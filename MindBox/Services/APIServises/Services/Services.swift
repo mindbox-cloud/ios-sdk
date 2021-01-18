@@ -8,21 +8,21 @@
 
 import Foundation
 
-protocol IMindBoxAPIServices: class {
+protocol IMindBoxAPIService: class {
 //    func avgPrice(symbol: String, completion: @escaping(Swift.Result<AveragePriceResponseModel, ErrorModel>) -> Void)
 }
 
-class MindBoxAPIServicesProvider: IMindBoxAPIServices {
+class MindBoxAPIServicesProvider: IMindBoxAPIService {
 
-    var serviceManager: APIServiceManager
+    var serviceManager: APIService
 
-    init(serviceManager: APIServiceManager) {
+    init(serviceManager: APIService) {
         self.serviceManager = serviceManager
     }
 
     ///MobileApplicationInstalled
     func mobileApplicationInstalled(endpoint: String, deviceUUID: String, completion: @escaping(Swift.Result<BaseResponce, ErrorModel>) -> Void) {
-		let req = MobileApplicationInstalledRequest(endpoint: "", deviceUUID: "")
+        let req = MobileApplicationInstalledRequest(endpoint: "", deviceUUID: "", apnsToken: nil)
         serviceManager.sendRequest(request: req) { (result) in
             completion(result)
         }

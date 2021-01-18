@@ -17,6 +17,25 @@ class RequestModel: NSObject {
 
     // MARK: - Properties
     var path: String
+
+    var pathWithQuery: String {
+        get {
+            var ret = path
+            for item in parameters.enumerated() {
+                let key = item.element.key
+                if item.offset == 0 {
+                    if let value = item.element.value as? String {
+                        ret.append("?\(key)=\(value)")
+                    }
+                } else {
+					if let value = item.element.value as? String {
+                        ret.append("&\(key)=\(value)")
+                    }
+                }
+            }
+            return ret
+        }
+    }
     var parameters: [String: Any?]
     var headers: [String: String]
     var method: RequestHTTPMethod
@@ -32,13 +51,7 @@ class RequestModel: NSObject {
         self.method = method
         self.parameters = parameters
 
-        self.headers = [
-            "Content-Language" : "ru-RU",
-            "Content-Type" : "application/json;charset=UTF-8",
-        ]
-        for (k, v) in headers  {
-            self.headers.updateValue(v, forKey: k)
-        }
+        self.headers = headers
         self.body = body
         super.init()
     }
@@ -49,12 +62,6 @@ extension RequestModel {
     
     func urlRequest(baseURL: String) -> URLRequest {
         var endpoint: String = baseURL.appending(path)
-        
-        for parameter in parameters {
-            if let value = parameter.value as? String {
-                endpoint.append("?\(parameter.key)=\(value)")
-            }
-        }
         
         var request: URLRequest = URLRequest(url: URL(string: endpoint)!)
         

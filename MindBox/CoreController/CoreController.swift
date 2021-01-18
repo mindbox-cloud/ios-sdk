@@ -13,7 +13,7 @@ class CoreController {
     @Injected var loger: ILoger!
     @Injected var configurationStorage: IConfigurationStorage
     @Injected var persistenceStorage: IPersistenceStorage
-    @Injected var apiServices: IMindBoxAPIServices
+    @Injected var apiServices: IMindBoxAPIService
     
     init() {
 

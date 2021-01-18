@@ -142,7 +142,7 @@ extension APILogManager {
     class func req(_ request: RequestModel, baseURL: String = "") {
         guard isLoggingEnabled else { return }
         
-        let path: String = request.path
+        let path: String = request.pathWithQuery
         let headers: String = String(describing: request.headers)
         let httpMethod: String = String(describing: request.method.rawValue)
         var body: String = ""

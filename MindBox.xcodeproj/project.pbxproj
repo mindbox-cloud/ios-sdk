@@ -24,7 +24,7 @@
 		317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CA25AF189800AE624C /* PersistenceStorage.swift */; };
 		317054CE25AF191F00AE624C /* Loger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CD25AF191F00AE624C /* Loger.swift */; };
 		317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */; };
-		317054E525B01BDD00AE624C /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D425B01BDD00AE624C /* Service.swift */; };
+		317054E525B01BDD00AE624C /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D425B01BDD00AE624C /* APIService.swift */; };
 		317054E625B01BDD00AE624C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D525B01BDD00AE624C /* LogManager.swift */; };
 		317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D825B01BDD00AE624C /* ErrorModel.swift */; };
 		317054E925B01BDD00AE624C /* RequestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D925B01BDD00AE624C /* RequestModel.swift */; };
@@ -66,7 +66,7 @@
 		317054CA25AF189800AE624C /* PersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceStorage.swift; sourceTree = "<group>"; };
 		317054CD25AF191F00AE624C /* Loger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loger.swift; sourceTree = "<group>"; };
 		317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryQueue.swift; sourceTree = "<group>"; };
-		317054D425B01BDD00AE624C /* Service.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
+		317054D425B01BDD00AE624C /* APIService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		317054D525B01BDD00AE624C /* LogManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		317054D825B01BDD00AE624C /* ErrorModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorModel.swift; sourceTree = "<group>"; };
 		317054D925B01BDD00AE624C /* RequestModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestModel.swift; sourceTree = "<group>"; };
@@ -233,7 +233,7 @@
 		317054D225B01BDD00AE624C /* APIServises */ = {
 			isa = PBXGroup;
 			children = (
-				317054D325B01BDD00AE624C /* Managers */,
+				317054D325B01BDD00AE624C /* Service */,
 				317054D625B01BDD00AE624C /* Models */,
 				317054DA25B01BDD00AE624C /* Utilities */,
 				317054E025B01BDD00AE624C /* Services */,
@@ -241,13 +241,13 @@
 			path = APIServises;
 			sourceTree = "<group>";
 		};
-		317054D325B01BDD00AE624C /* Managers */ = {
+		317054D325B01BDD00AE624C /* Service */ = {
 			isa = PBXGroup;
 			children = (
-				317054D425B01BDD00AE624C /* Service.swift */,
+				317054D425B01BDD00AE624C /* APIService.swift */,
 				317054D525B01BDD00AE624C /* LogManager.swift */,
 			);
-			path = Managers;
+			path = Service;
 			sourceTree = "<group>";
 		};
 		317054D625B01BDD00AE624C /* Models */ = {
@@ -510,7 +510,7 @@
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
 				317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
-				317054E525B01BDD00AE624C /* Service.swift in Sources */,
+				317054E525B01BDD00AE624C /* APIService.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

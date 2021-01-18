@@ -35,11 +35,11 @@ final class DIManager: NSObject {
                 // Code only executes when tests are running
             }
         #endif
-        container.register { (r) -> APIServiceManager in
+        container.register { (r) -> APIService in
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
 
-        container.register { (r) -> IMindBoxAPIServices in
+        container.register { (r) -> IMindBoxAPIService in
             MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
         }
 

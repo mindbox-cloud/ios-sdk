@@ -9,12 +9,26 @@
 import Foundation
 
 class MobileApplicationInstalledRequest: RequestModel {
-    init(endpoint: String, deviceUUID: String) {
-        super.init(path: "String",
+    let operationPath = "/v3/operations/async"
+    init(
+        endpoint: String,
+        deviceUUID: String,
+        apnsToken: String?
+    ) {
+        let headers = APIServiceConstant.defaultHeaders
+        let isTokenAvailable = apnsToken?.isEmpty == false
+        super.init(path: operationPath,
                    method: .post,
-                   parameters: [:],
-                   headers: [:],
-                   body: [:]
+                   parameters: [
+                    "endpointId":endpoint,
+                    "operation": "MobileApplicationInstalled",
+                    "deviceUUID": deviceUUID
+            ],
+                   headers: headers,
+                   body: [
+                    "Token": apnsToken,
+                    "IsTokenAvailable": isTokenAvailable
+            ]
         )
     }
 }

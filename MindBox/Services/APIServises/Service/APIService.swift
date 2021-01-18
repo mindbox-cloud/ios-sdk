@@ -1,5 +1,5 @@
 //
-//  APIServiceManager.swift
+//  APIService.swift
 //  MindBox
 //
 //  Created by Mikhail Barilov on 13.01.2021.
@@ -11,7 +11,7 @@ protocol APIService: class {
     func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<T, ErrorModel>) -> Void)
 }
 
-class NetworkManagerProvider: APIServiceManager {
+class NetworkManagerProvider: APIService {
     
     // MARK: - Properties
 
@@ -71,7 +71,7 @@ class NetworkManagerProvider: APIServiceManager {
     }
 }
 
-class MockManagerProvider: APIServiceManager {
+class MockManagerProvider: APIService {
 
     // MARK: - Properties
 

@@ -19,11 +19,29 @@ class MindBoxTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func initTest() {
+    func testOnInitCase() {
+
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
+
+
         let configuration = MBConfiguration(endpoint: "", domain: "")
         MindBox.shared.initialization(config: configuration)
+
     }
+
+//    func testDefaultHeader() {
+//
+//        APIServiceConstant.defaultHeaders.forEach { (key, value) in
+//
+//            print("\(key):\(value)")
+//        }
+//    }
+
+    func testRequest() {
+        let req = MobileApplicationInstalledRequest(endpoint: "TheEndpoint", deviceUUID: UUID.init().uuidString, apnsToken: "TheApnsToken")
+        APILogManager.req(req)
+    }
+
 
 }
