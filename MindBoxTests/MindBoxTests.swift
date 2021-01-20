@@ -24,9 +24,8 @@ class MindBoxTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
 
-
-        let configuration = MBConfiguration(endpoint: "", domain: "")
-        MindBox.shared.initialization(config: configuration)
+        let configuration = try! MBConfiguration(plistName: "TestConfig")
+        MindBox.shared.initialization(configuration: configuration)
 
     }
 
@@ -38,10 +37,9 @@ class MindBoxTests: XCTestCase {
 //        }
 //    }
 
-    func testRequest() {
-        let req = MobileApplicationInstalledRequest(endpoint: "TheEndpoint", deviceUUID: UUID.init().uuidString, apnsToken: "TheApnsToken")
-        APILogManager.req(req)
-    }
-
+//    func testRequest() {
+//        let req = MobileApplicationInstalledRequest(endpoint: "TheEndpoint", deviceUUID: UUID.init().uuidString, installationId: "TheInstallationId", apnsToken: "TheApnsToken")
+//        APILogManager.req(req)
+//    }
 
 }

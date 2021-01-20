@@ -10,14 +10,26 @@ import Foundation
 
 class CoreController {
 
+    enum State {
+        case none
+        case initing
+        case ready
+    }
+
     @Injected var loger: ILoger!
-    @Injected var configurationStorage: IConfigurationStorage
-    @Injected var persistenceStorage: IPersistenceStorage
-    @Injected var apiServices: IMindBoxAPIService
+    @Injected var configurationStorage: IConfigurationStorage!
+    @Injected var persistenceStorage: IPersistenceStorage!
+    @Injected var apiServices: IMindBoxAPIService!
     
     init() {
 
     }
+
+    public func initialization(configuration: MBConfiguration) {
+        configurationStorage.save(configuration: configuration)
+    }
+
+    
     
     
 }

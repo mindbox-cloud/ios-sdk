@@ -19,19 +19,21 @@ protocol IPersistenceStorage: class {
 class MBPersistenceStorage: IPersistenceStorage {
 
     enum keys: String {
-        case installationId = "MBMBPersistenceStorage-installationId"
-        case deviceUUID = "MBMBPersistenceStorage-deviceUUID"
-        case wasInstaled = "MBMBPersistenceStorage-wasInstaled"
+        case installationId = "installationId"
+        case deviceUUID = "deviceUUID"
+        case wasInstaled = "wasInstaled"
     }
 
-    let defaults: UserDefaults
     // MARK: - Elemets
+
+    let defaults: UserDefaults
 
     // MARK: - Property
 
     // MARK: - Init
-    init() {
-        defaults = UserDefaults.standard
+    
+    init(defaults: UserDefaults) {
+        self.defaults = defaults
     }
 
     // MARK: - IMBMBPersistenceStorage

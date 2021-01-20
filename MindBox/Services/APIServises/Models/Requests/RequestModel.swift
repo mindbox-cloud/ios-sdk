@@ -1,9 +1,9 @@
 //
-//  RequestModel.swift
-//  URLSessionAPIServices
+//  MobileApplicationInstalledRequest.swift
+//  MindBox
 //
-//  Created by Yusuf Demirci on 13.04.2020.
-//  Copyright © 2020 Yusuf Demirci. All rights reserved.
+//  Created by Mikhail Barilov on 18.01.2021.
+//  Copyright © 2021 Mikhail Barilov. All rights reserved.
 //
 
 import UIKit
@@ -16,6 +16,7 @@ enum RequestHTTPMethod: String {
 class RequestModel: NSObject {
 
     // MARK: - Properties
+
     var path: String
 
     var pathWithQuery: String {
@@ -36,10 +37,13 @@ class RequestModel: NSObject {
             return ret
         }
     }
+
     var parameters: [String: Any?]
     var headers: [String: String]
     var method: RequestHTTPMethod
     var body: [String: Any?]
+
+    // MARK: - Init
 
     init(path: String,
          method: RequestHTTPMethod,
@@ -58,10 +62,11 @@ class RequestModel: NSObject {
 }
 
 // MARK: - Public Functions
+
 extension RequestModel {
     
     func urlRequest(baseURL: String) -> URLRequest {
-        var endpoint: String = baseURL.appending(path)
+        let endpoint: String = baseURL.appending(pathWithQuery)
         
         var request: URLRequest = URLRequest(url: URL(string: endpoint)!)
         

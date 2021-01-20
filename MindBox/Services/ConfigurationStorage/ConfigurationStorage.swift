@@ -11,10 +11,17 @@ import Foundation
 protocol IConfigurationStorage: class {
     var domain: String {get set}
     var endpoint: String {get set}
+
+    func save(configuration: MBConfiguration)
 }
 
 class MBConfigurationStorage: IConfigurationStorage {
-
     var domain: String = ""
     var endpoint: String = ""
+
+    func save(configuration: MBConfiguration) {
+        self.domain = configuration.domain
+        self.endpoint = configuration.endpoint
+    }
+
 }

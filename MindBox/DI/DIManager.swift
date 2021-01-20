@@ -11,14 +11,6 @@ import Foundation
 /// Регистрирует DI-объекты
 final class DIManager: NSObject {
     static let shared: DIManager = DIManager()
-//
-//    private let coreAssemblies: [Assembly] = [
-//        CoreAsembly()
-//    ]
-//
-//    private let servisesAssemblies: [Assembly] = [
-//        APIAsembly()
-//    ]
 
     private(set) var container: Odin = Odin()
 
@@ -30,11 +22,11 @@ final class DIManager: NSObject {
         defer {
             print("❇️Dependency container registration is complete.")
         }
-        #if DEBUG
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-                // Code only executes when tests are running
-            }
-        #endif
+//        #if DEBUG
+//        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+//                // Code only executes when tests are running
+//            }
+//        #endif
         container.register { (r) -> APIService in
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
@@ -44,7 +36,7 @@ final class DIManager: NSObject {
         }
 
         container.register { (r) -> IPersistenceStorage in
-            MBPersistenceStorage()
+            MBPersistenceStorage(defaults: UserDefaults.standard )
         }
 
         container.register { (r) -> ILoger in
@@ -54,15 +46,6 @@ final class DIManager: NSObject {
         container.register { (r) -> IConfigurationStorage in
             MBConfigurationStorage()
         }
-
-//
-//        coreAssemblies.forEach {
-//            $0.assemble(container: container)
-//        }
-//
-//        servisesAssemblies.forEach {
-//            $0.assemble(container: container)
-//        }
     }
 
 }

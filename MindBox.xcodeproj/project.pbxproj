@@ -30,9 +30,13 @@
 		317054E925B01BDD00AE624C /* RequestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D925B01BDD00AE624C /* RequestModel.swift */; };
 		317054EA25B01BDD00AE624C /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DC25B01BDD00AE624C /* Constant.swift */; };
 		317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DE25B01BDD00AE624C /* ErrorKey.swift */; };
-		317054ED25B01BDD00AE624C /* Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054E125B01BDD00AE624C /* Services.swift */; };
+		317054ED25B01BDD00AE624C /* MindBoxAPIServicesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */; };
 		3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */; };
 		3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191C2A525ADFD8000E7D6B9 /* MindBox.swift */; };
+		31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */; };
+		31A20D4925B6CBE000AAA0A3 /* TestConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */; };
+		31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */; };
+		31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */; };
 		7B0C81AA9664887D9ACCBD11 /* Pods_MindBox_MindBoxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -72,9 +76,13 @@
 		317054D925B01BDD00AE624C /* RequestModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestModel.swift; sourceTree = "<group>"; };
 		317054DC25B01BDD00AE624C /* Constant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		317054DE25B01BDD00AE624C /* ErrorKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorKey.swift; sourceTree = "<group>"; };
-		317054E125B01BDD00AE624C /* Services.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
+		317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindBoxAPIServicesProvider.swift; sourceTree = "<group>"; };
 		3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationStorage.swift; sourceTree = "<group>"; };
 		3191C2A525ADFD8000E7D6B9 /* MindBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBox.swift; sourceTree = "<group>"; };
+		31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdatedRequest.swift; sourceTree = "<group>"; };
+		31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig.plist; sourceTree = "<group>"; };
+		31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBoxErrors.swift; sourceTree = "<group>"; };
+		31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBoxDelegate.swift; sourceTree = "<group>"; };
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
 		9F21C5FA3537762C986CF380 /* Pods-MindBox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.debug.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.debug.xcconfig"; sourceTree = "<group>"; };
 		BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindBox_MindBoxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,12 +135,14 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				317054C025AEF81900AE624C /* DI */,
 				314B38FE25AEE95D00E947B9 /* CoreController */,
 				314B38FB25AEE75B00E947B9 /* Services */,
 				313B233325ADEA0F00A1CB72 /* MindBox.h */,
 				313B233425ADEA0F00A1CB72 /* Info.plist */,
 				3191C2A525ADFD8000E7D6B9 /* MindBox.swift */,
+				31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */,
 				314B38FC25AEE8B200E947B9 /* MBConfiguration.swift */,
 			);
 			path = MindBox;
@@ -141,6 +151,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */,
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
 			);
@@ -153,8 +164,8 @@
 				317054D225B01BDD00AE624C /* APIServises */,
 				317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */,
 				317054CC25AF191100AE624C /* Loger */,
+				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
 				3178A52725AEEB6B00290CB9 /* ConfigurationStorage */,
-				317054CA25AF189800AE624C /* PersistenceStorage.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -181,6 +192,7 @@
 			children = (
 				317054D925B01BDD00AE624C /* RequestModel.swift */,
 				3159FFAF25B5922C00EE80E9 /* MobileApplicationInstalledRequest.swift */,
+				31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */,
 			);
 			path = Requests;
 			sourceTree = "<group>";
@@ -233,21 +245,13 @@
 		317054D225B01BDD00AE624C /* APIServises */ = {
 			isa = PBXGroup;
 			children = (
-				317054D325B01BDD00AE624C /* Service */,
-				317054D625B01BDD00AE624C /* Models */,
-				317054DA25B01BDD00AE624C /* Utilities */,
-				317054E025B01BDD00AE624C /* Services */,
-			);
-			path = APIServises;
-			sourceTree = "<group>";
-		};
-		317054D325B01BDD00AE624C /* Service */ = {
-			isa = PBXGroup;
-			children = (
 				317054D425B01BDD00AE624C /* APIService.swift */,
 				317054D525B01BDD00AE624C /* LogManager.swift */,
+				317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */,
+				317054D625B01BDD00AE624C /* Models */,
+				317054DA25B01BDD00AE624C /* Utilities */,
 			);
-			path = Service;
+			path = APIServises;
 			sourceTree = "<group>";
 		};
 		317054D625B01BDD00AE624C /* Models */ = {
@@ -277,20 +281,28 @@
 			path = Constants;
 			sourceTree = "<group>";
 		};
-		317054E025B01BDD00AE624C /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				317054E125B01BDD00AE624C /* Services.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
 		3178A52725AEEB6B00290CB9 /* ConfigurationStorage */ = {
 			isa = PBXGroup;
 			children = (
 				3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */,
 			);
 			path = ConfigurationStorage;
+			sourceTree = "<group>";
+		};
+		31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */ = {
+			isa = PBXGroup;
+			children = (
+				317054CA25AF189800AE624C /* PersistenceStorage.swift */,
+			);
+			path = PersistenceStorage;
+			sourceTree = "<group>";
+		};
+		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 		7ECBF932967E50162EE94F12 /* Pods */ = {
@@ -416,6 +428,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31A20D4925B6CBE000AAA0A3 /* TestConfig.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,13 +503,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
 				3159FFB025B5922C00EE80E9 /* MobileApplicationInstalledRequest.swift in Sources */,
 				317054EA25B01BDD00AE624C /* Constant.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
 				317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */,
 				317054CE25AF191F00AE624C /* Loger.swift in Sources */,
-				317054ED25B01BDD00AE624C /* Services.swift in Sources */,
+				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
+				31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */,
+				317054ED25B01BDD00AE624C /* MindBoxAPIServicesProvider.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
 				317054C425AEF88E00AE624C /* DIManager.swift in Sources */,
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
@@ -586,14 +602,18 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TVOS_DEPLOYMENT_TARGET = 10.0;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Debug;
 		};
@@ -643,14 +663,18 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TVOS_DEPLOYMENT_TARGET = 10.0;
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Release;
 		};
