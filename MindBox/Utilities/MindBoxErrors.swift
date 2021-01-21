@@ -12,6 +12,7 @@ extension MindBox {
     public enum Errors: LocalizedError {
         case invalidConfiguration(reason: String? = nil, suggestion: String? = nil)
         case invalidAccess(reason: String? = nil, suggestion: String? = nil)
+        case other(errorDescription: String? = nil, failureReason: String? = nil, recoverySuggestion: String? = nil)
 
         public var errorDescription: String? { get {
                 switch self {
@@ -19,6 +20,8 @@ extension MindBox {
                     return "MBConfiguration init was canceled."
                 case .invalidAccess:
                     return "Access denied"
+                case .other(let errorDescription , _, _):
+                    return errorDescription
                 }
             }
         }
@@ -29,6 +32,8 @@ extension MindBox {
                     return reason
                 case .invalidAccess(let reason, _):
                     return reason
+                case .other(_, let failureReason, _ ):
+                    return failureReason
                 }
             }
         }
@@ -39,6 +44,8 @@ extension MindBox {
                     return suggestion
                 case .invalidAccess(_, let suggestion):
                     return suggestion
+                case .other(_, _, let recoverySuggestion):
+                    return recoverySuggestion
                 }
             }
         }

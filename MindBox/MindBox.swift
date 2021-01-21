@@ -7,8 +7,6 @@
 //
 
 import Foundation
-import UIKit
-import AdSupport
 
 let resolver = DIManager.shared.container
 
@@ -18,7 +16,7 @@ public class MindBox {
 		return MindBox()
     }()
 
-    // MARK: - Elemets
+    // MARK: - Elements
 
     @Injected var configurationStorage: IConfigurationStorage
     @Injected var persistenceStorage: IPersistenceStorage
@@ -38,14 +36,8 @@ public class MindBox {
     // MARK: - MindBox
 
     public func initialization(configuration: MBConfiguration) {
-
-        let deviceIdentifierForVendor = UIDevice.current.identifierForVendor
-
-        ASIdentifierManager.shared().advertisingIdentifier
-
-        UUID()
-
-        configurationStorage.save(configuration: configuration)
+//        configurationStorage.save(configuration: configuration)
+        coreController.initialization(configuration: configuration)
     }
 
     public func getUUID() throws -> String {

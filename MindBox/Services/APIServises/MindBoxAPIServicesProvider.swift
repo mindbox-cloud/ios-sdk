@@ -12,7 +12,14 @@ protocol IMindBoxAPIService: class {
     func mobileApplicationInstalled(
         endpoint: String,
         deviceUUID: String,
-        installationId: String,
+        installationId: String?,
+        apnsToken: String?,
+        completion: @escaping(Swift.Result<BaseResponce, ErrorModel>) -> Void)
+
+    func mobileApplicationInfoUpdated(
+        endpoint: String,
+        deviceUUID: String,
+        apnsToken: String?,
         completion: @escaping(Swift.Result<BaseResponce, ErrorModel>) -> Void)
 }
 
@@ -28,10 +35,11 @@ class MindBoxAPIServicesProvider: IMindBoxAPIService {
     func mobileApplicationInstalled(
         endpoint: String,
         deviceUUID: String,
-        installationId: String,
+        installationId: String?,
+        apnsToken: String?,
         completion: @escaping(Swift.Result<BaseResponce, ErrorModel>) -> Void)
     {
-        let req = MobileApplicationInstalledRequest(endpoint: "", deviceUUID: "", installationId: nil, apnsToken: nil)
+        let req = MobileApplicationInstalledRequest(endpoint: endpoint, deviceUUID: deviceUUID, installationId: installationId, apnsToken: apnsToken)
         serviceManager.sendRequest(request: req) { (result) in
             completion(result)
         }
@@ -41,9 +49,10 @@ class MindBoxAPIServicesProvider: IMindBoxAPIService {
     func mobileApplicationInfoUpdated(
         endpoint: String,
         deviceUUID: String,
+        apnsToken: String?,
         completion: @escaping(Swift.Result<BaseResponce, ErrorModel>) -> Void)
     {
-        let req = MobileApplicationInfoUpdatedRequest(endpoint: "", deviceUUID: "", apnsToken: nil)
+        let req = MobileApplicationInfoUpdatedRequest(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken)
         serviceManager.sendRequest(request: req) { (result) in
             completion(result)
         }

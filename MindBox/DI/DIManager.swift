@@ -27,6 +27,11 @@ final class DIManager: NSObject {
 //                // Code only executes when tests are running
 //            }
 //        #endif
+        
+        container.register { (r) -> IFetchUtilities in
+            FetchUtilities()
+        }
+
         container.register { (r) -> APIService in
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
@@ -39,8 +44,8 @@ final class DIManager: NSObject {
             MBPersistenceStorage(defaults: UserDefaults.standard )
         }
 
-        container.register { (r) -> ILoger in
-            MBLoger()
+        container.register { (r) -> ILogger in
+            MBLogger()
         }
 
         container.register { (r) -> IConfigurationStorage in

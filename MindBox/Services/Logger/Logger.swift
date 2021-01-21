@@ -8,11 +8,11 @@
 
 import Foundation
 
-protocol ILoger: class {
+protocol ILogger: class {
 
 }
 
-class MBLoger: ILoger {
+class MBLogger: ILogger {
     init() {
     }
 

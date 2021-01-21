@@ -11,6 +11,7 @@ import Foundation
 protocol IConfigurationStorage: class {
     var domain: String {get set}
     var endpoint: String {get set}
+    var startConfiguration: MBConfiguration? {get}
 
     func save(configuration: MBConfiguration)
 }
@@ -18,10 +19,16 @@ protocol IConfigurationStorage: class {
 class MBConfigurationStorage: IConfigurationStorage {
     var domain: String = ""
     var endpoint: String = ""
+    private(set) var startConfiguration: MBConfiguration?
+
+    init() {
+        
+    }
 
     func save(configuration: MBConfiguration) {
         self.domain = configuration.domain
         self.endpoint = configuration.endpoint
+        startConfiguration = configuration
     }
 
 }

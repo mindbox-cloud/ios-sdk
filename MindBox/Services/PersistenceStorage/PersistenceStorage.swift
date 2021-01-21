@@ -13,6 +13,7 @@ protocol IPersistenceStorage: class {
     var deviceUUID: String? {get set}
     var installationId: String? {get set}
     var wasInstaled: Bool {get set}
+    var apnsToken: String? {get set}
 
 }
 
@@ -22,9 +23,10 @@ class MBPersistenceStorage: IPersistenceStorage {
         case installationId = "installationId"
         case deviceUUID = "deviceUUID"
         case wasInstaled = "wasInstaled"
+        case apnsToken = "apnsToken"
     }
 
-    // MARK: - Elemets
+    // MARK: - Elements
 
     let defaults: UserDefaults
 
@@ -62,6 +64,15 @@ class MBPersistenceStorage: IPersistenceStorage {
         }
         set {
             defaults.set(newValue, forKey: keys.wasInstaled.rawValue)
+        }
+    }
+
+    var apnsToken: String? {
+        get {
+            defaults.string(forKey: keys.apnsToken.rawValue)
+        }
+        set {
+            defaults.set(newValue, forKey: keys.apnsToken.rawValue)
         }
     }
 

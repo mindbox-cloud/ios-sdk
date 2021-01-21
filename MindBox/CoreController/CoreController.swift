@@ -7,29 +7,120 @@
 //
 
 import Foundation
+import UIKit
+import AdSupport
+import AppTrackingTransparency
 
 class CoreController {
-
     enum State {
         case none
         case initing
+        case wasInstalled
         case ready
     }
 
-    @Injected var loger: ILoger!
-    @Injected var configurationStorage: IConfigurationStorage!
-    @Injected var persistenceStorage: IPersistenceStorage!
-    @Injected var apiServices: IMindBoxAPIService!
-    
+    // MARK: - Elements
+
+    @Injected var logger: ILogger
+    @Injected var configurationStorage: IConfigurationStorage
+    @Injected var persistenceStorage: IPersistenceStorage
+    @Injected var apiServices: IMindBoxAPIService
+
+    // MARK: - Property
+
+    private var state: State = .none
+
+    // MARK: - Init
+
     init() {
 
+        if persistenceStorage.wasInstaled {
+            state = .wasInstalled
+        }
     }
+
+    // MARK: - CoreController
 
     public func initialization(configuration: MBConfiguration) {
         configurationStorage.save(configuration: configuration)
+        switch state {
+        case .none:
+            state = .initing
+            startInstallationCase(uuid: configuration.deviceUUID, installationId: configuration.installationId)
+        default:
+            updateToken()
+        }
     }
 
-    
-    
-    
+    // MARK: - Private
+
+    private func startInstallationCase(uuid: String?, installationId: String?) {
+
+        if let uuid = uuid {
+            self.startInstallationCase(uuid: uuid, installationId: installationId)
+        } else {
+            Utilities.fetch.getIDFA { (idfa) in
+                print("idfa get success \(idfa)")
+                self.startInstallationCase(uuid: idfa, installationId: installationId)
+            } onFail: {
+                if #available(iOS 14, *) {
+                    print("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
+                } else {
+                    Utilities.fetch.getIDFV(
+                        tryCount: 5) { (idfv) in
+                        self.startInstallationCase(uuid: idfv, installationId: installationId)
+                        print(" Utilities.fetch.getIDFV \(idfv.uuidString)")
+                    } onFail: {
+                        print("Utilities.fetch.getIDFV fail")
+                    }
+                }
+            }
+        }
+    }
+
+    private func updateToken() {
+        let endpoint = configurationStorage.endpoint
+        let apnsToken = persistenceStorage.apnsToken
+
+        guard let deviceUUID = persistenceStorage.deviceUUID else {
+            // FIX:
+            return
+        }
+
+        apiServices.mobileApplicationInfoUpdated(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken) { (result) in
+            switch result {
+            case .success:
+                MindBox.shared.delegate?.apnsTokenDidUpdated()
+            case .failure:
+                break
+            }
+        }
+    }
+
+    private func startInstallationCase(uuid: UUID, installationId: String?) {
+        let endpoint = configurationStorage.endpoint
+
+        let apnsToken = persistenceStorage.deviceUUID
+
+        apiServices.mobileApplicationInstalled(endpoint: endpoint, deviceUUID: uuid.uuidString, installationId: installationId, apnsToken: apnsToken, completion: {[weak self] result in
+                switch result {
+                case .success(let resp):
+               	 	self?.state = .wasInstalled
+                    self?.persistenceStorage.deviceUUID = uuid.uuidString
+                    self?.persistenceStorage.installationId = installationId
+
+                    print(" apiServices.mobileApplicationInstalled status-code \(resp.httpStatusCode ?? -1), status  \(resp.status)")
+
+                    MindBox.shared.delegate?.mindBoxDidInstalled()
+                    break
+                    
+                case .failure(let error):
+                    self?.state = .none
+                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
+                    break
+                }
+            }
+        )
+    }
+
 }

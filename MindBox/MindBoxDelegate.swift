@@ -9,7 +9,10 @@
 import Foundation
 
 public protocol MindBoxDelegate: class {
-    func mindeBoxDidInstaled()
+    func mindBoxDidInstalled()
+    func mindBoxInstalledFailed(error: MindBox.Errors)
+    func apnsTokenDidUpdated()
 
-    func mindBoxDidConfigurated()
+    func mindBoxDidConfigured()
+
 }

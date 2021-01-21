@@ -27,6 +27,12 @@ class MindBoxTests: XCTestCase {
         let configuration = try! MBConfiguration(plistName: "TestConfig")
         MindBox.shared.initialization(configuration: configuration)
 
+//        let exists = NSPredicate(format: "exists == 1")
+
+//        expectation(for: exists, evaluatedWith: self, handler: nil)
+//        waitForExpectations(timeout: 10, handler: nil)
+
+
     }
 
 //    func testDefaultHeader() {
