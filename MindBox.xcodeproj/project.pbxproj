@@ -34,6 +34,7 @@
 		3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */; };
 		317AF8FC25B844DB006348FA /* Utilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* Utilits.swift */; };
 		317F1FD525B879B200B54346 /* FetchUtilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* FetchUtilits.swift */; };
+		317F1FFA25B9A70D00B54346 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 317F1FF225B9A49B00B54346 /* SuccessResponse.json */; };
 		3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191C2A525ADFD8000E7D6B9 /* MindBox.swift */; };
 		31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */; };
 		31A20D4925B6CBE000AAA0A3 /* TestConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */; };
@@ -82,6 +83,7 @@
 		3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationStorage.swift; sourceTree = "<group>"; };
 		317AF8FB25B844DB006348FA /* Utilits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilits.swift; sourceTree = "<group>"; };
 		317F1FD425B879B200B54346 /* FetchUtilits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchUtilits.swift; sourceTree = "<group>"; };
+		317F1FF225B9A49B00B54346 /* SuccessResponse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
 		3191C2A525ADFD8000E7D6B9 /* MindBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBox.swift; sourceTree = "<group>"; };
 		31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdatedRequest.swift; sourceTree = "<group>"; };
 		31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig.plist; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 		317054D225B01BDD00AE624C /* APIServises */ = {
 			isa = PBXGroup;
 			children = (
+				317F1FF225B9A49B00B54346 /* SuccessResponse.json */,
 				317054D425B01BDD00AE624C /* APIService.swift */,
 				317054D525B01BDD00AE624C /* LogManager.swift */,
 				317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */,
@@ -427,6 +430,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				317F1FFA25B9A70D00B54346 /* SuccessResponse.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

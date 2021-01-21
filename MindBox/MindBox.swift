@@ -45,7 +45,6 @@ public class MindBox {
             return value
         } else {
             throw NSError()
-
         }
     }
 

@@ -33,7 +33,8 @@ final class DIManager: NSObject {
         }
 
         container.register { (r) -> APIService in
-            NetworkManagerProvider(configurationStorage: r.resolveOrDie())
+            MockManagerProvider()
+//            NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
 
         container.register { (r) -> IMindBoxAPIService in

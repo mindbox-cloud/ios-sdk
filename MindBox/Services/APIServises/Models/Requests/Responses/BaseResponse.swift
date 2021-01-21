@@ -15,12 +15,13 @@ class BaseResponce: Codable {
     //    response StatusCode
     var responseStatusCode: Int?
     //    "InternalServerError",
-    var status: StatusCode
+    var status: StatusCode = .unknow
     //    <http-код ошибки (число)>
     var httpStatusCode: Int?
+
 }
 
-class ResponseModel<T: Codable>: BaseResponce {
+class ResponseModel<T: Codable> {
 
     // MARK: - Properties
 
@@ -34,10 +35,8 @@ class ResponseModel<T: Codable>: BaseResponce {
 
     // MARK: - Init
 
-    required public init(from decoder: Decoder) throws {
-        let keyedContainer = try decoder.container(keyedBy: CodingKeys.self)
-        data = try? keyedContainer.decode(T.self, forKey: CodingKeys.data)
-        try super.init(from: decoder)
+    required public init()  {
+
     }
 
     private enum CodingKeys: String, CodingKey {

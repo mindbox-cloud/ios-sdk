@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>endpoint</key>
-	<string>Someendpoint</string>
+	<string>app-with-hub-IOS</string>
 	<key>domain</key>
-	<string>SomeDomain</string>
+	<string>api.staging.directcrm.ru</string>
 	<key>installationId</key>
-	<string>SomeiInstallationId</string>
+	<string></string>
 	<key>deviceUUID</key>
-	<string>SomeDeviceUUID</string>
+	<string></string>
 </dict>
 </plist>

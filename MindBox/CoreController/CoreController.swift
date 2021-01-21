@@ -57,22 +57,23 @@ class CoreController {
     private func startInstallationCase(uuid: String?, installationId: String?) {
 
         if let uuid = uuid {
-            self.startInstallationCase(uuid: uuid, installationId: installationId)
+            self.installation(uuid: uuid, installationId: installationId)
         } else {
             Utilities.fetch.getIDFA { (idfa) in
                 print("idfa get success \(idfa)")
-                self.startInstallationCase(uuid: idfa, installationId: installationId)
+                self.installation(uuid: idfa.uuidString, installationId: installationId)
             } onFail: {
                 if #available(iOS 14, *) {
                     print("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
                 } else {
-                    Utilities.fetch.getIDFV(
-                        tryCount: 5) { (idfv) in
-                        self.startInstallationCase(uuid: idfv, installationId: installationId)
-                        print(" Utilities.fetch.getIDFV \(idfv.uuidString)")
-                    } onFail: {
-                        print("Utilities.fetch.getIDFV fail")
-                    }
+                    print("idfa get fail")
+                }
+                Utilities.fetch.getIDFV(
+                    tryCount: 5) { (idfv) in
+                    self.installation(uuid: idfv.uuidString, installationId: installationId)
+                    print(" Utilities.fetch.getIDFV \(idfv.uuidString)")
+                } onFail: {
+                    print("Utilities.fetch.getIDFV fail")
                 }
             }
         }
@@ -97,19 +98,19 @@ class CoreController {
         }
     }
 
-    private func startInstallationCase(uuid: UUID, installationId: String?) {
+    private func installation(uuid: String, installationId: String?) {
         let endpoint = configurationStorage.endpoint
 
         let apnsToken = persistenceStorage.deviceUUID
 
-        apiServices.mobileApplicationInstalled(endpoint: endpoint, deviceUUID: uuid.uuidString, installationId: installationId, apnsToken: apnsToken, completion: {[weak self] result in
+        apiServices.mobileApplicationInstalled(endpoint: endpoint, deviceUUID: uuid, installationId: installationId, apnsToken: apnsToken, completion: {[weak self] result in
                 switch result {
                 case .success(let resp):
                	 	self?.state = .wasInstalled
-                    self?.persistenceStorage.deviceUUID = uuid.uuidString
+                    self?.persistenceStorage.deviceUUID = uuid
                     self?.persistenceStorage.installationId = installationId
 
-                    print(" apiServices.mobileApplicationInstalled status-code \(resp.httpStatusCode ?? -1), status  \(resp.status)")
+                    print(" apiServices.mobileApplicationInstalled status-code \(resp.data?.httpStatusCode ?? -1), status \(resp.data?.status)")
 
                     MindBox.shared.delegate?.mindBoxDidInstalled()
                     break

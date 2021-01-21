@@ -51,4 +51,28 @@ public struct MBConfiguration: Decodable {
             self = configuration
     }
 
+    enum CodingKeys: String, CodingKey {
+		case endpoint
+        case domain
+        case installationId
+        case deviceUUID
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.endpoint = try values.decode(String.self, forKey: .endpoint)
+        self.domain = try values.decode(String.self, forKey: .domain)
+        do {
+            let value = try values.decode(String.self, forKey: .installationId)
+            if !value.isEmpty {
+                self.installationId = value
+            }
+        }
+        do {
+            let value = try values.decode(String.self, forKey: .deviceUUID)
+            if !value.isEmpty {
+                self.deviceUUID = value
+            }
+        }
+    }
 }

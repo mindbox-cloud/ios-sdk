@@ -8,7 +8,7 @@
 
 import Foundation
 protocol APIService: class {
-    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<T, ErrorModel>) -> Void)
+    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void)
 }
 
 class NetworkManagerProvider: APIService {
@@ -27,7 +27,7 @@ class NetworkManagerProvider: APIService {
         self.configurationStorage = configurationStorage
     }
     
-    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<T, ErrorModel>) -> Void) {
+    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
         // FIX: -
 //        if request.isLoggingEnabled.request {
@@ -44,9 +44,12 @@ class NetworkManagerProvider: APIService {
                 guard let data = data else {
                     throw NSError()
                 }
+                let responseModel = ResponseModel<T>()
+                responseModel.rawData = data
+                responseModel.data = try JSONDecoder().decode(T.self, from: data)
+                responseModel.request = request
 
-                let object = try JSONDecoder().decode(T.self, from: data)
-                completion(Result.success(object))
+                completion(Result.success(responseModel))
             } catch let decodeError {
                 let error: ErrorModel = ErrorModel(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
                 do {
@@ -54,7 +57,7 @@ class NetworkManagerProvider: APIService {
                         throw NSError()
                     }
 					 let object = try JSONDecoder().decode(ErrorResponce.self, from: data)
-                    error.status = object.status
+                    error.status = object.status ?? .unknow
                     error.errorMessage = object.errorMessage
                     error.errorId = object.errorId
                     error.httpStatusCode = object.httpStatusCode
@@ -80,16 +83,18 @@ class MockManagerProvider: APIService {
     init() {
     }
 
-    func sendRequest<T: Codable>(request: RequestModel, completion: @escaping(Swift.Result<T, ErrorModel>) -> Void) {
+    func sendRequest<T: Codable>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
         // FIX
 //        if request.isLoggingEnabled.request {
 //            APILogManager.req(request, baseURL: baseURL)
 //        }
-        let data = try! Data(contentsOf: URL(fileURLWithPath: Bundle.main.path(forResource: "Response", ofType: "json")!), options: NSData.ReadingOptions.mappedIfSafe)
+        let data = try! Data(contentsOf: URL(fileURLWithPath: Bundle.init(for: MindBox.self).path(forResource: "SuccessResponse", ofType: "json")!), options: NSData.ReadingOptions.mappedIfSafe)
         do {
-            let responseModel = try JSONDecoder().decode(ResponseModel<T>.self, from: data)
+
+            let responseModel = ResponseModel<T>()
             responseModel.rawData = data
+            responseModel.data = try JSONDecoder().decode(T.self, from: data)
             responseModel.request = request
             // FIX
 //            if request.isLoggingEnabled.response {
@@ -97,7 +102,7 @@ class MockManagerProvider: APIService {
 //            }
 
             if let data = responseModel.data {
-                completion(Result.success(data))
+                completion(Result.success(responseModel))
             } else {
                 completion(Result.failure(ErrorModel(errorKey: ErrorKey.general.rawValue)))
             }
