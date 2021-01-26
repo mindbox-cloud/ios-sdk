@@ -9,10 +9,14 @@
 import Foundation
 
 public protocol MindBoxDelegate: class {
-    func mindBoxDidInstalled()
-    func mindBoxInstalledFailed(error: MindBox.Errors)
-    func apnsTokenDidUpdated()
 
-    func mindBoxDidConfigured()
+    /// Sdk will be called his method on installed case success
+    func mindBoxDidInstalled()
+
+    /// Sdk will be called this method on installed case fail
+    func mindBoxInstalledFailed(error: MindBox.Errors)
+
+    /// Sdk will be called this method on apns token did updated
+    func apnsTokenDidUpdated()
 
 }

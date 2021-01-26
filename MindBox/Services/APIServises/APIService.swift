@@ -29,11 +29,6 @@ class NetworkManagerProvider: APIService {
     
     func sendRequest<T: BaseResponce>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
-        // FIX: -
-        //        if request.isLoggingEnabled.request {
-        //            APILogManager.req(request, baseURL: baseURL)
-        //        }
-
         let request = requestModel.urlRequest(baseURL: baseURL)
         Log(request: request).withDate().make()
         URLSession.shared.dataTask(with: request) {data, response, error in
@@ -52,6 +47,7 @@ class NetworkManagerProvider: APIService {
                 guard let data = data else {
                     throw NSError()
                 }
+
                 let responseModel = ResponseModel<T>()
                 responseModel.rawData = data
                 responseModel.data = try JSONDecoder().decode(T.self, from: data)
@@ -71,13 +67,13 @@ class NetworkManagerProvider: APIService {
 
                 error.responseStatusCode = (response as? HTTPURLResponse)?.statusCode
 
-
                 Log(error: error).withDate().make()
                 completion(Result.failure(error))
             }
 
         }.resume()
     }
+
 }
 
 class MockManagerProvider: APIService {
@@ -91,10 +87,6 @@ class MockManagerProvider: APIService {
 
     func sendRequest<T: Codable>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
-        // FIX
-        //        if request.isLoggingEnabled.request {
-        //            APILogManager.req(request, baseURL: baseURL)
-        //        }
         let data = try! Data(contentsOf: URL(fileURLWithPath: Bundle.init(for: MindBox.self).path(forResource: "SuccessResponse", ofType: "json")!), options: NSData.ReadingOptions.mappedIfSafe)
         do {
 
@@ -103,12 +95,7 @@ class MockManagerProvider: APIService {
             responseModel.data = try JSONDecoder().decode(T.self, from: data)
             responseModel.request = requestModel
 
-            // FIX
-            //            if request.isLoggingEnabled.response {
-            //                APILogManager.res(responseModel, baseURL: baseURL)
-            //            }
-
-            if let data = responseModel.data {
+            if responseModel.data != nil {
                 completion(Result.success(responseModel))
             } else {
                 completion(Result.failure(ErrorModel(errorKey: ErrorKey.general.rawValue)))
@@ -119,4 +106,5 @@ class MockManagerProvider: APIService {
             completion(Result.failure(error))
         }
     }
+
 }

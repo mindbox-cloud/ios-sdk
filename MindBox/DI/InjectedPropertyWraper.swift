@@ -22,7 +22,11 @@ struct Injected<Value> {
         wrappedValue = value
     }
 
-    init<Wrapped>(name: String? = nil) where Value == Optional<Wrapped> {
-        wrappedValue = resolver.resolve()
+    // Not debugged
+    init<Wrapped: AnyObject>(name: String? = nil) where Value == Optional<Wrapped> {
+        if let value: Wrapped = resolver.resolve() {
+            wrappedValue = value
+        }
+        wrappedValue = nil
     }
 }

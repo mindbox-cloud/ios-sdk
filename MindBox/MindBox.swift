@@ -11,8 +11,9 @@ import Foundation
 let resolver = DIManager.shared.container
 
 public class MindBox {
+
     /// Singleton value for interaction with sdk
-    /// Side effect is setup DI
+    /// It has setup DI container  as side effect  on init
     public static var shared: MindBox = {
         DIManager.shared.registerServices()
 		return MindBox()
@@ -23,10 +24,12 @@ public class MindBox {
     @Injected var configurationStorage: IConfigurationStorage
     @Injected var persistenceStorage: IPersistenceStorage
 
+    /// Internal process controller
     let coreController: CoreController
 
     // MARK: - Property
 
+	/// Delegate for sending events to outside
     public weak var delegate: MindBoxDelegate?
 
     // MARK: - Init
@@ -37,30 +40,37 @@ public class MindBox {
 
     // MARK: - MindBox
 
+    /// This function starting initialization case using `configuration`.
+    /// - Parameter configuration: MBConfiguration struct with configuration
     public func initialization(configuration: MBConfiguration) {
         coreController.initialization(configuration: configuration)
     }
 
+	/// Method to get deviceUUID used for first initialization
+    /// - Throws: MindBox.Errors.invalidAccess until first initialization did success
     public func deviceUUID() throws -> String {
         if let value = persistenceStorage.deviceUUID {
             return value
         } else {
-            throw NSError()
+            throw MindBox.Errors.invalidAccess(reason: "deviceUUID unavailable until first initialization did success", suggestion: "Try later")
         }
     }
 
+    /// - Returns: APNSToken sent to the analytics system
     public var APNSToken: String? {
         get {
             persistenceStorage.apnsToken
         }
     }
 
+    /// - Returns: version from bundle
     public var sdkVersion: String {
         get {
             return Utilities.fetch.sdkVersion ?? "unknown"
         }
     }
 
+	/// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
         coreController.apnsTokenDidUpdate(token: token)
         persistenceStorage.apnsToken = token

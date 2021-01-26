@@ -7,6 +7,9 @@
 //
 
 import Foundation
+/// This struct contains init options and  behavior configuration options
+///
+/// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
 
 public struct MBConfiguration: Decodable {
     public let endpoint: String
@@ -14,6 +17,14 @@ public struct MBConfiguration: Decodable {
     public var installationId: String?
     public var deviceUUID: String?
 
+    /// Init with params
+    ///
+    /// - Parameter endpoint: Used for app identification
+    /// - Parameter domain: Used for generating baseurl for REST
+    /// - Parameter installationId: Used to create tracking continuity by uuid
+    /// - Parameter deviceUUID: Used instead of the generated value
+    ///
+    ///- Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
@@ -41,6 +52,26 @@ public struct MBConfiguration: Decodable {
         }
     }
 
+    /// Init with plist file
+    ///
+    /// ```
+    /// <?xml version="1.0" encoding="UTF-8"?>
+    /// <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    /// <plist version="1.0">
+    /// <dict>
+    ///    <key>endpoint</key>
+    ///    <string>app-with-hub-IOS</string>
+    ///    <key>domain</key>
+    ///    <string>api.mindbox.ru</string>
+    ///    <key>installationId</key>
+    ///    <string></string>
+    ///    <key>deviceUUID</key>
+    ///    <string></string>
+    /// </dict>
+    /// </plist>
+    /// ```
+    /// - Parameter plistName: name of plist file without extension
+    /// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters or  incorrect format file
     public init(plistName: String) throws {
         let decoder = PropertyListDecoder()
         var findeURL: URL?
@@ -100,4 +131,5 @@ public struct MBConfiguration: Decodable {
             deviceUUID: deviceUUID
         )
     }
+
 }
