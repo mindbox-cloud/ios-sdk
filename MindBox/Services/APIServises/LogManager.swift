@@ -1,9 +1,9 @@
 //
-//  LogManager.swift
-//  URLSessionAPIServices
+//  MindBox.swift
+//  MindBox
 //
-//  Created by Yusuf Demirci on 13.04.2020.
-//  Copyright © 2020 Yusuf Demirci. All rights reserved.
+//  Created by Mikhail Barilov on 25.01.2021.
+//  Copyright © 2021 Mikhail Barilov. All rights reserved.
 //
 
 import Foundation
@@ -16,132 +16,107 @@ import Foundation
 /// - verbose: Log type verbose
 /// - warning: Log type warning
 /// - severe: Log type severe
-private enum LogType: String {
-    case e = "[‼️]" // error
-    case i = "[ℹ️]" // info
-    case d = "[💬]" // debug
-    case v = "[🔬]" // verbose
-    case w = "[⚠️]" // warning
-    case s = "[🔥]" // severe
+enum LogType: String {
+    case error = "[‼️]"
+    case info = "[ℹ️]"
+    case debug = "[💬]"
+    case verbose = "[🔬]"
+    case warning = "[⚠️]"
+    case severe = "[🔥]"
 }
 
 internal extension Date {
     func toString() -> String {
         // FIX
-        return APILogManager.dateFormatter.string(from: self as Date)
+        return Log.dateFormatter.string(from: self as Date)
     }
 }
 
-class APILogManager {
+struct Log {
+    @Injected static var logerServise: ILogger
     
     // MARK: - Properties
     static var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = dateFormat
-        formatter.locale = Locale.current
-        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "hh:mm:ss.SSSS"
         return formatter
     }
-    private static var dateFormat = "hh:mm:ss"
-    private static var isLoggingEnabled: Bool {
-        //        #if DEBUG
-        return true
-        //        #else
-        //        return false
-        //        #endif
-    }
-}
+    //    private static var isLoggingEnabled: Bool {
+    //        #if DEBUG
+    //        return true
+    //        #else
+    //        return false
+    //        #endif
+    //    }
 
-// MARK: - Public Functions
-extension APILogManager {
-    
-    /// Logs error messages on console with prefix [‼️]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func e( _ object: Any, filename: String = #file, line: Int = #line, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.e.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(funcName) -> \(object)")
-        }
+    typealias Meta = (filename: String, line: Int, funcName: String)
+    var text: String = ""
+    var date: Date?
+    var type: LogType?
+    var chanel: MBLoggerChanels = .none
+    var meta: Meta?
+    var borders: (start: String, end: String) = ("[","\n]")
+
+    init(_ object: Any?) {
+        text = "\(String(describing: object))"
     }
-    
-    /// Logs info messages on console with prefix [ℹ️]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func i( _ object: Any, filename: String = #file, line: Int = #line, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.i.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(funcName) -> \(object)")
-        }
+    init(_ object: Any) {
+        text = "\(String(describing: object))"
     }
-    
-    /// Logs debug messages on console with prefix [💬]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func d( _ object: Any, filename: String = #file, line: Int = #line, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.d.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(funcName) -> \(object)")
+
+    func make() {
+
+        var header = ""
+        if let type = type {
+            header += type.rawValue + " "
         }
-    }
-    
-    /// Logs messages verbosely on console with prefix [🔬]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func v( _ object: Any, filename: String = #file, line: Int = #line, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.v.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(funcName) -> \(object)")
+        if let date = date {
+            header += date.toString() + " "
         }
-    }
-    
-    /// Logs warnings verbosely on console with prefix [⚠️]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func w( _ object: Any?, filename: String = #file, line: Int = #line, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.w.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(funcName) -> \(object!)")
+
+        if let meta = meta {
+            header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         }
-    }
-    
-    /// Logs severe events on console with prefix [🔥]
-    ///
-    /// - Parameters:
-    ///   - object: Object or message to be logged
-    ///   - filename: File name from where loggin to be done
-    ///   - line: Line number in file from where the logging is done
-    ///   - column: Column number of the log message
-    ///   - funcName: Name of the function from where the logging is done
-    class func s( _ object: Any, filename: String = #file, line: Int = #line, column: Int = #column, funcName: String = #function) {
-        if isLoggingEnabled {
-            print("LogManager: \(Date().toString()) \(LogType.s.rawValue)[\(sourceFileName(filePath: filename))]:\(line) \(column) \(funcName) -> \(object)")
-        }
-    }
-    
-    class func req(_ request: RequestModel, baseURL: String = "") {
-        guard isLoggingEnabled else { return }
+
+
         
+        Log.logerServise.log(inChanel: .system, text: borders.start + header + "\n" + text + borders.end)
+    }
+
+    func inChanel(_ chanel: MBLoggerChanels) -> Log {
+        var ret = self
+        ret.chanel = chanel
+        return ret
+    }
+
+    func withDate(_ date: Date = Date()) -> Log {
+        var ret = self
+        ret.date = date
+        return ret
+    }
+
+    func withType(_ type: LogType) -> Log {
+        var ret = self
+        ret.type = type
+        return ret
+    }
+
+    func withMeta(filename: String = #file, line: Int = #line, funcName: String = #function) -> Log {
+        var ret = self
+        ret.meta = (filename, line, funcName)
+        return ret
+    }
+
+    func withBorders(start: String, end: String) -> Log {
+        var ret = self
+        ret.borders = (start, end)
+        return ret
+    }
+
+
+    // MARK: - Public Functions
+
+    init(request: RequestModel, baseURL: String = "") {
         let path: String = request.pathWithQuery
         let headers: String = String(describing: request.headers)
         let httpMethod: String = String(describing: request.method.rawValue)
@@ -149,34 +124,32 @@ extension APILogManager {
         var bodyStrings: [String] = []
         for (_, value) in request.body.enumerated() {
             if let valueValue = value.value {
-                bodyStrings.append("\(value.key): \(type(of: valueValue))(\(valueValue))")
+                bodyStrings.append("\(value.key): \(Swift.type(of: valueValue))(\(valueValue))")
             } else {
                 bodyStrings.append("\(value.key): nil")
             }
         }
         body = bodyStrings.joined(separator: ", ")
-        
+
         var log: String = "[\(baseURL)\(path)]"
-        
+
         if !request.headers.isEmpty {
             log = log + "\n\(headers)"
         }
-        
+
         log = log + "\n[\(httpMethod)]"
-        
+
         if !request.body.isEmpty {
             log = log + "\n[\(body)]"
         }
-        
-        print("LogManager: \n--- Request ---\n[\(Date().toString())] \n\(log) \n--- End ---\n")
+
+        self.text = "LogManager: \n--- Request ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
+        self.chanel = .network
     }
     
-    class func res<T: Codable>(_ response: ResponseModel<T>, baseURL: String = "") {
-        guard isLoggingEnabled else { return }
+    init<T: Codable>(_ response: ResponseModel<T>, baseURL: String = "") {
         
         let path: String? = response.request?.path
-//        let isSuccess: Bool = response.isSuccess
-//        let message: String = response.message
         let dataJSON: String? = response.json
         
         var log: String = ""
@@ -185,23 +158,28 @@ extension APILogManager {
             log = log + "[\(baseURL)\(path)]\n"
         }
         
-//        log = log + "[isSuccess: \(isSuccess)]\n[message: \(message)]"
-        
         if let json = dataJSON {
             log = log + "\n[\(json)]"
         }
-        
-        print("LogManager: \n--- Response ---\n[\(Date().toString())] \n\(log) \n--- End ---\n")
+
+        self.text =  "LogManager: \n--- Response ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
+        self.chanel = .network
     }
     
-    class func err(_ error: ErrorModel) {
-        guard isLoggingEnabled else { return }
+    init(error: ErrorModel) {
+        //        guard isLoggingEnabled else { return }
         
         let errorKey: String? = error.errorKey
         let errorMessage: String? = error.errorMessage
         
         var log: String = ""
-        
+
+        if let status = error.httpStatusCode {
+            log = log + "\n[httpStatusCode: \(status)]"
+        }
+        if let status = error.responseStatusCode {
+            log = log + "\n[responseStatusCode: \(status)]"
+        }
         if let errorKey = errorKey {
             log = log + "\n[key: \(errorKey)]"
         }
@@ -211,18 +189,93 @@ extension APILogManager {
         
         if log.isEmpty { return }
         
-        print("LogManager: \n--- Error ---\n[\(Date().toString())] \(log) \n--- End ---\n")
+        self.text = "LogManager: \n--- Error ---\n[\(Date().toString())] \(log) \n--- End ---\n"
+        self.chanel = .network
+        self.type = .error
+    }
+
+    init(request: URLRequest) {
+
+        let urlString = request.url?.absoluteString ?? ""
+        let components = NSURLComponents(string: urlString)
+
+        let method = request.httpMethod != nil ? "\(request.httpMethod!)": ""
+        let path = "\(components?.path ?? "")"
+        let query = "\(components?.query ?? "")"
+        let host = "\(components?.host ?? "")"
+
+        var requestLog = ""
+        requestLog += "[Url]\n"
+        requestLog += "\(urlString)"
+        requestLog += "\n\n"
+        requestLog += "\(method) \(path)?\(query) HTTP/1.1\n"
+        requestLog += "Host: \(host)\n"
+
+        requestLog += "\n"
+        requestLog += "[Headers]\n"
+        for (key,value) in request.allHTTPHeaderFields ?? [:] {
+            requestLog += "\(key): \(value)\n"
+        }
+        requestLog += "\n"
+        requestLog += "[Body]\n"
+        if let body = request.httpBody{
+            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded";
+            requestLog += "\n\(bodyString)\n"
+        }
+        text = requestLog
+        chanel = .network
+        self.type = .debug
+        self.borders = ("[---------- OUT ---------->\n", "------------------------>]")
+    }
+
+    init(data: Data?, response: URLResponse?, error: Error?) {
+
+        let urlString = response?.url?.absoluteString
+        let components = NSURLComponents(string: urlString ?? "")
+
+        let path = "\(components?.path ?? "")"
+        let query = "\(components?.query ?? "")"
+
+        var responseLog = ""
+        if let urlString = urlString {
+            responseLog += "\(urlString)"
+            responseLog += "\n\n"
+        }
+
+        if let statusCode =  (response as? HTTPURLResponse)?.statusCode{
+            responseLog += "HTTP \(statusCode) \(path)?\(query)\n"
+        }
+        if let host = components?.host{
+            responseLog += "Host: \(host)\n"
+        }
+        for (key,value) in (response as? HTTPURLResponse)?.allHeaderFields ?? [:] {
+            responseLog += "\(key): \(value)\n"
+        }
+        if let body = data{
+            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded";
+            responseLog += "\n\(bodyString)\n"
+        }
+        self.type = .debug
+        if let error = error{
+            responseLog += "\nError: \(error.localizedDescription)\n"
+            self.type = .error
+        }
+        self.text = responseLog
+
+        self.chanel = .network
+
+        self.borders = ("[<---------- IN ----------\n", "<------------------------]")
     }
 }
 
 // MARK: - Private Functions
-private extension APILogManager {
+private extension Log {
     
     /// Extract the file name from the file path
     ///
     /// - Parameter filePath: Full file path in bundle
     /// - Returns: File Name with extension
-    class func sourceFileName(filePath: String) -> String {
+    static func sourceFileName(filePath: String) -> String {
         let components = filePath.components(separatedBy: "/")
         return components.isEmpty ? "" : components.last!
     }

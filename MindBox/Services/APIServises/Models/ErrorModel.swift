@@ -30,23 +30,22 @@ class ErrorModel: Error {
     var httpStatusCode: Int?
     var status: StatusCode = .unknow
 
+    var asMBError: MindBox.Errors {
+        return MindBox.Errors.other(errorDescription: "Network Error with statusCode \(httpStatusCode ?? -1)", failureReason: errorMessage, recoverySuggestion: nil)
+    }
+
     init( errorKey: String, rawError: Error? = nil) {
         self.errorKey = errorKey
         self.rawError = rawError
     }
 }
-
-class ErrorResponce: BaseResponce {
-    var validationMessages: [ValidationMessage]?
-    //	"<сообщение об ошибке>",
-    var errorMessage: String?
-    //	"<uuid  ошибки>",
-    var errorId: String?
-}
-
-struct ValidationMessage {
-    // "<текст ошибки>",
-    var message: String
-    // "<адрес поля с ошибкой>"
-    var location: String
-}
+//
+//class ErrorResponce: BaseResponce {
+//    
+//
+//    private enum CodingKeys: String, CodingKey {
+//        case validationMessages
+//        case errorMessage
+//        case errorId
+//    }
+//}

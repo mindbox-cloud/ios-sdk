@@ -11,6 +11,8 @@ import Foundation
 let resolver = DIManager.shared.container
 
 public class MindBox {
+    /// Singleton value for interaction with sdk
+    /// Side effect is setup DI
     public static var shared: MindBox = {
         DIManager.shared.registerServices()
 		return MindBox()
@@ -36,16 +38,32 @@ public class MindBox {
     // MARK: - MindBox
 
     public func initialization(configuration: MBConfiguration) {
-//        configurationStorage.save(configuration: configuration)
         coreController.initialization(configuration: configuration)
     }
 
-    public func getUUID() throws -> String {
+    public func deviceUUID() throws -> String {
         if let value = persistenceStorage.deviceUUID {
             return value
         } else {
             throw NSError()
         }
+    }
+
+    public var APNSToken: String? {
+        get {
+            persistenceStorage.apnsToken
+        }
+    }
+
+    public var sdkVersion: String {
+        get {
+            return Utilities.fetch.sdkVersion ?? "unknown"
+        }
+    }
+
+    public func apnsTokenUpdate(token: String) {
+        coreController.apnsTokenDidUpdate(token: token)
+        persistenceStorage.apnsToken = token
     }
 
     // MARK: - Private

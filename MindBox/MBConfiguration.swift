@@ -19,11 +19,26 @@ public struct MBConfiguration: Decodable {
         domain: String,
         installationId: String? = nil,
         deviceUUID: String? = nil
-    ) {
+    ) throws {
         self.endpoint = endpoint
         self.domain = domain
-        self.installationId = installationId
-        self.deviceUUID = deviceUUID
+
+        guard Utilities.isValidURL(string: "https://" + domain) else {
+            throw MindBox.Errors.invalidConfiguration(reason: "Invalid domain. Domain is unreachable")
+        }
+
+        guard !endpoint.isEmpty else {
+            throw MindBox.Errors.invalidConfiguration(reason: "Value endpoint can not be empty")
+        }
+
+        if let installationId = installationId,
+           !installationId.isEmpty {
+            self.installationId = installationId
+        }
+        if let deviceUUID = deviceUUID,
+           !deviceUUID.isEmpty {
+            self.deviceUUID = deviceUUID
+        }
     }
 
     public init(plistName: String) throws {
@@ -32,27 +47,27 @@ public struct MBConfiguration: Decodable {
 
         for bundle in Bundle.allBundles {
             if let url = bundle.url(forResource: plistName, withExtension: "plist") {
-				findeURL = url
+                findeURL = url
                 break
             }
         }
 
         guard let url = findeURL else {
-			throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) not found")
+            throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) not found")
         }
 
         guard let data = try? Data(contentsOf: url) else {
-			throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) cannot be read")
+            throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) cannot be read")
         }
 
         guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
-			throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) contains invalid properties")
+            throw MindBox.Errors.invalidConfiguration(reason: "file with name \(plistName) contains invalid properties")
         }
-            self = configuration
+        self = configuration
     }
 
     enum CodingKeys: String, CodingKey {
-		case endpoint
+        case endpoint
         case domain
         case installationId
         case deviceUUID
@@ -60,19 +75,29 @@ public struct MBConfiguration: Decodable {
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        self.endpoint = try values.decode(String.self, forKey: .endpoint)
-        self.domain = try values.decode(String.self, forKey: .domain)
+
+        let endpoint = try values.decode(String.self, forKey: .endpoint)
+        let domain = try values.decode(String.self, forKey: .domain)
+        var installationId: String? = nil
         do {
             let value = try values.decode(String.self, forKey: .installationId)
             if !value.isEmpty {
-                self.installationId = value
+                installationId = value
             }
         }
+
+        var deviceUUID: String? = nil
         do {
             let value = try values.decode(String.self, forKey: .deviceUUID)
             if !value.isEmpty {
-                self.deviceUUID = value
+                deviceUUID = value
             }
         }
+        try self.init(
+            endpoint: endpoint,
+            domain: domain,
+            installationId: installationId,
+            deviceUUID: deviceUUID
+        )
     }
 }

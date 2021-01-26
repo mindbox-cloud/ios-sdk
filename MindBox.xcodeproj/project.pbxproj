@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		07EAF58061C245BF106CB8EC /* Pods_MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6F21C97912995A3CAF1756 /* Pods_MindBox.framework */; };
+		311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BB47825BF12570093EE14 /* LogerConfiguration.swift */; };
 		313B233A25ADEA0F00A1CB72 /* MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* MindBox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */; };
 		313B234125ADEA0F00A1CB72 /* MindBox.h in Headers */ = {isa = PBXBuildFile; fileRef = 313B233325ADEA0F00A1CB72 /* MindBox.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -54,6 +55,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		311BB47825BF12570093EE14 /* LogerConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogerConfiguration.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* MindBox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MindBox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* MindBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MindBox.h; sourceTree = "<group>"; };
 		313B233425ADEA0F00A1CB72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -236,6 +238,7 @@
 			isa = PBXGroup;
 			children = (
 				317054CD25AF191F00AE624C /* Logger.swift */,
+				311BB47825BF12570093EE14 /* LogerConfiguration.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -533,6 +536,7 @@
 				317054E925B01BDD00AE624C /* RequestModel.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
+				311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */,
 				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
 				317054C925AEFA1F00AE624C /* APIAsembly.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,

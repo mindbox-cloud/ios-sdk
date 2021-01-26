@@ -13,6 +13,9 @@ import UIKit.UIDevice
 
 class FetchUtilities: IFetchUtilities {
 
+    let sdkBundle = Bundle.init(for: MindBox.self)
+    let appBundle = Bundle.main
+
     init() {
 
     }
@@ -25,6 +28,22 @@ class FetchUtilities: IFetchUtilities {
             }
             // Then, Get and return IDFA
             return ASIdentifierManager.shared().advertisingIdentifier
+        }
+    }
+
+    var appVerson: String? {
+        appBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+    }
+    var sdkVersion: String? {
+        get {
+            return sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+
+        }
+    }
+
+    var hostApplicationName: String? {
+        get {
+            return appBundle.bundleIdentifier
         }
     }
 

@@ -5,7 +5,7 @@
 	<key>endpoint</key>
 	<string>app-with-hub-IOS</string>
 	<key>domain</key>
-	<string>api.staging.directcrm.ru</string>
+	<string>api.mindbox.ru</string>
 	<key>installationId</key>
 	<string></string>
 	<key>deviceUUID</key>

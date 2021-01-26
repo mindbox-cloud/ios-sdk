@@ -20,38 +20,43 @@ final class DIManager: NSObject {
 
     func registerServices() {
         defer {
-            print("❇️Dependency container registration is complete.")
+            Log("❇️Dependency container registration is complete.")
+                .inChanel(.system)
+                .withMeta()
+                .withDate()
+                .make()
         }
 //        #if DEBUG
 //        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
 //                // Code only executes when tests are running
 //            }
 //        #endif
-        
-        container.register { (r) -> IFetchUtilities in
+
+        container.registerInContainer { (r) -> IConfigurationStorage in
+            MBConfigurationStorage()
+        }
+
+        container.registerInContainer { (r) -> IFetchUtilities in
             FetchUtilities()
         }
 
-        container.register { (r) -> APIService in
-            MockManagerProvider()
-//            NetworkManagerProvider(configurationStorage: r.resolveOrDie())
-        }
-
-        container.register { (r) -> IMindBoxAPIService in
-            MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
-        }
-
-        container.register { (r) -> IPersistenceStorage in
-            MBPersistenceStorage(defaults: UserDefaults.standard )
-        }
-
-        container.register { (r) -> ILogger in
+        container.registerInContainer { (r) -> ILogger in
             MBLogger()
         }
 
-        container.register { (r) -> IConfigurationStorage in
-            MBConfigurationStorage()
+        container.registerInContainer { (r) -> APIService in
+//            MockManagerProvider()
+            NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
+
+        container.registerInContainer { (r) -> IMindBoxAPIService in
+            MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
+        }
+
+        container.registerInContainer { (r) -> IPersistenceStorage in
+            MBPersistenceStorage(defaults: UserDefaults.standard )
+        }
+
     }
 
 }

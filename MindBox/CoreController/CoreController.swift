@@ -43,13 +43,16 @@ class CoreController {
 
     public func initialization(configuration: MBConfiguration) {
         configurationStorage.save(configuration: configuration)
+        
         switch state {
         case .none:
-            state = .initing
             startInstallationCase(uuid: configuration.deviceUUID, installationId: configuration.installationId)
         default:
             updateToken()
         }
+    }
+    public func apnsTokenDidUpdate(token: String) {
+        persistenceStorage.apnsToken = token
     }
 
     // MARK: - Private
@@ -60,20 +63,28 @@ class CoreController {
             self.installation(uuid: uuid, installationId: installationId)
         } else {
             Utilities.fetch.getIDFA { (idfa) in
-                print("idfa get success \(idfa)")
+                Log("idfa get success \(idfa)")
+                    .inChanel(.system).withType(.verbose).make()
+
+
                 self.installation(uuid: idfa.uuidString, installationId: installationId)
             } onFail: {
                 if #available(iOS 14, *) {
-                    print("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
+                    Log("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
+                        .inChanel(.system).withType(.verbose).make()
                 } else {
-                    print("idfa get fail")
+                    Log("idfa get fail")
+                        .inChanel(.system).withType(.verbose).make()
                 }
                 Utilities.fetch.getIDFV(
                     tryCount: 5) { (idfv) in
                     self.installation(uuid: idfv.uuidString, installationId: installationId)
-                    print(" Utilities.fetch.getIDFV \(idfv.uuidString)")
+                    Log(" Utilities.fetch.getIDFV \(idfv.uuidString)")
+                        .inChanel(.system).withType(.verbose).make()
+
                 } onFail: {
-                    print("Utilities.fetch.getIDFV fail")
+                    Log("Utilities.fetch.getIDFV fail")
+                        .inChanel(.system).withType(.verbose).make()
                 }
             }
         }
@@ -91,8 +102,10 @@ class CoreController {
         apiServices.mobileApplicationInfoUpdated(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken) { (result) in
             switch result {
             case .success:
+                
                 MindBox.shared.delegate?.apnsTokenDidUpdated()
-            case .failure:
+            case .failure(let error):
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
                 break
             }
         }
@@ -101,26 +114,29 @@ class CoreController {
     private func installation(uuid: String, installationId: String?) {
         let endpoint = configurationStorage.endpoint
 
-        let apnsToken = persistenceStorage.deviceUUID
+        let apnsToken = persistenceStorage.apnsToken
+
+        state = .initing
 
         apiServices.mobileApplicationInstalled(endpoint: endpoint, deviceUUID: uuid, installationId: installationId, apnsToken: apnsToken, completion: {[weak self] result in
-                switch result {
-                case .success(let resp):
-               	 	self?.state = .wasInstalled
-                    self?.persistenceStorage.deviceUUID = uuid
-                    self?.persistenceStorage.installationId = installationId
+            switch result {
+            case .success(let resp):
+                self?.state = .wasInstalled
+                self?.persistenceStorage.deviceUUID = uuid
+                self?.persistenceStorage.installationId = installationId
 
-                    print(" apiServices.mobileApplicationInstalled status-code \(resp.data?.httpStatusCode ?? -1), status \(resp.data?.status)")
+                Log("apiServices.mobileApplicationInstalled status-code \(resp.data?.httpStatusCode ?? -1), status \(resp.data?.status ?? .unknow)")
+                    .inChanel(.system).withType(.verbose).make()
+                MindBox.shared.delegate?.mindBoxDidInstalled()
+                break
 
-                    MindBox.shared.delegate?.mindBoxDidInstalled()
-                    break
-                    
-                case .failure(let error):
-                    self?.state = .none
-                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
-                    break
-                }
+            case .failure(let error):
+                self?.state = .none
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
+                //                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
+                break
             }
+        }
         )
     }
 

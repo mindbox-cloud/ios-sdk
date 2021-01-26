@@ -9,20 +9,23 @@
 import Foundation
 
 class MobileApplicationInfoUpdatedRequest: RequestModel {
-    let operationPath = "/v3/operations/async"
+    let operationPath = "/v3/operations/sync"
     let operationType = "MobileApplicationInfoUpdated"
     init(
         endpoint: String,
         deviceUUID: String,
-        apnsToken: String?
+        apnsToken: String?,
+        isNotificationsEnabled: Bool
     ) {
         let headers = APIServiceConstant.defaultHeaders
         
         let isTokenAvailable = apnsToken?.isEmpty == false
-        var body: [String: Any] = ["IsTokenAvailable": isTokenAvailable]
-        if let apnsToken = apnsToken {
-            body["Token"] = apnsToken
-        }
+        var body: [String: Any] = [
+            "IsTokenAvailable": isTokenAvailable,
+            "Token": apnsToken ?? ""
+        ]
+
+        body["isNotificationsEnabled"] = isNotificationsEnabled
 
         super.init(path: operationPath,
                    method: .post,

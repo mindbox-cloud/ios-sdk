@@ -13,14 +13,9 @@ class APIServiceConstant {
 
     static var defaultHeaders: [String:String] {
         get {
-            let sdkBundle = Bundle.init(for: MindBox.self)
-            let appBundle = Bundle.main
-
-            let sdkVersion: String = sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "unknow"
-            let appVersion: String = appBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "unknow"
-
-            //            let sdkApplicationName: String = sdkBundle.bundleIdentifier ?? "unknow"
-            let hostApplicationName: String = appBundle.bundleIdentifier ?? "unknow"
+            let sdkVersion: String = Utilities.fetch.sdkVersion ?? "unknow"
+            let appVersion: String = Utilities.fetch.appVerson ?? "unknow"
+            let hostApplicationName: String = Utilities.fetch.hostApplicationName ?? "unknow"
 
             let model: String = {
                 var systemInfo = utsname()

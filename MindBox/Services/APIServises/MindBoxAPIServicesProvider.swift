@@ -39,8 +39,8 @@ class MindBoxAPIServicesProvider: IMindBoxAPIService {
         apnsToken: String?,
         completion: @escaping(Swift.Result<ResponseModel<BaseResponce>, ErrorModel>) -> Void)
     {
-        let req = MobileApplicationInstalledRequest(endpoint: endpoint, deviceUUID: deviceUUID, installationId: installationId, apnsToken: apnsToken)
-        serviceManager.sendRequest(request: req) { (result) in
+        let req = MobileApplicationInstalledRequest(endpoint: endpoint, deviceUUID: deviceUUID, installationId: installationId, apnsToken: apnsToken, isNotificationsEnabled: false)
+        serviceManager.sendRequest(requestModel: req) { (result) in
             completion(result)
         }
     }
@@ -52,8 +52,8 @@ class MindBoxAPIServicesProvider: IMindBoxAPIService {
         apnsToken: String?,
         completion: @escaping(Swift.Result<ResponseModel<BaseResponce>, ErrorModel>) -> Void)
     {
-        let req = MobileApplicationInfoUpdatedRequest(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken)
-        serviceManager.sendRequest(request: req) { (result) in
+        let req = MobileApplicationInfoUpdatedRequest(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken, isNotificationsEnabled: false)
+        serviceManager.sendRequest(requestModel: req) { (result) in
             completion(result)
         }
     }

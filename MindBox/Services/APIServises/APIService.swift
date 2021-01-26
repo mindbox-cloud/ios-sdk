@@ -8,7 +8,7 @@
 
 import Foundation
 protocol APIService: class {
-    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void)
+    func sendRequest<T: BaseResponce>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void)
 }
 
 class NetworkManagerProvider: APIService {
@@ -17,7 +17,7 @@ class NetworkManagerProvider: APIService {
 
     var baseURL: String {
         get {
-        	return configurationStorage.domain
+            return configurationStorage.domain
         }
     }
 
@@ -27,46 +27,52 @@ class NetworkManagerProvider: APIService {
         self.configurationStorage = configurationStorage
     }
     
-    func sendRequest<T: BaseResponce>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
+    func sendRequest<T: BaseResponce>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
         // FIX: -
-//        if request.isLoggingEnabled.request {
-//            APILogManager.req(request, baseURL: baseURL)
-//        }
+        //        if request.isLoggingEnabled.request {
+        //            APILogManager.req(request, baseURL: baseURL)
+        //        }
 
-        URLSession.shared.dataTask(with: request.urlRequest(baseURL: baseURL)) {data, response, error in
+        let request = requestModel.urlRequest(baseURL: baseURL)
+        Log(request: request).withDate().make()
+        URLSession.shared.dataTask(with: request) {data, response, error in
 
-            guard let response = response as? HTTPURLResponse else {
-                return
-            }
+            Log(data: data, response: response, error: error).withDate().make()
 
             do {
+                guard let response = response as? HTTPURLResponse else {
+                    throw NSError()
+                }
+
+                guard (200...210).contains(response.statusCode)  else {
+                    throw NSError()
+                }
+
                 guard let data = data else {
                     throw NSError()
                 }
                 let responseModel = ResponseModel<T>()
                 responseModel.rawData = data
                 responseModel.data = try JSONDecoder().decode(T.self, from: data)
-                responseModel.request = request
+                responseModel.request = requestModel
 
                 completion(Result.success(responseModel))
             } catch let decodeError {
                 let error: ErrorModel = ErrorModel(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
-                do {
-                    guard let data = data else {
-                        throw NSError()
-                    }
-					 let object = try JSONDecoder().decode(ErrorResponce.self, from: data)
-                    error.status = object.status ?? .unknow
+
+                if let data = data,
+                   let object = try? JSONDecoder().decode(BaseResponce.self, from: data) {
+                    error.status = object.status
                     error.errorMessage = object.errorMessage
                     error.errorId = object.errorId
                     error.httpStatusCode = object.httpStatusCode
-                } catch _ {
-
                 }
 
-                error.responseStatusCode = response.statusCode
-                APILogManager.err(error)
+                error.responseStatusCode = (response as? HTTPURLResponse)?.statusCode
+
+
+                Log(error: error).withDate().make()
                 completion(Result.failure(error))
             }
 
@@ -83,23 +89,24 @@ class MockManagerProvider: APIService {
     init() {
     }
 
-    func sendRequest<T: Codable>(request: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
+    func sendRequest<T: Codable>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
         // FIX
-//        if request.isLoggingEnabled.request {
-//            APILogManager.req(request, baseURL: baseURL)
-//        }
+        //        if request.isLoggingEnabled.request {
+        //            APILogManager.req(request, baseURL: baseURL)
+        //        }
         let data = try! Data(contentsOf: URL(fileURLWithPath: Bundle.init(for: MindBox.self).path(forResource: "SuccessResponse", ofType: "json")!), options: NSData.ReadingOptions.mappedIfSafe)
         do {
 
             let responseModel = ResponseModel<T>()
             responseModel.rawData = data
             responseModel.data = try JSONDecoder().decode(T.self, from: data)
-            responseModel.request = request
+            responseModel.request = requestModel
+
             // FIX
-//            if request.isLoggingEnabled.response {
-//                APILogManager.res(responseModel, baseURL: baseURL)
-//            }
+            //            if request.isLoggingEnabled.response {
+            //                APILogManager.res(responseModel, baseURL: baseURL)
+            //            }
 
             if let data = responseModel.data {
                 completion(Result.success(responseModel))
@@ -108,7 +115,7 @@ class MockManagerProvider: APIService {
             }
         } catch let decodeError {
             let error: ErrorModel = ErrorModel(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
-            APILogManager.err(error)
+            Log(error: error).withDate().make()
             completion(Result.failure(error))
         }
     }

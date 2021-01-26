@@ -14,7 +14,8 @@ extension MindBox {
         case invalidAccess(reason: String? = nil, suggestion: String? = nil)
         case other(errorDescription: String? = nil, failureReason: String? = nil, recoverySuggestion: String? = nil)
 
-        public var errorDescription: String? { get {
+        public var errorDescription: String? {
+            get {
                 switch self {
                 case .invalidConfiguration:
                     return "MBConfiguration init was canceled."
@@ -26,7 +27,8 @@ extension MindBox {
             }
         }
 
-        public var failureReason: String? { get {
+        public var failureReason: String? {
+            get {
                 switch self {
                 case .invalidConfiguration(let reason, _):
                     return reason
@@ -38,7 +40,8 @@ extension MindBox {
             }
         }
 
-        public var recoverySuggestion: String? { get {
+        public var recoverySuggestion: String? {
+            get {
                 switch self {
                 case .invalidConfiguration(_, let suggestion):
                     return suggestion
@@ -49,7 +52,6 @@ extension MindBox {
                 }
             }
         }
-
     }
 
 }

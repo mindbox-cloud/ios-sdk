@@ -50,7 +50,8 @@ protocol GDRequest: class {
 //            return
 //        }
 //        guard let next = queue.last else {
-//            print("GuaranteedDeliveryQueue queue is empty")
+//			  Log("GuaranteedDeliveryQueue queue is empty")
+//    		  .inChanel(.system).withType(.verbose).make()
 //        }
 //
 //        currentTask =

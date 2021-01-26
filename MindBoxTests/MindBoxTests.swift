@@ -29,27 +29,14 @@ class MindBoxTests: XCTestCase {
 
 
 
-        MindBox.shared.initialization(configuration: configuration)
+//        MindBox.shared.initialization(configuration: configuration)
 
-        let exists = NSPredicate(format: "1 != 1")
+//        let exists = NSPredicate(format: "1 != 1")
 
-        expectation(for: exists, evaluatedWith: self, handler: nil)
-        waitForExpectations(timeout: 60, handler: nil)
+//        expectation(for: exists, evaluatedWith: self, handler: nil)
+//        waitForExpectations(timeout: 60, handler: nil)
 
 
     }
-
-//    func testDefaultHeader() {
-//
-//        APIServiceConstant.defaultHeaders.forEach { (key, value) in
-//
-//            print("\(key):\(value)")
-//        }
-//    }
-
-//    func testRequest() {
-//        let req = MobileApplicationInstalledRequest(endpoint: "TheEndpoint", deviceUUID: UUID.init().uuidString, installationId: "TheInstallationId", apnsToken: "TheApnsToken")
-//        APILogManager.req(req)
-//    }
 
 }

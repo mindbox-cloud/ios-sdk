@@ -9,24 +9,24 @@
 import Foundation
 
 class MobileApplicationInstalledRequest: RequestModel {
-    let operationPath = "/v3/operations/async"
+    let operationPath = "/v3/operations/sync"
     let operationType = "MobileApplicationInstalled"
     init(
         endpoint: String,
         deviceUUID: String,
         installationId: String?,
-        apnsToken: String?
+        apnsToken: String?,
+        isNotificationsEnabled: Bool
     ) {
         let headers = APIServiceConstant.defaultHeaders
 
         let isTokenAvailable = apnsToken?.isEmpty == false
-        var body: [String: Any] = ["IsTokenAvailable": isTokenAvailable]
-        if let apnsToken = apnsToken {
-            body["Token"] = apnsToken
-        }
-        if let installationId = installationId {
-            body["installationId"] = installationId
-        }
+        let body: [String: Any] = [
+            "IsTokenAvailable": isTokenAvailable,
+            "token": apnsToken ?? "",
+            "installationId": installationId ?? "",
+            "isNotificationsEnabled": isNotificationsEnabled
+        ]
         
         super.init(path: operationPath,
                    method: .post,

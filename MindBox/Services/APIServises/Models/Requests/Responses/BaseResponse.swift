@@ -18,8 +18,23 @@ class BaseResponce: Codable {
     var status: StatusCode = .unknow
     //    <http-код ошибки (число)>
     var httpStatusCode: Int?
+    
+    var validationMessages: [ValidationMessage]?
+    //    "<сообщение об ошибке>",
+    var errorMessage: String?
+    //    "<uuid  ошибки>",
+    var errorId: String?
 
 }
+
+
+struct ValidationMessage: Codable {
+    // "<текст ошибки>",
+    var message: String
+    // "<адрес поля с ошибкой>"
+    var location: String
+}
+
 
 class ResponseModel<T: Codable> {
 

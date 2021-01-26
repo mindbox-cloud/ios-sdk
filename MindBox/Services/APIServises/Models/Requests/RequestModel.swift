@@ -66,7 +66,8 @@ class RequestModel: NSObject {
 extension RequestModel {
     
     func urlRequest(baseURL: String) -> URLRequest {
-        let endpoint: String = baseURL.appending(pathWithQuery)
+        let prefix = "https://"
+        let endpoint: String = prefix.appending(baseURL).appending(pathWithQuery)
         
         var request: URLRequest = URLRequest(url: URL(string: endpoint)!)
         
@@ -80,7 +81,7 @@ extension RequestModel {
             do {
                 request.httpBody = try JSONSerialization.data(withJSONObject: body, options: JSONSerialization.WritingOptions.prettyPrinted)
             } catch let error {
-                APILogManager.e("Request body parse error: \(error.localizedDescription)")
+                Log("Request body parse error: \(error.localizedDescription)").inChanel(.network).make()
             }
         }
         

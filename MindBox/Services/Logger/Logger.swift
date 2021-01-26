@@ -8,11 +8,25 @@
 
 import Foundation
 
-protocol ILogger: class {
+enum MBLoggerChanels: String {
+    case system = "🤖"
+    case network = "📡"
+    case none
+}
 
+protocol ILogger: class {
+    func log(inChanel: MBLoggerChanels, text: String)
 }
 
 class MBLogger: ILogger {
+    func log(inChanel: MBLoggerChanels, text: String) {
+	let config = LogerConfiguration()
+
+        if config.enableChanels.contains(inChanel)  {
+        	print(text)
+        }
+    }
+
     init() {
     }
 

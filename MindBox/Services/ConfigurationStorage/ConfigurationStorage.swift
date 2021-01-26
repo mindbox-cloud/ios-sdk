@@ -28,6 +28,7 @@ class MBConfigurationStorage: IConfigurationStorage {
     func save(configuration: MBConfiguration) {
         self.domain = configuration.domain
         self.endpoint = configuration.endpoint
+        self.domain = configuration.domain
         startConfiguration = configuration
     }
 
