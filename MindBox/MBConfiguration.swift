@@ -16,6 +16,7 @@ public struct MBConfiguration: Decodable {
     public let domain: String
     public var installationId: String?
     public var deviceUUID: String?
+    ///public var canRequestTrackingAuthorization: Bool?
 
     /// Init with params
     ///
@@ -24,13 +25,14 @@ public struct MBConfiguration: Decodable {
     /// - Parameter installationId: Used to create tracking continuity by uuid
     /// - Parameter deviceUUID: Used instead of the generated value
     ///
-    ///- Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
+    /// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
         installationId: String? = nil,
         deviceUUID: String? = nil
     ) throws {
+
         self.endpoint = endpoint
         self.domain = domain
 
@@ -44,10 +46,26 @@ public struct MBConfiguration: Decodable {
 
         if let installationId = installationId,
            !installationId.isEmpty {
+            guard UUID(uuidString: installationId) != nil else {
+                throw MindBox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
+            }
+
+            guard Utilities.checkUUID(string: installationId) else {
+                throw MindBox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
+            }
+
             self.installationId = installationId
         }
         if let deviceUUID = deviceUUID,
            !deviceUUID.isEmpty {
+            guard UUID(uuidString: deviceUUID) != nil else {
+                throw MindBox.Errors.invalidConfiguration(reason: "deviceUUID doesn't match the UUID format", suggestion: nil)
+            }
+
+            guard Utilities.checkUUID(string: deviceUUID) else {
+                throw MindBox.Errors.invalidConfiguration(reason: "deviceUUID doesn't match the UUID format", suggestion: nil)
+            }
+
             self.deviceUUID = deviceUUID
         }
     }

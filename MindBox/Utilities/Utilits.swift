@@ -53,4 +53,11 @@ class Utilities {
             range: NSRange(location: 0, length: string.utf16.count)) != nil
     }
 
+    static func checkUUID(string: String) -> Bool {
+    var str = string
+        str = str.replacingOccurrences(of: "0", with: "")
+        str = str.replacingOccurrences(of: "-", with: "")
+
+        return !str.isEmpty
+    }
 }

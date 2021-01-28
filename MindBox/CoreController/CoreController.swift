@@ -53,6 +53,22 @@ class CoreController {
     }
     public func apnsTokenDidUpdate(token: String) {
         persistenceStorage.apnsToken = token
+
+        switch state {
+        case .none:
+            print()
+            break
+        case .initing:
+            print()
+            break
+        case .ready:
+            print()
+            break
+        case .wasInstalled:
+            updateToken()
+            print()
+            break
+        }
     }
 
     // MARK: - Private
@@ -69,20 +85,22 @@ class CoreController {
 
                 self.installation(uuid: idfa.uuidString, installationId: installationId)
             } onFail: {
-                if #available(iOS 14, *) {
-                    Log("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
-                        .inChanel(.system).withType(.verbose).make()
-                } else {
-                    Log("idfa get fail")
-                        .inChanel(.system).withType(.verbose).make()
-                }
+//                if #available(iOS 14, *) {
+//                    Log("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
+//                        .inChanel(.system).withType(.verbose).make()
+//                } else {
+//                    Log("idfa get fail")
+//                        .inChanel(.system).withType(.verbose).make()
+//                }
                 Utilities.fetch.getIDFV(
                     tryCount: 5) { (idfv) in
                     self.installation(uuid: idfv.uuidString, installationId: installationId)
-                    Log(" Utilities.fetch.getIDFV \(idfv.uuidString)")
+                    Log("Utilities.fetch.getIDFV \(idfv.uuidString)")
                         .inChanel(.system).withType(.verbose).make()
 
                 } onFail: {
+                    self.installation(uuid: UUID().uuidString, installationId: installationId)
+                    
                     Log("Utilities.fetch.getIDFV fail")
                         .inChanel(.system).withType(.verbose).make()
                 }
@@ -102,9 +120,12 @@ class CoreController {
         apiServices.mobileApplicationInfoUpdated(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken) { (result) in
             switch result {
             case .success:
-                
                 MindBox.shared.delegate?.apnsTokenDidUpdated()
+                Log("apnsTokenDidUpdated \(apnsToken ?? "")")
+                    .inChanel(.system).withType(.verbose).make()
             case .failure(let error):
+                Log("apnsTokenDidUpdated with \(error.localizedDescription )")
+                    .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
                 break
             }
@@ -133,7 +154,7 @@ class CoreController {
             case .failure(let error):
                 self?.state = .none
                 MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
-                //                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
                 break
             }
         }

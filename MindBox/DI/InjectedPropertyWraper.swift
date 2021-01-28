@@ -11,10 +11,6 @@ struct Injected<Value> {
     private(set) var wrappedValue: Value
 
     init() {
-        self.init(name: nil)
-    }
-
-    init(name: String? = nil) {
         guard let value: Value = resolver.resolve() else {
             fatalError("Could not resolve non-optional \(Value.self)")
         }
@@ -22,11 +18,17 @@ struct Injected<Value> {
         wrappedValue = value
     }
 
-    // Not debugged
-    init<Wrapped: AnyObject>(name: String? = nil) where Value == Optional<Wrapped> {
-        if let value: Wrapped = resolver.resolve() {
-            wrappedValue = value
+}
+
+@propertyWrapper
+struct InjectedOptional<Value> {
+    private(set) var wrappedValue: Optional<Value>
+
+    init() {
+        guard let value: Value = resolver.resolve() else {
+            fatalError("Could not resolve non-optional \(Value.self)")
         }
-        wrappedValue = nil
+
+        wrappedValue = value
     }
 }

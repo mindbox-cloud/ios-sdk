@@ -49,11 +49,13 @@ class FetchUtilities: IFetchUtilities {
 
     func getIDFA(
         onSuccess: @escaping ((UUID)->Void),
-        onFail: @escaping (()->Void)
+        onFail: @escaping (()->Void) // alwas on simul
     ) {
         func getAndExecute() {
             DispatchQueue.global().async {
-                if let id = self.advertising {
+
+
+                if let id = self.advertising, Utilities.checkUUID(string: id.uuidString) {
                     onSuccess(id)
                 } else {
                     onFail()

@@ -9,7 +9,10 @@
 import XCTest
 @testable import MindBox
 
-class MindBoxTests: XCTestCase {
+class MindBoxTests: XCTestCase, MindBoxDelegate {
+
+    var mindBoxDidInstalledFlag: Bool = false
+    var apnsTokenDidUpdatedFlag: Bool = false
 
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -24,19 +27,51 @@ class MindBoxTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
 
+        MindBox.shared.delegate = self
+
         let configuration = try! MBConfiguration(plistName: "TestConfig")
         MindBox.shared.initialization(configuration: configuration)
 
+        do {
+            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
+            expectation(for: exists, evaluatedWith: self, handler: nil)
+            waitForExpectations(timeout: 10, handler: nil)
 
+            mindBoxDidInstalledFlag = false
+            apnsTokenDidUpdatedFlag = false
+        }
 
-//        MindBox.shared.initialization(configuration: configuration)
+    	//        //        //        //        //        //		//        //        //        //        //        //
 
-//        let exists = NSPredicate(format: "1 != 1")
+        MindBox.shared.initialization(configuration: configuration)
 
-//        expectation(for: exists, evaluatedWith: self, handler: nil)
-//        waitForExpectations(timeout: 60, handler: nil)
+        do {
+            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == false && apnsTokenDidUpdatedFlag == true")
+            expectation(for: exists, evaluatedWith: self, handler: nil)
+            waitForExpectations(timeout: 10, handler: nil)
 
+            mindBoxDidInstalledFlag = false
+            apnsTokenDidUpdatedFlag = false
+        }
+
+        let persistensStorage: IPersistenceStorage = resolver.resolveOrDie()
+
+        persistensStorage.resetStorage()
 
     }
 
+
+    // MARK: - MindBoxDelegate
+
+    func mindBoxDidInstalled() {
+        mindBoxDidInstalledFlag = true
+    }
+
+    func mindBoxInstalledFailed(error: MindBox.Errors) {
+
+    }
+
+    func apnsTokenDidUpdated() {
+        apnsTokenDidUpdatedFlag = true
+    }
 }

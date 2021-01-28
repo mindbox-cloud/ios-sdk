@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol MindBoxDelegate: class {
+protocol MindBoxDelegate: class {
 
     /// Sdk will be called his method on installed case success
     func mindBoxDidInstalled()

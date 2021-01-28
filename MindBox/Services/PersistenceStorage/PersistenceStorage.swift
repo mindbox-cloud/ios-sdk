@@ -16,9 +16,13 @@ protocol IPersistenceStorage: class {
     var apnsToken: String? {get set}
     var apnsTokenSaveDate: Date? {get set}
 
+    func resetStorage()
+
 }
 
 class MBPersistenceStorage: IPersistenceStorage {
+
+
 
     enum keys: String {
         case installationId = "MBPersistenceStorage-installationId"
@@ -98,6 +102,13 @@ class MBPersistenceStorage: IPersistenceStorage {
                 defaults.set(nil, forKey: keys.apnsTokenSaveDate.rawValue)
             }
         }
+    }
+
+    func resetStorage() {
+        deviceUUID = nil
+        installationId = nil
+        apnsToken = nil
+        apnsTokenSaveDate = nil
     }
 
     // MARK: - Private

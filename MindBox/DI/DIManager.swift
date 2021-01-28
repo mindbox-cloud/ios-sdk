@@ -36,26 +36,28 @@ final class DIManager: NSObject {
             MBConfigurationStorage()
         }
 
-        container.registerInContainer { (r) -> IFetchUtilities in
+        container.registerInContainer { (r) -> IPersistenceStorage in
+            MBPersistenceStorage(defaults: UserDefaults.standard )
+        }
+
+        container.register { (r) -> IFetchUtilities in
             FetchUtilities()
         }
 
-        container.registerInContainer { (r) -> ILogger in
+        container.register { (r) -> ILogger in
             MBLogger()
         }
 
-        container.registerInContainer { (r) -> APIService in
+        container.register { (r) -> APIService in
 //            MockManagerProvider()
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
 
-        container.registerInContainer { (r) -> IMindBoxAPIService in
+        container.register { (r) -> IMindBoxAPIService in
             MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
         }
 
-        container.registerInContainer { (r) -> IPersistenceStorage in
-            MBPersistenceStorage(defaults: UserDefaults.standard )
-        }
+
 
     }
 

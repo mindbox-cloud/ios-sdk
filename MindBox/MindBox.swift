@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 let resolver = DIManager.shared.container
 
@@ -14,6 +15,7 @@ public class MindBox {
 
     /// Singleton value for interaction with sdk
     /// It has setup DI container  as side effect  on init
+    /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
     public static var shared: MindBox = {
         DIManager.shared.registerServices()
 		return MindBox()
@@ -29,8 +31,8 @@ public class MindBox {
 
     // MARK: - Property
 
-	/// Delegate for sending events to outside
-    public weak var delegate: MindBoxDelegate?
+	/// Delegate for sending events t
+    weak var delegate: MindBoxDelegate?
 
     // MARK: - Init
 

@@ -3,7 +3,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "MindBox"
-  spec.version      = "0.0.1"
+  spec.version      = "0.0.2"
   spec.summary      = "It is a nice sdk to make analytics about user push notification behavior"
 
   spec.description  = <<-DESC
