@@ -10,8 +10,7 @@ import Foundation
 
 enum MobileApplicationRoute: Route {
     
-    case installed(MobileApplicationInstalledDataWrapper),
-         infoUpdated
+    case installed(MobileApplicationInstalledDataWrapper), infoUpdated(MobileApplicationInfoUpdatedDataWrapper)
     
     var method: HTTPMethod {
         switch self {
@@ -42,8 +41,14 @@ enum MobileApplicationRoute: Route {
                 "operation": query.operation,
                 "deviceUUID": query.deviceUUID
             ]
-        case .infoUpdated:
-            return ["sdfsd": "sdfsf"]
+            
+        case let .infoUpdated(wrapper):
+            let query = wrapper.query
+            return [
+                "endpointId": query.endpointId,
+                "operation": query.operation,
+                "deviceUUID": query.deviceUUID
+            ]
         }
     }
     
@@ -51,8 +56,8 @@ enum MobileApplicationRoute: Route {
         switch self {
         case let .installed(wrapper):
             return try? JSONEncoder().encode(wrapper.body)
-        case .infoUpdated:
-            return nil
+        case let .infoUpdated(wrapper):
+            return try? JSONEncoder().encode(wrapper.body)
         }
     }
     
