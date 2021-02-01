@@ -53,6 +53,19 @@
 		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
 		31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */; };
 		7B0C81AA9664887D9ACCBD11 /* Pods_MindBox_MindBoxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */; };
+		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
+		847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
+		847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F580625C88C7A00147A9A /* NetworkFetcher.swift */; };
+		847F580B25C88CAF00147A9A /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F580A25C88CAF00147A9A /* Route.swift */; };
+		847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */; };
+		847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581225C8909300147A9A /* URLRequestBuilder.swift */; };
+		847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */; };
+		847F581B25C8A35C00147A9A /* NetworkConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */; };
+		847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */; };
+		84EAEDF625C8B0D700726063 /* MBNetworkConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */; };
+		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
+		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
+		84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +127,18 @@
 		31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_3.plist; sourceTree = "<group>"; };
 		31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_4.plist; sourceTree = "<group>"; };
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
+		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
+		847F580625C88C7A00147A9A /* NetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkFetcher.swift; sourceTree = "<group>"; };
+		847F580A25C88CAF00147A9A /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
+		847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBNetworkFetcher.swift; sourceTree = "<group>"; };
+		847F581225C8909300147A9A /* URLRequestBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
+		847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLResponseStatusCodeValidator.swift; sourceTree = "<group>"; };
+		847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConfiguration.swift; sourceTree = "<group>"; };
+		847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTypealiases.swift; sourceTree = "<group>"; };
+		84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBNetworkConfiguration.swift; sourceTree = "<group>"; };
+		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
+		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
+		84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalledData.swift; sourceTree = "<group>"; };
 		9F21C5FA3537762C986CF380 /* Pods-MindBox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.debug.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.debug.xcconfig"; sourceTree = "<group>"; };
 		BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindBox_MindBoxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB6F21C97912995A3CAF1756 /* Pods_MindBox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindBox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -173,6 +198,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				847F57FC25C88BA600147A9A /* Network */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				317054C025AEF81900AE624C /* DI */,
 				314B38FE25AEE95D00E947B9 /* CoreController */,
@@ -377,6 +403,81 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		847F57FC25C88BA600147A9A /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				84EAEDFF25C8B2C700726063 /* Routes */,
+				847F582C25C8AE7F00147A9A /* Helpers */,
+				847F582B25C8AE4B00147A9A /* Abstract */,
+				847F582825C8AE1D00147A9A /* Validators */,
+				847F582425C8AE0100147A9A /* Types */,
+				847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */,
+				84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		847F582425C8AE0100147A9A /* Types */ = {
+			isa = PBXGroup;
+			children = (
+				847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */,
+				847F57FD25C88BB700147A9A /* HTTPMethod.swift */,
+			);
+			path = Types;
+			sourceTree = "<group>";
+		};
+		847F582825C8AE1D00147A9A /* Validators */ = {
+			isa = PBXGroup;
+			children = (
+				847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */,
+			);
+			path = Validators;
+			sourceTree = "<group>";
+		};
+		847F582B25C8AE4B00147A9A /* Abstract */ = {
+			isa = PBXGroup;
+			children = (
+				847F580A25C88CAF00147A9A /* Route.swift */,
+				847F580625C88C7A00147A9A /* NetworkFetcher.swift */,
+				847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */,
+			);
+			path = Abstract;
+			sourceTree = "<group>";
+		};
+		847F582C25C8AE7F00147A9A /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				847F581225C8909300147A9A /* URLRequestBuilder.swift */,
+				84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		84EAEDFF25C8B2C700726063 /* Routes */ = {
+			isa = PBXGroup;
+			children = (
+				84EAEE0025C8B2D800726063 /* MobileApplication */,
+			);
+			path = Routes;
+			sourceTree = "<group>";
+		};
+		84EAEE0025C8B2D800726063 /* MobileApplication */ = {
+			isa = PBXGroup;
+			children = (
+				84EAEE0925C8B40C00726063 /* Installed */,
+				84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */,
+			);
+			path = MobileApplication;
+			sourceTree = "<group>";
+		};
+		84EAEE0925C8B40C00726063 /* Installed */ = {
+			isa = PBXGroup;
+			children = (
+				84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledData.swift */,
+			);
+			path = Installed;
+			sourceTree = "<group>";
+		};
 		C7B67ABFEED71F2C7C1A7BDF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -571,8 +672,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84EAEDF625C8B0D700726063 /* MBNetworkConfiguration.swift in Sources */,
+				84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */,
+				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				317F1FD525B879B200B54346 /* FetchUtilits.swift in Sources */,
+				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
 				3159FFB025B5922C00EE80E9 /* MobileApplicationInstalledRequest.swift in Sources */,
 				317054EA25B01BDD00AE624C /* Constant.swift in Sources */,
@@ -580,22 +685,30 @@
 				317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */,
 				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
 				317AF8FC25B844DB006348FA /* Utilits.swift in Sources */,
+				84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledData.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
+				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
+				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */,
 				317054ED25B01BDD00AE624C /* MindBoxAPIServicesProvider.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
 				317054C425AEF88E00AE624C /* DIManager.swift in Sources */,
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
+				847F581B25C8A35C00147A9A /* NetworkConfiguration.swift in Sources */,
 				317054C725AEF9DC00AE624C /* CoreAsembly.swift in Sources */,
+				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
+				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				317054E925B01BDD00AE624C /* RequestModel.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
 				311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */,
+				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
 				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
 				317054C925AEFA1F00AE624C /* APIAsembly.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
 				317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */,
+				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				317054E525B01BDD00AE624C /* APIService.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,
@@ -608,6 +721,7 @@
 			files = (
 				3132DFF625C2A811007FE358 /* DITest.swift in Sources */,
 				3132E02225C3FAFF007FE358 /* UtilsTest.swift in Sources */,
+				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
 				31ED2DE125C443D100301FAD /* MockApiService.swift in Sources */,

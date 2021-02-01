@@ -8,7 +8,7 @@
 
 import Foundation
 protocol APIService: class {
-    func sendRequest<T: BaseResponce>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void)
+    func sendRequest<T: BaseResponse>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void)
 }
 
 class NetworkManagerProvider: APIService {
@@ -27,7 +27,7 @@ class NetworkManagerProvider: APIService {
         self.configurationStorage = configurationStorage
     }
     
-    func sendRequest<T: BaseResponce>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
+    func sendRequest<T: BaseResponse>(requestModel: RequestModel, completion: @escaping(Swift.Result<ResponseModel<T>, ErrorModel>) -> Void) {
 
         let request = requestModel.urlRequest(baseURL: baseURL)
         Log(request: request).withDate().make()
@@ -51,14 +51,14 @@ class NetworkManagerProvider: APIService {
                 let responseModel = ResponseModel<T>()
                 responseModel.rawData = data
                 responseModel.data = try JSONDecoder().decode(T.self, from: data)
-                responseModel.request = requestModel
+//                responseModel.request = requestModel
 
                 completion(Result.success(responseModel))
             } catch let decodeError {
                 let error: ErrorModel = ErrorModel(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
 
                 if let data = data,
-                   let object = try? JSONDecoder().decode(BaseResponce.self, from: data) {
+                   let object = try? JSONDecoder().decode(BaseResponse.self, from: data) {
                     error.status = object.status
                     error.errorMessage = object.errorMessage
                     error.errorId = object.errorId

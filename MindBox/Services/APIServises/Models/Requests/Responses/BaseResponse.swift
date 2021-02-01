@@ -10,8 +10,15 @@ import Foundation
 
 import Foundation
 
-
-class BaseResponce: Codable {
+class BaseResponse: Codable {
+    
+    struct ValidationMessage: Codable {
+        // "<текст ошибки>",
+        var message: String
+        // "<адрес поля с ошибкой>"
+        var location: String
+    }
+    
     //    response StatusCode
     var responseStatusCode: Int?
     //    "InternalServerError",
@@ -26,15 +33,6 @@ class BaseResponce: Codable {
     var errorId: String?
 
 }
-
-
-struct ValidationMessage: Codable {
-    // "<текст ошибки>",
-    var message: String
-    // "<адрес поля с ошибкой>"
-    var location: String
-}
-
 
 class ResponseModel<T: Codable> {
 
