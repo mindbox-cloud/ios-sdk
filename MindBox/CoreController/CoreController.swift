@@ -81,26 +81,15 @@ class CoreController {
             Utilities.fetch.getIDFA { (idfa) in
                 Log("idfa get success \(idfa)")
                     .inChanel(.system).withType(.verbose).make()
-
-
                 self.installation(uuid: idfa.uuidString, installationId: installationId)
             } onFail: {
-//                if #available(iOS 14, *) {
-//                    Log("idfa get fail \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
-//                        .inChanel(.system).withType(.verbose).make()
-//                } else {
-//                    Log("idfa get fail")
-//                        .inChanel(.system).withType(.verbose).make()
-//                }
                 Utilities.fetch.getIDFV(
                     tryCount: 5) { (idfv) in
                     self.installation(uuid: idfv.uuidString, installationId: installationId)
                     Log("Utilities.fetch.getIDFV \(idfv.uuidString)")
                         .inChanel(.system).withType(.verbose).make()
-
                 } onFail: {
                     self.installation(uuid: UUID().uuidString, installationId: installationId)
-                    
                     Log("Utilities.fetch.getIDFV fail")
                         .inChanel(.system).withType(.verbose).make()
                 }
@@ -154,7 +143,6 @@ class CoreController {
             case .failure(let error):
                 self?.state = .none
                 MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
-                MindBox.shared.delegate?.mindBoxInstalledFailed(error: MindBox.Errors.other(errorDescription: " apiServices.mobileApplicationInstalled network fail", failureReason: error.localizedDescription, recoverySuggestion: nil))
                 break
             }
         }

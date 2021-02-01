@@ -10,6 +10,7 @@
 		07EAF58061C245BF106CB8EC /* Pods_MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6F21C97912995A3CAF1756 /* Pods_MindBox.framework */; };
 		311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BB47825BF12570093EE14 /* LogerConfiguration.swift */; };
 		3132DFF625C2A811007FE358 /* DITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* DITest.swift */; };
+		3132E02225C3FAFF007FE358 /* UtilsTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132E02125C3FAFF007FE358 /* UtilsTest.swift */; };
 		313B233A25ADEA0F00A1CB72 /* MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* MindBox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */; };
 		313B234125ADEA0F00A1CB72 /* MindBox.h in Headers */ = {isa = PBXBuildFile; fileRef = 313B233325ADEA0F00A1CB72 /* MindBox.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -36,12 +37,21 @@
 		3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */; };
 		317AF8FC25B844DB006348FA /* Utilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* Utilits.swift */; };
 		317F1FD525B879B200B54346 /* FetchUtilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* FetchUtilits.swift */; };
-		317F1FFA25B9A70D00B54346 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 317F1FF225B9A49B00B54346 /* SuccessResponse.json */; };
 		3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191C2A525ADFD8000E7D6B9 /* MindBox.swift */; };
 		31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */; };
-		31A20D4925B6CBE000AAA0A3 /* TestConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */; };
+		31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */; };
 		31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */; };
 		31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */; };
+		31EB907325C402F900368FFB /* TestConfig3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31EB907125C402F900368FFB /* TestConfig3.plist */; };
+		31EB907425C402F900368FFB /* TestConfig2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31EB907225C402F900368FFB /* TestConfig2.plist */; };
+		31EB907B25C4084400368FFB /* MockPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EB907A25C4084400368FFB /* MockPersistenceStorage.swift */; };
+		31ED2DE125C443D100301FAD /* MockApiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ED2DE025C443D100301FAD /* MockApiService.swift */; };
+		31ED2DE425C4443A00301FAD /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 317F1FF225B9A49B00B54346 /* SuccessResponse.json */; };
+		31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ED2DEB25C444C400301FAD /* MBConfigurationTest.swift */; };
+		31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */; };
+		31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */; };
+		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
+		31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */; };
 		7B0C81AA9664887D9ACCBD11 /* Pods_MindBox_MindBoxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -58,6 +68,7 @@
 /* Begin PBXFileReference section */
 		311BB47825BF12570093EE14 /* LogerConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogerConfiguration.swift; sourceTree = "<group>"; };
 		3132DFF525C2A811007FE358 /* DITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITest.swift; sourceTree = "<group>"; };
+		3132E02125C3FAFF007FE358 /* UtilsTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilsTest.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* MindBox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MindBox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* MindBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MindBox.h; sourceTree = "<group>"; };
 		313B233425ADEA0F00A1CB72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -90,9 +101,18 @@
 		317F1FF225B9A49B00B54346 /* SuccessResponse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
 		3191C2A525ADFD8000E7D6B9 /* MindBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBox.swift; sourceTree = "<group>"; };
 		31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdatedRequest.swift; sourceTree = "<group>"; };
-		31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig.plist; sourceTree = "<group>"; };
+		31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig1.plist; sourceTree = "<group>"; };
 		31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBoxErrors.swift; sourceTree = "<group>"; };
 		31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBoxDelegate.swift; sourceTree = "<group>"; };
+		31EB907125C402F900368FFB /* TestConfig3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig3.plist; sourceTree = "<group>"; };
+		31EB907225C402F900368FFB /* TestConfig2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig2.plist; sourceTree = "<group>"; };
+		31EB907A25C4084400368FFB /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
+		31ED2DE025C443D100301FAD /* MockApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockApiService.swift; sourceTree = "<group>"; };
+		31ED2DEB25C444C400301FAD /* MBConfigurationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationTest.swift; sourceTree = "<group>"; };
+		31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_2.plist; sourceTree = "<group>"; };
+		31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_1.plist; sourceTree = "<group>"; };
+		31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_3.plist; sourceTree = "<group>"; };
+		31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_4.plist; sourceTree = "<group>"; };
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
 		9F21C5FA3537762C986CF380 /* Pods-MindBox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.debug.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.debug.xcconfig"; sourceTree = "<group>"; };
 		BA2A43CBB18413D37F456E0E /* Pods_MindBox_MindBoxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindBox_MindBoxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -122,6 +142,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3132E02025C3FAD1007FE358 /* ServicesTest */ = {
+			isa = PBXGroup;
+			children = (
+				3132E02125C3FAFF007FE358 /* UtilsTest.swift */,
+			);
+			path = ServicesTest;
+			sourceTree = "<group>";
+		};
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
@@ -161,10 +189,19 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
-				31A20D4725B6CB7D00AAA0A3 /* TestConfig.plist */,
+				31EB907925C4083600368FFB /* Mock */,
+				3132E02025C3FAD1007FE358 /* ServicesTest */,
+				3132DFF525C2A811007FE358 /* DITest.swift */,
+				31ED2DEB25C444C400301FAD /* MBConfigurationTest.swift */,
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
-				3132DFF525C2A811007FE358 /* DITest.swift */,
+				31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */,
+				31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */,
+				31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */,
+				31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */,
+				31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */,
+				31EB907225C402F900368FFB /* TestConfig2.plist */,
+				31EB907125C402F900368FFB /* TestConfig3.plist */,
 			);
 			path = MindBoxTests;
 			sourceTree = "<group>";
@@ -172,6 +209,8 @@
 		314B38FB25AEE75B00E947B9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				317054D525B01BDD00AE624C /* LogManager.swift */,
+				317F1FD425B879B200B54346 /* FetchUtilits.swift */,
 				317054D225B01BDD00AE624C /* APIServises */,
 				317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */,
 				317054CC25AF191100AE624C /* Logger */,
@@ -257,13 +296,10 @@
 		317054D225B01BDD00AE624C /* APIServises */ = {
 			isa = PBXGroup;
 			children = (
-				317F1FF225B9A49B00B54346 /* SuccessResponse.json */,
-				317054D425B01BDD00AE624C /* APIService.swift */,
-				317054D525B01BDD00AE624C /* LogManager.swift */,
 				317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */,
+				317054D425B01BDD00AE624C /* APIService.swift */,
 				317054D625B01BDD00AE624C /* Models */,
 				317054DA25B01BDD00AE624C /* Utilities */,
-				317F1FD425B879B200B54346 /* FetchUtilits.swift */,
 			);
 			path = APIServises;
 			sourceTree = "<group>";
@@ -318,6 +354,16 @@
 				317AF8FB25B844DB006348FA /* Utilits.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		31EB907925C4083600368FFB /* Mock */ = {
+			isa = PBXGroup;
+			children = (
+				317F1FF225B9A49B00B54346 /* SuccessResponse.json */,
+				31EB907A25C4084400368FFB /* MockPersistenceStorage.swift */,
+				31ED2DE025C443D100301FAD /* MockApiService.swift */,
+			);
+			path = Mock;
 			sourceTree = "<group>";
 		};
 		7ECBF932967E50162EE94F12 /* Pods */ = {
@@ -436,7 +482,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				317F1FFA25B9A70D00B54346 /* SuccessResponse.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -444,7 +489,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31A20D4925B6CBE000AAA0A3 /* TestConfig.plist in Resources */,
+				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
+				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
+				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
+				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
+				31ED2DE425C4443A00301FAD /* SuccessResponse.json in Resources */,
+				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
+				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,
+				31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -555,7 +607,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				3132DFF625C2A811007FE358 /* DITest.swift in Sources */,
+				3132E02225C3FAFF007FE358 /* UtilsTest.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
+				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
+				31ED2DE125C443D100301FAD /* MockApiService.swift in Sources */,
+				31EB907B25C4084400368FFB /* MockPersistenceStorage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

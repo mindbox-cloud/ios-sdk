@@ -34,7 +34,7 @@ internal extension Date {
 
 struct Log {
     @Injected static var logerServise: ILogger
-    
+
     // MARK: - Properties
     static var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -65,7 +65,6 @@ struct Log {
     }
 
     func make() {
-
         var header = ""
         if let type = type {
             header += type.rawValue + " "

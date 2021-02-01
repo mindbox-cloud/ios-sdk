@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-let resolver = DIManager.shared.container
+let diManager = DIManager.shared
 
 public class MindBox {
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>endpoint</key>
+	<string>app-with-hub-IOS</string>
+	<key>domain</key>
+	<string>api.mindbox.ru</string>
+	<key>installationId</key>
+	<string>20000000-0000-0000-0000-000000000000</string>
+	<key>deviceUUID</key>
+	<string>00000000-0000-0000-0000-000000000002</string>
+</dict>
+</plist>
