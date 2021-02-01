@@ -15,6 +15,7 @@ class DITest: XCTestCase {
 
     override func setUp() {
 
+        DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -29,7 +30,6 @@ class DITest: XCTestCase {
 
         let opExtractor = DIExtractorOptionals()
 
-
         XCTAssert(opExtractor.logger != nil)
         XCTAssert(opExtractor.fetchUtilities != nil)
         XCTAssert(opExtractor.configurationStorage != nil)
@@ -41,7 +41,6 @@ class DITest: XCTestCase {
 
         XCTAssert(opExtractor.persistenceStorage.apnsToken == extractor.persistenceStorage.apnsToken)
 
-
     }
 
     class DIExtractor {
@@ -51,7 +50,6 @@ class DITest: XCTestCase {
         @Injected var apiService: APIService
         @Injected var ambApiService: IMindBoxAPIService
         @Injected var persistenceStorage: IPersistenceStorage
-
 
         init() {
         }
@@ -64,7 +62,6 @@ class DITest: XCTestCase {
         @InjectedOptional var apiService: APIService!
         @InjectedOptional var ambApiService: IMindBoxAPIService!
         @InjectedOptional var persistenceStorage: IPersistenceStorage!
-
 
         init() {
         }

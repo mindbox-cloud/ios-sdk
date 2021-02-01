@@ -12,13 +12,26 @@ import Foundation
 final class DIManager: NSObject {
     static let shared: DIManager = DIManager()
 
-    private(set) var container: Odin = Odin()
+    private(set) var container: Odin  = Odin()
+
 
     override private init() {
         super.init()
     }
 
+    var atOnce = true
     func registerServices() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+
+            if atOnce {
+                atOnce = false
+            } else {
+                return
+            }
+
+        }
+        #endif
         defer {
             Log("❇️Dependency container registration is complete.")
                 .inChanel(.system)
@@ -26,11 +39,7 @@ final class DIManager: NSObject {
                 .withDate()
                 .make()
         }
-//        #if DEBUG
-//        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-//                // Code only executes when tests are running
-//            }
-//        #endif
+
 
         container.registerInContainer { (r) -> IConfigurationStorage in
             MBConfigurationStorage()
@@ -49,16 +58,17 @@ final class DIManager: NSObject {
         }
 
         container.register { (r) -> APIService in
-//            MockManagerProvider()
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }
 
         container.register { (r) -> IMindBoxAPIService in
             MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
         }
+    }
 
-
-
+    func dropContainer() {
+        container = Odin()
+        atOnce = true
     }
 
 }

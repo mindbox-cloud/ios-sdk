@@ -11,7 +11,7 @@ struct Injected<Value> {
     private(set) var wrappedValue: Value
 
     init() {
-        guard let value: Value = resolver.resolve() else {
+        guard let value: Value = diManager.container.resolve() else {
             fatalError("Could not resolve non-optional \(Value.self)")
         }
 
@@ -25,7 +25,7 @@ struct InjectedOptional<Value> {
     private(set) var wrappedValue: Optional<Value>
 
     init() {
-        guard let value: Value = resolver.resolve() else {
+        guard let value: Value = diManager.container.resolve() else {
             fatalError("Could not resolve non-optional \(Value.self)")
         }
 

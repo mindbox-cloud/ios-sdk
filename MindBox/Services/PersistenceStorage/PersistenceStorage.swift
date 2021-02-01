@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol IPersistenceStorage: class {
+internal protocol IPersistenceStorage: class {
 
     var deviceUUID: String? {get set}
     var installationId: String? {get set}
