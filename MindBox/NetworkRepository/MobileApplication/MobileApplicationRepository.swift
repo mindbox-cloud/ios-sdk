@@ -13,7 +13,7 @@ protocol MobileApplicationRepository {
     func installed(
         endpoint: String,
         deviceUUID: String,
-        installationId: String,
+        installationId: String?,
         apnsToken: String?,
         isNotificationsEnabled: Bool,
         completion: @escaping Completion<BaseResponse>)

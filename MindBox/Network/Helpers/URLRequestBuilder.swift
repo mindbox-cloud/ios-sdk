@@ -10,10 +10,10 @@ import Foundation
 
 struct URLRequestBuilder {
     
-    let baseURL: URL
+    let domain: String
     
-    init(baseURL: URL) {
-        self.baseURL = baseURL
+    init(domain: String) {
+        self.domain = domain
     }
     
     func asURLRequest(route: Route) throws -> URLRequest {
@@ -35,8 +35,8 @@ struct URLRequestBuilder {
     
     private func makeURLComponents(for route: Route) -> URLComponents {
         var components = URLComponents()
-        components.scheme = baseURL.scheme
-        components.host = baseURL.host
+        components.scheme = "https"
+        components.host = domain
         components.path = route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
         

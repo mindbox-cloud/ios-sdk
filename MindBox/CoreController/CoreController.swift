@@ -12,73 +12,52 @@ import AdSupport
 import AppTrackingTransparency
 
 class CoreController {
-    enum State {
-        case none
-        case initing
-        case wasInstalled
-        case ready
-    }
-
+    
     // MARK: - Elements
 
     @Injected var logger: ILogger
     @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
-    @Injected var apiServices: IMindBoxAPIService
+    @Injected var mobileApplicationRepository: MobileApplicationRepository
+    @Injected var utilitiesFetcher: UtilitiesFetcher
 
     // MARK: - Property
-
-    private var state: State = .none
+    
+    var isInstalled: Bool {
+        persistenceStorage.isInstalled
+    }
 
     // MARK: - Init
-
+    
     init() {
-
-        if persistenceStorage.wasInstaled {
-            state = .wasInstalled
-        }
+        
     }
 
     // MARK: - CoreController
-
+    
     public func initialization(configuration: MBConfiguration) {
         configurationStorage.save(configuration: configuration)
-        
-        switch state {
-        case .none:
-            startInstallationCase(uuid: configuration.deviceUUID, installationId: configuration.installationId)
-        default:
+        if isInstalled {
             updateToken()
+        } else {
+            startInstallationCase(uuid: configuration.deviceUUID, installationId: configuration.installationId)
         }
     }
     public func apnsTokenDidUpdate(token: String) {
         persistenceStorage.apnsToken = token
-
-        switch state {
-        case .none:
-            print()
-            break
-        case .initing:
-            print()
-            break
-        case .ready:
-            print()
-            break
-        case .wasInstalled:
+        if isInstalled {
             updateToken()
-            print()
-            break
         }
     }
 
     // MARK: - Private
-
+    
     private func startInstallationCase(uuid: String?, installationId: String?) {
         if let uuid = uuid {
-            self.installation(uuid: uuid, installationId: installationId)
+            installation(uuid: uuid, installationId: installationId)
         } else {
-            Utilities.fetch.getUDID { (uuid) in
-                self.installation(uuid: uuid.uuidString, installationId: installationId)
+            utilitiesFetcher.getUDID { [weak self] (uuid) in
+                self?.installation(uuid: uuid.uuidString, installationId: installationId)
                 Log("Utilities.fetch.getIDFV fail")
                     .inChanel(.system).withType(.verbose).make()
             }
@@ -90,11 +69,16 @@ class CoreController {
         let apnsToken = persistenceStorage.apnsToken
 
         guard let deviceUUID = persistenceStorage.deviceUUID else {
-            // FIX:
+            // TODO: - Throw error ?
             return
         }
-
-        apiServices.mobileApplicationInfoUpdated(endpoint: endpoint, deviceUUID: deviceUUID, apnsToken: apnsToken) { (result) in
+        
+        mobileApplicationRepository.infoUpdated(
+            endpoint: endpoint,
+            deviceUUID: deviceUUID,
+            apnsToken: apnsToken,
+            isNotificationsEnabled: false
+        ) { (result) in
             switch result {
             case .success:
                 MindBox.shared.delegate?.apnsTokenDidUpdated()
@@ -104,37 +88,36 @@ class CoreController {
                 Log("apnsTokenDidUpdated with \(error.localizedDescription )")
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
-                break
             }
         }
     }
 
     private func installation(uuid: String, installationId: String?) {
         let endpoint = configurationStorage.endpoint
-
         let apnsToken = persistenceStorage.apnsToken
 
-        state = .initing
-
-        apiServices.mobileApplicationInstalled(endpoint: endpoint, deviceUUID: uuid, installationId: installationId, apnsToken: apnsToken, completion: {[weak self] result in
+        mobileApplicationRepository.installed(
+            endpoint: endpoint,
+            deviceUUID: uuid,
+            installationId: installationId,
+            apnsToken: apnsToken,
+            isNotificationsEnabled: false
+        ) { [weak self] (result) in
             switch result {
-            case .success(let resp):
-                self?.state = .wasInstalled
+            case .success(let response):
                 self?.persistenceStorage.deviceUUID = uuid
                 self?.persistenceStorage.installationId = installationId
 
-                Log("apiServices.mobileApplicationInstalled status-code \(resp.data?.httpStatusCode ?? -1), status \(resp.data?.status ?? .unknow)")
+                Log("apiServices.mobileApplicationInstalled status-code \(response.data?.httpStatusCode ?? -1), status \(response.data?.status ?? .unknow)")
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.mindBoxDidInstalled()
                 break
 
             case .failure(let error):
-                self?.state = .none
                 MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
                 break
             }
         }
-        )
     }
 
 }

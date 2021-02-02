@@ -12,7 +12,7 @@ protocol PersistenceStorage: class {
 
     var deviceUUID: String? { get set }
     var installationId: String? { get set }
-    var wasInstaled: Bool { get }
+    var isInstalled: Bool { get }
     var apnsToken: String? { get set }
     var apnsTokenSaveDate: Date? { get set }
 

@@ -13,8 +13,8 @@ import UIKit.UIDevice
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
 
-    let sdkBundle = Bundle(for: MindBox.self)
     let appBundle = Bundle.main
+    let sdkBundle = Bundle(for: MindBox.self)
 
     init() {
 

@@ -17,7 +17,7 @@ struct MobileApplicationInstalledWrapper {
         
         let token: String?
         let isTokenAvailable: Bool
-        let installationId: String
+        let installationId: String?
         let isNotificationsEnabled: Bool
 
     }

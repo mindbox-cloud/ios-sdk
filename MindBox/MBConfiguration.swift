@@ -36,8 +36,8 @@ public struct MBConfiguration: Decodable {
 
         self.endpoint = endpoint
         self.domain = domain
-
-        guard Utilities.isValidURL(string: "https://" + domain) else {
+        
+        guard let url = URL(string: "https://" + domain), URLValidator(url: url).evaluate() else {
             throw MindBox.Errors.invalidConfiguration(reason: "Invalid domain. Domain is unreachable")
         }
 
@@ -45,25 +45,23 @@ public struct MBConfiguration: Decodable {
             throw MindBox.Errors.invalidConfiguration(reason: "Value endpoint can not be empty")
         }
 
-        if let installationId = installationId,
-           !installationId.isEmpty {
+        if let installationId = installationId, !installationId.isEmpty {
             guard UUID(uuidString: installationId) != nil else {
                 throw MindBox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
             }
 
-            guard Utilities.checkUUID(string: installationId) else {
+            guard UDIDValidator(udid: installationId).evaluate() else {
                 throw MindBox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
             }
 
             self.installationId = installationId
         }
-        if let deviceUUID = deviceUUID,
-           !deviceUUID.isEmpty {
+        if let deviceUUID = deviceUUID, !deviceUUID.isEmpty {
             guard UUID(uuidString: deviceUUID) != nil else {
                 throw MindBox.Errors.invalidConfiguration(reason: "deviceUUID doesn't match the UUID format", suggestion: nil)
             }
 
-            guard Utilities.checkUUID(string: deviceUUID) else {
+            guard UDIDValidator(udid: deviceUUID).evaluate() else {
                 throw MindBox.Errors.invalidConfiguration(reason: "deviceUUID doesn't match the UUID format", suggestion: nil)
             }
 

@@ -10,10 +10,10 @@ import Foundation
 
 /// Регистрирует DI-объекты
 final class DIManager: NSObject {
+    
     static let shared: DIManager = DIManager()
 
     private(set) var container: Odin  = Odin()
-
 
     override private init() {
         super.init()
@@ -46,7 +46,7 @@ final class DIManager: NSObject {
         }
 
         container.registerInContainer { (r) -> PersistenceStorage in
-            MBPersistenceStorage(defaults: UserDefaults.standard )
+            MBPersistenceStorage(defaults: .standard )
         }
 
         container.register { (r) -> UtilitiesFetcher in
@@ -56,7 +56,18 @@ final class DIManager: NSObject {
         container.register { (r) -> ILogger in
             MBLogger()
         }
+        
+        container.register { (r) -> NetworkFetcher in
+            MBNetworkFetcher(
+                configuration: r.resolveOrDie(),
+                utilitiesFetcher: r.resolveOrDie())
+        }
+        
+        container.register { (r) -> MobileApplicationRepository in
+            MBMobileApplicationRepository(fetcher: r.resolveOrDie())
+        }
 
+        // TODO: - Remove
         container.register { (r) -> APIService in
             NetworkManagerProvider(configurationStorage: r.resolveOrDie())
         }

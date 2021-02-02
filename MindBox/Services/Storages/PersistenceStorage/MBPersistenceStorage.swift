@@ -14,7 +14,7 @@ class MBPersistenceStorage: PersistenceStorage {
     let defaults: UserDefaults
 
     // MARK: - Property
-    var wasInstaled: Bool {
+    var isInstalled: Bool {
         deviceUUID != nil
     }
     
@@ -79,7 +79,6 @@ extension MBPersistenceStorage {
             
             case installationId = "MBPersistenceStorage-installationId"
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
-            case wasInstaled = "MBPersistenceStorage-wasInstaled"
             case apnsToken = "MBPersistenceStorage-apnsToken"
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
         }

@@ -13,9 +13,9 @@ class APIServiceConstant {
 
     static var defaultHeaders: [String:String] {
         get {
-            let sdkVersion: String = Utilities.fetch.sdkVersion ?? "unknow"
-            let appVersion: String = Utilities.fetch.appVerson ?? "unknow"
-            let hostApplicationName: String = Utilities.fetch.hostApplicationName ?? "unknow"
+            let sdkVersion: String = "unknow"
+            let appVersion: String = "unknow"
+            let hostApplicationName: String = "unknow"
 
             let model: String = {
                 var systemInfo = utsname()

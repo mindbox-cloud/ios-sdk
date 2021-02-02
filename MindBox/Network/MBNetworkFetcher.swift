@@ -7,26 +7,39 @@
 //
 
 import Foundation
+import UIKit.UIDevice
 
 class MBNetworkFetcher: NetworkFetcher {
-    
-    private let session: URLSession
-    
-    private let builder: URLRequestBuilder
+            
+    private let configuration: ConfigurationStorage
 
-    init(configuration: NetworkConfiguration) {
-        self.builder = URLRequestBuilder(baseURL: configuration.baseURL)
-        let sessionConfiguration: URLSessionConfiguration = .default
-        sessionConfiguration.requestCachePolicy = configuration.cachePolicy
-        sessionConfiguration.timeoutIntervalForRequest = configuration.timeoutInterval
-        sessionConfiguration.httpAdditionalHeaders = configuration.additionalHeaders
-        self.session = URLSession(configuration: sessionConfiguration)
+    init(
+        configuration: ConfigurationStorage,
+        utilitiesFetcher: UtilitiesFetcher
+    ) {
+        self.configuration = configuration
+        
+        
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
+        let appVersion = utilitiesFetcher.appVerson ?? "unknow"
+        let hostApplicationName = utilitiesFetcher.sdkVersion ?? "unknow"
+
+        let userAgent: String = "\(hostApplicationName)\(appVersion), \(DeviceModelHelper.os)\(DeviceModelHelper.iOSVersion), Apple, \(DeviceModelHelper.model)"
+
+        URLSession.shared.configuration.httpAdditionalHeaders = [
+            "Mindbox-Integration": "iOS-SDK",
+            "Mindbox-Integration-Version": sdkVersion,
+            "User-Agent": userAgent,
+            "Content-Type": "application/json; charset=utf-8"
+        ]
     }
     
     func request<T: BaseResponse>(route: Route, completion: @escaping Completion<T>) {
+        let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            session.dataTask(with: urlRequest) { (data, response, error) in
+            Log(request: urlRequest).withDate().make()
+            URLSession.shared.dataTask(with: urlRequest) { (data, response, error) in
                 Log(data: data, response: response, error: error).withDate().make()
                 do {
                     guard let response = response as? HTTPURLResponse else {
@@ -63,7 +76,9 @@ class MBNetworkFetcher: NetworkFetcher {
  
             }.resume()
         } catch let error {
-            completion(.failure(ErrorModel(errorKey: error.localizedDescription)))
+            let errorModel = ErrorModel(errorKey: error.localizedDescription)
+            Log(error: errorModel).withDate().make()
+            completion(.failure(errorModel))
         }
     }
     

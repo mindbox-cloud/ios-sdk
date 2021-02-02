@@ -22,7 +22,8 @@ public class MindBox {
 
     @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
-
+    @Injected var utilitiesFetcher: UtilitiesFetcher
+    
     /// Internal process controller
     let coreController = CoreController()
 
@@ -63,7 +64,7 @@ public class MindBox {
     /// - Returns: version from bundle
     public var sdkVersion: String {
         get {
-            return Utilities.fetch.sdkVersion ?? "unknown"
+            return utilitiesFetcher.sdkVersion ?? "unknown"
         }
     }
 

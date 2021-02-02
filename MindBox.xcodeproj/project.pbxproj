@@ -59,7 +59,6 @@
 		847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */; };
 		847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581225C8909300147A9A /* URLRequestBuilder.swift */; };
 		847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */; };
-		847F581B25C8A35C00147A9A /* NetworkConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */; };
 		847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */; };
 		84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625D825C9558E00AB6228 /* MBPersistenceStorage.swift */; };
 		84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E325C988FA00AB6228 /* URLValidator.swift */; };
@@ -68,7 +67,6 @@
 		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
-		84EAEDF625C8B0D700726063 /* MBNetworkConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
 		84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */; };
@@ -139,7 +137,6 @@
 		847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBNetworkFetcher.swift; sourceTree = "<group>"; };
 		847F581225C8909300147A9A /* URLRequestBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
 		847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLResponseStatusCodeValidator.swift; sourceTree = "<group>"; };
-		847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConfiguration.swift; sourceTree = "<group>"; };
 		847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTypealiases.swift; sourceTree = "<group>"; };
 		84B625D825C9558E00AB6228 /* MBPersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPersistenceStorage.swift; sourceTree = "<group>"; };
 		84B625E325C988FA00AB6228 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
@@ -148,7 +145,6 @@
 		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
-		84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBNetworkConfiguration.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
 		84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalledWrapper.swift; sourceTree = "<group>"; };
@@ -301,6 +297,7 @@
 			children = (
 				317054CD25AF191F00AE624C /* Logger.swift */,
 				311BB47825BF12570093EE14 /* LogerConfiguration.swift */,
+				317054D525B01BDD00AE624C /* LogManager.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -373,10 +370,8 @@
 				317054CC25AF191100AE624C /* Logger */,
 				84D350C725C992900044E4E6 /* IDFAFetcher.swift */,
 				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
-				317054D525B01BDD00AE624C /* LogManager.swift */,
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
-				317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */,
-				317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */,
+				84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -420,7 +415,6 @@
 				847F582825C8AE1D00147A9A /* Validators */,
 				847F582425C8AE0100147A9A /* Types */,
 				847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */,
-				84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -449,7 +443,6 @@
 			children = (
 				847F580A25C88CAF00147A9A /* Route.swift */,
 				847F580625C88C7A00147A9A /* NetworkFetcher.swift */,
-				847F581A25C8A35C00147A9A /* NetworkConfiguration.swift */,
 			);
 			path = Abstract;
 			sourceTree = "<group>";
@@ -537,6 +530,15 @@
 				84EAEE2125C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift */,
 			);
 			path = InfoUpdated;
+			sourceTree = "<group>";
+		};
+		84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */ = {
+			isa = PBXGroup;
+			children = (
+				317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */,
+				317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */,
+			);
+			path = UtilitiesFetcher;
 			sourceTree = "<group>";
 		};
 		C7B67ABFEED71F2C7C1A7BDF /* Frameworks */ = {
@@ -733,7 +735,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				84EAEDF625C8B0D700726063 /* MBNetworkConfiguration.swift in Sources */,
 				84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
@@ -760,7 +761,6 @@
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
 				8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */,
-				847F581B25C8A35C00147A9A /* NetworkConfiguration.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				317054E925B01BDD00AE624C /* RequestModel.swift in Sources */,

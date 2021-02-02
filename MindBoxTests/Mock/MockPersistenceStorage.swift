@@ -18,7 +18,7 @@ class MockPersistenceStorage: PersistenceStorage {
 
     var installationId: String?
 
-    var wasInstaled: Bool = false
+    var isInstalled: Bool = false
 
     var apnsToken: String?
 
@@ -27,7 +27,7 @@ class MockPersistenceStorage: PersistenceStorage {
     func reset() {
         deviceUUID = nil
         installationId = nil
-        wasInstaled = false
+        isInstalled = false
         apnsToken = nil
         apnsTokenSaveDate = nil
     }
