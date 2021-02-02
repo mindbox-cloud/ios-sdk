@@ -11,40 +11,25 @@ import AdSupport
 import AppTrackingTransparency
 import UIKit.UIDevice
 
-class FetchUtilities: IFetchUtilities {
+class MBUtilitiesFetcher: UtilitiesFetcher {
 
-    let sdkBundle = Bundle.init(for: MindBox.self)
+    let sdkBundle = Bundle(for: MindBox.self)
     let appBundle = Bundle.main
 
     init() {
 
     }
-
-    private var advertising: UUID? {
-        get {
-            // Firstly, Check whether advertising tracking is enabled
-            guard ASIdentifierManager.shared().isAdvertisingTrackingEnabled else {
-                return nil
-            }
-            // Then, Get and return IDFA
-            return ASIdentifierManager.shared().advertisingIdentifier
-        }
-    }
-
+    
     var appVerson: String? {
         appBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
     }
+    
     var sdkVersion: String? {
-        get {
-            return sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
-
-        }
+        sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
     }
 
     var hostApplicationName: String? {
-        get {
-            return appBundle.bundleIdentifier
-        }
+        appBundle.bundleIdentifier
     }
     
     func getUDID(completion: @escaping (UUID) -> Void) {

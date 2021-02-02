@@ -49,8 +49,8 @@ final class DIManager: NSObject {
             MBPersistenceStorage(defaults: UserDefaults.standard )
         }
 
-        container.register { (r) -> IFetchUtilities in
-            FetchUtilities()
+        container.register { (r) -> UtilitiesFetcher in
+            MBUtilitiesFetcher()
         }
 
         container.register { (r) -> ILogger in

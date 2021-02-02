@@ -44,7 +44,7 @@ class DITestCase: XCTestCase {
 
     class DIExtractor {
         @Injected var logger: ILogger
-        @Injected var fetchUtilities: IFetchUtilities
+        @Injected var fetchUtilities: UtilitiesFetcher
         @Injected var configurationStorage: ConfigurationStorage
         @Injected var apiService: APIService
         @Injected var ambApiService: IMindBoxAPIService
@@ -56,7 +56,7 @@ class DITestCase: XCTestCase {
 
     class DIExtractorOptionals {
         @InjectedOptional var logger: ILogger!
-        @InjectedOptional var fetchUtilities: IFetchUtilities!
+        @InjectedOptional var fetchUtilities: UtilitiesFetcher!
         @InjectedOptional var configurationStorage: ConfigurationStorage!
         @InjectedOptional var apiService: APIService!
         @InjectedOptional var ambApiService: IMindBoxAPIService!

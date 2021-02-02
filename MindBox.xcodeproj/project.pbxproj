@@ -32,8 +32,8 @@
 		317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DE25B01BDD00AE624C /* ErrorKey.swift */; };
 		317054ED25B01BDD00AE624C /* MindBoxAPIServicesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */; };
 		3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */; };
-		317AF8FC25B844DB006348FA /* Utilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* Utilits.swift */; };
-		317F1FD525B879B200B54346 /* FetchUtilits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* FetchUtilits.swift */; };
+		317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */; };
+		317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */; };
 		3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191C2A525ADFD8000E7D6B9 /* MindBox.swift */; };
 		31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */; };
 		31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */; };
@@ -113,8 +113,8 @@
 		317054DE25B01BDD00AE624C /* ErrorKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorKey.swift; sourceTree = "<group>"; };
 		317054E125B01BDD00AE624C /* MindBoxAPIServicesProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindBoxAPIServicesProvider.swift; sourceTree = "<group>"; };
 		3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationStorage.swift; sourceTree = "<group>"; };
-		317AF8FB25B844DB006348FA /* Utilits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilits.swift; sourceTree = "<group>"; };
-		317F1FD425B879B200B54346 /* FetchUtilits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchUtilits.swift; sourceTree = "<group>"; };
+		317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilitiesFetcher.swift; sourceTree = "<group>"; };
+		317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBUtilitiesFetcher.swift; sourceTree = "<group>"; };
 		317F1FF225B9A49B00B54346 /* SuccessResponse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
 		3191C2A525ADFD8000E7D6B9 /* MindBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBox.swift; sourceTree = "<group>"; };
 		31A20D4025B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdatedRequest.swift; sourceTree = "<group>"; };
@@ -243,7 +243,6 @@
 		314B38FB25AEE75B00E947B9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				317F1FD425B879B200B54346 /* FetchUtilits.swift */,
 				317054D225B01BDD00AE624C /* APIServises */,
 				317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */,
 				84D350C025C990980044E4E6 /* Storages */,
@@ -376,7 +375,8 @@
 				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
 				317054D525B01BDD00AE624C /* LogManager.swift */,
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
-				317AF8FB25B844DB006348FA /* Utilits.swift */,
+				317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */,
+				317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -738,7 +738,7 @@
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */,
-				317F1FD525B879B200B54346 /* FetchUtilits.swift in Sources */,
+				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
 				3159FFB025B5922C00EE80E9 /* MobileApplicationInstalledRequest.swift in Sources */,
@@ -747,7 +747,7 @@
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
 				317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */,
 				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
-				317AF8FC25B844DB006348FA /* Utilits.swift in Sources */,
+				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
 				84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
