@@ -24,7 +24,7 @@ class MockPersistenceStorage: IPersistenceStorage {
 
     var apnsTokenSaveDate: Date?
 
-    func resetStorage() {
+    func reset() {
         deviceUUID = nil
         installationId = nil
         wasInstaled = false

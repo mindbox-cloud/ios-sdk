@@ -75,7 +75,7 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
 
         let persistensStorage: IPersistenceStorage = diManager.container.resolveOrDie()
 
-        persistensStorage.resetStorage()
+        persistensStorage.reset()
         coreController = CoreController()
 
         //        //        //        //        //        //        //        //        //        //        //        //
