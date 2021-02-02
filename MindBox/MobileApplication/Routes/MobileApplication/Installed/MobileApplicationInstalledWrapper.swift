@@ -1,5 +1,5 @@
 //
-//  MobileApplicationInfoUpdatedDataWrapper.swift
+//  MobileApplicationInstalledData.swift
 //  MindBox
 //
 //  Created by Maksim Kazachkov on 02.02.2021.
@@ -8,22 +8,23 @@
 
 import Foundation
 
-struct MobileApplicationInfoUpdatedDataWrapper {
+struct MobileApplicationInstalledWrapper {
     
     let query: Query
     let body: Body
     
     struct Body: Codable {
         
-        let token: String
+        let token: String?
         let isTokenAvailable: Bool
+        let installationId: String
         let isNotificationsEnabled: Bool
 
     }
     
     struct Query {
         let endpointId: String
-        let operation = "MobileApplicationInfoUpdated"
+        let operation = "MobileApplicationInstalled"
         let deviceUUID: String
     }
 

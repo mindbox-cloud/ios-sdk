@@ -10,7 +10,7 @@ import Foundation
 
 enum MobileApplicationRoute: Route {
     
-    case installed(MobileApplicationInstalledDataWrapper), infoUpdated(MobileApplicationInfoUpdatedDataWrapper)
+    case installed(MobileApplicationInstalledWrapper), infoUpdated(MobileApplicationInfoUpdatedWrapper)
     
     var method: HTTPMethod {
         switch self {

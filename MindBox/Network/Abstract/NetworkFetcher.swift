@@ -10,8 +10,6 @@ import Foundation
 
 protocol NetworkFetcher {
     
-    typealias Completion<T: BaseResponse> = (Result<ResponseModel<T>, ErrorModel>) -> Void
-    
     func request<T: BaseResponse>(route: Route, completion: @escaping Completion<T>)
     
 }
