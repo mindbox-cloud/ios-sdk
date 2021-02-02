@@ -12,6 +12,8 @@ class MBPersistenceStorage: PersistenceStorage {
     
     // MARK: - Dependency
     let defaults: UserDefaults
+    
+//    let semaphore = DispatchSemaphore(value: 1)
 
     // MARK: - Property
     var isInstalled: Bool {
@@ -100,7 +102,7 @@ extension MBPersistenceStorage {
             }
             set {
                 // Set value to UserDefaults
-                defaults.set(newValue, forKey: key.rawValue)
+                defaults.setValue(newValue, forKey: key.rawValue)
             }
         }
         

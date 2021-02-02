@@ -30,9 +30,9 @@ class MBMobileApplicationRepository: MobileApplicationRepository {
                 deviceUUID: deviceUUID
             ),
             body: MobileApplicationInstalledWrapper.Body(
-                token: apnsToken,
+                token: apnsToken ?? "",
                 isTokenAvailable: apnsToken?.isEmpty == false,
-                installationId: installationId,
+                installationId: installationId ?? "",
                 isNotificationsEnabled: isNotificationsEnabled
             )
         )
@@ -54,7 +54,7 @@ class MBMobileApplicationRepository: MobileApplicationRepository {
                 deviceUUID: deviceUUID
             ),
             body: MobileApplicationInfoUpdatedWrapper.Body(
-                token: apnsToken,
+                token: apnsToken ?? "",
                 isTokenAvailable: apnsToken?.isEmpty == false,
                 isNotificationsEnabled: isNotificationsEnabled
             )

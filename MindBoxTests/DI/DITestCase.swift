@@ -32,9 +32,9 @@ class DITestCase: XCTestCase {
         XCTAssert(opExtractor.logger != nil)
         XCTAssert(opExtractor.fetchUtilities != nil)
         XCTAssert(opExtractor.configurationStorage != nil)
-        XCTAssert(opExtractor.apiService != nil)
-        XCTAssert(opExtractor.ambApiService != nil)
         XCTAssert(opExtractor.persistenceStorage != nil)
+        XCTAssert(opExtractor.networkFetcher != nil)
+        XCTAssert(opExtractor.mobileApplicationRepository != nil)
 
         extractor.persistenceStorage.apnsToken = "123"
 
@@ -46,10 +46,9 @@ class DITestCase: XCTestCase {
         @Injected var logger: ILogger
         @Injected var fetchUtilities: UtilitiesFetcher
         @Injected var configurationStorage: ConfigurationStorage
-        @Injected var apiService: APIService
-        @Injected var ambApiService: IMindBoxAPIService
         @Injected var persistenceStorage: PersistenceStorage
-
+        @Injected var networkFetcher: NetworkFetcher
+        @Injected var mobileApplicationRepository: MobileApplicationRepository
         init() {
         }
     }
@@ -58,10 +57,10 @@ class DITestCase: XCTestCase {
         @InjectedOptional var logger: ILogger!
         @InjectedOptional var fetchUtilities: UtilitiesFetcher!
         @InjectedOptional var configurationStorage: ConfigurationStorage!
-        @InjectedOptional var apiService: APIService!
-        @InjectedOptional var ambApiService: IMindBoxAPIService!
         @InjectedOptional var persistenceStorage: PersistenceStorage!
-
+        @InjectedOptional var networkFetcher: NetworkFetcher!
+        @InjectedOptional var mobileApplicationRepository: MobileApplicationRepository!
+        
         init() {
         }
     }

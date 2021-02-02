@@ -114,41 +114,9 @@ struct Log {
 
 
     // MARK: - Public Functions
-
-    init(request: RequestModel, baseURL: String = "") {
-        let path: String = request.pathWithQuery
-        let headers: String = String(describing: request.headers)
-        let httpMethod: String = String(describing: request.method.rawValue)
-        var body: String = ""
-        var bodyStrings: [String] = []
-        for (_, value) in request.body.enumerated() {
-            if let valueValue = value.value {
-                bodyStrings.append("\(value.key): \(Swift.type(of: valueValue))(\(valueValue))")
-            } else {
-                bodyStrings.append("\(value.key): nil")
-            }
-        }
-        body = bodyStrings.joined(separator: ", ")
-
-        var log: String = "[\(baseURL)\(path)]"
-
-        if !request.headers.isEmpty {
-            log = log + "\n\(headers)"
-        }
-
-        log = log + "\n[\(httpMethod)]"
-
-        if !request.body.isEmpty {
-            log = log + "\n[\(body)]"
-        }
-
-        self.text = "LogManager: \n--- Request ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
-        self.chanel = .network
-    }
-    
     init<T: Codable>(_ response: ResponseModel<T>, baseURL: String = "") {
         
-        let path: String? = response.request?.path
+        let path: String? = response.route?.path
         let dataJSON: String? = response.json
         
         var log: String = ""

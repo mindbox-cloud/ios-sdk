@@ -44,7 +44,7 @@ class ResponseModel<T: Codable> {
         guard let rawData = rawData else { return nil }
         return String(data: rawData, encoding: String.Encoding.utf8)
     }
-    var request: RequestModel?
+    var route: Route?
 
     // MARK: - Init
 

@@ -15,9 +15,9 @@ struct MobileApplicationInstalledWrapper {
     
     struct Body: Codable {
         
-        let token: String?
+        let token: String
         let isTokenAvailable: Bool
-        let installationId: String?
+        let installationId: String
         let isNotificationsEnabled: Bool
 
     }

@@ -35,13 +35,23 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     func getUDID(completion: @escaping (UUID) -> Void) {
         IDFAFetcher().fetch { (uuid) in
             if let uuid = uuid {
+                Log("IDFAFetcher uuid:\(uuid.uuidString)")
+                    .inChanel(.system).withType(.verbose).make()
                 completion(uuid)
             } else {
+                Log("IDFAFetcher fail")
+                    .inChanel(.system).withType(.verbose).make()
                 IDFVFetcher().fetch(tryCount: 3) { (uuid) in
                     if let uuid = uuid {
+                        Log("IDFVFetcher uuid:\(uuid.uuidString)")
+                            .inChanel(.system).withType(.verbose).make()
                         completion(uuid)
                     } else {
-                        completion(UUID())
+                        Log("IDFVFetcher fail")
+                        let uuid = UUID()
+                        completion(uuid)
+                        Log("Generated uuid:\(uuid.uuidString)")
+                            .inChanel(.system).withType(.verbose).make()
                     }
                 }
             }

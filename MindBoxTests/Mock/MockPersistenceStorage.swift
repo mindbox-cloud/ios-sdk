@@ -10,6 +10,7 @@ import Foundation
 @testable import MindBox
 
 class MockPersistenceStorage: PersistenceStorage {
+    
     init() {
 
     }
@@ -31,6 +32,5 @@ class MockPersistenceStorage: PersistenceStorage {
         apnsToken = nil
         apnsTokenSaveDate = nil
     }
-
 
 }

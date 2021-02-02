@@ -66,15 +66,6 @@ final class DIManager: NSObject {
         container.register { (r) -> MobileApplicationRepository in
             MBMobileApplicationRepository(fetcher: r.resolveOrDie())
         }
-
-        // TODO: - Remove
-        container.register { (r) -> APIService in
-            NetworkManagerProvider(configurationStorage: r.resolveOrDie())
-        }
-
-        container.register { (r) -> IMindBoxAPIService in
-            MindBoxAPIServicesProvider(serviceManager: r.resolveOrDie())
-        }
     }
 
     func dropContainer() {

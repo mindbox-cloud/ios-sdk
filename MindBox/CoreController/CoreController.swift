@@ -23,14 +23,12 @@ class CoreController {
 
     // MARK: - Property
     
-    var isInstalled: Bool {
-        persistenceStorage.isInstalled
-    }
+    var isInstalled: Bool = false
 
     // MARK: - Init
     
     init() {
-        
+        self.isInstalled = self.persistenceStorage.isInstalled
     }
 
     // MARK: - CoreController
@@ -58,8 +56,6 @@ class CoreController {
         } else {
             utilitiesFetcher.getUDID { [weak self] (uuid) in
                 self?.installation(uuid: uuid.uuidString, installationId: installationId)
-                Log("Utilities.fetch.getIDFV fail")
-                    .inChanel(.system).withType(.verbose).make()
             }
         }
     }
@@ -107,7 +103,8 @@ class CoreController {
             case .success(let response):
                 self?.persistenceStorage.deviceUUID = uuid
                 self?.persistenceStorage.installationId = installationId
-
+                self?.isInstalled = true
+                
                 Log("apiServices.mobileApplicationInstalled status-code \(response.data?.httpStatusCode ?? -1), status \(response.data?.status ?? .unknow)")
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.mindBoxDidInstalled()

@@ -57,7 +57,7 @@ class MBNetworkFetcher: NetworkFetcher {
                     let responseModel = ResponseModel<T>()
                     responseModel.rawData = data
                     responseModel.data = try JSONDecoder().decode(T.self, from: data)
-//                    responseModel.request = requestModel
+                    responseModel.route = route
                     completion(.success(responseModel))
 
                 } catch let decodeError {
