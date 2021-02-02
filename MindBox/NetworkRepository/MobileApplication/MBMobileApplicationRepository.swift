@@ -10,9 +10,9 @@ import Foundation
 
 class MBMobileApplicationRepository: MobileApplicationRepository {
     
-    private let fetcher: MBNetworkFetcher
+    private let fetcher: NetworkFetcher
     
-    init(fetcher: MBNetworkFetcher) {
+    init(fetcher: NetworkFetcher) {
         self.fetcher = fetcher
     }
     

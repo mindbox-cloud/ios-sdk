@@ -12,26 +12,29 @@ import UIKit.UIDevice
 class MBNetworkFetcher: NetworkFetcher {
             
     private let configuration: ConfigurationStorage
+    
+    private let session: URLSession
 
     init(
         configuration: ConfigurationStorage,
         utilitiesFetcher: UtilitiesFetcher
     ) {
         self.configuration = configuration
-        
-        
+
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
         let hostApplicationName = utilitiesFetcher.sdkVersion ?? "unknow"
 
         let userAgent: String = "\(hostApplicationName)\(appVersion), \(DeviceModelHelper.os)\(DeviceModelHelper.iOSVersion), Apple, \(DeviceModelHelper.model)"
 
-        URLSession.shared.configuration.httpAdditionalHeaders = [
+        let sessionConfiguration = URLSessionConfiguration.default
+        sessionConfiguration.httpAdditionalHeaders = [
             "Mindbox-Integration": "iOS-SDK",
             "Mindbox-Integration-Version": sdkVersion,
             "User-Agent": userAgent,
             "Content-Type": "application/json; charset=utf-8"
         ]
+        self.session = URLSession(configuration: sessionConfiguration)
     }
     
     func request<T: BaseResponse>(route: Route, completion: @escaping Completion<T>) {
@@ -39,7 +42,7 @@ class MBNetworkFetcher: NetworkFetcher {
         do {
             let urlRequest = try builder.asURLRequest(route: route)
             Log(request: urlRequest).withDate().make()
-            URLSession.shared.dataTask(with: urlRequest) { (data, response, error) in
+            session.dataTask(with: urlRequest) { (data, response, error) in
                 Log(data: data, response: response, error: error).withDate().make()
                 do {
                     guard let response = response as? HTTPURLResponse else {

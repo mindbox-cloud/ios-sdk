@@ -16,7 +16,10 @@ public class MindBox {
     /// Singleton value for interaction with sdk
     /// It has setup DI container  as side effect  on init
     /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
-    public static var shared = MindBox()
+    public static var shared: MindBox = {
+        DIManager.shared.registerServices()
+        return MindBox()
+    }()
     
     // MARK: - Elements
 
@@ -34,9 +37,7 @@ public class MindBox {
 
     // MARK: - Init
 
-    private init() {
-        DIManager.shared.registerServices()
-    }
+    private init() {}
 
     // MARK: - MindBox
 
