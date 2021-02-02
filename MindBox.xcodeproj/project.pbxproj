@@ -204,7 +204,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
-				8460701F25C9425C00E2E56C /* MobileApplication */,
+				84B625D425C94F6F00AB6228 /* Repository */,
 				847F57FC25C88BA600147A9A /* Network */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				317054C025AEF81900AE624C /* DI */,
@@ -467,6 +467,14 @@
 				84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		84B625D425C94F6F00AB6228 /* Repository */ = {
+			isa = PBXGroup;
+			children = (
+				8460701F25C9425C00E2E56C /* MobileApplication */,
+			);
+			path = Repository;
 			sourceTree = "<group>";
 		};
 		84EAEDFF25C8B2C700726063 /* Routes */ = {
