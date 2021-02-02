@@ -22,7 +22,7 @@ class CoreController {
     // MARK: - Elements
 
     @Injected var logger: ILogger
-    @Injected var configurationStorage: IConfigurationStorage
+    @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var apiServices: IMindBoxAPIService
 
@@ -74,25 +74,13 @@ class CoreController {
     // MARK: - Private
 
     private func startInstallationCase(uuid: String?, installationId: String?) {
-
         if let uuid = uuid {
             self.installation(uuid: uuid, installationId: installationId)
         } else {
-            Utilities.fetch.getIDFA { (idfa) in
-                Log("idfa get success \(idfa)")
+            Utilities.fetch.getUDID { (uuid) in
+                self.installation(uuid: uuid.uuidString, installationId: installationId)
+                Log("Utilities.fetch.getIDFV fail")
                     .inChanel(.system).withType(.verbose).make()
-                self.installation(uuid: idfa.uuidString, installationId: installationId)
-            } onFail: {
-                Utilities.fetch.getIDFV(
-                    tryCount: 5) { (idfv) in
-                    self.installation(uuid: idfv.uuidString, installationId: installationId)
-                    Log("Utilities.fetch.getIDFV \(idfv.uuidString)")
-                        .inChanel(.system).withType(.verbose).make()
-                } onFail: {
-                    self.installation(uuid: UUID().uuidString, installationId: installationId)
-                    Log("Utilities.fetch.getIDFV fail")
-                        .inChanel(.system).withType(.verbose).make()
-                }
             }
         }
     }

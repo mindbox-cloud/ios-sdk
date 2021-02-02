@@ -20,7 +20,7 @@ public class MindBox {
     
     // MARK: - Elements
 
-    @Injected var configurationStorage: IConfigurationStorage
+    @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
 
     /// Internal process controller

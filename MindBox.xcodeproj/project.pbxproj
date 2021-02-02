@@ -9,8 +9,7 @@
 /* Begin PBXBuildFile section */
 		07EAF58061C245BF106CB8EC /* Pods_MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6F21C97912995A3CAF1756 /* Pods_MindBox.framework */; };
 		311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BB47825BF12570093EE14 /* LogerConfiguration.swift */; };
-		3132DFF625C2A811007FE358 /* DITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* DITest.swift */; };
-		3132E02225C3FAFF007FE358 /* UtilsTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132E02125C3FAFF007FE358 /* UtilsTest.swift */; };
+		3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* DITestCase.swift */; };
 		313B233A25ADEA0F00A1CB72 /* MindBox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* MindBox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */; };
 		313B234125ADEA0F00A1CB72 /* MindBox.h in Headers */ = {isa = PBXBuildFile; fileRef = 313B233325ADEA0F00A1CB72 /* MindBox.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -22,8 +21,6 @@
 		3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3159FFB125B5990300EE80E9 /* BaseResponse.swift */; };
 		317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C125AEF82D00AE624C /* InjectedPropertyWraper.swift */; };
 		317054C425AEF88E00AE624C /* DIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C325AEF88E00AE624C /* DIManager.swift */; };
-		317054C725AEF9DC00AE624C /* CoreAsembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C625AEF9DC00AE624C /* CoreAsembly.swift */; };
-		317054C925AEFA1F00AE624C /* APIAsembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C825AEFA1F00AE624C /* APIAsembly.swift */; };
 		317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CA25AF189800AE624C /* PersistenceStorage.swift */; };
 		317054CE25AF191F00AE624C /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CD25AF191F00AE624C /* Logger.swift */; };
 		317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */; };
@@ -68,6 +65,9 @@
 		84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E325C988FA00AB6228 /* URLValidator.swift */; };
 		84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E825C989C100AB6228 /* UDIDValidator.swift */; };
 		84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */; };
+		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
+		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
+		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
 		84EAEDF625C8B0D700726063 /* MBNetworkConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
@@ -87,8 +87,7 @@
 
 /* Begin PBXFileReference section */
 		311BB47825BF12570093EE14 /* LogerConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogerConfiguration.swift; sourceTree = "<group>"; };
-		3132DFF525C2A811007FE358 /* DITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITest.swift; sourceTree = "<group>"; };
-		3132E02125C3FAFF007FE358 /* UtilsTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilsTest.swift; sourceTree = "<group>"; };
+		3132DFF525C2A811007FE358 /* DITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITestCase.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* MindBox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MindBox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* MindBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MindBox.h; sourceTree = "<group>"; };
 		313B233425ADEA0F00A1CB72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -103,8 +102,6 @@
 		3159FFB125B5990300EE80E9 /* BaseResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseResponse.swift; sourceTree = "<group>"; };
 		317054C125AEF82D00AE624C /* InjectedPropertyWraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectedPropertyWraper.swift; sourceTree = "<group>"; };
 		317054C325AEF88E00AE624C /* DIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DIManager.swift; sourceTree = "<group>"; };
-		317054C625AEF9DC00AE624C /* CoreAsembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreAsembly.swift; sourceTree = "<group>"; };
-		317054C825AEFA1F00AE624C /* APIAsembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIAsembly.swift; sourceTree = "<group>"; };
 		317054CA25AF189800AE624C /* PersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceStorage.swift; sourceTree = "<group>"; };
 		317054CD25AF191F00AE624C /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryQueue.swift; sourceTree = "<group>"; };
@@ -148,6 +145,9 @@
 		84B625E325C988FA00AB6228 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
 		84B625E825C989C100AB6228 /* UDIDValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDIDValidator.swift; sourceTree = "<group>"; };
 		84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidatorsTestCase.swift; sourceTree = "<group>"; };
+		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
+		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
+		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
 		84EAEDF525C8B0D700726063 /* MBNetworkConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBNetworkConfiguration.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
@@ -181,14 +181,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		3132E02025C3FAD1007FE358 /* ServicesTest */ = {
-			isa = PBXGroup;
-			children = (
-				3132E02125C3FAFF007FE358 /* UtilsTest.swift */,
-			);
-			path = ServicesTest;
-			sourceTree = "<group>";
-		};
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
@@ -212,7 +204,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
-				84B625D425C94F6F00AB6228 /* Repository */,
+				84B625D425C94F6F00AB6228 /* NetworkRepository */,
 				847F57FC25C88BA600147A9A /* Network */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				317054C025AEF81900AE624C /* DI */,
@@ -231,10 +223,9 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				84B625F525C98EE000AB6228 /* DI */,
 				84B625EE25C98A8000AB6228 /* Validators */,
 				31EB907925C4083600368FFB /* Mock */,
-				3132E02025C3FAD1007FE358 /* ServicesTest */,
-				3132DFF525C2A811007FE358 /* DITest.swift */,
 				31ED2DEB25C444C400301FAD /* MBConfigurationTest.swift */,
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
@@ -252,13 +243,10 @@
 		314B38FB25AEE75B00E947B9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				317054D525B01BDD00AE624C /* LogManager.swift */,
 				317F1FD425B879B200B54346 /* FetchUtilits.swift */,
 				317054D225B01BDD00AE624C /* APIServises */,
 				317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */,
-				317054CC25AF191100AE624C /* Logger */,
-				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
-				3178A52725AEEB6B00290CB9 /* ConfigurationStorage */,
+				84D350C025C990980044E4E6 /* Storages */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -303,20 +291,10 @@
 			isa = PBXGroup;
 			children = (
 				3159FFA825B563BF00EE80E9 /* Odin  */,
-				317054C525AEF9CD00AE624C /* Assembly */,
 				317054C125AEF82D00AE624C /* InjectedPropertyWraper.swift */,
 				317054C325AEF88E00AE624C /* DIManager.swift */,
 			);
 			path = DI;
-			sourceTree = "<group>";
-		};
-		317054C525AEF9CD00AE624C /* Assembly */ = {
-			isa = PBXGroup;
-			children = (
-				317054C625AEF9DC00AE624C /* CoreAsembly.swift */,
-				317054C825AEFA1F00AE624C /* APIAsembly.swift */,
-			);
-			path = Assembly;
 			sourceTree = "<group>";
 		};
 		317054CC25AF191100AE624C /* Logger */ = {
@@ -352,7 +330,6 @@
 			children = (
 				3159FFAD25B5911000EE80E9 /* Requests */,
 				3159FFAE25B5911A00EE80E9 /* Responses */,
-				317054D825B01BDD00AE624C /* ErrorModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -361,7 +338,6 @@
 			isa = PBXGroup;
 			children = (
 				317054DB25B01BDD00AE624C /* Constants */,
-				317054DE25B01BDD00AE624C /* ErrorKey.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -378,6 +354,7 @@
 			isa = PBXGroup;
 			children = (
 				3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */,
+				84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */,
 			);
 			path = ConfigurationStorage;
 			sourceTree = "<group>";
@@ -394,6 +371,10 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				317054CC25AF191100AE624C /* Logger */,
+				84D350C725C992900044E4E6 /* IDFAFetcher.swift */,
+				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
+				317054D525B01BDD00AE624C /* LogManager.swift */,
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
 				317AF8FB25B844DB006348FA /* Utilits.swift */,
 			);
@@ -447,6 +428,8 @@
 		847F582425C8AE0100147A9A /* Types */ = {
 			isa = PBXGroup;
 			children = (
+				317054D825B01BDD00AE624C /* ErrorModel.swift */,
+				317054DE25B01BDD00AE624C /* ErrorKey.swift */,
 				847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */,
 				847F57FD25C88BB700147A9A /* HTTPMethod.swift */,
 			);
@@ -480,12 +463,12 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
-		84B625D425C94F6F00AB6228 /* Repository */ = {
+		84B625D425C94F6F00AB6228 /* NetworkRepository */ = {
 			isa = PBXGroup;
 			children = (
 				8460701F25C9425C00E2E56C /* MobileApplication */,
 			);
-			path = Repository;
+			path = NetworkRepository;
 			sourceTree = "<group>";
 		};
 		84B625E725C989B100AB6228 /* Validators */ = {
@@ -503,6 +486,23 @@
 				84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */,
 			);
 			path = Validators;
+			sourceTree = "<group>";
+		};
+		84B625F525C98EE000AB6228 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				3132DFF525C2A811007FE358 /* DITestCase.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
+		84D350C025C990980044E4E6 /* Storages */ = {
+			isa = PBXGroup;
+			children = (
+				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
+				3178A52725AEEB6B00290CB9 /* ConfigurationStorage */,
+			);
+			path = Storages;
 			sourceTree = "<group>";
 		};
 		84EAEDFF25C8B2C700726063 /* Routes */ = {
@@ -752,6 +752,7 @@
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
+				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				31A20D4125B6B08A00AAA0A3 /* MobileApplicationInfoUpdatedRequest.swift in Sources */,
 				317054ED25B01BDD00AE624C /* MindBoxAPIServicesProvider.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
@@ -760,7 +761,6 @@
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
 				8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */,
 				847F581B25C8A35C00147A9A /* NetworkConfiguration.swift in Sources */,
-				317054C725AEF9DC00AE624C /* CoreAsembly.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				317054E925B01BDD00AE624C /* RequestModel.swift in Sources */,
@@ -769,10 +769,11 @@
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
 				311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */,
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
+				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
-				317054C925AEFA1F00AE624C /* APIAsembly.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
+				84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */,
 				317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */,
 				84EAEE2225C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
@@ -787,8 +788,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
-				3132DFF625C2A811007FE358 /* DITest.swift in Sources */,
-				3132E02225C3FAFF007FE358 /* UtilsTest.swift in Sources */,
+				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,

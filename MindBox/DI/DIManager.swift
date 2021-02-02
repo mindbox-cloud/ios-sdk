@@ -41,7 +41,7 @@ final class DIManager: NSObject {
         }
 
 
-        container.registerInContainer { (r) -> IConfigurationStorage in
+        container.registerInContainer { (r) -> ConfigurationStorage in
             MBConfigurationStorage()
         }
 

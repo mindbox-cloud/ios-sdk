@@ -10,8 +10,7 @@
 import XCTest
 @testable import MindBox
 
-class DITest: XCTestCase {
-
+class DITestCase: XCTestCase {
 
     override func setUp() {
 
@@ -46,7 +45,7 @@ class DITest: XCTestCase {
     class DIExtractor {
         @Injected var logger: ILogger
         @Injected var fetchUtilities: IFetchUtilities
-        @Injected var configurationStorage: IConfigurationStorage
+        @Injected var configurationStorage: ConfigurationStorage
         @Injected var apiService: APIService
         @Injected var ambApiService: IMindBoxAPIService
         @Injected var persistenceStorage: PersistenceStorage
@@ -58,7 +57,7 @@ class DITest: XCTestCase {
     class DIExtractorOptionals {
         @InjectedOptional var logger: ILogger!
         @InjectedOptional var fetchUtilities: IFetchUtilities!
-        @InjectedOptional var configurationStorage: IConfigurationStorage!
+        @InjectedOptional var configurationStorage: ConfigurationStorage!
         @InjectedOptional var apiService: APIService!
         @InjectedOptional var ambApiService: IMindBoxAPIService!
         @InjectedOptional var persistenceStorage: PersistenceStorage!

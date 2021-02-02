@@ -14,16 +14,9 @@ protocol IFetchUtilities {
     var appVerson: String? {get}
     var sdkVersion: String? {get}
     var hostApplicationName: String? {get}
+    
+    func getUDID(completion: @escaping (UUID) -> Void)
 
-    func getIDFA(
-        onSuccess: @escaping ((UUID) -> Void),
-        onFail: @escaping (() -> Void)
-    )
-    func getIDFV(
-        tryCount: Int,
-        onSuccess: @escaping ((UUID)->Void),
-        onFail: @escaping (()->Void)
-    )
 }
 
 class Utilities {

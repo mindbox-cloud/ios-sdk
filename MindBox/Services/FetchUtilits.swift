@@ -46,76 +46,21 @@ class FetchUtilities: IFetchUtilities {
             return appBundle.bundleIdentifier
         }
     }
-
-    func getIDFA(
-        onSuccess: @escaping ((UUID)->Void),
-        onFail: @escaping (()->Void) // alwas on simul
-    ) {
-        func getAndExecute() {
-            DispatchQueue.global().async {
-
-
-                if let id = self.advertising, Utilities.checkUUID(string: id.uuidString) {
-                    onSuccess(id)
-                } else {
-                    onFail()
-                }
-            }
-        }
-
-        if #available(iOS 14, *) {
-            switch ATTrackingManager.trackingAuthorizationStatus {
-            case .authorized:
-                getAndExecute()
-            case .notDetermined:
-                guard Bundle.main.object(forInfoDictionaryKey: "NSUserTrackingUsageDescription") !=  nil else {
-                    // FIX: add Log
-                    onFail()
-                    return
-                }
-                ATTrackingManager.requestTrackingAuthorization { (status) in
-                    if status == .authorized {
-                        getAndExecute()
+    
+    func getUDID(completion: @escaping (UUID) -> Void) {
+        IDFAFetcher().fetch { (uuid) in
+            if let uuid = uuid {
+                completion(uuid)
+            } else {
+                IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+                    if let uuid = uuid {
+                        completion(uuid)
                     } else {
-                        onFail()
+                        completion(UUID())
                     }
                 }
-            default:
-                onFail()
             }
-        } else {
-            getAndExecute()
         }
-    }
-
-    func getIDFV(
-        tryCount: Int,
-        onSuccess: @escaping ((UUID)->Void),
-        onFail: @escaping (()->Void)
-    ) {
-		var countdown = tryCount
-        func fetchAndValidate() -> Bool {
-            if let idfv = UIDevice.current.identifierForVendor {
-                onSuccess(idfv)
-                return true
-            }
-            return false
-        }
-
-        let timer = Timer(timeInterval: 1, repeats: true) { (timer) in
-            guard countdown > 0 else {
-                onFail()
-                return
-            }
-            if fetchAndValidate() {
-                timer.invalidate()
-            }
-            countdown -= 1
-        }
-
-        timer.fire()
-        RunLoop.current.add(timer, forMode: .common)
-
     }
 
 }

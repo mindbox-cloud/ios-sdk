@@ -21,9 +21,9 @@ class NetworkManagerProvider: APIService {
         }
     }
 
-    let configurationStorage: IConfigurationStorage
+    let configurationStorage: ConfigurationStorage
 
-    init(configurationStorage: IConfigurationStorage) {
+    init(configurationStorage: ConfigurationStorage) {
         self.configurationStorage = configurationStorage
     }
     
