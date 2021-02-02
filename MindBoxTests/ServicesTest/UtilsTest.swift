@@ -24,14 +24,7 @@ class UtilsTest: XCTestCase {
 
     func test_checkUUID() throws {
 
-        XCTAssertFalse(Utilities.checkUUID(string: "00000000-0000-0000-0000-000000000000"))
-        XCTAssertFalse(Utilities.checkUUID(string: "00000000-0000-0000-0000"))
-
-        XCTAssertTrue(Utilities.checkUUID(string: "00000000-0000-0000-0000-000000000001"))
-        (0...100).forEach { _ in
-            XCTAssertTrue(Utilities.checkUUID(string: UUID().uuidString))
-        }
-
+        
     }
 
     func test_isValidURL() throws {
