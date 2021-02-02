@@ -12,6 +12,7 @@ import Foundation
 /// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
 
 public struct MBConfiguration: Decodable {
+    
     public let endpoint: String
     public let domain: String
     public var installationId: String?

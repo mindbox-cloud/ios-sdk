@@ -8,7 +8,7 @@
 
 import Foundation
 
-class MBPersistenceStorage: IPersistenceStorage {
+class MBPersistenceStorage: PersistenceStorage {
     
     // MARK: - Dependency
     let defaults: UserDefaults

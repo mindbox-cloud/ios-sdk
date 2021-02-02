@@ -45,7 +45,7 @@ final class DIManager: NSObject {
             MBConfigurationStorage()
         }
 
-        container.registerInContainer { (r) -> IPersistenceStorage in
+        container.registerInContainer { (r) -> PersistenceStorage in
             MBPersistenceStorage(defaults: UserDefaults.standard )
         }
 

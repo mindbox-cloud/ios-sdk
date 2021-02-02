@@ -9,7 +9,7 @@
 import Foundation
 @testable import MindBox
 
-class MockPersistenceStorage: IPersistenceStorage {
+class MockPersistenceStorage: PersistenceStorage {
     init() {
 
     }

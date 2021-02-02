@@ -18,7 +18,7 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
 
-        DIManager.shared.container.registerInContainer { _ -> IPersistenceStorage in
+        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
             return MockPersistenceStorage()
         }
 
@@ -73,7 +73,7 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
             apnsTokenDidUpdatedFlag = false
         }
 
-        let persistensStorage: IPersistenceStorage = diManager.container.resolveOrDie()
+        let persistensStorage: PersistenceStorage = diManager.container.resolveOrDie()
 
         persistensStorage.reset()
         coreController = CoreController()

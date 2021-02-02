@@ -21,10 +21,10 @@ public class MindBox {
     // MARK: - Elements
 
     @Injected var configurationStorage: IConfigurationStorage
-    @Injected var persistenceStorage: IPersistenceStorage
+    @Injected var persistenceStorage: PersistenceStorage
 
     /// Internal process controller
-    let coreController: CoreController
+    let coreController = CoreController()
 
     // MARK: - Property
 
@@ -35,7 +35,6 @@ public class MindBox {
 
     private init() {
         DIManager.shared.registerServices()
-        coreController = CoreController()
     }
 
     // MARK: - MindBox
@@ -58,9 +57,7 @@ public class MindBox {
 
     /// - Returns: APNSToken sent to the analytics system
     public var APNSToken: String? {
-        get {
-            persistenceStorage.apnsToken
-        }
+        return persistenceStorage.apnsToken
     }
 
     /// - Returns: version from bundle

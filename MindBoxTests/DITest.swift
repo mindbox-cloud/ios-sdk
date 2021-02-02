@@ -49,7 +49,7 @@ class DITest: XCTestCase {
         @Injected var configurationStorage: IConfigurationStorage
         @Injected var apiService: APIService
         @Injected var ambApiService: IMindBoxAPIService
-        @Injected var persistenceStorage: IPersistenceStorage
+        @Injected var persistenceStorage: PersistenceStorage
 
         init() {
         }
@@ -61,7 +61,7 @@ class DITest: XCTestCase {
         @InjectedOptional var configurationStorage: IConfigurationStorage!
         @InjectedOptional var apiService: APIService!
         @InjectedOptional var ambApiService: IMindBoxAPIService!
-        @InjectedOptional var persistenceStorage: IPersistenceStorage!
+        @InjectedOptional var persistenceStorage: PersistenceStorage!
 
         init() {
         }

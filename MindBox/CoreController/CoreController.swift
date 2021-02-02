@@ -23,7 +23,7 @@ class CoreController {
 
     @Injected var logger: ILogger
     @Injected var configurationStorage: IConfigurationStorage
-    @Injected var persistenceStorage: IPersistenceStorage
+    @Injected var persistenceStorage: PersistenceStorage
     @Injected var apiServices: IMindBoxAPIService
 
     // MARK: - Property
