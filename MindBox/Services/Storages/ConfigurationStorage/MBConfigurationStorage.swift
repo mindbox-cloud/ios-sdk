@@ -22,5 +22,9 @@ class MBConfigurationStorage: ConfigurationStorage {
         endpoint = configuration.endpoint
         startConfiguration = configuration
     }
+    
+    func set(uuid: String) {
+        startConfiguration?.deviceUUID = uuid
+    }
 
 }

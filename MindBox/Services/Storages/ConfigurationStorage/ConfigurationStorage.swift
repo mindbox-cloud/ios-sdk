@@ -15,4 +15,7 @@ protocol ConfigurationStorage: class {
     var startConfiguration: MBConfiguration? { get }
 
     func save(configuration: MBConfiguration)
+    
+    func set(uuid: String)
+    
 }
