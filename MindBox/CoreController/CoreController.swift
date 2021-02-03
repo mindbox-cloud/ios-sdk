@@ -91,6 +91,8 @@ class CoreController {
     }
 
     private func installation(uuid: String, installationId: String?) {
+        configurationStorage.set(uuid: uuid)
+
         let endpoint = configurationStorage.endpoint
         let apnsToken = persistenceStorage.apnsToken
 
