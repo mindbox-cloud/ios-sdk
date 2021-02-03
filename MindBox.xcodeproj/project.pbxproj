@@ -56,6 +56,9 @@
 		84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E825C989C100AB6228 /* UDIDValidator.swift */; };
 		84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */; };
 		84CC798025CABB0B00C062BD /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC797F25CABB0B00C062BD /* Event.swift */; };
+		84CC798725CACABF00C062BD /* EventRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC798625CACABF00C062BD /* EventRoute.swift */; };
+		84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC799225CACF0C00C062BD /* EventRepository.swift */; };
+		84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC799625CACF5500C062BD /* MBEventRepository.swift */; };
 		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
@@ -129,6 +132,9 @@
 		84B625E825C989C100AB6228 /* UDIDValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDIDValidator.swift; sourceTree = "<group>"; };
 		84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidatorsTestCase.swift; sourceTree = "<group>"; };
 		84CC797F25CABB0B00C062BD /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
+		84CC798625CACABF00C062BD /* EventRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRoute.swift; sourceTree = "<group>"; };
+		84CC799225CACF0C00C062BD /* EventRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRepository.swift; sourceTree = "<group>"; };
+		84CC799625CACF5500C062BD /* MBEventRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBEventRepository.swift; sourceTree = "<group>"; };
 		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
@@ -393,6 +399,7 @@
 		84B625D425C94F6F00AB6228 /* NetworkRepository */ = {
 			isa = PBXGroup;
 			children = (
+				84CC798525CACAAA00C062BD /* Event */,
 				8460701F25C9425C00E2E56C /* MobileApplication */,
 			);
 			path = NetworkRepository;
@@ -429,6 +436,16 @@
 				84CC797F25CABB0B00C062BD /* Event.swift */,
 			);
 			path = Model;
+			sourceTree = "<group>";
+		};
+		84CC798525CACAAA00C062BD /* Event */ = {
+			isa = PBXGroup;
+			children = (
+				84CC798625CACABF00C062BD /* EventRoute.swift */,
+				84CC799225CACF0C00C062BD /* EventRepository.swift */,
+				84CC799625CACF5500C062BD /* MBEventRepository.swift */,
+			);
+			path = Event;
 			sourceTree = "<group>";
 		};
 		84D350C025C990980044E4E6 /* Storages */ = {
@@ -691,6 +708,7 @@
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */,
+				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
@@ -712,6 +730,7 @@
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
+				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
@@ -721,6 +740,7 @@
 				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
+				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */,
 				317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */,
 				84EAEE2225C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift in Sources */,

@@ -21,7 +21,7 @@ struct Event {
     
     let enqueueTimeStamp: Double
     
-    let eventType: Type
+    let type: Type
     
     let body: String
     
