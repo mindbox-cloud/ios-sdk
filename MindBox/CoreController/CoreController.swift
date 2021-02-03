@@ -53,6 +53,8 @@ class CoreController {
     private func startInstallationCase(uuid: String?, installationId: String?) {
         if let uuid = uuid {
             installation(uuid: uuid, installationId: installationId)
+            Log("Configuration uuid:\(uuid)")
+                .inChanel(.system).withType(.verbose).make()
         } else {
             utilitiesFetcher.getUDID { [weak self] (uuid) in
                 self?.installation(uuid: uuid.uuidString, installationId: installationId)

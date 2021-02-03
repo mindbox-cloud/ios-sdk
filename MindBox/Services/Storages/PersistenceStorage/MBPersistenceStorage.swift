@@ -86,19 +86,19 @@ extension MBPersistenceStorage {
         }
         
         private let key: Key
-        private let defaultValue: T
+        private let defaultValue: T?
         private let defaults: UserDefaults
         
-        init(key: Key, defaultValue: T, defaults: UserDefaults = .standard) {
+        init(key: Key, defaultValue: T?, defaults: UserDefaults = .standard) {
             self.key = key
             self.defaultValue = defaultValue
             self.defaults = defaults
         }
         
-        var wrappedValue: T {
+        var wrappedValue: T? {
             get {
                 // Read value from UserDefaults
-                return defaults.object(forKey: key.rawValue) as? T ?? defaultValue
+                return defaults.value(forKey: key.rawValue) as? T ?? defaultValue
             }
             set {
                 // Set value to UserDefaults
