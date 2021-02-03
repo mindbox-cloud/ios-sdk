@@ -12,15 +12,15 @@ class MBEventRepository: EventRepository {
     
     private let fetcher: NetworkFetcher
     
-    private let configuration: MBConfiguration
+    private let configuration: ConfigurationStorage
     
-    init(fetcher: NetworkFetcher, configuration: MBConfiguration) {
+    init(fetcher: NetworkFetcher, configuration: ConfigurationStorage) {
         self.fetcher = fetcher
         self.configuration = configuration
     }
     
     func send(event: Event, completion: @escaping Completion<BaseResponse>) {
-        let route = EventRoute.asyncEvent(event: event, configuration: configuration)
+        let route = EventRoute.asyncEvent(event: event, configuration: configuration.startConfiguration!)
         fetcher.request(route: route, completion: completion)
     }
     

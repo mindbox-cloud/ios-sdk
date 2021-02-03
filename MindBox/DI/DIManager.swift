@@ -46,7 +46,7 @@ final class DIManager: NSObject {
         }
 
         container.registerInContainer { (r) -> PersistenceStorage in
-            MBPersistenceStorage(defaults: .standard )
+            MBPersistenceStorage(defaults: .standard)
         }
 
         container.register { (r) -> UtilitiesFetcher in
@@ -65,6 +65,10 @@ final class DIManager: NSObject {
         
         container.register { (r) -> MobileApplicationRepository in
             MBMobileApplicationRepository(fetcher: r.resolveOrDie())
+        }
+        
+        container.register { (r) -> EventRepository in
+            MBEventRepository(fetcher: r.resolveOrDie(), configuration: r.resolveOrDie())
         }
     }
 

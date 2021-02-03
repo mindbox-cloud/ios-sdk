@@ -48,6 +48,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
                         completion(uuid)
                     } else {
                         Log("IDFVFetcher fail")
+                            .inChanel(.system).withType(.verbose).make()
                         let uuid = UUID()
                         completion(uuid)
                         Log("Generated uuid:\(uuid.uuidString)")
