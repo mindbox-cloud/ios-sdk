@@ -10,6 +10,6 @@ import Foundation
 
 protocol EventRepository {
     
-    func send(event: Event, completion: @escaping Completion<BaseResponse>)
+    func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void)
     
 }

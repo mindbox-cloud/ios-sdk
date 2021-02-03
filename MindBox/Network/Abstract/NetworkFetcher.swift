@@ -10,6 +10,7 @@ import Foundation
 
 protocol NetworkFetcher {
     
-    func request<T: BaseResponse>(route: Route, completion: @escaping Completion<T>)
-    
+    func requestObject<T: BaseResponse>(route: Route, completion: @escaping Completion<T>)
+    func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void))
+
 }

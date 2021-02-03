@@ -19,7 +19,7 @@ class MBEventRepository: EventRepository {
         self.configuration = configuration
     }
     
-    func send(event: Event, completion: @escaping Completion<BaseResponse>) {
+    func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void) {
         let route = EventRoute.asyncEvent(event: event, configuration: configuration.startConfiguration!)
         fetcher.request(route: route, completion: completion)
     }

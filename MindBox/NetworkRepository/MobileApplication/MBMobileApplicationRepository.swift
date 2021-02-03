@@ -36,7 +36,7 @@ class MBMobileApplicationRepository: MobileApplicationRepository {
                 isNotificationsEnabled: isNotificationsEnabled
             )
         )
-        fetcher.request(
+        fetcher.requestObject(
             route: MobileApplicationRoute.installed(wrapper),
             completion: completion
         )
@@ -59,7 +59,7 @@ class MBMobileApplicationRepository: MobileApplicationRepository {
                 isNotificationsEnabled: isNotificationsEnabled
             )
         )
-        fetcher.request(
+        fetcher.requestObject(
             route: MobileApplicationRoute.infoUpdated(wrapper),
             completion: completion
         )

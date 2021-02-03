@@ -10,11 +10,15 @@ import Foundation
 @testable import MindBox
 
 class MockNetworkFetcher: NetworkFetcher {
-
+    
     init() {
     }
     
-    func request<T>(route: Route, completion: @escaping Completion<T>) where T : BaseResponse {
+    func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
+        
+    }
+    
+    func requestObject<T>(route: Route, completion: @escaping Completion<T>) where T : BaseResponse {
         let bundle = Bundle(for: MockNetworkFetcher.self)
         let path = bundle.path(forResource: "SuccessResponse", ofType: "json")!
         let url = URL(fileURLWithPath: path)
