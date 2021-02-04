@@ -37,7 +37,6 @@ class EventRepositoryTestCase: XCTestCase {
         let event = Event(
             transactionId: UUID().uuidString,
             dateTimeOffset: Date().timeIntervalSince1970,
-            enqueueTimeStamp: Date().timeIntervalSince1970,
             type: .installed,
             body: ""
         )

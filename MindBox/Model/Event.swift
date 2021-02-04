@@ -18,9 +18,7 @@ struct Event {
     let transactionId: String
     
     let dateTimeOffset: Double
-    
-    let enqueueTimeStamp: Double
-    
+        
     let type: Type
     
     let body: String
