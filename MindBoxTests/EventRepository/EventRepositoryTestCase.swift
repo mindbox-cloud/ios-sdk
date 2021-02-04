@@ -36,7 +36,7 @@ class EventRepositoryTestCase: XCTestCase {
         let repository: EventRepository = DIManager.shared.container.resolveOrDie()
         let event = Event(
             transactionId: UUID().uuidString,
-            dateTimeOffset: Date().timeIntervalSince1970,
+            enqueueTimeStamp: Date().timeIntervalSince1970,
             type: .installed,
             body: ""
         )
