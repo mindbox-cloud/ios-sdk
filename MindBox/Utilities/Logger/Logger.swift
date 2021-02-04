@@ -11,6 +11,7 @@ import Foundation
 enum MBLoggerChanels: String {
     case system = "🤖"
     case network = "📡"
+    case database = "📖"
     case none
 }
 

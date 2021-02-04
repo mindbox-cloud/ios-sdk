@@ -64,6 +64,9 @@
 		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
+		84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */; };
+		84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */; };
+		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
 		84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */; };
@@ -142,6 +145,9 @@
 		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
+		84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MBDatabase.xcdatamodel; sourceTree = "<group>"; };
+		84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepository.swift; sourceTree = "<group>"; };
+		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
 		84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalledWrapper.swift; sourceTree = "<group>"; };
@@ -200,6 +206,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				84DEE8A625CC02AF00C98CC7 /* Database */,
 				84CC797E25CABABB00C062BD /* Model */,
 				84B625D425C94F6F00AB6228 /* NetworkRepository */,
 				847F57FC25C88BA600147A9A /* Network */,
@@ -471,6 +478,16 @@
 			path = Storages;
 			sourceTree = "<group>";
 		};
+		84DEE8A625CC02AF00C98CC7 /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */,
+				84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */,
+				84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
 		84EAEDFF25C8B2C700726063 /* Routes */ = {
 			isa = PBXGroup;
 			children = (
@@ -729,11 +746,13 @@
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
+				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
 				317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */,
 				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
 				84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
+				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
@@ -762,6 +781,7 @@
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,
+				84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1045,6 +1065,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */,
+			);
+			currentVersion = 84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */;
+			path = MBDatabase.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 313B232725ADEA0F00A1CB72 /* Project object */;
 }

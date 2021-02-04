@@ -1,0 +1,27 @@
+//
+//  MBDatabaseError.swift
+//  MindBox
+//
+//  Created by Maksim Kazachkov on 04.02.2021.
+//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//
+
+import Foundation
+
+public enum MBDatabaseError: LocalizedError {
+    
+    case unableCreateDatabaseModel
+    case unableCreateManagedObjectModel(with: URL)
+    case unableToLoadPeristentStore(localizedDescription: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .unableCreateDatabaseModel:
+            return "Unable to create MBDatabase.xcdatamodel"
+        case .unableCreateManagedObjectModel(let url):
+            return "Unable to create NSManagedObjectModel from url: \(url)"
+        case .unableToLoadPeristentStore(let localizedDescription):
+            return "Unable to load persistent store with error: \(localizedDescription)"
+        }
+    }
+}
