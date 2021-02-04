@@ -9,7 +9,8 @@
 import Foundation
 @testable import MindBox
 
-class MockPersistenceStorage: IPersistenceStorage {
+class MockPersistenceStorage: PersistenceStorage {
+    
     init() {
 
     }
@@ -18,19 +19,18 @@ class MockPersistenceStorage: IPersistenceStorage {
 
     var installationId: String?
 
-    var wasInstaled: Bool = false
+    var isInstalled: Bool = false
 
     var apnsToken: String?
 
     var apnsTokenSaveDate: Date?
 
-    func resetStorage() {
+    func reset() {
         deviceUUID = nil
         installationId = nil
-        wasInstaled = false
+        isInstalled = false
         apnsToken = nil
         apnsTokenSaveDate = nil
     }
-
 
 }

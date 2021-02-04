@@ -7,6 +7,7 @@
 //
 
 import Foundation
+
 extension MindBox {
 
     public enum Errors: LocalizedError {

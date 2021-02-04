@@ -18,16 +18,17 @@ public class MindBox {
     /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
     public static var shared: MindBox = {
         DIManager.shared.registerServices()
-		return MindBox()
+        return MindBox()
     }()
-
+    
     // MARK: - Elements
 
-    @Injected var configurationStorage: IConfigurationStorage
-    @Injected var persistenceStorage: IPersistenceStorage
-
+    @Injected var configurationStorage: ConfigurationStorage
+    @Injected var persistenceStorage: PersistenceStorage
+    @Injected var utilitiesFetcher: UtilitiesFetcher
+    
     /// Internal process controller
-    let coreController: CoreController
+    let coreController = CoreController()
 
     // MARK: - Property
 
@@ -36,9 +37,7 @@ public class MindBox {
 
     // MARK: - Init
 
-    private init() {
-        coreController = CoreController()
-    }
+    private init() {}
 
     // MARK: - MindBox
 
@@ -60,15 +59,13 @@ public class MindBox {
 
     /// - Returns: APNSToken sent to the analytics system
     public var APNSToken: String? {
-        get {
-            persistenceStorage.apnsToken
-        }
+        return persistenceStorage.apnsToken
     }
 
     /// - Returns: version from bundle
     public var sdkVersion: String {
         get {
-            return Utilities.fetch.sdkVersion ?? "unknown"
+            return utilitiesFetcher.sdkVersion ?? "unknown"
         }
     }
 

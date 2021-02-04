@@ -8,6 +8,7 @@
 
 @propertyWrapper
 struct Injected<Value> {
+    
     private(set) var wrappedValue: Value
 
     init() {
@@ -22,6 +23,7 @@ struct Injected<Value> {
 
 @propertyWrapper
 struct InjectedOptional<Value> {
+    
     private(set) var wrappedValue: Optional<Value>
 
     init() {
@@ -31,4 +33,5 @@ struct InjectedOptional<Value> {
 
         wrappedValue = value
     }
+    
 }
