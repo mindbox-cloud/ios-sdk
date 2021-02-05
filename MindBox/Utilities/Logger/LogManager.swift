@@ -33,6 +33,7 @@ internal extension Date {
 }
 
 struct Log {
+    
     @Injected static var logerServise: ILogger
 
     // MARK: - Properties
@@ -41,19 +42,15 @@ struct Log {
         formatter.dateFormat = "hh:mm:ss.SSSS"
         return formatter
     }
-    //    private static var isLoggingEnabled: Bool {
-    //        #if DEBUG
-    //        return true
-    //        #else
-    //        return false
-    //        #endif
-    //    }
+    private var isLoggingEnabled: Bool {
+        return true
+    }
 
     typealias Meta = (filename: String, line: Int, funcName: String)
     var text: String = ""
     var date: Date?
     var type: LogType?
-    var chanel: MBLoggerChanels = .none
+    var chanel: MBLoggerChanels = .system
     var meta: Meta?
     var borders: (start: String, end: String) = ("[","\n]")
 
@@ -65,7 +62,10 @@ struct Log {
     }
 
     func make() {
+        guard isLoggingEnabled else { return }
+
         var header = ""
+        header += chanel.rawValue + " "
         if let type = type {
             header += type.rawValue + " "
         }
@@ -76,10 +76,11 @@ struct Log {
         if let meta = meta {
             header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         }
-
-
         
-        Log.logerServise.log(inChanel: .system, text: borders.start + header + "\n" + text + borders.end)
+        Log.logerServise.log(
+            inChanel: chanel,
+            text: borders.start + header + "\n" + text + borders.end
+        )
     }
 
     func inChanel(_ chanel: MBLoggerChanels) -> Log {
@@ -134,8 +135,6 @@ struct Log {
     }
     
     init(error: ErrorModel) {
-        //        guard isLoggingEnabled else { return }
-        
         let errorKey: String? = error.errorKey
         let errorMessage: String? = error.errorMessage
         
