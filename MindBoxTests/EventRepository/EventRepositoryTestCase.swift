@@ -13,7 +13,7 @@ class EventRepositoryTestCase: XCTestCase {
     
     var coreController: CoreController!
     
-    var isMockNetworkFetcher = false
+    var isMockNetworkFetcher = true
     
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.

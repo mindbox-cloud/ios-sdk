@@ -14,6 +14,24 @@ class MBDatabaseRepository {
     private let persistentContainer: NSPersistentContainer
     let context: NSManagedObjectContext
     
+    let countLimit = 10000
+    
+    private(set) var count: Int = 0 {
+        didSet {
+            Log("Count didSet with value: \(count)")
+                .inChanel(.database).withType(.debug).make()
+            guard count > countLimit else {
+                return
+            }
+            do {
+                try cleanUp()
+            } catch {
+                Log("Unable to remove first element")
+                    .inChanel(.database).withType(.error).make()
+            }
+        }
+    }
+    
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) throws {
         let bundle = Bundle(for: MBDatabaseRepository.self)
         let momdName = "MBDatabase"
@@ -47,9 +65,11 @@ class MBDatabaseRepository {
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
+        self.count = try countEvents()
     }
     
     // MARK: - CRUD operations
+    
     func create(event: Event) throws {
         try context.performAndWait {
             let entity = CDEvent(context: context)
@@ -60,6 +80,7 @@ class MBDatabaseRepository {
             Log("Adding event with transactionId: \(event.transactionId)")
                 .inChanel(.database).withType(.info).make()
             try saveContext()
+            count += 1
         }
     }
     
@@ -106,6 +127,47 @@ class MBDatabaseRepository {
             }
             context.delete(entity)
             try saveContext()
+            count -= 1
+        }
+    }
+    
+    func countEvents() throws -> Int {
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+        return try context.performAndWait {
+            Log("Events count limit: \(countLimit)")
+                .inChanel(.database).withType(.info).make()
+            Log("Counting events")
+                .inChanel(.database).withType(.info).make()
+            do {
+                let count = try context.count(for: request)
+                Log("Events count: \(count)")
+                    .inChanel(.database).withType(.info).make()
+                return count
+            } catch {
+                Log("Counting events failed with error: \(error.localizedDescription)")
+                    .inChanel(.database).withType(.error).make()
+                throw error
+            }
+        }
+    }
+    
+    private func cleanUp() throws {
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+        request.fetchLimit = 1
+        
+        try context.performAndWait {
+            Log("Removing first element")
+                .inChanel(.database).withType(.info).make()
+            guard let entity = try findOrFetch(by: request) else {
+                Log("Unable to fetch first element")
+                    .inChanel(.database).withType(.error).make()
+                return
+            }
+            Log("Removed first element with transactionId: \(String(describing: entity.transactionId))")
+                .inChanel(.database).withType(.info).make()
+            context.delete(entity)
+            try saveContext()
+            count -= 1
         }
     }
     

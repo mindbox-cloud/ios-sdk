@@ -136,6 +136,26 @@ class DatabaseRepositoryTestCase: XCTestCase {
         testCreateEvents()
     }
     
+    func testLimitCount() {
+        let events = generateEvents(count: databaseRepository.countLimit)
+        do {
+            try events.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        let limitEvents = generateEvents(count: 1)
+        do {
+            try limitEvents.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        XCTAssertTrue(databaseRepository.count <= databaseRepository.countLimit)
+    }
+    
     func testPerformanceExample() throws {
         // This is an example of a performance test case.
         self.measure {
