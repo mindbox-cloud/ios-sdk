@@ -15,7 +15,7 @@ class MBDatabaseRepository {
     private let context: NSManagedObjectContext
     
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) throws {
-        let bundle = Bundle(for: Self.self)
+        let bundle = Bundle(for: MBDatabaseRepository.self)
         let momdName = "MBDatabase"
         guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
@@ -63,13 +63,13 @@ class MBDatabaseRepository {
         }
     }
     
-    func read(by predicate: NSPredicate) throws -> CDEvent? {
+    func read(by transactionId: String) throws -> CDEvent? {
         try context.performAndWait {
-            Log("Reading event with predicate: \(predicate.predicateFormat)")
-                .inChanel(.database).withType(.error).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+            Log("Reading event with transactionId: \(transactionId)")
+                .inChanel(.database).withType(.info).make()
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: transactionId)
             guard let entity = try findOrFetch(by: request) else {
-                Log("Unable find event with predicate: \(predicate.predicateFormat)")
+                Log("Unable find event with transactionId: \(transactionId)")
                     .inChanel(.database).withType(.error).make()
                 return nil
             }
