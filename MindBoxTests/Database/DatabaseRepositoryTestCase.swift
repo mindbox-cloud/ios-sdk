@@ -7,13 +7,13 @@
 //
 
 import XCTest
+import CoreData
 @testable import MindBox
-
 
 class DatabaseRepositoryTestCase: XCTestCase {
     
     var databaseRepository: MockDatabaseRepository!
-    
+        
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
@@ -121,6 +121,19 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
         waitForExpectations(timeout: 1, handler: nil)
+    }
+    
+    func testHasEvents() {
+        NotificationCenter.default.addObserver(
+            forName: .NSManagedObjectContextObjectsDidChange,
+            object: databaseRepository.context,
+            queue: nil) { (notification) in
+            guard let context = notification.object as? NSManagedObjectContext else {
+                return
+            }
+            XCTAssertTrue(context.insertedObjects.count > 0)
+        }
+        testCreateEvents()
     }
     
     func testPerformanceExample() throws {

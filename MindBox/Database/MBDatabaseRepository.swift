@@ -10,9 +10,9 @@ import Foundation
 import CoreData
 
 class MBDatabaseRepository {
-    
+        
     private let persistentContainer: NSPersistentContainer
-    private let context: NSManagedObjectContext
+    let context: NSManagedObjectContext
     
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) throws {
         let bundle = Bundle(for: MBDatabaseRepository.self)
