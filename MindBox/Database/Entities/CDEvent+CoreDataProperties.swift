@@ -24,7 +24,7 @@ extension CDEvent {
     
     public class func fetchRequest(by transactionId: String) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-        request.predicate = NSPredicate(format: "%K == %@", [#keyPath(CDEvent.transactionId), transactionId])
+        request.predicate = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(CDEvent.transactionId), transactionId])
         return request
     }
     
