@@ -44,6 +44,8 @@
 		840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */; };
 		840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */; };
 		840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */; };
+		840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */; };
+		840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */; };
 		8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */; };
 		8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -129,6 +131,8 @@
 		840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataClass.swift"; sourceTree = "<group>"; };
 		840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObjectContext+.swift"; sourceTree = "<group>"; };
+		840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepository.swift; sourceTree = "<group>"; };
+		840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryTestCase.swift; sourceTree = "<group>"; };
 		8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRepository.swift; sourceTree = "<group>"; };
 		8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBMobileApplicationRepository.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
@@ -233,6 +237,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				840C387D25CD15B100D50183 /* Database */,
 				84CC79A325CAE12400C062BD /* EventRepository */,
 				84FCD3B325CA0FD300D1E574 /* Mock */,
 				84B625F525C98EE000AB6228 /* DI */,
@@ -369,6 +374,15 @@
 				840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		840C387D25CD15B100D50183 /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */,
+				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
+			);
+			path = Database;
 			sourceTree = "<group>";
 		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
@@ -821,9 +835,11 @@
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
+				840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
+				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
