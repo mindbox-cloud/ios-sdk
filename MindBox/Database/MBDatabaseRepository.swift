@@ -89,9 +89,8 @@ class MBDatabaseRepository {
                     .inChanel(.database).withType(.error).make()
                 return
             }
-            // TODO: - update retry offset
-            Log("Did update event with transactionId: \(entity.transactionId ?? "undefined")")
-                .inChanel(.database).withType(.info).make()
+            entity.retryTimestamp = Date().timeIntervalSince1970
+            try saveContext()
         }
     }
     
