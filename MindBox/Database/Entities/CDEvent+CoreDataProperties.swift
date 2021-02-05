@@ -14,7 +14,15 @@ import CoreData
 extension CDEvent {
 
     @nonobjc public class func fetchRequest() -> NSFetchRequest<CDEvent> {
-        return NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        request.sortDescriptors = [NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true)]
+        return request
+    }
+    
+    public class func fetchRequest(by transactionId: String) -> NSFetchRequest<CDEvent> {
+        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        request.predicate = NSPredicate(format: "%K == %@", [#keyPath(CDEvent.transactionId), transactionId])
+        return request
     }
 
     @NSManaged public var body: String?

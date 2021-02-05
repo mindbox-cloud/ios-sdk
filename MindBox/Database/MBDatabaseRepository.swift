@@ -49,4 +49,97 @@ class MBDatabaseRepository {
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
     }
     
+    // MARK: - CRUD operations
+    func create(event: Event) throws {
+        try context.performAndWait {
+            let entity = CDEvent(context: context)
+            entity.transactionId = event.transactionId
+            entity.timestamp = Date().timeIntervalSince1970
+            entity.type = event.type.rawValue
+            entity.body = event.body
+            Log("Adding event with transactionId: \(event.transactionId)")
+                .inChanel(.database).withType(.info).make()
+            try saveContext()
+        }
+    }
+    
+    func read(by predicate: NSPredicate) throws -> CDEvent? {
+        try context.performAndWait {
+            Log("Reading event with predicate: \(predicate.predicateFormat)")
+                .inChanel(.database).withType(.error).make()
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+            guard let entity = try findOrFetch(by: request) else {
+                Log("Unable find event with predicate: \(predicate.predicateFormat)")
+                    .inChanel(.database).withType(.error).make()
+                return nil
+            }
+            Log("Did read event with transactionId: \(entity.transactionId ?? "undefined")")
+                .inChanel(.database).withType(.info).make()
+            return entity
+        }
+    }
+    
+    func update(event: Event) throws {
+        try context.performAndWait {
+            Log("Updating event with transactionId: \(event.transactionId)")
+                .inChanel(.database).withType(.info).make()
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: event.transactionId)
+            guard let entity = try findOrFetch(by: request) else {
+                Log("Unable find event with transactionId: \(event.transactionId)")
+                    .inChanel(.database).withType(.error).make()
+                return
+            }
+            // TODO: - update retry offset
+            Log("Did update event with transactionId: \(entity.transactionId ?? "undefined")")
+                .inChanel(.database).withType(.info).make()
+        }
+    }
+    
+    func delete(event: Event) throws {
+        try context.performAndWait {
+            Log("Removing event with transactionId: \(event.transactionId)")
+                .inChanel(.database).withType(.info).make()
+            let request = CDEvent.fetchRequest(by: event.transactionId)
+            guard let entity = try findOrFetch(by: request) else {
+                Log("Unable find event with transactionId: \(event.transactionId)")
+                    .inChanel(.database).withType(.error).make()
+                return
+            }
+            context.delete(entity)
+            try saveContext()
+        }
+    }
+    
+    private func saveContext() throws {
+        guard context.hasChanges else {
+            return
+        }
+        do {
+            try context.save()
+            Log("Context did save")
+                .inChanel(.database).withType(.info).make()
+        } catch {
+            context.rollback()
+            Log("Context did save failed with error: \(error)")
+                .inChanel(.database).withType(.error).make()
+            throw error
+        }
+    }
+    
+    private func findOrFetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
+        try find(by: request) ?? fetch(by: request)
+    }
+    
+    private func find(by request: NSFetchRequest<CDEvent>) -> CDEvent? {
+        context.registeredObjects
+            .compactMap { $0 as? CDEvent }
+            .filter { !$0.isFault }
+            .filter { request.predicate?.evaluate(with: $0) ?? false }
+            .first
+    }
+    
+    private func fetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
+        try context.fetch(request).first
+    }
+        
 }
