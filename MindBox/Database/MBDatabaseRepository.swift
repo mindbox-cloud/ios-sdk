@@ -16,13 +16,13 @@ class MBDatabaseRepository {
     
     let countLimit = 10000
     
-    var onCount: ((Int) -> Void)?
+    var onObjectsDidChange: (() -> Void)?
     
     private(set) var count: Int = 0 {
         didSet {
-            onCount?(count)
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
+            onObjectsDidChange?()
             guard count > countLimit else {
                 return
             }
@@ -60,7 +60,7 @@ class MBDatabaseRepository {
                 Log("Persistent store url: \(url.description)")
                     .inChanel(.database).withType(.info).make()
             } else {
-                Log("Unable find persistentStoreURL")
+                Log("Unable to find persistentStoreURL")
                     .inChanel(.database).withType(.error).make()
             }
             persistentStoreURL = persistentStoreDescription.url
@@ -71,7 +71,7 @@ class MBDatabaseRepository {
                 Log("Removing database at url: \(url.absoluteString)")
                     .inChanel(.database).withType(.info).make()
                 if FileManager.default.fileExists(atPath: url.path) {
-                    Log("Unable find database at path: \(url.path)")
+                    Log("Unable to find database at path: \(url.path)")
                         .inChanel(.database).withType(.error).make()
                     do {
                         try FileManager.default.removeItem(at: url)
@@ -102,7 +102,7 @@ class MBDatabaseRepository {
             entity.timestamp = Date().timeIntervalSince1970
             entity.type = event.type.rawValue
             entity.body = event.body
-            Log("Adding event with transactionId: \(event.transactionId)")
+            Log("Creating event with transactionId: \(event.transactionId)")
                 .inChanel(.database).withType(.info).make()
             try saveContext()
             count += 1
@@ -115,7 +115,7 @@ class MBDatabaseRepository {
                 .inChanel(.database).withType(.info).make()
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: transactionId)
             guard let entity = try findOrFetch(by: request) else {
-                Log("Unable find event with transactionId: \(transactionId)")
+                Log("Unable to find event with transactionId: \(transactionId)")
                     .inChanel(.database).withType(.error).make()
                 return nil
             }
@@ -131,7 +131,7 @@ class MBDatabaseRepository {
                 .inChanel(.database).withType(.info).make()
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: event.transactionId)
             guard let entity = try findOrFetch(by: request) else {
-                Log("Unable find event with transactionId: \(event.transactionId)")
+                Log("Unable to find event with transactionId: \(event.transactionId)")
                     .inChanel(.database).withType(.error).make()
                 return
             }
@@ -142,11 +142,11 @@ class MBDatabaseRepository {
     
     func delete(event: Event) throws {
         try context.performAndWait {
-            Log("Removing event with transactionId: \(event.transactionId)")
+            Log("Deleting event with transactionId: \(event.transactionId)")
                 .inChanel(.database).withType(.info).make()
             let request = CDEvent.fetchRequest(by: event.transactionId)
             guard let entity = try findOrFetch(by: request) else {
-                Log("Unable find event with transactionId: \(event.transactionId)")
+                Log("Unable to find event with transactionId: \(event.transactionId)")
                     .inChanel(.database).withType(.error).make()
                 return
             }
@@ -158,13 +158,18 @@ class MBDatabaseRepository {
     
     func query(fetchLimit: Int) throws ->  [Event] {
         try context.performAndWait {
-            Log("Reading events with count: \(count)")
+            Log("Quering events with fetchLimit: \(fetchLimit)")
                 .inChanel(.database).withType(.info).make()
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
             request.fetchLimit = fetchLimit
             let events = try context.fetch(request)
-            Log("Did read events")
+            Log("Did query events")
                 .inChanel(.database).withType(.info).make()
+            guard !events.isEmpty else {
+                Log("Unable to find events")
+                    .inChanel(.delivery).withType(.info).make()
+                return []
+            }
             events.forEach {
                 Log("Event with transactionId: \(String(describing: $0.transactionId))")
                     .inChanel(.database).withType(.info).make()
@@ -211,7 +216,7 @@ class MBDatabaseRepository {
                 return
             }
             events.forEach {
-                Log("Removing event with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
+                Log("Deleting event with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
                     .inChanel(.database).withType(.info).make()
                 context.delete($0)
                 count -= 1
@@ -245,14 +250,14 @@ class MBDatabaseRepository {
         request.fetchLimit = 1
         
         try context.performAndWait {
-            Log("Removing first element")
+            Log("Deleting first element")
                 .inChanel(.database).withType(.info).make()
             guard let entity = try findOrFetch(by: request) else {
                 Log("Unable to fetch first element")
                     .inChanel(.database).withType(.error).make()
                 return
             }
-            Log("Removed first element with transactionId: \(String(describing: entity.transactionId))")
+            Log("Deleted first element with transactionId: \(String(describing: entity.transactionId))")
                 .inChanel(.database).withType(.info).make()
             context.delete(entity)
             try saveContext()
