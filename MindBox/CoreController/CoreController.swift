@@ -103,7 +103,7 @@ class CoreController {
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.mindBoxDidInstalled()
             case .failure(let error):
-                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
             }
         }
     }

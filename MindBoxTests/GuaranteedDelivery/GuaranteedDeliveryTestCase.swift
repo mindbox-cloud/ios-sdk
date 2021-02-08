@@ -32,7 +32,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         let configurationStorage: ConfigurationStorage = DIManager.shared.container.resolveOrDie()
-        configurationStorage.save(configuration: configuration)
+        configurationStorage.setConfiguration(configuration)
         configurationStorage.set(uuid: "0593B5CC-1479-4E45-A7D3-F0E8F9B40898")
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
