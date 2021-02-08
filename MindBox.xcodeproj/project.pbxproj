@@ -46,6 +46,8 @@
 		840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */; };
 		840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */; };
 		840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */; };
+		840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */; };
+		840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38AB25D11BB200D50183 /* DeliveryOperation.swift */; };
 		8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */; };
 		8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -133,6 +135,8 @@
 		840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObjectContext+.swift"; sourceTree = "<group>"; };
 		840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepository.swift; sourceTree = "<group>"; };
 		840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryTestCase.swift; sourceTree = "<group>"; };
+		840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryManager.swift; sourceTree = "<group>"; };
+		840C38AB25D11BB200D50183 /* DeliveryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryOperation.swift; sourceTree = "<group>"; };
 		8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRepository.swift; sourceTree = "<group>"; };
 		8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBMobileApplicationRepository.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
@@ -216,6 +220,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
 				84DEE8A625CC02AF00C98CC7 /* Database */,
 				84CC797E25CABABB00C062BD /* Model */,
 				84B625D425C94F6F00AB6228 /* NetworkRepository */,
@@ -383,6 +388,15 @@
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
 			);
 			path = Database;
+			sourceTree = "<group>";
+		};
+		840C38A425D118B900D50183 /* GuaranteedDeliveryManager */ = {
+			isa = PBXGroup;
+			children = (
+				840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */,
+				840C38AB25D11BB200D50183 /* DeliveryOperation.swift */,
+			);
+			path = GuaranteedDeliveryManager;
 			sourceTree = "<group>";
 		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
@@ -794,6 +808,7 @@
 				84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
+				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
@@ -823,6 +838,7 @@
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,
+				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
