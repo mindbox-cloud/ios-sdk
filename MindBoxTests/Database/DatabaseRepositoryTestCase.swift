@@ -13,7 +13,7 @@ import CoreData
 class DatabaseRepositoryTestCase: XCTestCase {
     
     var databaseRepository: MockDatabaseRepository!
-        
+    
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
@@ -156,9 +156,21 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertTrue(databaseRepository.count <= databaseRepository.countLimit)
     }
     
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
+    func testMonthLimitDate() {
+        XCTAssertNotNil(CDEvent.monthLimitDate)
+    }
+    
+    func testLifeTimeLimit() {
+        let event = generateEvent()
+        do {
+            try databaseRepository.create(event: event)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            try databaseRepository.removeDeprecatedEventsIfNeeded()
+        } catch {
+            XCTFail(error.localizedDescription)
         }
     }
     
