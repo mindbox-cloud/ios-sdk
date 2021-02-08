@@ -14,6 +14,8 @@ class DatabaseRepositoryTestCase: XCTestCase {
     
     var databaseRepository: MockDatabaseRepository!
     
+    let eventGenerator = EventGenerator()
+    
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
@@ -30,7 +32,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvent() {
-        let event = generateEvent()
+        let event = eventGenerator.generateEvent()
         let expectation = self.expectation(description: "create event")
         do {
             try databaseRepository.create(event: event)
@@ -43,7 +45,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     
     func testCreateEvents() {
         let count = 50
-        let events = generateEvents(count: count)
+        let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
         do {
             try events.forEach {
@@ -57,7 +59,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testReadEvent() {
-        let event = generateEvent()
+        let event = eventGenerator.generateEvent()
         let expectation = self.expectation(description: "read event")
         do {
             try databaseRepository.create(event: event)
@@ -76,7 +78,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testUpdateEvent() {
-        let event = generateEvent()
+        let event = eventGenerator.generateEvent()
         var initailRetryTimeStamp: Double?
         var updatedRetryTimeStamp: Double?
         do {
@@ -107,7 +109,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testDeleteEvent() {
-        let event = generateEvent()
+        let event = eventGenerator.generateEvent()
         do {
             try databaseRepository.create(event: event)
         } catch {
@@ -137,7 +139,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
-        let events = generateEvents(count: databaseRepository.countLimit)
+        let events = eventGenerator.generateEvents(count: databaseRepository.countLimit)
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
@@ -145,7 +147,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        let limitEvents = generateEvents(count: 1)
+        let limitEvents = eventGenerator.generateEvents(count: 1)
         do {
             try limitEvents.forEach {
                 try databaseRepository.create(event: $0)
@@ -161,7 +163,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLifeTimeLimit() {
-        let event = generateEvent()
+        let event = eventGenerator.generateEvent()
         do {
             try databaseRepository.create(event: event)
         } catch {
@@ -173,30 +175,5 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
-    
-    private func randomString(length: Int = 10) -> String {
-        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<length).map{ _ in letters.randomElement()! })
-    }
-    
-    private func generateEvent() -> Event {
-        Event(
-            transactionId: UUID().uuidString,
-            enqueueTimeStamp: Date().timeIntervalSince1970,
-            type: .installed,
-            body: randomString()
-        )
-    }
-    
-    private func generateEvents(count: Int) -> [Event] {
-        return (0...count).map { _ in
-            Event(
-                transactionId: UUID().uuidString,
-                enqueueTimeStamp: Date().timeIntervalSince1970,
-                type: .installed,
-                body: randomString()
-            )
-        }
-    }
-    
+
 }
