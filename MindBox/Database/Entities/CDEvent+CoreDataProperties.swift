@@ -15,6 +15,9 @@ extension CDEvent {
     
     @nonobjc public class func fetchRequest() -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        if let monthLimitDateStamp = monthLimitDate?.timeIntervalSince1970 {
+            request.predicate = NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
+        }
         request.sortDescriptors = [
             NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
             NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true)
@@ -26,6 +29,22 @@ extension CDEvent {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         request.predicate = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(CDEvent.transactionId), transactionId])
         return request
+    }
+    
+    public class func deprecatedEventsFetchRequest() -> NSFetchRequest<CDEvent> {
+        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        if let monthLimitDateStamp = monthLimitDate?.timeIntervalSince1970 {
+            request.predicate = NSPredicate(format: "%K <= %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
+        }
+        return request
+    }
+    
+    static var monthLimitDate: Date? {
+        let calendar: Calendar = .current
+        guard let monthLimitDate = calendar.date(byAdding: .month, value: -6, to: Date()) else {
+            return nil
+        }
+        return monthLimitDate
     }
     
     @NSManaged public var body: String?

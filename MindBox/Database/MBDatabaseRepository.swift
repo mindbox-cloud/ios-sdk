@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 
 class MBDatabaseRepository {
-        
+    
     private let persistentContainer: NSPersistentContainer
     let context: NSManagedObjectContext
     
@@ -66,6 +66,7 @@ class MBDatabaseRepository {
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
         self.count = try countEvents()
+        try self.removeDeprecatedEventsIfNeeded()
     }
     
     // MARK: - CRUD operations
@@ -131,7 +132,32 @@ class MBDatabaseRepository {
         }
     }
     
-    func countEvents() throws -> Int {
+    func query(by request: NSFetchRequest<CDEvent>) throws ->  [CDEvent] {
+        try context.fetch(request)
+    }
+    
+    func removeDeprecatedEventsIfNeeded() throws {
+        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
+        try context.performAndWait {
+            Log("Finding deprecated elements")
+                .inChanel(.database).withType(.info).make()
+            let events = try context.fetch(request)
+            guard !events.isEmpty else {
+                Log("Deprecated elements not found")
+                    .inChanel(.database).withType(.info).make()
+                return
+            }
+            events.forEach {
+                Log("Removing event with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
+                    .inChanel(.database).withType(.info).make()
+                context.delete($0)
+                count -= 1
+            }
+            try saveContext()
+        }
+    }
+    
+    private func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(countLimit)")
@@ -202,5 +228,5 @@ class MBDatabaseRepository {
     private func fetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
         try context.fetch(request).first
     }
-        
+    
 }
