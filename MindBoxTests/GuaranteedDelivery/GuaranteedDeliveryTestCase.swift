@@ -56,7 +56,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         waitForExpectations(timeout: 10, handler: nil)
     }
     
-    func testDeliverPreviousEvents() {
+    func testDeliverMultipleEvents() {
         let events = eventGenerator.generateEvents(count: 10)
         events.forEach {
             do {
@@ -65,7 +65,9 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 XCTFail(error.localizedDescription)
             }
         }
-        
+        let exists = NSPredicate(format: "isDelivering == false")
+        expectation(for: exists, evaluatedWith: self, handler: nil)
+        waitForExpectations(timeout: 10, handler: nil)
     }
     
     private func generateAndSaveToDatabaseEvents() {
