@@ -46,19 +46,40 @@ class MBDatabaseRepository {
         if let persistentStoreDescriptions = persistentStoreDescriptions {
             persistentContainer.persistentStoreDescriptions = persistentStoreDescriptions
         }
+        persistentContainer.persistentStoreDescriptions.forEach {
+            $0.shouldMigrateStoreAutomatically = true
+            $0.shouldInferMappingModelAutomatically = true
+        }
         var loadPersistentStoresError: Error?
+        var persistentStoreURL: URL?
         persistentContainer.loadPersistentStores { (persistentStoreDescription, error) in
-            if let persistentStoreURL = persistentStoreDescription.url {
-                Log("Persistent store url: \(persistentStoreURL.description)")
+            if let url = persistentStoreDescription.url {
+                Log("Persistent store url: \(url.description)")
                     .inChanel(.database).withType(.info).make()
             } else {
                 Log("Unable find persistentStoreURL")
                     .inChanel(.database).withType(.error).make()
             }
-            
+            persistentStoreURL = persistentStoreDescription.url
             loadPersistentStoresError = error
         }
         if let error = loadPersistentStoresError {
+            if let url = persistentStoreURL {
+                Log("Removing database at url: \(url.absoluteString)")
+                    .inChanel(.database).withType(.info).make()
+                if FileManager.default.fileExists(atPath: url.path) {
+                    Log("Unable find database at path: \(url.path)")
+                        .inChanel(.database).withType(.error).make()
+                    do {
+                        try FileManager.default.removeItem(at: url)
+                        Log("Removed database")
+                            .inChanel(.database).withType(.info).make()
+                    } catch {
+                        Log("Removed database failed with error: \(error.localizedDescription)")
+                            .inChanel(.database).withType(.error).make()
+                    }
+                }
+            }
             throw MBDatabaseError.unableToLoadPeristentStore(localizedDescription: error.localizedDescription)
         }
         self.persistentContainer = persistentContainer
