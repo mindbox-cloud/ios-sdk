@@ -22,7 +22,6 @@
 		317054C425AEF88E00AE624C /* DIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C325AEF88E00AE624C /* DIManager.swift */; };
 		317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CA25AF189800AE624C /* PersistenceStorage.swift */; };
 		317054CE25AF191F00AE624C /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CD25AF191F00AE624C /* Logger.swift */; };
-		317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */; };
 		317054E625B01BDD00AE624C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D525B01BDD00AE624C /* LogManager.swift */; };
 		317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D825B01BDD00AE624C /* ErrorModel.swift */; };
 		317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DE25B01BDD00AE624C /* ErrorKey.swift */; };
@@ -48,6 +47,8 @@
 		840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */; };
 		840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */; };
 		840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38AB25D11BB200D50183 /* DeliveryOperation.swift */; };
+		840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */; };
+		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
 		8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */; };
 		8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -111,7 +112,6 @@
 		317054C325AEF88E00AE624C /* DIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DIManager.swift; sourceTree = "<group>"; };
 		317054CA25AF189800AE624C /* PersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceStorage.swift; sourceTree = "<group>"; };
 		317054CD25AF191F00AE624C /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
-		317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryQueue.swift; sourceTree = "<group>"; };
 		317054D525B01BDD00AE624C /* LogManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		317054D825B01BDD00AE624C /* ErrorModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorModel.swift; sourceTree = "<group>"; };
 		317054DE25B01BDD00AE624C /* ErrorKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorKey.swift; sourceTree = "<group>"; };
@@ -137,6 +137,8 @@
 		840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryTestCase.swift; sourceTree = "<group>"; };
 		840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryManager.swift; sourceTree = "<group>"; };
 		840C38AB25D11BB200D50183 /* DeliveryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryOperation.swift; sourceTree = "<group>"; };
+		840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryTestCase.swift; sourceTree = "<group>"; };
+		840C38B725D13A7D00D50183 /* EventGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGenerator.swift; sourceTree = "<group>"; };
 		8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRepository.swift; sourceTree = "<group>"; };
 		8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBMobileApplicationRepository.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				840C38B625D13A6800D50183 /* Helpers */,
 				840C38AF25D12E7800D50183 /* GuaranteedDelivery */,
 				840C387D25CD15B100D50183 /* Database */,
 				84CC79A325CAE12400C062BD /* EventRepository */,
@@ -265,7 +268,6 @@
 		314B38FB25AEE75B00E947B9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */,
 				84D350C025C990980044E4E6 /* Storages */,
 			);
 			path = Services;
@@ -314,14 +316,6 @@
 				317054D525B01BDD00AE624C /* LogManager.swift */,
 			);
 			path = Logger;
-			sourceTree = "<group>";
-		};
-		317054CF25AF380400AE624C /* GuaranteedDeliveryQueue */ = {
-			isa = PBXGroup;
-			children = (
-				317054D025AF383600AE624C /* GuaranteedDeliveryQueue.swift */,
-			);
-			path = GuaranteedDeliveryQueue;
 			sourceTree = "<group>";
 		};
 		3178A52725AEEB6B00290CB9 /* ConfigurationStorage */ = {
@@ -403,8 +397,17 @@
 		840C38AF25D12E7800D50183 /* GuaranteedDelivery */ = {
 			isa = PBXGroup;
 			children = (
+				840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */,
 			);
 			path = GuaranteedDelivery;
+			sourceTree = "<group>";
+		};
+		840C38B625D13A6800D50183 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				840C38B725D13A7D00D50183 /* EventGenerator.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
@@ -841,7 +844,6 @@
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */,
-				317054D125AF383600AE624C /* GuaranteedDeliveryQueue.swift in Sources */,
 				84EAEE2225C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
@@ -855,6 +857,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
@@ -862,6 +865,7 @@
 				840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
+				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,

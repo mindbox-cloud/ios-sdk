@@ -21,33 +21,45 @@ final class GuaranteedDeliveryManager {
         return queue
     }()
     
-    private var isDelivering = false
+    private(set) var isDelivering = false
     
     init() {
-        databaseRepository.onCount = { [weak self] in
-            self?.scheduleOperations(fetchLimit: $0)
-        }
-        scheduleOperations(fetchLimit: databaseRepository.count)
+        databaseRepository.onObjectsDidChange = updateScheduler
+        updateScheduler()
+    }
+    
+    func updateScheduler() {
+        let count = databaseRepository.count
+        guard count != 0 else { return }
+        scheduleOperations(fetchLimit: count)
     }
     
     func scheduleOperations(fetchLimit: Int = 20) {
         guard !isDelivering else {
             return
         }
+        Log("Start enqueueing events")
+            .inChanel(.delivery).withType(.info).make()
         isDelivering = true
         guard let events = try? databaseRepository.query(fetchLimit: fetchLimit) else {
+            isDelivering = false
             return
         }
         guard !events.isEmpty else {
+            isDelivering = false
             return
         }
         let completion = BlockOperation { [weak self] in
+            Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
+                .inChanel(.delivery).withType(.info).make()
             self?.isDelivering = false
-            self?.scheduleOperations()
+            self?.updateScheduler()
         }
         let delivery = events.map {
             DeliveryOperation(event: $0)
         }
+        Log("Enqueued event count: \(delivery.count)")
+            .inChanel(.delivery).withType(.info).make()
         delivery.forEach {
             completion.addDependency($0)
         }
