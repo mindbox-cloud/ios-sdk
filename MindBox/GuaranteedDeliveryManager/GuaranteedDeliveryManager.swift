@@ -29,11 +29,11 @@ final class GuaranteedDeliveryManager {
     }
     
     init() {
-        databaseRepository.onObjectsDidChange = updateScheduler
-        updateScheduler()
+        databaseRepository.onObjectsDidChange = schedulerIfNeeded
+        schedulerIfNeeded()
     }
     
-    func updateScheduler() {
+    func schedulerIfNeeded() {
         let count = databaseRepository.count
         guard count != 0 else { return }
         scheduleOperations(fetchLimit: count)
@@ -58,7 +58,7 @@ final class GuaranteedDeliveryManager {
             Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
                 .inChanel(.delivery).withType(.info).make()
             self?.isDelivering = false
-            self?.updateScheduler()
+            self?.schedulerIfNeeded()
         }
         let delivery = events.map {
             DeliveryOperation(event: $0)

@@ -72,6 +72,7 @@
 		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
+		84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC49CB25D1832300D5D758 /* EventWrapper.swift */; };
 		84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */; };
 		84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */; };
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
@@ -161,6 +162,7 @@
 		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
+		84DC49CB25D1832300D5D758 /* EventWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWrapper.swift; sourceTree = "<group>"; };
 		84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MBDatabase.xcdatamodel; sourceTree = "<group>"; };
 		84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepository.swift; sourceTree = "<group>"; };
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
@@ -253,14 +255,8 @@
 				84B625EE25C98A8000AB6228 /* Validators */,
 				31ED2DEB25C444C400301FAD /* MBConfigurationTest.swift */,
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
+				84DC49D525D185A600D5D758 /* Supporting Files */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
-				31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */,
-				31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */,
-				31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */,
-				31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */,
-				31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */,
-				31EB907225C402F900368FFB /* TestConfig2.plist */,
-				31EB907125C402F900368FFB /* TestConfig3.plist */,
 			);
 			path = MindBoxTests;
 			sourceTree = "<group>";
@@ -379,8 +375,8 @@
 		840C387D25CD15B100D50183 /* Database */ = {
 			isa = PBXGroup;
 			children = (
-				840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */,
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
+				840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -515,6 +511,7 @@
 		84CC798525CACAAA00C062BD /* Event */ = {
 			isa = PBXGroup;
 			children = (
+				84DC49CB25D1832300D5D758 /* EventWrapper.swift */,
 				84CC798625CACABF00C062BD /* EventRoute.swift */,
 				84CC799225CACF0C00C062BD /* EventRepository.swift */,
 				84CC799625CACF5500C062BD /* MBEventRepository.swift */,
@@ -538,6 +535,20 @@
 				3178A52725AEEB6B00290CB9 /* ConfigurationStorage */,
 			);
 			path = Storages;
+			sourceTree = "<group>";
+		};
+		84DC49D525D185A600D5D758 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */,
+				31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */,
+				31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */,
+				31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */,
+				31A20D4725B6CB7D00AAA0A3 /* TestConfig1.plist */,
+				31EB907225C402F900368FFB /* TestConfig2.plist */,
+				31EB907125C402F900368FFB /* TestConfig3.plist */,
+			);
+			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		84DEE8A625CC02AF00C98CC7 /* Database */ = {
@@ -825,6 +836,7 @@
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
+				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DIManager.swift in Sources */,
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
