@@ -11,18 +11,16 @@ import Foundation
 protocol MobileApplicationRepository {
     
     func installed(
-        endpoint: String,
-        deviceUUID: String,
         installationId: String?,
         apnsToken: String?,
         isNotificationsEnabled: Bool,
-        completion: @escaping Completion<BaseResponse>)
+        completion: @escaping Completion<BaseResponse>
+    )
 
     func infoUpdated(
-        endpoint: String,
-        deviceUUID: String,
         apnsToken: String?,
         isNotificationsEnabled: Bool,
-        completion: @escaping Completion<BaseResponse>)
+        completion: @escaping Completion<BaseResponse>
+    )
     
 }

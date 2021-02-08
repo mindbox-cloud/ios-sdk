@@ -24,7 +24,7 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
             MockNetworkFetcher()
         }
         DIManager.shared.container.register { (r) -> MobileApplicationRepository in
-            MBMobileApplicationRepository(fetcher: r.resolveOrDie())
+            MBMobileApplicationRepository()
         }
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }

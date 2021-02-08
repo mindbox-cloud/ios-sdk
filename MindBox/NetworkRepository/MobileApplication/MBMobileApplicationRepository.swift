@@ -10,30 +10,40 @@ import Foundation
 
 class MBMobileApplicationRepository: MobileApplicationRepository {
     
-    private let fetcher: NetworkFetcher
+    @Injected var fetcher: NetworkFetcher
     
-    init(fetcher: NetworkFetcher) {
-        self.fetcher = fetcher
-    }
-    
+    @Injected var configurationStorage: ConfigurationStorage
+        
     func installed(
-        endpoint: String,
-        deviceUUID: String,
         installationId: String?,
         apnsToken: String?,
         isNotificationsEnabled: Bool,
         completion: @escaping Completion<BaseResponse>
     ) {
+        guard let configuration = configurationStorage.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        guard let deviceUUID = configuration.deviceUUID else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "DeviceUUID is not set")
+            )
+            completion(.failure(error))
+            return
+        }
         let wrapper = MobileApplicationInstalledWrapper(
-            query: MobileApplicationInstalledWrapper.Query(
-                endpointId: endpoint,
-                deviceUUID: deviceUUID
-            ),
+            endpointId: configuration.endpoint,
+            deviceUUID: deviceUUID,
             body: MobileApplicationInstalledWrapper.Body(
                 token: apnsToken ?? "",
                 isTokenAvailable: apnsToken?.isEmpty == false,
-                installationId: installationId ?? "",
-                isNotificationsEnabled: isNotificationsEnabled
+                isNotificationsEnabled: isNotificationsEnabled,
+                installationId: installationId ?? ""
             )
         )
         fetcher.requestObject(
@@ -43,16 +53,28 @@ class MBMobileApplicationRepository: MobileApplicationRepository {
     }
     
     func infoUpdated(
-        endpoint: String,
-        deviceUUID: String,
         apnsToken: String?,
         isNotificationsEnabled: Bool,
         completion: @escaping Completion<BaseResponse>) {
+        guard let configuration = configurationStorage.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        guard let deviceUUID = configuration.deviceUUID else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "DeviceUUID is not set")
+            )
+            completion(.failure(error))
+            return
+        }
         let wrapper = MobileApplicationInfoUpdatedWrapper(
-            query: MobileApplicationInfoUpdatedWrapper.Query(
-                endpointId: endpoint,
-                deviceUUID: deviceUUID
-            ),
+            endpointId: configuration.endpoint,
+            deviceUUID: deviceUUID,
             body: MobileApplicationInfoUpdatedWrapper.Body(
                 token: apnsToken ?? "",
                 isTokenAvailable: apnsToken?.isEmpty == false,

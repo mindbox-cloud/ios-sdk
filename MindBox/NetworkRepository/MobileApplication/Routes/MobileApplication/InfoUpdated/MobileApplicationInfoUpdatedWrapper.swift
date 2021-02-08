@@ -10,7 +10,12 @@ import Foundation
 
 struct MobileApplicationInfoUpdatedWrapper {
     
-    let query: Query
+    let operation = "MobileApplicationInfoUpdated"
+
+    let endpointId: String
+    
+    let deviceUUID: String
+    
     let body: Body
     
     struct Body: Codable {
@@ -20,12 +25,5 @@ struct MobileApplicationInfoUpdatedWrapper {
         let isNotificationsEnabled: Bool
 
     }
-    
-    struct Query {
-        let endpointId: String
-        let operation = "MobileApplicationInfoUpdated"
-        let deviceUUID: String
-    }
-
     
 }

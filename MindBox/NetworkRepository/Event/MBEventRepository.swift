@@ -10,17 +10,12 @@ import Foundation
 
 class MBEventRepository: EventRepository {
     
-    private let fetcher: NetworkFetcher
+    @Injected var fetcher: NetworkFetcher
     
-    private let configuration: ConfigurationStorage
-    
-    init(fetcher: NetworkFetcher, configuration: ConfigurationStorage) {
-        self.fetcher = fetcher
-        self.configuration = configuration
-    }
+    @Injected var configuration: ConfigurationStorage
     
     func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void) {
-        guard let configuration = configuration.startConfiguration else {
+        guard let configuration = configuration.configuration else {
             let error = ErrorModel(
                 errorKey: ErrorKey.configuration.rawValue,
                 rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")

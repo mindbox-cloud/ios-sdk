@@ -9,12 +9,10 @@
 import Foundation
 
 protocol ConfigurationStorage: class {
-    
-    var domain: String { get set }
-    var endpoint: String { get set }
-    var startConfiguration: MBConfiguration? { get }
 
-    func save(configuration: MBConfiguration)
+    var configuration: MBConfiguration? { get }
+
+    func setConfiguration(_ configuration: MBConfiguration)
     
     func set(uuid: String)
     

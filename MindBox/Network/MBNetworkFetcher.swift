@@ -11,23 +11,16 @@ import UIKit.UIDevice
 
 class MBNetworkFetcher: NetworkFetcher {
 
-    private let configuration: ConfigurationStorage
+    @Injected var configurationStorage: ConfigurationStorage
     
     private let session: URLSession
-
-    init(
-        configuration: ConfigurationStorage,
-        utilitiesFetcher: UtilitiesFetcher
-    ) {
-        self.configuration = configuration
-
+    
+    init(utilitiesFetcher: UtilitiesFetcher) {
+        let sessionConfiguration: URLSessionConfiguration = .default
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
         let hostApplicationName = utilitiesFetcher.sdkVersion ?? "unknow"
-
         let userAgent: String = "\(hostApplicationName)\(appVersion), \(DeviceModelHelper.os)\(DeviceModelHelper.iOSVersion), Apple, \(DeviceModelHelper.model)"
-
-        let sessionConfiguration = URLSessionConfiguration.default
         sessionConfiguration.httpAdditionalHeaders = [
             "Mindbox-Integration": "iOS-SDK",
             "Mindbox-Integration-Version": sdkVersion,
@@ -38,6 +31,14 @@ class MBNetworkFetcher: NetworkFetcher {
     }
     
     func requestObject<T: BaseResponse>(route: Route, completion: @escaping Completion<T>) {
+        guard let configuration = configurationStorage.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
@@ -86,6 +87,14 @@ class MBNetworkFetcher: NetworkFetcher {
     }
     
     func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
+        guard let configuration = configurationStorage.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)

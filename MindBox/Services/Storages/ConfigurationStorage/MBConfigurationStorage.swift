@@ -10,21 +10,14 @@ import Foundation
 
 class MBConfigurationStorage: ConfigurationStorage {
     
-    var domain: String = ""
-    var endpoint: String = ""
-    
-    private(set) var startConfiguration: MBConfiguration?
+    var configuration: MBConfiguration?
 
-    init() {}
-
-    func save(configuration: MBConfiguration) {
-        domain = configuration.domain
-        endpoint = configuration.endpoint
-        startConfiguration = configuration
+    func setConfiguration(_ configuration: MBConfiguration) {
+        self.configuration = configuration
     }
     
     func set(uuid: String) {
-        startConfiguration?.deviceUUID = uuid
+        configuration?.deviceUUID = uuid
     }
 
 }
