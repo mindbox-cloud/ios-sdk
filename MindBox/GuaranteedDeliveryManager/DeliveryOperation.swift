@@ -48,6 +48,7 @@ class DeliveryOperation: Operation {
             case .failure(let error):
                 Log("Did send event failed with error: \(error.localizedDescription)")
                     .inChanel(.delivery).withType(.error).make()
+                try? self.databaseRepository.update(event: self.event)
                 self.isFinished = true
             }
         }
