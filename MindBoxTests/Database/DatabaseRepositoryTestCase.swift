@@ -44,7 +44,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        let count = 50
+        let count = 100
         let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
         do {
@@ -126,30 +126,16 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testHasEvents() {
-        NotificationCenter.default.addObserver(
-            forName: .NSManagedObjectContextObjectsDidChange,
-            object: databaseRepository.context,
-            queue: nil) { (notification) in
-            guard let context = notification.object as? NSManagedObjectContext else {
-                return
-            }
-            XCTAssertTrue(context.insertedObjects.count > 0)
+        databaseRepository.onObjectsDidChange = { [self] in
+            XCTAssertTrue(databaseRepository.count > 0)
         }
         testCreateEvents()
     }
     
     func testLimitCount() {
-        let events = eventGenerator.generateEvents(count: databaseRepository.countLimit)
+        let events = eventGenerator.generateEvents(count: 2*databaseRepository.countLimit)
         do {
             try events.forEach {
-                try databaseRepository.create(event: $0)
-            }
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        let limitEvents = eventGenerator.generateEvents(count: 1)
-        do {
-            try limitEvents.forEach {
                 try databaseRepository.create(event: $0)
             }
         } catch {
@@ -175,5 +161,5 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
-
+    
 }

@@ -40,18 +40,32 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
-    func testGuaranteedDeliveryManager() {
-        let expectation = self.expectation(description: "GuaranteedDelivery")
+    var isDelivering: Bool {
+        guaranteedDeliveryManager.isDelivering
+    }
+    
+    func testIsDelivering() {
         let event = eventGenerator.generateEvent()
         do {
             try databaseRepository.create(event: event)
         } catch {
             XCTFail(error.localizedDescription)
         }
-        if !guaranteedDeliveryManager.isDelivering {
-            expectation.fulfill()
+        let exists = NSPredicate(format: "isDelivering == false")
+        expectation(for: exists, evaluatedWith: self, handler: nil)
+        waitForExpectations(timeout: 10, handler: nil)
+    }
+    
+    func testDeliverPreviousEvents() {
+        let events = eventGenerator.generateEvents(count: 10)
+        events.forEach {
+            do {
+                try databaseRepository.create(event: $0)
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
         }
-        waitForExpectations(timeout: 10)
+        
     }
     
     private func generateAndSaveToDatabaseEvents() {

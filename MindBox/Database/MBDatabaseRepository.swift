@@ -12,7 +12,7 @@ import CoreData
 class MBDatabaseRepository {
     
     private let persistentContainer: NSPersistentContainer
-    let context: NSManagedObjectContext
+    private let context: NSManagedObjectContext
     
     let countLimit = 10000
     
@@ -252,7 +252,7 @@ class MBDatabaseRepository {
         try context.performAndWait {
             Log("Deleting first element")
                 .inChanel(.database).withType(.info).make()
-            guard let entity = try findOrFetch(by: request) else {
+            guard let entity = try fetch(by: request) else {
                 Log("Unable to fetch first element")
                     .inChanel(.database).withType(.error).make()
                 return

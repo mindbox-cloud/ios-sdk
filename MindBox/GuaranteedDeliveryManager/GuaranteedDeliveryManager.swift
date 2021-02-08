@@ -21,7 +21,12 @@ final class GuaranteedDeliveryManager {
         return queue
     }()
     
-    private(set) var isDelivering = false
+    private(set) var isDelivering = false {
+        didSet {
+            Log("isDelivering didSet to value: \(isDelivering)")
+                .inChanel(.delivery).withType(.info).make()
+        }
+    }
     
     init() {
         databaseRepository.onObjectsDidChange = updateScheduler
@@ -58,7 +63,7 @@ final class GuaranteedDeliveryManager {
         let delivery = events.map {
             DeliveryOperation(event: $0)
         }
-        Log("Enqueued event count: \(delivery.count)")
+        Log("Enqueued events count: \(delivery.count)")
             .inChanel(.delivery).withType(.info).make()
         delivery.forEach {
             completion.addDependency($0)
