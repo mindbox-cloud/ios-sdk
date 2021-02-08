@@ -16,8 +16,11 @@ class MBDatabaseRepository {
     
     let countLimit = 10000
     
+    var onCount: ((Int) -> Void)?
+    
     private(set) var count: Int = 0 {
         didSet {
+            onCount?(count)
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
             guard count > countLimit else {
@@ -150,6 +153,45 @@ class MBDatabaseRepository {
             context.delete(entity)
             try saveContext()
             count -= 1
+        }
+    }
+    
+    func query(fetchLimit: Int) throws ->  [Event] {
+        try context.performAndWait {
+            Log("Reading events with count: \(count)")
+                .inChanel(.database).withType(.info).make()
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+            request.fetchLimit = fetchLimit
+            let events = try context.fetch(request)
+            Log("Did read events")
+                .inChanel(.database).withType(.info).make()
+            events.forEach {
+                Log("Event with transactionId: \(String(describing: $0.transactionId))")
+                    .inChanel(.database).withType(.info).make()
+            }
+            return events.compactMap {
+                guard let transactionId = $0.transactionId else {
+                    Log("Event with transactionId: nil")
+                        .inChanel(.database).withType(.error).make()
+                    return nil
+                }
+                guard let type = $0.type, let operation = Event.Operation(rawValue: type) else {
+                    Log("Event with type: nil")
+                        .inChanel(.database).withType(.error).make()
+                    return nil
+                }
+                guard let body = $0.body else {
+                    Log("Event with body: nil")
+                        .inChanel(.database).withType(.error).make()
+                    return nil
+                }
+                return Event(
+                    transactionId: transactionId,
+                    enqueueTimeStamp: $0.timestamp,
+                    type: operation,
+                    body: body
+                )
+            }
         }
     }
     

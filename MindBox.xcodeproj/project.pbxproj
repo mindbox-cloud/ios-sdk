@@ -242,6 +242,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindBoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				840C38AF25D12E7800D50183 /* GuaranteedDelivery */,
 				840C387D25CD15B100D50183 /* Database */,
 				84CC79A325CAE12400C062BD /* EventRepository */,
 				84FCD3B325CA0FD300D1E574 /* Mock */,
@@ -397,6 +398,13 @@
 				840C38AB25D11BB200D50183 /* DeliveryOperation.swift */,
 			);
 			path = GuaranteedDeliveryManager;
+			sourceTree = "<group>";
+		};
+		840C38AF25D12E7800D50183 /* GuaranteedDelivery */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = GuaranteedDelivery;
 			sourceTree = "<group>";
 		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
