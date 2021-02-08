@@ -10,18 +10,21 @@ import Foundation
 
 struct Event {
     
-    enum `Type`: String {
+    enum Operation: String {
         case installed = "MobileApplicationInstalled"
         case infoUpdated = "MobileApplocationInfoUpdated"
     }
     
     let transactionId: String
     
-    let dateTimeOffset: Double
+    var dateTimeOffset: Double {
+        Date().timeIntervalSince1970 - enqueueTimeStamp
+    }
     
+    // Время добавляения персистентно в очередь событий
     let enqueueTimeStamp: Double
     
-    let type: Type
+    let type: Operation
     
     let body: String
     

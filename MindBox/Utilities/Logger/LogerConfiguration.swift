@@ -11,6 +11,7 @@ import Foundation
 struct LogerConfiguration {
     var enableChanels: [MBLoggerChanels] = [
         .system,
-        .network
+        .network,
+        .database
     ]
 }

@@ -15,7 +15,7 @@ class MockNetworkFetcher: NetworkFetcher {
     }
     
     func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
-        
+        completion(Result.success(()))
     }
     
     func requestObject<T>(route: Route, completion: @escaping Completion<T>) where T : BaseResponse {
