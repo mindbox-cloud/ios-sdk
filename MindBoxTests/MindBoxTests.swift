@@ -9,9 +9,23 @@
 import XCTest
 @testable import MindBox
 
-class MindBoxTests: XCTestCase {
+class MindBoxTests: XCTestCase, MindBoxDelegate {
+
+    var mindBoxDidInstalledFlag: Bool = false
+    var apnsTokenDidUpdatedFlag: Bool = false
 
     override func setUp() {
+        DIManager.shared.dropContainer()
+        DIManager.shared.registerServices()
+        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
+            return MockPersistenceStorage()
+        }
+        DIManager.shared.container.register { (r) -> NetworkFetcher in
+            MockNetworkFetcher()
+        }
+        DIManager.shared.container.register { (r) -> MobileApplicationRepository in
+            MBMobileApplicationRepository(fetcher: r.resolveOrDie())
+        }
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -19,16 +33,80 @@ class MindBoxTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() {
+    func testOnInitCase1() {
+
+        var coreController = CoreController()
+        
+
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
 
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        MindBox.shared.delegate = self
+
+        let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
+        coreController.initialization(configuration: configuration1)
+
+        do {
+            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
+            expectation(for: exists, evaluatedWith: self, handler: nil)
+            waitForExpectations(timeout: 10, handler: nil)
+
+            mindBoxDidInstalledFlag = false
+            apnsTokenDidUpdatedFlag = false
+
         }
+        let deviceUUID =  try! MindBox.shared.deviceUUID()
+
+    	//        //        //        //        //        //		//        //        //        //        //        //
+
+        let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
+        coreController.initialization(configuration: configuration2)
+
+        do {
+            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == false && apnsTokenDidUpdatedFlag == true")
+            expectation(for: exists, evaluatedWith: self, handler: nil)
+            waitForExpectations(timeout: 10, handler: nil)
+
+            let deviceUUID2 = try! MindBox.shared.deviceUUID()
+            XCTAssert(deviceUUID == deviceUUID2)
+
+            mindBoxDidInstalledFlag = false
+            apnsTokenDidUpdatedFlag = false
+        }
+
+        let persistensStorage: PersistenceStorage = diManager.container.resolveOrDie()
+
+        persistensStorage.reset()
+        coreController = CoreController()
+
+        //        //        //        //        //        //        //        //        //        //        //        //
+
+        let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
+
+        coreController.initialization(configuration: configuration3)
+
+        do {
+            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
+            expectation(for: exists, evaluatedWith: self, handler: nil)
+            waitForExpectations(timeout: 10, handler: nil)
+
+            mindBoxDidInstalledFlag = false
+            apnsTokenDidUpdatedFlag = false
+        }
+
     }
 
+    // MARK: - MindBoxDelegate
+
+    func mindBoxDidInstalled() {
+        mindBoxDidInstalledFlag = true
+    }
+
+    func mindBoxInstalledFailed(error: MindBox.Errors) {
+
+    }
+
+    func apnsTokenDidUpdated() {
+        apnsTokenDidUpdatedFlag = true
+    }
 }
