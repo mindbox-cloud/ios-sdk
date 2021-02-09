@@ -48,7 +48,11 @@ class DeliveryOperation: Operation {
             case .failure(let error):
                 Log("Did send event failed with error: \(error.localizedDescription)")
                     .inChanel(.delivery).withType(.error).make()
-                try? self.databaseRepository.update(event: self.event)
+                if let statusCode = error.responseStatusCode, HTTPURLResponseStatusCodeValidator(statusCode: statusCode).isClientError {
+                    try? self.databaseRepository.delete(event: self.event)
+                } else {
+                    try? self.databaseRepository.update(event: self.event)
+                }
                 self.isFinished = true
             }
         }
