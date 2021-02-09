@@ -36,10 +36,10 @@ final class GuaranteedDeliveryManager {
     func scheduleIfNeeded() {
         let count = databaseRepository.count
         guard count != 0 else { return }
-        scheduleOperations(fetchLimit: count)
+        scheduleOperations(fetchLimit: count <= 20 ? count : 20)
     }
     
-    func scheduleOperations(fetchLimit: Int = 20) {
+    func scheduleOperations(fetchLimit: Int) {
         semaphore.wait()
         guard !isDelivering else {
             Log("Delivering. Ignore another schedule operation.")
