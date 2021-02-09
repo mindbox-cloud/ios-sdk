@@ -29,40 +29,41 @@ final class GuaranteedDeliveryManager {
     }
     
     init() {
-        databaseRepository.onObjectsDidChange = schedulerIfNeeded
-        schedulerIfNeeded()
+        databaseRepository.onObjectsDidChange = scheduleIfNeeded
+        scheduleIfNeeded()
     }
     
-    func schedulerIfNeeded() {
+    func scheduleIfNeeded() {
         let count = databaseRepository.count
         guard count != 0 else { return }
         scheduleOperations(fetchLimit: count)
     }
     
     func scheduleOperations(fetchLimit: Int = 20) {
+        semaphore.wait()
         guard !isDelivering else {
+            Log("Delivering. Ignore another schedule operation.")
+                .inChanel(.delivery).withType(.info).make()
+            semaphore.signal()
             return
         }
-        semaphore.wait()
         Log("Start enqueueing events")
             .inChanel(.delivery).withType(.info).make()
         isDelivering = true
+        semaphore.signal()
         guard let events = try? databaseRepository.query(fetchLimit: fetchLimit) else {
             isDelivering = false
-            semaphore.signal()
             return
         }
         guard !events.isEmpty else {
             isDelivering = false
-            semaphore.signal()
             return
         }
         let completion = BlockOperation { [weak self] in
             Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
                 .inChanel(.delivery).withType(.info).make()
             self?.isDelivering = false
-            self?.semaphore.signal()
-            self?.schedulerIfNeeded()
+            self?.scheduleIfNeeded()
         }
         let delivery = events.map {
             DeliveryOperation(event: $0)
