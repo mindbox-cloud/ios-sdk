@@ -160,7 +160,7 @@ struct Log {
         self.type = .error
     }
 
-    init(request: URLRequest) {
+    init(request: URLRequest, httpAdditionalHeaders: [AnyHashable : Any]? = nil) {
 
         let urlString = request.url?.absoluteString ?? ""
         let components = NSURLComponents(string: urlString)
@@ -179,6 +179,9 @@ struct Log {
 
         requestLog += "\n"
         requestLog += "[Headers]\n"
+        httpAdditionalHeaders?.forEach {
+            requestLog += "\($0.key): \($0.value)\n"
+        }
         for (key,value) in request.allHTTPHeaderFields ?? [:] {
             requestLog += "\(key): \(value)\n"
         }
