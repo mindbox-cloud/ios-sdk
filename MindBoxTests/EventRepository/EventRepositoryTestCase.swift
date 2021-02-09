@@ -13,7 +13,7 @@ class EventRepositoryTestCase: XCTestCase {
     
     var coreController: CoreController!
     
-    var isMockNetworkFetcher = true
+    var isMockNetworkFetcher = false
     
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -26,6 +26,9 @@ class EventRepositoryTestCase: XCTestCase {
             DIManager.shared.container.register { _ -> NetworkFetcher in
                 MockNetworkFetcher()
             }
+        }
+        DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
+            MockUNAuthorizationStatusProvider(status: .authorized)
         }
         coreController = CoreController()
     }

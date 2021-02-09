@@ -48,9 +48,13 @@ final class DIManager: NSObject {
         container.registerInContainer { (r) -> PersistenceStorage in
             MBPersistenceStorage(defaults: .standard)
         }
-
+        
         container.register { (r) -> UtilitiesFetcher in
             MBUtilitiesFetcher()
+        }
+        
+        container.register { (r) -> UNAuthorizationStatusProviding in
+            UNAuthorizationStatusProvider()
         }
 
         container.register { (r) -> ILogger in

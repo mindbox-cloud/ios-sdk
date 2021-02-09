@@ -19,7 +19,8 @@ class CoreController {
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var mobileApplicationRepository: MobileApplicationRepository
     @Injected var utilitiesFetcher: UtilitiesFetcher
-
+    @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
+    
     // MARK: - Property
     
     var isInstalled: Bool = false
@@ -70,10 +71,10 @@ class CoreController {
 
     private func updateToken() {
         let apnsToken = persistenceStorage.apnsToken
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+        notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
             self?.mobileApplicationRepository.infoUpdated(
                 apnsToken: apnsToken,
-                isNotificationsEnabled: settings.authorizationStatus == .authorized
+                isNotificationsEnabled: isNotificationsEnabled
             ) { (result) in
                 switch result {
                 case .success:
@@ -91,11 +92,11 @@ class CoreController {
 
     private func installation(uuid: String, installationId: String?) {
         let apnsToken = persistenceStorage.apnsToken
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+        notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
             self?.mobileApplicationRepository.installed(
                 installationId: installationId,
                 apnsToken: apnsToken,
-                isNotificationsEnabled: settings.authorizationStatus == .authorized
+                isNotificationsEnabled: isNotificationsEnabled
             ) { [weak self] (result) in
                 switch result {
                 case .success(let response):

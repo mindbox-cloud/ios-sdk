@@ -73,6 +73,8 @@
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
 		84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC49CB25D1832300D5D758 /* EventWrapper.swift */; };
+		84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC4A0125D27D0500D5D758 /* UNAuthorizationStatusProviding.swift */; };
+		84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC4A0625D27D6000D5D758 /* UNAuthorizationStatusProvider.swift */; };
 		84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */; };
 		84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */; };
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
@@ -80,6 +82,7 @@
 		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
 		84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */; };
 		84EAEE2225C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE2125C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift */; };
+		84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */; };
 		84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */; };
 		84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */; };
 		84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */; };
@@ -163,6 +166,8 @@
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
 		84DC49CB25D1832300D5D758 /* EventWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWrapper.swift; sourceTree = "<group>"; };
+		84DC4A0125D27D0500D5D758 /* UNAuthorizationStatusProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UNAuthorizationStatusProviding.swift; sourceTree = "<group>"; };
+		84DC4A0625D27D6000D5D758 /* UNAuthorizationStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UNAuthorizationStatusProvider.swift; sourceTree = "<group>"; };
 		84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MBDatabase.xcdatamodel; sourceTree = "<group>"; };
 		84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepository.swift; sourceTree = "<group>"; };
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
@@ -170,6 +175,7 @@
 		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
 		84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalledWrapper.swift; sourceTree = "<group>"; };
 		84EAEE2125C8B8AB00726063 /* MobileApplicationInfoUpdatedWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdatedWrapper.swift; sourceTree = "<group>"; };
+		84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUNAuthorizationStatusProvider.swift; sourceTree = "<group>"; };
 		84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
 		84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkFetcher.swift; sourceTree = "<group>"; };
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
@@ -340,6 +346,7 @@
 				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
 				84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */,
+				84DC4A0525D27D1500D5D758 /* UNAuthorizationStatusProviding */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -551,6 +558,15 @@
 			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		84DC4A0525D27D1500D5D758 /* UNAuthorizationStatusProviding */ = {
+			isa = PBXGroup;
+			children = (
+				84DC4A0125D27D0500D5D758 /* UNAuthorizationStatusProviding.swift */,
+				84DC4A0625D27D6000D5D758 /* UNAuthorizationStatusProvider.swift */,
+			);
+			path = UNAuthorizationStatusProviding;
+			sourceTree = "<group>";
+		};
 		84DEE8A625CC02AF00C98CC7 /* Database */ = {
 			isa = PBXGroup;
 			children = (
@@ -611,6 +627,7 @@
 			children = (
 				84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */,
 				84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */,
+				84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */,
 				84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */,
 			);
 			path = Mock;
@@ -840,8 +857,10 @@
 				317054C425AEF88E00AE624C /* DIManager.swift in Sources */,
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
+				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
+				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
@@ -874,6 +893,7 @@
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
+				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
 				840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
