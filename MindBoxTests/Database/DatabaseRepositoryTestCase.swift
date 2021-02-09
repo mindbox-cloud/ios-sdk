@@ -133,7 +133,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
-        let events = eventGenerator.generateEvents(count: 2*databaseRepository.countLimit)
+        let events = eventGenerator.generateEvents(count: 2*databaseRepository.countLimit / 1000)
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
