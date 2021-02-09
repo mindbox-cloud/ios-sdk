@@ -70,40 +70,44 @@ class CoreController {
 
     private func updateToken() {
         let apnsToken = persistenceStorage.apnsToken
-        mobileApplicationRepository.infoUpdated(
-            apnsToken: apnsToken,
-            isNotificationsEnabled: false
-        ) { (result) in
-            switch result {
-            case .success:
-                MindBox.shared.delegate?.apnsTokenDidUpdated()
-                Log("apnsTokenDidUpdated \(apnsToken ?? "")")
-                    .inChanel(.system).withType(.verbose).make()
-            case .failure(let error):
-                Log("apnsTokenDidUpdated failed with error: \(error.localizedDescription )")
-                    .inChanel(.system).withType(.verbose).make()
-                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            self?.mobileApplicationRepository.infoUpdated(
+                apnsToken: apnsToken,
+                isNotificationsEnabled: settings.authorizationStatus == .authorized
+            ) { (result) in
+                switch result {
+                case .success:
+                    MindBox.shared.delegate?.apnsTokenDidUpdated()
+                    Log("apnsTokenDidUpdated \(apnsToken ?? "")")
+                        .inChanel(.system).withType(.verbose).make()
+                case .failure(let error):
+                    Log("apnsTokenDidUpdated failed with error: \(error.localizedDescription )")
+                        .inChanel(.system).withType(.verbose).make()
+                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
+                }
             }
         }
     }
 
     private func installation(uuid: String, installationId: String?) {
         let apnsToken = persistenceStorage.apnsToken
-        mobileApplicationRepository.installed(
-            installationId: installationId,
-            apnsToken: apnsToken,
-            isNotificationsEnabled: false
-        ) { [weak self] (result) in
-            switch result {
-            case .success(let response):
-                self?.persistenceStorage.deviceUUID = uuid
-                self?.persistenceStorage.installationId = installationId
-                self?.isInstalled = true
-                Log("apiServices.mobileApplicationInstalled status-code \(response.data?.httpStatusCode ?? -1), status \(response.data?.status ?? .unknow)")
-                    .inChanel(.system).withType(.verbose).make()
-                MindBox.shared.delegate?.mindBoxDidInstalled()
-            case .failure(let error):
-                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            self?.mobileApplicationRepository.installed(
+                installationId: installationId,
+                apnsToken: apnsToken,
+                isNotificationsEnabled: settings.authorizationStatus == .authorized
+            ) { [weak self] (result) in
+                switch result {
+                case .success(let response):
+                    self?.persistenceStorage.deviceUUID = uuid
+                    self?.persistenceStorage.installationId = installationId
+                    self?.isInstalled = true
+                    Log("apiServices.mobileApplicationInstalled status-code \(response.data?.httpStatusCode ?? -1), status \(response.data?.status ?? .unknow)")
+                        .inChanel(.system).withType(.verbose).make()
+                    MindBox.shared.delegate?.mindBoxDidInstalled()
+                case .failure(let error):
+                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
+                }
             }
         }
     }
