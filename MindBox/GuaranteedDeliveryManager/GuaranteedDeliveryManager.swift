@@ -20,20 +20,56 @@ final class GuaranteedDeliveryManager {
         queue.name = "MindBox-GuaranteedDeliveryQueue"
         return queue
     }()
+    
     let semaphore = DispatchSemaphore(value: 1)
-    private(set) var isDelivering = false {
+    
+    enum State: String, CustomStringConvertible {
+        
+        case idle, delivering, waitingForRetry
+         
+        var isDelivering: Bool {
+            self == .delivering
+        }
+        
+        var isIdle: Bool {
+            self == .idle
+        }
+        
+        var isWaitingForRetry: Bool {
+            self == .waitingForRetry
+        }
+        
+        var description: String {
+            rawValue
+        }
+        
+    }
+    
+    private(set) var state: State = .idle {
         didSet {
-            Log("isDelivering didSet to value: \(isDelivering)")
+            Log("State didSet to value: \(state.description)")
                 .inChanel(.delivery).withType(.info).make()
         }
     }
     
-    init() {
-        databaseRepository.onObjectsDidChange = scheduleIfNeeded
-        scheduleIfNeeded()
+    var canScheduleOperations = true {
+        didSet {
+            Log("canScheduleOperation didSet to value: \(canScheduleOperations)")
+                .inChanel(.delivery).withType(.info).make()
+            performScheduleIfNeeded()
+        }
     }
     
-    func scheduleIfNeeded() {
+    init(retryDeadline: TimeInterval = 60) {
+        self.retryDeadline = retryDeadline
+        databaseRepository.onObjectsDidChange = performScheduleIfNeeded
+        performScheduleIfNeeded()
+    }
+    
+    private let retryDeadline: TimeInterval
+
+    func performScheduleIfNeeded() {
+        guard canScheduleOperations else { return }
         let count = databaseRepository.count
         guard count != 0 else { return }
         scheduleOperations(fetchLimit: count <= 20 ? count : 20)
@@ -41,7 +77,7 @@ final class GuaranteedDeliveryManager {
     
     func scheduleOperations(fetchLimit: Int) {
         semaphore.wait()
-        guard !isDelivering else {
+        guard !state.isDelivering else {
             Log("Delivering. Ignore another schedule operation.")
                 .inChanel(.delivery).withType(.info).make()
             semaphore.signal()
@@ -49,21 +85,22 @@ final class GuaranteedDeliveryManager {
         }
         Log("Start enqueueing events")
             .inChanel(.delivery).withType(.info).make()
-        isDelivering = true
+        state = .delivering
         semaphore.signal()
-        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit) else {
-            isDelivering = false
+        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline) else {
+            state = .idle
             return
         }
         guard !events.isEmpty else {
-            isDelivering = false
+            state = .waitingForRetry
+            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
         let completion = BlockOperation { [weak self] in
             Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
                 .inChanel(.delivery).withType(.info).make()
-            self?.isDelivering = false
-            self?.scheduleIfNeeded()
+            self?.state = .idle
+            self?.performScheduleIfNeeded()
         }
         let delivery = events.map {
             DeliveryOperation(event: $0)

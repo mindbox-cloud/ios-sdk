@@ -17,6 +17,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     let eventGenerator = EventGenerator()
     
+    var isDelivering: Bool {
+        guaranteedDeliveryManager.isDelivering
+    }
+    
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
@@ -40,10 +44,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
-    var isDelivering: Bool {
-        guaranteedDeliveryManager.isDelivering
-    }
-    
     func testIsDelivering() {
         let event = eventGenerator.generateEvent()
         do {
@@ -53,7 +53,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         let exists = NSPredicate(format: "isDelivering == false")
         expectation(for: exists, evaluatedWith: self, handler: nil)
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 60, handler: nil)
     }
     
     func testDeliverMultipleEvents() {
@@ -65,9 +65,40 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 XCTFail(error.localizedDescription)
             }
         }
-        let exists = NSPredicate(format: "isDelivering == false")
-        expectation(for: exists, evaluatedWith: self, handler: nil)
+        let deliveringExpectation = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(state), GuaranteedDeliveryManager.State.idle.rawValue])
+        expectation(for: deliveringExpectation, evaluatedWith: self, handler: nil)
         waitForExpectations(timeout: 10, handler: nil)
+    }
+    
+    var state: NSString {
+        NSString(string: guaranteedDeliveryManager.state.rawValue)
+    }
+    
+    func testScheduleByTimer() {
+        let retryDeadline: TimeInterval = 3
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
+        guaranteedDeliveryManager.canScheduleOperation = false
+        let count = 2
+        let events = eventGenerator.generateEvents(count: count)
+        do {
+            try events.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            try events.forEach {
+                try databaseRepository.update(event: $0)
+            }
+            guaranteedDeliveryManager.canScheduleOperation = true
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        let expectDeadline = 2 * retryDeadline
+        let retryExpectation = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(state), GuaranteedDeliveryManager.State.idle.rawValue])
+        expectation(for: retryExpectation, evaluatedWith: self, handler: nil)
+        waitForExpectations(timeout: expectDeadline)
     }
     
     private func generateAndSaveToDatabaseEvents() {

@@ -71,6 +71,8 @@ struct Log {
         }
         if let date = date {
             header += date.toString() + " "
+        } else {
+            header += Date().toString() + " "
         }
 
         if let meta = meta {
