@@ -156,15 +156,26 @@ class MBDatabaseRepository {
         }
     }
     
-    func query(fetchLimit: Int) throws ->  [Event] {
+    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws ->  [Event] {
         try context.performAndWait {
             Log("Quering events with fetchLimit: \(fetchLimit)")
                 .inChanel(.database).withType(.info).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+            let request: NSFetchRequest<CDEvent> = CDEvent.retryFetchRequest(deadline: retryDeadline)
             request.fetchLimit = fetchLimit
-            let events = try context.fetch(request)
-            Log("Did query events")
+            var events: [CDEvent] = []
+            let retryEvents = try context.fetch(request)
+            events.append(contentsOf: retryEvents)
+            Log("Did query retry events count: \(retryEvents.count)")
                 .inChanel(.database).withType(.info).make()
+            let residualLimit = abs(fetchLimit - retryEvents.count)
+            if residualLimit > 0 {
+                let nextEventsRequest: NSFetchRequest<CDEvent> = CDEvent.unretryFetchRequest()
+                nextEventsRequest.fetchLimit = residualLimit
+                let nextEvents = try context.fetch(nextEventsRequest)
+                events.append(contentsOf: nextEvents)
+                Log("Did query nextEvents count: \(nextEvents.count)")
+                    .inChanel(.database).withType(.info).make()
+            }
             guard !events.isEmpty else {
                 Log("Unable to find events")
                     .inChanel(.delivery).withType(.info).make()
