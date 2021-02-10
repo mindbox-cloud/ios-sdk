@@ -125,7 +125,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         waitForExpectations(timeout: 1, handler: nil)
     }
     
-    func testHasEvents() {
+    func testHasEventsAfterCreation() {
         databaseRepository.onObjectsDidChange = { [self] in
             XCTAssertTrue(databaseRepository.count > 0)
         }
@@ -144,8 +144,14 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertTrue(databaseRepository.count <= databaseRepository.countLimit)
     }
     
-    func testMonthLimitDate() {
-        XCTAssertNotNil(CDEvent.monthLimitDate)
+    func testlifeTimeLimit() {
+        XCTAssertNotNil(CDEvent.lifeLimitDate)
+        let event = eventGenerator.generateEvent()
+        guard let monthLimitDate = CDEvent.lifeLimitDate else {
+            XCTFail("monthLimitDate could not be nil")
+            return
+        }
+        XCTAssertTrue(event.enqueueTimeStamp > monthLimitDate.timeIntervalSince1970)
     }
     
     func testLifeTimeLimit() {
@@ -160,6 +166,61 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
+    }
+    
+    func testFetchUnretryEvents() {
+        let count = 5
+        let events = eventGenerator.generateEvents(count: count)
+        do {
+            try events.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            let events = try self.databaseRepository.query(fetchLimit: count)
+            XCTAssertFalse(events.isEmpty)
+            XCTAssertTrue(events.count == count)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+    
+    func testFetchRetryEvents() {
+        let count = 5
+        let events = eventGenerator.generateEvents(count: count)
+        let retriedEvent = events[count / 2]
+        let retriedEvent2 = events[(count / 2) + 1]
+        let eventsToRetry = [retriedEvent, retriedEvent2]
+        do {
+            try events.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            try eventsToRetry.forEach {
+                try databaseRepository.update(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        let retryDeadline: TimeInterval = 4
+        let expectDeadline = retryDeadline + 2
+        let retryExpectation = expectation(description: "RetryExpectation")
+        DispatchQueue.main.asyncAfter(deadline: .now() + expectDeadline) {
+            do {
+                let events = try self.databaseRepository.query(fetchLimit: count, retryDeadline: retryDeadline)
+                XCTAssertFalse(events.isEmpty)
+                XCTAssertTrue(retriedEvent.transactionId == events[0].transactionId)
+                retryExpectation.fulfill()
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        waitForExpectations(timeout: retryDeadline + 2.0)
     }
     
 }
