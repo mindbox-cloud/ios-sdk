@@ -35,19 +35,17 @@ enum MobileApplicationRoute: Route {
     var queryParameters: QueryParameters {
         switch self {
         case let .installed(wrapper):
-            let query = wrapper.query
             return [
-                "endpointId": query.endpointId,
-                "operation": query.operation,
-                "deviceUUID": query.deviceUUID
+                "endpointId": wrapper.endpointId,
+                "operation": wrapper.operation,
+                "deviceUUID": wrapper.deviceUUID
             ]
             
         case let .infoUpdated(wrapper):
-            let query = wrapper.query
             return [
-                "endpointId": query.endpointId,
-                "operation": query.operation,
-                "deviceUUID": query.deviceUUID
+                "endpointId": wrapper.endpointId,
+                "operation": wrapper.operation,
+                "deviceUUID": wrapper.deviceUUID
             ]
         }
     }

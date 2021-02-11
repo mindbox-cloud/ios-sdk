@@ -22,6 +22,7 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => "#{spec.version}" }
 
   spec.source_files  = "MindBox/**/*.{swift}"
+
   spec.exclude_files = "Classes/Exclude"
 
   # spec.public_header_files = "Classes/**/*.h"
@@ -37,6 +38,7 @@ Pod::Spec.new do |spec|
 
   # spec.resource  = "icon.png"
   # spec.resources = "Resources/*.png"
+  spec.resources = ["MindBox/**/*.xcdatamodeld"]
 
   # spec.preserve_paths = "FilesToSave", "MoreFilesToSave"
 

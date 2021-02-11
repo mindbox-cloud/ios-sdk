@@ -13,14 +13,23 @@ import CoreData
 
 extension CDEvent {
     
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<CDEvent> {
+    @nonobjc public class func fetchRequest(retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-        if let monthLimitDateStamp = monthLimitDate?.timeIntervalSince1970 {
-            request.predicate = NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
+        var subpredicates: [NSPredicate] = []
+        if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
+            subpredicates.append(
+                NSPredicate(format: "%K > %@ AND %K == NULL", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp, #keyPath(CDEvent.retryTimestamp)])
+            )
         }
+        if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
+            subpredicates.append(
+                NSPredicate(format: "%K < %@", argumentArray: [#keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970])
+            )
+        }
+        request.predicate = NSCompoundPredicate(type: .or, subpredicates: subpredicates)
         request.sortDescriptors = [
+            NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true),
             NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
-            NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true)
         ]
         return request
     }
@@ -33,13 +42,13 @@ extension CDEvent {
     
     public class func deprecatedEventsFetchRequest() -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-        if let monthLimitDateStamp = monthLimitDate?.timeIntervalSince1970 {
+        if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
             request.predicate = NSPredicate(format: "%K <= %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
         }
         return request
     }
     
-    static var monthLimitDate: Date? {
+    static var lifeLimitDate: Date? {
         let calendar: Calendar = .current
         guard let monthLimitDate = calendar.date(byAdding: .month, value: -6, to: Date()) else {
             return nil

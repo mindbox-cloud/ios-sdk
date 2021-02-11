@@ -12,6 +12,7 @@ struct LogerConfiguration {
     var enableChanels: [MBLoggerChanels] = [
         .system,
         .network,
-        .database
+        .database,
+        .delivery
     ]
 }

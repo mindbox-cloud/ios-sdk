@@ -10,7 +10,7 @@ import Foundation
 
 enum EventRoute: Route {
     
-    case asyncEvent(event: Event, configuration: MBConfiguration)
+    case asyncEvent(EventWrapper)
     
     var method: HTTPMethod {
         switch self {
@@ -32,21 +32,21 @@ enum EventRoute: Route {
     
     var queryParameters: QueryParameters {
         switch self {
-        case .asyncEvent(let event, let configuration):
+        case .asyncEvent(let wrapper):
             return [
-                "endpointId": configuration.endpoint,
-                "operation": event.type.rawValue,
-                "deviceUUID": configuration.deviceUUID!,
-                "transactionId": event.transactionId,
-                "dateTimeOffset": event.dateTimeOffset
+                "endpointId": wrapper.endpoint,
+                "operation": wrapper.event.type.rawValue,
+                "deviceUUID": wrapper.deviceUUID,
+                "transactionId": wrapper.event.transactionId,
+                "dateTimeOffset": wrapper.event.dateTimeOffset
             ]
         }
     }
     
     var body: Data? {
         switch self {
-        case .asyncEvent(let event, _):
-            return event.body.data(using: .utf8)
+        case .asyncEvent(let wrapper):
+            return wrapper.event.body.data(using: .utf8)
         }
     }
     

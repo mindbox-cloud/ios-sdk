@@ -23,7 +23,6 @@ public class MindBox {
     
     // MARK: - Elements
 
-    @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var utilitiesFetcher: UtilitiesFetcher
     
@@ -72,7 +71,6 @@ public class MindBox {
 	/// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
         coreController.apnsTokenDidUpdate(token: token)
-        persistenceStorage.apnsToken = token
     }
 
     // MARK: - Private

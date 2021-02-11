@@ -10,17 +10,33 @@ import Foundation
 
 class MBEventRepository: EventRepository {
     
-    private let fetcher: NetworkFetcher
+    @Injected var fetcher: NetworkFetcher
     
-    private let configuration: ConfigurationStorage
-    
-    init(fetcher: NetworkFetcher, configuration: ConfigurationStorage) {
-        self.fetcher = fetcher
-        self.configuration = configuration
-    }
+    @Injected var configuration: ConfigurationStorage
     
     func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void) {
-        let route = EventRoute.asyncEvent(event: event, configuration: configuration.startConfiguration!)
+        guard let configuration = configuration.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        guard let deviceUUID = configuration.deviceUUID else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "DeviceUUID is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+        let route = EventRoute.asyncEvent(wrapper)
         fetcher.request(route: route, completion: completion)
     }
     

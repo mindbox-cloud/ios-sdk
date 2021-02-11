@@ -27,6 +27,9 @@ class EventRepositoryTestCase: XCTestCase {
                 MockNetworkFetcher()
             }
         }
+        DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
+            MockUNAuthorizationStatusProvider(status: .authorized)
+        }
         coreController = CoreController()
     }
     
@@ -35,8 +38,6 @@ class EventRepositoryTestCase: XCTestCase {
         coreController.initialization(configuration: configuration)
         let repository: EventRepository = DIManager.shared.container.resolveOrDie()
         let event = Event(
-            transactionId: UUID().uuidString,
-            enqueueTimeStamp: Date().timeIntervalSince1970,
             type: .installed,
             body: ""
         )

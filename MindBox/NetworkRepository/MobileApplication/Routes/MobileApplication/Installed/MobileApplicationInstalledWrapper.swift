@@ -10,23 +10,21 @@ import Foundation
 
 struct MobileApplicationInstalledWrapper {
     
-    let query: Query
+    let operation = "MobileApplicationInstalled"
+    
+    let endpointId: String
+    
+    let deviceUUID: String
+    
     let body: Body
     
     struct Body: Codable {
         
         let token: String
         let isTokenAvailable: Bool
-        let installationId: String
         let isNotificationsEnabled: Bool
+        let installationId: String
 
     }
-    
-    struct Query {
-        let endpointId: String
-        let operation = "MobileApplicationInstalled"
-        let deviceUUID: String
-    }
-
     
 }

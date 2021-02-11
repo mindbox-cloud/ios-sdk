@@ -48,9 +48,13 @@ final class DIManager: NSObject {
         container.registerInContainer { (r) -> PersistenceStorage in
             MBPersistenceStorage(defaults: .standard)
         }
-
+        
         container.register { (r) -> UtilitiesFetcher in
             MBUtilitiesFetcher()
+        }
+        
+        container.register { (r) -> UNAuthorizationStatusProviding in
+            UNAuthorizationStatusProvider()
         }
 
         container.register { (r) -> ILogger in
@@ -58,17 +62,23 @@ final class DIManager: NSObject {
         }
         
         container.register { (r) -> NetworkFetcher in
-            MBNetworkFetcher(
-                configuration: r.resolveOrDie(),
-                utilitiesFetcher: r.resolveOrDie())
+            MBNetworkFetcher(utilitiesFetcher: r.resolveOrDie())
         }
         
         container.register { (r) -> MobileApplicationRepository in
-            MBMobileApplicationRepository(fetcher: r.resolveOrDie())
+            MBMobileApplicationRepository()
         }
         
         container.register { (r) -> EventRepository in
-            MBEventRepository(fetcher: r.resolveOrDie(), configuration: r.resolveOrDie())
+            MBEventRepository()
+        }
+        
+        container.registerInContainer { (r) -> MBDatabaseRepository in
+            return try! MBDatabaseRepository()
+        }
+        
+        container.registerInContainer { (r) -> GuaranteedDeliveryManager in
+            GuaranteedDeliveryManager()
         }
     }
 

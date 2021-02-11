@@ -12,6 +12,7 @@ enum MBLoggerChanels: String {
     case system = "🤖"
     case network = "📡"
     case database = "📖"
+    case delivery = "⚙️"
 }
 
 protocol ILogger: class {

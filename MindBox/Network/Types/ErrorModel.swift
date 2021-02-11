@@ -29,9 +29,12 @@ class ErrorModel: Error {
     var errorId: String?
     var httpStatusCode: Int?
     var status: StatusCode = .unknow
-
+    
     var asMBError: MindBox.Errors {
-        return MindBox.Errors.other(errorDescription: "Network Error with statusCode \(httpStatusCode ?? -1)", failureReason: errorMessage, recoverySuggestion: nil)
+        return MindBox.Errors.other(
+            errorDescription: "Network Error with statusCode \(httpStatusCode ?? -1)",
+            failureReason: errorMessage, recoverySuggestion: nil
+        )
     }
 
     init( errorKey: String, rawError: Error? = nil) {
@@ -39,13 +42,3 @@ class ErrorModel: Error {
         self.rawError = rawError
     }
 }
-//
-//class ErrorResponce: BaseResponce {
-//    
-//
-//    private enum CodingKeys: String, CodingKey {
-//        case validationMessages
-//        case errorMessage
-//        case errorId
-//    }
-//}
