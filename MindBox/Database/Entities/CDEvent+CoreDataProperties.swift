@@ -18,7 +18,7 @@ extension CDEvent {
         var subpredicates: [NSPredicate] = []
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
             subpredicates.append(
-                NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
+                NSPredicate(format: "%K > %@ AND %K == NULL", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp, #keyPath(CDEvent.retryTimestamp)])
             )
         }
         if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
