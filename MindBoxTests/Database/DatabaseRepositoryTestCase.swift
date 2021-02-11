@@ -214,7 +214,8 @@ class DatabaseRepositoryTestCase: XCTestCase {
             do {
                 let events = try self.databaseRepository.query(fetchLimit: count, retryDeadline: retryDeadline)
                 XCTAssertFalse(events.isEmpty)
-                XCTAssertTrue(retriedEvent.transactionId == events[0].transactionId)
+                XCTAssertTrue(retriedEvent.transactionId == events[count - 2].transactionId)
+                XCTAssertTrue(retriedEvent2.transactionId == events[count - 1].transactionId)
                 retryExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)

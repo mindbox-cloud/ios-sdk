@@ -13,48 +13,22 @@ import CoreData
 
 extension CDEvent {
     
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<CDEvent> {
+    @nonobjc public class func fetchRequest(retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        var subpredicates: [NSPredicate] = []
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
-            request.predicate = NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
-        }
-        request.sortDescriptors = [
-            NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true),
-            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
-        ]
-        return request
-    }
-    
-    @nonobjc public class func unretryFetchRequest() -> NSFetchRequest<CDEvent> {
-        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-        if let lifetimeLimitTimestamp = lifeLimitDate?.timeIntervalSince1970 {
-            request.predicate = NSCompoundPredicate(type: .and, subpredicates: [
-                NSPredicate(format: "%K == nil", argumentArray: [#keyPath(CDEvent.retryTimestamp)]),
-                NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), lifetimeLimitTimestamp])
-            ])
-        }
-        request.sortDescriptors = [
-            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
-        ]
-        return request
-    }
-    
-    @nonobjc public class func retryFetchRequest(deadline: TimeInterval) -> NSFetchRequest<CDEvent> {
-        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-        if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
-            var subpredicates: [NSPredicate] = [
-                NSPredicate(format: "%K != nil", argumentArray: [#keyPath(CDEvent.retryTimestamp)]),
+            subpredicates.append(
                 NSPredicate(format: "%K > %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
-            ]
-            if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(deadline), to: Date()) {
-                subpredicates.append(
-                    NSPredicate(format: "%K < %@", argumentArray: [#keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970])
-                )
-            }
-            request.predicate = NSCompoundPredicate(type: .and, subpredicates: subpredicates)
+            )
+        }
+        if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
+            subpredicates.append(
+                NSPredicate(format: "%K < %@", argumentArray: [#keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970])
+            )
         }
         request.sortDescriptors = [
             NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true),
+            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
         ]
         return request
     }

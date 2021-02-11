@@ -160,27 +160,16 @@ class MBDatabaseRepository {
         try context.performAndWait {
             Log("Quering events with fetchLimit: \(fetchLimit)")
                 .inChanel(.database).withType(.info).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.retryFetchRequest(deadline: retryDeadline)
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
-            var events: [CDEvent] = []
-            let retryEvents = try context.fetch(request)
-            events.append(contentsOf: retryEvents)
-            Log("Did query retry events count: \(retryEvents.count)")
-                .inChanel(.database).withType(.info).make()
-            let residualLimit = abs(fetchLimit - retryEvents.count)
-            if residualLimit > 0 {
-                let nextEventsRequest: NSFetchRequest<CDEvent> = CDEvent.unretryFetchRequest()
-                nextEventsRequest.fetchLimit = residualLimit
-                let nextEvents = try context.fetch(nextEventsRequest)
-                events.append(contentsOf: nextEvents)
-                Log("Did query nextEvents count: \(nextEvents.count)")
-                    .inChanel(.database).withType(.info).make()
-            }
+            let events = try context.fetch(request)
             guard !events.isEmpty else {
                 Log("Unable to find events")
                     .inChanel(.delivery).withType(.info).make()
                 return []
             }
+            Log("Did query retry events count: \(events.count)")
+                .inChanel(.database).withType(.info).make()
             events.forEach {
                 Log("Event with transactionId: \(String(describing: $0.transactionId))")
                     .inChanel(.database).withType(.info).make()
