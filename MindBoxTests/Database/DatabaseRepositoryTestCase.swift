@@ -133,7 +133,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
-        let events = eventGenerator.generateEvents(count: 2*databaseRepository.countLimit / 1000)
+        let events = eventGenerator.generateEvents(count: databaseRepository.countLimit)
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
@@ -144,7 +144,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertTrue(databaseRepository.count <= databaseRepository.countLimit)
     }
     
-    func testlifeTimeLimit() {
+    func testLifeTimeLimit() {
         XCTAssertNotNil(CDEvent.lifeLimitDate)
         let event = eventGenerator.generateEvent()
         guard let monthLimitDate = CDEvent.lifeLimitDate else {
@@ -154,7 +154,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertTrue(event.enqueueTimeStamp > monthLimitDate.timeIntervalSince1970)
     }
     
-    func testLifeTimeLimit() {
+    func testRemoveDeprecatedEvents() {
         let event = eventGenerator.generateEvent()
         do {
             try databaseRepository.create(event: event)

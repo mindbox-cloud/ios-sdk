@@ -18,7 +18,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     let eventGenerator = EventGenerator()
     
     var isDelivering: Bool {
-        guaranteedDeliveryManager.isDelivering
+        guaranteedDeliveryManager.state.isDelivering
     }
     
     override func setUp() {
@@ -77,7 +77,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
-        guaranteedDeliveryManager.canScheduleOperation = false
+        guaranteedDeliveryManager.canScheduleOperations = false
         let count = 2
         let events = eventGenerator.generateEvents(count: count)
         do {
@@ -91,7 +91,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             try events.forEach {
                 try databaseRepository.update(event: $0)
             }
-            guaranteedDeliveryManager.canScheduleOperation = true
+            guaranteedDeliveryManager.canScheduleOperations = true
         } catch {
             XCTFail(error.localizedDescription)
         }
