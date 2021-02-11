@@ -14,10 +14,12 @@ class DeliveryOperation: Operation {
     
     @Injected var eventRepository: EventRepository
     @Injected var databaseRepository: MBDatabaseRepository
-    
+
     init(event: Event) {
         self.event = event
     }
+    
+    var onCompleted: ((_ event: Event, _ error: ErrorModel?) -> Void)?
     
     private var _isFinished: Bool = false
     override var isFinished: Bool {
@@ -41,11 +43,13 @@ class DeliveryOperation: Operation {
             guard let self = self else { return }
             switch result {
             case .success:
+                self.onCompleted?(self.event, nil)
                 Log("Did send event with transactionId: \(self.event.transactionId)")
                     .inChanel(.delivery).withType(.info).make()
                 try? self.databaseRepository.delete(event: self.event)
                 self.isFinished = true
             case .failure(let error):
+                self.onCompleted?(self.event, error)
                 Log("Did send event failed with error: \(error.localizedDescription)")
                     .inChanel(.delivery).withType(.error).make()
                 if let statusCode = error.responseStatusCode, HTTPURLResponseStatusCodeValidator(statusCode: statusCode).isClientError {

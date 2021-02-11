@@ -14,23 +14,27 @@ import AppTrackingTransparency
 class CoreController {
     
     // MARK: - Elements
-
+    
     @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
-    @Injected var mobileApplicationRepository: MobileApplicationRepository
     @Injected var utilitiesFetcher: UtilitiesFetcher
     @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
+    @Injected var databaseRepository: MBDatabaseRepository
+    @Injected var guaranteedDeliveryManager: GuaranteedDeliveryManager
     
     // MARK: - Property
     
     var isInstalled: Bool = false
-
+    
     // MARK: - Init
     
     init() {
         self.isInstalled = self.persistenceStorage.isInstalled
+        guaranteedDeliveryManager.onCompletedEvent = { [weak self] (event, error) in
+            self?.proceed(result: (event, error))
+        }
     }
-
+    
     // MARK: - CoreController
     
     public func initialization(configuration: MBConfiguration) {
@@ -53,7 +57,7 @@ class CoreController {
             updateToken()
         }
     }
-
+    
     // MARK: - Private
     
     private func startInstallationCase(uuid: String?, installationId: String?) {
@@ -68,49 +72,66 @@ class CoreController {
             }
         }
     }
-
+    
     private func updateToken() {
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
-            self?.mobileApplicationRepository.infoUpdated(
-                apnsToken: apnsToken,
+            let infoUpdated = MobileApplicationInfoUpdated(
+                token: apnsToken ?? "",
                 isNotificationsEnabled: isNotificationsEnabled
-            ) { (result) in
-                switch result {
-                case .success:
-                    MindBox.shared.delegate?.apnsTokenDidUpdated()
-                    Log("apnsTokenDidUpdated \(apnsToken ?? "")")
-                        .inChanel(.system).withType(.verbose).make()
-                case .failure(let error):
-                    Log("apnsTokenDidUpdated failed with error: \(error.localizedDescription )")
-                        .inChanel(.system).withType(.verbose).make()
-                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError )
-                }
-            }
+            )
+            let event = Event(
+                transactionId: UUID().uuidString,
+                enqueueTimeStamp: Date().timeIntervalSince1970,
+                type: .infoUpdated,
+                body: BodyEncoder(encodable: infoUpdated).body
+            )
+            try? self?.databaseRepository.create(event: event)
         }
     }
-
+    
     private func installation(uuid: String, installationId: String?) {
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
-            self?.mobileApplicationRepository.installed(
-                installationId: installationId,
-                apnsToken: apnsToken,
-                isNotificationsEnabled: isNotificationsEnabled
-            ) { [weak self] (result) in
-                switch result {
-                case .success(let response):
-                    self?.persistenceStorage.deviceUUID = uuid
-                    self?.persistenceStorage.installationId = installationId
-                    self?.isInstalled = true
-                    Log("apiServices.mobileApplicationInstalled status-code \(response.data?.httpStatusCode ?? -1), status \(response.data?.status ?? .unknow)")
-                        .inChanel(.system).withType(.verbose).make()
-                    MindBox.shared.delegate?.mindBoxDidInstalled()
-                case .failure(let error):
-                    MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
+            let installed = MobileApplicationInstalled(
+                token: apnsToken ?? "",
+                isNotificationsEnabled: isNotificationsEnabled,
+                installationId: installationId ?? ""
+            )
+            let event = Event(
+                transactionId: UUID().uuidString,
+                enqueueTimeStamp: Date().timeIntervalSince1970,
+                type: .installed,
+                body: BodyEncoder(encodable: installed).body
+            )
+            try? self?.databaseRepository.create(event: event)
+        }
+    }
+    
+    private func proceed(result: (event: Event, error: ErrorModel?)) {
+        switch result.event.type {
+        case .installed:
+            if let error = result.error {
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
+            } else {
+                isInstalled = true
+                if let decoder = BodyDecoder<MobileApplicationInstalled>(decodable: result.event.body) {
+                    persistenceStorage.deviceUUID = configurationStorage.configuration?.deviceUUID
+                    persistenceStorage.installationId = decoder.body.installationId
                 }
+                Log("MobileApplicationInstalled")
+                    .inChanel(.system).withType(.verbose).make()
+                MindBox.shared.delegate?.mindBoxDidInstalled()
+            }
+        case .infoUpdated:
+            if let error = result.error {
+                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
+            } else {
+                Log("apnsTokenDidUpdate")
+                    .inChanel(.system).withType(.verbose).make()
+                MindBox.shared.delegate?.apnsTokenDidUpdated()
             }
         }
     }
-
+    
 }

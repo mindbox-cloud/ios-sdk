@@ -63,6 +63,7 @@
 		84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E325C988FA00AB6228 /* URLValidator.swift */; };
 		84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E825C989C100AB6228 /* UDIDValidator.swift */; };
 		84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */; };
+		84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BAEF8125D54919002E8A26 /* BodyDecoder.swift */; };
 		84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */; };
 		84C65E6425D4FBBB008996FA /* MobileApplicationInfoUpdated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */; };
 		84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C65E6725D4FE41008996FA /* BodyEncoder.swift */; };
@@ -159,6 +160,7 @@
 		84B625E325C988FA00AB6228 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
 		84B625E825C989C100AB6228 /* UDIDValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDIDValidator.swift; sourceTree = "<group>"; };
 		84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidatorsTestCase.swift; sourceTree = "<group>"; };
+		84BAEF8125D54919002E8A26 /* BodyDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyDecoder.swift; sourceTree = "<group>"; };
 		84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalled.swift; sourceTree = "<group>"; };
 		84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdated.swift; sourceTree = "<group>"; };
 		84C65E6725D4FE41008996FA /* BodyEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyEncoder.swift; sourceTree = "<group>"; };
@@ -353,7 +355,7 @@
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
 				84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */,
 				84DC4A0525D27D1500D5D758 /* UNAuthorizationStatusProviding */,
-				84C65E6725D4FE41008996FA /* BodyEncoder.swift */,
+				84BAEF8525D5492B002E8A26 /* Body+ */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -512,6 +514,15 @@
 				3132DFF525C2A811007FE358 /* DITestCase.swift */,
 			);
 			path = DI;
+			sourceTree = "<group>";
+		};
+		84BAEF8525D5492B002E8A26 /* Body+ */ = {
+			isa = PBXGroup;
+			children = (
+				84C65E6725D4FE41008996FA /* BodyEncoder.swift */,
+				84BAEF8125D54919002E8A26 /* BodyDecoder.swift */,
+			);
+			path = "Body+";
 			sourceTree = "<group>";
 		};
 		84C65E5B25D4FB71008996FA /* Bodies */ = {
@@ -876,6 +887,7 @@
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
+				84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,

@@ -45,6 +45,8 @@ final class GuaranteedDeliveryManager {
         
     }
     
+    var onCompletedEvent: ((_ event: Event, _ error: ErrorModel?) -> Void)?
+    
     private(set) var state: State = .idle {
         didSet {
             Log("State didSet to value: \(state.description)")
@@ -109,6 +111,7 @@ final class GuaranteedDeliveryManager {
             .inChanel(.delivery).withType(.info).make()
         delivery.forEach {
             completion.addDependency($0)
+            $0.onCompleted = onCompletedEvent
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
