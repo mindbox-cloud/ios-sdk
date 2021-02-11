@@ -26,6 +26,9 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
         DIManager.shared.container.register { (r) -> MobileApplicationRepository in
             MBMobileApplicationRepository()
         }
+        DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
+            MockUNAuthorizationStatusProvider(status: .authorized)
+        }
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
