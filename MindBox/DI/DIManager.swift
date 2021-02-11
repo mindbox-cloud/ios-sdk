@@ -72,6 +72,14 @@ final class DIManager: NSObject {
         container.register { (r) -> EventRepository in
             MBEventRepository()
         }
+        
+        container.registerInContainer { (r) -> MBDatabaseRepository in
+            return try! MBDatabaseRepository()
+        }
+        
+        container.registerInContainer { (r) -> GuaranteedDeliveryManager in
+            GuaranteedDeliveryManager()
+        }
     }
 
     func dropContainer() {
