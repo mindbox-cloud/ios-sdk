@@ -57,6 +57,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testDeliverMultipleEvents() {
+        let retryDeadline: TimeInterval = 3
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
         let events = eventGenerator.generateEvents(count: 10)
         events.forEach {
             do {
@@ -67,7 +69,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         let deliveringExpectation = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(state), GuaranteedDeliveryManager.State.idle.rawValue])
         expectation(for: deliveringExpectation, evaluatedWith: self, handler: nil)
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 20, handler: nil)
     }
     
     var state: NSString {

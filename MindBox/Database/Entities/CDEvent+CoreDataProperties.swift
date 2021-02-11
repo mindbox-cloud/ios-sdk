@@ -26,6 +26,7 @@ extension CDEvent {
                 NSPredicate(format: "%K < %@", argumentArray: [#keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970])
             )
         }
+        request.predicate = NSCompoundPredicate(type: .or, subpredicates: subpredicates)
         request.sortDescriptors = [
             NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true),
             NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
