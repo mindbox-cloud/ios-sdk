@@ -81,8 +81,6 @@ class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled
             )
             let event = Event(
-                transactionId: UUID().uuidString,
-                enqueueTimeStamp: Date().timeIntervalSince1970,
                 type: .infoUpdated,
                 body: BodyEncoder(encodable: infoUpdated).body
             )
@@ -99,8 +97,6 @@ class CoreController {
                 installationId: installationId ?? ""
             )
             let event = Event(
-                transactionId: UUID().uuidString,
-                enqueueTimeStamp: Date().timeIntervalSince1970,
                 type: .installed,
                 body: BodyEncoder(encodable: installed).body
             )

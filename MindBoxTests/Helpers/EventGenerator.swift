@@ -13,8 +13,6 @@ struct EventGenerator {
 
     func generateEvent() -> Event {
         Event(
-            transactionId: UUID().uuidString,
-            enqueueTimeStamp: Date().timeIntervalSince1970,
             type: .installed,
             body: randomString()
         )
@@ -23,8 +21,6 @@ struct EventGenerator {
     func generateEvents(count: Int) -> [Event] {
         return (1...count).map { _ in
             Event(
-                transactionId: UUID().uuidString,
-                enqueueTimeStamp: Date().timeIntervalSince1970,
                 type: .installed,
                 body: randomString()
             )

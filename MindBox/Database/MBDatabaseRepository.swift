@@ -175,27 +175,7 @@ class MBDatabaseRepository {
                     .inChanel(.database).withType(.info).make()
             }
             return events.compactMap {
-                guard let transactionId = $0.transactionId else {
-                    Log("Event with transactionId: nil")
-                        .inChanel(.database).withType(.error).make()
-                    return nil
-                }
-                guard let type = $0.type, let operation = Event.Operation(rawValue: type) else {
-                    Log("Event with type: nil")
-                        .inChanel(.database).withType(.error).make()
-                    return nil
-                }
-                guard let body = $0.body else {
-                    Log("Event with body: nil")
-                        .inChanel(.database).withType(.error).make()
-                    return nil
-                }
-                return Event(
-                    transactionId: transactionId,
-                    enqueueTimeStamp: $0.timestamp,
-                    type: operation,
-                    body: body
-                )
+                Event($0)
             }
         }
     }
