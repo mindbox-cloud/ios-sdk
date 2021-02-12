@@ -55,42 +55,49 @@ class MBDatabaseRepository {
         }
         var loadPersistentStoresError: Error?
         var persistentStoreURL: URL?
-        persistentContainer.loadPersistentStores { (persistentStoreDescription, error) in
-            if let url = persistentStoreDescription.url {
-                Log("Persistent store url: \(url.description)")
-                    .inChanel(.database).withType(.info).make()
-            } else {
-                Log("Unable to find persistentStoreURL")
-                    .inChanel(.database).withType(.error).make()
-            }
-            persistentStoreURL = persistentStoreDescription.url
-            loadPersistentStoresError = error
-        }
-        if let error = loadPersistentStoresError {
-            if let url = persistentStoreURL {
-                Log("Removing database at url: \(url.absoluteString)")
-                    .inChanel(.database).withType(.info).make()
-                if FileManager.default.fileExists(atPath: url.path) {
-                    Log("Unable to find database at path: \(url.path)")
+        func loadPersistentStores() {
+            persistentContainer.loadPersistentStores { (persistentStoreDescription, error) in
+                if let url = persistentStoreDescription.url {
+                    Log("Persistent store url: \(url.description)")
+                        .inChanel(.database).withType(.info).make()
+                } else {
+                    Log("Unable to find persistentStoreURL")
                         .inChanel(.database).withType(.error).make()
-                    do {
-                        try FileManager.default.removeItem(at: url)
-                        Log("Removed database")
-                            .inChanel(.database).withType(.info).make()
-                    } catch {
-                        Log("Removed database failed with error: \(error.localizedDescription)")
-                            .inChanel(.database).withType(.error).make()
-                    }
                 }
+                persistentStoreURL = persistentStoreDescription.url
+                loadPersistentStoresError = error
             }
-            throw MBDatabaseError.unableToLoadPeristentStore(localizedDescription: error.localizedDescription)
         }
+        loadPersistentStores()
         self.persistentContainer = persistentContainer
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
+        if let error = loadPersistentStoresError {
+            if let url = persistentStoreURL {
+                try destroyStore(at: url)
+            }
+            throw MBDatabaseError.unableToLoadPeristentStore(localizedDescription: error.localizedDescription)
+        }
         self.count = try countEvents()
         try self.removeDeprecatedEventsIfNeeded()
+    }
+    
+    func destroyStore(at persistentStoreURL: URL) throws {
+        Log("Removing database at url: \(persistentStoreURL.absoluteString)")
+            .inChanel(.database).withType(.info).make()
+        if FileManager.default.fileExists(atPath: persistentStoreURL.path) {
+            Log("Unable to find database at path: \(persistentStoreURL.path)")
+                .inChanel(.database).withType(.error).make()
+            do {
+                try FileManager.default.removeItem(at: persistentStoreURL)
+                Log("Removed database")
+                    .inChanel(.database).withType(.info).make()
+            } catch {
+                Log("Removed database failed with error: \(error.localizedDescription)")
+                    .inChanel(.database).withType(.error).make()
+            }
+        }
     }
     
     // MARK: - CRUD operations
@@ -168,7 +175,7 @@ class MBDatabaseRepository {
                     .inChanel(.delivery).withType(.info).make()
                 return []
             }
-            Log("Did query retry events count: \(events.count)")
+            Log("Did query events count: \(events.count)")
                 .inChanel(.database).withType(.info).make()
             events.forEach {
                 Log("Event with transactionId: \(String(describing: $0.transactionId))")
