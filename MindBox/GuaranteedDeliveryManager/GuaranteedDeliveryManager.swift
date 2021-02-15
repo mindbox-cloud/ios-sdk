@@ -71,11 +71,7 @@ final class GuaranteedDeliveryManager {
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()
     }
-    
-    deinit {
-      NotificationCenter.default.removeObserver(self)
-    }
-    
+
     private let retryDeadline: TimeInterval
 
     func performScheduleIfNeeded() {

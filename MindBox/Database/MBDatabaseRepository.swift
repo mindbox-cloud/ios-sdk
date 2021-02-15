@@ -14,7 +14,8 @@ class MBDatabaseRepository {
     private let persistentContainer: NSPersistentContainer
     private let context: NSManagedObjectContext
     
-    let countLimit = 10000
+    let limit = 10000
+    let deprecatedLimit = 500
     
     var onObjectsDidChange: (() -> Void)?
     
@@ -23,7 +24,7 @@ class MBDatabaseRepository {
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
             onObjectsDidChange?()
-            guard count > countLimit else {
+            guard count > limit else {
                 return
             }
             do {
@@ -212,10 +213,28 @@ class MBDatabaseRepository {
         }
     }
     
+    func countDeprecatedEvents() throws -> Int {
+        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
+        return try context.performAndWait {
+            Log("Counting deprecated elements")
+                .inChanel(.database).withType(.info).make()
+            do {
+                let count = try context.count(for: request)
+                Log("Deprecated Events did count: \(count)")
+                    .inChanel(.database).withType(.info).make()
+                return count
+            } catch {
+                Log("Counting events failed with error: \(error.localizedDescription)")
+                    .inChanel(.database).withType(.error).make()
+                throw error
+            }
+        }
+    }
+    
     private func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
         return try context.performAndWait {
-            Log("Events count limit: \(countLimit)")
+            Log("Events count limit: \(limit)")
                 .inChanel(.database).withType(.info).make()
             Log("Counting events")
                 .inChanel(.database).withType(.info).make()

@@ -44,7 +44,7 @@ class BackgroundTaskManagerProxy {
     }
     
     func registerTask(with identifier: String) {
-        taskManager?.registerTask(with: identifier)
+        taskManager?.registerBackgroundTasks(appRefreshIdentifier: identifier, appProcessingIdentifier: "")
     }
     
 }

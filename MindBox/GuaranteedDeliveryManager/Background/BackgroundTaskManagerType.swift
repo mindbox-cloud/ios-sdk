@@ -13,6 +13,6 @@ protocol BackgroundTaskManagerType: class {
     func applicationDidEnterBackground()
     func applicationDidBecomeActive()
     func endBackgroundTask(success: Bool)
-    func registerTask(with identifier: String)
+    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String)
     
 }

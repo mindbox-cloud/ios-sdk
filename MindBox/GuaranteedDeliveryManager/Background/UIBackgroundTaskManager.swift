@@ -11,12 +11,6 @@ import UIKit
 
 class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
-    init() {
-
-    }
-    
-    func registerTask(with identifier: String) {}
-    
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
         didSet {
             if backgroundTaskID != .invalid {
@@ -27,6 +21,10 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
                     .inChanel(.background).withType(.info).make()
             }
         }
+    }
+    
+    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+        
     }
     
     func applicationDidEnterBackground() {
