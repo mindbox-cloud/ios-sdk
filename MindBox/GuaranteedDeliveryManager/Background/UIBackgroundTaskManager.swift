@@ -11,6 +11,9 @@ import UIKit
 
 class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
+    @Injected
+    private var databaseRepository: MBDatabaseRepository
+    
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
         didSet {
             if backgroundTaskID != .invalid {
@@ -23,9 +26,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         }
     }
     
-    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
-        
-    }
+    var removingDeprecatedEventsInProgress = false
     
     func applicationDidEnterBackground() {
         guard backgroundTaskID == .invalid else {
@@ -47,20 +48,53 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             guard let self = self else { return }
             Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
                 .inChanel(.background).withType(.warning).make()
+            self.removingDeprecatedEventsInProgress = false
             self.endBackgroundTask(success: true)
             Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
                 .inChanel(.background).withType(.info).make()
         })
         Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
             .inChanel(.background).withType(.info).make()
+        removeDeprecatedEventsIfNeeded()
+    }
+    
+    private func removeDeprecatedEventsIfNeeded() {
+        guard removingDeprecatedEventsInProgress else {
+            return
+        }
+        guard let count = try? databaseRepository.countDeprecatedEvents() else {
+            return
+        }
+        guard count > databaseRepository.deprecatedLimit else {
+            return
+        }
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        queue.qualityOfService = .background
+        let operation = BlockOperation { [self] in
+            try? databaseRepository.removeDeprecatedEventsIfNeeded()
+        }
+        operation.completionBlock = { [weak self] in
+            self?.removingDeprecatedEventsInProgress = false
+            self?.endBackgroundTask(success: true)
+        }
+        removingDeprecatedEventsInProgress = true
+        queue.addOperation(operation)
+        Log("removeDeprecatedEventsProcessing task started")
+            .inChanel(.background).withType(.info).make()
     }
     
     func endBackgroundTask(success: Bool) {
         guard backgroundTaskID != .invalid else { return }
+        guard !removingDeprecatedEventsInProgress else { return }
         Log("Ending BackgroundTaskID \(backgroundTaskID)")
             .inChanel(.background).withType(.info).make()
         UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
         self.backgroundTaskID = .invalid
+    }
+    
+    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+        
     }
     
 }

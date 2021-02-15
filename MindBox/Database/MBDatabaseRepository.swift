@@ -81,7 +81,6 @@ class MBDatabaseRepository {
             throw MBDatabaseError.unableToLoadPeristentStore(localizedDescription: error.localizedDescription)
         }
         self.count = try countEvents()
-        try self.removeDeprecatedEventsIfNeeded()
     }
     
     func destroyStore(at persistentStoreURL: URL) throws {
