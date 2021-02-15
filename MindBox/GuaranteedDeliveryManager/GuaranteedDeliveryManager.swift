@@ -75,8 +75,6 @@ final class GuaranteedDeliveryManager {
     private let retryDeadline: TimeInterval
 
     func performScheduleIfNeeded() {
-        Log("Did call performScheduleIfNeeded after TimeInterval")
-            .inChanel(.delivery).withType(.info).make()
         guard canScheduleOperations else { return }
         let count = databaseRepository.count
         guard count != 0 else {
