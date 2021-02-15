@@ -9,10 +9,13 @@
 import Foundation
 import CoreData
 import UIKit
+import BackgroundTasks
 
 final class GuaranteedDeliveryManager {
     
     @Injected var databaseRepository: MBDatabaseRepository
+    
+    let backgroundTaskManager: BackgroundTaskManagerProxy = .shared
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -67,22 +70,6 @@ final class GuaranteedDeliveryManager {
         self.retryDeadline = retryDeadline
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didEnterBackgroundNotification,
-            object: nil,
-            queue: nil) { [weak self] (_) in
-            Log("UIApplication.didEnterBackgroundNotification")
-                .inChanel(.system).withType(.info).make()
-            self?.applicationDidEnterBackground()
-        }
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: nil) { [weak self] (_) in
-            Log("UIApplication.didBecomeActiveNotification")
-                .inChanel(.system).withType(.info).make()
-            self?.applicationDidBecomeActive()
-        }
     }
     
     deinit {
@@ -97,7 +84,7 @@ final class GuaranteedDeliveryManager {
         guard canScheduleOperations else { return }
         let count = databaseRepository.count
         guard count != 0 else {
-            endBackgroundTask()
+            backgroundTaskManager.endBackgroundTask(success: true)
             return
         }
         scheduleOperations(fetchLimit: count <= 20 ? count : 20)
@@ -143,62 +130,6 @@ final class GuaranteedDeliveryManager {
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
-    }
-    
-    // MARK: - Background
-    
-    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
-        didSet {
-            if backgroundTaskID != .invalid {
-                Log("Did begin BackgroundTaskID: \(backgroundTaskID)")
-                    .inChanel(.background).withType(.info).make()
-            } else {
-                Log("Did become invalid BackgroundTaskID")
-                    .inChanel(.background).withType(.info).make()
-            }
-        }
-    }
-    
-    private func applicationDidEnterBackground() {
-        guard backgroundTaskID == .invalid else {
-            Log("BackgroundTask already in progress. Skip call of beginBackgroundTask")
-                .inChanel(.background).withType(.info).make()
-            return
-        }
-        Log("Beginnig BackgroundTask")
-            .inChanel(.background).withType(.info).make()
-        beginBackgroundTask()
-    }
-    
-    private func applicationDidBecomeActive() {
-        endBackgroundTask()
-    }
-    
-    private func beginBackgroundTask() {
-        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: UUID().uuidString, expirationHandler: { [weak self] in
-            guard let self = self else { return }
-            Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
-                .inChanel(.background).withType(.info).make()
-            self.endBackgroundTask()
-            Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
-                .inChanel(.background).withType(.info).make()
-        })
-        Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
-            .inChanel(.background).withType(.info).make()
-    
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2*60) {
-            Log("LOG TIMELINE")
-                .inChanel(.background).withType(.info).make()
-
-        }
-    }
-    
-    func endBackgroundTask() {
-        guard backgroundTaskID != .invalid else { return }
-        Log("Ending BackgroundTaskID \(backgroundTaskID)")
-            .inChanel(.background).withType(.info).make()
-        UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
-        self.backgroundTaskID = .invalid
     }
     
 }

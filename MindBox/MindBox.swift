@@ -58,19 +58,21 @@ public class MindBox {
 
     /// - Returns: APNSToken sent to the analytics system
     public var APNSToken: String? {
-        return persistenceStorage.apnsToken
+        persistenceStorage.apnsToken
     }
 
     /// - Returns: version from bundle
     public var sdkVersion: String {
-        get {
-            return utilitiesFetcher.sdkVersion ?? "unknown"
-        }
+        utilitiesFetcher.sdkVersion ?? "unknown"
     }
 
 	/// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
         coreController.apnsTokenDidUpdate(token: token)
+    }
+    
+    public func registerBGTask(with identifire: String) {
+        BackgroundTaskManagerProxy.shared.registerTask(with: identifire)
     }
 
     // MARK: - Private
