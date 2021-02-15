@@ -43,8 +43,11 @@ class BackgroundTaskManagerProxy {
         taskManager?.endBackgroundTask(success: success)
     }
     
-    func registerTask(with identifier: String) {
-        taskManager?.registerBackgroundTasks(appRefreshIdentifier: identifier, appProcessingIdentifier: "")
+    func registerTask(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+        taskManager?.registerBackgroundTasks(
+            appRefreshIdentifier: appRefreshIdentifier,
+            appProcessingIdentifier: appProcessingIdentifier
+        )
     }
     
 }

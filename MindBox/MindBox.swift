@@ -71,8 +71,11 @@ public class MindBox {
         coreController.apnsTokenDidUpdate(token: token)
     }
     
-    public func registerBGTask(with identifire: String) {
-        BackgroundTaskManagerProxy.shared.registerTask(with: identifire)
+    public func registerBGTask(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+        BackgroundTaskManagerProxy.shared.registerTask(
+            appRefreshIdentifier: appRefreshIdentifier,
+            appProcessingIdentifier: appProcessingIdentifier
+        )
     }
 
     // MARK: - Private
