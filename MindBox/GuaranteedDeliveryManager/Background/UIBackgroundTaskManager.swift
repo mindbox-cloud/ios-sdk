@@ -11,9 +11,9 @@ import UIKit
 
 class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
-    @Injected
-    private var databaseRepository: MBDatabaseRepository
-    
+    @Injected private var databaseRepository: MBDatabaseRepository
+    @Injected private var persistenceStorage: PersistenceStorage
+
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
         didSet {
             if backgroundTaskID != .invalid {
@@ -60,6 +60,10 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
     private func removeDeprecatedEventsIfNeeded() {
         guard removingDeprecatedEventsInProgress else {
+            return
+        }
+        let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
+        guard Date() > deprecatedEventsRemoveDate + TimeInterval(7 * 24 * 60 * 60) else {
             return
         }
         guard let count = try? databaseRepository.countDeprecatedEvents() else {
