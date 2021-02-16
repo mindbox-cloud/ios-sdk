@@ -13,69 +13,60 @@ import BackgroundTasks
 @available(iOS 13.0, *)
 class BGTaskManager: BackgroundTaskManagerType {
 
-    var appRefreshIdentifier: String?
-    var appProcessingIdentifier: String?
+    var appGDRefreshIdentifier: String?
+    var appGDProcessingIdentifier: String?
+    var appRemoveDeprecatedEventsProcessingIdentifier: String?
 
-    private var appRefreshTask: BGAppRefreshTask?
-    
-    @Injected
-    private var databaseRepository: MBDatabaseRepository
+    private var appGDRefreshTask: BGAppRefreshTask?
+    private var appGDProcessingTask: BGProcessingTask?
+
+    @Injected private var databaseRepository: MBDatabaseRepository
+    @Injected private var persistenceStorage: PersistenceStorage
     
     func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
-        self.appRefreshIdentifier = appRefreshIdentifier
+        self.appGDRefreshIdentifier = appRefreshIdentifier
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: appRefreshIdentifier,
             using: nil,
-            launchHandler: appRefreshHandler
+            launchHandler: appGDRefreshHandler
+        )
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: appProcessingIdentifier,
+            using: nil,
+            launchHandler: appGDProcessingHandler
         )
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: appProcessingIdentifier,
             using: nil,
             launchHandler: removeDeprecatedEventsProcessingHandler
         )
-        Log("Did register BGAppRefreshTask with identifier: \(appRefreshIdentifier)")
-            .inChanel(.background).withType(.info).make()
     }
     
     func endBackgroundTask(success: Bool) {
-        Log("Did end Background task with identifire:\(String(describing: appRefreshIdentifier)) ")
+        Log("Did end Background task with identifire:\(String(describing: appGDRefreshIdentifier)) ")
             .inChanel(.background).withType(.info).make()
-        appRefreshTask?.setTaskCompleted(success: success)
+        appGDRefreshTask?.setTaskCompleted(success: success)
+        appGDProcessingTask?.setTaskCompleted(success: success)
     }
     
     func applicationDidEnterBackground() {
-        scheduleAppRefreshTask()
+        scheduleGDAppRefreshTask()
+        scheduleGDAppProcessingTask()
         scheduleRemoveDeprecatedEventsAppProcessingTaskIfNeeded()
     }
     
     func applicationDidBecomeActive() {
-        BGTaskScheduler.shared.cancelAllTaskRequests()
-        appRefreshTask?.setTaskCompleted(success: false)
+        appGDRefreshTask?.setTaskCompleted(success: false)
+        appGDProcessingTask?.setTaskCompleted(success: false)
     }
     
-    private func appRefreshHandler(task: BGTask) {
-        Log("Invoked AppRefreshTaskHandler")
-            .inChanel(.background).withType(.info).make()
-        guard let task = task as? BGAppRefreshTask else {
-            return
-        }
-        self.appRefreshTask = task
-        scheduleAppRefreshTask()
-        task.expirationHandler = {
-            Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
-                .inChanel(.background).withType(.warning).make()
-            self.appRefreshTask = nil
-        }
-        Log("AppRefresh task started")
-            .inChanel(.background).withType(.info).make()
-    }
-    
-    private func scheduleAppRefreshTask() {
-        guard let identifier = appRefreshIdentifier else {
+    // MARK: - Shedulers
+    private func scheduleGDAppRefreshTask() {
+        guard let identifier = appGDRefreshIdentifier else {
             return
         }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 1 * 60) // Fetch no earlier than 1 minute from now
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 2 * 60) // Fetch no earlier than 2 minute from now
         do {
             try BGTaskScheduler.shared.submit(request)
             Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")
@@ -86,8 +77,29 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
     }
     
+    private func scheduleGDAppProcessingTask() {
+        guard let identifier = appGDProcessingIdentifier else {
+            return
+        }
+        let request = BGProcessingTaskRequest(identifier: identifier)
+        request.requiresNetworkConnectivity = true
+        request.requiresExternalPower = false
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            Log("Scheduled SendEventsBGProcessingTaskRequest")
+                .inChanel(.background).withType(.info).make()
+        } catch {
+            Log("Could not schedule app processing task with error: \(error.localizedDescription)")
+                .inChanel(.background).withType(.warning).make()
+        }
+    }
+    
     private func scheduleRemoveDeprecatedEventsAppProcessingTaskIfNeeded() {
-        guard let identifier = appProcessingIdentifier else {
+        guard let identifier = appRemoveDeprecatedEventsProcessingIdentifier else {
+            return
+        }
+        let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
+        guard Date() > deprecatedEventsRemoveDate + TimeInterval(7 * 24 * 60 * 60) else {
             return
         }
         guard let count = try? databaseRepository.countDeprecatedEvents() else {
@@ -109,6 +121,40 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
     }
     
+    // MARK: - Handlers
+    private func appGDRefreshHandler(task: BGTask) {
+        Log("Invoked appGDRefreshHandler")
+            .inChanel(.background).withType(.info).make()
+        guard let task = task as? BGAppRefreshTask else {
+            return
+        }
+        self.appGDRefreshTask = task
+        scheduleGDAppRefreshTask()
+        task.expirationHandler = {
+            Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
+                .inChanel(.background).withType(.warning).make()
+            self.appGDRefreshTask = nil
+        }
+        Log("GDAppRefresh task started")
+            .inChanel(.background).withType(.info).make()
+    }
+    
+    private func appGDProcessingHandler(task: BGTask) {
+        Log("Invoked appGDAppProcessingHandler")
+            .inChanel(.background).withType(.info).make()
+        guard let task = task as? BGProcessingTask else {
+            return
+        }
+        self.appGDProcessingTask = task
+        task.expirationHandler = {
+            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
+                .inChanel(.background).withType(.warning).make()
+            self.appGDProcessingTask = nil
+        }
+        Log("GDAppProcessing task started")
+            .inChanel(.background).withType(.info).make()
+    }
+    
     private func removeDeprecatedEventsProcessingHandler(task: BGTask) {
         Log("Invoked removeDeprecatedEventsProcessing")
             .inChanel(.background).withType(.info).make()
@@ -125,7 +171,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             task.setTaskCompleted(success: !operation.isCancelled)
         }
         task.expirationHandler = {
-            Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
+            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
                 .inChanel(.background).withType(.warning).make()
             queue.cancelAllOperations()
         }
