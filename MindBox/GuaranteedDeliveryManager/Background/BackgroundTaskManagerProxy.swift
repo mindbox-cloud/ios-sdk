@@ -13,7 +13,7 @@ class BackgroundTaskManagerProxy {
     
     static let shared = BackgroundTaskManagerProxy()
     
-    private var taskManager: BackgroundTaskManagerType?
+    private var taskManagers: [BackgroundTaskManagerType] = []
     
     private init() {
         NotificationCenter.default.addObserver(
@@ -22,7 +22,7 @@ class BackgroundTaskManagerProxy {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didEnterBackgroundNotification")
                 .inChanel(.system).withType(.info).make()
-            self?.taskManager?.applicationDidEnterBackground()
+            self?.taskManagers.forEach { $0.applicationDidEnterBackground() }
         }
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
@@ -30,24 +30,26 @@ class BackgroundTaskManagerProxy {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
                 .inChanel(.system).withType(.info).make()
-            self?.taskManager?.applicationDidBecomeActive()
+            self?.taskManagers.forEach { $0.applicationDidBecomeActive() }
         }
         if #available(iOS 13, *) {
-            taskManager = BGTaskManager()
+            taskManagers = [UIBackgroundTaskManager(), BGTaskManager()]
         } else {
-            taskManager = UIBackgroundTaskManager()
+            taskManagers = [UIBackgroundTaskManager()]
         }
     }
     
     func endBackgroundTask(success: Bool) {
-        taskManager?.endBackgroundTask(success: success)
+        taskManagers.forEach { $0.endBackgroundTask(success: success) }
     }
     
     func registerTask(appRefreshIdentifier: String, appProcessingIdentifier: String) {
-        taskManager?.registerBackgroundTasks(
-            appRefreshIdentifier: appRefreshIdentifier,
-            appProcessingIdentifier: appProcessingIdentifier
-        )
+        taskManagers.forEach {
+            $0.registerBackgroundTasks(
+                appRefreshIdentifier: appRefreshIdentifier,
+                appProcessingIdentifier: appProcessingIdentifier
+            )
+        }
     }
     
 }
