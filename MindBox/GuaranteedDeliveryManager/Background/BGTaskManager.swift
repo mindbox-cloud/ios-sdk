@@ -75,7 +75,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 5 * 60) // Fetch no earlier than 1 minute from now
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 1 * 60) // Fetch no earlier than 1 minute from now
         do {
             try BGTaskScheduler.shared.submit(request)
             Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")

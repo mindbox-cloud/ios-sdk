@@ -193,6 +193,7 @@ class MBDatabaseRepository {
     
     func removeDeprecatedEventsIfNeeded() throws {
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
+        let context = persistentContainer.newBackgroundContext()
         try context.performAndWait {
             Log("Finding deprecated elements")
                 .inChanel(.database).withType(.info).make()
@@ -213,6 +214,7 @@ class MBDatabaseRepository {
     }
     
     func countDeprecatedEvents() throws -> Int {
+        let context = persistentContainer.newBackgroundContext()
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
         return try context.performAndWait {
             Log("Counting deprecated elements")
