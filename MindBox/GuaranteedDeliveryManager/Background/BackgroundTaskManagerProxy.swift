@@ -11,11 +11,17 @@ import UIKit
 
 class BackgroundTaskManagerProxy {
     
-    static let shared = BackgroundTaskManagerProxy()
-    
+    weak var gdManager: GuaranteedDeliveryManager? {
+        didSet {
+            taskManagers.forEach {
+                $0.gdManager = gdManager
+            }
+        }
+    }
+        
     private var taskManagers: [BackgroundTaskManagerType] = []
     
-    private init() {
+    init() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
@@ -43,12 +49,23 @@ class BackgroundTaskManagerProxy {
         taskManagers.forEach { $0.endBackgroundTask(success: success) }
     }
     
-    func registerTask(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+    func registerTask(
+        appGDRefreshIdentifier: String,
+        appGDProcessingIdentifier: String,
+        appDBCleanProcessingIdentifire: String
+    ) {
         taskManagers.forEach {
-            $0.registerBackgroundTasks(
-                appRefreshIdentifier: appRefreshIdentifier,
-                appProcessingIdentifier: appProcessingIdentifier
+            $0.registerBGTasks(
+                appGDRefreshIdentifier: appGDRefreshIdentifier,
+                appGDProcessingIdentifier: appGDProcessingIdentifier,
+                appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifire
             )
+        }
+    }
+    
+    func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        taskManagers.forEach {
+            $0.application(application, performFetchWithCompletionHandler: completionHandler)
         }
     }
     

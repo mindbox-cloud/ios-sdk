@@ -13,7 +13,10 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
     @Injected private var databaseRepository: MBDatabaseRepository
     @Injected private var persistenceStorage: PersistenceStorage
-
+    weak var gdManager: GuaranteedDeliveryManager?
+    
+    private var observationToken: NSKeyValueObservation?
+    
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
         didSet {
             if backgroundTaskID != .invalid {
@@ -44,22 +47,24 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     }
     
     private func beginBackgroundTask() {
-        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: UUID().uuidString, expirationHandler: { [weak self] in
-            guard let self = self else { return }
-            Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
-                .inChanel(.background).withType(.warning).make()
-            self.removingDeprecatedEventsInProgress = false
-            self.endBackgroundTask(success: true)
-            Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
-                .inChanel(.background).withType(.info).make()
-        })
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(
+            withName: UUID().uuidString,
+            expirationHandler: { [weak self] in
+                guard let self = self else { return }
+                Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
+                    .inChanel(.background).withType(.warning).make()
+                self.removingDeprecatedEventsInProgress = false
+                self.endBackgroundTask(success: true)
+                Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
+                    .inChanel(.background).withType(.info).make()
+            })
         Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
             .inChanel(.background).withType(.info).make()
         removeDeprecatedEventsIfNeeded()
     }
     
     private func removeDeprecatedEventsIfNeeded() {
-        guard removingDeprecatedEventsInProgress else {
+        guard !removingDeprecatedEventsInProgress else {
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
@@ -97,8 +102,33 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         self.backgroundTaskID = .invalid
     }
     
-    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
+    func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        guard let gdManager = gdManager else {
+            completionHandler(.noData)
+            return
+        }
         
+        switch gdManager.state {
+        case .idle:
+            Log("completionHandler(.noData): idle")
+                .inChanel(.background).withType(.info).make()
+            completionHandler(.noData)
+        case .delivering:
+            observationToken = gdManager.observe(\.stateObserver, options: [.new]) { (observed, change) in
+                Log("change.newValue \(String(describing: change.newValue))")
+                    .inChanel(.background).withType(.info).make()
+                let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
+                if change.newValue == idleString {
+                    Log("completionHandler(.newData): delivering")
+                        .inChanel(.background).withType(.info).make()
+                    completionHandler(.newData)
+                }
+            }
+        case .waitingForRetry:
+            Log("completionHandler(.newData): waitingForRetry")
+                .inChanel(.background).withType(.info).make()
+            completionHandler(.newData)
+        }
     }
     
 }

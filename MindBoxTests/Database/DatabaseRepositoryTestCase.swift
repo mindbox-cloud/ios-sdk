@@ -44,7 +44,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        let count = 100
+        let count = 10000
         let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
         do {
@@ -133,7 +133,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
-        let events = eventGenerator.generateEvents(count: databaseRepository.countLimit)
+        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
@@ -141,7 +141,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        XCTAssertTrue(databaseRepository.count <= databaseRepository.countLimit)
+        XCTAssertTrue(databaseRepository.count <= databaseRepository.limit)
     }
     
     func testLifeTimeLimit() {

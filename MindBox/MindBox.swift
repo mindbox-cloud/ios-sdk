@@ -25,6 +25,7 @@ public class MindBox {
 
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var utilitiesFetcher: UtilitiesFetcher
+    @Injected var gdManager: GuaranteedDeliveryManager
     
     /// Internal process controller
     let coreController = CoreController()
@@ -71,11 +72,29 @@ public class MindBox {
         coreController.apnsTokenDidUpdate(token: token)
     }
     
-    public func registerBGTask(appRefreshIdentifier: String, appProcessingIdentifier: String) {
-        BackgroundTaskManagerProxy.shared.registerTask(
-            appRefreshIdentifier: appRefreshIdentifier,
-            appProcessingIdentifier: appProcessingIdentifier
+    @available(iOS 13.0, *)
+    public func registerBGTasks() {
+        guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {
+            return
+        }
+        guard let appGDRefreshIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppRefresh") }) else  {
+            return
+        }
+        guard let appGDProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppProcessing") }) else  {
+            return
+        }
+        guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.DBCleanAppProcessing") }) else  {
+            return
+        }
+        gdManager.backgroundTaskManager.registerTask(
+            appGDRefreshIdentifier: appGDRefreshIdentifier,
+            appGDProcessingIdentifier: appGDProcessingIdentifier,
+            appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
         )
+    }
+    
+    public func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        gdManager.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
 
     // MARK: - Private

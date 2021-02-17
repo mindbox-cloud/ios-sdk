@@ -12,10 +12,12 @@ import BackgroundTasks
 
 @available(iOS 13.0, *)
 class BGTaskManager: BackgroundTaskManagerType {
+    
+    weak var gdManager: GuaranteedDeliveryManager?
 
     var appGDRefreshIdentifier: String?
     var appGDProcessingIdentifier: String?
-    var appRemoveDeprecatedEventsProcessingIdentifier: String?
+    var appDBCleanProcessingIdentifire: String?
 
     private var appGDRefreshTask: BGAppRefreshTask?
     private var appGDProcessingTask: BGProcessingTask?
@@ -23,22 +25,29 @@ class BGTaskManager: BackgroundTaskManagerType {
     @Injected private var databaseRepository: MBDatabaseRepository
     @Injected private var persistenceStorage: PersistenceStorage
     
-    func registerBackgroundTasks(appRefreshIdentifier: String, appProcessingIdentifier: String) {
-        self.appGDRefreshIdentifier = appRefreshIdentifier
+    func registerBGTasks(
+        appGDRefreshIdentifier: String,
+        appGDProcessingIdentifier: String,
+        appDBCleanProcessingIdentifire: String
+    ) {
+        self.appGDRefreshIdentifier = appGDRefreshIdentifier
+        self.appGDProcessingIdentifier = appGDProcessingIdentifier
+        self.appDBCleanProcessingIdentifire = appDBCleanProcessingIdentifire
+        
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: appRefreshIdentifier,
+            forTaskWithIdentifier: appGDRefreshIdentifier,
             using: nil,
             launchHandler: appGDRefreshHandler
         )
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: appProcessingIdentifier,
+            forTaskWithIdentifier: appGDProcessingIdentifier,
             using: nil,
             launchHandler: appGDProcessingHandler
         )
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: appProcessingIdentifier,
+            forTaskWithIdentifier: appDBCleanProcessingIdentifire,
             using: nil,
-            launchHandler: removeDeprecatedEventsProcessingHandler
+            launchHandler: appDBCleanProcessingHandler
         )
     }
     
@@ -50,9 +59,9 @@ class BGTaskManager: BackgroundTaskManagerType {
     }
     
     func applicationDidEnterBackground() {
-        scheduleGDAppRefreshTask()
-        scheduleGDAppProcessingTask()
-        scheduleRemoveDeprecatedEventsAppProcessingTaskIfNeeded()
+        scheduleAppGDRefreshTask()
+        scheduleAppGDProcessingTask()
+        scheduleAppDBCleanProcessingTaskIfNeeded()
     }
     
     func applicationDidBecomeActive() {
@@ -61,7 +70,7 @@ class BGTaskManager: BackgroundTaskManagerType {
     }
     
     // MARK: - Shedulers
-    private func scheduleGDAppRefreshTask() {
+    private func scheduleAppGDRefreshTask() {
         guard let identifier = appGDRefreshIdentifier else {
             return
         }
@@ -77,7 +86,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
     }
     
-    private func scheduleGDAppProcessingTask() {
+    private func scheduleAppGDProcessingTask() {
         guard let identifier = appGDProcessingIdentifier else {
             return
         }
@@ -94,8 +103,8 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
     }
     
-    private func scheduleRemoveDeprecatedEventsAppProcessingTaskIfNeeded() {
-        guard let identifier = appRemoveDeprecatedEventsProcessingIdentifier else {
+    private func scheduleAppDBCleanProcessingTaskIfNeeded() {
+        guard let identifier = appDBCleanProcessingIdentifire else {
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
@@ -110,7 +119,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
         let request = BGProcessingTaskRequest(identifier: identifier)
         request.requiresNetworkConnectivity = false
-        request.requiresExternalPower = true
+        request.requiresExternalPower = false
         do {
             try BGTaskScheduler.shared.submit(request)
             Log("Scheduled BGProcessingTaskRequest")
@@ -129,7 +138,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         self.appGDRefreshTask = task
-        scheduleGDAppRefreshTask()
+        scheduleAppGDRefreshTask()
         task.expirationHandler = {
             Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
                 .inChanel(.background).withType(.warning).make()
@@ -155,7 +164,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             .inChanel(.background).withType(.info).make()
     }
     
-    private func removeDeprecatedEventsProcessingHandler(task: BGTask) {
+    private func appDBCleanProcessingHandler(task: BGTask) {
         Log("Invoked removeDeprecatedEventsProcessing")
             .inChanel(.background).withType(.info).make()
         guard let task = task as? BGProcessingTask else {
@@ -179,5 +188,5 @@ class BGTaskManager: BackgroundTaskManagerType {
         Log("removeDeprecatedEventsProcessing task started")
             .inChanel(.background).withType(.info).make()
     }
-    
+
 }
