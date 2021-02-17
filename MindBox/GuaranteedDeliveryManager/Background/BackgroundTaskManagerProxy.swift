@@ -49,7 +49,7 @@ class BackgroundTaskManagerProxy {
         taskManagers.forEach { $0.endBackgroundTask(success: success) }
     }
     
-    func registerTask(
+    func registerBGTasks(
         appGDRefreshIdentifier: String,
         appGDProcessingIdentifier: String,
         appDBCleanProcessingIdentifire: String

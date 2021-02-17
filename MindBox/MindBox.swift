@@ -86,14 +86,17 @@ public class MindBox {
         guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.DBCleanAppProcessing") }) else  {
             return
         }
-        gdManager.backgroundTaskManager.registerTask(
+        gdManager.backgroundTaskManager.registerBGTasks(
             appGDRefreshIdentifier: appGDRefreshIdentifier,
             appGDProcessingIdentifier: appGDProcessingIdentifier,
             appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
         )
     }
     
-    public func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    public func application(
+        _ application: UIApplication,
+        performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
         gdManager.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
 
