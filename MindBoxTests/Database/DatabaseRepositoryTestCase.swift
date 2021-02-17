@@ -12,7 +12,7 @@ import CoreData
 
 class DatabaseRepositoryTestCase: XCTestCase {
     
-    var databaseRepository: MockDatabaseRepository!
+    var databaseRepository: MBDatabaseRepository!
     
     let eventGenerator = EventGenerator()
     
@@ -44,13 +44,19 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        let count = 10000
+        databaseRepository = try! MBDatabaseRepository()
+        let beforeDate = Date()
+        let count = databaseRepository.limit
         let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
             }
+            let afterDate = Date()
+            let delta = afterDate.timeIntervalSince1970 - beforeDate.timeIntervalSince1970
+            print(delta)
+            XCTAssertTrue(delta < 30)
             expectation.fulfill()
         } catch {
             XCTFail(error.localizedDescription)
@@ -222,6 +228,10 @@ class DatabaseRepositoryTestCase: XCTestCase {
             }
         }
         waitForExpectations(timeout: retryDeadline + 2.0)
+    }
+    
+    override func measure(_ block: () -> Void) {
+        testCreateEvents()
     }
     
 }
