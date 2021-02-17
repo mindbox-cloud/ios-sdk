@@ -176,12 +176,14 @@ class BGTaskManager: BackgroundTaskManagerType {
         let operation = BlockOperation { [self] in
             try? databaseRepository.removeDeprecatedEventsIfNeeded()
         }
-        operation.completionBlock = {
+        operation.completionBlock = { [self] in
+            persistenceStorage.deprecatedEventsRemoveDate = Date()
             task.setTaskCompleted(success: !operation.isCancelled)
         }
-        task.expirationHandler = {
+        task.expirationHandler = { [self] in
             Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
                 .inChanel(.background).withType(.warning).make()
+            persistenceStorage.deprecatedEventsRemoveDate = Date()
             queue.cancelAllOperations()
         }
         queue.addOperation(operation)

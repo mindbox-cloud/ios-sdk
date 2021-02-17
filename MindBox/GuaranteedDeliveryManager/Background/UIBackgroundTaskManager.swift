@@ -60,7 +60,12 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             })
         Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
             .inChanel(.background).withType(.info).make()
-        removeDeprecatedEventsIfNeeded()
+        
+        if #available(iOS 13.0, *) {
+            // Do nothing cause BGProcessingTask will be called
+        } else {
+            removeDeprecatedEventsIfNeeded()
+        }
     }
     
     private func removeDeprecatedEventsIfNeeded() {
@@ -83,9 +88,10 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         let operation = BlockOperation { [self] in
             try? databaseRepository.removeDeprecatedEventsIfNeeded()
         }
-        operation.completionBlock = { [weak self] in
-            self?.removingDeprecatedEventsInProgress = false
-            self?.endBackgroundTask(success: true)
+        operation.completionBlock = { [self] in
+            persistenceStorage.deprecatedEventsRemoveDate = Date()
+            removingDeprecatedEventsInProgress = false
+            endBackgroundTask(success: true)
         }
         removingDeprecatedEventsInProgress = true
         queue.addOperation(operation)
