@@ -229,9 +229,5 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         waitForExpectations(timeout: retryDeadline + 2.0)
     }
-    
-    override func measure(_ block: () -> Void) {
-        testCreateEvents()
-    }
-    
+
 }
