@@ -53,7 +53,10 @@ public class MindBox {
         if let value = persistenceStorage.deviceUUID {
             return value
         } else {
-            throw MindBox.Errors.invalidAccess(reason: "deviceUUID unavailable until first initialization did success", suggestion: "Try later")
+            throw MindBox.Errors.invalidAccess(
+                reason: "deviceUUID unavailable until first initialization did success",
+                suggestion: "Try later"
+            )
         }
     }
 
