@@ -69,7 +69,9 @@ public class MindBox {
 
 	/// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
-        coreController.apnsTokenDidUpdate(token: token)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.coreController.apnsTokenDidUpdate(token: token)
+        }
     }
     
     @available(iOS 13.0, *)
