@@ -12,7 +12,7 @@ struct Event {
     
     enum Operation: String {
         case installed = "MobileApplicationInstalled"
-        case infoUpdated = "MobileApplocationInfoUpdated"
+        case infoUpdated = "MobileApplicationInfoUpdated"
     }
     
     let transactionId: String
