@@ -13,6 +13,7 @@ struct LogerConfiguration {
         .system,
         .network,
         .database,
-        .delivery
+        .delivery,
+        .background
     ]
 }

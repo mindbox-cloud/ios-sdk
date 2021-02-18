@@ -15,6 +15,7 @@ protocol PersistenceStorage: class {
     var isInstalled: Bool { get }
     var apnsToken: String? { get set }
     var apnsTokenSaveDate: Date? { get set }
+    var deprecatedEventsRemoveDate: Date? { get set }
 
     func reset()
 

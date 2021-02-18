@@ -25,6 +25,7 @@ public class MindBox {
 
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var utilitiesFetcher: UtilitiesFetcher
+    @Injected var gdManager: GuaranteedDeliveryManager
     
     /// Internal process controller
     let coreController = CoreController()
@@ -58,19 +59,47 @@ public class MindBox {
 
     /// - Returns: APNSToken sent to the analytics system
     public var APNSToken: String? {
-        return persistenceStorage.apnsToken
+        persistenceStorage.apnsToken
     }
 
     /// - Returns: version from bundle
     public var sdkVersion: String {
-        get {
-            return utilitiesFetcher.sdkVersion ?? "unknown"
-        }
+        utilitiesFetcher.sdkVersion ?? "unknown"
     }
 
 	/// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
-        coreController.apnsTokenDidUpdate(token: token)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.coreController.apnsTokenDidUpdate(token: token)
+        }
+    }
+    
+    @available(iOS 13.0, *)
+    public func registerBGTasks() {
+        guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {
+            return
+        }
+        guard let appGDRefreshIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppRefresh") }) else  {
+            return
+        }
+        guard let appGDProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppProcessing") }) else  {
+            return
+        }
+        guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.DBCleanAppProcessing") }) else  {
+            return
+        }
+        gdManager.backgroundTaskManager.registerBGTasks(
+            appGDRefreshIdentifier: appGDRefreshIdentifier,
+            appGDProcessingIdentifier: appGDProcessingIdentifier,
+            appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
+        )
+    }
+    
+    public func application(
+        _ application: UIApplication,
+        performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        gdManager.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
 
     // MARK: - Private

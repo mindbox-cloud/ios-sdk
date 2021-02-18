@@ -59,6 +59,10 @@
 		847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581225C8909300147A9A /* URLRequestBuilder.swift */; };
 		847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */; };
 		847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */; };
+		84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312AF25DA5CF30096A017 /* BackgroundTaskManagerProxy.swift */; };
+		84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312B625DA64C60096A017 /* BGTaskManager.swift */; };
+		84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312BC25DA651C0096A017 /* UIBackgroundTaskManager.swift */; };
+		84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312C225DA65690096A017 /* BackgroundTaskManagerType.swift */; };
 		84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625D825C9558E00AB6228 /* MBPersistenceStorage.swift */; };
 		84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E325C988FA00AB6228 /* URLValidator.swift */; };
 		84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E825C989C100AB6228 /* UDIDValidator.swift */; };
@@ -156,6 +160,10 @@
 		847F581225C8909300147A9A /* URLRequestBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
 		847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLResponseStatusCodeValidator.swift; sourceTree = "<group>"; };
 		847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTypealiases.swift; sourceTree = "<group>"; };
+		84A312AF25DA5CF30096A017 /* BackgroundTaskManagerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManagerProxy.swift; sourceTree = "<group>"; };
+		84A312B625DA64C60096A017 /* BGTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGTaskManager.swift; sourceTree = "<group>"; };
+		84A312BC25DA651C0096A017 /* UIBackgroundTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIBackgroundTaskManager.swift; sourceTree = "<group>"; };
+		84A312C225DA65690096A017 /* BackgroundTaskManagerType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManagerType.swift; sourceTree = "<group>"; };
 		84B625D825C9558E00AB6228 /* MBPersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPersistenceStorage.swift; sourceTree = "<group>"; };
 		84B625E325C988FA00AB6228 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
 		84B625E825C989C100AB6228 /* UDIDValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDIDValidator.swift; sourceTree = "<group>"; };
@@ -402,6 +410,7 @@
 			children = (
 				840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */,
 				840C38AB25D11BB200D50183 /* DeliveryOperation.swift */,
+				84A312B325DA64B80096A017 /* Background */,
 			);
 			path = GuaranteedDeliveryManager;
 			sourceTree = "<group>";
@@ -480,6 +489,17 @@
 				84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		84A312B325DA64B80096A017 /* Background */ = {
+			isa = PBXGroup;
+			children = (
+				84A312C225DA65690096A017 /* BackgroundTaskManagerType.swift */,
+				84A312AF25DA5CF30096A017 /* BackgroundTaskManagerProxy.swift */,
+				84A312BC25DA651C0096A017 /* UIBackgroundTaskManager.swift */,
+				84A312B625DA64C60096A017 /* BGTaskManager.swift */,
+			);
+			path = Background;
 			sourceTree = "<group>";
 		};
 		84B625D425C94F6F00AB6228 /* NetworkRepository */ = {
@@ -868,7 +888,9 @@
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
+				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
 				8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */,
+				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
 				840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
@@ -884,6 +906,7 @@
 				840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */,
 				84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindBoxDelegate.swift in Sources */,
+				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
@@ -901,6 +924,7 @@
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
+				84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,

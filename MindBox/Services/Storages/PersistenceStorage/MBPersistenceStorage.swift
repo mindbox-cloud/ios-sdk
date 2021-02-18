@@ -13,8 +13,6 @@ class MBPersistenceStorage: PersistenceStorage {
     // MARK: - Dependency
     let defaults: UserDefaults
     
-//    let semaphore = DispatchSemaphore(value: 1)
-
     // MARK: - Property
     var isInstalled: Bool {
         deviceUUID != nil
@@ -43,6 +41,29 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
+    var deprecatedEventsRemoveDate: Date? {
+        get {
+            let dateFormater = DateFormatter()
+            dateFormater.dateStyle = .full
+            dateFormater.timeStyle = .full
+            if let dateString = deprecatedEventsRemoveDateString {
+                return dateFormater.date(from: dateString)
+            } else {
+                return nil
+            }
+        }
+        set {
+            let dataFormater = DateFormatter()
+            dataFormater.dateStyle = .full
+            dataFormater.timeStyle = .full
+            if let date = newValue {
+                deprecatedEventsRemoveDateString = dataFormater.string(from: date)
+            } else {
+                deprecatedEventsRemoveDateString = nil
+            }
+        }
+    }
+    
     // MARK: - Init
     init(defaults: UserDefaults) {
         self.defaults = defaults
@@ -60,6 +81,9 @@ class MBPersistenceStorage: PersistenceStorage {
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String?
+    
+    @UserDefaultsWrapper(key: .deprecatedEventsRemoveDate, defaultValue: nil)
+    private var deprecatedEventsRemoveDateString: String?
 
     func reset() {
         deviceUUID = nil
@@ -83,6 +107,7 @@ extension MBPersistenceStorage {
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
             case apnsToken = "MBPersistenceStorage-apnsToken"
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
+            case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
         }
         
         private let key: Key

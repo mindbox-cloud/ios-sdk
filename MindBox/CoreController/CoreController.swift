@@ -33,6 +33,10 @@ class CoreController {
         guaranteedDeliveryManager.onCompletedEvent = { [weak self] (event, error) in
             self?.proceed(result: (event, error))
         }
+//        (0...1000)
+//            .forEach({ _ in
+//                updateToken()
+//            })
     }
     
     // MARK: - CoreController
@@ -50,6 +54,7 @@ class CoreController {
                 installationId: configuration.installationId
             )
         }
+        guaranteedDeliveryManager.canScheduleOperations = true
     }
     public func apnsTokenDidUpdate(token: String) {
         persistenceStorage.apnsToken = token

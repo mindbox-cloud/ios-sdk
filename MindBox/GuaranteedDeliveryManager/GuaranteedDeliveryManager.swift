@@ -8,12 +8,15 @@
 
 import Foundation
 import CoreData
+import UIKit
+import BackgroundTasks
 
-final class GuaranteedDeliveryManager {
+final class GuaranteedDeliveryManager: NSObject {
     
     @Injected var databaseRepository: MBDatabaseRepository
+    let backgroundTaskManager = BackgroundTaskManagerProxy()
     
-    private let queue: OperationQueue = {
+    let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .background
         queue.maxConcurrentOperationCount = 1
@@ -47,14 +50,17 @@ final class GuaranteedDeliveryManager {
     
     var onCompletedEvent: ((_ event: Event, _ error: ErrorModel?) -> Void)?
     
+    @objc dynamic var stateObserver: NSString
+    
     private(set) var state: State = .idle {
         didSet {
+            stateObserver = NSString(string: state.rawValue)
             Log("State didSet to value: \(state.description)")
                 .inChanel(.delivery).withType(.info).make()
         }
     }
     
-    var canScheduleOperations = true {
+    var canScheduleOperations = false {
         didSet {
             Log("canScheduleOperation didSet to value: \(canScheduleOperations)")
                 .inChanel(.delivery).withType(.info).make()
@@ -62,19 +68,28 @@ final class GuaranteedDeliveryManager {
         }
     }
     
-    init(retryDeadline: TimeInterval = 60) {
+    var fetchLimit: Int = 20
+    
+    init(retryDeadline: TimeInterval = 60, fetchLimit: Int = 20) {
         self.retryDeadline = retryDeadline
+        self.fetchLimit = fetchLimit
+        stateObserver = NSString(string: state.description)
+        super.init()
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()
+        backgroundTaskManager.gdManager = self
     }
-    
+
     private let retryDeadline: TimeInterval
 
     func performScheduleIfNeeded() {
         guard canScheduleOperations else { return }
         let count = databaseRepository.count
-        guard count != 0 else { return }
-        scheduleOperations(fetchLimit: count <= 20 ? count : 20)
+        guard count != 0 else {
+            backgroundTaskManager.endBackgroundTask(success: true)
+            return
+        }
+        scheduleOperations(fetchLimit: count <= fetchLimit ? count : fetchLimit)
     }
     
     func scheduleOperations(fetchLimit: Int) {
@@ -95,6 +110,8 @@ final class GuaranteedDeliveryManager {
         }
         guard !events.isEmpty else {
             state = .waitingForRetry
+            Log("Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)")
+                .inChanel(.delivery).withType(.info).make()
             DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
@@ -118,3 +135,4 @@ final class GuaranteedDeliveryManager {
     }
     
 }
+

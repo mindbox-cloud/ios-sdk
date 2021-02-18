@@ -12,13 +12,13 @@ struct Event {
     
     enum Operation: String {
         case installed = "MobileApplicationInstalled"
-        case infoUpdated = "MobileApplocationInfoUpdated"
+        case infoUpdated = "MobileApplicationInfoUpdated"
     }
     
     let transactionId: String
     
-    var dateTimeOffset: Double {
-        Date().timeIntervalSince1970 - enqueueTimeStamp
+    var dateTimeOffset: Int {
+        Int((Date().timeIntervalSince1970 - enqueueTimeStamp).rounded())
     }
     
     // Время добавляения персистентно в очередь событий

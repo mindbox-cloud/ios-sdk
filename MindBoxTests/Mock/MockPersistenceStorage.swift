@@ -24,6 +24,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var apnsToken: String?
 
     var apnsTokenSaveDate: Date?
+    
+    var deprecatedEventsRemoveDate: Date?
 
     func reset() {
         deviceUUID = nil
@@ -31,6 +33,7 @@ class MockPersistenceStorage: PersistenceStorage {
         isInstalled = false
         apnsToken = nil
         apnsTokenSaveDate = nil
+        deprecatedEventsRemoveDate = nil
     }
 
 }
