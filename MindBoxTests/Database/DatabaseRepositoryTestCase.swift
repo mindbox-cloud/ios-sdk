@@ -44,7 +44,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        databaseRepository = try! MBDatabaseRepository()
         let beforeDate = Date()
         let count = databaseRepository.limit
         let events = eventGenerator.generateEvents(count: count)
@@ -55,7 +54,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
             }
             let afterDate = Date()
             let delta = afterDate.timeIntervalSince1970 - beforeDate.timeIntervalSince1970
-            print(delta)
             XCTAssertTrue(delta < 30)
             expectation.fulfill()
         } catch {
@@ -135,7 +133,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         databaseRepository.onObjectsDidChange = { [self] in
             XCTAssertTrue(databaseRepository.count > 0)
         }
-        testCreateEvents()
+        testCreateEvent()
     }
     
     func testLimitCount() {
