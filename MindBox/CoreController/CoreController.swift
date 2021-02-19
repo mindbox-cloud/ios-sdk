@@ -54,7 +54,9 @@ class CoreController {
     }
     public func apnsTokenDidUpdate(token: String) {
         persistenceStorage.apnsToken = token
-        updateToken()
+        if isInstalled {
+            updateToken()
+        }
     }
     
     // MARK: - Private
