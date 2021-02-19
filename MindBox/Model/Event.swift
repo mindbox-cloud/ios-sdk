@@ -27,6 +27,7 @@ struct Event {
     
     let type: Operation
     
+    // Data according to Operation
     let body: String
     
     init(type: Operation, body: String) {

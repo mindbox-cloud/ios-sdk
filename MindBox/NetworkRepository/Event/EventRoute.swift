@@ -10,12 +10,14 @@ import Foundation
 
 enum EventRoute: Route {
     
-    case asyncEvent(EventWrapper)
+    case asyncEvent(EventWrapper), pushDeleveried(EventWrapper)
     
     var method: HTTPMethod {
         switch self {
         case .asyncEvent:
             return .post
+        case .pushDeleveried:
+            return .get
         }
     }
     
@@ -23,6 +25,8 @@ enum EventRoute: Route {
         switch self {
         case .asyncEvent:
             return "/v3/operations/async"
+        case .pushDeleveried:
+            return "/mobile-push/delivered"
         }
     }
     
@@ -40,6 +44,15 @@ enum EventRoute: Route {
                 "transactionId": wrapper.event.transactionId,
                 "dateTimeOffset": wrapper.event.dateTimeOffset
             ]
+        case .pushDeleveried(let wrapper):
+            let decoded = BodyDecoder<PushDelivered>(decodable: wrapper.event.body)
+            return [
+                "endpointId": wrapper.endpoint,
+                "deviceUUID": wrapper.deviceUUID,
+                "transactionId": wrapper.event.transactionId,
+                "dateTimeOffset": wrapper.event.dateTimeOffset,
+                "uniqKey": decoded?.body.uniqKey ?? ""
+            ]
         }
     }
     
@@ -47,6 +60,8 @@ enum EventRoute: Route {
         switch self {
         case .asyncEvent(let wrapper):
             return wrapper.event.body.data(using: .utf8)
+        case .pushDeleveried:
+            return nil
         }
     }
     
