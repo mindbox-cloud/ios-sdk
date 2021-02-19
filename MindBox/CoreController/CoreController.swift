@@ -128,6 +128,8 @@ class CoreController {
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.apnsTokenDidUpdated()
             }
+        case .pushDelivered:
+            break
         }
     }
     
