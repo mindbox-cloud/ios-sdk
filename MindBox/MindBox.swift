@@ -82,13 +82,13 @@ public class MindBox {
         guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {
             return
         }
-        guard let appGDRefreshIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppRefresh") }) else  {
+        guard let appGDRefreshIdentifier = identifiers.first(where: { $0.contains("GDAppRefresh") }) else  {
             return
         }
-        guard let appGDProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.GDAppProcessing") }) else  {
+        guard let appGDProcessingIdentifier = identifiers.first(where: { $0.contains("GDAppProcessing") }) else  {
             return
         }
-        guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("MindBox.DBCleanAppProcessing") }) else  {
+        guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("DBCleanAppProcessing") }) else  {
             return
         }
         gdManager.backgroundTaskManager.registerBGTasks(
