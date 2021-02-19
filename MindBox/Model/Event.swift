@@ -11,8 +11,8 @@ import Foundation
 struct Event {
     
     enum Operation: String {
-        case installed = "MobileApplicationInstalled"
-        case infoUpdated = "MobileApplicationInfoUpdated"
+        case installed = "MobilePush.ApplicationInstalled"
+        case infoUpdated = "MobilePush.ApplicationInfoUpdated"
     }
     
     let transactionId: String
