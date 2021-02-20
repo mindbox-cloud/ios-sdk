@@ -49,6 +49,7 @@
 		840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38AB25D11BB200D50183 /* DeliveryOperation.swift */; };
 		840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */; };
 		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
+		8425749425E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */; };
 		842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */; };
 		842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */; };
 		842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */; };
@@ -154,6 +155,7 @@
 		840C38AB25D11BB200D50183 /* DeliveryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryOperation.swift; sourceTree = "<group>"; };
 		840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryTestCase.swift; sourceTree = "<group>"; };
 		840C38B725D13A7D00D50183 /* EventGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGenerator.swift; sourceTree = "<group>"; };
+		8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerTestCase.swift; sourceTree = "<group>"; };
 		842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDelivered.swift; sourceTree = "<group>"; };
 		842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManager.swift; sourceTree = "<group>"; };
 		842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerError.swift; sourceTree = "<group>"; };
@@ -286,6 +288,7 @@
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
 				84DC49D525D185A600D5D758 /* Supporting Files */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
+				8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */,
 			);
 			path = MindBoxTests;
 			sourceTree = "<group>";
@@ -975,6 +978,7 @@
 				840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
+				8425749425E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
