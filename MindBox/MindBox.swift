@@ -78,7 +78,8 @@ public class MindBox {
     }
     
     public func pushDelivered(request: UNNotificationRequest) throws {
-        
+        let traker = try DeliveredNotificationManager(appGroup: "test")
+        try traker.track(request: request)
     }
     
     @available(iOS 13.0, *)

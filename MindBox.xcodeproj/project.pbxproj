@@ -51,6 +51,7 @@
 		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
 		842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */; };
 		842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */; };
+		842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */; };
 		8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */; };
 		8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -155,6 +156,7 @@
 		840C38B725D13A7D00D50183 /* EventGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGenerator.swift; sourceTree = "<group>"; };
 		842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDelivered.swift; sourceTree = "<group>"; };
 		842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManager.swift; sourceTree = "<group>"; };
+		842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerError.swift; sourceTree = "<group>"; };
 		8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRepository.swift; sourceTree = "<group>"; };
 		8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBMobileApplicationRepository.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
@@ -250,6 +252,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
 				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
 				84DEE8A625CC02AF00C98CC7 /* Database */,
 				84CC797E25CABABB00C062BD /* Model */,
@@ -263,7 +266,6 @@
 				313B233325ADEA0F00A1CB72 /* MindBox.h */,
 				313B233425ADEA0F00A1CB72 /* Info.plist */,
 				3191C2A525ADFD8000E7D6B9 /* MindBox.swift */,
-				842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */,
 				31A20D4D25B6EFB600AAA0A3 /* MindBoxDelegate.swift */,
 				314B38FC25AEE8B200E947B9 /* MBConfiguration.swift */,
 			);
@@ -434,6 +436,15 @@
 				840C38B725D13A7D00D50183 /* EventGenerator.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		842DE34425E15069002BE5C6 /* DeliveredNotificationManager */ = {
+			isa = PBXGroup;
+			children = (
+				842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */,
+				842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */,
+			);
+			path = DeliveredNotificationManager;
 			sourceTree = "<group>";
 		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
@@ -892,6 +903,7 @@
 			files = (
 				84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
+				842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
