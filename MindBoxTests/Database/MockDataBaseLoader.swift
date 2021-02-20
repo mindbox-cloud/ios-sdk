@@ -11,7 +11,7 @@ import CoreData
 
 @testable import MindBox
 
-class MockDatabaseRepository: MBDatabaseRepository {
+class MockDataBaseLoader: DataBaseLoader {
     
     init() throws {
         let inMemoryDescription = NSPersistentStoreDescription()

@@ -15,13 +15,15 @@ class DatabaseRepositoryTestCase: XCTestCase {
     var databaseRepository: MBDatabaseRepository!
     
     let eventGenerator = EventGenerator()
-    
+        
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
-        if databaseRepository == nil {
-            databaseRepository = try! MockDatabaseRepository()
+        DIManager.shared.container.registerInContainer { (r) -> DataBaseLoader in
+            return try! MockDataBaseLoader()
         }
+        databaseRepository = DIManager.shared.container.resolve()
+        //        }
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -44,6 +46,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
+        try! databaseRepository.erase()
         let beforeDate = Date()
         let count = databaseRepository.limit
         let events = eventGenerator.generateEvents(count: count)
@@ -137,6 +140,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
+        try! databaseRepository.erase()
         let events = eventGenerator.generateEvents(count: databaseRepository.limit)
         do {
             try events.forEach {
@@ -192,6 +196,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testFetchRetryEvents() {
+        try! databaseRepository.erase()
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
         let retriedEvent = events[count / 2]
@@ -218,8 +223,8 @@ class DatabaseRepositoryTestCase: XCTestCase {
             do {
                 let events = try self.databaseRepository.query(fetchLimit: count, retryDeadline: retryDeadline)
                 XCTAssertFalse(events.isEmpty)
-                XCTAssertTrue(retriedEvent.transactionId == events[count - 2].transactionId)
-                XCTAssertTrue(retriedEvent2.transactionId == events[count - 1].transactionId)
+                XCTAssertTrue(retriedEvent.transactionId == events[events.count - 2].transactionId)
+                XCTAssertTrue(retriedEvent2.transactionId == events[events.count - 1].transactionId)
                 retryExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)

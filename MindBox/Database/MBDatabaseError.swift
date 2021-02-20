@@ -13,6 +13,8 @@ public enum MBDatabaseError: LocalizedError {
     case unableCreateDatabaseModel
     case unableCreateManagedObjectModel(with: URL)
     case unableToLoadPeristentStore(localizedDescription: String)
+    case persistentStoreURLNotFound
+    case persistentStoreNotExistsAtURL(path: String)
 
     public var errorDescription: String? {
         switch self {
@@ -22,6 +24,10 @@ public enum MBDatabaseError: LocalizedError {
             return "Unable to create NSManagedObjectModel from url: \(url)"
         case .unableToLoadPeristentStore(let localizedDescription):
             return "Unable to load persistent store with error: \(localizedDescription)"
+        case .persistentStoreURLNotFound:
+            return "Unable to find persistentStoreURL"
+        case .persistentStoreNotExistsAtURL(let path):
+            return ""
         }
     }
 }

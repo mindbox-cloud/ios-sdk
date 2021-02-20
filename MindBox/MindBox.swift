@@ -77,6 +77,10 @@ public class MindBox {
         }
     }
     
+    public func pushDelivered(request: UNNotificationRequest) throws {
+        
+    }
+    
     @available(iOS 13.0, *)
     public func registerBGTasks() {
         guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {

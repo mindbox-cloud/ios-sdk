@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreData
 
 /// Регистрирует DI-объекты
 final class DIManager: NSObject {
@@ -73,8 +74,14 @@ final class DIManager: NSObject {
             MBEventRepository()
         }
         
+        container.registerInContainer { (r) -> DataBaseLoader in
+            return try! DataBaseLoader()
+        }
+
         container.registerInContainer { (r) -> MBDatabaseRepository in
-            return try! MBDatabaseRepository()
+            let loader: DataBaseLoader = r.resolveOrDie()
+            let persistentContainer = try! loader.loadPersistentContainer()
+            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
         }
         
         container.registerInContainer { (r) -> GuaranteedDeliveryManager in
