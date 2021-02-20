@@ -14,7 +14,7 @@ final class DeliveredNotificationManager {
     @Injected var databaseRepository: MBDatabaseRepository
 
     init(appGroup: String) throws {
-        
+        // TODO: - handle init for db
     }
 
     func track(request: UNNotificationRequest) throws {
@@ -23,6 +23,12 @@ final class DeliveredNotificationManager {
         }
         Log("Track request with userInfo: \(userInfo)")
             .inChanel(.notification).withType(.info).make()
+        let payload = try parse(userInfo: userInfo)
+        let event = makeEvent(with: payload)
+        try databaseRepository.create(event: event)
+    }
+    
+    private func parse(userInfo: [AnyHashable: Any]) throws -> Payload {
         do {
             let data = try JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted)
             let decoder = JSONDecoder()
@@ -30,20 +36,24 @@ final class DeliveredNotificationManager {
                 let payload = try decoder.decode(Payload.self, from: data)
                 Log("Did parse payload: \(payload)")
                     .inChanel(.notification).withType(.info).make()
-                // TODO: - Set push status
-                let pushDelivered = PushDelivered(uniqKey: payload.uniqKey)
-                let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
-                try databaseRepository.create(event: event)
+                return payload
             } catch {
                 Log("Unable to decode Payload")
                     .inChanel(.notification).withType(.error).make()
                 print(error.localizedDescription)
+                throw error
             }
         } catch {
             Log("Unable to serialization userInfo: \(userInfo)")
                 .inChanel(.notification).withType(.error).make()
             throw error
         }
+    }
+    
+    private func makeEvent(with payload: Payload) -> Event {
+        let pushDelivered = PushDelivered(uniqKey: payload.uniqKey)
+        let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
+        return event
     }
     
 }
