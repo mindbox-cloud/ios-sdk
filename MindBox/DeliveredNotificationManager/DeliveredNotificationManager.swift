@@ -44,20 +44,19 @@ final class DeliveredNotificationManager {
                     .inChanel(.notification).withType(.info).make()
                 return payload
             } catch {
-                Log("Unable to decode Payload")
+                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
                     .inChanel(.notification).withType(.error).make()
-                print(error.localizedDescription)
                 throw error
             }
         } catch {
-            Log("Unable to serialization userInfo: \(userInfo)")
+            Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
                 .inChanel(.notification).withType(.error).make()
             throw error
         }
     }
     
     private func makeEvent(with payload: Payload) -> Event {
-        let pushDelivered = PushDelivered(uniqKey: payload.uniqKey)
+        let pushDelivered = PushDelivered(uniqKey: payload.uniqueKey)
         let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
         return event
     }
@@ -66,10 +65,10 @@ final class DeliveredNotificationManager {
 
 fileprivate struct Payload: Codable, CustomDebugStringConvertible {
     
-    let uniqKey: String
+    let uniqueKey: String
     
     var debugDescription: String {
-        "uniqKey: \(uniqKey)"
+        "uniqueKey: \(uniqueKey)"
     }
     
 }

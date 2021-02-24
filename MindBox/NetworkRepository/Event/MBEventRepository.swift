@@ -36,8 +36,18 @@ class MBEventRepository: EventRepository {
             endpoint: configuration.endpoint,
             deviceUUID: deviceUUID
         )
-        let route = EventRoute.asyncEvent(wrapper)
+        let route = makeRoute(wrapper: wrapper)
         fetcher.request(route: route, completion: completion)
+    }
+    
+    private func makeRoute(wrapper: EventWrapper) -> Route {
+        switch wrapper.event.type {
+        case .pushDelivered:
+             return EventRoute.pushDeleveried(wrapper)
+        case .installed,
+             .infoUpdated:
+            return EventRoute.asyncEvent(wrapper)
+        }
     }
     
 }
