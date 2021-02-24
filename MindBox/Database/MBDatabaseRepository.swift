@@ -263,9 +263,10 @@ class MBDatabaseRepository {
     func erase() throws {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CDEvent")
         let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        return try context.performAndWait {
+        try context.performAndWait {
             try context.execute(eraseRequest)
             try saveContext()
+            count = try countEvents()
         }
     }
     

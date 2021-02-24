@@ -26,6 +26,8 @@ final class DeliveredNotificationManager {
         let payload = try parse(userInfo: userInfo)
         let event = makeEvent(with: payload)
         try databaseRepository.create(event: event)
+        Log("Successfully tracked event:\(event)")
+            .inChanel(.notification).withType(.info).make()
     }
     
     private func parse(userInfo: [AnyHashable: Any]) throws -> Payload {

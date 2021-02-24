@@ -32,7 +32,6 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
         }
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
     func testTrack() {
