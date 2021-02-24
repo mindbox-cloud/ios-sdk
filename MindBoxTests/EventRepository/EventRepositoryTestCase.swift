@@ -15,6 +15,8 @@ class EventRepositoryTestCase: XCTestCase {
     
     var isMockNetworkFetcher = true
     
+    var databaseRepository: MBDatabaseRepository!
+
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
         DIManager.shared.dropContainer()
@@ -30,10 +32,12 @@ class EventRepositoryTestCase: XCTestCase {
         DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
             MockUNAuthorizationStatusProvider(status: .authorized)
         }
+        databaseRepository = DIManager.shared.container.resolve()
         coreController = CoreController()
     }
     
     func testSendEvent() {
+        try! databaseRepository.erase()
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         let repository: EventRepository = DIManager.shared.container.resolveOrDie()

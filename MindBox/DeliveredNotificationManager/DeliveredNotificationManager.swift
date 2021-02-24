@@ -13,14 +13,11 @@ final class DeliveredNotificationManager {
     
     @Injected var databaseRepository: MBDatabaseRepository
 
-    init(appGroup: String) throws {
+    init() {
         // TODO: - handle init for db
     }
-
-    func track(request: UNNotificationRequest) throws {
-        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
-            throw DeliveredNotificationManagerError.unableToFetchUserInfo
-        }
+    
+    func track(userInfo: [AnyHashable : Any]) throws {
         Log("Track request with userInfo: \(userInfo)")
             .inChanel(.notification).withType(.info).make()
         let payload = try parse(userInfo: userInfo)
@@ -28,6 +25,13 @@ final class DeliveredNotificationManager {
         try databaseRepository.create(event: event)
         Log("Successfully tracked event:\(event)")
             .inChanel(.notification).withType(.info).make()
+    }
+
+    func track(request: UNNotificationRequest) throws {
+        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
+            throw DeliveredNotificationManagerError.unableToFetchUserInfo
+        }
+        try track(userInfo: userInfo)
     }
     
     private func parse(userInfo: [AnyHashable: Any]) throws -> Payload {

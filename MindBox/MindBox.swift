@@ -78,16 +78,21 @@ public class MindBox {
     }
     
     public func pushDelivered(request: UNNotificationRequest) {
+        let traker = DeliveredNotificationManager()
         do {
-            let traker = try DeliveredNotificationManager(appGroup: "test")
-            do {
-                try traker.track(request: request)
-            } catch {
-                Log("Track UNNotificationRequest failed with error: \(error)")
-                    .inChanel(.notification).withType(.error).make()
-            }
+            try traker.track(request: request)
         } catch {
-            Log("DeliveredNotificationManager init failed with error: \(error)")
+            Log("Track UNNotificationRequest failed with error: \(error)")
+                .inChanel(.notification).withType(.error).make()
+        }
+    }
+    
+    public func pushDelivered(userInfo: [AnyHashable : Any]) {
+        let traker = DeliveredNotificationManager()
+        do {
+            try traker.track(userInfo: userInfo)
+        } catch {
+            Log("Track UNNotificationRequest failed with error: \(error)")
                 .inChanel(.notification).withType(.error).make()
         }
     }

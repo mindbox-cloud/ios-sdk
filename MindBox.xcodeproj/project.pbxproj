@@ -278,6 +278,7 @@
 			isa = PBXGroup;
 			children = (
 				840C38B625D13A6800D50183 /* Helpers */,
+				8464C60525E646CD006DC3E7 /* DeliveredNotification */,
 				840C38AF25D12E7800D50183 /* GuaranteedDelivery */,
 				840C387D25CD15B100D50183 /* Database */,
 				84CC79A325CAE12400C062BD /* EventRepository */,
@@ -288,7 +289,6 @@
 				313B233E25ADEA0F00A1CB72 /* MindBoxTests.swift */,
 				84DC49D525D185A600D5D758 /* Supporting Files */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
-				8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */,
 			);
 			path = MindBoxTests;
 			sourceTree = "<group>";
@@ -458,6 +458,14 @@
 				8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */,
 			);
 			path = MobileApplication;
+			sourceTree = "<group>";
+		};
+		8464C60525E646CD006DC3E7 /* DeliveredNotification */ = {
+			isa = PBXGroup;
+			children = (
+				8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */,
+			);
+			path = DeliveredNotification;
 			sourceTree = "<group>";
 		};
 		847F57FC25C88BA600147A9A /* Network */ = {
