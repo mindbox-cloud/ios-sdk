@@ -17,14 +17,20 @@ final class DeliveredNotificationManager {
         // TODO: - handle init for db
     }
     
+    let semaphore = DispatchSemaphore(value: 0)
+    
     func track(userInfo: [AnyHashable : Any]) throws {
-        Log("Track request with userInfo: \(userInfo)")
-            .inChanel(.notification).withType(.info).make()
-        let payload = try parse(userInfo: userInfo)
-        let event = makeEvent(with: payload)
-        try databaseRepository.create(event: event)
-        Log("Successfully tracked event:\(event)")
-            .inChanel(.notification).withType(.info).make()
+        try DispatchQueue.global().sync {
+            Log("Track request with userInfo: \(userInfo)")
+                .inChanel(.notification).withType(.info).make()
+            let payload = try parse(userInfo: userInfo)
+            let event = makeEvent(with: payload)
+            try databaseRepository.create(event: event)
+            Log("Successfully tracked event:\(event)")
+                .inChanel(.notification).withType(.info).make()
+            semaphore.signal()
+        }
+        semaphore.wait()
     }
 
     func track(request: UNNotificationRequest) throws {
