@@ -9,6 +9,14 @@
 import Foundation
 import CoreData
 
+class MBPersistentContainer: NSPersistentContainer {
+    
+    override class func defaultDirectoryURL() -> URL {
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.cloud.MindBox.PushOk") ?? super.defaultDirectoryURL()
+    }
+    
+}
+
 class DataBaseLoader {
     
     private let persistentStoreDescriptions: [NSPersistentStoreDescription]?
@@ -26,7 +34,7 @@ class DataBaseLoader {
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
             throw MBDatabaseError.unableCreateManagedObjectModel(with: modelURL)
         }
-        self.persistentContainer = NSPersistentContainer(
+        self.persistentContainer = MBPersistentContainer(
             name: momdName,
             managedObjectModel: managedObjectModel
         )
@@ -125,7 +133,7 @@ class MBDatabaseRepository {
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
-        self.count = try countEvents()
+        try countEvents()
     }
     
     // MARK: - CRUD operations
@@ -266,11 +274,11 @@ class MBDatabaseRepository {
         try context.performAndWait {
             try context.execute(eraseRequest)
             try saveContext()
-            count = try countEvents()
+            try countEvents()
         }
     }
     
-    private func countEvents() throws -> Int {
+    func countEvents() throws {
         let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
@@ -281,7 +289,7 @@ class MBDatabaseRepository {
                 let count = try context.count(for: request)
                 Log("Events count: \(count)")
                     .inChanel(.database).withType(.info).make()
-                return count
+                self.count = count
             } catch {
                 Log("Counting events failed with error: \(error.localizedDescription)")
                     .inChanel(.database).withType(.error).make()

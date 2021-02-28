@@ -27,7 +27,7 @@ public enum MBDatabaseError: LocalizedError {
         case .persistentStoreURLNotFound:
             return "Unable to find persistentStoreURL"
         case .persistentStoreNotExistsAtURL(let path):
-            return ""
+            return "Unable to find persistentStoreURL at path: \(path)"
         }
     }
 }

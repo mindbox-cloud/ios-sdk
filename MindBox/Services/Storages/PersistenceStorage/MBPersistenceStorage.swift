@@ -11,7 +11,7 @@ import Foundation
 class MBPersistenceStorage: PersistenceStorage {
     
     // MARK: - Dependency
-    let defaults: UserDefaults
+    static var defaults: UserDefaults = .standard
     
     // MARK: - Property
     var isInstalled: Bool {
@@ -64,9 +64,25 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
+    var configuration: MBConfiguration? {
+        get {
+            guard let data = configurationData else {
+                return nil
+            }
+            return try? JSONDecoder().decode(MBConfiguration.self, from: data)
+        }
+        set {
+            if let data = newValue {
+                configurationData = try? JSONEncoder().encode(data)
+            } else {
+                configurationData = nil
+            }
+        }
+    }
+    
     // MARK: - Init
     init(defaults: UserDefaults) {
-        self.defaults = defaults
+        MBPersistenceStorage.defaults = defaults
     }
 
     // MARK: - IMBMBPersistenceStorage
@@ -84,6 +100,9 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .deprecatedEventsRemoveDate, defaultValue: nil)
     private var deprecatedEventsRemoveDateString: String?
+    
+    @UserDefaultsWrapper(key: .configurationData, defaultValue: nil)
+    private var configurationData: Data?
 
     func reset() {
         deviceUUID = nil
@@ -108,26 +127,25 @@ extension MBPersistenceStorage {
             case apnsToken = "MBPersistenceStorage-apnsToken"
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
             case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
+            case configurationData = "MBPersistenceStorage-configurationData"
         }
         
         private let key: Key
         private let defaultValue: T?
-        private let defaults: UserDefaults
         
-        init(key: Key, defaultValue: T?, defaults: UserDefaults = .standard) {
+        init(key: Key, defaultValue: T?) {
             self.key = key
             self.defaultValue = defaultValue
-            self.defaults = defaults
         }
         
         var wrappedValue: T? {
             get {
                 // Read value from UserDefaults
-                return defaults.value(forKey: key.rawValue) as? T ?? defaultValue
+                return MBPersistenceStorage.defaults.value(forKey: key.rawValue) as? T ?? defaultValue
             }
             set {
                 // Set value to UserDefaults
-                defaults.setValue(newValue, forKey: key.rawValue)
+                MBPersistenceStorage.defaults.setValue(newValue, forKey: key.rawValue)
             }
         }
         

@@ -47,7 +47,7 @@ final class DIManager: NSObject {
         }
 
         container.registerInContainer { (r) -> PersistenceStorage in
-            MBPersistenceStorage(defaults: .standard)
+            MBPersistenceStorage(defaults: UserDefaults(suiteName: "group.cloud.MindBox.PushOk") ?? .standard)
         }
         
         container.register { (r) -> UtilitiesFetcher in

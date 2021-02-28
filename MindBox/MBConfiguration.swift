@@ -11,7 +11,7 @@ import Foundation
 ///
 /// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
 
-public struct MBConfiguration: Decodable {
+public struct MBConfiguration: Codable {
     
     public let endpoint: String
     public let domain: String
@@ -127,13 +127,12 @@ public struct MBConfiguration: Decodable {
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
         var installationId: String? = nil
-        do {
-            let value = try values.decode(String.self, forKey: .installationId)
+        if let value = try? values.decode(String.self, forKey: .installationId) {
             if !value.isEmpty {
                 installationId = value
             }
         }
-
+        
         var deviceUUID: String? = nil
         do {
             let value = try values.decode(String.self, forKey: .deviceUUID)
