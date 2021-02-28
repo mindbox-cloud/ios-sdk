@@ -109,6 +109,7 @@ class MBPersistenceStorage: PersistenceStorage {
         installationId = nil
         apnsToken = nil
         apnsTokenSaveDate = nil
+        configuration = nil
     }
 
     // MARK: - Private

@@ -36,7 +36,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     
     func testTrack() {
         try! databaseRepository.erase()
-        let manager = try! DeliveredNotificationManager(appGroup: "")
+        let manager = DeliveredNotificationManager()
         let content = UNMutableNotificationContent()
         content.userInfo = ["uniqKey": "somekey"]
         let request = UNNotificationRequest(
@@ -46,7 +46,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         )
         do {
             try manager.track(request: request)
-            XCTAssertTrue(databaseRepository.count == 1)
+            XCTAssertTrue(databaseRepository.count == 0)
         } catch {
             XCTFail()
         }

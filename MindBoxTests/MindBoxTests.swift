@@ -20,23 +20,19 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
-            return MockPersistenceStorage()
+
+        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
+            return try! MockDataBaseLoader()
         }
         DIManager.shared.container.register { (r) -> NetworkFetcher in
             MockNetworkFetcher()
         }
-        DIManager.shared.container.register { (r) -> MobileApplicationRepository in
-            MBMobileApplicationRepository()
-        }
         DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
             MockUNAuthorizationStatusProvider(status: .authorized)
         }
-        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
-            return try! MockDataBaseLoader()
-        }
         databaseRepository = DIManager.shared.container.resolve()
         MindBox.shared.delegate = self
+        try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -49,7 +45,6 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
 
-        try! databaseRepository.erase()
 
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
@@ -63,6 +58,7 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
             apnsTokenDidUpdatedFlag = false
 
         }
+        
         let deviceUUID =  try! MindBox.shared.deviceUUID()
 
     	//        //        //        //        //        //		//        //        //        //        //        //
