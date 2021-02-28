@@ -77,26 +77,18 @@ public class MindBox {
         }
     }
     
-    public func pushDelivered(request: UNNotificationRequest) {
+    @discardableResult
+    public func pushDelivered(request: UNNotificationRequest) -> Bool {
         let traker = DeliveredNotificationManager()
         do {
-            try traker.track(request: request)
+            return try traker.track(request: request)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
                 .inChanel(.notification).withType(.error).make()
+            return false
         }
     }
-    
-    public func pushDelivered(userInfo: [AnyHashable : Any]) {
-        let traker = DeliveredNotificationManager()
-        do {
-            try traker.track(userInfo: userInfo)
-        } catch {
-            Log("Track UNNotificationRequest failed with error: \(error)")
-                .inChanel(.notification).withType(.error).make()
-        }
-    }
-    
+
     @available(iOS 13.0, *)
     public func registerBGTasks() {
         guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {

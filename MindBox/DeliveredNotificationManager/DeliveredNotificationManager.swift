@@ -21,8 +21,12 @@ final class DeliveredNotificationManager {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private let timeout: TimeInterval = 5.0
-    
-    func track(userInfo: [AnyHashable : Any]) throws {
+
+    @discardableResult
+    func track(request: UNNotificationRequest) throws -> Bool {
+        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
+            throw DeliveredNotificationManagerError.unableToFetchUserInfo
+        }
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
         let prepareConfigurationStorageOperation = PrepareConfigurationStorageOperation()
@@ -45,25 +49,20 @@ final class DeliveredNotificationManager {
         case .success:
             Log("Track succeeded")
                 .inChanel(.notification).withType(.info).make()
+            return true
         case .timedOut:
             queue.cancelAllOperations()
             Log("Track time expired")
                 .inChanel(.notification).withType(.info).make()
+            return false
         }
-    }
-    
-    func track(request: UNNotificationRequest) throws {
-        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
-            throw DeliveredNotificationManagerError.unableToFetchUserInfo
-        }
-        try track(userInfo: userInfo)
     }
     
     private func track(event: Event) {
         let saveOperation = SaveEventOperation(event: event)
         let deliverOperation = DeliveryOperation(event: event)
         deliverOperation.addDependency(saveOperation)
-        saveOperation.onCompleted = { [weak self] (_) in
+        deliverOperation.onCompleted = { [weak self] (_, _) in
             self?.semaphore.signal()
         }
         Log("Started DeliveryOperation")
