@@ -21,6 +21,20 @@ final class DeliveredNotificationManager {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private let timeout: TimeInterval = 5.0
+    
+    init(appGroup: String) {
+        diManager.container.registerInContainer { (r) -> PersistenceStorage in
+            MBPersistenceStorage(defaults: UserDefaults(suiteName: appGroup) ?? .standard)
+        }
+        diManager.container.registerInContainer { (r) -> DataBaseLoader in
+            return try! DataBaseLoader(appGroup: appGroup)
+        }
+        diManager.container.registerInContainer { (r) -> MBDatabaseRepository in
+            let loader: DataBaseLoader = r.resolveOrDie()
+            let persistentContainer = try! loader.loadPersistentContainer()
+            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
+        }
+    }
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
@@ -67,7 +81,7 @@ final class DeliveredNotificationManager {
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        self.queue.addOperations([saveOperation, deliverOperation], waitUntilFinished: false)
+        self.queue.addOperations([saveOperation], waitUntilFinished: false)
     }
     
 }

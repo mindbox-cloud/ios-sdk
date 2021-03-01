@@ -78,8 +78,8 @@ public class MindBox {
     }
     
     @discardableResult
-    public func pushDelivered(request: UNNotificationRequest) -> Bool {
-        let traker = DeliveredNotificationManager()
+    public func pushDelivered(request: UNNotificationRequest, appGroup: String) -> Bool {
+        let traker = DeliveredNotificationManager(appGroup: appGroup)
         do {
             return try traker.track(request: request)
         } catch {

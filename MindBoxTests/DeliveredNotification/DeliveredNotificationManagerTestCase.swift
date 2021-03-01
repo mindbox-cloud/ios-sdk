@@ -36,7 +36,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     
     func testTrack() {
         try! databaseRepository.erase()
-        let manager = DeliveredNotificationManager()
+        let manager = DeliveredNotificationManager(appGroup: "")
         let content = UNMutableNotificationContent()
         content.userInfo = ["uniqKey": "somekey"]
         let request = UNNotificationRequest(
