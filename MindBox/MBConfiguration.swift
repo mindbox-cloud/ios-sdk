@@ -17,7 +17,7 @@ public struct MBConfiguration: Codable {
     public let domain: String
     public var installationId: String?
     public var deviceUUID: String?
-    ///public var canRequestTrackingAuthorization: Bool?
+    public var subscribeCustomerIfCreated: Bool
 
     /// Init with params
     ///
@@ -31,7 +31,8 @@ public struct MBConfiguration: Codable {
         endpoint: String,
         domain: String,
         installationId: String? = nil,
-        deviceUUID: String? = nil
+        deviceUUID: String? = nil,
+        subscribeCustomerIfCreated: Bool = false
     ) throws {
 
         self.endpoint = endpoint
@@ -67,6 +68,7 @@ public struct MBConfiguration: Codable {
 
             self.deviceUUID = deviceUUID
         }
+        self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
     }
 
     /// Init with plist file
