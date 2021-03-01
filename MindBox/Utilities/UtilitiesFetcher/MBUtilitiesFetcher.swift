@@ -13,11 +13,30 @@ import UIKit.UIDevice
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
 
-    let appBundle = Bundle.main
-    let sdkBundle = Bundle(for: MindBox.self)
+    let appBundle: Bundle = {
+        var bundle: Bundle = .main
+        prepareBundle(&bundle)
+        return bundle
+    }()
+    
+    let sdkBundle: Bundle = {
+        var bundle = Bundle(for: MindBox.self)
+        prepareBundle(&bundle)
+        return bundle
+    }()
 
     init() {
 
+    }
+    
+    private static func prepareBundle(_ bundle: inout Bundle) {
+        if Bundle.main.bundleURL.pathExtension == "appex" {
+            // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
+            let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+            if let otherBundle = Bundle(url: url) {
+                bundle = otherBundle
+            }
+        }
     }
     
     var appVerson: String? {

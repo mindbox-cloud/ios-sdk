@@ -19,6 +19,14 @@ final class DIManager: NSObject {
     override private init() {
         super.init()
     }
+    
+    private var appGroup: String? {
+        let utilitiesFetcher: UtilitiesFetcher = self.container.resolveOrDie()
+        guard let hostApplicationName = utilitiesFetcher.hostApplicationName else {
+            return nil
+        }
+        return "group.cloud.MindBox.\(hostApplicationName)"
+    }
 
     var atOnce = true
     func registerServices() {
@@ -46,14 +54,18 @@ final class DIManager: NSObject {
             MBConfigurationStorage()
         }
 
-        container.registerInContainer { (r) -> PersistenceStorage in
-            MBPersistenceStorage(defaults: .standard)
-        }
-        
         container.register { (r) -> UtilitiesFetcher in
             MBUtilitiesFetcher()
         }
         
+        container.registerInContainer { [weak self] (r) -> PersistenceStorage in
+            if let appGroup = self?.appGroup {
+                return MBPersistenceStorage(defaults: UserDefaults(suiteName: appGroup) ?? .standard)
+            } else {
+                return MBPersistenceStorage(defaults: .standard)
+            }
+        }
+
         container.register { (r) -> UNAuthorizationStatusProviding in
             UNAuthorizationStatusProvider()
         }
@@ -74,8 +86,12 @@ final class DIManager: NSObject {
             MBEventRepository()
         }
         
-        container.registerInContainer { (r) -> DataBaseLoader in
-            return try! DataBaseLoader()
+        container.registerInContainer { [weak self] (r) -> DataBaseLoader in
+            if let appGroup = self?.appGroup {
+                return try! DataBaseLoader(appGroup: appGroup)
+            } else {
+                return try! DataBaseLoader()
+            }
         }
 
         container.registerInContainer { (r) -> MBDatabaseRepository in
