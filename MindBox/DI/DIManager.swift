@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreData
 
 /// Регистрирует DI-объекты
 final class DIManager: NSObject {
@@ -17,6 +18,15 @@ final class DIManager: NSObject {
 
     override private init() {
         super.init()
+    }
+    
+    private var appGroup: String? {
+        let utilitiesFetcher: UtilitiesFetcher = self.container.resolveOrDie()
+        guard let hostApplicationName = utilitiesFetcher.hostApplicationName else {
+            return nil
+        }
+        let identifier = "group.cloud.MindBox.\(hostApplicationName)"
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil ? identifier : nil
     }
 
     var atOnce = true
@@ -45,14 +55,18 @@ final class DIManager: NSObject {
             MBConfigurationStorage()
         }
 
-        container.registerInContainer { (r) -> PersistenceStorage in
-            MBPersistenceStorage(defaults: .standard)
-        }
-        
         container.register { (r) -> UtilitiesFetcher in
             MBUtilitiesFetcher()
         }
         
+        container.registerInContainer { [weak self] (r) -> PersistenceStorage in
+            if let appGroup = self?.appGroup {
+                return MBPersistenceStorage(defaults: UserDefaults(suiteName: appGroup) ?? .standard)
+            } else {
+                return MBPersistenceStorage(defaults: .standard)
+            }
+        }
+
         container.register { (r) -> UNAuthorizationStatusProviding in
             UNAuthorizationStatusProvider()
         }
@@ -73,8 +87,18 @@ final class DIManager: NSObject {
             MBEventRepository()
         }
         
+        container.registerInContainer { [weak self] (r) -> DataBaseLoader in
+            if let appGroup = self?.appGroup {
+                return try! DataBaseLoader(appGroup: appGroup)
+            } else {
+                return try! DataBaseLoader()
+            }
+        }
+
         container.registerInContainer { (r) -> MBDatabaseRepository in
-            return try! MBDatabaseRepository()
+            let loader: DataBaseLoader = r.resolveOrDie()
+            let persistentContainer = try! loader.loadPersistentContainer()
+            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
         }
         
         container.registerInContainer { (r) -> GuaranteedDeliveryManager in

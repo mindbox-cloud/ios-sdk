@@ -36,6 +36,7 @@ class BackgroundTaskManagerProxy {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
                 .inChanel(.system).withType(.info).make()
+            self?.gdManager?.performScheduleIfNeeded()
             self?.taskManagers.forEach { $0.applicationDidBecomeActive() }
         }
         if #available(iOS 13, *) {

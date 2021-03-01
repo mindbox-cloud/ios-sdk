@@ -26,6 +26,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var apnsTokenSaveDate: Date?
     
     var deprecatedEventsRemoveDate: Date?
+    
+    var configuration: MBConfiguration?
 
     func reset() {
         deviceUUID = nil
@@ -34,6 +36,7 @@ class MockPersistenceStorage: PersistenceStorage {
         apnsToken = nil
         apnsTokenSaveDate = nil
         deprecatedEventsRemoveDate = nil
+        configuration = nil
     }
 
 }

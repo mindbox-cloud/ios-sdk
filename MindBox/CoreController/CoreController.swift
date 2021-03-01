@@ -115,6 +115,7 @@ class CoreController {
                 if let decoder = BodyDecoder<MobileApplicationInstalled>(decodable: result.event.body) {
                     persistenceStorage.deviceUUID = configurationStorage.configuration?.deviceUUID
                     persistenceStorage.installationId = decoder.body.installationId
+                    persistenceStorage.configuration = configurationStorage.configuration
                 }
                 Log("MobileApplicationInstalled")
                     .inChanel(.system).withType(.verbose).make()
@@ -127,7 +128,10 @@ class CoreController {
                 Log("apnsTokenDidUpdate")
                     .inChanel(.system).withType(.verbose).make()
                 MindBox.shared.delegate?.apnsTokenDidUpdated()
+                persistenceStorage.configuration = configurationStorage.configuration
             }
+        case .pushDelivered:
+            break
         }
     }
     

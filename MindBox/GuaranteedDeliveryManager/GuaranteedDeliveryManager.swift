@@ -78,6 +78,15 @@ final class GuaranteedDeliveryManager: NSObject {
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()
         backgroundTaskManager.gdManager = self
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: nil) { [weak self] (_) in
+            Log("UIApplication.didBecomeActiveNotification")
+                .inChanel(.system).withType(.info).make()
+            try? self?.databaseRepository.countEvents()
+            self?.performScheduleIfNeeded()
+        }
     }
 
     private let retryDeadline: TimeInterval

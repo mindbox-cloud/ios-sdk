@@ -14,6 +14,7 @@ struct LogerConfiguration {
         .network,
         .database,
         .delivery,
-        .background
+        .background,
+        .notification
     ]
 }

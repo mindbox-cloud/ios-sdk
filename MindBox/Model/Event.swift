@@ -13,6 +13,7 @@ struct Event {
     enum Operation: String {
         case installed = "MobilePush.ApplicationInstalled"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
+        case pushDelivered = ""
     }
     
     let transactionId: String
@@ -26,6 +27,7 @@ struct Event {
     
     let type: Operation
     
+    // Data according to Operation
     let body: String
     
     init(type: Operation, body: String) {

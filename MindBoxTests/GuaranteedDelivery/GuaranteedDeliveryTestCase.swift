@@ -12,7 +12,7 @@ import CoreData
 
 class GuaranteedDeliveryTestCase: XCTestCase {
     
-    var databaseRepository: MockDatabaseRepository!
+    var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     
     let eventGenerator = EventGenerator()
@@ -27,13 +27,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         DIManager.shared.container.register { _ -> NetworkFetcher in
             MockNetworkFetcher()
         }
-        DIManager.shared.container.registerInContainer { _ -> MBDatabaseRepository in
-            try! MockDatabaseRepository()
+        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
+            return try! MockDataBaseLoader()
         }
-        if databaseRepository == nil {
-            let dependency: MBDatabaseRepository = DIManager.shared.container.resolveOrDie()
-            databaseRepository = dependency as? MockDatabaseRepository
-        }
+        databaseRepository = DIManager.shared.container.resolve()
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         let configurationStorage: ConfigurationStorage = DIManager.shared.container.resolveOrDie()
         configurationStorage.setConfiguration(configuration)
@@ -57,6 +54,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testDeliverMultipleEvents() {
+        try! databaseRepository.erase()
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
         let events = eventGenerator.generateEvents(count: 10)
@@ -77,6 +75,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testScheduleByTimer() {
+        try! databaseRepository.erase()
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
         guaranteedDeliveryManager.canScheduleOperations = false

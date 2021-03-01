@@ -43,12 +43,17 @@
 		840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */; };
 		840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */; };
 		840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */; };
-		840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */; };
+		840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */; };
 		840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */; };
 		840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */; };
 		840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38AB25D11BB200D50183 /* DeliveryOperation.swift */; };
 		840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */; };
 		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
+		8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8410681225ECDC73004701C2 /* DatabaseLoader.swift */; };
+		8425749425E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */; };
+		842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */; };
+		842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */; };
+		842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */; };
 		8460702125C944DF00E2E56C /* MobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */; };
 		8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -86,6 +91,9 @@
 		84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */; };
 		84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */; };
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
+		84E2713D25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */; };
+		84E2714125EBA89D0041449F /* ParseEventOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2714025EBA89D0041449F /* ParseEventOperation.swift */; };
+		84E2714E25EBACF60041449F /* SaveEventOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2714D25EBACF60041449F /* SaveEventOperation.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */; };
 		84EAEE0B25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */; };
@@ -145,12 +153,17 @@
 		840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataClass.swift"; sourceTree = "<group>"; };
 		840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObjectContext+.swift"; sourceTree = "<group>"; };
-		840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepository.swift; sourceTree = "<group>"; };
+		840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataBaseLoader.swift; sourceTree = "<group>"; };
 		840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryTestCase.swift; sourceTree = "<group>"; };
 		840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryManager.swift; sourceTree = "<group>"; };
 		840C38AB25D11BB200D50183 /* DeliveryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryOperation.swift; sourceTree = "<group>"; };
 		840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryTestCase.swift; sourceTree = "<group>"; };
 		840C38B725D13A7D00D50183 /* EventGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGenerator.swift; sourceTree = "<group>"; };
+		8410681225ECDC73004701C2 /* DatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoader.swift; sourceTree = "<group>"; };
+		8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerTestCase.swift; sourceTree = "<group>"; };
+		842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDelivered.swift; sourceTree = "<group>"; };
+		842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManager.swift; sourceTree = "<group>"; };
+		842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerError.swift; sourceTree = "<group>"; };
 		8460702025C944DF00E2E56C /* MobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRepository.swift; sourceTree = "<group>"; };
 		8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBMobileApplicationRepository.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
@@ -187,6 +200,9 @@
 		84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MBDatabase.xcdatamodel; sourceTree = "<group>"; };
 		84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepository.swift; sourceTree = "<group>"; };
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
+		84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepareConfigurationStorageOperation.swift; sourceTree = "<group>"; };
+		84E2714025EBA89D0041449F /* ParseEventOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseEventOperation.swift; sourceTree = "<group>"; };
+		84E2714D25EBACF60041449F /* SaveEventOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveEventOperation.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84EAEE0125C8B30500726063 /* MobileApplicationRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationRoute.swift; sourceTree = "<group>"; };
 		84EAEE0A25C8B43A00726063 /* MobileApplicationInstalledWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalledWrapper.swift; sourceTree = "<group>"; };
@@ -246,6 +262,7 @@
 		313B233225ADEA0F00A1CB72 /* MindBox */ = {
 			isa = PBXGroup;
 			children = (
+				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
 				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
 				84DEE8A625CC02AF00C98CC7 /* Database */,
 				84CC797E25CABABB00C062BD /* Model */,
@@ -269,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				840C38B625D13A6800D50183 /* Helpers */,
+				8464C60525E646CD006DC3E7 /* DeliveredNotification */,
 				840C38AF25D12E7800D50183 /* GuaranteedDelivery */,
 				840C387D25CD15B100D50183 /* Database */,
 				84CC79A325CAE12400C062BD /* EventRepository */,
@@ -400,7 +418,7 @@
 			isa = PBXGroup;
 			children = (
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
-				840C387E25CD15C200D50183 /* MockDatabaseRepository.swift */,
+				840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -431,6 +449,16 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
+		842DE34425E15069002BE5C6 /* DeliveredNotificationManager */ = {
+			isa = PBXGroup;
+			children = (
+				84E2713B25EBA8700041449F /* Operations */,
+				842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */,
+				842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */,
+			);
+			path = DeliveredNotificationManager;
+			sourceTree = "<group>";
+		};
 		8460701F25C9425C00E2E56C /* MobileApplication */ = {
 			isa = PBXGroup;
 			children = (
@@ -439,6 +467,14 @@
 				8460702625C945F300E2E56C /* MBMobileApplicationRepository.swift */,
 			);
 			path = MobileApplication;
+			sourceTree = "<group>";
+		};
+		8464C60525E646CD006DC3E7 /* DeliveredNotification */ = {
+			isa = PBXGroup;
+			children = (
+				8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */,
+			);
+			path = DeliveredNotification;
 			sourceTree = "<group>";
 		};
 		847F57FC25C88BA600147A9A /* Network */ = {
@@ -548,6 +584,7 @@
 		84C65E5B25D4FB71008996FA /* Bodies */ = {
 			isa = PBXGroup;
 			children = (
+				842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */,
 				84C65E5C25D4FB7C008996FA /* MobileApplication */,
 			);
 			path = Bodies;
@@ -631,8 +668,19 @@
 				84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */,
 				84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */,
 				84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */,
+				8410681225ECDC73004701C2 /* DatabaseLoader.swift */,
 			);
 			path = Database;
+			sourceTree = "<group>";
+		};
+		84E2713B25EBA8700041449F /* Operations */ = {
+			isa = PBXGroup;
+			children = (
+				84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */,
+				84E2714025EBA89D0041449F /* ParseEventOperation.swift */,
+				84E2714D25EBACF60041449F /* SaveEventOperation.swift */,
+			);
+			path = Operations;
 			sourceTree = "<group>";
 		};
 		84EAEDFF25C8B2C700726063 /* Routes */ = {
@@ -885,7 +933,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */,
+				84E2713D25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
+				842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindBoxErrors.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
@@ -900,6 +950,7 @@
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
+				842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */,
 				317054C225AEF82D00AE624C /* InjectedPropertyWraper.swift in Sources */,
 				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
@@ -912,6 +963,7 @@
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
 				84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
+				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
@@ -919,8 +971,10 @@
 				317054C425AEF88E00AE624C /* DIManager.swift in Sources */,
 				3159FFAC25B563F000EE80E9 /* Odin.swift in Sources */,
 				3159FFAA25B563D200EE80E9 /* DependencyInjectionContainer.swift in Sources */,
+				84E2714125EBA89D0041449F /* ParseEventOperation.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				8460702725C945F300E2E56C /* MBMobileApplicationRepository.swift in Sources */,
+				84E2714E25EBACF60041449F /* SaveEventOperation.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
@@ -935,6 +989,7 @@
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
+				842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */,
@@ -955,10 +1010,11 @@
 				840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
+				8425749425E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* DITestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
-				840C387F25CD15C200D50183 /* MockDatabaseRepository.swift in Sources */,
+				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindBoxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,

@@ -36,68 +36,12 @@ class MBDatabaseRepository {
         }
     }
     
-    init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) throws {
-        let bundle = Bundle(for: MBDatabaseRepository.self)
-        let momdName = "MBDatabase"
-        guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
-            throw MBDatabaseError.unableCreateDatabaseModel
-        }
-        guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
-            throw MBDatabaseError.unableCreateManagedObjectModel(with: modelURL)
-        }
-        let persistentContainer = NSPersistentContainer(name: momdName, managedObjectModel: managedObjectModel)
-        // Set descriptions if needed
-        if let persistentStoreDescriptions = persistentStoreDescriptions {
-            persistentContainer.persistentStoreDescriptions = persistentStoreDescriptions
-        }
-        persistentContainer.persistentStoreDescriptions.forEach {
-            $0.shouldMigrateStoreAutomatically = true
-            $0.shouldInferMappingModelAutomatically = true
-        }
-        var loadPersistentStoresError: Error?
-        var persistentStoreURL: URL?
-        func loadPersistentStores() {
-            persistentContainer.loadPersistentStores { (persistentStoreDescription, error) in
-                if let url = persistentStoreDescription.url {
-                    Log("Persistent store url: \(url.description)")
-                        .inChanel(.database).withType(.info).make()
-                } else {
-                    Log("Unable to find persistentStoreURL")
-                        .inChanel(.database).withType(.error).make()
-                }
-                persistentStoreURL = persistentStoreDescription.url
-                loadPersistentStoresError = error
-            }
-        }
-        loadPersistentStores()
+    init(persistentContainer: NSPersistentContainer) throws {
         self.persistentContainer = persistentContainer
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
-        if let error = loadPersistentStoresError {
-            if let url = persistentStoreURL {
-                try destroyStore(at: url)
-            }
-            throw MBDatabaseError.unableToLoadPeristentStore(localizedDescription: error.localizedDescription)
-        }
-        self.count = try countEvents()
-    }
-    
-    func destroyStore(at persistentStoreURL: URL) throws {
-        Log("Removing database at url: \(persistentStoreURL.absoluteString)")
-            .inChanel(.database).withType(.info).make()
-        if FileManager.default.fileExists(atPath: persistentStoreURL.path) {
-            Log("Unable to find database at path: \(persistentStoreURL.path)")
-                .inChanel(.database).withType(.error).make()
-            do {
-                try FileManager.default.removeItem(at: persistentStoreURL)
-                Log("Removed database")
-                    .inChanel(.database).withType(.info).make()
-            } catch {
-                Log("Removed database failed with error: \(error.localizedDescription)")
-                    .inChanel(.database).withType(.error).make()
-            }
-        }
+        try countEvents()
     }
     
     // MARK: - CRUD operations
@@ -232,7 +176,17 @@ class MBDatabaseRepository {
         }
     }
     
-    private func countEvents() throws -> Int {
+    func erase() throws {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CDEvent")
+        let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        try context.performAndWait {
+            try context.execute(eraseRequest)
+            try saveContext()
+            try countEvents()
+        }
+    }
+    
+    func countEvents() throws {
         let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
@@ -243,7 +197,7 @@ class MBDatabaseRepository {
                 let count = try context.count(for: request)
                 Log("Events count: \(count)")
                     .inChanel(.database).withType(.info).make()
-                return count
+                self.count = count
             } catch {
                 Log("Counting events failed with error: \(error.localizedDescription)")
                     .inChanel(.database).withType(.error).make()
