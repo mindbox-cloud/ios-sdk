@@ -25,7 +25,8 @@ final class DIManager: NSObject {
         guard let hostApplicationName = utilitiesFetcher.hostApplicationName else {
             return nil
         }
-        return "group.cloud.MindBox.\(hostApplicationName)"
+        let identifier = "group.cloud.MindBox.\(hostApplicationName)"
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil ? identifier : nil
     }
 
     var atOnce = true
