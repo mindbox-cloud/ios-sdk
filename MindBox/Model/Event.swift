@@ -19,7 +19,12 @@ struct Event {
     let transactionId: String
     
     var dateTimeOffset: Int {
-        Int((Date().timeIntervalSince1970 - enqueueTimeStamp).rounded())
+        let components = Calendar.current.dateComponents([.nanosecond], from: Date(timeIntervalSince1970: enqueueTimeStamp))
+        let ns = components.nanosecond ?? .zero
+        let ms = Int(ns / 1000000)
+        print("Nanosecond: \(ns)")
+        print("Milisecond: \(ms)")
+        return ms
     }
     
     // Время добавляения персистентно в очередь событий
