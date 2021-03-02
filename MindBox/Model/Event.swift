@@ -22,8 +22,6 @@ struct Event {
         let components = Calendar.current.dateComponents([.nanosecond], from: Date(timeIntervalSince1970: enqueueTimeStamp))
         let ns = components.nanosecond ?? .zero
         let ms = Int(ns / 1000000)
-        print("Nanosecond: \(ns)")
-        print("Milisecond: \(ms)")
         return ms
     }
     
