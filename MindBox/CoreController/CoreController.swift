@@ -74,6 +74,8 @@ class CoreController {
         }
     }
     
+    private let semaphore = DispatchSemaphore(value: 0)
+    
     private func updateToken() {
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
@@ -86,7 +88,9 @@ class CoreController {
                 body: BodyEncoder(encodable: infoUpdated).body
             )
             try? self?.databaseRepository.create(event: event)
+            self?.semaphore.signal()
         }
+        semaphore.wait()
     }
     
     private func installation(uuid: String, installationId: String?) {

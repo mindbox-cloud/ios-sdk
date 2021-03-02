@@ -72,9 +72,7 @@ public class MindBox {
     
     /// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.coreController.apnsTokenDidUpdate(token: token)
-        }
+        coreController.apnsTokenDidUpdate(token: token)
     }
     
     @discardableResult
