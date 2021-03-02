@@ -18,7 +18,7 @@ final class GuaranteedDeliveryManager: NSObject {
     
     let queue: OperationQueue = {
         let queue = OperationQueue()
-        queue.qualityOfService = .background
+        queue.qualityOfService = .utility
         queue.maxConcurrentOperationCount = 1
         queue.name = "MindBox-GuaranteedDeliveryQueue"
         return queue
