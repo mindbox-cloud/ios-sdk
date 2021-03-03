@@ -59,7 +59,7 @@ final class ParseEventOperation: Operation {
                     .inChanel(.notification).withType(.info).make()
                 return payload
             } catch {
-                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
+                Log("Notification is not from MindBox\nDid fail to decode Payload with error: \(error.localizedDescription)")
                     .inChanel(.notification).withType(.error).make()
                 throw error
             }
