@@ -84,7 +84,6 @@ final class GuaranteedDeliveryManager: NSObject {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
                 .inChanel(.system).withType(.info).make()
-            _ = try? self?.databaseRepository.countEvents()
             self?.performScheduleIfNeeded()
         }
     }

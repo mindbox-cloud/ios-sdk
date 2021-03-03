@@ -23,7 +23,9 @@ class MBDatabaseRepository {
         didSet {
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
-            onObjectsDidChange?()
+            if count != oldValue {
+                onObjectsDidChange?()
+            }
             guard count > limit else {
                 return
             }
@@ -41,7 +43,7 @@ class MBDatabaseRepository {
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
-        try countEvents()
+        _ = try countEvents()
     }
     
     // MARK: - CRUD operations
@@ -196,9 +198,9 @@ class MBDatabaseRepository {
                 .inChanel(.database).withType(.info).make()
             do {
                 let count = try context.count(for: request)
+                self.count = count
                 Log("Events count: \(count)")
                     .inChanel(.database).withType(.info).make()
-                self.count = count
                 return count
             } catch {
                 Log("Counting events failed with error: \(error.localizedDescription)")
