@@ -27,7 +27,6 @@ enum LogType: String {
 
 internal extension Date {
     func toString() -> String {
-        // FIX
         return Log.dateFormatter.string(from: self as Date)
     }
 }

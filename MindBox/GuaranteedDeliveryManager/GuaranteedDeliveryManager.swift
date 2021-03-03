@@ -84,7 +84,6 @@ final class GuaranteedDeliveryManager: NSObject {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
                 .inChanel(.system).withType(.info).make()
-            try? self?.databaseRepository.countEvents()
             self?.performScheduleIfNeeded()
         }
     }
@@ -92,8 +91,12 @@ final class GuaranteedDeliveryManager: NSObject {
     private let retryDeadline: TimeInterval
 
     func performScheduleIfNeeded() {
-        guard canScheduleOperations else { return }
-        let count = databaseRepository.count
+        guard canScheduleOperations else {
+            return
+        }
+        guard let count = try? databaseRepository.countEvents() else {
+            return
+        }
         guard count != 0 else {
             backgroundTaskManager.endBackgroundTask(success: true)
             return
@@ -121,7 +124,7 @@ final class GuaranteedDeliveryManager: NSObject {
             state = .waitingForRetry
             Log("Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)")
                 .inChanel(.delivery).withType(.info).make()
-            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
         let completion = BlockOperation { [weak self] in
