@@ -84,7 +84,7 @@ final class GuaranteedDeliveryManager: NSObject {
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
                 .inChanel(.system).withType(.info).make()
-            try? self?.databaseRepository.countEvents()
+            _ = try? self?.databaseRepository.countEvents()
             self?.performScheduleIfNeeded()
         }
     }
@@ -92,8 +92,12 @@ final class GuaranteedDeliveryManager: NSObject {
     private let retryDeadline: TimeInterval
 
     func performScheduleIfNeeded() {
-        guard canScheduleOperations else { return }
-        let count = databaseRepository.count
+        guard canScheduleOperations else {
+            return
+        }
+        guard let count = try? databaseRepository.countEvents() else {
+            return
+        }
         guard count != 0 else {
             backgroundTaskManager.endBackgroundTask(success: true)
             return

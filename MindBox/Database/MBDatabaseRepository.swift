@@ -19,7 +19,7 @@ class MBDatabaseRepository {
     
     var onObjectsDidChange: (() -> Void)?
     
-    private(set) var count: Int = 0 {
+    private var count: Int = 0 {
         didSet {
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
@@ -186,7 +186,8 @@ class MBDatabaseRepository {
         }
     }
     
-    func countEvents() throws {
+    @discardableResult
+    func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
@@ -198,6 +199,7 @@ class MBDatabaseRepository {
                 Log("Events count: \(count)")
                     .inChanel(.database).withType(.info).make()
                 self.count = count
+                return count
             } catch {
                 Log("Counting events failed with error: \(error.localizedDescription)")
                     .inChanel(.database).withType(.error).make()
