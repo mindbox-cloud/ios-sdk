@@ -124,7 +124,7 @@ final class GuaranteedDeliveryManager: NSObject {
             state = .waitingForRetry
             Log("Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)")
                 .inChanel(.delivery).withType(.info).make()
-            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
         let completion = BlockOperation { [weak self] in

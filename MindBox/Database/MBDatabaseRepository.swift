@@ -19,7 +19,7 @@ class MBDatabaseRepository {
     
     var onObjectsDidChange: (() -> Void)?
     
-    private var count: Int = 0 {
+    private(set) var count: Int = 0 {
         didSet {
             Log("Count didSet with value: \(count)")
                 .inChanel(.database).withType(.debug).make()
@@ -190,7 +190,7 @@ class MBDatabaseRepository {
     
     @discardableResult
     func countEvents() throws -> Int {
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+        let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
                 .inChanel(.database).withType(.info).make()

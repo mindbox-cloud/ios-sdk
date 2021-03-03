@@ -30,8 +30,13 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             fatalError("CFBundleShortVersionString not found for host app")
         }
         let identifier = "group.cloud.MindBox.\(hostApplicationName)"
-        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
+        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+        guard url != nil else {
+            #if targetEnvironment(simulator)
+            return ""
+            #else
             fatalError("containerURL not found for group: \(identifier)")
+            #endif
         }
         return identifier
     }
