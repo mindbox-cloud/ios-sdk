@@ -37,16 +37,16 @@ struct IDFAFetcher {
                 completion(nil)
             }
         } else {
+            guard ASIdentifierManager.shared().isAdvertisingTrackingEnabled else {
+                completion(nil)
+                return
+            }
             extract(completion: completion)
         }
     }
     
     private func extract(completion: @escaping Completion) {
         DispatchQueue.global().async {
-            guard ASIdentifierManager.shared().isAdvertisingTrackingEnabled else {
-                completion(nil)
-                return
-            }
             let udid = ASIdentifierManager.shared().advertisingIdentifier
             if isValid(udid: udid.uuidString) {
                 completion(udid)
