@@ -102,6 +102,16 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         waitForExpectations(timeout: expectDeadline)
     }
     
+    func testDateTimeOffset() {
+        let events = eventGenerator.generateEvents(count: 1000)
+        events.forEach { (event) in
+            let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
+            let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
+            let dateTimeOffset = event.dateTimeOffset
+            XCTAssertTrue(expectation == dateTimeOffset)
+        }
+    }
+    
     private func generateAndSaveToDatabaseEvents() {
         let event = eventGenerator.generateEvent()
         do {
