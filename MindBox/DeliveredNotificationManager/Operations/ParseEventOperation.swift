@@ -59,7 +59,7 @@ final class ParseEventOperation: Operation {
                     .inChanel(.notification).withType(.info).make()
                 return payload
             } catch {
-                Log("Notification is not from MindBox\nDid fail to decode Payload with error: \(error.localizedDescription)")
+                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
                     .inChanel(.notification).withType(.error).make()
                 throw error
             }
@@ -81,7 +81,7 @@ final class ParseEventOperation: Operation {
 fileprivate struct Payload: Codable, CustomDebugStringConvertible {
     
     let uniqueKey: String
-    
+
     var debugDescription: String {
         "uniqueKey: \(uniqueKey)"
     }

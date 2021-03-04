@@ -15,6 +15,8 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     
+    let mockUtility = MockUtility()
+    
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
@@ -25,10 +27,6 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
             return try! MockDataBaseLoader()
         }
         databaseRepository = DIManager.shared.container.resolve()
-        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
-        let configurationStorage: ConfigurationStorage = DIManager.shared.container.resolveOrDie()
-        configurationStorage.setConfiguration(configuration)
-        configurationStorage.set(uuid: "0593B5CC-1479-4E45-A7D3-F0E8F9B40898")
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
         }
@@ -38,17 +36,19 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         try! databaseRepository.erase()
         let manager = DeliveredNotificationManager()
         let content = UNMutableNotificationContent()
-        content.userInfo = ["uniqKey": "somekey"]
+        let uniqueKey = mockUtility.randomString()
+        let id = mockUtility.randomString()
+        content.userInfo = ["uniqueKey": uniqueKey]
         let request = UNNotificationRequest(
-            identifier: "1234",
+            identifier: id,
             content: content,
             trigger: nil
         )
         do {
-            try manager.track(request: request)
-            XCTAssertTrue(databaseRepository.count == 0)
+            let isTracked = try manager.track(request: request)
+            XCTAssertTrue(isTracked)
         } catch {
-            XCTFail()
+            XCTFail(error.localizedDescription)
         }
     }
 

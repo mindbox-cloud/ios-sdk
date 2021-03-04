@@ -21,11 +21,18 @@ final class DeliveredNotificationManager {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private let timeout: TimeInterval = 5.0
+    
+    private let mindBoxIdentifireKey = "uniqueKey"
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
+        }
+        guard userInfo[mindBoxIdentifireKey] != nil else {
+            Log("Push notification is not from MindBox")
+                .inChanel(.notification).withType(.info).make()
+            return false
         }
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
