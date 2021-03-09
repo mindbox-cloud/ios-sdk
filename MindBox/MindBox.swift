@@ -44,6 +44,7 @@ public class MindBox {
     /// This function starting initialization case using `configuration`.
     /// - Parameter configuration: MBConfiguration struct with configuration
     public func initialization(configuration: MBConfiguration) {
+        persistenceStorage.storeToFileBackgroundExecution()
         coreController.initialization(configuration: configuration)
     }
     
