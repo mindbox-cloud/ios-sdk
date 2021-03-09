@@ -29,6 +29,8 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var configuration: MBConfiguration?
 
+    var backgroundExecutions: [BackgroudExecution] = []
+
     func reset() {
         deviceUUID = nil
         installationId = nil
@@ -37,6 +39,22 @@ class MockPersistenceStorage: PersistenceStorage {
         apnsTokenSaveDate = nil
         deprecatedEventsRemoveDate = nil
         configuration = nil
+        backgroundExecutions = []
     }
+    
+    
+    func setBackgroundExecution(_ value: BackgroudExecution) {
+        backgroundExecutions.append(value)
+    }
+    
+    func resetBackgroundExecutions() {
+        backgroundExecutions = []
+    }
+    
+    func storeToFileBackgroundExecution() {
+        
+    }
+    
+    
 
 }

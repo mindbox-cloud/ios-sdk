@@ -113,28 +113,66 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             completionHandler(.noData)
             return
         }
-        
+        let taskID = String.randomString()
+        let backgroudExecution = BackgroudExecution(
+            taskID: taskID,
+            taskName: "performFetchWithCompletionHandler",
+            dateString: Date().fullToString(),
+            info: "System call"
+        )
+        persistenceStorage.setBackgroundExecution(backgroudExecution)
         switch gdManager.state {
         case .idle:
             Log("completionHandler(.noData): idle")
                 .inChanel(.background).withType(.info).make()
+            let backgroudExecution = BackgroudExecution(
+                taskID: taskID,
+                taskName: "performFetchWithCompletionHandler",
+                dateString: Date().fullToString(),
+                info: "GuaranteedDeliveryManager.State.idle\ncompletionHandler(.noData)"
+            )
+            persistenceStorage.setBackgroundExecution(backgroudExecution)
             completionHandler(.noData)
         case .delivering:
-            observationToken = gdManager.observe(\.stateObserver, options: [.new]) { (observed, change) in
+            observationToken = gdManager.observe(\.stateObserver, options: [.new]) { [weak self] (observed, change) in
                 Log("change.newValue \(String(describing: change.newValue))")
                     .inChanel(.background).withType(.info).make()
                 let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
                 if change.newValue == idleString {
                     Log("completionHandler(.newData): delivering")
                         .inChanel(.background).withType(.info).make()
+                    let backgroudExecution = BackgroudExecution(
+                        taskID: taskID,
+                        taskName: "performFetchWithCompletionHandler",
+                        dateString: Date().fullToString(),
+                        info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
+                    )
+                    self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
                     completionHandler(.newData)
                 }
             }
         case .waitingForRetry:
             Log("completionHandler(.newData): waitingForRetry")
                 .inChanel(.background).withType(.info).make()
+            let backgroudExecution = BackgroudExecution(
+                taskID: taskID,
+                taskName: "performFetchWithCompletionHandler",
+                dateString: Date().fullToString(),
+                info: "GuaranteedDeliveryManager.State.waitingForRetry\ncompletionHandler(.newData)"
+            )
+            persistenceStorage.setBackgroundExecution(backgroudExecution)
             completionHandler(.newData)
         }
     }
+    
+}
+
+extension String {
+    
+    static func randomString(length: Int = 10) -> String {
+        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return String((0..<length).map{ _ in letters.randomElement()! })
+    }
+
     
 }

@@ -29,6 +29,13 @@ internal extension Date {
     func toString() -> String {
         return Log.dateFormatter.string(from: self as Date)
     }
+    
+    func fullToString() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return dateFormatter.string(from: self as Date)
+    }
+    
 }
 
 struct Log {

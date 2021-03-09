@@ -52,7 +52,10 @@ class BGTaskManager: BackgroundTaskManagerType {
     }
     
     func endBackgroundTask(success: Bool) {
-        Log("Did end Background task with identifire:\(String(describing: appGDRefreshIdentifier)) ")
+        guard appGDRefreshTask != nil, appGDProcessingTask != nil else {
+            return
+        }
+        Log("Did call EndBackgroundTask")
             .inChanel(.background).withType(.info).make()
         appGDRefreshTask?.setTaskCompleted(success: success)
         appGDProcessingTask?.setTaskCompleted(success: success)
@@ -138,11 +141,29 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         self.appGDRefreshTask = task
+        let backgroudExecution = BackgroudExecution(
+            taskID: appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
+            taskName: appGDRefreshTask.debugDescription,
+            dateString: Date().fullToString(),
+            info: "System call"
+        )
+        persistenceStorage.setBackgroundExecution(backgroudExecution)
         scheduleAppGDRefreshTask()
-        task.expirationHandler = {
+        task.expirationHandler = { [weak self] in
+            guard let self = self else { return }
             Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
                 .inChanel(.background).withType(.warning).make()
-            self.appGDRefreshTask = nil
+            let backgroudExecution = BackgroudExecution(
+                taskID: self.appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
+                taskName: self.appGDRefreshTask.debugDescription,
+                dateString: Date().fullToString(),
+                info: "System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)"
+            )
+            self.persistenceStorage.setBackgroundExecution(backgroudExecution)
+            if self.appGDRefreshTask != nil {
+                self.appGDRefreshTask?.setTaskCompleted(success: false)
+                self.appGDRefreshTask = nil
+            }
         }
         Log("GDAppRefresh task started")
             .inChanel(.background).withType(.info).make()
@@ -155,10 +176,28 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         self.appGDProcessingTask = task
-        task.expirationHandler = {
+        let backgroudExecution = BackgroudExecution(
+            taskID: appGDProcessingIdentifier ?? "appGDProcessingIdentifier nil",
+            taskName: appGDProcessingIdentifier.debugDescription,
+            dateString: Date().fullToString(),
+            info: "System call"
+        )
+        persistenceStorage.setBackgroundExecution(backgroudExecution)
+        task.expirationHandler = { [weak self] in
+            guard let self = self else { return }
             Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
                 .inChanel(.background).withType(.warning).make()
-            self.appGDProcessingTask = nil
+            let backgroudExecution = BackgroudExecution(
+                taskID: self.appGDProcessingIdentifier ?? "appGDRefreshIdentifier nil",
+                taskName: self.appGDProcessingIdentifier.debugDescription,
+                dateString: Date().fullToString(),
+                info: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)"
+            )
+            self.persistenceStorage.setBackgroundExecution(backgroudExecution)
+            if self.appGDProcessingTask != nil {
+                self.appGDProcessingTask?.setTaskCompleted(success: false)
+                self.appGDProcessingTask = nil
+            }
         }
         Log("GDAppProcessing task started")
             .inChanel(.background).withType(.info).make()
