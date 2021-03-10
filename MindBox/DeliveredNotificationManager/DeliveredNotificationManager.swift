@@ -12,8 +12,8 @@ import UserNotifications
 
 final class DeliveredNotificationManager {
     
-    @Injected var persistenceStorage: PersistenceStorage
-    @Injected var configurationStorage: ConfigurationStorage
+    @Injected private var persistenceStorage: PersistenceStorage
+    @Injected private var configurationStorage: ConfigurationStorage
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -72,12 +72,14 @@ final class DeliveredNotificationManager {
     
     private func track(event: Event) {
         let isConfigurationSet = persistenceStorage.configuration != nil
+        let notificationSettingsOperation = NotificationSettingsOperation()
         let saveOperation = SaveEventOperation(event: event)
         saveOperation.onCompleted = { [weak self] result in
             if !isConfigurationSet {
                 self?.semaphore.signal()
             }
         }
+        saveOperation.addDependency(notificationSettingsOperation)
         let deliverOperation = DeliveryOperation(event: event)
         deliverOperation.addDependency(saveOperation)
         deliverOperation.onCompleted = { [weak self] (_, _) in
@@ -85,7 +87,7 @@ final class DeliveredNotificationManager {
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        var operations: [Operation] = [saveOperation]
+        var operations: [Operation] = [notificationSettingsOperation, saveOperation]
         if isConfigurationSet {
             operations.append(deliverOperation)
         }

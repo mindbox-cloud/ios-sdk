@@ -58,7 +58,7 @@ class CoreController {
             updateToken()
         }
     }
-    
+
     // MARK: - Private
     
     private func startInstallationCase(uuid: String?, installationId: String?) {
