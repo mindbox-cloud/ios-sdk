@@ -90,20 +90,25 @@ public class MindBox {
         }
     }
     
-    private let semaphore = DispatchSemaphore(value: 0)
+    private let semaphore = DispatchSemaphore(value: 1)
     
     // MARK: - To test Guaranteed Delivery
     public func pushDelivered(uniqueKey: String) {
+        semaphore.wait()
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
-        notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
+        let operation = NotificationSettingsOperation()
+        operation.completionBlock = { [weak self] in
+            guard let self = self else {
+                return
+            }
             let event = Event(
                 type: .pushDelivered,
                 body: BodyEncoder(encodable: pushDelivered).body
             )
-            try? self?.databaseRepository.create(event: event)
-            self?.semaphore.signal()
+            try? self.databaseRepository.create(event: event)
+            self.semaphore.signal()
         }
-        semaphore.wait()
+        operation.start()
     }
 
     @available(iOS 13.0, *)

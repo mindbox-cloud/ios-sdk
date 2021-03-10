@@ -139,6 +139,10 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .configurationData, defaultValue: nil)
     private var configurationData: Data?
+    
+    @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: false)
+    var isNotificationsEnabled: Bool?
+
 
     func reset() {
         deviceUUID = nil
@@ -182,6 +186,7 @@ extension MBPersistenceStorage {
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
             case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
             case configurationData = "MBPersistenceStorage-configurationData"
+            case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
         }
         
         private let key: Key

@@ -18,6 +18,7 @@ protocol PersistenceStorage: class {
     var deprecatedEventsRemoveDate: Date? { get set }
     var configuration: MBConfiguration? { get set }
     var backgroundExecutions: [BackgroudExecution] { get }
+    var isNotificationsEnabled: Bool? { get set }
     
     func setBackgroundExecution(_ value: BackgroudExecution)
     
