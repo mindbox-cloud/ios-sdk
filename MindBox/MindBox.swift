@@ -26,7 +26,9 @@ public class MindBox {
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var utilitiesFetcher: UtilitiesFetcher
     @Injected var gdManager: GuaranteedDeliveryManager
-    
+    @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
+    @Injected var databaseRepository: MBDatabaseRepository
+
     /// Internal process controller
     let coreController = CoreController()
     
@@ -86,6 +88,22 @@ public class MindBox {
                 .inChanel(.notification).withType(.error).make()
             return false
         }
+    }
+    
+    private let semaphore = DispatchSemaphore(value: 0)
+    
+    // MARK: - To test Guaranteed Delivery
+    public func pushDelivered(uniqueKey: String) {
+        let pushDelivered = PushDelivered(uniqKey: uniqueKey)
+        notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
+            let event = Event(
+                type: .pushDelivered,
+                body: BodyEncoder(encodable: pushDelivered).body
+            )
+            try? self?.databaseRepository.create(event: event)
+            self?.semaphore.signal()
+        }
+        semaphore.wait()
     }
 
     @available(iOS 13.0, *)
