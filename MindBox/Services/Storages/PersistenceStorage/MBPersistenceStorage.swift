@@ -80,6 +80,42 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
+    var backgroundExecutions: [BackgroudExecution] {
+        get {
+            if let data = MBPersistenceStorage.defaults.value(forKey:"backgroundExecution") as? Data {
+                return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
+            } else {
+                return []
+            }
+        }
+    }
+    
+    func setBackgroundExecution(_ value: BackgroudExecution) {
+        var tasks = backgroundExecutions
+        tasks.append(value)
+        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey:"backgroundExecution")
+    }
+    
+    func storeToFileBackgroundExecution() {
+        let path = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("BackgroundExecution.plist")
+        
+        // Swift Dictionary To Data.
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .xml
+        do {
+            let data = try encoder.encode(backgroundExecutions)
+            try data.write(to: path)
+            Log("Successfully storeToFileBackgroundExecution")
+                .inChanel(.system).withType(.info).make()
+        } catch {
+            Log("StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
+                .inChanel(.system).withType(.info).make()
+        }
+    }
+    
+    
     // MARK: - Init
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
@@ -110,10 +146,27 @@ class MBPersistenceStorage: PersistenceStorage {
         apnsToken = nil
         apnsTokenSaveDate = nil
         configuration = nil
+        
+    }
+    
+    func resetBackgroundExecutions() {
+        MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
     }
 
     // MARK: - Private
 
+}
+
+struct BackgroudExecution: Codable {
+    
+    let taskID: String
+    
+    let taskName: String
+    
+    let dateString: String
+    
+    let info: String
+    
 }
 
 extension MBPersistenceStorage {

@@ -12,7 +12,7 @@ import AppTrackingTransparency
 import UIKit.UIDevice
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
-
+    
     let appBundle: Bundle = {
         var bundle: Bundle = .main
         prepareBundle(&bundle)
@@ -24,9 +24,25 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         prepareBundle(&bundle)
         return bundle
     }()
-
+    
+    var appGroup: String {
+        guard let hostApplicationName = hostApplicationName else {
+            fatalError("CFBundleShortVersionString not found for host app")
+        }
+        let identifier = "group.cloud.MindBox.\(hostApplicationName)"
+        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+        guard url != nil else {
+            #if targetEnvironment(simulator)
+            return ""
+            #else
+            fatalError("containerURL not found for group: \(identifier)")
+            #endif
+        }
+        return identifier
+    }
+    
     init() {
-
+        
     }
     
     private static func prepareBundle(_ bundle: inout Bundle) {
@@ -46,7 +62,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     var sdkVersion: String? {
         sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
     }
-
+    
     var hostApplicationName: String? {
         appBundle.bundleIdentifier
     }
@@ -77,5 +93,5 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             }
         }
     }
-
+    
 }

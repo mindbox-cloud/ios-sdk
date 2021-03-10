@@ -18,8 +18,10 @@ struct Event {
     
     let transactionId: String
     
-    var dateTimeOffset: Int {
-        Int((Date().timeIntervalSince1970 - enqueueTimeStamp).rounded())
+    var dateTimeOffset: Int64 {
+        let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
+        let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
+        return Int64(ms)
     }
     
     // Время добавляения персистентно в очередь событий

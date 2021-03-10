@@ -81,7 +81,7 @@ final class ParseEventOperation: Operation {
 fileprivate struct Payload: Codable, CustomDebugStringConvertible {
     
     let uniqueKey: String
-    
+
     var debugDescription: String {
         "uniqueKey: \(uniqueKey)"
     }

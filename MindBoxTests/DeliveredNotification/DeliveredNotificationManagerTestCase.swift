@@ -14,41 +14,97 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
 
     var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
+    var persistenceStorage: PersistenceStorage!
+    
+    let mockUtility = MockUtility()
     
     override func setUp() {
         DIManager.shared.dropContainer()
         DIManager.shared.registerServices()
-        DIManager.shared.container.register { _ -> NetworkFetcher in
-            MockNetworkFetcher()
-        }
         DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
             return try! MockDataBaseLoader()
         }
         databaseRepository = DIManager.shared.container.resolve()
-        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
-        let configurationStorage: ConfigurationStorage = DIManager.shared.container.resolveOrDie()
-        configurationStorage.setConfiguration(configuration)
-        configurationStorage.set(uuid: "0593B5CC-1479-4E45-A7D3-F0E8F9B40898")
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
         }
+        try! databaseRepository.erase()
+        persistenceStorage = DIManager.shared.container.resolve()
+        persistenceStorage.reset()
     }
     
-    func testTrack() {
-        try! databaseRepository.erase()
+    func testTrackOnlySaveIfConfigurationNotSet() {
         let manager = DeliveredNotificationManager()
         let content = UNMutableNotificationContent()
-        content.userInfo = ["uniqKey": "somekey"]
+        let uniqueKey = mockUtility.randomString()
+        let id = mockUtility.randomString()
+        content.userInfo = ["uniqueKey": uniqueKey]
         let request = UNNotificationRequest(
-            identifier: "1234",
+            identifier: id,
             content: content,
             trigger: nil
         )
         do {
-            try manager.track(request: request)
-            XCTAssertTrue(databaseRepository.count == 0)
+            let eventsCount = try databaseRepository.countEvents()
+            XCTAssertTrue(eventsCount == 0)
         } catch {
-            XCTFail()
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            let isTracked = try manager.track(request: request)
+            XCTAssertTrue(isTracked)
+            do {
+                let eventsCount = try databaseRepository.countEvents()
+                XCTAssertTrue(eventsCount == 1)
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
+            do {
+                guard let event = try databaseRepository.query(fetchLimit: 1).first else {
+                    XCTFail("Could not query event after store in db")
+                    return
+                }
+                guard let body = BodyDecoder<PushDelivered>(decodable: event.body)?.body else {
+                    XCTFail("Could not decode body form event: \(event)")
+                    return
+                }
+                XCTAssertTrue(uniqueKey == body.uniqKey)
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+    
+    func testNotTrackIfNotificationIsNotMindBox() {
+        let manager = DeliveredNotificationManager()
+        let content = UNMutableNotificationContent()
+        let uniqueKey = mockUtility.randomString()
+        let id = mockUtility.randomString()
+        content.userInfo = ["NonMindBoxKey": uniqueKey]
+        let request = UNNotificationRequest(
+            identifier: id,
+            content: content,
+            trigger: nil
+        )
+        do {
+            let eventsCount = try databaseRepository.countEvents()
+            XCTAssertTrue(eventsCount == 0)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+        do {
+            let isTracked = try manager.track(request: request)
+            XCTAssertFalse(isTracked)
+            do {
+                let eventsCount = try databaseRepository.countEvents()
+                XCTAssertTrue(eventsCount == 0)
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
         }
     }
 

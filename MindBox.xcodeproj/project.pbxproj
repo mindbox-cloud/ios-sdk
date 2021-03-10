@@ -50,6 +50,7 @@
 		840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */; };
 		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
 		8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8410681225ECDC73004701C2 /* DatabaseLoader.swift */; };
+		841E0DA025F0F253009327C9 /* MockUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841E0D9F25F0F253009327C9 /* MockUtility.swift */; };
 		8425749425E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */; };
 		842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */; };
 		842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */; };
@@ -91,7 +92,6 @@
 		84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */; };
 		84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */; };
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
-		84E2713D25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */; };
 		84E2714125EBA89D0041449F /* ParseEventOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2714025EBA89D0041449F /* ParseEventOperation.swift */; };
 		84E2714E25EBACF60041449F /* SaveEventOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E2714D25EBACF60041449F /* SaveEventOperation.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
@@ -160,6 +160,7 @@
 		840C38B225D133B000D50183 /* GuaranteedDeliveryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryTestCase.swift; sourceTree = "<group>"; };
 		840C38B725D13A7D00D50183 /* EventGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGenerator.swift; sourceTree = "<group>"; };
 		8410681225ECDC73004701C2 /* DatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoader.swift; sourceTree = "<group>"; };
+		841E0D9F25F0F253009327C9 /* MockUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUtility.swift; sourceTree = "<group>"; };
 		8425749325E163B500DA8106 /* DeliveredNotificationManagerTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerTestCase.swift; sourceTree = "<group>"; };
 		842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDelivered.swift; sourceTree = "<group>"; };
 		842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManager.swift; sourceTree = "<group>"; };
@@ -200,7 +201,6 @@
 		84DEE8A825CC031200C98CC7 /* MBDatabase.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MBDatabase.xcdatamodel; sourceTree = "<group>"; };
 		84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepository.swift; sourceTree = "<group>"; };
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
-		84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepareConfigurationStorageOperation.swift; sourceTree = "<group>"; };
 		84E2714025EBA89D0041449F /* ParseEventOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseEventOperation.swift; sourceTree = "<group>"; };
 		84E2714D25EBACF60041449F /* SaveEventOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveEventOperation.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
@@ -445,6 +445,7 @@
 			isa = PBXGroup;
 			children = (
 				840C38B725D13A7D00D50183 /* EventGenerator.swift */,
+				841E0D9F25F0F253009327C9 /* MockUtility.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -676,7 +677,6 @@
 		84E2713B25EBA8700041449F /* Operations */ = {
 			isa = PBXGroup;
 			children = (
-				84E2713C25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift */,
 				84E2714025EBA89D0041449F /* ParseEventOperation.swift */,
 				84E2714D25EBACF60041449F /* SaveEventOperation.swift */,
 			);
@@ -933,7 +933,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				84EAEE0225C8B30500726063 /* MobileApplicationRoute.swift in Sources */,
-				84E2713D25EBA87E0041449F /* PrepareConfigurationStorageOperation.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
@@ -1019,6 +1018,7 @@
 				31ED2DEC25C444C400301FAD /* MBConfigurationTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
+				841E0DA025F0F253009327C9 /* MockUtility.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 			);

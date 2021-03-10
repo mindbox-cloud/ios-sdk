@@ -11,25 +11,22 @@ import Foundation
 
 struct EventGenerator {
 
+    let utility = MockUtility()
+    
     func generateEvent() -> Event {
         Event(
             type: .installed,
-            body: randomString()
+            body: utility.randomString()
         )
     }
-    
+        
     func generateEvents(count: Int) -> [Event] {
         return (1...count).map { _ in
-            Event(
+            return Event(
                 type: .installed,
-                body: randomString()
+                body: utility.randomString()
             )
         }
     }
-    
-    private func randomString(length: Int = 10) -> String {
-        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<length).map{ _ in letters.randomElement()! })
-    }
-    
+
 }

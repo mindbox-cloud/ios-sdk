@@ -20,15 +20,6 @@ final class DIManager: NSObject {
         super.init()
     }
     
-    private var appGroup: String? {
-        let utilitiesFetcher: UtilitiesFetcher = self.container.resolveOrDie()
-        guard let hostApplicationName = utilitiesFetcher.hostApplicationName else {
-            return nil
-        }
-        let identifier = "group.cloud.MindBox.\(hostApplicationName)"
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil ? identifier : nil
-    }
-
     var atOnce = true
     func registerServices() {
         #if DEBUG
@@ -59,15 +50,12 @@ final class DIManager: NSObject {
             MBUtilitiesFetcher()
         }
         
-        container.registerInContainer { [weak self] (r) -> PersistenceStorage in
-            if let appGroup = self?.appGroup {
-                return MBPersistenceStorage(defaults: UserDefaults(suiteName: appGroup) ?? .standard)
-            } else {
-                return MBPersistenceStorage(defaults: .standard)
-            }
+        container.registerInContainer { (r) -> PersistenceStorage in
+            let utilitiesFetcher: UtilitiesFetcher = r.resolveOrDie()
+            return MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
         }
 
-        container.register { (r) -> UNAuthorizationStatusProviding in
+        container.registerInContainer { (r) -> UNAuthorizationStatusProviding in
             UNAuthorizationStatusProvider()
         }
 
@@ -87,12 +75,9 @@ final class DIManager: NSObject {
             MBEventRepository()
         }
         
-        container.registerInContainer { [weak self] (r) -> DataBaseLoader in
-            if let appGroup = self?.appGroup {
-                return try! DataBaseLoader(appGroup: appGroup)
-            } else {
-                return try! DataBaseLoader()
-            }
+        container.registerInContainer { (r) -> DataBaseLoader in
+            let utilitiesFetcher: UtilitiesFetcher = r.resolveOrDie()
+            return try! DataBaseLoader(appGroup: utilitiesFetcher.appGroup)
         }
 
         container.registerInContainer { (r) -> MBDatabaseRepository in

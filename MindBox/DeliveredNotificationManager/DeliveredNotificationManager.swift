@@ -9,7 +9,11 @@
 import Foundation
 import UserNotifications
 
+
 final class DeliveredNotificationManager {
+    
+    @Injected var persistenceStorage: PersistenceStorage
+    @Injected var configurationStorage: ConfigurationStorage
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -21,15 +25,24 @@ final class DeliveredNotificationManager {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private let timeout: TimeInterval = 5.0
+    
+    private let mindBoxIdentifireKey = "uniqueKey"
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
         }
+        guard userInfo[mindBoxIdentifireKey] != nil else {
+            Log("Push notification is not from MindBox")
+                .inChanel(.notification).withType(.info).make()
+            return false
+        }
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
-        let prepareConfigurationStorageOperation = PrepareConfigurationStorageOperation()
+        if let configuration = persistenceStorage.configuration {
+            configurationStorage.setConfiguration(configuration)
+        }
         let parseEventOperation = ParseEventOperation(userInfo: userInfo)
         parseEventOperation.onCompleted = { [weak self] result in
             guard let self = self else {
@@ -43,8 +56,7 @@ final class DeliveredNotificationManager {
                     .inChanel(.notification).withType(.info).make()
             }
         }
-        parseEventOperation.addDependency(prepareConfigurationStorageOperation)
-        queue.addOperations([prepareConfigurationStorageOperation, parseEventOperation], waitUntilFinished: false)
+        queue.addOperations([parseEventOperation], waitUntilFinished: false)
         switch semaphore.wait(wallTimeout: .now() + timeout) {
         case .success:
             Log("Track succeeded")
@@ -59,7 +71,13 @@ final class DeliveredNotificationManager {
     }
     
     private func track(event: Event) {
+        let isConfigurationSet = persistenceStorage.configuration != nil
         let saveOperation = SaveEventOperation(event: event)
+        saveOperation.onCompleted = { [weak self] result in
+            if !isConfigurationSet {
+                self?.semaphore.signal()
+            }
+        }
         let deliverOperation = DeliveryOperation(event: event)
         deliverOperation.addDependency(saveOperation)
         deliverOperation.onCompleted = { [weak self] (_, _) in
@@ -67,7 +85,11 @@ final class DeliveredNotificationManager {
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        self.queue.addOperations([saveOperation, deliverOperation], waitUntilFinished: false)
+        var operations: [Operation] = [saveOperation]
+        if isConfigurationSet {
+            operations.append(deliverOperation)
+        }
+        self.queue.addOperations(operations, waitUntilFinished: false)
     }
     
 }

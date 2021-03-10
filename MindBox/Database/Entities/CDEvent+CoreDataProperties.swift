@@ -13,18 +13,28 @@ import CoreData
 
 extension CDEvent {
     
-    @nonobjc public class func fetchRequest(retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
+    public class func fetchRequest(retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         var subpredicates: [NSPredicate] = []
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
             subpredicates.append(
-                NSPredicate(format: "%K > %@ AND %K == NULL", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp, #keyPath(CDEvent.retryTimestamp)])
+                NSPredicate(
+                    format: "%K > %@ AND %K == NULL",
+                    argumentArray: [
+                        #keyPath(CDEvent.timestamp), monthLimitDateStamp,
+                        #keyPath(CDEvent.retryTimestamp)]
+                )
             )
-        }
-        if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
-            subpredicates.append(
-                NSPredicate(format: "%K < %@", argumentArray: [#keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970])
-            )
+            if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
+                subpredicates.append(
+                    NSPredicate(
+                        format: "%K > %@ AND %K < %@",
+                        argumentArray: [
+                            #keyPath(CDEvent.timestamp), monthLimitDateStamp,
+                            #keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970]
+                    )
+                )
+            }
         }
         request.predicate = NSCompoundPredicate(type: .or, subpredicates: subpredicates)
         request.sortDescriptors = [
@@ -37,6 +47,17 @@ extension CDEvent {
     public class func fetchRequest(by transactionId: String) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         request.predicate = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(CDEvent.transactionId), transactionId])
+        return request
+    }
+    
+    public class func countEventsFetchRequest() -> NSFetchRequest<CDEvent> {
+        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
+            request.predicate = NSPredicate(
+                format: "%K > %@",
+                argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp]
+            )
+        }
         return request
     }
     
