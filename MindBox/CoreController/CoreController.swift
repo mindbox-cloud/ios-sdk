@@ -95,11 +95,13 @@ class CoreController {
     
     private func installation(uuid: String, installationId: String?) {
         let apnsToken = persistenceStorage.apnsToken
+        let subscribe = configurationStorage.configuration?.subscribeCustomerIfCreated ?? false
         notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
             let installed = MobileApplicationInstalled(
                 token: apnsToken ?? "",
                 isNotificationsEnabled: isNotificationsEnabled,
-                installationId: installationId ?? ""
+                installationId: installationId ?? "",
+                subscribe: subscribe
             )
             let event = Event(
                 type: .installed,
