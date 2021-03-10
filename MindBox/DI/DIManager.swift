@@ -55,7 +55,7 @@ final class DIManager: NSObject {
             return MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
         }
 
-        container.register { (r) -> UNAuthorizationStatusProviding in
+        container.registerInContainer { (r) -> UNAuthorizationStatusProviding in
             UNAuthorizationStatusProvider()
         }
 
