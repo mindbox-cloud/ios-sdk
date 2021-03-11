@@ -92,24 +92,27 @@ public class MindBox {
     
     private let semaphore = DispatchSemaphore(value: 1)
     
+    let queue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.qualityOfService = .utility
+        queue.maxConcurrentOperationCount = 1
+        queue.name = "MindBox-NotificationSettingsQueue"
+        return queue
+    }()
+    
     // MARK: - To test Guaranteed Delivery
     public func pushDelivered(uniqueKey: String) {
-        semaphore.wait()
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
-        let operation = NotificationSettingsOperation()
-        operation.completionBlock = { [weak self] in
-            guard let self = self else {
-                return
-            }
-            let event = Event(
-                type: .pushDelivered,
-                body: BodyEncoder(encodable: pushDelivered).body
-            )
-            try? self.databaseRepository.create(event: event)
-            self.semaphore.signal()
-        }
-        operation.start()
+        let notificationSettings = NotificationSettingsOperation()
+        let event = Event(
+            type: .pushDelivered,
+            body: BodyEncoder(encodable: pushDelivered).body
+        )
+        let saveEventOperation = SaveEventOperation(event: event)
+        saveEventOperation.addDependency(notificationSettings)
+        queue.addOperations([notificationSettings, saveEventOperation], waitUntilFinished: true)
     }
+
 
     @available(iOS 13.0, *)
     public func registerBGTasks() {
