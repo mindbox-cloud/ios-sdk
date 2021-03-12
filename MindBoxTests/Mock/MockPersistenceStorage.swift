@@ -30,6 +30,10 @@ class MockPersistenceStorage: PersistenceStorage {
     var configuration: MBConfiguration?
 
     var backgroundExecutions: [BackgroudExecution] = []
+    
+    var isNotificationsEnabled: Bool?
+    
+    var installationDate: Date?
 
     func reset() {
         deviceUUID = nil
@@ -40,6 +44,8 @@ class MockPersistenceStorage: PersistenceStorage {
         deprecatedEventsRemoveDate = nil
         configuration = nil
         backgroundExecutions = []
+        isNotificationsEnabled = false
+        installationDate = nil
     }
     
     

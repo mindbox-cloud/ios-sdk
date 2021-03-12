@@ -67,7 +67,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         appBundle.bundleIdentifier
     }
     
-    func getUDID(completion: @escaping (UUID) -> Void) {
+    func getDeviceUUID(completion: @escaping (UUID) -> Void) {
         IDFAFetcher().fetch { (uuid) in
             if let uuid = uuid {
                 Log("IDFAFetcher uuid:\(uuid.uuidString)")

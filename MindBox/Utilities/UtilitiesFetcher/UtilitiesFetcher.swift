@@ -17,6 +17,6 @@ protocol UtilitiesFetcher {
     
     var appGroup: String { get }
     
-    func getUDID(completion: @escaping (UUID) -> Void)
+    func getDeviceUUID(completion: @escaping (UUID) -> Void)
 
 }

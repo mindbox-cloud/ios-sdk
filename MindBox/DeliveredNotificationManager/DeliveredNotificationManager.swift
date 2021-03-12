@@ -72,14 +72,12 @@ final class DeliveredNotificationManager {
     
     private func track(event: Event) {
         let isConfigurationSet = persistenceStorage.configuration != nil
-        let notificationSettingsOperation = NotificationSettingsOperation()
         let saveOperation = SaveEventOperation(event: event)
         saveOperation.onCompleted = { [weak self] result in
             if !isConfigurationSet {
                 self?.semaphore.signal()
             }
         }
-        saveOperation.addDependency(notificationSettingsOperation)
         let deliverOperation = DeliveryOperation(event: event)
         deliverOperation.addDependency(saveOperation)
         deliverOperation.onCompleted = { [weak self] (_, _) in
@@ -87,7 +85,7 @@ final class DeliveredNotificationManager {
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        var operations: [Operation] = [notificationSettingsOperation, saveOperation]
+        var operations: [Operation] = [saveOperation]
         if isConfigurationSet {
             operations.append(deliverOperation)
         }
