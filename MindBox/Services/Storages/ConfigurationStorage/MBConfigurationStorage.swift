@@ -16,8 +16,8 @@ class MBConfigurationStorage: ConfigurationStorage {
         self.configuration = configuration
     }
     
-    func set(uuid: String) {
-        configuration?.deviceUUID = uuid
+    func set(deviceUUID: String) {
+        configuration?.deviceUUID = deviceUUID
     }
 
 }

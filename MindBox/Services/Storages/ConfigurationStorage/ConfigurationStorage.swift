@@ -14,6 +14,6 @@ protocol ConfigurationStorage: class {
 
     func setConfiguration(_ configuration: MBConfiguration)
     
-    func set(uuid: String)
+    func set(deviceUUID: String)
     
 }
