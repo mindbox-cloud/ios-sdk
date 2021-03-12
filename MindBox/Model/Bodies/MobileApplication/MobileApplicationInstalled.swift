@@ -21,15 +21,15 @@ struct MobileApplicationInstalled: Codable {
     let subscribe: Bool
     
     init(
-        token: String,
+        token: String? = nil,
         isNotificationsEnabled: Bool,
-        installationId: String,
+        installationId: String?,
         subscribe: Bool
     ) {
-        self.token = token
-        self.isTokenAvailable = !token.isEmpty
+        self.token = token ?? ""
+        self.isTokenAvailable = !self.token.isEmpty
         self.isNotificationsEnabled = isNotificationsEnabled
-        self.installationId = installationId
+        self.installationId = installationId ?? ""
         self.subscribe = subscribe
     }
 
