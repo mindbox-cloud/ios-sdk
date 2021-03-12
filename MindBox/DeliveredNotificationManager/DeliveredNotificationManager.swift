@@ -14,6 +14,7 @@ final class DeliveredNotificationManager {
     
     @Injected private var persistenceStorage: PersistenceStorage
     @Injected private var configurationStorage: ConfigurationStorage
+    @Injected private var databaseRepository: MBDatabaseRepository
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -27,6 +28,19 @@ final class DeliveredNotificationManager {
     private let timeout: TimeInterval = 5.0
     
     private let mindBoxIdentifireKey = "uniqueKey"
+    
+    @discardableResult
+    func track(uniqueKey: String) throws -> Bool {
+        Log("Track started")
+            .inChanel(.notification).withType(.info).make()
+        if let configuration = persistenceStorage.configuration {
+            configurationStorage.setConfiguration(configuration)
+        }
+        let pushDelivered = PushDelivered(uniqKey: uniqueKey)
+        let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
+        track(event: event)
+        return performSemaphoreWait()
+    }
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
@@ -57,6 +71,10 @@ final class DeliveredNotificationManager {
             }
         }
         queue.addOperations([parseEventOperation], waitUntilFinished: false)
+        return performSemaphoreWait()
+    }
+    
+    private func performSemaphoreWait() -> Bool {
         switch semaphore.wait(wallTimeout: .now() + timeout) {
         case .success:
             Log("Track succeeded")
@@ -72,24 +90,18 @@ final class DeliveredNotificationManager {
     
     private func track(event: Event) {
         let isConfigurationSet = persistenceStorage.configuration != nil
-        let saveOperation = SaveEventOperation(event: event)
-        saveOperation.onCompleted = { [weak self] result in
-            if !isConfigurationSet {
-                self?.semaphore.signal()
-            }
+        try? databaseRepository.create(event: event)
+        guard isConfigurationSet else {
+            semaphore.signal()
+            return
         }
         let deliverOperation = DeliveryOperation(event: event)
-        deliverOperation.addDependency(saveOperation)
         deliverOperation.onCompleted = { [weak self] (_, _) in
             self?.semaphore.signal()
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        var operations: [Operation] = [saveOperation]
-        if isConfigurationSet {
-            operations.append(deliverOperation)
-        }
-        self.queue.addOperations(operations, waitUntilFinished: false)
+        self.queue.addOperations([deliverOperation], waitUntilFinished: false)
     }
     
 }
