@@ -15,9 +15,9 @@ class BGTaskManager: BackgroundTaskManagerType {
     
     weak var gdManager: GuaranteedDeliveryManager?
 
-    var appGDRefreshIdentifier: String?
-    var appGDProcessingIdentifier: String?
-    var appDBCleanProcessingIdentifire: String?
+    private var appGDRefreshIdentifier: String?
+    private var appGDProcessingIdentifier: String?
+    private var appDBCleanProcessingIdentifire: String?
 
     private var appGDRefreshTask: BGAppRefreshTask?
     private var appGDProcessingTask: BGProcessingTask?
