@@ -15,7 +15,30 @@ class MBPersistenceStorage: PersistenceStorage {
     
     // MARK: - Property
     var isInstalled: Bool {
-        deviceUUID != nil
+        installationDate != nil
+    }
+    
+    var installationDate: Date? {
+        get {
+            let dateFormater = DateFormatter()
+            dateFormater.dateStyle = .full
+            dateFormater.timeStyle = .full
+            if let dateString = installationDateString {
+                return dateFormater.date(from: dateString)
+            } else {
+                return nil
+            }
+        }
+        set {
+            let dataFormater = DateFormatter()
+            dataFormater.dateStyle = .full
+            dataFormater.timeStyle = .full
+            if let date = newValue {
+                installationDateString = dataFormater.string(from: date)
+            } else {
+                installationDateString = nil
+            }
+        }
     }
     
     var apnsTokenSaveDate: Date? {
@@ -129,7 +152,11 @@ class MBPersistenceStorage: PersistenceStorage {
     var installationId: String?
 
     @UserDefaultsWrapper(key: .apnsToken, defaultValue: nil)
-    var apnsToken: String?
+    var apnsToken: String? {
+        didSet {
+            apnsTokenSaveDate = Date()
+        }
+    }
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String?
@@ -142,6 +169,9 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: false)
     var isNotificationsEnabled: Bool?
+    
+    @UserDefaultsWrapper(key: .installationData, defaultValue: nil)
+    private var installationDateString: String?
 
 
     func reset() {
@@ -187,6 +217,7 @@ extension MBPersistenceStorage {
             case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
+            case installationData = "MBPersistenceStorage-installationData"
         }
         
         private let key: Key
