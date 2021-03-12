@@ -89,26 +89,18 @@ public class MindBox {
             return false
         }
     }
-        
-    private let queue: OperationQueue = {
-        let queue = OperationQueue()
-        queue.qualityOfService = .utility
-        queue.maxConcurrentOperationCount = 1
-        queue.name = "MindBox-NotificationSettingsQueue"
-        return queue
-    }()
     
-    // MARK: - To test Guaranteed Delivery
-    // TODO: - Change to push clicked
-    public func pushDelivered(uniqueKey: String) {
+    @discardableResult
+    public func pushDelivered(uniqueKey: String) -> Bool {
         coreController.checkNotificationStatus()
-        let pushDelivered = PushDelivered(uniqKey: uniqueKey)
-        let event = Event(
-            type: .pushDelivered,
-            body: BodyEncoder(encodable: pushDelivered).body
-        )
-        let saveEventOperation = SaveEventOperation(event: event)
-        queue.addOperations([saveEventOperation], waitUntilFinished: true)
+        let traker = DeliveredNotificationManager()
+        do {
+            return try traker.track(uniqueKey: uniqueKey)
+        } catch {
+            Log("Track UNNotificationRequest failed with error: \(error)")
+                .inChanel(.notification).withType(.error).make()
+            return false
+        }
     }
 
     @available(iOS 13.0, *)
