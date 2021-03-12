@@ -30,6 +30,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var configuration: MBConfiguration?
 
     var backgroundExecutions: [BackgroudExecution] = []
+    
+    var isNotificationsEnabled: Bool?
 
     func reset() {
         deviceUUID = nil
