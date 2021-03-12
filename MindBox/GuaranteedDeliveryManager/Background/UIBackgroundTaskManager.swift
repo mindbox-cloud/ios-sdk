@@ -11,9 +11,10 @@ import UIKit
 
 class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
+    weak var gdManager: GuaranteedDeliveryManager?
+    
     @Injected private var databaseRepository: MBDatabaseRepository
     @Injected private var persistenceStorage: PersistenceStorage
-    weak var gdManager: GuaranteedDeliveryManager?
     
     private var observationToken: NSKeyValueObservation?
     
@@ -29,7 +30,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         }
     }
     
-    var removingDeprecatedEventsInProgress = false
+    private var removingDeprecatedEventsInProgress = false
     
     func applicationDidEnterBackground() {
         guard backgroundTaskID == .invalid else {
