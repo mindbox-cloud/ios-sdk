@@ -113,28 +113,21 @@ class CoreController {
                 installationId: installationId,
                 subscribe: subscribe
             )
+            let body = BodyEncoder(encodable: installed).body
+            let event = Event(
+                type: .installed,
+                body: body
+            )
             do {
-                let body = try BodyEncoder(encodable: installed).encode(from: installed)
-                let event = Event(
-                    type: .installed,
-                    body: body
-                )
-                do {
-                    try self.databaseRepository.create(event: event)
-                    self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-                    self.persistenceStorage.installationDate = Date()
-                    Log("MobileApplicationInstalled")
-                        .inChanel(.system).withType(.verbose).make()
-                    MindBox.shared.delegate?.mindBoxDidInstalled()
-                } catch {
-                    Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
-                        .inChanel(.system).withType(.error).make()
-                    //                MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
-                }
+                try self.databaseRepository.create(event: event)
+                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+                self.persistenceStorage.installationDate = Date()
+                Log("MobileApplicationInstalled")
+                    .inChanel(.system).withType(.verbose).make()
+                MindBox.shared.delegate?.mindBoxDidInstalled()
             } catch {
                 Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
                     .inChanel(.system).withType(.error).make()
-                //            MindBox.shared.delegate?.mindBoxInstalledFailed(error: error.asMBError)
             }
         }
         
