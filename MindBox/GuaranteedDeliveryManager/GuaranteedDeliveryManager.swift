@@ -14,9 +14,10 @@ import BackgroundTasks
 final class GuaranteedDeliveryManager: NSObject {
     
     @Injected var databaseRepository: MBDatabaseRepository
+    
     let backgroundTaskManager = BackgroundTaskManagerProxy()
     
-    let queue: OperationQueue = {
+    private let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .utility
         queue.maxConcurrentOperationCount = 1
@@ -24,29 +25,7 @@ final class GuaranteedDeliveryManager: NSObject {
         return queue
     }()
     
-    let semaphore = DispatchSemaphore(value: 1)
-    
-    enum State: String, CustomStringConvertible {
-        
-        case idle, delivering, waitingForRetry
-         
-        var isDelivering: Bool {
-            self == .delivering
-        }
-        
-        var isIdle: Bool {
-            self == .idle
-        }
-        
-        var isWaitingForRetry: Bool {
-            self == .waitingForRetry
-        }
-        
-        var description: String {
-            rawValue
-        }
-        
-    }
+    private let semaphore = DispatchSemaphore(value: 1)
     
     var onCompletedEvent: ((_ event: Event, _ error: ErrorModel?) -> Void)?
     
@@ -68,7 +47,7 @@ final class GuaranteedDeliveryManager: NSObject {
         }
     }
     
-    var fetchLimit: Int = 20
+   private let fetchLimit: Int
     
     init(retryDeadline: TimeInterval = 60, fetchLimit: Int = 20) {
         self.retryDeadline = retryDeadline
@@ -104,7 +83,7 @@ final class GuaranteedDeliveryManager: NSObject {
         scheduleOperations(fetchLimit: count <= fetchLimit ? count : fetchLimit)
     }
     
-    func scheduleOperations(fetchLimit: Int) {
+    private func scheduleOperations(fetchLimit: Int) {
         semaphore.wait()
         guard !state.isDelivering else {
             Log("Delivering. Ignore another schedule operation.")
