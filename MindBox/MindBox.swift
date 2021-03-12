@@ -23,30 +23,29 @@ public class MindBox {
     
     // MARK: - Elements
     
-    @Injected var persistenceStorage: PersistenceStorage
-    @Injected var utilitiesFetcher: UtilitiesFetcher
-    @Injected var gdManager: GuaranteedDeliveryManager
-    @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
-    @Injected var databaseRepository: MBDatabaseRepository
+    @Injected private var persistenceStorage: PersistenceStorage
+    @Injected private var utilitiesFetcher: UtilitiesFetcher
+    @Injected private var gdManager: GuaranteedDeliveryManager
+    @Injected private var notificationStatusProvider: UNAuthorizationStatusProviding
+    @Injected private var databaseRepository: MBDatabaseRepository
 
     /// Internal process controller
     let coreController = CoreController()
-    
-    // MARK: - Property
-    
-    /// Delegate for sending events t
+        
+    /// Delegate for sending events
     weak var delegate: MindBoxDelegate?
     
     // MARK: - Init
     
-    private init() {}
+    private init() {
+        persistenceStorage.storeToFileBackgroundExecution()
+    }
     
     // MARK: - MindBox
     
     /// This function starting initialization case using `configuration`.
     /// - Parameter configuration: MBConfiguration struct with configuration
     public func initialization(configuration: MBConfiguration) {
-        persistenceStorage.storeToFileBackgroundExecution()
         coreController.initialization(configuration: configuration)
     }
     
@@ -63,8 +62,8 @@ public class MindBox {
         }
     }
     
-    /// - Returns: APNSToken sent to the analytics system
-    public var APNSToken: String? {
+    /// - Returns: apnsToken sent to the analytics system
+    public var apnsToken: String? {
         persistenceStorage.apnsToken
     }
     
@@ -80,6 +79,7 @@ public class MindBox {
     
     @discardableResult
     public func pushDelivered(request: UNNotificationRequest) -> Bool {
+        coreController.checkNotificationStatus()
         let traker = DeliveredNotificationManager()
         do {
             return try traker.track(request: request)
@@ -89,10 +89,8 @@ public class MindBox {
             return false
         }
     }
-    
-    private let semaphore = DispatchSemaphore(value: 1)
-    
-    let queue: OperationQueue = {
+        
+    private let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .utility
         queue.maxConcurrentOperationCount = 1
@@ -101,18 +99,17 @@ public class MindBox {
     }()
     
     // MARK: - To test Guaranteed Delivery
+    // TODO: - Change to push clicked
     public func pushDelivered(uniqueKey: String) {
+        coreController.checkNotificationStatus()
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
-        let notificationSettings = NotificationSettingsOperation()
         let event = Event(
             type: .pushDelivered,
             body: BodyEncoder(encodable: pushDelivered).body
         )
         let saveEventOperation = SaveEventOperation(event: event)
-        saveEventOperation.addDependency(notificationSettings)
-        queue.addOperations([notificationSettings, saveEventOperation], waitUntilFinished: true)
+        queue.addOperations([saveEventOperation], waitUntilFinished: true)
     }
-
 
     @available(iOS 13.0, *)
     public func registerBGTasks() {
@@ -142,5 +139,4 @@ public class MindBox {
         gdManager.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
     
-    // MARK: - Private
 }
