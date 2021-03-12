@@ -102,6 +102,13 @@ public class MindBox {
             return false
         }
     }
+    
+    // FixMe: - Change to click event later. Now its for GD testing
+    public func pushClicked(uniqueKey: String) {
+        let pushDelivered = PushDelivered(uniqKey: uniqueKey)
+        let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
+        try? databaseRepository.create(event: event)
+    }
 
     @available(iOS 13.0, *)
     public func registerBGTasks() {
