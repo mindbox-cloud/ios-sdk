@@ -43,6 +43,7 @@ class CoreController {
                 )
             }
             persistenceStorage.apnsToken = token
+            MindBox.shared.delegate?.apnsTokenDidUpdated()
         } else {
             // Before send infoUpdated need to check that sdk is installed
             if persistenceStorage.isInstalled {
@@ -50,8 +51,10 @@ class CoreController {
                     apnsToken: token,
                     isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
                 )
+                MindBox.shared.delegate?.apnsTokenDidUpdated()
             }
             persistenceStorage.apnsToken = token
+            MindBox.shared.delegate?.apnsTokenDidUpdated()
         }
     }
     

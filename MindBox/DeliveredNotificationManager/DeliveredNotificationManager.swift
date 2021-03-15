@@ -9,7 +9,6 @@
 import Foundation
 import UserNotifications
 
-
 final class DeliveredNotificationManager {
     
     @Injected private var persistenceStorage: PersistenceStorage
@@ -55,8 +54,7 @@ final class DeliveredNotificationManager {
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
         let payload = try parse(userInfo: userInfo)
-        try track(uniqueKey: payload.uniqueKey)
-        return performSemaphoreWait()
+        return try track(uniqueKey: payload.uniqueKey)
     }
     
     private func performSemaphoreWait() -> Bool {

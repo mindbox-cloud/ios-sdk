@@ -28,16 +28,19 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
         }
-        try! databaseRepository.erase()
+        DIManager.shared.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
+            return MockUNAuthorizationStatusProvider(status: .authorized)
+        }
         persistenceStorage = DIManager.shared.container.resolve()
         persistenceStorage.reset()
+        try! databaseRepository.erase()
     }
     
     func testTrackOnlySaveIfConfigurationNotSet() {
         let manager = DeliveredNotificationManager()
         let content = UNMutableNotificationContent()
         let uniqueKey = mockUtility.randomString()
-        let id = mockUtility.randomString()
+        let id = UUID().uuidString
         content.userInfo = ["uniqueKey": uniqueKey]
         let request = UNNotificationRequest(
             identifier: id,

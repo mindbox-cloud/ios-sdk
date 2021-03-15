@@ -34,7 +34,6 @@ class DITestCase: XCTestCase {
         XCTAssert(opExtractor.configurationStorage != nil)
         XCTAssert(opExtractor.persistenceStorage != nil)
         XCTAssert(opExtractor.networkFetcher != nil)
-        XCTAssert(opExtractor.mobileApplicationRepository != nil)
         XCTAssert(opExtractor.eventRepository != nil)
 
         extractor.persistenceStorage.apnsToken = "123"
@@ -49,7 +48,6 @@ class DITestCase: XCTestCase {
         @Injected var configurationStorage: ConfigurationStorage
         @Injected var persistenceStorage: PersistenceStorage
         @Injected var networkFetcher: NetworkFetcher
-        @Injected var mobileApplicationRepository: MobileApplicationRepository
         @Injected var eventRepository: EventRepository
         init() {
         }
@@ -61,7 +59,6 @@ class DITestCase: XCTestCase {
         @InjectedOptional var configurationStorage: ConfigurationStorage!
         @InjectedOptional var persistenceStorage: PersistenceStorage!
         @InjectedOptional var networkFetcher: NetworkFetcher!
-        @InjectedOptional var mobileApplicationRepository: MobileApplicationRepository!
         @InjectedOptional var eventRepository: EventRepository!
         
         init() {

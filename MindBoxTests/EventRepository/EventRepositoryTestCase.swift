@@ -29,7 +29,7 @@ class EventRepositoryTestCase: XCTestCase {
                 MockNetworkFetcher()
             }
         }
-        DIManager.shared.container.register { _ -> UNAuthorizationStatusProviding in
+        DIManager.shared.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
             MockUNAuthorizationStatusProvider(status: .authorized)
         }
         databaseRepository = DIManager.shared.container.resolve()

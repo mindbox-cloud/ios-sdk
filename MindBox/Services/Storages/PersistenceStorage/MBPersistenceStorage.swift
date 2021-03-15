@@ -175,12 +175,15 @@ class MBPersistenceStorage: PersistenceStorage {
 
 
     func reset() {
+        installationDate = nil
         deviceUUID = nil
         installationId = nil
         apnsToken = nil
         apnsTokenSaveDate = nil
+        deprecatedEventsRemoveDate = nil
         configuration = nil
-        
+        isNotificationsEnabled = nil
+        resetBackgroundExecutions()
     }
     
     func resetBackgroundExecutions() {

@@ -38,6 +38,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         if guaranteedDeliveryManager == nil {
             guaranteedDeliveryManager = GuaranteedDeliveryManager()
         }
+        try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -54,7 +55,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testDeliverMultipleEvents() {
-        try! databaseRepository.erase()
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
         let events = eventGenerator.generateEvents(count: 10)
@@ -75,7 +75,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testScheduleByTimer() {
-        try! databaseRepository.erase()
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
         guaranteedDeliveryManager.canScheduleOperations = false

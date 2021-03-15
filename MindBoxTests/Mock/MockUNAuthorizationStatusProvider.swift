@@ -11,15 +11,15 @@ import UIKit
 @testable import MindBox
 
 class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
-
+    
     private let status: UNAuthorizationStatus
 
     init(status: UNAuthorizationStatus) {
         self.status = status
     }
 
-    func isAuthorized(completion: @escaping (Bool) -> Void) {
-        completion(status.rawValue == UNAuthorizationStatus.authorized.rawValue)
+    func isNotificationsEnabled() -> Bool {
+        status.rawValue == UNAuthorizationStatus.authorized.rawValue
     }
     
 }
