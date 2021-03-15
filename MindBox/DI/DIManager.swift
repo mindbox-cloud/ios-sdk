@@ -66,11 +66,7 @@ final class DIManager: NSObject {
         container.register { (r) -> NetworkFetcher in
             MBNetworkFetcher(utilitiesFetcher: r.resolveOrDie())
         }
-        
-        container.register { (r) -> MobileApplicationRepository in
-            MBMobileApplicationRepository()
-        }
-        
+
         container.register { (r) -> EventRepository in
             MBEventRepository()
         }

@@ -10,12 +10,17 @@ import Foundation
 import UIKit
 
 class UNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
-
-    func isAuthorized(completion: @escaping (Bool) -> Void) {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            let isAuthorized = settings.authorizationStatus.rawValue == UNAuthorizationStatus.authorized.rawValue
-            completion(isAuthorized)
+    
+    private let semathore = DispatchSemaphore(value: 0)
+    
+    func isNotificationsEnabled() -> Bool {
+        var isAuthorized: Bool = false
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            isAuthorized = settings.authorizationStatus.rawValue == UNAuthorizationStatus.authorized.rawValue
+            self?.semathore.signal()
         }
+        semathore.wait()
+        return isAuthorized
     }
     
 }

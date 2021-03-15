@@ -10,6 +10,5 @@ import Foundation
 
 protocol UNAuthorizationStatusProviding {
     
-    func isAuthorized(completion: @escaping (Bool) -> Void)
-    
+    func isNotificationsEnabled() -> Bool
 }

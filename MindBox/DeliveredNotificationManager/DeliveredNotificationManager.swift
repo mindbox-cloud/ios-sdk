@@ -54,23 +54,8 @@ final class DeliveredNotificationManager {
         }
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
-        if let configuration = persistenceStorage.configuration {
-            configurationStorage.setConfiguration(configuration)
-        }
-        let parseEventOperation = ParseEventOperation(userInfo: userInfo)
-        parseEventOperation.onCompleted = { [weak self] result in
-            guard let self = self else {
-                return
-            }
-            do {
-                let event = try result.get()
-                self.track(event: event)
-            } catch {
-                Log("Track failed with error: \(error.localizedDescription)")
-                    .inChanel(.notification).withType(.info).make()
-            }
-        }
-        queue.addOperations([parseEventOperation], waitUntilFinished: false)
+        let payload = try parse(userInfo: userInfo)
+        try track(uniqueKey: payload.uniqueKey)
         return performSemaphoreWait()
     }
     
@@ -101,7 +86,30 @@ final class DeliveredNotificationManager {
         }
         Log("Started DeliveryOperation")
             .inChanel(.notification).withType(.info).make()
-        self.queue.addOperations([deliverOperation], waitUntilFinished: false)
+        queue.addOperations([deliverOperation], waitUntilFinished: false)
+    }
+    
+    private func parse(userInfo: [AnyHashable: Any]) throws -> Payload {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted)
+            let decoder = JSONDecoder()
+            do {
+                let payload = try decoder.decode(Payload.self, from: data)
+                Log("Did parse payload: \(payload)")
+                    .inChanel(.notification).withType(.info).make()
+                return payload
+            } catch {
+                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
+                    .inChanel(.notification).withType(.error).make()
+                throw error
+            }
+        } catch {
+            Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
+                .inChanel(.notification).withType(.error).make()
+            throw error
+        }
     }
     
 }
+
+
