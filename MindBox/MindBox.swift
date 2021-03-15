@@ -39,6 +39,9 @@ public class MindBox {
     
     private init() {
         persistenceStorage.storeToFileBackgroundExecution()
+        if persistenceStorage.isInstalled {
+            coreController.checkNotificationStatus()
+        }
     }
     
     // MARK: - MindBox

@@ -20,12 +20,6 @@ class CoreController {
     @Injected var databaseRepository: MBDatabaseRepository
     @Injected var guaranteedDeliveryManager: GuaranteedDeliveryManager
     
-    init() {
-        if persistenceStorage.isInstalled {
-            checkNotificationStatus()
-        }
-    }
-    
     func initialization(configuration: MBConfiguration) {
         configurationStorage.setConfiguration(configuration)
         if !persistenceStorage.isInstalled {
@@ -134,7 +128,6 @@ class CoreController {
     }
     
     private func infoUpdated(with apnsToken: String) {
-        let apnsToken = persistenceStorage.apnsToken
         let isNotificationsEnabled = persistenceStorage.isNotificationsEnabled ?? false
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
