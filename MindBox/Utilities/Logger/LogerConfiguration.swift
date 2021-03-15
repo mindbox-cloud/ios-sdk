@@ -9,6 +9,9 @@
 import Foundation
 
 struct LogerConfiguration {
+    
+    var isWriting: Bool = true
+
     var enableChanels: [MBLoggerChanels] = [
         .system,
         .network,
