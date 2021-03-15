@@ -24,13 +24,13 @@ struct MobileApplicationInstalled: Codable {
         token: String? = nil,
         isNotificationsEnabled: Bool,
         installationId: String?,
-        subscribe: Bool
+        subscribe: Bool?
     ) {
         self.token = token ?? ""
         self.isTokenAvailable = !self.token.isEmpty
         self.isNotificationsEnabled = isNotificationsEnabled
         self.installationId = installationId ?? ""
-        self.subscribe = subscribe
+        self.subscribe = subscribe ?? false
     }
 
 }

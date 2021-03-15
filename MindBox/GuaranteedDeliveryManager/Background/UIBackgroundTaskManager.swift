@@ -114,7 +114,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             completionHandler(.noData)
             return
         }
-        let taskID = String.randomString()
+        let taskID = UUID().uuidString
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",
@@ -165,15 +165,5 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             completionHandler(.newData)
         }
     }
-    
-}
-
-extension String {
-    
-    static func randomString(length: Int = 10) -> String {
-        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return String((0..<length).map{ _ in letters.randomElement()! })
-    }
-
     
 }

@@ -37,34 +37,42 @@ class CoreController {
             }
             // Before send infoUpdated need to check that sdk is installed
             if persistenceStorage.isInstalled {
-                infoUpdated(with: token)
+                infoUpdated(
+                    apnsToken: token,
+                    isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
+                )
             }
             persistenceStorage.apnsToken = token
         } else {
             // Before send infoUpdated need to check that sdk is installed
             if persistenceStorage.isInstalled {
-                infoUpdated(with: token)
+                infoUpdated(
+                    apnsToken: token,
+                    isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
+                )
             }
             persistenceStorage.apnsToken = token
         }
     }
     
     func checkNotificationStatus() {
-        notificationStatusProvider.isAuthorized { [weak self] isNotificationsEnabled in
-            guard let self = self else {
-                return
-            }
-            guard let isPersistentNotificationsEnabled = self.persistenceStorage.isNotificationsEnabled else {
-                self.infoUpdated(with: isNotificationsEnabled)
-                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-                return
-            }
-            guard isPersistentNotificationsEnabled != isNotificationsEnabled else {
-                return
-            }
-            self.infoUpdated(with: isNotificationsEnabled)
-            self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+        let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
+        guard let isPersistentNotificationsEnabled = persistenceStorage.isNotificationsEnabled else {
+            infoUpdated(
+                apnsToken: persistenceStorage.apnsToken,
+                isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
+            )
+            persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+            return
         }
+        guard isPersistentNotificationsEnabled != isNotificationsEnabled else {
+            return
+        }
+        persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+        infoUpdated(
+            apnsToken: persistenceStorage.apnsToken,
+            isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
+        )
     }
     
     // MARK: - Private
@@ -96,39 +104,34 @@ class CoreController {
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = installationId
         let apnsToken = persistenceStorage.apnsToken
-        let subscribe = configurationStorage.configuration?.subscribeCustomerIfCreated ?? false
-        notificationStatusProvider.isAuthorized { [weak self] (isNotificationsEnabled) in
-            guard let self = self else {
-                return
-            }
-            let installed = MobileApplicationInstalled(
-                token: apnsToken,
-                isNotificationsEnabled: isNotificationsEnabled,
-                installationId: installationId,
-                subscribe: subscribe
-            )
-            let body = BodyEncoder(encodable: installed).body
-            let event = Event(
-                type: .installed,
-                body: body
-            )
-            do {
-                try self.databaseRepository.create(event: event)
-                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-                self.persistenceStorage.installationDate = Date()
-                Log("MobileApplicationInstalled")
-                    .inChanel(.system).withType(.verbose).make()
-                MindBox.shared.delegate?.mindBoxDidInstalled()
-            } catch {
-                Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
-                    .inChanel(.system).withType(.error).make()
-            }
+        let subscribe = configurationStorage.configuration?.subscribeCustomerIfCreated
+        let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
+        let installed = MobileApplicationInstalled(
+            token: apnsToken,
+            isNotificationsEnabled: isNotificationsEnabled,
+            installationId: installationId,
+            subscribe: subscribe
+        )
+        let body = BodyEncoder(encodable: installed).body
+        let event = Event(
+            type: .installed,
+            body: body
+        )
+        do {
+            try databaseRepository.create(event: event)
+            persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+            persistenceStorage.installationDate = Date()
+            Log("MobileApplicationInstalled")
+                .inChanel(.system).withType(.verbose).make()
+            MindBox.shared.delegate?.mindBoxDidInstalled()
+        } catch {
+            Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
+                .inChanel(.system).withType(.error).make()
         }
         
     }
     
-    private func infoUpdated(with apnsToken: String) {
-        let isNotificationsEnabled = persistenceStorage.isNotificationsEnabled ?? false
+    private func infoUpdated(apnsToken: String?, isNotificationsEnabled: Bool) {
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
             isNotificationsEnabled: isNotificationsEnabled
@@ -137,20 +140,15 @@ class CoreController {
             type: .infoUpdated,
             body: BodyEncoder(encodable: infoUpdated).body
         )
-        try? databaseRepository.create(event: event)
-    }
-    
-    private func infoUpdated(with isNotificationsEnabled: Bool) {
-        let apnsToken = persistenceStorage.apnsToken
-        let infoUpdated = MobileApplicationInfoUpdated(
-            token: apnsToken,
-            isNotificationsEnabled: isNotificationsEnabled
-        )
-        let event = Event(
-            type: .infoUpdated,
-            body: BodyEncoder(encodable: infoUpdated).body
-        )
-        try? databaseRepository.create(event: event)
+        do {
+            try databaseRepository.create(event: event)
+            Log("MobileApplicationInfoUpdated")
+                .inChanel(.system).withType(.verbose).make()
+            MindBox.shared.delegate?.mindBoxDidInstalled()
+        } catch {
+            Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
+                .inChanel(.system).withType(.error).make()
+        }
     }
     
 }
