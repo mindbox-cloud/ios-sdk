@@ -77,7 +77,14 @@ public class MindBox {
     
     /// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
-        coreController.apnsTokenDidUpdate(token: token)
+        if let persistenceAPNSToken = persistenceStorage.apnsToken {
+            guard persistenceAPNSToken != token else {
+                return
+            }
+            coreController.apnsTokenDidUpdate(token: token)
+        } else {
+            coreController.apnsTokenDidUpdate(token: token)
+        }
     }
     
     @discardableResult

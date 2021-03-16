@@ -31,31 +31,16 @@ class CoreController {
     }
     
     func apnsTokenDidUpdate(token: String) {
-        if let persistenceAPNSToken = persistenceStorage.apnsToken {
-            guard persistenceAPNSToken != token else {
-                return
-            }
-            // Before send infoUpdated need to check that sdk is installed
-            if persistenceStorage.isInstalled {
-                infoUpdated(
-                    apnsToken: token,
-                    isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
-                )
-            }
-            persistenceStorage.apnsToken = token
-            MindBox.shared.delegate?.apnsTokenDidUpdated()
-        } else {
-            // Before send infoUpdated need to check that sdk is installed
-            if persistenceStorage.isInstalled {
-                infoUpdated(
-                    apnsToken: token,
-                    isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
-                )
-                MindBox.shared.delegate?.apnsTokenDidUpdated()
-            }
-            persistenceStorage.apnsToken = token
-            MindBox.shared.delegate?.apnsTokenDidUpdated()
+        let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
+        if persistenceStorage.isInstalled {
+            infoUpdated(
+                apnsToken: token,
+                isNotificationsEnabled:isNotificationsEnabled
+            )
         }
+        persistenceStorage.apnsToken = token
+        persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+        MindBox.shared.delegate?.apnsTokenDidUpdated()
     }
     
     func checkNotificationStatus() {
