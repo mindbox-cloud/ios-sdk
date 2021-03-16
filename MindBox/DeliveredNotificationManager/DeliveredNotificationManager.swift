@@ -51,8 +51,6 @@ final class DeliveredNotificationManager {
                 .inChanel(.notification).withType(.info).make()
             return false
         }
-        Log("Track started")
-            .inChanel(.notification).withType(.info).make()
         let payload = try parse(userInfo: userInfo)
         return try track(uniqueKey: payload.uniqueKey)
     }
