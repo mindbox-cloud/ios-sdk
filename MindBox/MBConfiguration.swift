@@ -121,11 +121,11 @@ public struct MBConfiguration: Codable {
         case domain
         case installationId
         case deviceUUID
+        case subscribeCustomerIfCreated
     }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
         var installationId: String? = nil
@@ -134,19 +134,19 @@ public struct MBConfiguration: Codable {
                 installationId = value
             }
         }
-        
         var deviceUUID: String? = nil
-        do {
-            let value = try values.decode(String.self, forKey: .deviceUUID)
+        if let value = try? values.decode(String.self, forKey: .deviceUUID) {
             if !value.isEmpty {
                 deviceUUID = value
             }
         }
+        let subscribeCustomerIfCreated = try values.decodeIfPresent(Bool.self, forKey: .subscribeCustomerIfCreated) ?? false
         try self.init(
             endpoint: endpoint,
             domain: domain,
             installationId: installationId,
-            deviceUUID: deviceUUID
+            deviceUUID: deviceUUID,
+            subscribeCustomerIfCreated: subscribeCustomerIfCreated
         )
     }
 
