@@ -117,6 +117,7 @@ class MBPersistenceStorage: PersistenceStorage {
         var tasks = backgroundExecutions
         tasks.append(value)
         MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey:"backgroundExecution")
+        MBPersistenceStorage.defaults.synchronize()
     }
     
     func storeToFileBackgroundExecution() {
@@ -171,7 +172,7 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .configurationData, defaultValue: nil)
     private var configurationData: Data?
     
-    @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: false)
+    @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: nil)
     var isNotificationsEnabled: Bool?
     
     @UserDefaultsWrapper(key: .installationData, defaultValue: nil)
@@ -192,6 +193,7 @@ class MBPersistenceStorage: PersistenceStorage {
     
     func resetBackgroundExecutions() {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
+        MBPersistenceStorage.defaults.synchronize()
     }
 
     // MARK: - Private
@@ -238,14 +240,25 @@ extension MBPersistenceStorage {
         var wrappedValue: T? {
             get {
                 // Read value from UserDefaults
-                return MBPersistenceStorage.defaults.value(forKey: key.rawValue) as? T ?? defaultValue
+                let isExists = defaults.isValueExists(forKey: key.rawValue)
+                let value = MBPersistenceStorage.defaults.value(forKey: key.rawValue) as? T ?? defaultValue
+                return isExists ? value : defaultValue
             }
             set {
                 // Set value to UserDefaults
                 MBPersistenceStorage.defaults.setValue(newValue, forKey: key.rawValue)
+                MBPersistenceStorage.defaults.synchronize()
             }
         }
         
     }
     
+}
+
+fileprivate extension UserDefaults {
+
+    func isValueExists(forKey key: String) -> Bool {
+        return object(forKey: key) != nil
+    }
+
 }
