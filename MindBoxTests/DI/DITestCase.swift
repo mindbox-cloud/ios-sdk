@@ -31,7 +31,6 @@ class DITestCase: XCTestCase {
 
         XCTAssert(opExtractor.logger != nil)
         XCTAssert(opExtractor.fetchUtilities != nil)
-        XCTAssert(opExtractor.configurationStorage != nil)
         XCTAssert(opExtractor.persistenceStorage != nil)
         XCTAssert(opExtractor.networkFetcher != nil)
         XCTAssert(opExtractor.eventRepository != nil)
@@ -49,7 +48,6 @@ class DITestCase: XCTestCase {
     class DIExtractor {
         @Injected var logger: ILogger
         @Injected var fetchUtilities: UtilitiesFetcher
-        @Injected var configurationStorage: ConfigurationStorage
         @Injected var persistenceStorage: PersistenceStorage
         @Injected var networkFetcher: NetworkFetcher
         @Injected var eventRepository: EventRepository
@@ -65,7 +63,6 @@ class DITestCase: XCTestCase {
     class DIExtractorOptionals {
         @InjectedOptional var logger: ILogger!
         @InjectedOptional var fetchUtilities: UtilitiesFetcher!
-        @InjectedOptional var configurationStorage: ConfigurationStorage!
         @InjectedOptional var persistenceStorage: PersistenceStorage!
         @InjectedOptional var networkFetcher: NetworkFetcher!
         @InjectedOptional var eventRepository: EventRepository!

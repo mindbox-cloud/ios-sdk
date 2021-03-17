@@ -12,7 +12,6 @@ import UserNotifications
 final class DeliveredNotificationManager {
     
     @Injected private var persistenceStorage: PersistenceStorage
-    @Injected private var configurationStorage: ConfigurationStorage
     @Injected private var databaseRepository: MBDatabaseRepository
     
     private let queue: OperationQueue = {
@@ -32,9 +31,6 @@ final class DeliveredNotificationManager {
     func track(uniqueKey: String) throws -> Bool {
         Log("Track started")
             .inChanel(.notification).withType(.info).make()
-        if let configuration = persistenceStorage.configuration {
-            configurationStorage.setConfiguration(configuration)
-        }
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
         let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
         track(event: event)

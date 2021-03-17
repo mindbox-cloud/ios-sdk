@@ -9,33 +9,34 @@
 import XCTest
 @testable import MindBox
 
-class MindBoxTests: XCTestCase, MindBoxDelegate {
+class MindBoxTests: XCTestCase {
 
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 
     var databaseRepository: MBDatabaseRepository!
     var gdManager: GuaranteedDeliveryManager!
-
+    var persistenceStorage: PersistenceStorage!
+    
     override func setUp() {
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-
-        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
+        diManager.dropContainer()
+        diManager.registerServices()
+        diManager.container.registerInContainer { _ -> DataBaseLoader in
             return try! MockDataBaseLoader()
         }
-        DIManager.shared.container.register { (r) -> NetworkFetcher in
-            MockNetworkFetcher()
-        }
-        DIManager.shared.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
-            MockUNAuthorizationStatusProvider(status: .authorized)
-        }
-        databaseRepository = DIManager.shared.container.resolve()
-        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
+        diManager.container.registerInContainer { _ -> PersistenceStorage in
             MockPersistenceStorage()
         }
+        diManager.container.register { (r) -> NetworkFetcher in
+            MockNetworkFetcher()
+        }
+        diManager.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
+            MockUNAuthorizationStatusProvider(status: .authorized)
+        }
+        databaseRepository = diManager.container.resolve()
+        persistenceStorage = diManager.container.resolve()
+        persistenceStorage.reset()
         try! databaseRepository.erase()
-        MindBox.shared.delegate = self
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -47,43 +48,18 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
         var coreController = CoreController()
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
-
-
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 2) { (error) in
-                print("mindBoxDidInstalledFlag \(self.mindBoxDidInstalledFlag); apnsTokenDidUpdatedFlag \(self.apnsTokenDidUpdatedFlag)")
-                XCTAssertNil(error)
-            }
-
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-
-        }
-        
+        XCTAssertTrue(persistenceStorage.isInstalled)
         let deviceUUID =  try! MindBox.shared.deviceUUID()
-
     	//        //        //        //        //        //		//        //        //        //        //        //
-
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
-        apnsTokenDidUpdated()
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == false && apnsTokenDidUpdatedFlag == true")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 2) { (error) in
-                print("mindBoxDidInstalledFlag \(self.mindBoxDidInstalledFlag); apnsTokenDidUpdatedFlag \(self.apnsTokenDidUpdatedFlag)")
-                XCTAssertNil(error)
-            }
-            let deviceUUID2 = try! MindBox.shared.deviceUUID()
-            XCTAssert(deviceUUID == deviceUUID2)
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-        }
-        
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
+        let deviceUUID2 = try! MindBox.shared.deviceUUID()
+        XCTAssert(deviceUUID == deviceUUID2)
 
         let persistensStorage: PersistenceStorage = diManager.container.resolveOrDie()
 
@@ -95,32 +71,9 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
 
         let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
         coreController.initialization(configuration: configuration3)
-        apnsTokenDidUpdated()
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == true")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 2) { (error) in
-                print("mindBoxDidInstalledFlag \(self.mindBoxDidInstalledFlag); apnsTokenDidUpdatedFlag \(self.apnsTokenDidUpdatedFlag)")
-                XCTAssertNil(error)
-            }
-
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-        }
-
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
     }
 
-    // MARK: - MindBoxDelegate
-
-    func mindBoxDidInstalled() {
-        mindBoxDidInstalledFlag = true
-    }
-
-    func mindBoxInstalledFailed(error: MindBox.Errors) {
-
-    }
-
-    func apnsTokenDidUpdated() {
-        apnsTokenDidUpdatedFlag = true
-    }
 }

@@ -146,7 +146,11 @@ class MBPersistenceStorage: PersistenceStorage {
 
     // MARK: - IMBMBPersistenceStorage
     @UserDefaultsWrapper(key: .deviceUUID, defaultValue: nil)
-    var deviceUUID: String?
+    var deviceUUID: String? {
+        didSet {
+            configuration?.deviceUUID = deviceUUID
+        }
+    }
 
     @UserDefaultsWrapper(key: .installationId, defaultValue: nil)
     var installationId: String?

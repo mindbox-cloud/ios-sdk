@@ -11,7 +11,7 @@ import UIKit.UIDevice
 
 class MBNetworkFetcher: NetworkFetcher {
 
-    @Injected var configurationStorage: ConfigurationStorage
+    @Injected var persistenceStorage: PersistenceStorage
     
     private let session: URLSession
     
@@ -31,7 +31,7 @@ class MBNetworkFetcher: NetworkFetcher {
     }
     
     func requestObject<T: BaseResponse>(route: Route, completion: @escaping Completion<T>) {
-        guard let configuration = configurationStorage.configuration else {
+        guard let configuration = persistenceStorage.configuration else {
             let error = ErrorModel(
                 errorKey: ErrorKey.configuration.rawValue,
                 rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
@@ -89,7 +89,7 @@ class MBNetworkFetcher: NetworkFetcher {
     }
     
     func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
-        guard let configuration = configurationStorage.configuration else {
+        guard let configuration = persistenceStorage.configuration else {
             let error = ErrorModel(
                 errorKey: ErrorKey.configuration.rawValue,
                 rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")

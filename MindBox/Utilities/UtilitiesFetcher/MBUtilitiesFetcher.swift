@@ -67,31 +67,45 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         appBundle.bundleIdentifier
     }
     
-    func getDeviceUUID(completion: @escaping (UUID) -> Void) {
-        IDFAFetcher().fetch { (uuid) in
+    private let deviceUUIDSemathore = DispatchSemaphore(value: 0)
+    
+    func getDeviceUUID() -> String {
+        var deviceUUID: String = ""
+        IDFAFetcher().fetch { [weak self] (uuid) in
+            guard let self = self else {
+                return
+            }
             if let uuid = uuid {
                 Log("IDFAFetcher uuid:\(uuid.uuidString)")
                     .inChanel(.system).withType(.verbose).make()
-                completion(uuid)
+                deviceUUID = uuid.uuidString
+                self.deviceUUIDSemathore.signal()
             } else {
                 Log("IDFAFetcher fail")
                     .inChanel(.system).withType(.verbose).make()
-                IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+                IDFVFetcher().fetch(tryCount: 3) { [weak self] (uuid) in
+                    guard let self = self else {
+                        return
+                    }
                     if let uuid = uuid {
                         Log("IDFVFetcher uuid:\(uuid.uuidString)")
                             .inChanel(.system).withType(.verbose).make()
-                        completion(uuid)
+                        deviceUUID = uuid.uuidString
+                        self.deviceUUIDSemathore.signal()
                     } else {
                         Log("IDFVFetcher fail")
                             .inChanel(.system).withType(.verbose).make()
                         let uuid = UUID()
-                        completion(uuid)
+                        deviceUUID = uuid.uuidString
                         Log("Generated uuid:\(uuid.uuidString)")
                             .inChanel(.system).withType(.verbose).make()
+                        self.deviceUUIDSemathore.signal()
                     }
                 }
             }
         }
+        deviceUUIDSemathore.wait()
+        return deviceUUID
     }
     
 }
