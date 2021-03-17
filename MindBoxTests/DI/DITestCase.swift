@@ -31,12 +31,15 @@ class DITestCase: XCTestCase {
 
         XCTAssert(opExtractor.logger != nil)
         XCTAssert(opExtractor.fetchUtilities != nil)
-        XCTAssert(opExtractor.configurationStorage != nil)
         XCTAssert(opExtractor.persistenceStorage != nil)
         XCTAssert(opExtractor.networkFetcher != nil)
         XCTAssert(opExtractor.eventRepository != nil)
+        XCTAssert(opExtractor.authorizationStatusProvider != nil)
+        XCTAssert(opExtractor.dataBaseLoader != nil)
+        XCTAssert(opExtractor.databaseRepository != nil)
+        XCTAssert(opExtractor.gdManager != nil)
 
-        extractor.persistenceStorage.apnsToken = "123"
+        extractor.persistenceStorage.apnsToken = UUID().uuidString
 
         XCTAssert(opExtractor.persistenceStorage.apnsToken == extractor.persistenceStorage.apnsToken)
 
@@ -45,10 +48,14 @@ class DITestCase: XCTestCase {
     class DIExtractor {
         @Injected var logger: ILogger
         @Injected var fetchUtilities: UtilitiesFetcher
-        @Injected var configurationStorage: ConfigurationStorage
         @Injected var persistenceStorage: PersistenceStorage
         @Injected var networkFetcher: NetworkFetcher
         @Injected var eventRepository: EventRepository
+        @Injected var authorizationStatusProvider: UNAuthorizationStatusProviding
+        @Injected var dataBaseLoader: DataBaseLoader
+        @Injected var databaseRepository: MBDatabaseRepository
+        @Injected var gdManager: GuaranteedDeliveryManager
+
         init() {
         }
     }
@@ -56,11 +63,14 @@ class DITestCase: XCTestCase {
     class DIExtractorOptionals {
         @InjectedOptional var logger: ILogger!
         @InjectedOptional var fetchUtilities: UtilitiesFetcher!
-        @InjectedOptional var configurationStorage: ConfigurationStorage!
         @InjectedOptional var persistenceStorage: PersistenceStorage!
         @InjectedOptional var networkFetcher: NetworkFetcher!
         @InjectedOptional var eventRepository: EventRepository!
-        
+        @InjectedOptional var authorizationStatusProvider: UNAuthorizationStatusProviding!
+        @InjectedOptional var dataBaseLoader: DataBaseLoader!
+        @InjectedOptional var databaseRepository: MBDatabaseRepository!
+        @InjectedOptional var gdManager: GuaranteedDeliveryManager!
+
         init() {
         }
     }

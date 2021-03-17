@@ -25,7 +25,6 @@
 		317054E625B01BDD00AE624C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D525B01BDD00AE624C /* LogManager.swift */; };
 		317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D825B01BDD00AE624C /* ErrorModel.swift */; };
 		317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DE25B01BDD00AE624C /* ErrorKey.swift */; };
-		3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */; };
 		317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */; };
 		317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */; };
 		3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191C2A525ADFD8000E7D6B9 /* MindBox.swift */; };
@@ -83,7 +82,6 @@
 		84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC799625CACF5500C062BD /* MBEventRepository.swift */; };
 		84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CC79A425CAE14200C062BD /* EventRepositoryTestCase.swift */; };
 		84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 84CC79AA25CAEBBB00C062BD /* TestEventConfig.plist */; };
-		84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */; };
 		84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350C725C992900044E4E6 /* IDFAFetcher.swift */; };
 		84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D350D125C99F320044E4E6 /* IDFVFetcher.swift */; };
 		84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC49CB25D1832300D5D758 /* EventWrapper.swift */; };
@@ -131,7 +129,6 @@
 		317054D525B01BDD00AE624C /* LogManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		317054D825B01BDD00AE624C /* ErrorModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorModel.swift; sourceTree = "<group>"; };
 		317054DE25B01BDD00AE624C /* ErrorKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorKey.swift; sourceTree = "<group>"; };
-		3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationStorage.swift; sourceTree = "<group>"; };
 		317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilitiesFetcher.swift; sourceTree = "<group>"; };
 		317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBUtilitiesFetcher.swift; sourceTree = "<group>"; };
 		3191C2A525ADFD8000E7D6B9 /* MindBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindBox.swift; sourceTree = "<group>"; };
@@ -188,7 +185,6 @@
 		84CC799625CACF5500C062BD /* MBEventRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBEventRepository.swift; sourceTree = "<group>"; };
 		84CC79A425CAE14200C062BD /* EventRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRepositoryTestCase.swift; sourceTree = "<group>"; };
 		84CC79AA25CAEBBB00C062BD /* TestEventConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = TestEventConfig.plist; sourceTree = "<group>"; };
-		84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationStorage.swift; sourceTree = "<group>"; };
 		84D350C725C992900044E4E6 /* IDFAFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFAFetcher.swift; sourceTree = "<group>"; };
 		84D350D125C99F320044E4E6 /* IDFVFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFVFetcher.swift; sourceTree = "<group>"; };
 		84DC49CB25D1832300D5D758 /* EventWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWrapper.swift; sourceTree = "<group>"; };
@@ -345,15 +341,6 @@
 				846AD39325FF7AC100A59E86 /* LogWriter.swift */,
 			);
 			path = Logger;
-			sourceTree = "<group>";
-		};
-		3178A52725AEEB6B00290CB9 /* ConfigurationStorage */ = {
-			isa = PBXGroup;
-			children = (
-				3178A52825AEEB8600290CB9 /* ConfigurationStorage.swift */,
-				84D350BC25C990520044E4E6 /* MBConfigurationStorage.swift */,
-			);
-			path = ConfigurationStorage;
 			sourceTree = "<group>";
 		};
 		31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */ = {
@@ -616,7 +603,6 @@
 			isa = PBXGroup;
 			children = (
 				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
-				3178A52725AEEB6B00290CB9 /* ConfigurationStorage */,
 			);
 			path = Storages;
 			sourceTree = "<group>";
@@ -923,13 +909,11 @@
 				311BB47925BF12570093EE14 /* LogerConfiguration.swift in Sources */,
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
-				3178A52925AEEB8600290CB9 /* ConfigurationStorage.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* MindBox.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
-				84D350BD25C990520044E4E6 /* MBConfigurationStorage.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,

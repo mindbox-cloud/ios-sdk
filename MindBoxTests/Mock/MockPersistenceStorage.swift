@@ -15,7 +15,11 @@ class MockPersistenceStorage: PersistenceStorage {
 
     }
     
-    var deviceUUID: String?
+    var deviceUUID: String? {
+        didSet {
+            configuration?.deviceUUID = deviceUUID
+        }
+    }
 
     var installationId: String?
 
@@ -42,15 +46,15 @@ class MockPersistenceStorage: PersistenceStorage {
     var installationDate: Date?
 
     func reset() {
+        installationDate = nil
         deviceUUID = nil
         installationId = nil
         apnsToken = nil
         apnsTokenSaveDate = nil
         deprecatedEventsRemoveDate = nil
         configuration = nil
-        backgroundExecutions = []
-        isNotificationsEnabled = false
-        installationDate = nil
+        isNotificationsEnabled = nil
+        resetBackgroundExecutions()
     }
     
     

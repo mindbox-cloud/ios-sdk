@@ -41,11 +41,6 @@ final class DIManager: NSObject {
                 .make()
         }
 
-
-        container.registerInContainer { (r) -> ConfigurationStorage in
-            MBConfigurationStorage()
-        }
-
         container.register { (r) -> UtilitiesFetcher in
             MBUtilitiesFetcher()
         }

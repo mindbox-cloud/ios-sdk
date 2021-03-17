@@ -8,12 +8,9 @@
 
 import Foundation
 import UIKit
-import AdSupport
-import AppTrackingTransparency
 
 class CoreController {
     
-    @Injected var configurationStorage: ConfigurationStorage
     @Injected var persistenceStorage: PersistenceStorage
     @Injected var utilitiesFetcher: UtilitiesFetcher
     @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
@@ -21,7 +18,7 @@ class CoreController {
     @Injected var guaranteedDeliveryManager: GuaranteedDeliveryManager
     
     func initialization(configuration: MBConfiguration) {
-        configurationStorage.setConfiguration(configuration)
+        persistenceStorage.configuration = configuration
         if !persistenceStorage.isInstalled {
             primaryInitialization(with: configuration)
         } else {
@@ -35,12 +32,11 @@ class CoreController {
         if persistenceStorage.isInstalled {
             infoUpdated(
                 apnsToken: token,
-                isNotificationsEnabled:isNotificationsEnabled
+                isNotificationsEnabled: isNotificationsEnabled
             )
         }
         persistenceStorage.apnsToken = token
         persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-        MindBox.shared.delegate?.apnsTokenDidUpdated()
     }
     
     func checkNotificationStatus() {
@@ -65,17 +61,12 @@ class CoreController {
     
     // MARK: - Private
     private func primaryInitialization(with configutaion: MBConfiguration) {
-        persistenceStorage.configuration = configutaion
-        if let deviceUUID = configutaion.deviceUUID {
-            installed(deviceUUID: deviceUUID, installationId: configutaion.installationId)
-            Log("Configuration deviceUUID:\(deviceUUID)")
-                .inChanel(.system).withType(.verbose).make()
-        } else {
-            utilitiesFetcher.getDeviceUUID { [weak self] (deviceUUID) in
-                self?.configurationStorage.set(deviceUUID: deviceUUID.uuidString)
-                self?.installed(deviceUUID: deviceUUID.uuidString, installationId: configutaion.installationId)
-            }
-        }
+        let deviceUUID = configutaion.deviceUUID ?? utilitiesFetcher.getDeviceUUID()
+        installed(
+            deviceUUID: deviceUUID,
+            installationId: configutaion.installationId,
+            subscribe: configutaion.subscribeCustomerIfCreated
+        )
     }
     
     private func repeatedInitialization() {
@@ -84,15 +75,13 @@ class CoreController {
                 .inChanel(.system).withType(.error).make()
             return
         }
-        configurationStorage.set(deviceUUID: deviceUUID)
-        persistenceStorage.configuration = configurationStorage.configuration
+        persistenceStorage.configuration?.deviceUUID = deviceUUID
     }
     
-    private func installed(deviceUUID: String, installationId: String?) {
+    private func installed(deviceUUID: String, installationId: String?, subscribe: Bool) {
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = installationId
         let apnsToken = persistenceStorage.apnsToken
-        let subscribe = configurationStorage.configuration?.subscribeCustomerIfCreated
         let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
         let installed = MobileApplicationInstalled(
             token: apnsToken,
@@ -111,7 +100,6 @@ class CoreController {
             persistenceStorage.installationDate = Date()
             Log("MobileApplicationInstalled")
                 .inChanel(.system).withType(.verbose).make()
-            MindBox.shared.delegate?.mindBoxDidInstalled()
         } catch {
             Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
                 .inChanel(.system).withType(.error).make()
@@ -132,7 +120,6 @@ class CoreController {
             try databaseRepository.create(event: event)
             Log("MobileApplicationInfoUpdated")
                 .inChanel(.system).withType(.verbose).make()
-            MindBox.shared.delegate?.mindBoxDidInstalled()
         } catch {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
                 .inChanel(.system).withType(.error).make()
