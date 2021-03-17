@@ -28,10 +28,10 @@ public class MindBox {
     @Injected private var gdManager: GuaranteedDeliveryManager
     @Injected private var notificationStatusProvider: UNAuthorizationStatusProviding
     @Injected private var databaseRepository: MBDatabaseRepository
-
+    
     /// Internal process controller
     let coreController = CoreController()
-        
+    
     /// Delegate for sending events
     weak var delegate: MindBoxDelegate?
     
@@ -39,9 +39,6 @@ public class MindBox {
     
     private init() {
         persistenceStorage.storeToFileBackgroundExecution()
-        if persistenceStorage.isInstalled {
-            coreController.checkNotificationStatus()
-        }
     }
     
     // MARK: - MindBox
@@ -87,6 +84,10 @@ public class MindBox {
         }
     }
     
+    public func notificationsRequestAuthorization(granted: Bool) {
+        coreController.checkNotificationStatus(granted: granted)
+    }
+    
     @discardableResult
     public func pushDelivered(request: UNNotificationRequest) -> Bool {
         coreController.checkNotificationStatus()
@@ -119,7 +120,7 @@ public class MindBox {
         let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
         try? databaseRepository.create(event: event)
     }
-
+    
     @available(iOS 13.0, *)
     public func registerBGTasks() {
         guard let identifiers = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] else {

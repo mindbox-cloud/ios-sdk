@@ -256,11 +256,11 @@
 				84CC797E25CABABB00C062BD /* Model */,
 				84B625D425C94F6F00AB6228 /* NetworkRepository */,
 				847F57FC25C88BA600147A9A /* Network */,
+				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				317054C025AEF81900AE624C /* DI */,
 				314B38FE25AEE95D00E947B9 /* CoreController */,
 				84B625E725C989B100AB6228 /* Validators */,
-				314B38FB25AEE75B00E947B9 /* Services */,
 				313B233325ADEA0F00A1CB72 /* MindBox.h */,
 				313B233425ADEA0F00A1CB72 /* Info.plist */,
 				3191C2A525ADFD8000E7D6B9 /* MindBox.swift */,
@@ -287,14 +287,6 @@
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
 			);
 			path = MindBoxTests;
-			sourceTree = "<group>";
-		};
-		314B38FB25AEE75B00E947B9 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				84D350C025C990980044E4E6 /* Storages */,
-			);
-			path = Services;
 			sourceTree = "<group>";
 		};
 		314B38FE25AEE95D00E947B9 /* CoreController */ = {
@@ -356,8 +348,7 @@
 			isa = PBXGroup;
 			children = (
 				317054CC25AF191100AE624C /* Logger */,
-				84D350C725C992900044E4E6 /* IDFAFetcher.swift */,
-				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
+				84BAB89B260231E800D694D0 /* IDFetcher */,
 				31A20D4B25B6E0D700AAA0A3 /* MindBoxErrors.swift */,
 				84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */,
 				84DC4A0525D27D1500D5D758 /* UNAuthorizationStatusProviding */,
@@ -543,6 +534,15 @@
 			path = DI;
 			sourceTree = "<group>";
 		};
+		84BAB89B260231E800D694D0 /* IDFetcher */ = {
+			isa = PBXGroup;
+			children = (
+				84D350C725C992900044E4E6 /* IDFAFetcher.swift */,
+				84D350D125C99F320044E4E6 /* IDFVFetcher.swift */,
+			);
+			path = IDFetcher;
+			sourceTree = "<group>";
+		};
 		84BAEF8525D5492B002E8A26 /* Body+ */ = {
 			isa = PBXGroup;
 			children = (
@@ -597,14 +597,6 @@
 				84CC79AA25CAEBBB00C062BD /* TestEventConfig.plist */,
 			);
 			path = EventRepository;
-			sourceTree = "<group>";
-		};
-		84D350C025C990980044E4E6 /* Storages */ = {
-			isa = PBXGroup;
-			children = (
-				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
-			);
-			path = Storages;
 			sourceTree = "<group>";
 		};
 		84DC49D525D185A600D5D758 /* Supporting Files */ = {

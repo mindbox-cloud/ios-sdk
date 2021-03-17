@@ -11,11 +11,11 @@ import UIKit
 
 class CoreController {
     
-    @Injected var persistenceStorage: PersistenceStorage
-    @Injected var utilitiesFetcher: UtilitiesFetcher
-    @Injected var notificationStatusProvider: UNAuthorizationStatusProviding
-    @Injected var databaseRepository: MBDatabaseRepository
-    @Injected var guaranteedDeliveryManager: GuaranteedDeliveryManager
+    @Injected private var persistenceStorage: PersistenceStorage
+    @Injected private var utilitiesFetcher: UtilitiesFetcher
+    @Injected private var notificationStatusProvider: UNAuthorizationStatusProviding
+    @Injected private var databaseRepository: MBDatabaseRepository
+    @Injected private var guaranteedDeliveryManager: GuaranteedDeliveryManager
     
     func initialization(configuration: MBConfiguration) {
         persistenceStorage.configuration = configuration
@@ -27,7 +27,13 @@ class CoreController {
         guaranteedDeliveryManager.canScheduleOperations = true
     }
     
+    private let infoUpdatedSemathore = DispatchSemaphore(value: 1)
+
     func apnsTokenDidUpdate(token: String) {
+        infoUpdatedSemathore.wait()
+        defer {
+            infoUpdatedSemathore.signal()
+        }
         let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
         if persistenceStorage.isInstalled {
             infoUpdated(
@@ -39,34 +45,41 @@ class CoreController {
         persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
     }
     
-    func checkNotificationStatus() {
-        let isNotificationsEnabled = notificationStatusProvider.isNotificationsEnabled()
-        guard let isPersistentNotificationsEnabled = persistenceStorage.isNotificationsEnabled else {
+    func checkNotificationStatus(granted: Bool? = nil) {
+        infoUpdatedSemathore.wait()
+        defer {
+            infoUpdatedSemathore.signal()
+        }
+        let isNotificationsEnabled = granted ?? notificationStatusProvider.isNotificationsEnabled()
+        guard persistenceStorage.isNotificationsEnabled != isNotificationsEnabled else {
+            return
+        }
+        if persistenceStorage.isInstalled {
             infoUpdated(
                 apnsToken: persistenceStorage.apnsToken,
-                isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
+                isNotificationsEnabled: isNotificationsEnabled
             )
-            persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-            return
-        }
-        guard isPersistentNotificationsEnabled != isNotificationsEnabled else {
-            return
         }
         persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-        infoUpdated(
-            apnsToken: persistenceStorage.apnsToken,
-            isNotificationsEnabled: notificationStatusProvider.isNotificationsEnabled()
-        )
     }
     
     // MARK: - Private
     private func primaryInitialization(with configutaion: MBConfiguration) {
-        let deviceUUID = configutaion.deviceUUID ?? utilitiesFetcher.getDeviceUUID()
-        installed(
-            deviceUUID: deviceUUID,
-            installationId: configutaion.installationId,
-            subscribe: configutaion.subscribeCustomerIfCreated
-        )
+        if let deviceUUID = configutaion.deviceUUID {
+            installed(
+                deviceUUID: deviceUUID,
+                installationId: configutaion.installationId,
+                subscribe: configutaion.subscribeCustomerIfCreated
+            )
+        } else {
+            utilitiesFetcher.getDeviceUUID(completion: { [self] (deviceUUID) in
+                installed(
+                    deviceUUID: deviceUUID,
+                    installationId: configutaion.installationId,
+                    subscribe: configutaion.subscribeCustomerIfCreated
+                )
+            })
+        }
     }
     
     private func repeatedInitialization() {
@@ -76,6 +89,7 @@ class CoreController {
             return
         }
         persistenceStorage.configuration?.deviceUUID = deviceUUID
+        checkNotificationStatus()
     }
     
     private func installed(deviceUUID: String, installationId: String?, subscribe: Bool) {
