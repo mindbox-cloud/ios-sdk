@@ -35,12 +35,11 @@ class CoreController {
         if persistenceStorage.isInstalled {
             infoUpdated(
                 apnsToken: token,
-                isNotificationsEnabled:isNotificationsEnabled
+                isNotificationsEnabled: isNotificationsEnabled
             )
         }
         persistenceStorage.apnsToken = token
         persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-        MindBox.shared.delegate?.apnsTokenDidUpdated()
     }
     
     func checkNotificationStatus() {
@@ -111,7 +110,6 @@ class CoreController {
             persistenceStorage.installationDate = Date()
             Log("MobileApplicationInstalled")
                 .inChanel(.system).withType(.verbose).make()
-            MindBox.shared.delegate?.mindBoxDidInstalled()
         } catch {
             Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
                 .inChanel(.system).withType(.error).make()
@@ -132,7 +130,6 @@ class CoreController {
             try databaseRepository.create(event: event)
             Log("MobileApplicationInfoUpdated")
                 .inChanel(.system).withType(.verbose).make()
-            MindBox.shared.delegate?.mindBoxDidInstalled()
         } catch {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
                 .inChanel(.system).withType(.error).make()

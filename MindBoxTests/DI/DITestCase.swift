@@ -35,8 +35,12 @@ class DITestCase: XCTestCase {
         XCTAssert(opExtractor.persistenceStorage != nil)
         XCTAssert(opExtractor.networkFetcher != nil)
         XCTAssert(opExtractor.eventRepository != nil)
+        XCTAssert(opExtractor.authorizationStatusProvider != nil)
+        XCTAssert(opExtractor.dataBaseLoader != nil)
+        XCTAssert(opExtractor.databaseRepository != nil)
+        XCTAssert(opExtractor.gdManager != nil)
 
-        extractor.persistenceStorage.apnsToken = "123"
+        extractor.persistenceStorage.apnsToken = UUID().uuidString
 
         XCTAssert(opExtractor.persistenceStorage.apnsToken == extractor.persistenceStorage.apnsToken)
 
@@ -49,6 +53,11 @@ class DITestCase: XCTestCase {
         @Injected var persistenceStorage: PersistenceStorage
         @Injected var networkFetcher: NetworkFetcher
         @Injected var eventRepository: EventRepository
+        @Injected var authorizationStatusProvider: UNAuthorizationStatusProviding
+        @Injected var dataBaseLoader: DataBaseLoader
+        @Injected var databaseRepository: MBDatabaseRepository
+        @Injected var gdManager: GuaranteedDeliveryManager
+
         init() {
         }
     }
@@ -60,7 +69,11 @@ class DITestCase: XCTestCase {
         @InjectedOptional var persistenceStorage: PersistenceStorage!
         @InjectedOptional var networkFetcher: NetworkFetcher!
         @InjectedOptional var eventRepository: EventRepository!
-        
+        @InjectedOptional var authorizationStatusProvider: UNAuthorizationStatusProviding!
+        @InjectedOptional var dataBaseLoader: DataBaseLoader!
+        @InjectedOptional var databaseRepository: MBDatabaseRepository!
+        @InjectedOptional var gdManager: GuaranteedDeliveryManager!
+
         init() {
         }
     }
