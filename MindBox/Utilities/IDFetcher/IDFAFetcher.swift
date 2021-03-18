@@ -13,26 +13,12 @@ import AppTrackingTransparency
 struct IDFAFetcher {
     
     typealias Completion = (UUID?) -> Void
-    
-    init() {}
-    
+        
     func fetch(completion: @escaping Completion) {
         if #available(iOS 14, *) {
             switch ATTrackingManager.trackingAuthorizationStatus {
             case .authorized:
                 extract(completion: completion)
-            case .notDetermined:
-                guard Bundle.main.object(forInfoDictionaryKey: "NSUserTrackingUsageDescription") !=  nil else {
-                    completion(nil)
-                    return
-                }
-                ATTrackingManager.requestTrackingAuthorization { (status) in
-                    if status == .authorized {
-                        extract(completion: completion)
-                    } else {
-                        completion(nil)
-                    }
-                }
             default:
                 completion(nil)
             }
