@@ -13,4 +13,24 @@ class Fastfile: LaneFile {
 	desc("Description of what the lane does")
 		// add actions here: https://docs.fastlane.tools/actions
 	}
+    
+    
+    private let workspace = "Mindbox.xcworkspace"
+
+    func buildLane() {
+           desc("Build for testing")
+           scan(workspace: workspace,
+                derivedDataPath: "derivedData",
+                buildForTesting: true,
+                xcargs: "CI=true")
+    }
+    
+    func unitTestLane() {
+            desc("Run unit tests")
+            scan(workspace: workspace,
+                 onlyTesting: ["MindBoxTests"],
+                 derivedDataPath: "derivedData",
+                 testWithoutBuilding: true)
+    }
+
 }
