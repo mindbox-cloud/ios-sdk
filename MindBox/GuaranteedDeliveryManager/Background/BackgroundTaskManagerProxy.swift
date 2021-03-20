@@ -21,7 +21,12 @@ class BackgroundTaskManagerProxy {
         
     private var taskManagers: [BackgroundTaskManagerType] = []
     
-    init() {
+    private let persistenceStorage: PersistenceStorage
+    private let databaseRepository: MBDatabaseRepository
+    
+    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+        self.persistenceStorage = persistenceStorage
+        self.databaseRepository = databaseRepository
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
@@ -40,9 +45,21 @@ class BackgroundTaskManagerProxy {
             self?.taskManagers.forEach { $0.applicationDidBecomeActive() }
         }
         if #available(iOS 13, *) {
-            taskManagers = [UIBackgroundTaskManager(), BGTaskManager()]
+            taskManagers = [
+                UIBackgroundTaskManager(
+                    persistenceStorage: persistenceStorage,
+                    databaseRepository: databaseRepository),
+                BGTaskManager(
+                    persistenceStorage: persistenceStorage,
+                    databaseRepository: databaseRepository
+                )
+            ]
         } else {
-            taskManagers = [UIBackgroundTaskManager()]
+            taskManagers = [
+                UIBackgroundTaskManager(
+                    persistenceStorage: persistenceStorage,
+                    databaseRepository: databaseRepository)
+            ]
         }
     }
     

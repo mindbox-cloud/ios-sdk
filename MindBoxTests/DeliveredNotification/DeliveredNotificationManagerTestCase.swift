@@ -12,34 +12,28 @@ import UserNotifications
 
 class DeliveredNotificationManagerTestCase: XCTestCase {
 
-    var databaseRepository: MBDatabaseRepository!
-    var guaranteedDeliveryManager: GuaranteedDeliveryManager!
-    var persistenceStorage: PersistenceStorage!
+    var databaseRepository: MBDatabaseRepository {
+        container.databaseRepository
+    }
+    var persistenceStorage: PersistenceStorage {
+        container.persistenceStorage
+    }
     
-    let mockUtility = MockUtility()
-    
+    var container = try! TestDIManager()
+        
     override func setUp() {
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
-            return try! MockDataBaseLoader()
-        }
-        databaseRepository = DIManager.shared.container.resolve()
-        if guaranteedDeliveryManager == nil {
-            guaranteedDeliveryManager = GuaranteedDeliveryManager()
-        }
-        DIManager.shared.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
-            return MockUNAuthorizationStatusProvider(status: .authorized)
-        }
-        persistenceStorage = DIManager.shared.container.resolve()
         persistenceStorage.reset()
         try! databaseRepository.erase()
     }
     
     func testTrackOnlySaveIfConfigurationNotSet() {
-        let manager = DeliveredNotificationManager()
+        let manager = DeliveredNotificationManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository()
+        )
         let content = UNMutableNotificationContent()
-        let uniqueKey = mockUtility.randomString()
+        let uniqueKey = UUID().uuidString
         let id = UUID().uuidString
         content.userInfo = ["uniqueKey": uniqueKey]
         let request = UNNotificationRequest(
@@ -81,10 +75,14 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     }
     
     func testNotTrackIfNotificationIsNotMindBox() {
-        let manager = DeliveredNotificationManager()
+        let manager = DeliveredNotificationManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository()
+        )
         let content = UNMutableNotificationContent()
-        let uniqueKey = mockUtility.randomString()
-        let id = mockUtility.randomString()
+        let uniqueKey = UUID().uuidString
+        let id = UUID().uuidString
         content.userInfo = ["NonMindBoxKey": uniqueKey]
         let request = UNNotificationRequest(
             identifier: id,

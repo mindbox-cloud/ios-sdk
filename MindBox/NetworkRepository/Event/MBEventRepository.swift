@@ -10,10 +10,14 @@ import Foundation
 
 class MBEventRepository: EventRepository {
     
-    @Injected var fetcher: NetworkFetcher
+    private let fetcher: NetworkFetcher
     
-    @Injected var persistenceStorage: PersistenceStorage
-//    @Injected var configuration: ConfigurationStorage
+    private let persistenceStorage: PersistenceStorage
+    
+    init(fetcher: NetworkFetcher, persistenceStorage: PersistenceStorage) {
+        self.fetcher = fetcher
+        self.persistenceStorage = persistenceStorage
+    }
     
     func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void) {
         guard let configuration = persistenceStorage.configuration else {

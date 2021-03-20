@@ -10,81 +10,78 @@ import Foundation
 import CoreData
 
 /// Регистрирует DI-объекты
-final class DIManager: NSObject {
+final class DIManager: DIContainer {
     
-    static let shared: DIManager = DIManager()
+    let utilitiesFetcher: UtilitiesFetcher
+    let persistenceStorage: PersistenceStorage
+    let databaseLoader: DataBaseLoader
+    let databaseRepository: MBDatabaseRepository
+    let guaranteedDeliveryManager: GuaranteedDeliveryManager
+    let authorizationStatusProvider: UNAuthorizationStatusProviding
+    let newInstanceDependency: NewInstanceDependency
+    static let logger: ILogger = MBLogger()
 
-    private(set) var container: Odin  = Odin()
-
-    override private init() {
-        super.init()
+    init() throws {
+        utilitiesFetcher = MBUtilitiesFetcher()
+        persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
+        newInstanceDependency = MBNewInstanceDependency(
+            persistenceStorage: persistenceStorage,
+            utilitiesFetcher: utilitiesFetcher
+        )
+        databaseLoader = try DataBaseLoader(appGroup: utilitiesFetcher.appGroup)
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
+        databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: persistenceStorage,
+            databaseRepository: databaseRepository,
+            eventRepository: newInstanceDependency.makeEventRepository()
+        )
+        authorizationStatusProvider = UNAuthorizationStatusProvider()
     }
+
+}
+
+protocol NewInstanceDependency {
     
-    var atOnce = true
-    func registerServices() {
-        #if DEBUG
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+    func makeNetworkFetcher() -> NetworkFetcher
+    func makeEventRepository() -> EventRepository
+    
+}
 
-            if atOnce {
-                atOnce = false
-            } else {
-                return
-            }
+protocol DIContainer {
+    
+    var utilitiesFetcher: UtilitiesFetcher { get }
+    var persistenceStorage: PersistenceStorage { get }
+    var databaseLoader: DataBaseLoader { get }
+    var databaseRepository: MBDatabaseRepository { get }
+    var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
+    var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
+    var newInstanceDependency: NewInstanceDependency { get }
+    static var logger: ILogger { get }
+    
+}
 
-        }
-        #endif
-        defer {
-            Log("❇️Dependency container registration is complete.")
-                .inChanel(.system)
-                .withMeta()
-                .withDate()
-                .make()
-        }
+class MBNewInstanceDependency: NewInstanceDependency {
+    
+    private let persistenceStorage: PersistenceStorage
+    private let utilitiesFetcher: UtilitiesFetcher
 
-        container.register { (r) -> UtilitiesFetcher in
-            MBUtilitiesFetcher()
-        }
-        
-        container.registerInContainer { (r) -> PersistenceStorage in
-            let utilitiesFetcher: UtilitiesFetcher = r.resolveOrDie()
-            return MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
-        }
-
-        container.registerInContainer { (r) -> UNAuthorizationStatusProviding in
-            UNAuthorizationStatusProvider()
-        }
-
-        container.register { (r) -> ILogger in
-            MBLogger()
-        }
-        
-        container.register { (r) -> NetworkFetcher in
-            MBNetworkFetcher(utilitiesFetcher: r.resolveOrDie())
-        }
-
-        container.register { (r) -> EventRepository in
-            MBEventRepository()
-        }
-        
-        container.registerInContainer { (r) -> DataBaseLoader in
-            let utilitiesFetcher: UtilitiesFetcher = r.resolveOrDie()
-            return try! DataBaseLoader(appGroup: utilitiesFetcher.appGroup)
-        }
-
-        container.registerInContainer { (r) -> MBDatabaseRepository in
-            let loader: DataBaseLoader = r.resolveOrDie()
-            let persistentContainer = try! loader.loadPersistentContainer()
-            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
-        }
-        
-        container.registerInContainer { (r) -> GuaranteedDeliveryManager in
-            GuaranteedDeliveryManager()
-        }
+    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher) {
+        self.persistenceStorage = persistenceStorage
+        self.utilitiesFetcher = utilitiesFetcher
     }
 
-    func dropContainer() {
-        container = Odin()
-        atOnce = true
+    func makeNetworkFetcher() -> NetworkFetcher {
+        return MBNetworkFetcher(
+            utilitiesFetcher: utilitiesFetcher,
+            persistenceStorage: persistenceStorage
+        )
     }
 
+    func makeEventRepository() -> EventRepository {
+        return MBEventRepository(
+            fetcher: makeNetworkFetcher(),
+            persistenceStorage: persistenceStorage
+        )
+    }
 }

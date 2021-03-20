@@ -12,10 +12,12 @@ class DeliveryOperation: Operation {
     
     private let event: Event
     
-    @Injected private var eventRepository: EventRepository
-    @Injected private var databaseRepository: MBDatabaseRepository
+    private let databaseRepository: MBDatabaseRepository
+    private let eventRepository: EventRepository
 
-    init(event: Event) {
+    init(databaseRepository: MBDatabaseRepository, eventRepository: EventRepository, event: Event) {
+        self.databaseRepository = databaseRepository
+        self.eventRepository = eventRepository
         self.event = event
     }
     

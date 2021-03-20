@@ -12,17 +12,15 @@ import CoreData
 
 class DatabaseRepositoryTestCase: XCTestCase {
     
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: MBDatabaseRepository {
+        container.databaseRepository
+    }
     
     let eventGenerator = EventGenerator()
         
+    let container = try! TestDIManager()
+
     override func setUp() {
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { (r) -> DataBaseLoader in
-            return try! MockDataBaseLoader()
-        }
-        databaseRepository = DIManager.shared.container.resolve()
         try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -46,7 +44,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        let count = databaseRepository.limit
+        let count = 1000
         let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
         let createEventsDate = Date()
@@ -56,7 +54,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             }
             let createdEventsDate = Date()
             let delta = createdEventsDate.timeIntervalSince1970 - createEventsDate.timeIntervalSince1970
-            XCTAssertTrue(delta < 40)
+            XCTAssertTrue(delta < 30)
             expectation.fulfill()
         } catch {
             XCTFail(error.localizedDescription)

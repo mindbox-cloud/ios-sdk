@@ -11,11 +11,11 @@ import UIKit.UIDevice
 
 class MBNetworkFetcher: NetworkFetcher {
 
-    @Injected var persistenceStorage: PersistenceStorage
+    private let persistenceStorage: PersistenceStorage
     
     private let session: URLSession
     
-    init(utilitiesFetcher: UtilitiesFetcher) {
+    init(utilitiesFetcher: UtilitiesFetcher, persistenceStorage: PersistenceStorage) {
         let sessionConfiguration: URLSessionConfiguration = .default
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
@@ -27,6 +27,7 @@ class MBNetworkFetcher: NetworkFetcher {
             "User-Agent": userAgent,
             "Content-Type": "application/json; charset=utf-8"
         ]
+        self.persistenceStorage = persistenceStorage
         self.session = URLSession(configuration: sessionConfiguration)
     }
     

@@ -22,8 +22,13 @@ class BGTaskManager: BackgroundTaskManagerType {
     private var appGDRefreshTask: BGAppRefreshTask?
     private var appGDProcessingTask: BGProcessingTask?
 
-    @Injected private var databaseRepository: MBDatabaseRepository
-    @Injected private var persistenceStorage: PersistenceStorage
+    private let persistenceStorage: PersistenceStorage
+    private let databaseRepository: MBDatabaseRepository
+    
+    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+        self.persistenceStorage = persistenceStorage
+        self.databaseRepository = databaseRepository
+    }
     
     func registerBGTasks(
         appGDRefreshIdentifier: String,

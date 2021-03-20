@@ -12,9 +12,14 @@ import CoreData
 
 class GuaranteedDeliveryTestCase: XCTestCase {
     
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: MBDatabaseRepository {
+        container.databaseRepository
+    }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
-    var persistenceStorage: PersistenceStorage!
+    
+    var persistenceStorage: PersistenceStorage {
+        container.persistenceStorage
+    }
     
     let eventGenerator = EventGenerator()
     
@@ -22,24 +27,15 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         guaranteedDeliveryManager.state.isDelivering
     }
     
+    var container: DIContainer!
+    
     override func setUp() {
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.register { _ -> NetworkFetcher in
-            MockNetworkFetcher()
-        }
-        DIManager.shared.container.registerInContainer { _ -> DataBaseLoader in
-            return try! MockDataBaseLoader()
-        }
-        databaseRepository = DIManager.shared.container.resolve()
-        persistenceStorage = DIManager.shared.container.resolve()
+        container = try! TestDIManager()
+        guaranteedDeliveryManager = container.guaranteedDeliveryManager
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
         persistenceStorage.configuration?.deviceUUID = configuration.deviceUUID
         persistenceStorage.deviceUUID = "0593B5CC-1479-4E45-A7D3-F0E8F9B40898"
-        if guaranteedDeliveryManager == nil {
-            guaranteedDeliveryManager = GuaranteedDeliveryManager()
-        }
         try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -58,7 +54,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     func testDeliverMultipleEvents() {
         let retryDeadline: TimeInterval = 3
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         let events = eventGenerator.generateEvents(count: 10)
         events.forEach {
             do {
@@ -78,7 +79,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 3
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(retryDeadline: retryDeadline)
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         guaranteedDeliveryManager.canScheduleOperations = false
         let count = 2
         let events = eventGenerator.generateEvents(count: count)
@@ -104,7 +110,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testDateTimeOffset() {
-        let events = eventGenerator.generateEvents(count: 1000)
+        let events = eventGenerator.generateEvents(count: 100)
         events.forEach { (event) in
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())

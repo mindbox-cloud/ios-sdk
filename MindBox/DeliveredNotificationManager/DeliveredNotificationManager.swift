@@ -11,8 +11,9 @@ import UserNotifications
 
 final class DeliveredNotificationManager {
     
-    @Injected private var persistenceStorage: PersistenceStorage
-    @Injected private var databaseRepository: MBDatabaseRepository
+    private let persistenceStorage: PersistenceStorage
+    private let databaseRepository: MBDatabaseRepository
+    private let eventRepository: EventRepository
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -26,6 +27,16 @@ final class DeliveredNotificationManager {
     private let timeout: TimeInterval = 5.0
     
     private let mindBoxIdentifireKey = "uniqueKey"
+    
+    init(
+        persistenceStorage: PersistenceStorage,
+        databaseRepository: MBDatabaseRepository,
+        eventRepository: EventRepository
+    ) {
+        self.persistenceStorage = persistenceStorage
+        self.databaseRepository = databaseRepository
+        self.eventRepository = eventRepository
+    }
     
     @discardableResult
     func track(uniqueKey: String) throws -> Bool {
@@ -72,7 +83,11 @@ final class DeliveredNotificationManager {
             semaphore.signal()
             return
         }
-        let deliverOperation = DeliveryOperation(event: event)
+        let deliverOperation = DeliveryOperation(
+            databaseRepository: databaseRepository,
+            eventRepository: eventRepository,
+            event: event
+        )
         deliverOperation.onCompleted = { [weak self] (_, _) in
             self?.semaphore.signal()
         }

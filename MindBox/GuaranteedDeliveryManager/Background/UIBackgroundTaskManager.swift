@@ -13,8 +13,13 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
     weak var gdManager: GuaranteedDeliveryManager?
     
-    @Injected private var databaseRepository: MBDatabaseRepository
-    @Injected private var persistenceStorage: PersistenceStorage
+    private let persistenceStorage: PersistenceStorage
+    private let databaseRepository: MBDatabaseRepository
+    
+    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+        self.persistenceStorage = persistenceStorage
+        self.databaseRepository = databaseRepository
+    }
     
     private var observationToken: NSKeyValueObservation?
     

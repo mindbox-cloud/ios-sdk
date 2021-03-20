@@ -12,35 +12,26 @@ import XCTest
 class EventRepositoryTestCase: XCTestCase {
     
     var coreController: CoreController!
-    
-    var isMockNetworkFetcher = true
-    
-    var databaseRepository: MBDatabaseRepository!
+        
+    var container: DIContainer!
 
     override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
-            MockPersistenceStorage()
-        }
-        if isMockNetworkFetcher {
-            DIManager.shared.container.register { _ -> NetworkFetcher in
-                MockNetworkFetcher()
-            }
-        }
-        DIManager.shared.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
-            MockUNAuthorizationStatusProvider(status: .authorized)
-        }
-        databaseRepository = DIManager.shared.container.resolve()
-        coreController = CoreController()
+        container = try! TestDIManager()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
     }
     
     func testSendEvent() {
-        try! databaseRepository.erase()
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
-        let repository: EventRepository = DIManager.shared.container.resolveOrDie()
+        let repository: EventRepository = container.newInstanceDependency.makeEventRepository()
         let event = Event(
             type: .installed,
             body: ""
