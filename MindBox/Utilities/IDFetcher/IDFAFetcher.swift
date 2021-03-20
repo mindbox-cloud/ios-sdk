@@ -32,7 +32,7 @@ struct IDFAFetcher {
     }
     
     private func extract(completion: @escaping Completion) {
-        DispatchQueue.global().async {
+        DispatchQueue.global().sync {
             let udid = ASIdentifierManager.shared().advertisingIdentifier
             if isValid(udid: udid.uuidString) {
                 completion(udid)
