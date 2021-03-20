@@ -10,13 +10,11 @@ import Foundation
 @testable import MindBox
 
 struct EventGenerator {
-
-    let utility = MockUtility()
     
     func generateEvent() -> Event {
         Event(
             type: .installed,
-            body: utility.randomString()
+            body: UUID().uuidString
         )
     }
         
@@ -24,7 +22,7 @@ struct EventGenerator {
         return (1...count).map { _ in
             return Event(
                 type: .installed,
-                body: utility.randomString()
+                body: UUID().uuidString
             )
         }
     }

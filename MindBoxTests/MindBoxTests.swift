@@ -14,29 +14,13 @@ class MindBoxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 
-    var databaseRepository: MBDatabaseRepository!
-    var gdManager: GuaranteedDeliveryManager!
-    var persistenceStorage: PersistenceStorage!
+    var container: DIContainer!
+    var coreController: CoreController!
     
     override func setUp() {
-        diManager.dropContainer()
-        diManager.registerServices()
-        diManager.container.registerInContainer { _ -> DataBaseLoader in
-            return try! MockDataBaseLoader()
-        }
-        diManager.container.registerInContainer { _ -> PersistenceStorage in
-            MockPersistenceStorage()
-        }
-        diManager.container.register { (r) -> NetworkFetcher in
-            MockNetworkFetcher()
-        }
-        diManager.container.registerInContainer { _ -> UNAuthorizationStatusProviding in
-            MockUNAuthorizationStatusProvider(status: .authorized)
-        }
-        databaseRepository = diManager.container.resolve()
-        persistenceStorage = diManager.container.resolve()
-        persistenceStorage.reset()
-        try! databaseRepository.erase()
+        container = try! TestDIManager()
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -45,35 +29,45 @@ class MindBoxTests: XCTestCase {
     }
 
     func testOnInitCase1() {
-        var coreController = CoreController()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
-        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
         let deviceUUID =  try! MindBox.shared.deviceUUID()
     	//        //        //        //        //        //		//        //        //        //        //        //
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
-        XCTAssertTrue(persistenceStorage.isInstalled)
-        XCTAssertNotNil(persistenceStorage.apnsToken)
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertNotNil(container.persistenceStorage.apnsToken)
         let deviceUUID2 = try! MindBox.shared.deviceUUID()
         XCTAssert(deviceUUID == deviceUUID2)
 
-        let persistensStorage: PersistenceStorage = diManager.container.resolveOrDie()
-
-        persistensStorage.reset()
-        try! databaseRepository.erase()
-        coreController = CoreController()
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
 
         //        //        //        //        //        //        //        //        //        //        //        //
 
         let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
         coreController.initialization(configuration: configuration3)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
-        XCTAssertTrue(persistenceStorage.isInstalled)
-        XCTAssertNotNil(persistenceStorage.apnsToken)
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertNotNil(container.persistenceStorage.apnsToken)
     }
 
 }

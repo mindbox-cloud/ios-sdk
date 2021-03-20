@@ -10,68 +10,56 @@
 import XCTest
 @testable import MindBox
 
-class DITestCase: XCTestCase {
-
-    override func setUp() {
-
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+final class TestDIManager: DIContainer {
+    
+    let utilitiesFetcher: UtilitiesFetcher
+    let persistenceStorage: PersistenceStorage
+    let databaseLoader: DataBaseLoader
+    let databaseRepository: MBDatabaseRepository
+    let guaranteedDeliveryManager: GuaranteedDeliveryManager
+    let authorizationStatusProvider: UNAuthorizationStatusProviding
+    let newInstanceDependency: NewInstanceDependency
+    static let logger: ILogger = MBLogger()
+    
+    init() throws {
+        utilitiesFetcher = MBUtilitiesFetcher()
+        persistenceStorage = MockPersistenceStorage()
+        newInstanceDependency = MockNewInstanceDependency(
+            persistenceStorage: persistenceStorage,
+            utilitiesFetcher: utilitiesFetcher
+        )
+        databaseLoader = try DataBaseLoader()
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
+        databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: persistenceStorage,
+            databaseRepository: databaseRepository,
+            eventRepository: newInstanceDependency.makeEventRepository()
+        )
+        authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
     }
 
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+}
+
+class MockNewInstanceDependency: NewInstanceDependency {
+    
+    private let persistenceStorage: PersistenceStorage
+    private let utilitiesFetcher: UtilitiesFetcher
+
+    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher) {
+        self.persistenceStorage = persistenceStorage
+        self.utilitiesFetcher = utilitiesFetcher
     }
 
-    func testOnInitCase() {
-
-        let extractor = DIExtractor()
-
-        let opExtractor = DIExtractorOptionals()
-
-        XCTAssert(opExtractor.logger != nil)
-        XCTAssert(opExtractor.fetchUtilities != nil)
-        XCTAssert(opExtractor.persistenceStorage != nil)
-        XCTAssert(opExtractor.networkFetcher != nil)
-        XCTAssert(opExtractor.eventRepository != nil)
-        XCTAssert(opExtractor.authorizationStatusProvider != nil)
-        XCTAssert(opExtractor.dataBaseLoader != nil)
-        XCTAssert(opExtractor.databaseRepository != nil)
-        XCTAssert(opExtractor.gdManager != nil)
-
-        extractor.persistenceStorage.apnsToken = UUID().uuidString
-
-        XCTAssert(opExtractor.persistenceStorage.apnsToken == extractor.persistenceStorage.apnsToken)
-
+    func makeNetworkFetcher() -> NetworkFetcher {
+        return MockNetworkFetcher()
     }
 
-    class DIExtractor {
-        @Injected var logger: ILogger
-        @Injected var fetchUtilities: UtilitiesFetcher
-        @Injected var persistenceStorage: PersistenceStorage
-        @Injected var networkFetcher: NetworkFetcher
-        @Injected var eventRepository: EventRepository
-        @Injected var authorizationStatusProvider: UNAuthorizationStatusProviding
-        @Injected var dataBaseLoader: DataBaseLoader
-        @Injected var databaseRepository: MBDatabaseRepository
-        @Injected var gdManager: GuaranteedDeliveryManager
-
-        init() {
-        }
-    }
-
-    class DIExtractorOptionals {
-        @InjectedOptional var logger: ILogger!
-        @InjectedOptional var fetchUtilities: UtilitiesFetcher!
-        @InjectedOptional var persistenceStorage: PersistenceStorage!
-        @InjectedOptional var networkFetcher: NetworkFetcher!
-        @InjectedOptional var eventRepository: EventRepository!
-        @InjectedOptional var authorizationStatusProvider: UNAuthorizationStatusProviding!
-        @InjectedOptional var dataBaseLoader: DataBaseLoader!
-        @InjectedOptional var databaseRepository: MBDatabaseRepository!
-        @InjectedOptional var gdManager: GuaranteedDeliveryManager!
-
-        init() {
-        }
+    func makeEventRepository() -> EventRepository {
+        return MBEventRepository(
+            fetcher: makeNetworkFetcher(),
+            persistenceStorage: persistenceStorage
+        )
     }
 }
+

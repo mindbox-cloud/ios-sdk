@@ -11,11 +11,11 @@ import UIKit
 
 class CoreController {
     
-    @Injected private var persistenceStorage: PersistenceStorage
-    @Injected private var utilitiesFetcher: UtilitiesFetcher
-    @Injected private var notificationStatusProvider: UNAuthorizationStatusProviding
-    @Injected private var databaseRepository: MBDatabaseRepository
-    @Injected private var guaranteedDeliveryManager: GuaranteedDeliveryManager
+    private let persistenceStorage: PersistenceStorage
+    private let utilitiesFetcher: UtilitiesFetcher
+    private let notificationStatusProvider: UNAuthorizationStatusProviding
+    private let databaseRepository: MBDatabaseRepository
+    private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     
     func initialization(configuration: MBConfiguration) {
         persistenceStorage.configuration = configuration
@@ -138,6 +138,19 @@ class CoreController {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
                 .inChanel(.system).withType(.error).make()
         }
+    }
+    
+    init(
+        persistenceStorage: PersistenceStorage,
+        utilitiesFetcher: UtilitiesFetcher,
+        notificationStatusProvider: UNAuthorizationStatusProviding,
+        databaseRepository: MBDatabaseRepository,
+        guaranteedDeliveryManager: GuaranteedDeliveryManager) {
+        self.persistenceStorage = persistenceStorage
+        self.utilitiesFetcher = utilitiesFetcher
+        self.notificationStatusProvider = notificationStatusProvider
+        self.databaseRepository = databaseRepository
+        self.guaranteedDeliveryManager = guaranteedDeliveryManager
     }
     
 }

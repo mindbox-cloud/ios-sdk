@@ -45,7 +45,6 @@ internal extension Date {
 }
 
 struct Log {
-    @Injected static var logerServise: ILogger
 
     // MARK: - Properties
 
@@ -93,7 +92,7 @@ struct Log {
             header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         }
 
-        Log.logerServise.log(
+        DIManager.logger.log(
             inChanel: chanel,
             text: borders.start + header + "\n" + text + borders.end,
             level: type

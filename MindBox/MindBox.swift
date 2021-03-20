@@ -9,50 +9,45 @@
 import Foundation
 import UIKit
 
-let diManager = DIManager.shared
-
 public class MindBox {
     
     /// Singleton value for interaction with sdk
     /// It has setup DI container  as side effect  on init
     /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
-    public static var shared: MindBox = {
-        DIManager.shared.registerServices()
-        return MindBox()
-    }()
+    public static let shared = MindBox()
     
     // MARK: - Elements
     
-    @Injected private var persistenceStorage: PersistenceStorage
-    @Injected private var utilitiesFetcher: UtilitiesFetcher
-    @Injected private var gdManager: GuaranteedDeliveryManager
-    @Injected private var notificationStatusProvider: UNAuthorizationStatusProviding
-    @Injected private var databaseRepository: MBDatabaseRepository
+    private var persistenceStorage: PersistenceStorage?
+    private var utilitiesFetcher: UtilitiesFetcher?
+    private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
+    private var notificationStatusProvider: UNAuthorizationStatusProviding?
+    private var databaseRepository: MBDatabaseRepository?
     
     /// Internal process controller
-    let coreController = CoreController()
-    
+    var coreController: CoreController?
+    var container: DIContainer?
+
     /// Delegate for sending events
-    weak var delegate: MindBoxDelegate?
-    
-    // MARK: - Init
-    
-    private init() {
-        persistenceStorage.storeToFileBackgroundExecution()
+    weak var delegate: MindBoxDelegate? {
+        didSet {
+            guard let error = initError else { return }
+            delegate?.mindBox(self, failedWithError: error)
+        }
     }
-    
+        
     // MARK: - MindBox
     
     /// This function starting initialization case using `configuration`.
     /// - Parameter configuration: MBConfiguration struct with configuration
     public func initialization(configuration: MBConfiguration) {
-        coreController.initialization(configuration: configuration)
+        coreController?.initialization(configuration: configuration)
     }
     
     /// Method to get deviceUUID used for first initialization
     /// - Throws: MindBox.Errors.invalidAccess until first initialization did success
     public func deviceUUID() throws -> String {
-        if let value = persistenceStorage.deviceUUID {
+        if let value = persistenceStorage?.deviceUUID {
             return value
         } else {
             throw MindBox.Errors.invalidAccess(
@@ -64,34 +59,39 @@ public class MindBox {
     
     /// - Returns: apnsToken sent to the analytics system
     public var apnsToken: String? {
-        persistenceStorage.apnsToken
+        persistenceStorage?.apnsToken
     }
     
     /// - Returns: version from bundle
     public var sdkVersion: String {
-        utilitiesFetcher.sdkVersion ?? "unknown"
+        utilitiesFetcher?.sdkVersion ?? "unknown"
     }
     
     /// Method for keeping apnsTokenUpdate actuality
     public func apnsTokenUpdate(token: String) {
-        if let persistenceAPNSToken = persistenceStorage.apnsToken {
+        if let persistenceAPNSToken = persistenceStorage?.apnsToken {
             guard persistenceAPNSToken != token else {
                 return
             }
-            coreController.apnsTokenDidUpdate(token: token)
+            coreController?.apnsTokenDidUpdate(token: token)
         } else {
-            coreController.apnsTokenDidUpdate(token: token)
+            coreController?.apnsTokenDidUpdate(token: token)
         }
     }
     
     public func notificationsRequestAuthorization(granted: Bool) {
-        coreController.checkNotificationStatus(granted: granted)
+        coreController?.checkNotificationStatus(granted: granted)
     }
     
     @discardableResult
     public func pushDelivered(request: UNNotificationRequest) -> Bool {
-        coreController.checkNotificationStatus()
-        let traker = DeliveredNotificationManager()
+        coreController?.checkNotificationStatus()
+        guard let container = container else { return false }
+        let traker = DeliveredNotificationManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository()
+        )
         do {
             return try traker.track(request: request)
         } catch {
@@ -103,8 +103,13 @@ public class MindBox {
     
     @discardableResult
     public func pushDelivered(uniqueKey: String) -> Bool {
-        coreController.checkNotificationStatus()
-        let traker = DeliveredNotificationManager()
+        coreController?.checkNotificationStatus()
+        guard let container = container else { return false }
+        let traker = DeliveredNotificationManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.newInstanceDependency.makeEventRepository()
+        )
         do {
             return try traker.track(uniqueKey: uniqueKey)
         } catch {
@@ -118,7 +123,7 @@ public class MindBox {
     public func pushClicked(uniqueKey: String) {
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
         let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
-        try? databaseRepository.create(event: event)
+        try? databaseRepository?.create(event: event)
     }
     
     @available(iOS 13.0, *)
@@ -135,7 +140,7 @@ public class MindBox {
         guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("DBCleanAppProcessing") }) else  {
             return
         }
-        gdManager.backgroundTaskManager.registerBGTasks(
+        guaranteedDeliveryManager?.backgroundTaskManager.registerBGTasks(
             appGDRefreshIdentifier: appGDRefreshIdentifier,
             appGDProcessingIdentifier: appGDProcessingIdentifier,
             appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
@@ -146,7 +151,33 @@ public class MindBox {
         _ application: UIApplication,
         performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        gdManager.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
+        guaranteedDeliveryManager?.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
+    }
+    
+    private var initError: Error?
+    
+    private init() {
+        do {
+            let container = try DIManager()
+            self.container = container
+
+            persistenceStorage = container.persistenceStorage
+            utilitiesFetcher = container.utilitiesFetcher
+            guaranteedDeliveryManager = container.guaranteedDeliveryManager
+            notificationStatusProvider = container.authorizationStatusProvider
+            databaseRepository = container.databaseRepository
+
+            coreController = CoreController(
+                persistenceStorage: container.persistenceStorage,
+                utilitiesFetcher: container.utilitiesFetcher,
+                notificationStatusProvider: container.authorizationStatusProvider,
+                databaseRepository: container.databaseRepository,
+                guaranteedDeliveryManager: container.guaranteedDeliveryManager
+            )
+        } catch {
+            initError = error
+        }
+        persistenceStorage?.storeToFileBackgroundExecution()
     }
     
 }

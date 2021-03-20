@@ -13,9 +13,10 @@ import BackgroundTasks
 
 final class GuaranteedDeliveryManager: NSObject {
     
-    @Injected var databaseRepository: MBDatabaseRepository
+    private let databaseRepository: MBDatabaseRepository
+    private let eventRepository: EventRepository
     
-    let backgroundTaskManager = BackgroundTaskManagerProxy()
+    let backgroundTaskManager: BackgroundTaskManagerProxy
     
     private let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -49,7 +50,13 @@ final class GuaranteedDeliveryManager: NSObject {
     
    private let fetchLimit: Int
     
-    init(retryDeadline: TimeInterval = 60, fetchLimit: Int = 20) {
+    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository, eventRepository: EventRepository, retryDeadline: TimeInterval = 60, fetchLimit: Int = 20) {
+        self.databaseRepository = databaseRepository
+        self.eventRepository = eventRepository
+        self.backgroundTaskManager = BackgroundTaskManagerProxy(
+            persistenceStorage: persistenceStorage,
+            databaseRepository: databaseRepository
+        )
         self.retryDeadline = retryDeadline
         self.fetchLimit = fetchLimit
         stateObserver = NSString(string: state.description)
@@ -113,7 +120,11 @@ final class GuaranteedDeliveryManager: NSObject {
             self?.performScheduleIfNeeded()
         }
         let delivery = events.map {
-            DeliveryOperation(event: $0)
+            DeliveryOperation(
+                databaseRepository: databaseRepository,
+                eventRepository: eventRepository,
+                event: $0
+            )
         }
         Log("Enqueued events count: \(delivery.count)")
             .inChanel(.delivery).withType(.info).make()
