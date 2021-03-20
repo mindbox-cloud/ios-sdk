@@ -23,7 +23,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             return try! MockDataBaseLoader()
         }
         databaseRepository = DIManager.shared.container.resolve()
-        //        }
+        try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -46,18 +46,17 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testCreateEvents() {
-        try! databaseRepository.erase()
-        let beforeDate = Date()
         let count = databaseRepository.limit
         let events = eventGenerator.generateEvents(count: count)
         let expectation = self.expectation(description: "create \(count) events")
+        let createEventsDate = Date()
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
             }
-            let afterDate = Date()
-            let delta = afterDate.timeIntervalSince1970 - beforeDate.timeIntervalSince1970
-            XCTAssertTrue(delta < 30)
+            let createdEventsDate = Date()
+            let delta = createdEventsDate.timeIntervalSince1970 - createEventsDate.timeIntervalSince1970
+            XCTAssertTrue(delta < 40)
             expectation.fulfill()
         } catch {
             XCTFail(error.localizedDescription)
@@ -196,7 +195,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testFetchRetryEvents() {
-        try! databaseRepository.erase()
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
         let retriedEvent = events[count / 2]
