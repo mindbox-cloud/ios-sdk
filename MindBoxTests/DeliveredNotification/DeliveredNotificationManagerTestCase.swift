@@ -19,7 +19,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         container.persistenceStorage
     }
     
-    var container = try! TestDIManager()
+    var container = try! TestDependencyProvider()
         
     override func setUp() {
         persistenceStorage.reset()
@@ -30,7 +30,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         let manager = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository()
+            eventRepository: container.instanceFactory.makeEventRepository()
         )
         let content = UNMutableNotificationContent()
         let uniqueKey = UUID().uuidString
@@ -78,7 +78,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         let manager = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository()
+            eventRepository: container.instanceFactory.makeEventRepository()
         )
         let content = UNMutableNotificationContent()
         let uniqueKey = UUID().uuidString

@@ -10,7 +10,7 @@
 import XCTest
 @testable import MindBox
 
-final class TestDIManager: DIContainer {
+final class TestDependencyProvider: DependencyContainer {
     
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
@@ -18,13 +18,13 @@ final class TestDIManager: DIContainer {
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let authorizationStatusProvider: UNAuthorizationStatusProviding
-    let newInstanceDependency: NewInstanceDependency
+    let instanceFactory: InstanceFactory
     static let logger: ILogger = MBLogger()
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
-        newInstanceDependency = MockNewInstanceDependency(
+        instanceFactory = MockInstanceFactory(
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: utilitiesFetcher
         )
@@ -34,14 +34,14 @@ final class TestDIManager: DIContainer {
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
-            eventRepository: newInstanceDependency.makeEventRepository()
+            eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
     }
 
 }
 
-class MockNewInstanceDependency: NewInstanceDependency {
+class MockInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher

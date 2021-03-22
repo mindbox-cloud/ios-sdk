@@ -13,10 +13,10 @@ class EventRepositoryTestCase: XCTestCase {
     
     var coreController: CoreController!
         
-    var container: DIContainer!
+    var container: DependencyContainer!
 
     override func setUp() {
-        container = try! TestDIManager()
+        container = try! TestDependencyProvider()
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
@@ -31,7 +31,7 @@ class EventRepositoryTestCase: XCTestCase {
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
-        let repository: EventRepository = container.newInstanceDependency.makeEventRepository()
+        let repository: EventRepository = container.instanceFactory.makeEventRepository()
         let event = Event(
             type: .installed,
             body: ""

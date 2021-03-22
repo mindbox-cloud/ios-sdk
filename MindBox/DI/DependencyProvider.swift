@@ -9,8 +9,7 @@
 import Foundation
 import CoreData
 
-/// Регистрирует DI-объекты
-final class DIManager: DIContainer {
+final class DependencyProvider: DependencyContainer {
     
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
@@ -18,13 +17,13 @@ final class DIManager: DIContainer {
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let authorizationStatusProvider: UNAuthorizationStatusProviding
-    let newInstanceDependency: NewInstanceDependency
+    let instanceFactory: InstanceFactory
     static let logger: ILogger = MBLogger()
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
-        newInstanceDependency = MBNewInstanceDependency(
+        instanceFactory = MBInstanceFactory(
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: utilitiesFetcher
         )
@@ -34,34 +33,14 @@ final class DIManager: DIContainer {
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
-            eventRepository: newInstanceDependency.makeEventRepository()
+            eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
     }
 
 }
 
-protocol NewInstanceDependency {
-    
-    func makeNetworkFetcher() -> NetworkFetcher
-    func makeEventRepository() -> EventRepository
-    
-}
-
-protocol DIContainer {
-    
-    var utilitiesFetcher: UtilitiesFetcher { get }
-    var persistenceStorage: PersistenceStorage { get }
-    var databaseLoader: DataBaseLoader { get }
-    var databaseRepository: MBDatabaseRepository { get }
-    var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
-    var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
-    var newInstanceDependency: NewInstanceDependency { get }
-    static var logger: ILogger { get }
-    
-}
-
-class MBNewInstanceDependency: NewInstanceDependency {
+class MBInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher

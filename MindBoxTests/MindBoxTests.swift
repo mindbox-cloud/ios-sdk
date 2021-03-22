@@ -14,13 +14,14 @@ class MindBoxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 
-    var container: DIContainer!
+    var container: DependencyContainer!
     var coreController: CoreController!
     
     override func setUp() {
-        container = try! TestDIManager()
+        container = try! TestDependencyProvider()
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
+        MindBox.shared.assembly(with: container)
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 

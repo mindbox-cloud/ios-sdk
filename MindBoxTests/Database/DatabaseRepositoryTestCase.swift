@@ -18,7 +18,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     
     let eventGenerator = EventGenerator()
         
-    let container = try! TestDIManager()
+    let container = try! TestDependencyProvider()
 
     override func setUp() {
         try! databaseRepository.erase()

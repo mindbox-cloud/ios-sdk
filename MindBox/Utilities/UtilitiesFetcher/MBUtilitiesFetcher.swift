@@ -66,9 +66,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     var hostApplicationName: String? {
         appBundle.bundleIdentifier
     }
-    
-    private let deviceUUIDSemathore = DispatchSemaphore(value: 0)
-    
+        
     func getDeviceUUID(completion: @escaping (String) -> Void) {
         IDFAFetcher().fetch { (uuid) in
             if let uuid = uuid {

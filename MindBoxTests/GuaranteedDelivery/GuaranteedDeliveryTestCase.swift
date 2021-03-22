@@ -27,10 +27,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         guaranteedDeliveryManager.state.isDelivering
     }
     
-    var container: DIContainer!
+    var container: DependencyContainer!
     
     override func setUp() {
-        container = try! TestDIManager()
+        container = try! TestDependencyProvider()
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
@@ -57,7 +57,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository(),
+            eventRepository: container.instanceFactory.makeEventRepository(),
             retryDeadline: retryDeadline
         )
         let events = eventGenerator.generateEvents(count: 10)
@@ -82,7 +82,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository(),
+            eventRepository: container.instanceFactory.makeEventRepository(),
             retryDeadline: retryDeadline
         )
         guaranteedDeliveryManager.canScheduleOperations = false

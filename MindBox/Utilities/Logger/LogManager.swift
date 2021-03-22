@@ -92,7 +92,7 @@ struct Log {
             header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         }
 
-        DIManager.logger.log(
+        DependencyProvider.logger.log(
             inChanel: chanel,
             text: borders.start + header + "\n" + text + borders.end,
             level: type
