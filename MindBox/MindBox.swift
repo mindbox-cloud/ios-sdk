@@ -12,12 +12,10 @@ import UIKit
 public class MindBox {
     
     /// Singleton value for interaction with sdk
-    /// It has setup DI container  as side effect  on init
     /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
     public static let shared = MindBox()
-    
+        
     // MARK: - Elements
-    
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
@@ -26,8 +24,8 @@ public class MindBox {
     
     /// Internal process controller
     var coreController: CoreController?
-    var container: DIContainer?
-
+    var container: DependencyContainer? 
+    
     /// Delegate for sending events
     weak var delegate: MindBoxDelegate? {
         didSet {
@@ -35,7 +33,7 @@ public class MindBox {
             delegate?.mindBox(self, failedWithError: error)
         }
     }
-        
+    
     // MARK: - MindBox
     
     /// This function starting initialization case using `configuration`.
@@ -90,7 +88,7 @@ public class MindBox {
         let traker = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository()
+            eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
             return try traker.track(request: request)
@@ -108,7 +106,7 @@ public class MindBox {
         let traker = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
-            eventRepository: container.newInstanceDependency.makeEventRepository()
+            eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
             return try traker.track(uniqueKey: uniqueKey)
@@ -158,26 +156,29 @@ public class MindBox {
     
     private init() {
         do {
-            let container = try DIManager()
+            let container = try DependencyProvider()
             self.container = container
-
-            persistenceStorage = container.persistenceStorage
-            utilitiesFetcher = container.utilitiesFetcher
-            guaranteedDeliveryManager = container.guaranteedDeliveryManager
-            notificationStatusProvider = container.authorizationStatusProvider
-            databaseRepository = container.databaseRepository
-
-            coreController = CoreController(
-                persistenceStorage: container.persistenceStorage,
-                utilitiesFetcher: container.utilitiesFetcher,
-                notificationStatusProvider: container.authorizationStatusProvider,
-                databaseRepository: container.databaseRepository,
-                guaranteedDeliveryManager: container.guaranteedDeliveryManager
-            )
+            assembly(with: container)
         } catch {
             initError = error
         }
         persistenceStorage?.storeToFileBackgroundExecution()
+    }
+    
+    func assembly(with container: DependencyContainer) {
+        persistenceStorage = container.persistenceStorage
+        utilitiesFetcher = container.utilitiesFetcher
+        guaranteedDeliveryManager = container.guaranteedDeliveryManager
+        notificationStatusProvider = container.authorizationStatusProvider
+        databaseRepository = container.databaseRepository
+        
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
     }
     
 }
