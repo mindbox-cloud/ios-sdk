@@ -12,14 +12,15 @@ import UIKit
 
 class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
     
+    func getStatus(result: @escaping (Bool) -> Void) {
+        result(status.rawValue == UNAuthorizationStatus.authorized.rawValue)
+    }
+    
+    
     private let status: UNAuthorizationStatus
 
     init(status: UNAuthorizationStatus) {
         self.status = status
-    }
-
-    func isNotificationsEnabled() -> Bool {
-        status.rawValue == UNAuthorizationStatus.authorized.rawValue
     }
     
 }
