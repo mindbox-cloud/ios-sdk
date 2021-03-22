@@ -35,7 +35,8 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         let content = UNMutableNotificationContent()
         let uniqueKey = UUID().uuidString
         let id = UUID().uuidString
-        content.userInfo = ["uniqueKey": uniqueKey]
+        let aps = ["uniqueKey": uniqueKey]
+        content.userInfo = ["aps": aps]
         let request = UNNotificationRequest(
             identifier: id,
             content: content,
@@ -83,7 +84,8 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         let content = UNMutableNotificationContent()
         let uniqueKey = UUID().uuidString
         let id = UUID().uuidString
-        content.userInfo = ["NonMindBoxKey": uniqueKey]
+        let aps = ["NonMindBoxKey": uniqueKey]
+        content.userInfo = ["aps": aps]
         let request = UNNotificationRequest(
             identifier: id,
             content: content,

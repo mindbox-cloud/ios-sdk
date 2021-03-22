@@ -50,7 +50,7 @@ final class DeliveredNotificationManager {
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
-        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
+        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo["aps"] as? [AnyHashable: Any] else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
         }
         guard userInfo[mindBoxIdentifireKey] != nil else {
