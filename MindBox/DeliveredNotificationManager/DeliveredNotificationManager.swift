@@ -26,7 +26,7 @@ final class DeliveredNotificationManager {
     
     private let timeout: TimeInterval = 5.0
     
-    private let mindBoxIdentifireKey = "uniqueKey"
+    let mindBoxIdentifireKey = "uniqueKey"
     
     init(
         persistenceStorage: PersistenceStorage,
@@ -50,9 +50,7 @@ final class DeliveredNotificationManager {
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
-        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo["aps"] as? [AnyHashable: Any] else {
-            throw DeliveredNotificationManagerError.unableToFetchUserInfo
-        }
+        let userInfo = try getUserInfo(form: request)
         guard userInfo[mindBoxIdentifireKey] != nil else {
             Log("Push notification is not from MindBox")
                 .inChanel(.notification).withType(.info).make()
@@ -114,6 +112,19 @@ final class DeliveredNotificationManager {
             Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
                 .inChanel(.notification).withType(.error).make()
             throw error
+        }
+    }
+    
+    private func getUserInfo(form request: UNNotificationRequest) throws -> [AnyHashable: Any] {
+        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
+            throw DeliveredNotificationManagerError.unableToFetchUserInfo
+        }
+        if userInfo[mindBoxIdentifireKey] != nil {
+            return userInfo
+        } else if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+            return innerUserInfo
+        } else {
+            return userInfo
         }
     }
     
