@@ -117,10 +117,9 @@ public class MindBox {
         }
     }
     
-    // FixMe: - Change to click event later. Now its for GD testing
-    public func pushClicked(uniqueKey: String) {
-        let pushDelivered = PushDelivered(uniqKey: uniqueKey)
-        let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
+    public func pushClicked(uniqueKey: String, buttonUnicKey: String? = nil) {
+        let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUnicKey)
+        let event = Event(type: .trackClick, body: BodyEncoder(encodable: trackMobilePushClick).body)
         try? databaseRepository?.create(event: event)
     }
     

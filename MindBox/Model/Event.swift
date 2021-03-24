@@ -14,6 +14,8 @@ struct Event {
         case installed = "MobilePush.ApplicationInstalled"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
         case pushDelivered = ""
+        case trackClick = "MobilePush.TrackClick"
+
     }
     
     let transactionId: String
