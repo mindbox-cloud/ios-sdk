@@ -12,12 +12,47 @@ import AppTrackingTransparency
 import UIKit.UIDevice
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
-
-    let appBundle = Bundle.main
-    let sdkBundle = Bundle(for: MindBox.self)
-
+    
+    let appBundle: Bundle = {
+        var bundle: Bundle = .main
+        prepareBundle(&bundle)
+        return bundle
+    }()
+    
+    let sdkBundle: Bundle = {
+        var bundle = Bundle(for: MindBox.self)
+        prepareBundle(&bundle)
+        return bundle
+    }()
+    
+    var appGroup: String {
+        guard let hostApplicationName = hostApplicationName else {
+            fatalError("CFBundleShortVersionString not found for host app")
+        }
+        let identifier = "group.cloud.MindBox.\(hostApplicationName)"
+        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+        guard url != nil else {
+            #if targetEnvironment(simulator)
+            return ""
+            #else
+            fatalError("containerURL not found for group: \(identifier)")
+            #endif
+        }
+        return identifier
+    }
+    
     init() {
-
+        
+    }
+    
+    private static func prepareBundle(_ bundle: inout Bundle) {
+        if Bundle.main.bundleURL.pathExtension == "appex" {
+            // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
+            let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+            if let otherBundle = Bundle(url: url) {
+                bundle = otherBundle
+            }
+        }
     }
     
     var appVerson: String? {
@@ -27,17 +62,17 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     var sdkVersion: String? {
         sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
     }
-
+    
     var hostApplicationName: String? {
         appBundle.bundleIdentifier
     }
-    
-    func getUDID(completion: @escaping (UUID) -> Void) {
+        
+    func getDeviceUUID(completion: @escaping (String) -> Void) {
         IDFAFetcher().fetch { (uuid) in
             if let uuid = uuid {
                 Log("IDFAFetcher uuid:\(uuid.uuidString)")
                     .inChanel(.system).withType(.verbose).make()
-                completion(uuid)
+                completion(uuid.uuidString)
             } else {
                 Log("IDFAFetcher fail")
                     .inChanel(.system).withType(.verbose).make()
@@ -45,12 +80,12 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
                     if let uuid = uuid {
                         Log("IDFVFetcher uuid:\(uuid.uuidString)")
                             .inChanel(.system).withType(.verbose).make()
-                        completion(uuid)
+                        completion(uuid.uuidString)
                     } else {
                         Log("IDFVFetcher fail")
                             .inChanel(.system).withType(.verbose).make()
                         let uuid = UUID()
-                        completion(uuid)
+                        completion(uuid.uuidString)
                         Log("Generated uuid:\(uuid.uuidString)")
                             .inChanel(.system).withType(.verbose).make()
                     }

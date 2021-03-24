@@ -9,23 +9,19 @@
 import XCTest
 @testable import MindBox
 
-class MindBoxTests: XCTestCase, MindBoxDelegate {
+class MindBoxTests: XCTestCase {
 
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 
+    var container: DependencyContainer!
+    var coreController: CoreController!
+    
     override func setUp() {
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
-            return MockPersistenceStorage()
-        }
-        DIManager.shared.container.register { (r) -> NetworkFetcher in
-            MockNetworkFetcher()
-        }
-        DIManager.shared.container.register { (r) -> MobileApplicationRepository in
-            MBMobileApplicationRepository(fetcher: r.resolveOrDie())
-        }
+        container = try! TestDependencyProvider()
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
+        MindBox.shared.assembly(with: container)
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -34,79 +30,45 @@ class MindBoxTests: XCTestCase, MindBoxDelegate {
     }
 
     func testOnInitCase1() {
-
-        var coreController = CoreController()
-        
-
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
-
-        MindBox.shared.delegate = self
-
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
-
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 10, handler: nil)
-
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-
-        }
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
         let deviceUUID =  try! MindBox.shared.deviceUUID()
-
     	//        //        //        //        //        //		//        //        //        //        //        //
-
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertNotNil(container.persistenceStorage.apnsToken)
+        let deviceUUID2 = try! MindBox.shared.deviceUUID()
+        XCTAssert(deviceUUID == deviceUUID2)
 
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == false && apnsTokenDidUpdatedFlag == true")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 10, handler: nil)
-
-            let deviceUUID2 = try! MindBox.shared.deviceUUID()
-            XCTAssert(deviceUUID == deviceUUID2)
-
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-        }
-
-        let persistensStorage: PersistenceStorage = diManager.container.resolveOrDie()
-
-        persistensStorage.reset()
-        coreController = CoreController()
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
 
         //        //        //        //        //        //        //        //        //        //        //        //
 
         let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
-
         coreController.initialization(configuration: configuration3)
-
-        do {
-            let exists = NSPredicate(format: "mindBoxDidInstalledFlag == true && apnsTokenDidUpdatedFlag == false")
-            expectation(for: exists, evaluatedWith: self, handler: nil)
-            waitForExpectations(timeout: 10, handler: nil)
-
-            mindBoxDidInstalledFlag = false
-            apnsTokenDidUpdatedFlag = false
-        }
-
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertNotNil(container.persistenceStorage.apnsToken)
     }
 
-    // MARK: - MindBoxDelegate
-
-    func mindBoxDidInstalled() {
-        mindBoxDidInstalledFlag = true
-    }
-
-    func mindBoxInstalledFailed(error: MindBox.Errors) {
-
-    }
-
-    func apnsTokenDidUpdated() {
-        apnsTokenDidUpdatedFlag = true
-    }
 }

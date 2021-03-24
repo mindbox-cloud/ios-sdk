@@ -14,14 +14,31 @@ struct HTTPURLResponseStatusCodeValidator {
     
     enum StatusCodes {
         
-        case success, failure
+        case success, redirection, clientError, serverError
+        
+        var range: ClosedRange<Int> {
+            switch self {
+            case .success:
+                return 200...299
+            case .redirection:
+                return 300...399
+            case .clientError:
+                return 400...499
+            case .serverError:
+                return 500...599
+            }
+        }
         
         init?(statusCode: Int) {
             switch statusCode {
-            case 200...399:
+            case StatusCodes.success.range:
                 self = .success
-            case 400...599:
-                self = .failure
+            case StatusCodes.redirection.range:
+                self = .redirection
+            case StatusCodes.clientError.range:
+                self = .clientError
+            case StatusCodes.serverError.range:
+                self = .serverError
             default:
                 return nil
             }
@@ -29,8 +46,16 @@ struct HTTPURLResponseStatusCodeValidator {
         
     }
     
+    var isClientError: Bool {
+        return StatusCodes(statusCode: statusCode) == .clientError
+    }
+    
     func evaluate() -> Bool {
-        return StatusCodes(statusCode: statusCode) == .success
+        guard let statusCode = StatusCodes(statusCode: statusCode) else {
+            return false
+        }
+        let evaluateCodes: [StatusCodes] = [.success, .redirection]
+        return evaluateCodes.contains(statusCode)
     }
     
 }

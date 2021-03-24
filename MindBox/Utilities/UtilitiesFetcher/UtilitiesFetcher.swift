@@ -15,6 +15,8 @@ protocol UtilitiesFetcher {
     var sdkVersion: String? { get }
     var hostApplicationName: String? { get }
     
-    func getUDID(completion: @escaping (UUID) -> Void)
-
+    var appGroup: String { get }
+    
+    func getDeviceUUID(completion: @escaping (String) -> Void)
+    
 }

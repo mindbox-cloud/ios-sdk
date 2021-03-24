@@ -11,13 +11,13 @@ import Foundation
 ///
 /// - Throws:`MindBox.Errors.invalidConfiguration` for invalid initialization parameters
 
-public struct MBConfiguration: Decodable {
+public struct MBConfiguration: Codable {
     
     public let endpoint: String
     public let domain: String
     public var installationId: String?
     public var deviceUUID: String?
-    ///public var canRequestTrackingAuthorization: Bool?
+    public var subscribeCustomerIfCreated: Bool
 
     /// Init with params
     ///
@@ -31,7 +31,8 @@ public struct MBConfiguration: Decodable {
         endpoint: String,
         domain: String,
         installationId: String? = nil,
-        deviceUUID: String? = nil
+        deviceUUID: String? = nil,
+        subscribeCustomerIfCreated: Bool = false
     ) throws {
 
         self.endpoint = endpoint
@@ -67,6 +68,7 @@ public struct MBConfiguration: Decodable {
 
             self.deviceUUID = deviceUUID
         }
+        self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
     }
 
     /// Init with plist file
@@ -119,33 +121,32 @@ public struct MBConfiguration: Decodable {
         case domain
         case installationId
         case deviceUUID
+        case subscribeCustomerIfCreated
     }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
         var installationId: String? = nil
-        do {
-            let value = try values.decode(String.self, forKey: .installationId)
+        if let value = try? values.decode(String.self, forKey: .installationId) {
             if !value.isEmpty {
                 installationId = value
             }
         }
-
         var deviceUUID: String? = nil
-        do {
-            let value = try values.decode(String.self, forKey: .deviceUUID)
+        if let value = try? values.decode(String.self, forKey: .deviceUUID) {
             if !value.isEmpty {
                 deviceUUID = value
             }
         }
+        let subscribeCustomerIfCreated = try values.decodeIfPresent(Bool.self, forKey: .subscribeCustomerIfCreated) ?? false
         try self.init(
             endpoint: endpoint,
             domain: domain,
             installationId: installationId,
-            deviceUUID: deviceUUID
+            deviceUUID: deviceUUID,
+            subscribeCustomerIfCreated: subscribeCustomerIfCreated
         )
     }
 

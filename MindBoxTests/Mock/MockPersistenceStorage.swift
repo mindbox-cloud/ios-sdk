@@ -15,22 +15,61 @@ class MockPersistenceStorage: PersistenceStorage {
 
     }
     
-    var deviceUUID: String?
+    var deviceUUID: String? {
+        didSet {
+            configuration?.deviceUUID = deviceUUID
+        }
+    }
 
     var installationId: String?
 
-    var isInstalled: Bool = false
+    var isInstalled: Bool {
+        installationDate != nil
+    }
 
-    var apnsToken: String?
+    var apnsToken: String? {
+        didSet {
+            apnsTokenSaveDate = Date()
+        }
+    }
 
     var apnsTokenSaveDate: Date?
+    
+    var deprecatedEventsRemoveDate: Date?
+    
+    var configuration: MBConfiguration?
+
+    var backgroundExecutions: [BackgroudExecution] = []
+    
+    var isNotificationsEnabled: Bool?
+    
+    var installationDate: Date?
 
     func reset() {
+        installationDate = nil
         deviceUUID = nil
         installationId = nil
-        isInstalled = false
         apnsToken = nil
         apnsTokenSaveDate = nil
+        deprecatedEventsRemoveDate = nil
+        configuration = nil
+        isNotificationsEnabled = nil
+        resetBackgroundExecutions()
     }
+    
+    
+    func setBackgroundExecution(_ value: BackgroudExecution) {
+        backgroundExecutions.append(value)
+    }
+    
+    func resetBackgroundExecutions() {
+        backgroundExecutions = []
+    }
+    
+    func storeToFileBackgroundExecution() {
+        
+    }
+    
+    
 
 }

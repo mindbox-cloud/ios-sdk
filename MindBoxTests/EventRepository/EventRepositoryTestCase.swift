@@ -12,25 +12,27 @@ import XCTest
 class EventRepositoryTestCase: XCTestCase {
     
     var coreController: CoreController!
-    
+        
+    var container: DependencyContainer!
+
     override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-        DIManager.shared.dropContainer()
-        DIManager.shared.registerServices()
-        DIManager.shared.container.registerInContainer { _ -> PersistenceStorage in
-            return MockPersistenceStorage()
-        }
-        coreController = CoreController()
+        container = try! TestDependencyProvider()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+        )
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
     }
     
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
-        let repository: EventRepository = DIManager.shared.container.resolveOrDie()
+        let repository: EventRepository = container.instanceFactory.makeEventRepository()
         let event = Event(
-            transactionId: UUID().uuidString,
-            dateTimeOffset: Date().timeIntervalSince1970,
-            enqueueTimeStamp: Date().timeIntervalSince1970,
             type: .installed,
             body: ""
         )

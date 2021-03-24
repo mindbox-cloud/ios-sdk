@@ -12,16 +12,47 @@ class MBEventRepository: EventRepository {
     
     private let fetcher: NetworkFetcher
     
-    private let configuration: ConfigurationStorage
+    private let persistenceStorage: PersistenceStorage
     
-    init(fetcher: NetworkFetcher, configuration: ConfigurationStorage) {
+    init(fetcher: NetworkFetcher, persistenceStorage: PersistenceStorage) {
         self.fetcher = fetcher
-        self.configuration = configuration
+        self.persistenceStorage = persistenceStorage
     }
     
     func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void) {
-        let route = EventRoute.asyncEvent(event: event, configuration: configuration.startConfiguration!)
+        guard let configuration = persistenceStorage.configuration else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "Configuration is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        guard let deviceUUID = configuration.deviceUUID else {
+            let error = ErrorModel(
+                errorKey: ErrorKey.configuration.rawValue,
+                rawError: MindBox.Errors.invalidConfiguration(reason: "DeviceUUID is not set")
+            )
+            completion(.failure(error))
+            return
+        }
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+        let route = makeRoute(wrapper: wrapper)
         fetcher.request(route: route, completion: completion)
+    }
+    
+    private func makeRoute(wrapper: EventWrapper) -> Route {
+        switch wrapper.event.type {
+        case .pushDelivered:
+             return EventRoute.pushDeleveried(wrapper)
+        case .installed,
+             .infoUpdated:
+            return EventRoute.asyncEvent(wrapper)
+        }
     }
     
 }

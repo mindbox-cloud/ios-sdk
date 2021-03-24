@@ -16,7 +16,7 @@ import Foundation
 /// - verbose: Log type verbose
 /// - warning: Log type warning
 /// - severe: Log type severe
-enum LogType: String {
+public enum LogType: String {
     case error = "[‼️]"
     case info = "[ℹ️]"
     case debug = "[💬]"
@@ -25,61 +25,78 @@ enum LogType: String {
     case severe = "[🔥]"
 }
 
+enum ExecutionMethod {
+    case sync(lock: NSRecursiveLock)
+    case async(queue: DispatchQueue)
+}
+
 internal extension Date {
+    
     func toString() -> String {
-        // FIX
         return Log.dateFormatter.string(from: self as Date)
     }
+    
+    func fullToString() -> String {
+           let dateFormatter = DateFormatter()
+           dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+           return dateFormatter.string(from: self as Date)
+    }
+    
 }
 
 struct Log {
-    @Injected static var logerServise: ILogger
 
     // MARK: - Properties
+
     static var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "hh:mm:ss.SSSS"
         return formatter
     }
-    //    private static var isLoggingEnabled: Bool {
-    //        #if DEBUG
-    //        return true
-    //        #else
-    //        return false
-    //        #endif
-    //    }
+
+    private var isLoggingEnabled: Bool {
+        return true
+    }
 
     typealias Meta = (filename: String, line: Int, funcName: String)
     var text: String = ""
     var date: Date?
     var type: LogType?
-    var chanel: MBLoggerChanels = .none
+    var chanel: MBLoggerChanels = .system
     var meta: Meta?
-    var borders: (start: String, end: String) = ("[","\n]")
+    var borders: (start: String, end: String) = ("[", "\n]")
 
     init(_ object: Any?) {
         text = "\(String(describing: object))"
     }
+
     init(_ object: Any) {
         text = "\(String(describing: object))"
     }
 
     func make() {
+        guard isLoggingEnabled else { return }
+
         var header = ""
+        header += chanel.rawValue + " "
         if let type = type {
             header += type.rawValue + " "
         }
         if let date = date {
             header += date.toString() + " "
+        } else {
+            header += Date().toString() + " "
         }
 
         if let meta = meta {
             header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         }
 
-
-        
-        Log.logerServise.log(inChanel: .system, text: borders.start + header + "\n" + text + borders.end)
+        DependencyProvider.logger.log(
+            inChanel: chanel,
+            text: borders.start + header + "\n" + text + borders.end,
+            level: type
+        )
     }
 
     func inChanel(_ chanel: MBLoggerChanels) -> Log {
@@ -112,33 +129,30 @@ struct Log {
         return ret
     }
 
-
     // MARK: - Public Functions
+
     init<T: Codable>(_ response: ResponseModel<T>, baseURL: String = "") {
-        
         let path: String? = response.route?.path
         let dataJSON: String? = response.json
-        
+
         var log: String = ""
-        
+
         if let path = path {
             log = log + "[\(baseURL)\(path)]\n"
         }
-        
+
         if let json = dataJSON {
             log = log + "\n[\(json)]"
         }
 
-        self.text =  "LogManager: \n--- Response ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
-        self.chanel = .network
+        text = "LogManager: \n--- Response ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
+        chanel = .network
     }
-    
+
     init(error: ErrorModel) {
-        //        guard isLoggingEnabled else { return }
-        
         let errorKey: String? = error.errorKey
         let errorMessage: String? = error.errorMessage
-        
+
         var log: String = ""
 
         if let status = error.httpStatusCode {
@@ -153,20 +167,19 @@ struct Log {
         if let errorMessage = errorMessage {
             log = log + "\n[message: \(errorMessage)]"
         }
-        
+
         if log.isEmpty { return }
-        
-        self.text = "LogManager: \n--- Error ---\n[\(Date().toString())] \(log) \n--- End ---\n"
-        self.chanel = .network
-        self.type = .error
+
+        text = "LogManager: \n--- Error ---\n[\(Date().toString())] \(log) \n--- End ---\n"
+        chanel = .network
+        type = .error
     }
 
-    init(request: URLRequest) {
-
+    init(request: URLRequest, httpAdditionalHeaders: [AnyHashable: Any]? = nil) {
         let urlString = request.url?.absoluteString ?? ""
         let components = NSURLComponents(string: urlString)
 
-        let method = request.httpMethod != nil ? "\(request.httpMethod!)": ""
+        let method = request.httpMethod != nil ? "\(request.httpMethod!)" : ""
         let path = "\(components?.path ?? "")"
         let query = "\(components?.query ?? "")"
         let host = "\(components?.host ?? "")"
@@ -180,23 +193,25 @@ struct Log {
 
         requestLog += "\n"
         requestLog += "[Headers]\n"
-        for (key,value) in request.allHTTPHeaderFields ?? [:] {
+        httpAdditionalHeaders?.forEach {
+            requestLog += "\($0.key): \($0.value)\n"
+        }
+        for (key, value) in request.allHTTPHeaderFields ?? [:] {
             requestLog += "\(key): \(value)\n"
         }
         requestLog += "\n"
         requestLog += "[Body]\n"
-        if let body = request.httpBody{
-            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded";
+        if let body = request.httpBody {
+            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded"
             requestLog += "\n\(bodyString)\n"
         }
         text = requestLog
         chanel = .network
-        self.type = .debug
-        self.borders = ("[---------- OUT ---------->\n", "------------------------>]")
+        type = .debug
+        borders = ("[---------- OUT ---------->\n", "------------------------>]")
     }
 
     init(data: Data?, response: URLResponse?, error: Error?) {
-
         let urlString = response?.url?.absoluteString
         let components = NSURLComponents(string: urlString ?? "")
 
@@ -209,35 +224,35 @@ struct Log {
             responseLog += "\n\n"
         }
 
-        if let statusCode =  (response as? HTTPURLResponse)?.statusCode{
+        if let statusCode = (response as? HTTPURLResponse)?.statusCode {
             responseLog += "HTTP \(statusCode) \(path)?\(query)\n"
         }
-        if let host = components?.host{
+        if let host = components?.host {
             responseLog += "Host: \(host)\n"
         }
-        for (key,value) in (response as? HTTPURLResponse)?.allHeaderFields ?? [:] {
+        for (key, value) in (response as? HTTPURLResponse)?.allHeaderFields ?? [:] {
             responseLog += "\(key): \(value)\n"
         }
-        if let body = data{
-            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded";
+        if let body = data {
+            let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded"
             responseLog += "\n\(bodyString)\n"
         }
-        self.type = .debug
-        if let error = error{
+        type = .debug
+        if let error = error {
             responseLog += "\nError: \(error.localizedDescription)\n"
-            self.type = .error
+            type = .error
         }
-        self.text = responseLog
+        text = responseLog
 
-        self.chanel = .network
+        chanel = .network
 
-        self.borders = ("[<---------- IN ----------\n", "<------------------------]")
+        borders = ("[<---------- IN ----------\n", "<------------------------]")
     }
 }
 
 // MARK: - Private Functions
+
 private extension Log {
-    
     /// Extract the file name from the file path
     ///
     /// - Parameter filePath: Full file path in bundle
