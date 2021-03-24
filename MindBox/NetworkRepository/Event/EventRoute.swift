@@ -37,22 +37,13 @@ enum EventRoute: Route {
     var queryParameters: QueryParameters {
         switch self {
         case .asyncEvent(let wrapper):
-            return [
-                "endpointId": wrapper.endpoint,
-                "operation": wrapper.event.type.rawValue,
-                "deviceUUID": wrapper.deviceUUID,
-                "transactionId": wrapper.event.transactionId,
-                "dateTimeOffset": wrapper.event.dateTimeOffset
-            ]
+            return makeBasicQueryParameters(with: wrapper)
+                .appending(["operation": wrapper.event.type.rawValue])
+            
         case .pushDeleveried(let wrapper):
             let decoded = BodyDecoder<PushDelivered>(decodable: wrapper.event.body)
-            return [
-                "endpointId": wrapper.endpoint,
-                "deviceUUID": wrapper.deviceUUID,
-                "transactionId": wrapper.event.transactionId,
-                "dateTimeOffset": wrapper.event.dateTimeOffset,
-                "uniqKey": decoded?.body.uniqKey ?? ""
-            ]
+            return makeBasicQueryParameters(with: wrapper)
+                .appending(["uniqKey": decoded?.body.uniqKey ?? ""])
         }
     }
     
@@ -65,5 +56,24 @@ enum EventRoute: Route {
         }
     }
     
+    func makeBasicQueryParameters(with wrapper: EventWrapper) -> QueryParameters {
+        ["endpointId": wrapper.endpoint,
+         "deviceUUID": wrapper.deviceUUID,
+         "transactionId": wrapper.event.transactionId,
+         "dateTimeOffset": wrapper.event.dateTimeOffset]
+    }
     
 }
+
+fileprivate extension QueryParameters {
+
+    func appending(_ values: @autoclosure () -> QueryParameters) -> QueryParameters {
+        var copy = self
+        values().forEach { (key, value) in
+            copy[key] = value
+        }
+        return copy
+    }
+    
+}
+
