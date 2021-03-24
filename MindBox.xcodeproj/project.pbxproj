@@ -61,7 +61,7 @@
 		847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581225C8909300147A9A /* URLRequestBuilder.swift */; };
 		847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */; };
 		847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */; };
-		84A0CD54260AF8C8004CD91B /* TrackMobilePushClick.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A0CD53260AF8C8004CD91B /* TrackMobilePushClick.swift */; };
+		84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A0CD53260AF8C8004CD91B /* TrackClick.swift */; };
 		84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A0CD59260B021F004CD91B /* MockFailureNetworkFetcher.swift */; };
 		84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312AF25DA5CF30096A017 /* BackgroundTaskManagerProxy.swift */; };
 		84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A312B625DA64C60096A017 /* BGTaskManager.swift */; };
@@ -163,7 +163,7 @@
 		847F581225C8909300147A9A /* URLRequestBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
 		847F581625C8981E00147A9A /* HTTPURLResponseStatusCodeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLResponseStatusCodeValidator.swift; sourceTree = "<group>"; };
 		847F581E25C8A3F500147A9A /* HTTPTypealiases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTypealiases.swift; sourceTree = "<group>"; };
-		84A0CD53260AF8C8004CD91B /* TrackMobilePushClick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackMobilePushClick.swift; sourceTree = "<group>"; };
+		84A0CD53260AF8C8004CD91B /* TrackClick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackClick.swift; sourceTree = "<group>"; };
 		84A0CD59260B021F004CD91B /* MockFailureNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockFailureNetworkFetcher.swift; sourceTree = "<group>"; };
 		84A312AF25DA5CF30096A017 /* BackgroundTaskManagerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManagerProxy.swift; sourceTree = "<group>"; };
 		84A312B625DA64C60096A017 /* BGTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGTaskManager.swift; sourceTree = "<group>"; };
@@ -545,7 +545,7 @@
 				842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */,
 				84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */,
 				84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */,
-				84A0CD53260AF8C8004CD91B /* TrackMobilePushClick.swift */,
+				84A0CD53260AF8C8004CD91B /* TrackClick.swift */,
 			);
 			path = Bodies;
 			sourceTree = "<group>";
@@ -864,7 +864,7 @@
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
 				846AD34E25FF6B8900A59E86 /* DeliveredNotification+Payload.swift in Sources */,
-				84A0CD54260AF8C8004CD91B /* TrackMobilePushClick.swift in Sources */,
+				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
