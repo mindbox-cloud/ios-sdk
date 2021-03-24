@@ -18,7 +18,7 @@ Pod::Spec.new do |spec|
 
   spec.platform     = :ios, "10.0"
 
-  spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => "#{spec.version}" }
+  spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => {spec.version} }
 
   spec.source_files  = "MindBox/**/*.{swift}"
 
