@@ -45,6 +45,8 @@ class MockInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
+    
+    var isFailureNetworkFetcher: Bool = false
 
     init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher) {
         self.persistenceStorage = persistenceStorage
@@ -52,7 +54,7 @@ class MockInstanceFactory: InstanceFactory {
     }
 
     func makeNetworkFetcher() -> NetworkFetcher {
-        return MockNetworkFetcher()
+        return isFailureNetworkFetcher ? MockFailureNetworkFetcher() : MockNetworkFetcher()
     }
 
     func makeEventRepository() -> EventRepository {

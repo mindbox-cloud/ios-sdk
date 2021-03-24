@@ -47,7 +47,8 @@ class MBEventRepository: EventRepository {
     
     private func makeRoute(wrapper: EventWrapper) -> Route {
         switch wrapper.event.type {
-        case .pushDelivered:
+        case .pushDelivered,
+             .trackMobilePushClick:
              return EventRoute.pushDeleveried(wrapper)
         case .installed,
              .infoUpdated:
