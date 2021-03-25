@@ -119,9 +119,7 @@ final class DeliveredNotificationManager {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
         }
-        if userInfo[mindBoxIdentifireKey] != nil {
-            return userInfo
-        } else if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
             return innerUserInfo
         } else {
             return userInfo
