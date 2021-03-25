@@ -10,6 +10,8 @@ import Foundation
 
 class MBPersistenceStorage: PersistenceStorage {
     
+    var onDidChange: (() -> Void)?
+
     // MARK: - Dependency
     static var defaults: UserDefaults = .standard
     
@@ -118,6 +120,7 @@ class MBPersistenceStorage: PersistenceStorage {
         tasks.append(value)
         MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey:"backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
+        onDidChange?()
     }
     
     func storeToFileBackgroundExecution() {
@@ -140,44 +143,67 @@ class MBPersistenceStorage: PersistenceStorage {
     }
     
     
-    // MARK: - Init
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
     }
 
-    // MARK: - IMBMBPersistenceStorage
     @UserDefaultsWrapper(key: .deviceUUID, defaultValue: nil)
     var deviceUUID: String? {
         didSet {
             configuration?.deviceUUID = deviceUUID
+            onDidChange?()
         }
     }
 
     @UserDefaultsWrapper(key: .installationId, defaultValue: nil)
-    var installationId: String?
+    var installationId: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     @UserDefaultsWrapper(key: .apnsToken, defaultValue: nil)
     var apnsToken: String? {
         didSet {
             apnsTokenSaveDate = Date()
+            onDidChange?()
         }
     }
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
-    private var apnsTokenSaveDateString: String?
+    private var apnsTokenSaveDateString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     @UserDefaultsWrapper(key: .deprecatedEventsRemoveDate, defaultValue: nil)
-    private var deprecatedEventsRemoveDateString: String?
+    private var deprecatedEventsRemoveDateString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     @UserDefaultsWrapper(key: .configurationData, defaultValue: nil)
-    private var configurationData: Data?
+    private var configurationData: Data? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: nil)
-    var isNotificationsEnabled: Bool?
+    var isNotificationsEnabled: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     @UserDefaultsWrapper(key: .installationData, defaultValue: nil)
-    private var installationDateString: String?
-
+    private var installationDateString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     func reset() {
         installationDate = nil
@@ -195,8 +221,6 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
     }
-
-    // MARK: - Private
 
 }
 

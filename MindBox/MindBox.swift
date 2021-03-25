@@ -14,14 +14,14 @@ public class MindBox {
     /// Singleton value for interaction with sdk
     /// - Warning: All calls which use DI containers objects, mast go through `MindBox.shared`
     public static let shared = MindBox()
-        
+    
     // MARK: - Elements
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
-    
+        
     /// Internal process controller
     var coreController: CoreController?
     var container: DependencyContainer? 
@@ -42,22 +42,35 @@ public class MindBox {
         coreController?.initialization(configuration: configuration)
     }
     
-    /// Method to get deviceUUID used for first initialization
-    /// - Throws: MindBox.Errors.invalidAccess until first initialization did success
-    public func deviceUUID() throws -> String {
+    private var observeTokens: [UUID] = []
+            
+    public func deviceUUID(_ completion: @escaping (String) -> Void) {
         if let value = persistenceStorage?.deviceUUID {
-            return value
+            completion(value)
         } else {
-            throw MindBox.Errors.invalidAccess(
-                reason: "deviceUUID unavailable until first initialization did success",
-                suggestion: "Try later"
-            )
+            observe(value: self.persistenceStorage?.deviceUUID, with: completion)
         }
     }
     
     /// - Returns: apnsToken sent to the analytics system
-    public var apnsToken: String? {
-        persistenceStorage?.apnsToken
+    public func apnsToken(_ completion: @escaping (String) -> Void) {
+        if let value = persistenceStorage?.apnsToken {
+            completion(value)
+        } else {
+            observe(value: self.persistenceStorage?.apnsToken, with: completion)
+        }
+    }
+    
+    private func observe(value: @escaping @autoclosure () -> String?, with completion: @escaping (String)-> Void) {
+        let token = UUID()
+        persistenceStorage?.onDidChange = { [weak self] in
+            guard let value = value(), let index = self?.observeTokens.firstIndex(of: token) else {
+                return
+            }
+            self?.observeTokens.remove(at: index)
+            completion(value)
+        }
+        observeTokens.append(token)
     }
     
     /// - Returns: version from bundle
