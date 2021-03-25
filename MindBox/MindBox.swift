@@ -117,8 +117,8 @@ public class MindBox {
         }
     }
     
-    public func pushClicked(uniqueKey: String, buttonUnicKey: String? = nil) {
-        let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUnicKey)
+    public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
+        let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
         let event = Event(type: .trackClick, body: BodyEncoder(encodable: trackMobilePushClick).body)
         try? databaseRepository?.create(event: event)
     }

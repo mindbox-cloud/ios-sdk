@@ -50,7 +50,7 @@ final class DeliveredNotificationManager {
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
-        let userInfo = try getUserInfo(form: request)
+        let userInfo = try getUserInfo(from: request)
         guard userInfo[mindBoxIdentifireKey] != nil else {
             Log("Push notification is not from MindBox")
                 .inChanel(.notification).withType(.info).make()
@@ -115,7 +115,7 @@ final class DeliveredNotificationManager {
         }
     }
     
-    private func getUserInfo(form request: UNNotificationRequest) throws -> [AnyHashable: Any] {
+    private func getUserInfo(from request: UNNotificationRequest) throws -> [AnyHashable: Any] {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
         }
