@@ -44,7 +44,7 @@ public class MindBox {
     
     private var observeTokens: [UUID] = []
             
-    public func deviceUUID(_ completion: @escaping (String) -> Void) {
+    public func getDeviceUUID(_ completion: @escaping (String) -> Void) {
         if let value = persistenceStorage?.deviceUUID {
             completion(value)
         } else {
@@ -53,7 +53,7 @@ public class MindBox {
     }
     
     /// - Returns: apnsToken sent to the analytics system
-    public func apnsToken(_ completion: @escaping (String) -> Void) {
+    public func getAPNSToken(_ completion: @escaping (String) -> Void) {
         if let value = persistenceStorage?.apnsToken {
             completion(value)
         } else {
