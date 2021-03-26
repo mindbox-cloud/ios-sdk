@@ -9,7 +9,7 @@
 import Foundation
 
 protocol PersistenceStorage: class {
-    
+        
     var installationDate: Date? { get set }
 
     var deviceUUID: String? { get set }
@@ -37,5 +37,7 @@ protocol PersistenceStorage: class {
     func resetBackgroundExecutions()
     
     func storeToFileBackgroundExecution()
-
+    
+    var onDidChange: (() -> Void)? { get set }
+    
 }

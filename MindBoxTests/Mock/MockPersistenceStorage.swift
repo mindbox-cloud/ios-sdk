@@ -11,6 +11,8 @@ import Foundation
 
 class MockPersistenceStorage: PersistenceStorage {
     
+    var onDidChange: (() -> Void)?
+    
     init() {
 
     }
@@ -18,10 +20,15 @@ class MockPersistenceStorage: PersistenceStorage {
     var deviceUUID: String? {
         didSet {
             configuration?.deviceUUID = deviceUUID
+            onDidChange?()
         }
     }
 
-    var installationId: String?
+    var installationId: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     var isInstalled: Bool {
         installationDate != nil
@@ -33,17 +40,41 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
-    var apnsTokenSaveDate: Date?
+    var apnsTokenSaveDate: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
-    var deprecatedEventsRemoveDate: Date?
+    var deprecatedEventsRemoveDate: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
-    var configuration: MBConfiguration?
+    var configuration: MBConfiguration? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
-    var backgroundExecutions: [BackgroudExecution] = []
+    var backgroundExecutions: [BackgroudExecution] = [] {
+        didSet {
+            onDidChange?()
+        }
+    }
     
-    var isNotificationsEnabled: Bool?
+    var isNotificationsEnabled: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
-    var installationDate: Date?
+    var installationDate: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     func reset() {
         installationDate = nil

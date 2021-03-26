@@ -42,14 +42,22 @@ class MindBoxTests: XCTestCase {
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
         XCTAssertTrue(container.persistenceStorage.isInstalled)
-        let deviceUUID =  try! MindBox.shared.deviceUUID()
+        var deviceUUID: String?
+        MindBox.shared.deviceUUID { (value) in
+            deviceUUID = value
+        }
+        XCTAssertNotNil(deviceUUID)
     	//        //        //        //        //        //		//        //        //        //        //        //
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
-        let deviceUUID2 = try! MindBox.shared.deviceUUID()
+        var deviceUUID2: String?
+        MindBox.shared.deviceUUID { (value) in
+            deviceUUID2 = value
+        }
+        XCTAssertNotNil(deviceUUID2)
         XCTAssert(deviceUUID == deviceUUID2)
 
         container.persistenceStorage.reset()
