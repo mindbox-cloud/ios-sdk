@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 import BackgroundTasks
 
+
 @available(iOS 13.0, *)
 class BGTaskManager: BackgroundTaskManagerType {
     
@@ -83,7 +84,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 2 * 60) // Fetch no earlier than 2 minute from now
+        request.earliestBeginDate = Date(timeIntervalSinceNow: Constants.Background.refreshTaskInterval)
         do {
             try BGTaskScheduler.shared.submit(request)
             Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")
@@ -116,7 +117,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
-        guard Date() > deprecatedEventsRemoveDate + TimeInterval(7 * 24 * 60 * 60) else {
+        guard Date() > deprecatedEventsRemoveDate + Constants.Background.removeDeprecatedEventsInterval else {
             return
         }
         guard let count = try? databaseRepository.countDeprecatedEvents() else {

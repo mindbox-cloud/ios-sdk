@@ -79,7 +79,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
-        guard Date() > deprecatedEventsRemoveDate + TimeInterval(7 * 24 * 60 * 60) else {
+        guard Date() > deprecatedEventsRemoveDate + Constants.Background.removeDeprecatedEventsInterval else {
             return
         }
         guard let count = try? databaseRepository.countDeprecatedEvents() else {
@@ -114,6 +114,8 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         self.backgroundTaskID = .invalid
     }
     
+    private typealias CompletionHandler = (UIBackgroundFetchResult) -> Void
+    
     func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         guard let gdManager = gdManager else {
             completionHandler(.noData)
@@ -129,46 +131,58 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         persistenceStorage.setBackgroundExecution(backgroudExecution)
         switch gdManager.state {
         case .idle:
-            Log("completionHandler(.noData): idle")
-                .inChanel(.background).withType(.info).make()
-            let backgroudExecution = BackgroudExecution(
-                taskID: taskID,
-                taskName: "performFetchWithCompletionHandler",
-                dateString: Date().fullToString(),
-                info: "GuaranteedDeliveryManager.State.idle\ncompletionHandler(.noData)"
-            )
-            persistenceStorage.setBackgroundExecution(backgroudExecution)
-            completionHandler(.noData)
+            idle(taskID: taskID, completionHandler: completionHandler)
         case .delivering:
-            observationToken = gdManager.observe(\.stateObserver, options: [.new]) { [weak self] (observed, change) in
-                Log("change.newValue \(String(describing: change.newValue))")
-                    .inChanel(.background).withType(.info).make()
-                let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
-                if change.newValue == idleString {
-                    Log("completionHandler(.newData): delivering")
-                        .inChanel(.background).withType(.info).make()
-                    let backgroudExecution = BackgroudExecution(
-                        taskID: taskID,
-                        taskName: "performFetchWithCompletionHandler",
-                        dateString: Date().fullToString(),
-                        info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
-                    )
-                    self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
-                    completionHandler(.newData)
-                }
-            }
+            delivering(taskID: taskID, completionHandler: completionHandler)
         case .waitingForRetry:
-            Log("completionHandler(.newData): waitingForRetry")
-                .inChanel(.background).withType(.info).make()
-            let backgroudExecution = BackgroudExecution(
-                taskID: taskID,
-                taskName: "performFetchWithCompletionHandler",
-                dateString: Date().fullToString(),
-                info: "GuaranteedDeliveryManager.State.waitingForRetry\ncompletionHandler(.newData)"
-            )
-            persistenceStorage.setBackgroundExecution(backgroudExecution)
-            completionHandler(.newData)
+            waitingForRetry(taskID: taskID, completionHandler: completionHandler)
         }
+    }
+    
+    private func idle(taskID: String, completionHandler: @escaping CompletionHandler) {
+        Log("completionHandler(.noData): idle")
+            .inChanel(.background).withType(.info).make()
+        let backgroudExecution = BackgroudExecution(
+            taskID: taskID,
+            taskName: "performFetchWithCompletionHandler",
+            dateString: Date().fullToString(),
+            info: "GuaranteedDeliveryManager.State.idle\ncompletionHandler(.noData)"
+        )
+        persistenceStorage.setBackgroundExecution(backgroudExecution)
+        completionHandler(.noData)
+    }
+    
+    private func delivering(taskID: String, completionHandler: @escaping CompletionHandler) {
+        observationToken = gdManager?.observe(\.stateObserver, options: [.new]) { [weak self] (observed, change) in
+            Log("change.newValue \(String(describing: change.newValue))")
+                .inChanel(.background).withType(.info).make()
+            let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
+            if change.newValue == idleString {
+                Log("completionHandler(.newData): delivering")
+                    .inChanel(.background).withType(.info).make()
+                let backgroudExecution = BackgroudExecution(
+                    taskID: taskID,
+                    taskName: "performFetchWithCompletionHandler",
+                    dateString: Date().fullToString(),
+                    info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
+                )
+                self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
+                completionHandler(.newData)
+            }
+        }
+    }
+    
+    private func waitingForRetry(taskID: String, completionHandler: @escaping CompletionHandler) {
+        Log("completionHandler(.newData): waitingForRetry")
+            .inChanel(.background).withType(.info).make()
+        let backgroudExecution = BackgroudExecution(
+            taskID: taskID,
+            taskName: "performFetchWithCompletionHandler",
+            dateString: Date().fullToString(),
+            info: "GuaranteedDeliveryManager.State.waitingForRetry\ncompletionHandler(.newData)"
+        )
+        persistenceStorage.setBackgroundExecution(backgroudExecution)
+        completionHandler(.newData)
     }
     
 }

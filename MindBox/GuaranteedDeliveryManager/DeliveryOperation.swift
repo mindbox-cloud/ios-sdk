@@ -29,9 +29,15 @@ class DeliveryOperation: Operation {
             return _isFinished
         }
         set {
-            willChangeValue(for: \.isFinished)
-            _isFinished = newValue
-            didChangeValue(for: \.isFinished)
+            if #available(iOS 11.0, *) {
+                willChangeValue(for: \.isFinished)
+                _isFinished = newValue
+                didChangeValue(for: \.isFinished)
+            } else {
+                willChangeValue(forKey: "isFinished")
+                _isFinished = newValue
+                didChangeValue(forKey: "isFinished")
+            }
         }
     }
     

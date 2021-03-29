@@ -15,6 +15,8 @@ class MBPersistenceStorage: PersistenceStorage {
     // MARK: - Dependency
     static var defaults: UserDefaults = .standard
     
+    private let dateFormatter = DateFormatter()
+    
     // MARK: - Property
     var isInstalled: Bool {
         installationDate != nil
@@ -22,21 +24,19 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var installationDate: Date? {
         get {
-            let dateFormater = DateFormatter()
-            dateFormater.dateStyle = .full
-            dateFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let dateString = installationDateString {
-                return dateFormater.date(from: dateString)
+                return dateFormatter.date(from: dateString)
             } else {
                 return nil
             }
         }
         set {
-            let dataFormater = DateFormatter()
-            dataFormater.dateStyle = .full
-            dataFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let date = newValue {
-                installationDateString = dataFormater.string(from: date)
+                installationDateString = dateFormatter.string(from: date)
             } else {
                 installationDateString = nil
             }
@@ -45,21 +45,19 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var apnsTokenSaveDate: Date? {
         get {
-            let dateFormater = DateFormatter()
-            dateFormater.dateStyle = .full
-            dateFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let dateString = apnsTokenSaveDateString {
-                return dateFormater.date(from: dateString)
+                return dateFormatter.date(from: dateString)
             } else {
                 return nil
             }
         }
         set {
-            let dataFormater = DateFormatter()
-            dataFormater.dateStyle = .full
-            dataFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let date = newValue {
-                apnsTokenSaveDateString = dataFormater.string(from: date)
+                apnsTokenSaveDateString = dateFormatter.string(from: date)
             } else {
                 apnsTokenSaveDateString = nil
             }
@@ -68,21 +66,19 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var deprecatedEventsRemoveDate: Date? {
         get {
-            let dateFormater = DateFormatter()
-            dateFormater.dateStyle = .full
-            dateFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let dateString = deprecatedEventsRemoveDateString {
-                return dateFormater.date(from: dateString)
+                return dateFormatter.date(from: dateString)
             } else {
                 return nil
             }
         }
         set {
-            let dataFormater = DateFormatter()
-            dataFormater.dateStyle = .full
-            dataFormater.timeStyle = .full
+            dateFormatter.dateStyle = .full
+            dateFormatter.timeStyle = .full
             if let date = newValue {
-                deprecatedEventsRemoveDateString = dataFormater.string(from: date)
+                deprecatedEventsRemoveDateString = dateFormatter.string(from: date)
             } else {
                 deprecatedEventsRemoveDateString = nil
             }

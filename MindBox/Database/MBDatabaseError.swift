@@ -19,7 +19,7 @@ public enum MBDatabaseError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unableCreateDatabaseModel:
-            return "Unable to create MBDatabase.xcdatamodel"
+            return "Unable to create \(Constants.Database.mombName).xcdatamodel"
         case .unableCreateManagedObjectModel(let url):
             return "Unable to create NSManagedObjectModel from url: \(url)"
         case .unableToLoadPeristentStore(let localizedDescription):

@@ -25,7 +25,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         return bundle
     }()
     
-    var appGroup: String {
+    var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
             fatalError("CFBundleShortVersionString not found for host app")
         }

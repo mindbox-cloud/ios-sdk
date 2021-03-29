@@ -30,7 +30,7 @@ final class TestDependencyProvider: DependencyContainer {
         )
         databaseLoader = try DataBaseLoader()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
-        databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
+        databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,

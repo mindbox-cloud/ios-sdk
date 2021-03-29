@@ -22,12 +22,12 @@ final class DependencyProvider: DependencyContainer {
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
-        persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.appGroup)!)
+        persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
         instanceFactory = MBInstanceFactory(
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: utilitiesFetcher
         )
-        databaseLoader = try DataBaseLoader(appGroup: utilitiesFetcher.appGroup)
+        databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
         guaranteedDeliveryManager = GuaranteedDeliveryManager(

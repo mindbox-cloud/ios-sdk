@@ -13,7 +13,7 @@ import CoreData
 
 extension CDEvent {
     
-    public class func fetchRequest(retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
+    public class func fetchRequest(lifeLimitDate: Date?, retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         var subpredicates: [NSPredicate] = []
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
@@ -50,7 +50,7 @@ extension CDEvent {
         return request
     }
     
-    public class func countEventsFetchRequest() -> NSFetchRequest<CDEvent> {
+    public class func countEventsFetchRequest(lifeLimitDate: Date?) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
             request.predicate = NSPredicate(
@@ -61,20 +61,12 @@ extension CDEvent {
         return request
     }
     
-    public class func deprecatedEventsFetchRequest() -> NSFetchRequest<CDEvent> {
+    public class func deprecatedEventsFetchRequest(lifeLimitDate: Date?) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
             request.predicate = NSPredicate(format: "%K <= %@", argumentArray: [#keyPath(CDEvent.timestamp), monthLimitDateStamp])
         }
         return request
-    }
-    
-    static var lifeLimitDate: Date? {
-        let calendar: Calendar = .current
-        guard let monthLimitDate = calendar.date(byAdding: .month, value: -6, to: Date()) else {
-            return nil
-        }
-        return monthLimitDate
     }
     
     @NSManaged public var body: String?
