@@ -16,6 +16,8 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install Bundle
       run: bundle install
+    - name: Pods setup
+      run: pod install
     - name: Run unit tests
       run: CI=true bundle exec fastlane unitTestLane
 
@@ -25,5 +27,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install Bundle
       run: bundle install
+    - name: Pods setup
+      run: pod install
     - name: Run build
       run: CI=true bundle exec fastlane buildLane
