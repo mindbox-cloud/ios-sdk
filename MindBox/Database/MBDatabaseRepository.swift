@@ -19,6 +19,14 @@ class MBDatabaseRepository {
     
     var onObjectsDidChange: (() -> Void)?
     
+    var lifeLimitDate: Date? {
+        let calendar: Calendar = .current
+        guard let monthLimitDate = calendar.date(byAdding: .month, value: -6, to: Date()) else {
+            return nil
+        }
+        return monthLimitDate
+    }
+    
     private(set) var count: Int = 0 {
         didSet {
             Log("Count didSet with value: \(count)")
@@ -57,7 +65,7 @@ class MBDatabaseRepository {
             entity.body = event.body
             Log("Creating event with transactionId: \(event.transactionId)")
                 .inChanel(.database).withType(.info).make()
-            try saveContext()
+            try saveContext(context)
             count += 1
         }
     }
@@ -89,7 +97,7 @@ class MBDatabaseRepository {
                 return
             }
             entity.retryTimestamp = Date().timeIntervalSince1970
-            try saveContext()
+            try saveContext(context)
         }
     }
     
@@ -104,7 +112,7 @@ class MBDatabaseRepository {
                 return
             }
             context.delete(entity)
-            try saveContext()
+            try saveContext(context)
             count -= 1
         }
     }
@@ -113,7 +121,7 @@ class MBDatabaseRepository {
         try context.performAndWait {
             Log("Quering events with fetchLimit: \(fetchLimit)")
                 .inChanel(.database).withType(.info).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(retryDeadLine: retryDeadline)
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
             let events = try context.fetch(request)
             guard !events.isEmpty else {
@@ -138,7 +146,7 @@ class MBDatabaseRepository {
     }
     
     func removeDeprecatedEventsIfNeeded() throws {
-        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
+        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         let context = persistentContainer.newBackgroundContext()
         try context.performAndWait {
             Log("Finding deprecated elements")
@@ -155,13 +163,13 @@ class MBDatabaseRepository {
                 context.delete($0)
                 count -= 1
             }
-            try saveContext()
+            try saveContext(context)
         }
     }
     
     func countDeprecatedEvents() throws -> Int {
         let context = persistentContainer.newBackgroundContext()
-        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest()
+        let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         return try context.performAndWait {
             Log("Counting deprecated elements")
                 .inChanel(.database).withType(.info).make()
@@ -183,14 +191,14 @@ class MBDatabaseRepository {
         let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         try context.performAndWait {
             try context.execute(eraseRequest)
-            try saveContext()
+            try saveContext(context)
             try countEvents()
         }
     }
     
     @discardableResult
     func countEvents() throws -> Int {
-        let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
+        let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
                 .inChanel(.database).withType(.info).make()
@@ -211,7 +219,7 @@ class MBDatabaseRepository {
     }
     
     private func cleanUp() throws {
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest()
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate)
         request.fetchLimit = 1
         
         try context.performAndWait {
@@ -225,12 +233,12 @@ class MBDatabaseRepository {
             Log("Deleted first element with transactionId: \(String(describing: entity.transactionId))")
                 .inChanel(.database).withType(.info).make()
             context.delete(entity)
-            try saveContext()
+            try saveContext(context)
             count -= 1
         }
     }
     
-    private func saveContext() throws {
+    private func saveContext(_ context: NSManagedObjectContext) throws {
         guard context.hasChanges else {
             return
         }

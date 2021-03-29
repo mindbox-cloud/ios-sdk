@@ -43,7 +43,7 @@ class MindBoxTests: XCTestCase {
         coreController.initialization(configuration: configuration1)
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         var deviceUUID: String?
-        MindBox.shared.deviceUUID { (value) in
+        MindBox.shared.getDeviceUUID { (value) in
             deviceUUID = value
         }
         XCTAssertNotNil(deviceUUID)
@@ -54,7 +54,7 @@ class MindBoxTests: XCTestCase {
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
         var deviceUUID2: String?
-        MindBox.shared.deviceUUID { (value) in
+        MindBox.shared.getDeviceUUID { (value) in
             deviceUUID2 = value
         }
         XCTAssertNotNil(deviceUUID2)
