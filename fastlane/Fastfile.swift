@@ -32,7 +32,8 @@ class Fastfile: LaneFile {
                  onlyTesting: ["MindBoxTests"],
                  derivedDataPath: "derivedData",
                  disableConcurrentTesting: true,
-                 testWithoutBuilding: false
+                 testWithoutBuilding: false,
+                 xcargs: "CI=true"
             )
     }
 
