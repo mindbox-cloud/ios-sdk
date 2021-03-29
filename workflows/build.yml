@@ -1,0 +1,29 @@
+name: SDK CI
+
+on:
+  push:
+    branches-ignore:
+      - 'master'
+      - 'develop'
+      - 'release-*'
+    tags-ignore:
+      - '*'
+
+jobs:
+  unit:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Bundle
+      run: bundle install
+    - name: Run swiftlint
+      run: CI=true bundle exec fastlane unitTestLane
+
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Bundle
+      run: bundle install
+    - name: Run swiftlint
+      run: CI=true bundle exec fastlane buildLane
