@@ -9,19 +9,6 @@
 import Foundation
 import CoreData
 
-class MBPersistentContainer: NSPersistentContainer {
-    
-    static var applicationGroupIdentifier: String? = nil
-        
-    override class func defaultDirectoryURL() -> URL {
-        guard let applicationGroupIdentifier = applicationGroupIdentifier else {
-            return super.defaultDirectoryURL()
-        }
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupIdentifier) ?? super.defaultDirectoryURL()
-    }
-    
-}
-
 class DataBaseLoader {
     
     private let persistentStoreDescriptions: [NSPersistentStoreDescription]?
@@ -30,10 +17,10 @@ class DataBaseLoader {
     var loadPersistentStoresError: Error?
     var persistentStoreURL: URL?
     
-    init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, appGroup: String? = nil) throws {
-        MBPersistentContainer.applicationGroupIdentifier = appGroup
+    init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
+        MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
         let bundle = Bundle(for: DataBaseLoader.self)
-        let momdName = "MBDatabase"
+        let momdName = Constants.Database.mombName
         guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
         }

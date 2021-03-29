@@ -22,7 +22,7 @@ class CoreController {
         if !persistenceStorage.isInstalled {
             primaryInitialization(with: configuration)
         } else {
-            repeatedInitialization()
+            repeatInitialization()
         }
         guaranteedDeliveryManager.canScheduleOperations = true
     }
@@ -31,7 +31,7 @@ class CoreController {
         notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
             if self.persistenceStorage.isInstalled {
-                self.infoUpdated(
+                self.updateInfo(
                     apnsToken: token,
                     isNotificationsEnabled: isNotificationsEnabled
                 )
@@ -49,7 +49,7 @@ class CoreController {
                 return
             }
             if self.persistenceStorage.isInstalled {
-                self.infoUpdated(
+                self.updateInfo(
                     apnsToken: self.persistenceStorage.apnsToken,
                     isNotificationsEnabled: isNotificationsEnabled
                 )
@@ -77,7 +77,7 @@ class CoreController {
         }
     }
     
-    private func repeatedInitialization() {
+    private func repeatInitialization() {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Log("Unable to find deviceUUID in persistenceStorage")
                 .inChanel(.system).withType(.error).make()
@@ -117,7 +117,7 @@ class CoreController {
         }
     }
     
-    private func infoUpdated(apnsToken: String?, isNotificationsEnabled: Bool) {
+    private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
             isNotificationsEnabled: isNotificationsEnabled

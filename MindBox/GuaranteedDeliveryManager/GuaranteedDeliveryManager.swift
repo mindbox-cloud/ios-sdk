@@ -136,7 +136,7 @@ final class GuaranteedDeliveryManager: NSObject {
             .inChanel(.delivery).withType(.info).make()
         delivery.forEach {
             completion.addDependency($0)
-            $0.onCompleted = onCompletedEvent
+            $0.onCompleted = onCompletedEvent // TODO: - remove
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
