@@ -117,6 +117,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     private typealias CompletionHandler = (UIBackgroundFetchResult) -> Void
     
     func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        MindBox.shared.coreController?.checkNotificationStatus()
         guard let gdManager = gdManager else {
             completionHandler(.noData)
             return

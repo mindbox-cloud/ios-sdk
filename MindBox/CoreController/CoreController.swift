@@ -147,6 +147,14 @@ class CoreController {
         self.notificationStatusProvider = notificationStatusProvider
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: nil) { [weak self] (_) in
+            Log("UIApplication.didBecomeActiveNotification")
+                .inChanel(.system).withType(.info).make()
+            self?.checkNotificationStatus()
+        }
     }
     
 }
