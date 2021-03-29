@@ -171,6 +171,7 @@ class BGTaskManager: BackgroundTaskManagerType {
                 self.appGDRefreshTask = nil
             }
         }
+        MindBox.shared.coreController?.checkNotificationStatus()
         Log("GDAppRefresh task started")
             .inChanel(.background).withType(.info).make()
     }
@@ -205,6 +206,7 @@ class BGTaskManager: BackgroundTaskManagerType {
                 self.appGDProcessingTask = nil
             }
         }
+        MindBox.shared.coreController?.checkNotificationStatus()
         Log("GDAppProcessing task started")
             .inChanel(.background).withType(.info).make()
     }
@@ -232,6 +234,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             queue.cancelAllOperations()
         }
         queue.addOperation(operation)
+        MindBox.shared.coreController?.checkNotificationStatus()
         Log("removeDeprecatedEventsProcessing task started")
             .inChanel(.background).withType(.info).make()
     }
