@@ -17,7 +17,7 @@ protocol DependencyContainer {
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
     var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
     var instanceFactory: InstanceFactory { get }
-    static var logger: ILogger { get }
+    static var logger: Logger { get }
     
 }
 

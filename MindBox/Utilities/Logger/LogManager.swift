@@ -8,27 +8,6 @@
 
 import Foundation
 
-/// Enum which maps an appropiate symbol which added as prefix for each log message
-///
-/// - error: Log type error
-/// - info: Log type info
-/// - debug: Log type debug
-/// - verbose: Log type verbose
-/// - warning: Log type warning
-/// - severe: Log type severe
-public enum LogType: String {
-    case error = "[‼️]"
-    case info = "[ℹ️]"
-    case debug = "[💬]"
-    case verbose = "[🔬]"
-    case warning = "[⚠️]"
-    case severe = "[🔥]"
-}
-
-enum ExecutionMethod {
-    case sync(lock: NSRecursiveLock)
-    case async(queue: DispatchQueue)
-}
 
 internal extension Date {
     
@@ -54,15 +33,11 @@ struct Log {
         return formatter
     }
 
-    private var isLoggingEnabled: Bool {
-        return true
-    }
-
     typealias Meta = (filename: String, line: Int, funcName: String)
     var text: String = ""
     var date: Date?
-    var type: LogType?
-    var chanel: MBLoggerChanels = .system
+    var level: LogLevel = .debug
+    var category: LogCategory = .general
     var meta: Meta?
     var borders: (start: String, end: String) = ("[", "\n]")
 
@@ -75,13 +50,9 @@ struct Log {
     }
 
     func make() {
-        guard isLoggingEnabled else { return }
-
         var header = ""
-        header += chanel.rawValue + " "
-        if let type = type {
-            header += type.rawValue + " "
-        }
+        header += category.emoji + " "
+        header += level.emoji + " "
         if let date = date {
             header += date.toString() + " "
         } else {
@@ -93,15 +64,15 @@ struct Log {
         }
 
         DependencyProvider.logger.log(
-            inChanel: chanel,
             text: borders.start + header + "\n" + text + borders.end,
-            level: type
+            category: category,
+            level: level
         )
     }
 
-    func inChanel(_ chanel: MBLoggerChanels) -> Log {
+    func category(_ category: LogCategory) -> Log {
         var ret = self
-        ret.chanel = chanel
+        ret.category = category
         return ret
     }
 
@@ -111,9 +82,9 @@ struct Log {
         return ret
     }
 
-    func withType(_ type: LogType) -> Log {
+    func level(_ type: LogLevel) -> Log {
         var ret = self
-        ret.type = type
+        ret.level = type
         return ret
     }
 
@@ -146,7 +117,8 @@ struct Log {
         }
 
         text = "LogManager: \n--- Response ---\n[\(Date().toString())] \n\(log) \n--- End ---\n"
-        chanel = .network
+        category = .network
+        level = .debug
     }
 
     init(error: ErrorModel) {
@@ -171,8 +143,8 @@ struct Log {
         if log.isEmpty { return }
 
         text = "LogManager: \n--- Error ---\n[\(Date().toString())] \(log) \n--- End ---\n"
-        chanel = .network
-        type = .error
+        category = .network
+        level = .error
     }
 
     init(request: URLRequest, httpAdditionalHeaders: [AnyHashable: Any]? = nil) {
@@ -206,8 +178,8 @@ struct Log {
             requestLog += "\n\(bodyString)\n"
         }
         text = requestLog
-        chanel = .network
-        type = .debug
+        category = .network
+        level = .debug
         borders = ("[---------- OUT ---------->\n", "------------------------>]")
     }
 
@@ -237,14 +209,14 @@ struct Log {
             let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded"
             responseLog += "\n\(bodyString)\n"
         }
-        type = .debug
+        level = .debug
         if let error = error {
             responseLog += "\nError: \(error.localizedDescription)\n"
-            type = .error
+            level = .error
         }
         text = responseLog
 
-        chanel = .network
+        category = .network
 
         borders = ("[<---------- IN ----------\n", "<------------------------]")
     }

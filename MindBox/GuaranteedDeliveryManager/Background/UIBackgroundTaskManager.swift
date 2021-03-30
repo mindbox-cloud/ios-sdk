@@ -27,10 +27,10 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         didSet {
             if backgroundTaskID != .invalid {
                 Log("Did begin BackgroundTaskID: \(backgroundTaskID)")
-                    .inChanel(.background).withType(.info).make()
+                    .category(.background).level(.info).make()
             } else {
                 Log("Did become invalid BackgroundTaskID")
-                    .inChanel(.background).withType(.info).make()
+                    .category(.background).level(.info).make()
             }
         }
     }
@@ -40,11 +40,11 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     func applicationDidEnterBackground() {
         guard backgroundTaskID == .invalid else {
             Log("BackgroundTask already in progress. Skip call of beginBackgroundTask")
-                .inChanel(.background).withType(.info).make()
+                .category(.background).level(.info).make()
             return
         }
         Log("Beginnig BackgroundTask")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
         beginBackgroundTask()
     }
     
@@ -58,14 +58,14 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             expirationHandler: { [weak self] in
                 guard let self = self else { return }
                 Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
-                    .inChanel(.background).withType(.warning).make()
+                    .category(.background).level(.warning).make()
                 self.removingDeprecatedEventsInProgress = false
                 self.endBackgroundTask(success: true)
                 Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
-                    .inChanel(.background).withType(.info).make()
+                    .category(.background).level(.info).make()
             })
         Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
         
         if #available(iOS 13.0, *) {
             // Do nothing cause BGProcessingTask will be called
@@ -102,14 +102,14 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         removingDeprecatedEventsInProgress = true
         queue.addOperation(operation)
         Log("removeDeprecatedEventsProcessing task started")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
     }
     
     func endBackgroundTask(success: Bool) {
         guard backgroundTaskID != .invalid else { return }
         guard !removingDeprecatedEventsInProgress else { return }
         Log("Ending BackgroundTaskID \(backgroundTaskID)")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
         UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
         self.backgroundTaskID = .invalid
     }
@@ -142,7 +142,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
     private func idle(taskID: String, completionHandler: @escaping CompletionHandler) {
         Log("completionHandler(.noData): idle")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",
@@ -156,11 +156,11 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     private func delivering(taskID: String, completionHandler: @escaping CompletionHandler) {
         observationToken = gdManager?.observe(\.stateObserver, options: [.new]) { [weak self] (observed, change) in
             Log("change.newValue \(String(describing: change.newValue))")
-                .inChanel(.background).withType(.info).make()
+                .category(.background).level(.info).make()
             let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
             if change.newValue == idleString {
                 Log("completionHandler(.newData): delivering")
-                    .inChanel(.background).withType(.info).make()
+                    .category(.background).level(.info).make()
                 let backgroudExecution = BackgroudExecution(
                     taskID: taskID,
                     taskName: "performFetchWithCompletionHandler",
@@ -175,7 +175,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     
     private func waitingForRetry(taskID: String, completionHandler: @escaping CompletionHandler) {
         Log("completionHandler(.newData): waitingForRetry")
-            .inChanel(.background).withType(.info).make()
+            .category(.background).level(.info).make()
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",

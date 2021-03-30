@@ -19,7 +19,7 @@ final class TestDependencyProvider: DependencyContainer {
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let instanceFactory: InstanceFactory
-    static let logger: ILogger = MBLogger()
+    static let logger: LoggerType = MBLogger()
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()

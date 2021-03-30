@@ -46,20 +46,20 @@ class DeliveryOperation: Operation {
             return
         }
         Log("Sending event with transactionId: \(event.transactionId)")
-            .inChanel(.delivery).withType(.info).make()
+            .category(.delivery).level(.info).make()
         eventRepository.send(event: event) { [weak self] (result) in
             guard let self = self else { return }
             switch result {
             case .success:
                 self.onCompleted?(self.event, nil)
                 Log("Did send event with transactionId: \(self.event.transactionId)")
-                    .inChanel(.delivery).withType(.info).make()
+                    .category(.delivery).level(.info).make()
                 try? self.databaseRepository.delete(event: self.event)
                 self.isFinished = true
             case .failure(let error):
                 self.onCompleted?(self.event, error)
                 Log("Did send event failed with error: \(error.localizedDescription)")
-                    .inChanel(.delivery).withType(.error).make()
+                    .category(.delivery).level(.error).make()
                 if let statusCode = error.responseStatusCode, HTTPURLResponseStatusCodeValidator(statusCode: statusCode).isClientError {
                     try? self.databaseRepository.delete(event: self.event)
                 } else {

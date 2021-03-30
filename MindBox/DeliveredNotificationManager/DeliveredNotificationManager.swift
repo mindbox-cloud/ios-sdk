@@ -41,7 +41,7 @@ final class DeliveredNotificationManager {
     @discardableResult
     func track(uniqueKey: String) throws -> Bool {
         Log("Track started")
-            .inChanel(.notification).withType(.info).make()
+            .category(.notification).level(.info).make()
         let pushDelivered = PushDelivered(uniqKey: uniqueKey)
         let event = Event(type: .pushDelivered, body: BodyEncoder(encodable: pushDelivered).body)
         track(event: event)
@@ -53,7 +53,7 @@ final class DeliveredNotificationManager {
         let userInfo = try getUserInfo(from: request)
         guard userInfo[mindBoxIdentifireKey] != nil else {
             Log("Push notification is not from MindBox")
-                .inChanel(.notification).withType(.info).make()
+                .category(.notification).level(.info).make()
             return false
         }
         let payload = try parse(userInfo: userInfo)
@@ -64,12 +64,12 @@ final class DeliveredNotificationManager {
         switch semaphore.wait(wallTimeout: .now() + timeout) {
         case .success:
             Log("Track succeeded")
-                .inChanel(.notification).withType(.info).make()
+                .category(.notification).level(.info).make()
             return true
         case .timedOut:
             queue.cancelAllOperations()
             Log("Track time expired")
-                .inChanel(.notification).withType(.info).make()
+                .category(.notification).level(.info).make()
             return false
         }
     }
@@ -90,7 +90,7 @@ final class DeliveredNotificationManager {
             self?.semaphore.signal()
         }
         Log("Started DeliveryOperation")
-            .inChanel(.notification).withType(.info).make()
+            .category(.notification).level(.info).make()
         queue.addOperations([deliverOperation], waitUntilFinished: false)
     }
     
@@ -101,16 +101,16 @@ final class DeliveredNotificationManager {
             do {
                 let payload = try decoder.decode(Payload.self, from: data)
                 Log("Did parse payload: \(payload)")
-                    .inChanel(.notification).withType(.info).make()
+                    .category(.notification).level(.info).make()
                 return payload
             } catch {
                 Log("Did fail to decode Payload with error: \(error.localizedDescription)")
-                    .inChanel(.notification).withType(.error).make()
+                    .category(.notification).level(.error).make()
                 throw error
             }
         } catch {
             Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
-                .inChanel(.notification).withType(.error).make()
+                .category(.notification).level(.error).make()
             throw error
         }
     }
