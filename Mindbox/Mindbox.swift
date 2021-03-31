@@ -98,13 +98,13 @@ public class Mindbox {
     public func pushDelivered(request: UNNotificationRequest) -> Bool {
         coreController?.checkNotificationStatus()
         guard let container = container else { return false }
-        let traker = DeliveredNotificationManager(
+        let tracker = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
-            return try traker.track(request: request)
+            return try tracker.track(request: request)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
                 .category(.notification).level(.error).make()
@@ -116,13 +116,13 @@ public class Mindbox {
     public func pushDelivered(uniqueKey: String) -> Bool {
         coreController?.checkNotificationStatus()
         guard let container = container else { return false }
-        let traker = DeliveredNotificationManager(
+        let tracker = DeliveredNotificationManager(
             persistenceStorage: container.persistenceStorage,
             databaseRepository: container.databaseRepository,
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
-            return try traker.track(uniqueKey: uniqueKey)
+            return try tracker.track(uniqueKey: uniqueKey)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
                 .category(.notification).level(.error).make()
@@ -131,9 +131,25 @@ public class Mindbox {
     }
     
     public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
-        let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
-        let event = Event(type: .trackClick, body: BodyEncoder(encodable: trackMobilePushClick).body)
-        try? databaseRepository?.create(event: event)
+        guard let container = container else { return }
+        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
+        do {
+            try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
+        } catch {
+            Log("Track UNNotificationResponse failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+    }
+    
+    public func pushClicked(response: UNNotificationResponse) {
+        guard let container = container else { return }
+        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
+        do {
+            try tracker.track(response: response)
+        } catch {
+            Log("Track UNNotificationResponse failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
     }
     
     @available(iOS 13.0, *)

@@ -34,6 +34,9 @@
 		31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */; };
 		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
 		31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */; };
+		8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */; };
+		840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042902614C65900CA17C5 /* NotificationsPayloads.swift */; };
+		840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */; };
 		840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */; };
 		840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */; };
 		840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */; };
@@ -49,7 +52,6 @@
 		842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */; };
 		842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */; };
 		843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */; };
-		846AD34E25FF6B8900A59E86 /* DeliveredNotification+Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846AD34D25FF6B8900A59E86 /* DeliveredNotification+Payload.swift */; };
 		846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846AD39325FF7AC100A59E86 /* LogWriter.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
 		847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
@@ -147,6 +149,9 @@
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
 		67F031A4BB4C40B110009B9C /* Pods-Mindbox-MindboxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox-MindboxTests.debug.xcconfig"; path = "Target Support Files/Pods-Mindbox-MindboxTests/Pods-Mindbox-MindboxTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B1A023255C78DD260B208DD /* Pods_Mindbox_MindboxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Mindbox_MindboxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDecoder.swift; sourceTree = "<group>"; };
+		840042902614C65900CA17C5 /* NotificationsPayloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsPayloads.swift; sourceTree = "<group>"; };
+		840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickNotificationManager.swift; sourceTree = "<group>"; };
 		840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataClass.swift"; sourceTree = "<group>"; };
 		840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		840C387725CC7C4300D50183 /* NSManagedObjectContext+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObjectContext+.swift"; sourceTree = "<group>"; };
@@ -162,7 +167,6 @@
 		842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManager.swift; sourceTree = "<group>"; };
 		842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveredNotificationManagerError.swift; sourceTree = "<group>"; };
 		843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
-		846AD34D25FF6B8900A59E86 /* DeliveredNotification+Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeliveredNotification+Payload.swift"; sourceTree = "<group>"; };
 		846AD39325FF7AC100A59E86 /* LogWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
 		847F580625C88C7A00147A9A /* NetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkFetcher.swift; sourceTree = "<group>"; };
@@ -258,6 +262,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				8400429F2614CDED00CA17C5 /* ClickNotificationManager */,
 				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
 				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
 				84DEE8A625CC02AF00C98CC7 /* Database */,
@@ -352,6 +357,7 @@
 				84DC4A0525D27D1500D5D758 /* UNAuthorizationStatusProviding */,
 				84BAEF8525D5492B002E8A26 /* Body+ */,
 				84F7053A26120199009C7A07 /* Constants.swift */,
+				8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -369,6 +375,22 @@
 				1F58BD4668B2D6CB795EAFDC /* Pods-Mindbox-MindboxTests.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		8400428F2614C64900CA17C5 /* NotificationPayload */ = {
+			isa = PBXGroup;
+			children = (
+				840042902614C65900CA17C5 /* NotificationsPayloads.swift */,
+			);
+			path = NotificationPayload;
+			sourceTree = "<group>";
+		};
+		8400429F2614CDED00CA17C5 /* ClickNotificationManager */ = {
+			isa = PBXGroup;
+			children = (
+				840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */,
+			);
+			path = ClickNotificationManager;
 			sourceTree = "<group>";
 		};
 		840C386525CC1A5300D50183 /* Entities */ = {
@@ -429,7 +451,6 @@
 			isa = PBXGroup;
 			children = (
 				842DE34025E14F61002BE5C6 /* DeliveredNotificationManager.swift */,
-				846AD34D25FF6B8900A59E86 /* DeliveredNotification+Payload.swift */,
 				842DE34525E1508F002BE5C6 /* DeliveredNotificationManagerError.swift */,
 			);
 			path = DeliveredNotificationManager;
@@ -569,6 +590,7 @@
 		84CC797E25CABABB00C062BD /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				8400428F2614C64900CA17C5 /* NotificationPayload */,
 				84C65E5B25D4FB71008996FA /* Bodies */,
 				84CC797F25CABB0B00C062BD /* Event.swift */,
 			);
@@ -850,6 +872,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
+				840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */,
 				842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
@@ -859,6 +882,7 @@
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
+				840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
@@ -870,6 +894,7 @@
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
 				840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */,
 				846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */,
+				8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
@@ -881,7 +906,6 @@
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
-				846AD34E25FF6B8900A59E86 /* DeliveredNotification+Payload.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
