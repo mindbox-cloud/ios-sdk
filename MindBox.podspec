@@ -4,15 +4,15 @@ Pod::Spec.new do |spec|
 
   spec.name         = "Mindbox"
   
-  spec.version      = "0.3.0"
+  spec.version      = "0.4.0"
   
-  spec.summary      = "Mindbox"
+  spec.summary      = "Library for integration with Mindbox"
 
-  spec.description  = "It is a nice sdk to make analytics"
+  spec.description  = "This library allows you to integrate data transfer to Mindbox Marketing Cloud"
 
   spec.homepage     = "https://github.com/mindbox-moscow/ios-sdk"
 
-  spec.license      = { :type => "Mindbox", :file => "LICENSE" }
+  spec.license      = { :type => "CC BY-NC-ND 4.0", :file => "LICENSE" }
 
   spec.author       = { "Mindbox" => "ios-sdk@mindbox.ru" }
 
