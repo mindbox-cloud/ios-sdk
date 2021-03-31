@@ -14,7 +14,7 @@ struct TrackClick: Codable {
     
     let buttonUniqueKey: String?
     
-    init(messageUniqueKey: String, buttonUniqueKey: String?) {
+    init(messageUniqueKey: String, buttonUniqueKey: String? = nil) {
         self.messageUniqueKey = messageUniqueKey
         self.buttonUniqueKey = buttonUniqueKey
     }

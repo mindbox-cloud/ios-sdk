@@ -25,9 +25,7 @@ final class DeliveredNotificationManager {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private let timeout: TimeInterval = 5.0
-    
-    let mindBoxIdentifireKey = "uniqueKey"
-    
+        
     init(
         persistenceStorage: PersistenceStorage,
         databaseRepository: MBDatabaseRepository,
@@ -50,13 +48,13 @@ final class DeliveredNotificationManager {
 
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
-        let userInfo = try getUserInfo(from: request)
-        guard userInfo[mindBoxIdentifireKey] != nil else {
+        let decoder = try NotificationDecoder<NotificationsPayloads.Delivery>(request: request)
+        guard decoder.isMindboxNotification else {
             Log("Push notification is not from Mindbox")
                 .category(.notification).level(.info).make()
             return false
         }
-        let payload = try parse(userInfo: userInfo)
+        let payload = try decoder.decode()
         return try track(uniqueKey: payload.uniqueKey)
     }
     
@@ -92,38 +90,6 @@ final class DeliveredNotificationManager {
         Log("Started DeliveryOperation")
             .category(.notification).level(.info).make()
         queue.addOperations([deliverOperation], waitUntilFinished: false)
-    }
-    
-    private func parse(userInfo: [AnyHashable: Any]) throws -> Payload {
-        do {
-            let data = try JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted)
-            let decoder = JSONDecoder()
-            do {
-                let payload = try decoder.decode(Payload.self, from: data)
-                Log("Did parse payload: \(payload)")
-                    .category(.notification).level(.info).make()
-                return payload
-            } catch {
-                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
-                    .category(.notification).level(.error).make()
-                throw error
-            }
-        } catch {
-            Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
-                .category(.notification).level(.error).make()
-            throw error
-        }
-    }
-    
-    private func getUserInfo(from request: UNNotificationRequest) throws -> [AnyHashable: Any] {
-        guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
-            throw DeliveredNotificationManagerError.unableToFetchUserInfo
-        }
-        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
-            return innerUserInfo
-        } else {
-            return userInfo
-        }
     }
     
 }
