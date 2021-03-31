@@ -2,25 +2,25 @@
 
 Pod::Spec.new do |spec|
 
-  spec.name         = "MindBox"
+  spec.name         = "Mindbox"
   
   spec.version      = "0.3.0"
   
-  spec.summary      = "MindBox"
+  spec.summary      = "Mindbox"
 
   spec.description  = "It is a nice sdk to make analytics"
 
   spec.homepage     = "https://github.com/mindbox-moscow/ios-sdk"
 
-  spec.license      = { :type => "MindBox", :file => "LICENSE" }
+  spec.license      = { :type => "Mindbox", :file => "LICENSE" }
 
-  spec.author       = { "MindBox" => "ios-sdk@mindbox.ru" }
+  spec.author       = { "Mindbox" => "ios-sdk@mindbox.ru" }
 
   spec.platform     = :ios, "10.0"
 
   spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => spec.version }
 
-  spec.source_files  = "MindBox/**/*.{swift}"
+  spec.source_files  = "Mindbox/**/*.{swift}"
 
   spec.exclude_files = "Classes/Exclude"
 
@@ -33,7 +33,7 @@ Pod::Spec.new do |spec|
   #  non-essential files like tests, examples and documentation.
   #
 
-  spec.resources = ["MindBox/**/*.xcdatamodeld"]
+  spec.resources = ["Mindbox/**/*.xcdatamodeld"]
 
 
   # ――― Project Linking ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
