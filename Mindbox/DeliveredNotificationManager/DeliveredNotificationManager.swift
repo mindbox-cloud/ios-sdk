@@ -1,6 +1,6 @@
 //
 //  DeliveredNotificationManager.swift
-//  MindBox
+//  Mindbox
 //
 //  Created by Maksim Kazachkov on 20.02.2021.
 //  Copyright © 2021 Mikhail Barilov. All rights reserved.
@@ -18,7 +18,7 @@ final class DeliveredNotificationManager {
     private let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
-        queue.name = "MindBox-DeliveredNotificationQueue"
+        queue.name = "Mindbox-DeliveredNotificationQueue"
         return queue
     }()
     
@@ -52,7 +52,7 @@ final class DeliveredNotificationManager {
     func track(request: UNNotificationRequest) throws -> Bool {
         let userInfo = try getUserInfo(from: request)
         guard userInfo[mindBoxIdentifireKey] != nil else {
-            Log("Push notification is not from MindBox")
+            Log("Push notification is not from Mindbox")
                 .category(.notification).level(.info).make()
             return false
         }
