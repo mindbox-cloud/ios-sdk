@@ -8,12 +8,10 @@
 
 import Foundation
 
-struct LogerConfiguration {
+struct LogConfiguration {
     
-    var isWriting: Bool = true
-
-    var enableChanels: [MBLoggerChanels] = [
-        .system,
+    var enabledCategories: [LogCategory] = [
+        .general,
         .network,
         .database,
         .delivery,

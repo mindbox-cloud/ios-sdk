@@ -80,7 +80,7 @@ class CoreController {
     private func repeatInitialization() {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Log("Unable to find deviceUUID in persistenceStorage")
-                .inChanel(.system).withType(.error).make()
+                .category(.general).level(.error).make()
             return
         }
         persistenceStorage.configuration?.deviceUUID = deviceUUID
@@ -109,10 +109,10 @@ class CoreController {
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
                 self.persistenceStorage.installationDate = Date()
                 Log("MobileApplicationInstalled")
-                    .inChanel(.system).withType(.verbose).make()
+                    .category(.general).level(.default).make()
             } catch {
                 Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
-                    .inChanel(.system).withType(.error).make()
+                    .category(.general).level(.error).make()
             }
         }
     }
@@ -129,10 +129,10 @@ class CoreController {
         do {
             try databaseRepository.create(event: event)
             Log("MobileApplicationInfoUpdated")
-                .inChanel(.system).withType(.verbose).make()
+                .category(.general).level(.default).make()
         } catch {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
-                .inChanel(.system).withType(.error).make()
+                .category(.general).level(.error).make()
         }
     }
     
@@ -152,7 +152,7 @@ class CoreController {
             object: nil,
             queue: nil) { [weak self] (_) in
             Log("UIApplication.didBecomeActiveNotification")
-                .inChanel(.system).withType(.info).make()
+                .category(.general).level(.info).make()
             self?.checkNotificationStatus()
         }
     }

@@ -57,10 +57,10 @@ class DataBaseLoader {
         persistentContainer.loadPersistentStores { [weak self] (persistentStoreDescription, error) in
             if let url = persistentStoreDescription.url {
                 Log("Persistent store url: \(url.description)")
-                    .inChanel(.database).withType(.info).make()
+                    .category(.database).level(.info).make()
             } else {
                 Log("Unable to find persistentStoreURL")
-                    .inChanel(.database).withType(.error).make()
+                    .category(.database).level(.error).make()
             }
             self?.persistentStoreURL = persistentStoreDescription.url
             self?.loadPersistentStoresError = error
@@ -76,19 +76,19 @@ class DataBaseLoader {
             throw MBDatabaseError.persistentStoreURLNotFound
         }
         Log("Removing database at url: \(persistentStoreURL.absoluteString)")
-            .inChanel(.database).withType(.info).make()
+            .category(.database).level(.info).make()
         guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
             throw MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path)
         }
         Log("Unable to find database at path: \(persistentStoreURL.path)")
-            .inChanel(.database).withType(.error).make()
+            .category(.database).level(.error).make()
         do {
             try FileManager.default.removeItem(at: persistentStoreURL)
             Log("Removed database")
-                .inChanel(.database).withType(.info).make()
+                .category(.database).level(.info).make()
         } catch {
             Log("Removed database failed with error: \(error.localizedDescription)")
-                .inChanel(.database).withType(.error).make()
+                .category(.database).level(.error).make()
             throw error
         }
     }

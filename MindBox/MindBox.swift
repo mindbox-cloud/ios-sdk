@@ -107,7 +107,7 @@ public class MindBox {
             return try traker.track(request: request)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
-                .inChanel(.notification).withType(.error).make()
+                .category(.notification).level(.error).make()
             return false
         }
     }
@@ -125,7 +125,7 @@ public class MindBox {
             return try traker.track(uniqueKey: uniqueKey)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
-                .inChanel(.notification).withType(.error).make()
+                .category(.notification).level(.error).make()
             return false
         }
     }

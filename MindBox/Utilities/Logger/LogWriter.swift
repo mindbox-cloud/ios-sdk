@@ -9,22 +9,22 @@
 import Foundation
 import os
 
-public protocol LogWriter {
-    func writeMessage(_ message: String, logLevel: LogType)
+protocol LogWriter {
+    func writeMessage(_ message: String, logLevel: LogLevel)
 }
 
-open class ConsoleWriter: LogWriter {
-    public enum Method {
+class ConsoleWriter: LogWriter {
+    enum Method {
         case print, nslog
     }
 
-    private let method: Method
+    let method: Method
 
-    public init(method: Method = .nslog) {
+    init(method: Method = .nslog) {
         self.method = method
     }
 
-    open func writeMessage(_ message: String, logLevel: LogType) {
+    func writeMessage(_ message: String, logLevel: LogLevel) {
         switch method {
         case .print:
             print(message)
@@ -34,31 +34,38 @@ open class ConsoleWriter: LogWriter {
     }
 }
 
-open class OSLogWriter: LogWriter {
-    public let subsystem: String
-    public let category: String
+class OSLogWriter: LogWriter {
+    let subsystem: String
+    let category: String
 
-    private let log: OSLog
+    let log: OSLog
 
-    public init(subsystem: String, category: String) {
+    init(subsystem: String, category: String) {
         self.subsystem = subsystem
         self.category = category
         log = OSLog(subsystem: subsystem, category: category)
     }
 
-    open func writeMessage(_ message: String, logLevel: LogType) {
-        let type = logType(forLogLevel: logLevel)
-
-        os_log("%@", log: log, type: type, message)
+    func writeMessage(_ message: String, logLevel: LogLevel) {
+        os_log("%{public}@", log: log, type: logLevel.asOSLogType, message)
     }
 
-    open func logType(forLogLevel logLevel: LogType) -> OSLogType {
-        switch logLevel {
-        case LogType.debug: return .debug
-        case LogType.info: return .info
-        case LogType.warning: return .default
-        case LogType.error, LogType.severe: return .error
-        default: return .default
+}
+
+fileprivate extension LogLevel {
+    
+    var asOSLogType: OSLogType {
+        switch self {
+        case .error:
+            return .error
+        case .info:
+            return .info
+        case .debug:
+            return .debug
+        case .default,
+             .warning:
+            return .default
         }
     }
+    
 }

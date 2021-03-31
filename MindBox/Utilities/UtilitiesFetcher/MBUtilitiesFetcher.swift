@@ -71,23 +71,23 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         IDFAFetcher().fetch { (uuid) in
             if let uuid = uuid {
                 Log("IDFAFetcher uuid:\(uuid.uuidString)")
-                    .inChanel(.system).withType(.verbose).make()
+                    .category(.general).level(.default).make()
                 completion(uuid.uuidString)
             } else {
                 Log("IDFAFetcher fail")
-                    .inChanel(.system).withType(.verbose).make()
+                    .category(.general).level(.default).make()
                 IDFVFetcher().fetch(tryCount: 3) { (uuid) in
                     if let uuid = uuid {
                         Log("IDFVFetcher uuid:\(uuid.uuidString)")
-                            .inChanel(.system).withType(.verbose).make()
+                            .category(.general).level(.default).make()
                         completion(uuid.uuidString)
                     } else {
                         Log("IDFVFetcher fail")
-                            .inChanel(.system).withType(.verbose).make()
+                            .category(.general).level(.default).make()
                         let uuid = UUID()
                         completion(uuid.uuidString)
                         Log("Generated uuid:\(uuid.uuidString)")
-                            .inChanel(.system).withType(.verbose).make()
+                            .category(.general).level(.default).make()
                     }
                 }
             }
