@@ -1,10 +1,10 @@
 
 platform :ios, '10.0'
 
-target 'MindBox' do
+target 'Mindbox' do
   use_frameworks!
   pod 'SwiftLint'
-  target 'MindBoxTests' do
+  target 'MindboxTests' do
   end
 
 end
