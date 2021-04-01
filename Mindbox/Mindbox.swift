@@ -79,7 +79,12 @@ public class Mindbox {
     }
     
     /// Method for keeping apnsTokenUpdate actuality
-    public func apnsTokenUpdate(token: String) {
+    public func apnsTokenUpdate(deviceToken: Data) {
+        let token = deviceToken
+            .map { String(format: "%02.2hhx", $0) }
+            .joined()
+        Log("Did register for remote notifications with token: \(token)")
+            .category(.notification).level(.info).make()
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
             guard persistenceAPNSToken != token else {
                 return
@@ -146,6 +151,17 @@ public class Mindbox {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(response: response)
+        } catch {
+            Log("Track UNNotificationResponse failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+    }
+    
+    public func pushClicked(userInfo: [AnyHashable: Any]) {
+        guard let container = container else { return }
+        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
+        do {
+            try tracker.track(userInfo: userInfo)
         } catch {
             Log("Track UNNotificationResponse failed with error: \(error)")
                 .category(.notification).level(.error).make()

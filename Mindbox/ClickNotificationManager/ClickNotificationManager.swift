@@ -19,13 +19,13 @@ final class ClickNotificationManager {
         self.databaseRepository = databaseRepository
     }
     
-    public func track(uniqueKey: String, buttonUniqueKey: String? = nil) throws {
+    func track(uniqueKey: String, buttonUniqueKey: String? = nil) throws {
         let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
         let event = Event(type: .trackClick, body: BodyEncoder(encodable: trackMobilePushClick).body)
         try databaseRepository.create(event: event)
     }
     
-    public func track(response: UNNotificationResponse) throws {
+    func track(response: UNNotificationResponse) throws {
         let decoder = try NotificationDecoder<NotificationsPayloads.Click>(response: response)
         let payload = try decoder.decode()
         var trackMobilePushClick: TrackClick?
@@ -37,6 +37,14 @@ final class ClickNotificationManager {
         guard let encodable = trackMobilePushClick else {
             return
         }
+        let event = Event(type: .trackClick, body: BodyEncoder(encodable: encodable).body)
+        try databaseRepository.create(event: event)
+    }
+    
+    func track(userInfo: [AnyHashable: Any]) throws {
+        let decoder = try NotificationDecoder<NotificationsPayloads.Click>(userInfo: userInfo)
+        let payload = try decoder.decode()
+        let encodable = TrackClick(messageUniqueKey: payload.uniqueKey)
         let event = Event(type: .trackClick, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
