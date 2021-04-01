@@ -11,27 +11,29 @@ import UserNotifications
 
 struct NotificationDecoder<T: Codable> {
     
-    private let mindBoxIdentifireKey = "uniqueKey"
-    
     var isMindboxNotification: Bool {
-        userInfo[mindBoxIdentifireKey] != nil
+        userInfo[Constants.Notification.mindBoxIdentifireKey] != nil
     }
     
     private let userInfo: [AnyHashable: Any]
-    
+        
     init(request: UNNotificationRequest) throws {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             throw DeliveredNotificationManagerError.unableToFetchUserInfo
         }
+        try self.init(userInfo: userInfo)
+    }
+    
+    init(response: UNNotificationResponse) throws {
+        try self.init(request: response.notification.request)
+    }
+    
+    init(userInfo: [AnyHashable: Any]) throws {
         if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
             self.userInfo = innerUserInfo
         } else {
             self.userInfo = userInfo
         }
-    }
-    
-    init(response: UNNotificationResponse) throws {
-        try self.init(request: response.notification.request)
     }
     
     func decode() throws -> T {

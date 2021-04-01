@@ -79,7 +79,12 @@ public class Mindbox {
     }
     
     /// Method for keeping apnsTokenUpdate actuality
-    public func apnsTokenUpdate(token: String) {
+    public func apnsTokenUpdate(deviceToken: Data) {
+        let token = deviceToken
+            .map { String(format: "%02.2hhx", $0) }
+            .joined()
+        Log("Did register for remote notifications with token: \(token)")
+            .category(.notification).level(.info).make()
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
             guard persistenceAPNSToken != token else {
                 return
@@ -104,6 +109,8 @@ public class Mindbox {
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
+            Log("Track delivery")
+                .category(.notification).level(.info).make()
             return try tracker.track(request: request)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
@@ -122,6 +129,8 @@ public class Mindbox {
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
+            Log("Track delivery")
+                .category(.notification).level(.info).make()
             return try tracker.track(uniqueKey: uniqueKey)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
@@ -135,6 +144,8 @@ public class Mindbox {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
+            Log("Track Click")
+                .category(.notification).level(.info).make()
         } catch {
             Log("Track UNNotificationResponse failed with error: \(error)")
                 .category(.notification).level(.error).make()
@@ -146,6 +157,8 @@ public class Mindbox {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(response: response)
+            Log("Track Click")
+                .category(.notification).level(.info).make()
         } catch {
             Log("Track UNNotificationResponse failed with error: \(error)")
                 .category(.notification).level(.error).make()

@@ -54,7 +54,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     func testIsTrackNonAPSPayload() {
         let request = generateNotificationContent(
             isRootAPSKey: false,
-            payload: [manager.mindBoxIdentifireKey: UUID().uuidString]
+            payload: [Constants.Notification.mindBoxIdentifireKey: UUID().uuidString]
         )
         do {
             let isTracked = try manager.track(request: request)
@@ -67,7 +67,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
     func testIsTrackAPSPayload() {
         let request = generateNotificationContent(
             isRootAPSKey: true,
-            payload: [manager.mindBoxIdentifireKey: UUID().uuidString]
+            payload: [Constants.Notification.mindBoxIdentifireKey: UUID().uuidString]
         )
         do {
             let isTracked = try manager.track(request: request)
@@ -81,7 +81,7 @@ class DeliveredNotificationManagerTestCase: XCTestCase {
         let uniqueKey = UUID().uuidString
         let request = generateNotificationContent(
             isRootAPSKey: true,
-            payload: [manager.mindBoxIdentifireKey: uniqueKey]
+            payload: [Constants.Notification.mindBoxIdentifireKey: uniqueKey]
         )
         do {
             let eventsCount = try databaseRepository.countEvents()

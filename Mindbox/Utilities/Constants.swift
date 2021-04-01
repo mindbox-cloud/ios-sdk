@@ -22,5 +22,11 @@ enum Constants {
         static let mombName = "MBDatabase"
         
     }
+    
+    enum Notification {
+        
+        static let mindBoxIdentifireKey = "uniqueKey"
+        
+    }
         
 }
