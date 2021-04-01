@@ -109,6 +109,8 @@ public class Mindbox {
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
+            Log("Track delivery")
+                .category(.notification).level(.info).make()
             return try tracker.track(request: request)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
@@ -127,6 +129,8 @@ public class Mindbox {
             eventRepository: container.instanceFactory.makeEventRepository()
         )
         do {
+            Log("Track delivery")
+                .category(.notification).level(.info).make()
             return try tracker.track(uniqueKey: uniqueKey)
         } catch {
             Log("Track UNNotificationRequest failed with error: \(error)")
@@ -140,6 +144,8 @@ public class Mindbox {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
+            Log("Track Click")
+                .category(.notification).level(.info).make()
         } catch {
             Log("Track UNNotificationResponse failed with error: \(error)")
                 .category(.notification).level(.error).make()
@@ -151,17 +157,8 @@ public class Mindbox {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(response: response)
-        } catch {
-            Log("Track UNNotificationResponse failed with error: \(error)")
-                .category(.notification).level(.error).make()
-        }
-    }
-    
-    public func pushClicked(userInfo: [AnyHashable: Any]) {
-        guard let container = container else { return }
-        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
-        do {
-            try tracker.track(userInfo: userInfo)
+            Log("Track Click")
+                .category(.notification).level(.info).make()
         } catch {
             Log("Track UNNotificationResponse failed with error: \(error)")
                 .category(.notification).level(.error).make()
