@@ -1,11 +1,10 @@
-name: SDK CI
+name: SDK publish
 
 on:
   push:
     branches:
       - 'master'
-      - 'develop'
-      - 'release-*'
+      - 'release**'
     paths-ignore:
       - '**.md'
     tags-ignore:
@@ -25,7 +24,7 @@ jobs:
       env:
         CI: true
 
-  build:
+  publish:
     needs: [unit]
     runs-on: macos-latest
     steps:
@@ -38,3 +37,15 @@ jobs:
       run: fastlane buildLane
       env:
         CI: true
+    - name: Publish to Cocoapods
+      run: pod trunk push 
+
+    - name: Job status notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'SDK is available for public https://cocoapods.org/pods/Mindbox'
+          SLACK_USERNAME: MindBox-bot
+          SLACK_ICON: 'https://mindbox.ru/blog/wp-content/uploads/2020/06/favicon.png'
+          SLACK_COLOR: ${{job.status}}
