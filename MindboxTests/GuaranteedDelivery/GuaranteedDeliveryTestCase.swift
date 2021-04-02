@@ -129,7 +129,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline)
+        waitForExpectations(timeout: retryDeadline * 2)
     }
     
     func testFailureScheduleByTimer() {
@@ -185,7 +185,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline + 1)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2)
     }
     
     private func generateAndSaveToDatabaseEvents() {
