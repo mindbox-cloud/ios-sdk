@@ -30,7 +30,7 @@ class Fastfile: LaneFile {
                 desc("Run unit tests")
                 scan(workspace: workspace,
                      onlyTesting: ["MindboxTests"],
-                     derivedDataPath: "derivedData",
+                     clean: true,
                      disableConcurrentTesting: true,
                      testWithoutBuilding: false,
                      xcargs: "CI=true"
