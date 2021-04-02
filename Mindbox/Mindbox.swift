@@ -21,7 +21,9 @@ public class Mindbox {
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
-        
+    
+    private let concurrentQueue = DispatchQueue(label: "com.mindbox.initialization.cuncurrent", attributes: .concurrent)
+    
     /// Internal process controller
     var coreController: CoreController?
     var container: DependencyContainer? 
@@ -196,14 +198,16 @@ public class Mindbox {
     private var initError: Error?
     
     private init() {
-        do {
-            let container = try DependencyProvider()
-            self.container = container
-            assembly(with: container)
-        } catch {
-            initError = error
+        concurrentQueue.async(flags: .barrier) {
+            do {
+                let container = try DependencyProvider()
+                self.container = container
+                self.assembly(with: container)
+            } catch {
+                self.initError = error
+            }
+            self.persistenceStorage?.storeToFileBackgroundExecution()
         }
-        persistenceStorage?.storeToFileBackgroundExecution()
     }
     
     func assembly(with container: DependencyContainer) {
