@@ -22,7 +22,7 @@ public class Mindbox {
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
     
-    private let concurrentQueue = DispatchQueue(label: "com.mindbox.initialization.cuncurrent", attributes: .concurrent)
+    private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
     
     /// Internal process controller
     var coreController: CoreController?
@@ -198,7 +198,7 @@ public class Mindbox {
     private var initError: Error?
     
     private init() {
-        concurrentQueue.async(flags: .barrier) {
+        queue.sync(flags: .barrier) {
             do {
                 let container = try DependencyProvider()
                 self.container = container
