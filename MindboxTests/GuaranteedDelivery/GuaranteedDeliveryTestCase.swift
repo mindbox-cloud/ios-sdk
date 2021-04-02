@@ -46,18 +46,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         (container.instanceFactory as! MockInstanceFactory).isFailureNetworkFetcher = withFailureNetworkFetcher
     }
     
-    func testIsDelivering() {
-        let event = eventGenerator.generateEvent()
-        do {
-            try databaseRepository.create(event: event)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        let exists = NSPredicate(format: "isDelivering == false")
-        expectation(for: exists, evaluatedWith: self, handler: nil)
-        waitForExpectations(timeout: 60, handler: nil)
-    }
-    
     func testDeliverMultipleEvents() {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
