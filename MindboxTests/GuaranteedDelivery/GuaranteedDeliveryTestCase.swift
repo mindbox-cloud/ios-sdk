@@ -92,6 +92,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 )
             }
         var iterator: Int = 0
+        try! databaseRepository.erase()
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: container.persistenceStorage,
@@ -100,11 +101,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             retryDeadline: retryDeadline
         )
         // Lock update
-        guaranteedDeliveryManager.canScheduleOperations = false
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   simpleCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type")
+                XCTFail("New state is not expected type. Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == simpleCase[iterator] {
@@ -112,6 +112,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
             iterator += 1
         }
+        guaranteedDeliveryManager.canScheduleOperations = false
         // Generating new events
         let events = eventGenerator.generateEvents(count: 10)
         do {
@@ -124,7 +125,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline * 2 + 60)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2)
     }
     
     func testFailureScheduleByTimer() {
@@ -158,7 +159,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type")
+                XCTFail("New state is not expected type. Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == errorCase[iterator] {
