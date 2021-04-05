@@ -60,21 +60,12 @@ class CoreController {
     
     // MARK: - Private
     private func primaryInitialization(with configutaion: MBConfiguration) {
-        if let deviceUUID = configutaion.deviceUUID {
-            installed(
+        utilitiesFetcher.getDeviceUUID(completion: { [self] (deviceUUID) in
+            install(
                 deviceUUID: deviceUUID,
-                installationId: configutaion.installationId,
-                subscribe: configutaion.subscribeCustomerIfCreated
+                configuration: configutaion
             )
-        } else {
-            utilitiesFetcher.getDeviceUUID(completion: { [self] (deviceUUID) in
-                installed(
-                    deviceUUID: deviceUUID,
-                    installationId: configutaion.installationId,
-                    subscribe: configutaion.subscribeCustomerIfCreated
-                )
-            })
-        }
+        })
     }
     
     private func repeatInitialization() {
@@ -87,19 +78,20 @@ class CoreController {
         checkNotificationStatus()
     }
     
-    private func installed(deviceUUID: String, installationId: String?, subscribe: Bool) {
+    private func install(deviceUUID: String, configuration: MBConfiguration) {
         persistenceStorage.deviceUUID = deviceUUID
-        persistenceStorage.installationId = installationId
+        persistenceStorage.installationId = configuration.installationId
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.getStatus { [weak self] (isNotificationsEnabled) in
             guard let self = self else { return }
-            let installed = MobileApplicationInstalled(
+            let encodable = MobileApplicationInstalled(
                 token: apnsToken,
                 isNotificationsEnabled: isNotificationsEnabled,
-                installationId: installationId,
-                subscribe: subscribe
+                installationId: configuration.installationId,
+                subscribe: configuration.subscribeCustomerIfCreated,
+                lastDeviceUuid: configuration.deviceUUID
             )
-            let body = BodyEncoder(encodable: installed).body
+            let body = BodyEncoder(encodable: encodable).body
             let event = Event(
                 type: .installed,
                 body: body
