@@ -82,6 +82,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testScheduleByTimer() {
+        let retryDeadline: TimeInterval = 2
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.instanceFactory.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         let simpleCase: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
         let simpleExpectations: [XCTestExpectation] = simpleCase
             .map {
@@ -92,14 +99,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 )
             }
         var iterator: Int = 0
+        // Full erase database
         try! databaseRepository.erase()
-        let retryDeadline: TimeInterval = 2
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
-            retryDeadline: retryDeadline
-        )
         // Lock update
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
@@ -130,6 +131,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
+        let retryDeadline: TimeInterval = 2
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.instanceFactory.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         let errorCase: [GuaranteedDeliveryManager.State] = [
             .delivering,
             .idle,
@@ -149,13 +157,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
-        let retryDeadline: TimeInterval = 2
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
-            retryDeadline: retryDeadline
-        )
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
