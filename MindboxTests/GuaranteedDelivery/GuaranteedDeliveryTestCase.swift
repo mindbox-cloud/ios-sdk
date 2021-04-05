@@ -129,7 +129,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline * 2)
+        waitForExpectations(timeout: retryDeadline * 2 + 20)
     }
     
     func testFailureScheduleByTimer() {
