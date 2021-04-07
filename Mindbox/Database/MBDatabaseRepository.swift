@@ -11,8 +11,9 @@ import CoreData
 
 class MBDatabaseRepository {
     
-    private let persistentContainer: NSPersistentContainer
+    let persistentContainer: NSPersistentContainer
     private let context: NSManagedObjectContext
+    private let store: NSPersistentStore
     
     let limit = 10000
     let deprecatedLimit = 500
@@ -48,14 +49,44 @@ class MBDatabaseRepository {
     
     init(persistentContainer: NSPersistentContainer) throws {
         self.persistentContainer = persistentContainer
+        if let store = persistentContainer.persistentStoreCoordinator.persistentStores.first {
+            self.store = store
+        } else {
+            throw MBDatabaseError.persistentStoreURLNotFound
+        }
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
         _ = try countEvents()
     }
     
-    // MARK: - CRUD operations
+    enum MetadataKey: String {
+        
+        case install = "ApplicationInstalledVersion"
+        case infoUpdate = "ApplicationInfoUpdatedVersion"
+        
+    }
     
+    var infoUpdateVersion: Int? {
+        get {
+            getMetadata(forKey: .infoUpdate)
+        }
+        set {
+            setMetadata(newValue, forKey: .infoUpdate)
+        }
+    }
+    
+    var installVersion: Int? {
+        get {
+            getMetadata(forKey: .install)
+        }
+        set {
+            setMetadata(newValue, forKey: .install)
+        }
+    }
+    
+    
+    // MARK: - CRUD operations
     func create(event: Event) throws {
         try context.performAndWait {
             let entity = CDEvent(context: context)
@@ -268,6 +299,26 @@ class MBDatabaseRepository {
     
     private func fetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
         try context.fetch(request).first
+    }
+    
+    private func getMetadata<T>(forKey key: MetadataKey) -> T? {
+        store.metadata[key.rawValue] as? T
+    }
+    
+    private func setMetadata<T>(_ value: T?, forKey key: MetadataKey) {
+        guard let value = value else {
+            return
+        }
+        store.metadata[key.rawValue] = value
+        persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
+        do {
+            try saveContext(context)
+            Log("Did save metadata of \(key.rawValue) to: \(value)")
+                .category(.database).level(.info).make()
+        } catch {
+            Log("Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)")
+                .category(.database).level(.error).make()
+        }
     }
     
 }

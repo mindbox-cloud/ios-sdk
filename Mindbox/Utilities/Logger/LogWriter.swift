@@ -62,9 +62,10 @@ fileprivate extension LogLevel {
             return .info
         case .debug:
             return .debug
-        case .default,
-             .warning:
+        case .default:
             return .default
+        case .fault:
+            return .fault
         }
     }
     

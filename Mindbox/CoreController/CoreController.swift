@@ -79,6 +79,8 @@ class CoreController {
     }
     
     private func install(deviceUUID: String, configuration: MBConfiguration) {
+        let previousVersion = databaseRepository.installVersion ?? -1
+        let newVersion = previousVersion + 1
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.installationId
         let apnsToken = persistenceStorage.apnsToken
@@ -89,7 +91,8 @@ class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled,
                 installationId: configuration.installationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
-                lastDeviceUuid: configuration.deviceUUID
+                lastDeviceUuid: configuration.deviceUUID,
+                version: newVersion
             )
             let body = BodyEncoder(encodable: encodable).body
             let event = Event(
@@ -98,6 +101,7 @@ class CoreController {
             )
             do {
                 try self.databaseRepository.create(event: event)
+                self.databaseRepository.installVersion = newVersion
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
                 self.persistenceStorage.installationDate = Date()
                 Log("MobileApplicationInstalled")
@@ -110,9 +114,12 @@ class CoreController {
     }
     
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
+        let previousVersion = databaseRepository.infoUpdateVersion ?? 0
+        let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
-            isNotificationsEnabled: isNotificationsEnabled
+            isNotificationsEnabled: isNotificationsEnabled,
+            version: newVersion
         )
         let event = Event(
             type: .infoUpdated,
@@ -120,6 +127,7 @@ class CoreController {
         )
         do {
             try databaseRepository.create(event: event)
+            databaseRepository.infoUpdateVersion = newVersion
             Log("MobileApplicationInfoUpdated")
                 .category(.general).level(.default).make()
         } catch {

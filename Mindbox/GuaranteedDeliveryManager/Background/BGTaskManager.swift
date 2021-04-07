@@ -90,8 +90,13 @@ class BGTaskManager: BackgroundTaskManagerType {
             Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")
                 .category(.background).level(.info).make()
         } catch {
+            #if targetEnvironment(simulator)
+            Log("Could not schedule app refresh task for simulator")
+                .category(.background).level(.info).make()
+            #else
             Log("Could not schedule app refresh task with error: \(error.localizedDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.fault).make()
+            #endif
         }
     }
     
@@ -107,8 +112,13 @@ class BGTaskManager: BackgroundTaskManagerType {
             Log("Scheduled SendEventsBGProcessingTaskRequest")
                 .category(.background).level(.info).make()
         } catch {
+            #if targetEnvironment(simulator)
+            Log("Could not schedule app processing task for simulator")
+                .category(.background).level(.info).make()
+            #else
             Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.fault).make()
+            #endif
         }
     }
     
@@ -134,8 +144,14 @@ class BGTaskManager: BackgroundTaskManagerType {
             Log("Scheduled BGProcessingTaskRequest")
                 .category(.background).level(.info).make()
         } catch {
+            #if targetEnvironment(simulator)
+            Log("Could not schedule app processing task for simulator")
+                .category(.background).level(.info).make()
+            #else
             Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.fault).make()
+            #endif
+            
         }
     }
     
@@ -158,7 +174,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
             Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.info).make()
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDRefreshTask.debugDescription,
@@ -193,7 +209,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
             Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.info).make()
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDProcessingIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDProcessingIdentifier.debugDescription,
@@ -229,7 +245,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         }
         task.expirationHandler = { [self] in
             Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.warning).make()
+                .category(.background).level(.info).make()
             persistenceStorage.deprecatedEventsRemoveDate = Date()
             queue.cancelAllOperations()
         }
