@@ -13,6 +13,7 @@ class DataBaseLoader {
     
     private let persistentStoreDescriptions: [NSPersistentStoreDescription]?
     private let persistentContainer: NSPersistentContainer
+    var persistentStoreDescription: NSPersistentStoreDescription?
     
     var loadPersistentStoresError: Error?
     var persistentStoreURL: URL?
@@ -64,6 +65,7 @@ class DataBaseLoader {
             }
             self?.persistentStoreURL = persistentStoreDescription.url
             self?.loadPersistentStoresError = error
+            self?.persistentStoreDescription = persistentStoreDescription
         }
         if let error = loadPersistentStoresError {
             throw error
@@ -71,20 +73,20 @@ class DataBaseLoader {
         return persistentContainer
     }
     
-    private func destroy() throws {
+    func destroy() throws {
         guard let persistentStoreURL = persistentStoreURL else {
             throw MBDatabaseError.persistentStoreURLNotFound
         }
         Log("Removing database at url: \(persistentStoreURL.absoluteString)")
             .category(.database).level(.info).make()
         guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
+            Log("Unable to find database at path: \(persistentStoreURL.path)")
+                .category(.database).level(.error).make()
             throw MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path)
         }
-        Log("Unable to find database at path: \(persistentStoreURL.path)")
-            .category(.database).level(.error).make()
         do {
-            try FileManager.default.removeItem(at: persistentStoreURL)
-            Log("Removed database")
+            try self.persistentContainer.persistentStoreCoordinator.destroyPersistentStore(at: persistentStoreURL, ofType: "sqlite", options: nil)
+            Log("Database has been removed")
                 .category(.database).level(.info).make()
         } catch {
             Log("Removed database failed with error: \(error.localizedDescription)")

@@ -11,7 +11,7 @@ import CoreData
 
 class MBDatabaseRepository {
     
-    private let persistentContainer: NSPersistentContainer
+    let persistentContainer: NSPersistentContainer
     private let context: NSManagedObjectContext
     private let store: NSPersistentStore
     
