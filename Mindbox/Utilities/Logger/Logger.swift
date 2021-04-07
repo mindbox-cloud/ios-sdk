@@ -49,7 +49,7 @@ public enum LogLevel: String {
     case info
     case debug
     case `default`
-    case warning
+    case fault
     
     var emoji: String {
         switch self {
@@ -61,7 +61,7 @@ public enum LogLevel: String {
             return "[🪲]"
         case .`default`:
             return "[🔎]"
-        case .warning:
+        case .fault:
             return "[⚠️]"
         }
     }
