@@ -9,100 +9,66 @@
 import Foundation
 import os
 
-protocol Logger: class {
+public class MBLogger {
     
-    func log(text: String, category: LogCategory, level: LogLevel)
-    
-}
+    public var isEnabled: Bool
 
-enum LogCategory: String {
-    
-    case general
-    case network
-    case database
-    case delivery
-    case background
-    case notification
-    
-    var emoji: String {
-        switch self {
-        case .general:
-            return "🤖"
-        case .network:
-            return "📡"
-        case .database:
-            return "📖"
-        case .delivery:
-            return "⚙️"
-        case .background:
-            return "🕳"
-        case .notification:
-            return "✉️"
-        }
+    public var logLevel: LogLevel = .default
+        
+    private enum ExecutionMethod {
+        case sync(lock: NSRecursiveLock)
+        case async(queue: DispatchQueue)
     }
     
-}
-
-public enum LogLevel: String {
+    private let executionMethod: ExecutionMethod
     
-    case error
-    case info
-    case debug
-    case `default`
-    case fault
-    
-    var emoji: String {
-        switch self {
-        case .error:
-            return "[‼️]"
-        case .info:
-            return "[💡]"
-        case .debug:
-            return "[🪲]"
-        case .`default`:
-            return "[🔎]"
-        case .fault:
-            return "[⚠️]"
-        }
-    }
-    
-}
-
-enum ExecutionMethod {
-    case sync(lock: NSRecursiveLock)
-    case async(queue: DispatchQueue)
-}
-
-
-class MBLogger: Logger {
-    
-    let executionMethod: ExecutionMethod
-    
-    func log(text: String, category: LogCategory, level: LogLevel) {
-        let writer = makeWriter(category: category, level: level)
-        let config = LogConfiguration()
-        guard config.enabledCategories.contains(category) else {
-            return
-        }
-        switch executionMethod {
-        case let .async(queue: queue):
-            queue.async { writer.writeMessage(text, logLevel: level) }
-        case let .sync(lock: lock):
-            lock.lock(); defer { lock.unlock() }
-            writer.writeMessage(text, logLevel: level)
-        }
-    }
-    
-    func makeWriter(category: LogCategory, level: LogLevel) -> LogWriter {
-        return OSLogWriter(subsystem: "cloud.Mindbox", category: category.rawValue.capitalized)
-    }
-
-    init() {
+    public init() {
         #if DEBUG
+            isEnabled = true
             executionMethod = .sync(lock: NSRecursiveLock())
         #else
-            executionMethod = .async(queue: DispatchQueue(label: "serial.log.queue", qos: .utility))
+            isEnabled = false
+            executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
+    }
+    
+    func log(level: LogLevel, message: String, category: LogCategory) {
+        guard isEnabled else {
+            return
+        }
+        guard logLevel.rawValue <= level.rawValue else {
+            return
+        }
+        let categories: [LogCategory] = LogCategory.allCases
+        guard categories.contains(category) else {
+            return
+        }
+        let writer = makeWriter(category: category, level: level)
+        switch executionMethod {
+        case let .async(queue: queue):
+            queue.async { writer.writeMessage(message, logLevel: level) }
+        case let .sync(lock: lock):
+            lock.lock(); defer { lock.unlock() }
+            writer.writeMessage(message, logLevel: level)
+        }
+    }
+    
+    public func log(
+        level: LogLevel,
+        message: String,
+        fileName: String = #file,
+        line: Int = #line,
+        funcName: String = #function
+    ) {
+        Log(message)
+            .meta(filename: fileName, line: line, funcName: funcName)
+            .level(level)
+            .category(.general)
+            .make()
+    }
+    
+    private func makeWriter(category: LogCategory, level: LogLevel) -> LogWriter {
+        return OSLogWriter(subsystem: "cloud.Mindbox", category: category.rawValue.capitalized)
     }
     
 }
