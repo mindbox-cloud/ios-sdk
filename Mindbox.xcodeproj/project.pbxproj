@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		311BB47925BF12570093EE14 /* LogConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BB47825BF12570093EE14 /* LogConfiguration.swift */; };
 		3132DFF625C2A811007FE358 /* TestDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */; };
 		313B233A25ADEA0F00A1CB72 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* Mindbox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */; };
@@ -92,6 +91,8 @@
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
 		84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFB33A25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift */; };
 		84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */; };
+		84E1D6DF261D9B19002BF03A /* LogCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6DE261D9B19002BF03A /* LogCategory.swift */; };
+		84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6E2261D9B2B002BF03A /* LogLevel.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */; };
 		84F705372611F873009C7A07 /* MBPersistentContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F705362611F873009C7A07 /* MBPersistentContainer.swift */; };
@@ -116,7 +117,6 @@
 /* Begin PBXFileReference section */
 		1F58BD4668B2D6CB795EAFDC /* Pods-Mindbox-MindboxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox-MindboxTests.release.xcconfig"; path = "Target Support Files/Pods-Mindbox-MindboxTests/Pods-Mindbox-MindboxTests.release.xcconfig"; sourceTree = "<group>"; };
 		2E20394908AFBD7C785CD9D4 /* Pods_Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		311BB47825BF12570093EE14 /* LogConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogConfiguration.swift; sourceTree = "<group>"; };
 		3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDependencyProvider.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* Mindbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mindbox.h; sourceTree = "<group>"; };
@@ -207,6 +207,8 @@
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
 		84DFB33A25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GuaranteedDeliveryManager+State.swift"; sourceTree = "<group>"; };
 		84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderTest.swift; sourceTree = "<group>"; };
+		84E1D6DE261D9B19002BF03A /* LogCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCategory.swift; sourceTree = "<group>"; };
+		84E1D6E2261D9B2B002BF03A /* LogLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUNAuthorizationStatusProvider.swift; sourceTree = "<group>"; };
 		84F705362611F873009C7A07 /* MBPersistentContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPersistentContainer.swift; sourceTree = "<group>"; };
@@ -333,9 +335,10 @@
 			isa = PBXGroup;
 			children = (
 				317054CD25AF191F00AE624C /* Logger.swift */,
-				311BB47825BF12570093EE14 /* LogConfiguration.swift */,
-				317054D525B01BDD00AE624C /* LogManager.swift */,
+				84E1D6E2261D9B2B002BF03A /* LogLevel.swift */,
+				84E1D6DE261D9B19002BF03A /* LogCategory.swift */,
 				846AD39325FF7AC100A59E86 /* LogWriter.swift */,
+				317054D525B01BDD00AE624C /* LogManager.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -905,11 +908,13 @@
 				847F581325C8909300147A9A /* URLRequestBuilder.swift in Sources */,
 				84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
+				84E1D6DF261D9B19002BF03A /* LogCategory.swift in Sources */,
 				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
+				84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
@@ -923,7 +928,6 @@
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
 				843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
-				311BB47925BF12570093EE14 /* LogConfiguration.swift in Sources */,
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,

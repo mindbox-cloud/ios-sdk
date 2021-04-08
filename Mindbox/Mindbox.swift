@@ -15,6 +15,8 @@ public class Mindbox {
     /// - Warning: All calls which use DI containers objects, mast go through `Mindbox.shared`
     public static let shared = Mindbox()
     
+    public static let logger = MBLogger()
+    
     // MARK: - Elements
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?

@@ -85,7 +85,6 @@ class MBDatabaseRepository {
         }
     }
     
-    
     // MARK: - CRUD operations
     func create(event: Event) throws {
         try context.performAndWait {

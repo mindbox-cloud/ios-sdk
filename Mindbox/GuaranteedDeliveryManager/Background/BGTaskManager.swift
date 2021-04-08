@@ -166,7 +166,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         let backgroudExecution = BackgroudExecution(
             taskID: appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
             taskName: appGDRefreshTask.debugDescription,
-            dateString: Date().fullToString(),
+            dateString: Date().toFullString(),
             info: "System call"
         )
         persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -178,7 +178,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDRefreshTask.debugDescription,
-                dateString: Date().fullToString(),
+                dateString: Date().toFullString(),
                 info: "System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)"
             )
             self.persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -202,7 +202,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         let backgroudExecution = BackgroudExecution(
             taskID: appGDProcessingIdentifier ?? "appGDProcessingIdentifier nil",
             taskName: appGDProcessingIdentifier.debugDescription,
-            dateString: Date().fullToString(),
+            dateString: Date().toFullString(),
             info: "System call"
         )
         persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -213,7 +213,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDProcessingIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDProcessingIdentifier.debugDescription,
-                dateString: Date().fullToString(),
+                dateString: Date().toFullString(),
                 info: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)"
             )
             self.persistenceStorage.setBackgroundExecution(backgroudExecution)

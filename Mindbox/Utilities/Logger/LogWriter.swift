@@ -13,36 +13,11 @@ protocol LogWriter {
     func writeMessage(_ message: String, logLevel: LogLevel)
 }
 
-class ConsoleWriter: LogWriter {
-    enum Method {
-        case print, nslog
-    }
-
-    let method: Method
-
-    init(method: Method = .nslog) {
-        self.method = method
-    }
-
-    func writeMessage(_ message: String, logLevel: LogLevel) {
-        switch method {
-        case .print:
-            print(message)
-        case .nslog:
-            NSLog("%@", message)
-        }
-    }
-}
-
 class OSLogWriter: LogWriter {
-    let subsystem: String
-    let category: String
-
+    
     let log: OSLog
 
     init(subsystem: String, category: String) {
-        self.subsystem = subsystem
-        self.category = category
         log = OSLog(subsystem: subsystem, category: category)
     }
 

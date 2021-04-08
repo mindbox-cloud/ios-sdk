@@ -48,7 +48,7 @@ final class GuaranteedDeliveryManager: NSObject {
         }
     }
     
-   private let fetchLimit: Int
+    private let fetchLimit: Int
     
     init(
         persistenceStorage: PersistenceStorage,
@@ -79,9 +79,9 @@ final class GuaranteedDeliveryManager: NSObject {
             self?.performScheduleIfNeeded()
         }
     }
-
+    
     private let retryDeadline: TimeInterval
-
+    
     func performScheduleIfNeeded() {
         guard canScheduleOperations else {
             return
