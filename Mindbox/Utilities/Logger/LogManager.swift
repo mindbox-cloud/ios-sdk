@@ -39,6 +39,7 @@ struct Log {
     var category: LogCategory = .general
     var meta: Meta?
     var borders: (start: String, end: String) = ("[", "\n]")
+    var subsystem: String = "cloud.Mindbox"
     
     init(_ object: Any?) {
         message = "\(String(describing: object))"
@@ -49,7 +50,7 @@ struct Log {
     }
     
     func make() {
-        var header = "Mindbox "
+        var header = subsystem + " "
         header += category.emoji + " "
         header += level.emoji + " "
         if let date = date {
@@ -62,8 +63,15 @@ struct Log {
         Mindbox.logger.log(
             level: level,
             message: borders.start + header + "\n" + message + borders.end,
-            category: category
+            category: category,
+            subsystem: subsystem
         )
+    }
+    
+    func subsystem(_ subsystem: String) -> Log {
+        var ret = self
+        ret.subsystem = subsystem
+        return ret
     }
     
     func category(_ category: LogCategory) -> Log {

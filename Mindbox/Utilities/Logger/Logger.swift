@@ -11,8 +11,6 @@ import os
 
 public class MBLogger {
     
-    public var isEnabled: Bool
-
     public var logLevel: LogLevel = .default
         
     private enum ExecutionMethod {
@@ -24,26 +22,21 @@ public class MBLogger {
     
     public init() {
         #if DEBUG
-            isEnabled = true
             executionMethod = .sync(lock: NSRecursiveLock())
         #else
-            isEnabled = false
             executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
     }
     
-    func log(level: LogLevel, message: String, category: LogCategory) {
-        guard isEnabled else {
-            return
-        }
-        guard logLevel.rawValue <= level.rawValue else {
+    func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
+        guard logLevel.rawValue >= level.rawValue else {
             return
         }
         let categories: [LogCategory] = LogCategory.allCases
         guard categories.contains(category) else {
             return
         }
-        let writer = makeWriter(category: category, level: level)
+        let writer = makeWriter(subsystem: subsystem, category: category)
         switch executionMethod {
         case let .async(queue: queue):
             queue.async { writer.writeMessage(message, logLevel: level) }
@@ -62,13 +55,14 @@ public class MBLogger {
     ) {
         Log(message)
             .meta(filename: fileName, line: line, funcName: funcName)
+            .subsystem(Mindbox.shared.container?.utilitiesFetcher.hostApplicationName ?? "cloud.Mindbox.UndefinedHostApplication")
             .level(level)
             .category(.general)
             .make()
     }
     
-    private func makeWriter(category: LogCategory, level: LogLevel) -> LogWriter {
-        return OSLogWriter(subsystem: "cloud.Mindbox", category: category.rawValue.capitalized)
+    private func makeWriter(subsystem: String, category: LogCategory) -> LogWriter {
+        return OSLogWriter(subsystem: subsystem, category: category.rawValue.capitalized)
     }
     
 }
