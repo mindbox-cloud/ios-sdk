@@ -219,6 +219,8 @@ class MBDatabaseRepository {
     func erase() throws {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CDEvent")
         let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        infoUpdateVersion = nil
+        installVersion = nil
         try context.performAndWait {
             try context.execute(eraseRequest)
             try saveContext(context)
@@ -301,18 +303,18 @@ class MBDatabaseRepository {
     }
     
     private func getMetadata<T>(forKey key: MetadataKey) -> T? {
-        store.metadata[key.rawValue] as? T
+        let value = store.metadata[key.rawValue] as? T
+        Log("Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))")
+            .category(.database).level(.info).make()
+        return value
     }
     
     private func setMetadata<T>(_ value: T?, forKey key: MetadataKey) {
-        guard let value = value else {
-            return
-        }
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
             try saveContext(context)
-            Log("Did save metadata of \(key.rawValue) to: \(value)")
+            Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
                 .category(.database).level(.info).make()
         } catch {
             Log("Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)")

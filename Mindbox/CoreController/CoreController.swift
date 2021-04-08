@@ -17,6 +17,9 @@ class CoreController {
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     
+    private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
+    private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
+
     func initialization(configuration: MBConfiguration) {
         persistenceStorage.configuration = configuration
         if !persistenceStorage.isInstalled {
@@ -26,21 +29,23 @@ class CoreController {
         }
         guaranteedDeliveryManager.canScheduleOperations = true
     }
-    
+        
     func apnsTokenDidUpdate(token: String) {
         notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
             if self.persistenceStorage.isInstalled {
-                self.updateInfo(
-                    apnsToken: token,
-                    isNotificationsEnabled: isNotificationsEnabled
-                )
+                self.infoUpdateQueue.sync {
+                    self.updateInfo(
+                        apnsToken: token,
+                        isNotificationsEnabled: isNotificationsEnabled
+                    )
+                }
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             }
         }
         persistenceStorage.apnsToken = token
     }
-    
+            
     func checkNotificationStatus(granted: Bool? = nil) {
         notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
@@ -48,23 +53,28 @@ class CoreController {
             guard self.persistenceStorage.isNotificationsEnabled != isNotificationsEnabled else {
                 return
             }
-            if self.persistenceStorage.isInstalled {
+            guard self.persistenceStorage.isInstalled else {
+                return
+            }
+            self.infoUpdateQueue.sync {
                 self.updateInfo(
                     apnsToken: self.persistenceStorage.apnsToken,
                     isNotificationsEnabled: isNotificationsEnabled
                 )
-                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             }
+            self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
         }
     }
     
     // MARK: - Private
     private func primaryInitialization(with configutaion: MBConfiguration) {
         utilitiesFetcher.getDeviceUUID(completion: { [self] (deviceUUID) in
-            install(
-                deviceUUID: deviceUUID,
-                configuration: configutaion
-            )
+            installQueue.sync {
+                install(
+                    deviceUUID: deviceUUID,
+                    configuration: configutaion
+                )
+            }
         })
     }
     
@@ -78,7 +88,10 @@ class CoreController {
         checkNotificationStatus()
     }
     
+    private var installSemathore = DispatchSemaphore(value: 1)
+    
     private func install(deviceUUID: String, configuration: MBConfiguration) {
+        installSemathore.wait()
         let previousVersion = databaseRepository.installVersion ?? -1
         let newVersion = previousVersion + 1
         persistenceStorage.deviceUUID = deviceUUID
@@ -111,9 +124,13 @@ class CoreController {
                     .category(.general).level(.error).make()
             }
         }
+        installSemathore.signal()
     }
     
+    private var infoUpdateSemathore = DispatchSemaphore(value: 1)
+    
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
+        infoUpdateSemathore.wait()
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
         let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
@@ -134,6 +151,7 @@ class CoreController {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
                 .category(.general).level(.error).make()
         }
+        infoUpdateSemathore.signal()
     }
     
     init(

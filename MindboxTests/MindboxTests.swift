@@ -25,6 +25,7 @@ class MindboxTests: XCTestCase {
     }
 
     override func tearDown() {
+        queues = []
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
@@ -168,6 +169,71 @@ class MindboxTests: XCTestCase {
         Mindbox.shared.getAPNSToken { _ in }
         XCTAssertEqual(firstCountApnsToken, 1)
         XCTAssertEqual(secondCountApnsToken, 1)
+    }
+    
+    private var queues: [DispatchQueue] = []
+    
+    func testInfoUpdateVersioning() {
+        let createEventsExpectation = self.expectation(description: "CreateInfoUpdate")
+        let inspectVersionsExpectation = self.expectation(description: "InspectVersion")
+        let configuration = try! MBConfiguration(
+            endpoint: "mpush-test-iOS-test",
+            domain: "api.mindbox.ru",
+            installationId: "",
+            deviceUUID: UUID().uuidString,
+            subscribeCustomerIfCreated: true
+        )
+        Mindbox.shared.initialization(configuration: configuration)
+        container.guaranteedDeliveryManager.canScheduleOperations = false
+        queues = []
+        let infoUpdateLimit = 50
+        (1...infoUpdateLimit).forEach { index in
+            let queue = DispatchQueue(label: "com.Mindbox.testInfoUpdateVersioning-\(index)", attributes: .concurrent)
+            queues.append(queue)
+            queue.async {
+                Mindbox.shared.apnsTokenUpdate(deviceToken: self.mockToken())
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            let count = self.container.databaseRepository.count
+            XCTAssertTrue(count == infoUpdateLimit)
+            createEventsExpectation.fulfill()
+            do {
+                let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
+                events.forEach({
+                    XCTAssertTrue($0.type == .infoUpdated)
+                })
+                let decodedBodies = events
+                    .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                    .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body  }
+                
+                XCTAssertTrue(decodedBodies.count == infoUpdateLimit)
+                decodedBodies
+                    .enumerated()
+                    .makeIterator()
+                    .forEach { (offset, element) in
+                        XCTAssertTrue(offset + 1 == element.version)
+                    }
+                inspectVersionsExpectation.fulfill()
+            } catch {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        
+        waitForExpectations(timeout: 60, handler: nil)
+    }
+    
+    private func mockToken() -> Data {
+        (1...8)
+            .map { _ in randomString(length: 8) + " " }
+            .reduce("", +)
+            .data(using: .utf8)!
+    }
+    
+    private func randomString(length: Int = 10) -> String {
+        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return String((0..<length).map{ _ in letters.randomElement()! })
     }
     
 }
