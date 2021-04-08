@@ -11,14 +11,17 @@ import Foundation
 /// The `Loglevel` is used to distinguish between log messages level.
 public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
     
-    case debug = 0     //  |
-    case info = 1      //  |
-    case `default` = 2 //  |
-    case error = 3     //  |
-    case fault = 4     //  V
+    case none = 0   //  X
+    case debug      //  |
+    case info       //  |
+    case `default`  //  |
+    case error      //  |
+    case fault      //  V
     
     var emoji: String {
         switch self {
+        case .none:
+            return ""
         case .debug:
             return "[🪲]"
         case .info:

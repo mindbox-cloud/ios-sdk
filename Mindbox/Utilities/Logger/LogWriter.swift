@@ -31,14 +31,16 @@ fileprivate extension LogLevel {
     
     var asOSLogType: OSLogType {
         switch self {
-        case .error:
-            return .error
-        case .info:
-            return .info
+        case .none:
+            return .default
         case .debug:
             return .debug
+        case .info:
+            return .info
         case .default:
             return .default
+        case .error:
+            return .error
         case .fault:
             return .fault
         }
