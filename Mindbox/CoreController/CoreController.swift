@@ -19,6 +19,7 @@ class CoreController {
     
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
     private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
+    private let checkNotificationStatusQueue = DispatchQueue(label: "com.Mindbox.checkNotificationStatus")
 
     func initialization(configuration: MBConfiguration) {
         persistenceStorage.configuration = configuration
@@ -45,24 +46,26 @@ class CoreController {
         }
         persistenceStorage.apnsToken = token
     }
-            
+                
     func checkNotificationStatus(granted: Bool? = nil) {
-        notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
-            guard let self = self else { return }
-            let isNotificationsEnabled = granted ?? isNotificationsEnabled
-            guard self.persistenceStorage.isNotificationsEnabled != isNotificationsEnabled else {
-                return
+        checkNotificationStatusQueue.sync {
+            notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
+                guard let self = self else { return }
+                let isNotificationsEnabled = granted ?? isNotificationsEnabled
+                guard self.persistenceStorage.isNotificationsEnabled != isNotificationsEnabled else {
+                    return
+                }
+                guard self.persistenceStorage.isInstalled else {
+                    return
+                }
+                self.infoUpdateQueue.sync {
+                    self.updateInfo(
+                        apnsToken: self.persistenceStorage.apnsToken,
+                        isNotificationsEnabled: isNotificationsEnabled
+                    )
+                }
+                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             }
-            guard self.persistenceStorage.isInstalled else {
-                return
-            }
-            self.infoUpdateQueue.sync {
-                self.updateInfo(
-                    apnsToken: self.persistenceStorage.apnsToken,
-                    isNotificationsEnabled: isNotificationsEnabled
-                )
-            }
-            self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
         }
     }
     

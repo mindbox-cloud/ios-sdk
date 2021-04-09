@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class MBConfigurationTest: XCTestCase {
+class MBConfigurationTestCase: XCTestCase {
     let emptyDomainFile = "TestConfig_Invalid_1"
     let emptyEndpointFile = "TestConfig_Invalid_2"
     let invalidUUIDFile = "TestConfig_Invalid_3"
