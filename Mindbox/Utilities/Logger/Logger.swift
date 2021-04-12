@@ -11,7 +11,7 @@ import os
 
 public class MBLogger {
     
-    public var logLevel: LogLevel = .default
+    public var logLevel: LogLevel = .none
         
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)
