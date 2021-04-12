@@ -32,6 +32,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     private var observationToken: NSKeyValueObservation?
     
     override func setUp() {
+        Mindbox.logger.logLevel = .none
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
@@ -160,7 +161,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type. SimpleCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
+                XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == errorCase[iterator] {
