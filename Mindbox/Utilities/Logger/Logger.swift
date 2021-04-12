@@ -9,8 +9,18 @@
 import Foundation
 import os
 
+
 public class MBLogger {
     
+    /**
+     ### Levels:
+     1. none
+     2. debug 🪲
+     3. info ℹ️
+     4. default 💡
+     5. error ‼️
+     6. fault ⚠️
+     */
     public var logLevel: LogLevel = .none
         
     private enum ExecutionMethod {
@@ -27,7 +37,7 @@ public class MBLogger {
             executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
     }
-    
+
     func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
         guard logLevel.rawValue >= level.rawValue else {
             return
@@ -46,6 +56,24 @@ public class MBLogger {
         }
     }
     
+    /**
+     Method to write log in Xcode debug output as well in Console.app.
+     
+     - Important:
+     To filter SDK logs in _Console.app_ use __subsystem__:
+     your bundle identifier which is defined by the CFBundleIdentifier key in the bundle’s information property list.
+     
+     - Warning:
+     If sdk could't find your bundleID, your logs will be under
+     subsystem __"cloud.Mindbox.UndefinedHostApplication"__
+     
+     - Parameters:
+        - level: LogLevel of the log
+        - message: Log message
+        - fileName: By default it uses #file
+        - line: By default it uses #line
+        - funcName: By default it uses #function
+     */
     public func log(
         level: LogLevel,
         message: String,

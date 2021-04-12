@@ -8,7 +8,17 @@
 
 import Foundation
 
-/// The `Loglevel` is used to distinguish between log messages level.
+/**
+ Logging levels supported by the sdk.
+ 
+ ### Levels:
+ 1. none
+ 2. debug 🪲
+ 3. info ℹ️
+ 4. default 💡
+ 5. error ‼️
+ 6. fault ⚠️
+ */
 public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
     
     case none = 0   //  X
