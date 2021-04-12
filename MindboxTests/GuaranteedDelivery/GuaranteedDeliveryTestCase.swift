@@ -160,7 +160,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type. SimpleCase:\(simpleCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
+                XCTFail("New state is not expected type. SimpleCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == errorCase[iterator] {
