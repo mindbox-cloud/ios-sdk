@@ -86,7 +86,7 @@ class MindboxTests: XCTestCase {
         let configuration = try! MBConfiguration(
             endpoint: "mpush-test-iOS-test",
             domain: "api.mindbox.ru",
-            installationId: "",
+            previousInstallationId: "",
             deviceUUID: "",
             subscribeCustomerIfCreated: true
         )
@@ -110,7 +110,7 @@ class MindboxTests: XCTestCase {
         let configuration = try! MBConfiguration(
             endpoint: "mpush-test-iOS-test",
             domain: "api.mindbox.ru",
-            installationId: "",
+            previousInstallationId: "",
             deviceUUID: "",
             subscribeCustomerIfCreated: true
         )

@@ -98,14 +98,14 @@ class CoreController {
         let previousVersion = databaseRepository.installVersion ?? -1
         let newVersion = previousVersion + 1
         persistenceStorage.deviceUUID = deviceUUID
-        persistenceStorage.installationId = configuration.installationId
+        persistenceStorage.installationId = configuration.previousInstallationId
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.getStatus { [weak self] (isNotificationsEnabled) in
             guard let self = self else { return }
             let encodable = MobileApplicationInstalled(
                 token: apnsToken,
                 isNotificationsEnabled: isNotificationsEnabled,
-                installationId: configuration.installationId,
+                installationId: configuration.previousInstallationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
                 lastDeviceUuid: configuration.deviceUUID,
                 version: newVersion

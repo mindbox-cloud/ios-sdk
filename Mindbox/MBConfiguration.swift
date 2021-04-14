@@ -15,7 +15,7 @@ public struct MBConfiguration: Codable {
     
     public let endpoint: String
     public let domain: String
-    public var installationId: String?
+    public var previousInstallationId: String?
     public var deviceUUID: String?
     public var subscribeCustomerIfCreated: Bool
 
@@ -23,14 +23,14 @@ public struct MBConfiguration: Codable {
     ///
     /// - Parameter endpoint: Used for app identification
     /// - Parameter domain: Used for generating baseurl for REST
-    /// - Parameter installationId: Used to create tracking continuity by uuid
+    /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter deviceUUID: Used instead of the generated value
     ///
     /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
-        installationId: String? = nil,
+        previousInstallationId: String? = nil,
         deviceUUID: String? = nil,
         subscribeCustomerIfCreated: Bool = false
     ) throws {
@@ -46,16 +46,16 @@ public struct MBConfiguration: Codable {
             throw Mindbox.Errors.invalidConfiguration(reason: "Value endpoint can not be empty")
         }
 
-        if let installationId = installationId, !installationId.isEmpty {
-            guard UUID(uuidString: installationId) != nil else {
+        if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
+            guard UUID(uuidString: previousInstallationId) != nil else {
                 throw Mindbox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
             }
 
-            guard UDIDValidator(udid: installationId).evaluate() else {
+            guard UDIDValidator(udid: previousInstallationId).evaluate() else {
                 throw Mindbox.Errors.invalidConfiguration(reason: "installationId doesn't match the UUID format", suggestion: nil)
             }
 
-            self.installationId = installationId
+            self.previousInstallationId = previousInstallationId
         }
         if let deviceUUID = deviceUUID, !deviceUUID.isEmpty {
             guard UUID(uuidString: deviceUUID) != nil else {
@@ -119,7 +119,7 @@ public struct MBConfiguration: Codable {
     enum CodingKeys: String, CodingKey {
         case endpoint
         case domain
-        case installationId
+        case previousInstallationId
         case deviceUUID
         case subscribeCustomerIfCreated
     }
@@ -128,10 +128,10 @@ public struct MBConfiguration: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
-        var installationId: String? = nil
-        if let value = try? values.decode(String.self, forKey: .installationId) {
+        var previousInstallationId: String? = nil
+        if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {
-                installationId = value
+                previousInstallationId = value
             }
         }
         var deviceUUID: String? = nil
@@ -144,7 +144,7 @@ public struct MBConfiguration: Codable {
         try self.init(
             endpoint: endpoint,
             domain: domain,
-            installationId: installationId,
+            previousInstallationId: previousInstallationId,
             deviceUUID: deviceUUID,
             subscribeCustomerIfCreated: subscribeCustomerIfCreated
         )

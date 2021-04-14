@@ -93,7 +93,7 @@ class VersioningTestCase: XCTestCase {
         let configuration = try! MBConfiguration(
             endpoint: "mpush-test-iOS-test",
             domain: "api.mindbox.ru",
-            installationId: "",
+            previousInstallationId: "",
             deviceUUID: UUID().uuidString,
             subscribeCustomerIfCreated: true
         )
