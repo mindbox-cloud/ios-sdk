@@ -94,7 +94,7 @@ class VersioningTestCase: XCTestCase {
             endpoint: "mpush-test-iOS-test",
             domain: "api.mindbox.ru",
             previousInstallationId: "",
-            deviceUUID: UUID().uuidString,
+            previousDeviceUUID: UUID().uuidString,
             subscribeCustomerIfCreated: true
         )
         Mindbox.shared.initialization(configuration: configuration)

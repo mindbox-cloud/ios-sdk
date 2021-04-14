@@ -19,7 +19,7 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var deviceUUID: String? {
         didSet {
-            configuration?.deviceUUID = deviceUUID
+            configuration?.previousDeviceUUID = deviceUUID
             onDidChange?()
         }
     }

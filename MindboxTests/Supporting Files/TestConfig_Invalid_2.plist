@@ -6,9 +6,9 @@
 	<string>app-with-hub-IOS</string>
 	<key>domain</key>
 	<string></string>
-	<key>installationId</key>
+	<key>previousInstallationId</key>
 	<string></string>
-	<key>deviceUUID</key>
+	<key>previousDeviceUUID</key>
 	<string></string>
 </dict>
 </plist>

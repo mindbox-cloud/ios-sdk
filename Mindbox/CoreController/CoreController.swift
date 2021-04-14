@@ -87,7 +87,7 @@ class CoreController {
                 .category(.general).level(.error).make()
             return
         }
-        persistenceStorage.configuration?.deviceUUID = deviceUUID
+        persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         checkNotificationStatus()
     }
     
@@ -107,7 +107,7 @@ class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled,
                 installationId: configuration.previousInstallationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
-                lastDeviceUuid: configuration.deviceUUID,
+                lastDeviceUuid: configuration.previousDeviceUUID,
                 version: newVersion
             )
             let body = BodyEncoder(encodable: encodable).body
