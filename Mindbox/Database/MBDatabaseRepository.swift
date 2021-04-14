@@ -64,6 +64,7 @@ class MBDatabaseRepository {
         
         case install = "ApplicationInstalledVersion"
         case infoUpdate = "ApplicationInfoUpdatedVersion"
+        case instanceId = "ApplicationInstanceId"
         
     }
     
@@ -82,6 +83,15 @@ class MBDatabaseRepository {
         }
         set {
             setMetadata(newValue, forKey: .install)
+        }
+    }
+    
+    var instanceId: String? {
+        get {
+            getMetadata(forKey: .instanceId)
+        }
+        set {
+            setMetadata(newValue, forKey: .instanceId)
         }
     }
     

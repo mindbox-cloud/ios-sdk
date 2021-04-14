@@ -94,7 +94,7 @@ class CoreController {
     private var installSemathore = DispatchSemaphore(value: 1)
     
     private func install(deviceUUID: String, configuration: MBConfiguration) {
-        installSemathore.wait()
+        installSemathore.wait(); defer { installSemathore.signal() }
         let previousVersion = databaseRepository.installVersion ?? -1
         let newVersion = previousVersion + 1
         persistenceStorage.deviceUUID = deviceUUID
@@ -102,13 +102,16 @@ class CoreController {
         let apnsToken = persistenceStorage.apnsToken
         notificationStatusProvider.getStatus { [weak self] (isNotificationsEnabled) in
             guard let self = self else { return }
+            let instanceId = UUID().uuidString
+            self.databaseRepository.instanceId = instanceId
             let encodable = MobileApplicationInstalled(
                 token: apnsToken,
                 isNotificationsEnabled: isNotificationsEnabled,
                 installationId: configuration.previousInstallationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
                 lastDeviceUuid: configuration.previousDeviceUUID,
-                version: newVersion
+                version: newVersion,
+                instanceId: instanceId
             )
             let body = BodyEncoder(encodable: encodable).body
             let event = Event(
@@ -127,19 +130,19 @@ class CoreController {
                     .category(.general).level(.error).make()
             }
         }
-        installSemathore.signal()
     }
     
     private var infoUpdateSemathore = DispatchSemaphore(value: 1)
     
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
-        infoUpdateSemathore.wait()
+        infoUpdateSemathore.wait(); defer { infoUpdateSemathore.signal() }
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
         let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
             isNotificationsEnabled: isNotificationsEnabled,
-            version: newVersion
+            version: newVersion,
+            instanceId: databaseRepository.instanceId ?? ""
         )
         let event = Event(
             type: .infoUpdated,
@@ -154,7 +157,6 @@ class CoreController {
             Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
                 .category(.general).level(.error).make()
         }
-        infoUpdateSemathore.signal()
     }
     
     init(
