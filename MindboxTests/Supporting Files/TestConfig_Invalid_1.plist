@@ -6,9 +6,9 @@
 	<string></string>
 	<key>domain</key>
 	<string>api.mindbox.ru</string>
-	<key>installationId</key>
+	<key>previousInstallationId</key>
 	<string></string>
-	<key>deviceUUID</key>
+	<key>previousDeviceUUID</key>
 	<string></string>
 </dict>
 </plist>

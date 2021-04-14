@@ -36,7 +36,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
-        persistenceStorage.configuration?.deviceUUID = configuration.deviceUUID
+        persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
         persistenceStorage.deviceUUID = "0593B5CC-1479-4E45-A7D3-F0E8F9B40898"
         try! databaseRepository.erase()
         updateInstanceFactory(withFailureNetworkFetcher: false)

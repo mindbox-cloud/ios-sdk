@@ -28,7 +28,7 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        guard let deviceUUID = configuration.deviceUUID else {
+        guard let deviceUUID = configuration.previousDeviceUUID else {
             let error = ErrorModel(
                 errorKey: ErrorKey.configuration.rawValue,
                 rawError: Mindbox.Errors.invalidConfiguration(reason: "DeviceUUID is not set")
