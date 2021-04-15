@@ -23,9 +23,12 @@ jobs:
         CI: true
 
   publish:
+    needs: [unit]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Release generation
+      run: ./git-release.sh "Automatically generated Pre-release" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"  
     - name: Install bundler dependencies
       run: bundle install
     - name: Pods setup
@@ -41,6 +44,10 @@ jobs:
         pod trunk push --allow-warnings
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+
+    notify:
+    needs: [publish]
+    runs-on: ubuntu-latest
     - name: Job status notification
       uses: rtCamp/action-slack-notify@v2
       env:
