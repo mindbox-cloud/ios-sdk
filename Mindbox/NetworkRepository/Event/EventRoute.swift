@@ -10,11 +10,12 @@ import Foundation
 
 enum EventRoute: Route {
     
-    case asyncEvent(EventWrapper), pushDeleveried(EventWrapper)
+    case asyncEvent(EventWrapper), trackVisit(EventWrapper), pushDeleveried(EventWrapper)
     
     var method: HTTPMethod {
         switch self {
-        case .asyncEvent:
+        case .asyncEvent,
+             .trackVisit:
             return .post
         case .pushDeleveried:
             return .get
@@ -25,6 +26,8 @@ enum EventRoute: Route {
         switch self {
         case .asyncEvent:
             return "/v3/operations/async"
+        case .trackVisit:
+            return "/v1.1/customer/mobile-track-visit"
         case .pushDeleveried:
             return "/mobile-push/delivered"
         }
@@ -39,11 +42,14 @@ enum EventRoute: Route {
         case .asyncEvent(let wrapper):
             return makeBasicQueryParameters(with: wrapper)
                 .appending(["operation": wrapper.event.type.rawValue])
-            
+                .appending(["endpointId": wrapper.endpoint])
         case .pushDeleveried(let wrapper):
             let decoded = BodyDecoder<PushDelivered>(decodable: wrapper.event.body)
             return makeBasicQueryParameters(with: wrapper)
                 .appending(["uniqKey": decoded?.body.uniqKey ?? ""])
+                .appending(["endpointId": wrapper.endpoint])
+        case .trackVisit(let wrapper):
+            return makeBasicQueryParameters(with: wrapper)
         }
     }
     
@@ -53,14 +59,35 @@ enum EventRoute: Route {
             return wrapper.event.body.data(using: .utf8)
         case .pushDeleveried:
             return nil
+        case .trackVisit(let wrapper):
+            guard let decoded = BodyDecoder<TrackVisit>(decodable: wrapper.event.body) else {
+                return nil
+            }
+            let encodable = TrackVisitBodyProxy(
+                ianaTimeZone: decoded.body.ianaTimeZone,
+                endpointId: wrapper.endpoint
+            )
+            let encoded = BodyEncoder<TrackVisitBodyProxy>(encodable: encodable)
+            return encoded.body.data(using: .utf8)
         }
     }
     
     func makeBasicQueryParameters(with wrapper: EventWrapper) -> QueryParameters {
-        ["endpointId": wrapper.endpoint,
+        ["transactionId": wrapper.event.transactionId,
          "deviceUUID": wrapper.deviceUUID,
-         "transactionId": wrapper.event.transactionId,
          "dateTimeOffset": wrapper.event.dateTimeOffset]
+    }
+    
+}
+
+fileprivate struct TrackVisitBodyProxy: Codable {
+    
+    let ianaTimeZone: String
+    let endpointId: String
+    
+    init(ianaTimeZone: String, endpointId: String) {
+        self.ianaTimeZone = ianaTimeZone
+        self.endpointId = endpointId
     }
     
 }

@@ -22,13 +22,14 @@ final class DependencyProvider: DependencyContainer {
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
-        instanceFactory = MBInstanceFactory(
-            persistenceStorage: persistenceStorage,
-            utilitiesFetcher: utilitiesFetcher
-        )
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
+        instanceFactory = MBInstanceFactory(
+            persistenceStorage: persistenceStorage,
+            utilitiesFetcher: utilitiesFetcher,
+            databaseRepository: databaseRepository
+        )
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
@@ -43,10 +44,16 @@ class MBInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
-
-    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher) {
+    private let databaseRepository: MBDatabaseRepository
+    
+    init(
+        persistenceStorage: PersistenceStorage,
+        utilitiesFetcher: UtilitiesFetcher,
+        databaseRepository: MBDatabaseRepository
+    ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
+        self.databaseRepository = databaseRepository
     }
 
     func makeNetworkFetcher() -> NetworkFetcher {
@@ -62,4 +69,9 @@ class MBInstanceFactory: InstanceFactory {
             persistenceStorage: persistenceStorage
         )
     }
+    
+    func makeTrackVisitManager() -> TrackVisitManager {
+        return TrackVisitManager(databaseRepository: databaseRepository)
+    }
+    
 }

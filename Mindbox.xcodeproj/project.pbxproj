@@ -97,6 +97,8 @@
 		84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6E2261D9B2B002BF03A /* LogLevel.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */; };
+		84F565212628304A00269FD6 /* TrackVisit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F565202628304A00269FD6 /* TrackVisit.swift */; };
+		84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F5655D2628434D00269FD6 /* TrackVisitManager.swift */; };
 		84F705372611F873009C7A07 /* MBPersistentContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F705362611F873009C7A07 /* MBPersistentContainer.swift */; };
 		84F7053B26120199009C7A07 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F7053A26120199009C7A07 /* Constants.swift */; };
 		84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */; };
@@ -215,6 +217,8 @@
 		84E1D6E2261D9B2B002BF03A /* LogLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUNAuthorizationStatusProvider.swift; sourceTree = "<group>"; };
+		84F565202628304A00269FD6 /* TrackVisit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackVisit.swift; sourceTree = "<group>"; };
+		84F5655D2628434D00269FD6 /* TrackVisitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackVisitManager.swift; sourceTree = "<group>"; };
 		84F705362611F873009C7A07 /* MBPersistentContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPersistentContainer.swift; sourceTree = "<group>"; };
 		84F7053A26120199009C7A07 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
@@ -270,6 +274,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				8400429F2614CDED00CA17C5 /* ClickNotificationManager */,
 				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
 				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
@@ -600,6 +605,7 @@
 			isa = PBXGroup;
 			children = (
 				842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */,
+				84F565202628304A00269FD6 /* TrackVisit.swift */,
 				84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */,
 				84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */,
 				84A0CD53260AF8C8004CD91B /* TrackClick.swift */,
@@ -672,6 +678,14 @@
 				84F705362611F873009C7A07 /* MBPersistentContainer.swift */,
 			);
 			path = Database;
+			sourceTree = "<group>";
+		};
+		84F5655C2628433900269FD6 /* TrackVisitManager */ = {
+			isa = PBXGroup;
+			children = (
+				84F5655D2628434D00269FD6 /* TrackVisitManager.swift */,
+			);
+			path = TrackVisitManager;
 			sourceTree = "<group>";
 		};
 		84FCD37D25C9FCF100D1E574 /* UtilitiesFetcher */ = {
@@ -900,6 +914,7 @@
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
 				840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
+				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */,
@@ -937,6 +952,7 @@
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
+				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,

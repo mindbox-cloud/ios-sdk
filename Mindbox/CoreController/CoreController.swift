@@ -16,6 +16,7 @@ class CoreController {
     private let notificationStatusProvider: UNAuthorizationStatusProviding
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
+    private let trackVisitManager: TrackVisitManager
     
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
     private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
@@ -28,6 +29,7 @@ class CoreController {
         } else {
             repeatInitialization()
         }
+        trackLaunch()
         guaranteedDeliveryManager.canScheduleOperations = true
     }
         
@@ -159,17 +161,31 @@ class CoreController {
         }
     }
     
+    private func trackLaunch() {
+        do {
+            try trackVisitManager.trackLaunch()
+            Log("Tracked Visit")
+                .category(.visit).level(.info).make()
+        } catch {
+            Log("Track Visit failed with error: \(error)")
+                .category(.visit).level(.info).make()
+        }
+    }
+    
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
         notificationStatusProvider: UNAuthorizationStatusProviding,
         databaseRepository: MBDatabaseRepository,
-        guaranteedDeliveryManager: GuaranteedDeliveryManager) {
+        guaranteedDeliveryManager: GuaranteedDeliveryManager,
+        trackVisitManager: TrackVisitManager
+    ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
         self.notificationStatusProvider = notificationStatusProvider
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
+        self.trackVisitManager = trackVisitManager
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
@@ -177,6 +193,7 @@ class CoreController {
             Log("UIApplication.didBecomeActiveNotification")
                 .category(.general).level(.info).make()
             self?.checkNotificationStatus()
+            self?.trackLaunch()
         }
     }
     

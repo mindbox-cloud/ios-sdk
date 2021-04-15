@@ -16,6 +16,7 @@ public enum LogCategory: String, CaseIterable {
     case delivery
     case background
     case notification
+    case visit
     
     var emoji: String {
         switch self {
@@ -31,6 +32,8 @@ public enum LogCategory: String, CaseIterable {
             return "🕳"
         case .notification:
             return "✉️"
+        case .visit:
+            return "👁"
         }
     }
     

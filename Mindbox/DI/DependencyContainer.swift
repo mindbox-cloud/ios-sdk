@@ -24,5 +24,6 @@ protocol InstanceFactory {
     
     func makeNetworkFetcher() -> NetworkFetcher
     func makeEventRepository() -> EventRepository
+    func makeTrackVisitManager() -> TrackVisitManager
     
 }

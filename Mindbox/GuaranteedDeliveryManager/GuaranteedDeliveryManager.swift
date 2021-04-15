@@ -74,8 +74,6 @@ final class GuaranteedDeliveryManager: NSObject {
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: nil) { [weak self] (_) in
-            Log("UIApplication.didBecomeActiveNotification")
-                .category(.general).level(.info).make()
             self?.performScheduleIfNeeded()
         }
     }
