@@ -19,26 +19,28 @@ final class ClickNotificationManager {
         self.databaseRepository = databaseRepository
     }
     
-    public func track(uniqueKey: String, buttonUniqueKey: String? = nil) throws {
-        let trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
-        let event = Event(type: .trackClick, body: BodyEncoder(encodable: trackMobilePushClick).body)
-        try databaseRepository.create(event: event)
-    }
-    
-    public func track(response: UNNotificationResponse) throws {
-        let decoder = try NotificationDecoder<NotificationsPayloads.Click>(response: response)
-        let payload = try decoder.decode()
+    func track(uniqueKey: String, buttonUniqueKey: String? = nil) throws {
         var trackMobilePushClick: TrackClick?
-        if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            trackMobilePushClick = TrackClick(messageUniqueKey: payload.uniqueKey)
-        } else if response.actionIdentifier != UNNotificationDismissActionIdentifier {
-            trackMobilePushClick = TrackClick(messageUniqueKey: payload.uniqueKey, buttonUniqueKey: response.actionIdentifier)
+        if let buttonUniqueKey = buttonUniqueKey {
+            if buttonUniqueKey == UNNotificationDefaultActionIdentifier {
+                trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey)
+            } else if buttonUniqueKey != UNNotificationDismissActionIdentifier {
+                trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
+            }
+        } else {
+            trackMobilePushClick = TrackClick(messageUniqueKey: uniqueKey)
         }
         guard let encodable = trackMobilePushClick else {
             return
         }
         let event = Event(type: .trackClick, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
+    }
+    
+    func track(response: UNNotificationResponse) throws {
+        let decoder = try NotificationDecoder<NotificationsPayloads.Click>(response: response)
+        let payload = try decoder.decode()
+        try track(uniqueKey: payload.uniqueKey, buttonUniqueKey: response.actionIdentifier)
     }
     
 }

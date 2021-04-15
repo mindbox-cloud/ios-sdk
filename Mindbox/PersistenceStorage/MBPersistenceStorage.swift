@@ -146,7 +146,7 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .deviceUUID, defaultValue: nil)
     var deviceUUID: String? {
         didSet {
-            configuration?.deviceUUID = deviceUUID
+            configuration?.previousDeviceUUID = deviceUUID
             onDidChange?()
         }
     }

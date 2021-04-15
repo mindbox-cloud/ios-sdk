@@ -58,7 +58,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             expirationHandler: { [weak self] in
                 guard let self = self else { return }
                 Log("System calls expirationHandler for BackgroundTaskID: \(self.backgroundTaskID)")
-                    .category(.background).level(.warning).make()
+                    .category(.background).level(.info).make()
                 self.removingDeprecatedEventsInProgress = false
                 self.endBackgroundTask(success: true)
                 Log("BackgroundTimeRemaining after system calls expirationHandler: \(UIApplication.shared.backgroundTimeRemaining)")
@@ -126,7 +126,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",
-            dateString: Date().fullToString(),
+            dateString: Date().toFullString(),
             info: "System call"
         )
         persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -146,7 +146,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",
-            dateString: Date().fullToString(),
+            dateString: Date().toFullString(),
             info: "GuaranteedDeliveryManager.State.idle\ncompletionHandler(.noData)"
         )
         persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -164,7 +164,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
                 let backgroudExecution = BackgroudExecution(
                     taskID: taskID,
                     taskName: "performFetchWithCompletionHandler",
-                    dateString: Date().fullToString(),
+                    dateString: Date().toFullString(),
                     info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
                 )
                 self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
@@ -179,7 +179,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         let backgroudExecution = BackgroudExecution(
             taskID: taskID,
             taskName: "performFetchWithCompletionHandler",
-            dateString: Date().fullToString(),
+            dateString: Date().toFullString(),
             info: "GuaranteedDeliveryManager.State.waitingForRetry\ncompletionHandler(.newData)"
         )
         persistenceStorage.setBackgroundExecution(backgroudExecution)

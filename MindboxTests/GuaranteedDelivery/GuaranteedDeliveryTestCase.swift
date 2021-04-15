@@ -32,10 +32,11 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     private var observationToken: NSKeyValueObservation?
     
     override func setUp() {
+        Mindbox.logger.logLevel = .none
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
-        persistenceStorage.configuration?.deviceUUID = configuration.deviceUUID
+        persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
         persistenceStorage.deviceUUID = "0593B5CC-1479-4E45-A7D3-F0E8F9B40898"
         try! databaseRepository.erase()
         updateInstanceFactory(withFailureNetworkFetcher: false)
@@ -44,18 +45,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     private func updateInstanceFactory(withFailureNetworkFetcher: Bool) {
         (container.instanceFactory as! MockInstanceFactory).isFailureNetworkFetcher = withFailureNetworkFetcher
-    }
-    
-    func testIsDelivering() {
-        let event = eventGenerator.generateEvent()
-        do {
-            try databaseRepository.create(event: event)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        let exists = NSPredicate(format: "isDelivering == false")
-        expectation(for: exists, evaluatedWith: self, handler: nil)
-        waitForExpectations(timeout: 60, handler: nil)
     }
     
     func testDeliverMultipleEvents() {
@@ -94,6 +83,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func testScheduleByTimer() {
+        let retryDeadline: TimeInterval = 2
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.instanceFactory.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         let simpleCase: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
         let simpleExpectations: [XCTestExpectation] = simpleCase
             .map {
@@ -104,22 +100,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 )
             }
         var iterator: Int = 0
-        do {
-            try databaseRepository.erase()
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        let retryDeadline: TimeInterval = 2
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
-            retryDeadline: retryDeadline
-        )
+        // Full erase database
+        try! databaseRepository.erase()
+        // Lock update
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   simpleCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type")
+                XCTFail("New state is not expected type. SimpleCase:\(simpleCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == simpleCase[iterator] {
@@ -127,7 +114,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
             iterator += 1
         }
-        // Lock update
         guaranteedDeliveryManager.canScheduleOperations = false
         // Generating new events
         let events = eventGenerator.generateEvents(count: 10)
@@ -141,11 +127,18 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2)
     }
     
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
+        let retryDeadline: TimeInterval = 2
+        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+            persistenceStorage: container.persistenceStorage,
+            databaseRepository: container.databaseRepository,
+            eventRepository: container.instanceFactory.makeEventRepository(),
+            retryDeadline: retryDeadline
+        )
         let errorCase: [GuaranteedDeliveryManager.State] = [
             .delivering,
             .idle,
@@ -165,17 +158,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
-        let retryDeadline: TimeInterval = 2
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
-            retryDeadline: retryDeadline
-        )
         observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type")
+                XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
             if newState == errorCase[iterator] {
@@ -197,7 +183,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: retryDeadline + 1)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2)
     }
     
     private func generateAndSaveToDatabaseEvents() {
