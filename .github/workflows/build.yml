@@ -3,9 +3,9 @@ name: SDK CI
 on:
   push:
     branches:
-      - 'master'
+      - '!master'
       - 'develop'
-      - 'release-*'
+      - '!release-*'
     paths-ignore:
       - '**.md'
     tags-ignore:
