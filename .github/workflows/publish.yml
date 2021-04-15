@@ -48,8 +48,9 @@ jobs:
     notify:
       needs: [publish]
       runs-on: ubuntu-latest
+      steps:
+      - uses: rtCamp/action-slack-notify@v2
       - name: Job status notification
-        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
