@@ -39,8 +39,6 @@ class BackgroundTaskManagerProxy {
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: nil) { [weak self] (_) in
-            Log("UIApplication.didBecomeActiveNotification")
-                .category(.general).level(.info).make()
             self?.taskManagers.forEach { $0.applicationDidBecomeActive() }
         }
         if #available(iOS 13, *) {

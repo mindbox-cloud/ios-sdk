@@ -60,7 +60,15 @@ enum EventRoute: Route {
         case .pushDeleveried:
             return nil
         case .trackVisit(let wrapper):
-            return wrapper.event.body.data(using: .utf8)
+            guard let decoded = BodyDecoder<TrackVisit>(decodable: wrapper.event.body) else {
+                return nil
+            }
+            let encodable = TrackVisitBodyProxy(
+                ianaTimeZone: decoded.body.ianaTimeZone,
+                endpointId: wrapper.endpoint
+            )
+            let encoded = BodyEncoder<TrackVisitBodyProxy>(encodable: encodable)
+            return encoded.body.data(using: .utf8)
         }
     }
     
@@ -68,6 +76,18 @@ enum EventRoute: Route {
         ["transactionId": wrapper.event.transactionId,
          "deviceUUID": wrapper.deviceUUID,
          "dateTimeOffset": wrapper.event.dateTimeOffset]
+    }
+    
+}
+
+fileprivate struct TrackVisitBodyProxy: Codable {
+    
+    let ianaTimeZone: String
+    let endpointId: String
+    
+    init(ianaTimeZone: String, endpointId: String) {
+        self.ianaTimeZone = ianaTimeZone
+        self.endpointId = endpointId
     }
     
 }

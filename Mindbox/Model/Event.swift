@@ -15,6 +15,7 @@ struct Event {
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
         case pushDelivered = ""
         case trackClick = "MobilePush.TrackClick"
+        case trackVisit = "MobilePush.TrackVisit"
 
     }
     

@@ -342,7 +342,8 @@ public class Mindbox {
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager()
         )
     }
     

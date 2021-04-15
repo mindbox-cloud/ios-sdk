@@ -11,11 +11,9 @@ import Foundation
 struct TrackVisit: Codable {
     
     let ianaTimeZone: String
-    let endpointId: String
     
-    init(endpointId: String) {
+    init() {
         ianaTimeZone = TimeZone.current.identifier
-        self.endpointId = endpointId
     }
     
 }
