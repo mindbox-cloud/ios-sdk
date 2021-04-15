@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - 'master'
-      - 'release**'
-    paths-ignore:
-      - '**.md'
+      - 'release-*'
     tags-ignore:
       - '**'
 
@@ -25,7 +23,6 @@ jobs:
         CI: true
 
   publish:
-    needs: [unit]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -37,8 +34,13 @@ jobs:
       run: fastlane buildLane
       env:
         CI: true
-    - name: Publish to Cocoapods
-      run: pod trunk push
+    - name: Deploy to Cocoapods
+      run: |
+        set -eo pipefail
+        pod lib lint --allow-warnings
+        pod trunk push --allow-warnings
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
     - name: Job status notification
       uses: rtCamp/action-slack-notify@v2
       env:
