@@ -187,10 +187,10 @@ class CoreController {
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
         NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
+            forName: UIApplication.willEnterForegroundNotification,
             object: nil,
             queue: nil) { [weak self] (_) in
-            Log("UIApplication.didBecomeActiveNotification")
+            Log("UIApplication.willEnterForegroundNotification")
                 .category(.general).level(.info).make()
             self?.checkNotificationStatus()
             self?.trackLaunch()
