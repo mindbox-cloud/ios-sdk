@@ -43,9 +43,13 @@ class MBNetworkFetcher: NetworkFetcher {
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
+            #if DEBUG
             Log(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders).withDate().make()
+            #endif
             session.dataTask(with: urlRequest) { (data, response, error) in
+                #if DEBUG
                 Log(data: data, response: response, error: error).withDate().make()
+                #endif
                 do {
                     guard let response = response as? HTTPURLResponse else {
                         throw URLError(.unknown)
@@ -101,10 +105,14 @@ class MBNetworkFetcher: NetworkFetcher {
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
+            #if DEBUG
             Log(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders).withDate().make()
+            #endif
             session
                 .dataTask(with: urlRequest) { (data, response, error) in
+                    #if DEBUG
                     Log(data: data, response: response, error: error).withDate().make()
+                    #endif
                     do {
                         if let error = error {
                             throw error
