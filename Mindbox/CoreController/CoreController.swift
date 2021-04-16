@@ -190,7 +190,7 @@ class CoreController {
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
             queue: nil) { [weak self] (_) in
-            Log("UIApplication.didBecomeActiveNotification")
+            Log("UIApplication.willEnterForegroundNotification")
                 .category(.general).level(.info).make()
             self?.checkNotificationStatus()
             self?.trackLaunch()
