@@ -23,13 +23,14 @@ final class TestDependencyProvider: DependencyContainer {
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
-        instanceFactory = MockInstanceFactory(
-            persistenceStorage: persistenceStorage,
-            utilitiesFetcher: utilitiesFetcher
-        )
         databaseLoader = try DataBaseLoader()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
+        instanceFactory = MockInstanceFactory(
+            persistenceStorage: persistenceStorage,
+            utilitiesFetcher: utilitiesFetcher,
+            databaseRepository: databaseRepository
+        )
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
@@ -44,12 +45,14 @@ class MockInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
+    private let databaseRepository: MBDatabaseRepository
     
     var isFailureNetworkFetcher: Bool = false
 
-    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher) {
+    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher, databaseRepository: MBDatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
+        self.databaseRepository = databaseRepository
     }
 
     func makeNetworkFetcher() -> NetworkFetcher {
@@ -61,6 +64,10 @@ class MockInstanceFactory: InstanceFactory {
             fetcher: makeNetworkFetcher(),
             persistenceStorage: persistenceStorage
         )
+    }
+    
+    func makeTrackVisitManager() -> TrackVisitManager {
+        return TrackVisitManager(databaseRepository: databaseRepository)
     }
 }
 
