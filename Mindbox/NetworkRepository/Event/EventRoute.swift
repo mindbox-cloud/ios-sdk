@@ -10,11 +10,12 @@ import Foundation
 
 enum EventRoute: Route {
     
-    case asyncEvent(EventWrapper), trackVisit(EventWrapper), pushDeleveried(EventWrapper)
+    case asyncEvent(EventWrapper), customAsyncEvent(EventWrapper) , trackVisit(EventWrapper), pushDeleveried(EventWrapper)
     
     var method: HTTPMethod {
         switch self {
         case .asyncEvent,
+             .customAsyncEvent,
              .trackVisit:
             return .post
         case .pushDeleveried:
@@ -24,7 +25,7 @@ enum EventRoute: Route {
     
     var path: String {
         switch self {
-        case .asyncEvent:
+        case .asyncEvent, .customAsyncEvent:
             return "/v3/operations/async"
         case .trackVisit:
             return "/v1.1/customer/mobile-track-visit"
@@ -43,6 +44,14 @@ enum EventRoute: Route {
             return makeBasicQueryParameters(with: wrapper)
                 .appending(["operation": wrapper.event.type.rawValue])
                 .appending(["endpointId": wrapper.endpoint])
+        case .customAsyncEvent(let wrapper):
+            guard let decoded = BodyDecoder<CustomEvent>(decodable: wrapper.event.body) else {
+                return [:]
+            }
+            
+            return makeBasicQueryParameters(with: wrapper)
+                .appending(["operation": decoded.body.name])
+                .appending(["endpointId": wrapper.endpoint])
         case .pushDeleveried(let wrapper):
             let decoded = BodyDecoder<PushDelivered>(decodable: wrapper.event.body)
             return makeBasicQueryParameters(with: wrapper)
@@ -55,7 +64,7 @@ enum EventRoute: Route {
     
     var body: Data? {
         switch self {
-        case .asyncEvent(let wrapper):
+        case .asyncEvent(let wrapper), .customAsyncEvent(let wrapper):
             return wrapper.event.body.data(using: .utf8)
         case .pushDeleveried:
             return nil

@@ -247,6 +247,26 @@ public class Mindbox {
     }
     
     /**
+     Method for register a custom action.
+     
+     - Parameters:
+        - name: Name of custom operation
+        - payload: Provided `Encodable` payload to send
+     */
+    public func executeAsyncOperation<T: Encodable>(name: String, payload: T) {
+        let customEvent = CustomEvent(name: name, payload: BodyEncoder(encodable: payload).body)
+        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        do {
+            try databaseRepository?.create(event: event)
+            Log("Track executeAsyncOperation")
+                .category(.notification).level(.info).make()
+        } catch {
+            Log("Track executeAsyncOperation failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+    }
+    
+    /**
      Method for transmitting the fact of a click on a push notification.
      
      - Parameters:

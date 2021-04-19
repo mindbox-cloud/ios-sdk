@@ -16,7 +16,7 @@ struct Event {
         case pushDelivered = ""
         case trackClick = "MobilePush.TrackClick"
         case trackVisit = "MobilePush.TrackVisit"
-
+        case customEvent
     }
     
     let transactionId: String
