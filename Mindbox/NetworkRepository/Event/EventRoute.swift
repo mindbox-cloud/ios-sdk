@@ -64,8 +64,14 @@ enum EventRoute: Route {
     
     var body: Data? {
         switch self {
-        case .asyncEvent(let wrapper), .customAsyncEvent(let wrapper):
+        case .asyncEvent(let wrapper):
             return wrapper.event.body.data(using: .utf8)
+        case .customAsyncEvent(let wrapper):
+            guard let decoded = BodyDecoder<CustomEvent>(decodable: wrapper.event.body) else {
+                return nil
+            }
+            
+            return decoded.body.payload.data(using: .utf8)
         case .pushDeleveried:
             return nil
         case .trackVisit(let wrapper):
