@@ -34,7 +34,8 @@ class MindboxTests: XCTestCase {
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager()
         )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
@@ -66,7 +67,8 @@ class MindboxTests: XCTestCase {
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager()
         )
 
         //        //        //        //        //        //        //        //        //        //        //        //

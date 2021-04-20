@@ -53,6 +53,8 @@ class MBEventRepository: EventRepository {
              .infoUpdated,
              .trackClick:
             return EventRoute.asyncEvent(wrapper)
+        case .customEvent:
+            return EventRoute.customAsyncEvent(wrapper)
         case .trackVisit:
             return EventRoute.trackVisit(wrapper)
         }
