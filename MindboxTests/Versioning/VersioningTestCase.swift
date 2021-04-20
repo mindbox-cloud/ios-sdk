@@ -78,7 +78,7 @@ class VersioningTestCase: XCTestCase {
                     .enumerated()
                     .makeIterator()
                     .forEach { (offset, element) in
-                        XCTAssertTrue(offset + 1 == element.version)
+                        XCTAssertTrue(offset + 1 == element.version, "Element version is \(element.version). Current element is \(offset + 1). Are they equal? \(offset + 1 == element.version)")
                     }
                 inspectVersionsExpectation.fulfill()
             } catch {
