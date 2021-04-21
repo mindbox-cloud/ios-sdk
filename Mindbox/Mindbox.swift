@@ -247,11 +247,11 @@ public class Mindbox {
     }
     
     /**
-     Method for register a custom action.
+     Method for register a custom event.
      
      - Parameters:
-        - name: Name of custom operation
-        - payload: Provided `Encodable` payload to send
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationBody: Provided `Encodable` payload to send
      */
     public func executeAsyncOperation<T: Encodable>(operationSystemName: String, operationBody: T) {
         guard operationSystemName.operationNameIsValid else {
