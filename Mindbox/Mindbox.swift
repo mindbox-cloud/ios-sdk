@@ -253,8 +253,13 @@ public class Mindbox {
         - name: Name of custom operation
         - payload: Provided `Encodable` payload to send
      */
-    public func executeAsyncOperation<T: Encodable>(name: String, payload: T) {
-        let customEvent = CustomEvent(name: name, payload: BodyEncoder(encodable: payload).body)
+    public func executeAsyncOperation<T: Encodable>(operationSystemName: String, operationBody: T) {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
         do {
             try databaseRepository?.create(event: event)
