@@ -17,6 +17,7 @@
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
+.idea/
 
 # Gradle:
 .idea/**/gradle.xml
@@ -266,7 +267,7 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots
 fastlane/test_output
-
+test_output
 ### SwiftPackageManager ###
 Packages
 xcuserdata

@@ -1,0 +1,40 @@
+name: SDK CI
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+      - '!release-*'
+    paths-ignore:
+      - '**.md'
+    tags-ignore:
+      - '**'
+
+jobs:
+  unit:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install bundler dependencies
+      run: bundle install
+    - name: Pods setup
+      run: pod install
+    - name: Run unit tests
+      run: fastlane unitTestLane
+      env:
+        CI: true
+
+  build:
+    needs: [unit]
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install bundler dependencies
+      run: bundle install
+    - name: Pods setup
+      run: pod install
+    - name: Run build
+      run: fastlane buildLane
+      env:
+        CI: true
