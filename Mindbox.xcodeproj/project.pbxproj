@@ -34,6 +34,7 @@
 		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
 		31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */; };
 		3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4126303F2F000A30D0 /* String+Regex.swift */; };
+		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339ACE4F262DAC74003590D2 /* CustomEvent.swift */; };
 		8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */; };
 		840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042902614C65900CA17C5 /* NotificationsPayloads.swift */; };
@@ -153,6 +154,7 @@
 		31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_3.plist; sourceTree = "<group>"; };
 		31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_4.plist; sourceTree = "<group>"; };
 		3328FE4126303F2F000A30D0 /* String+Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Regex.swift"; sourceTree = "<group>"; };
+		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
 		339ACE4F262DAC74003590D2 /* CustomEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEvent.swift; sourceTree = "<group>"; };
 		446EBBC3A43EEB99FB63A476 /* Pods-Mindbox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox.debug.xcconfig"; path = "Target Support Files/Pods-Mindbox/Pods-Mindbox.debug.xcconfig"; sourceTree = "<group>"; };
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
@@ -278,6 +280,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				337EDF302636DA290089559F /* Notifications */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				8400429F2614CDED00CA17C5 /* ClickNotificationManager */,
 				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
@@ -380,6 +383,14 @@
 				3328FE4126303F2F000A30D0 /* String+Regex.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		337EDF302636DA290089559F /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				337EDF332636DA3F0089559F /* MindboxNotificationService.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		7ECBF932967E50162EE94F12 /* Pods */ = {
@@ -961,6 +972,7 @@
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
+				337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */,
 				339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
