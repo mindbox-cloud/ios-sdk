@@ -195,6 +195,11 @@ class CoreController {
             self?.checkNotificationStatus()
             self?.trackLaunch()
         }
+        
+        TimerManager.shared.configurate(trackEvery: 20 * 60) { [weak self] in
+            self?.trackLaunch()
+        }
+        TimerManager.shared.setupTimer()
     }
     
 }

@@ -25,7 +25,6 @@ public class MindboxNotificationService {
     public init() {}
 
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
-    @available(iOS 12.0, *)
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
         context = extensionContext
         self.viewController = viewController
@@ -67,7 +66,6 @@ public class MindboxNotificationService {
         }
     }
 
-    @available(iOS 12.0, *)
     private func createButtons(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
@@ -75,12 +73,11 @@ public class MindboxNotificationService {
         }
         if let attachment = notification.request.content.attachments.first, attachment.url.startAccessingSecurityScopedResource() {
             attachmentUrl = attachment.url
-            createImageView(with: payload, view: viewController?.view)
+            createImageView(with: attachment.url.path, view: self.viewController?.view)
         }
-        createActions(with: payload, context: context)
+        createActions(with: payload, context: self.context)
     }
 
-    @available(iOS 12.0, *)
     private func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
             return
@@ -92,18 +89,22 @@ public class MindboxNotificationService {
                 options: [.foreground]
             )
         }
-        context.notificationActions = []
-        actions.forEach {
-            context.notificationActions.append($0)
+        
+        if #available(iOS 12.0, *) {
+            context.notificationActions = []
+            actions.forEach {
+                context.notificationActions.append($0)
+            }
         }
     }
 
-    private func createImageView(with payload: Payload, view: UIView?) {
-        guard let imageUrl = payload.withImageURL?.imageUrl,
-              let url = URL(string: imageUrl),
-              let view = view else {
+    private func createImageView(with imagePath: String, view: UIView?) {
+        guard let view = view else {
             return
         }
+        
+        let url = URL(fileURLWithPath: imagePath)
+        
         guard let data = try? Data(contentsOf: url) else {
             return
         }
@@ -117,7 +118,7 @@ public class MindboxNotificationService {
             imageView.rightAnchor.constraint(equalTo: view.rightAnchor),
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300)
         ])
     }
 
