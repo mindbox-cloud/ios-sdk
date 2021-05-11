@@ -69,7 +69,7 @@ final class TrackVisitManager {
             return
         }
 
-        let encodable = TrackVisit(url: url, source: .link)
+        let encodable = TrackVisit(url: url, source: .push)
         try sendTrackVisit(encodable)
         Log("Tracked Visit event type: push").category(.visit).level(.info).make()
     }
