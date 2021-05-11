@@ -292,6 +292,24 @@ public class Mindbox {
     }
     
     /**
+     Method for tracking application activities.
+     
+     - Parameters:
+        - type: `TrackVisitType`
+     
+     */
+    public func track(_ type: TrackVisitType) {
+        guard let container = container else { return }
+        let tracker = container.instanceFactory.makeTrackVisitManager()
+        do {
+            try tracker.track(type)
+        } catch {
+            Log("Track Visit failed with error: \(error)")
+                .category(.visit).level(.error).make()
+        }
+    }
+    
+    /**
      Method for registering background tasks for iOS 13 and higher.
      
      - Important:

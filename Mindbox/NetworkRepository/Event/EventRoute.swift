@@ -75,15 +75,14 @@ enum EventRoute: Route {
         case .pushDeleveried:
             return nil
         case .trackVisit(let wrapper):
-            guard let decoded = BodyDecoder<TrackVisit>(decodable: wrapper.event.body) else {
+            guard let data = wrapper.event.body.data(using: .utf8),
+                  var json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] else {
                 return nil
             }
-            let encodable = TrackVisitBodyProxy(
-                ianaTimeZone: decoded.body.ianaTimeZone,
-                endpointId: wrapper.endpoint
-            )
-            let encoded = BodyEncoder<TrackVisitBodyProxy>(encodable: encodable)
-            return encoded.body.data(using: .utf8)
+            
+            json["endpointId"] = wrapper.endpoint
+            
+            return try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted)
         }
     }
     

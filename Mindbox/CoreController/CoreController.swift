@@ -10,14 +10,13 @@ import Foundation
 import UIKit
 
 class CoreController {
-    
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
     private let notificationStatusProvider: UNAuthorizationStatusProviding
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
-    
+
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
     private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
     private let checkNotificationStatusQueue = DispatchQueue(label: "com.Mindbox.checkNotificationStatus")
@@ -29,10 +28,9 @@ class CoreController {
         } else {
             repeatInitialization()
         }
-        trackLaunch()
         guaranteedDeliveryManager.canScheduleOperations = true
     }
-        
+
     func apnsTokenDidUpdate(token: String) {
         notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
@@ -48,7 +46,7 @@ class CoreController {
         }
         persistenceStorage.apnsToken = token
     }
-                
+
     func checkNotificationStatus(granted: Bool? = nil) {
         checkNotificationStatusQueue.sync {
             notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
@@ -70,10 +68,11 @@ class CoreController {
             }
         }
     }
-    
+
     // MARK: - Private
+
     private func primaryInitialization(with configutaion: MBConfiguration) {
-        utilitiesFetcher.getDeviceUUID(completion: { [self] (deviceUUID) in
+        utilitiesFetcher.getDeviceUUID(completion: { [self] deviceUUID in
             installQueue.sync {
                 install(
                     deviceUUID: deviceUUID,
@@ -82,7 +81,7 @@ class CoreController {
             }
         })
     }
-    
+
     private func repeatInitialization() {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Log("Unable to find deviceUUID in persistenceStorage")
@@ -92,9 +91,9 @@ class CoreController {
         persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         checkNotificationStatus()
     }
-    
+
     private var installSemathore = DispatchSemaphore(value: 1)
-    
+
     private func install(deviceUUID: String, configuration: MBConfiguration) {
         installSemathore.wait(); defer { installSemathore.signal() }
         let previousVersion = databaseRepository.installVersion ?? -1
@@ -102,7 +101,7 @@ class CoreController {
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
         let apnsToken = persistenceStorage.apnsToken
-        notificationStatusProvider.getStatus { [weak self] (isNotificationsEnabled) in
+        notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
             let instanceId = UUID().uuidString
             self.databaseRepository.instanceId = instanceId
@@ -111,7 +110,7 @@ class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled,
                 installationId: configuration.previousInstallationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
-                lastDeviceUuid: configuration.previousDeviceUUID,
+                externalDeviceUUID: configuration.previousDeviceUUID,
                 version: newVersion,
                 instanceId: instanceId
             )
@@ -133,9 +132,9 @@ class CoreController {
             }
         }
     }
-    
+
     private var infoUpdateSemathore = DispatchSemaphore(value: 1)
-    
+
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
         infoUpdateSemathore.wait(); defer { infoUpdateSemathore.signal() }
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
@@ -160,18 +159,16 @@ class CoreController {
                 .category(.general).level(.error).make()
         }
     }
-    
-    private func trackLaunch() {
+
+    private func trackDirect() {
         do {
-            try trackVisitManager.trackLaunch()
-            Log("Tracked Visit")
-                .category(.visit).level(.info).make()
+            try trackVisitManager.trackDirect()
         } catch {
             Log("Track Visit failed with error: \(error)")
                 .category(.visit).level(.info).make()
         }
     }
-    
+
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
@@ -186,20 +183,18 @@ class CoreController {
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
-            Log("UIApplication.willEnterForegroundNotification")
-                .category(.general).level(.info).make()
+            queue: nil) { [weak self] _ in
             self?.checkNotificationStatus()
-            self?.trackLaunch()
+            self?.trackDirect()
         }
-        
+
         TimerManager.shared.configurate(trackEvery: 20 * 60) { [weak self] in
-            self?.trackLaunch()
+            self?.trackDirect()
         }
         TimerManager.shared.setupTimer()
     }
-    
 }
