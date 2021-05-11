@@ -111,7 +111,7 @@ class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled,
                 installationId: configuration.previousInstallationId,
                 subscribe: configuration.subscribeCustomerIfCreated,
-                lastDeviceUuid: configuration.previousDeviceUUID,
+                externalDeviceUUID: configuration.previousDeviceUUID,
                 version: newVersion,
                 instanceId: instanceId
             )

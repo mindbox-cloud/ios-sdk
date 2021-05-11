@@ -20,7 +20,7 @@ struct MobileApplicationInstalled: Codable {
     
     let subscribe: Bool
     
-    let lastDeviceUuid: String?
+    let externalDeviceUUID: String?
     
     let version: Int
     
@@ -31,7 +31,7 @@ struct MobileApplicationInstalled: Codable {
         isNotificationsEnabled: Bool,
         installationId: String?,
         subscribe: Bool?,
-        lastDeviceUuid: String?,
+        externalDeviceUUID: String?,
         version: Int,
         instanceId: String
     ) {
@@ -40,7 +40,7 @@ struct MobileApplicationInstalled: Codable {
         self.isNotificationsEnabled = isNotificationsEnabled
         self.installationId = installationId ?? ""
         self.subscribe = subscribe ?? false
-        self.lastDeviceUuid = lastDeviceUuid
+        self.externalDeviceUUID = externalDeviceUUID
         self.version = version
         self.instanceId = instanceId
     }
