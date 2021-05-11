@@ -34,6 +34,8 @@
 		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
 		31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */; };
 		3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4126303F2F000A30D0 /* String+Regex.swift */; };
+		334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3A64264AA18500A6AC00 /* MindboxSceneDelegate.swift */; };
+		334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */; };
 		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339ACE4F262DAC74003590D2 /* CustomEvent.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
@@ -155,6 +157,8 @@
 		31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_3.plist; sourceTree = "<group>"; };
 		31ED2DF925C4459400301FAD /* TestConfig_Invalid_4.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_4.plist; sourceTree = "<group>"; };
 		3328FE4126303F2F000A30D0 /* String+Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Regex.swift"; sourceTree = "<group>"; };
+		334F3A64264AA18500A6AC00 /* MindboxSceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxSceneDelegate.swift; sourceTree = "<group>"; };
+		334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxAppDelegate.swift; sourceTree = "<group>"; };
 		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
 		339ACE4F262DAC74003590D2 /* CustomEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEvent.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
@@ -282,25 +286,27 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
-				337EDF302636DA290089559F /* Notifications */,
-				84F5655C2628433900269FD6 /* TrackVisitManager */,
-				8400429F2614CDED00CA17C5 /* ClickNotificationManager */,
-				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
-				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
-				84DEE8A625CC02AF00C98CC7 /* Database */,
-				84CC797E25CABABB00C062BD /* Model */,
-				84B625D425C94F6F00AB6228 /* NetworkRepository */,
-				847F57FC25C88BA600147A9A /* Network */,
-				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
-				31A20D4A25B6E09900AAA0A3 /* Utilities */,
-				317054C025AEF81900AE624C /* DI */,
-				314B38FE25AEE95D00E947B9 /* CoreController */,
-				84B625E725C989B100AB6228 /* Validators */,
 				313B233325ADEA0F00A1CB72 /* Mindbox.h */,
 				313B233425ADEA0F00A1CB72 /* Info.plist */,
-				3191C2A525ADFD8000E7D6B9 /* Mindbox.swift */,
-				31A20D4D25B6EFB600AAA0A3 /* MindboxDelegate.swift */,
 				314B38FC25AEE8B200E947B9 /* MBConfiguration.swift */,
+				3191C2A525ADFD8000E7D6B9 /* Mindbox.swift */,
+				334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */,
+				31A20D4D25B6EFB600AAA0A3 /* MindboxDelegate.swift */,
+				334F3A64264AA18500A6AC00 /* MindboxSceneDelegate.swift */,
+				8400429F2614CDED00CA17C5 /* ClickNotificationManager */,
+				314B38FE25AEE95D00E947B9 /* CoreController */,
+				84DEE8A625CC02AF00C98CC7 /* Database */,
+				842DE34425E15069002BE5C6 /* DeliveredNotificationManager */,
+				317054C025AEF81900AE624C /* DI */,
+				840C38A425D118B900D50183 /* GuaranteedDeliveryManager */,
+				84CC797E25CABABB00C062BD /* Model */,
+				847F57FC25C88BA600147A9A /* Network */,
+				84B625D425C94F6F00AB6228 /* NetworkRepository */,
+				337EDF302636DA290089559F /* Notifications */,
+				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
+				84F5655C2628433900269FD6 /* TrackVisitManager */,
+				31A20D4A25B6E09900AAA0A3 /* Utilities */,
+				84B625E725C989B100AB6228 /* Validators */,
 			);
 			path = Mindbox;
 			sourceTree = "<group>";
@@ -934,12 +940,14 @@
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
 				840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
+				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
+				334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */,
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
