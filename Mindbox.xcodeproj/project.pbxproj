@@ -36,6 +36,46 @@
 		3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4126303F2F000A30D0 /* String+Regex.swift */; };
 		334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3A64264AA18500A6AC00 /* MindboxSceneDelegate.swift */; };
 		334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */; };
+		334F3AD8264C199900A6AC00 /* CheckSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AAE264C199900A6AC00 /* CheckSegment.swift */; };
+		334F3AD9264C199900A6AC00 /* ViewProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AAF264C199900A6AC00 /* ViewProduct.swift */; };
+		334F3ADA264C199900A6AC00 /* SetPromocode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB0264C199900A6AC00 /* SetPromocode.swift */; };
+		334F3ADB264C199900A6AC00 /* CreateOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB1264C199900A6AC00 /* CreateOrder.swift */; };
+		334F3ADC264C199900A6AC00 /* CalculateCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB2264C199900A6AC00 /* CalculateCatalog.swift */; };
+		334F3ADD264C199900A6AC00 /* SetCountInProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB3264C199900A6AC00 /* SetCountInProductList.swift */; };
+		334F3ADE264C199900A6AC00 /* RemoveFromProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB4264C199900A6AC00 /* RemoveFromProductList.swift */; };
+		334F3ADF264C199900A6AC00 /* SubViewProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB6264C199900A6AC00 /* SubViewProduct.swift */; };
+		334F3AE0264C199900A6AC00 /* ViewProductCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB7264C199900A6AC00 /* ViewProductCategory.swift */; };
+		334F3AE1264C199900A6AC00 /* Promocode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB8264C199900A6AC00 /* Promocode.swift */; };
+		334F3AE2264C199900A6AC00 /* Coupon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AB9264C199900A6AC00 /* Coupon.swift */; };
+		334F3AE3264C199900A6AC00 /* ProductCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABA264C199900A6AC00 /* ProductCategory.swift */; };
+		334F3AE4264C199900A6AC00 /* RemoveProductFromList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABB264C199900A6AC00 /* RemoveProductFromList.swift */; };
+		334F3AE5264C199900A6AC00 /* ReferencedCustomer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABC264C199900A6AC00 /* ReferencedCustomer.swift */; };
+		334F3AE6264C199900A6AC00 /* AddProductToList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABD264C199900A6AC00 /* AddProductToList.swift */; };
+		334F3AE7264C199900A6AC00 /* CatalogProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABE264C199900A6AC00 /* CatalogProductList.swift */; };
+		334F3AE8264C199900A6AC00 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ABF264C199900A6AC00 /* Item.swift */; };
+		334F3AE9264C199900A6AC00 /* Order.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC0264C199900A6AC00 /* Order.swift */; };
+		334F3AEA264C199900A6AC00 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC1264C199900A6AC00 /* Customer.swift */; };
+		334F3AEB264C199900A6AC00 /* DiscountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC2264C199900A6AC00 /* DiscountCard.swift */; };
+		334F3AEC264C199900A6AC00 /* RequestedPromotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC3264C199900A6AC00 /* RequestedPromotion.swift */; };
+		334F3AED264C199900A6AC00 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC4264C199900A6AC00 /* Subscription.swift */; };
+		334F3AEE264C199900A6AC00 /* Segmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC5264C199900A6AC00 /* Segmentation.swift */; };
+		334F3AEF264C199900A6AC00 /* DiscountPromoCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC6264C199900A6AC00 /* DiscountPromoCode.swift */; };
+		334F3AF0264C199900A6AC00 /* Discount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC7264C199900A6AC00 /* Discount.swift */; };
+		334F3AF1264C199900A6AC00 /* Pool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC8264C199900A6AC00 /* Pool.swift */; };
+		334F3AF2264C199900A6AC00 /* Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AC9264C199900A6AC00 /* Line.swift */; };
+		334F3AF3264C199900A6AC00 /* Area.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACA264C199900A6AC00 /* Area.swift */; };
+		334F3AF4264C199900A6AC00 /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACB264C199900A6AC00 /* Product.swift */; };
+		334F3AF5264C199900A6AC00 /* CustomFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACC264C199900A6AC00 /* CustomFields.swift */; };
+		334F3AF6264C199900A6AC00 /* ProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACD264C199900A6AC00 /* ProductList.swift */; };
+		334F3AF7264C199900A6AC00 /* CustomerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACE264C199900A6AC00 /* CustomerAction.swift */; };
+		334F3AF8264C199900A6AC00 /* ViewCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3ACF264C199900A6AC00 /* ViewCategory.swift */; };
+		334F3AF9264C199900A6AC00 /* CreateCustomer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD0264C199900A6AC00 /* CreateCustomer.swift */; };
+		334F3AFA264C199900A6AC00 /* AddToProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD1264C199900A6AC00 /* AddToProductList.swift */; };
+		334F3AFB264C199900A6AC00 /* FindOrCreateCustomer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD2264C199900A6AC00 /* FindOrCreateCustomer.swift */; };
+		334F3AFC264C199900A6AC00 /* DeleteCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD3264C199900A6AC00 /* DeleteCard.swift */; };
+		334F3AFE264C199900A6AC00 /* SetProductList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD5264C199900A6AC00 /* SetProductList.swift */; };
+		334F3AFF264C199900A6AC00 /* ReferrenceCustomer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD6264C199900A6AC00 /* ReferrenceCustomer.swift */; };
+		334F3B00264C199A00A6AC00 /* AddAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334F3AD7264C199900A6AC00 /* AddAction.swift */; };
 		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339ACE4F262DAC74003590D2 /* CustomEvent.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
@@ -159,6 +199,46 @@
 		3328FE4126303F2F000A30D0 /* String+Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Regex.swift"; sourceTree = "<group>"; };
 		334F3A64264AA18500A6AC00 /* MindboxSceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxSceneDelegate.swift; sourceTree = "<group>"; };
 		334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxAppDelegate.swift; sourceTree = "<group>"; };
+		334F3AAE264C199900A6AC00 /* CheckSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckSegment.swift; sourceTree = "<group>"; };
+		334F3AAF264C199900A6AC00 /* ViewProduct.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewProduct.swift; sourceTree = "<group>"; };
+		334F3AB0264C199900A6AC00 /* SetPromocode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SetPromocode.swift; sourceTree = "<group>"; };
+		334F3AB1264C199900A6AC00 /* CreateOrder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateOrder.swift; sourceTree = "<group>"; };
+		334F3AB2264C199900A6AC00 /* CalculateCatalog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CalculateCatalog.swift; sourceTree = "<group>"; };
+		334F3AB3264C199900A6AC00 /* SetCountInProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SetCountInProductList.swift; sourceTree = "<group>"; };
+		334F3AB4264C199900A6AC00 /* RemoveFromProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoveFromProductList.swift; sourceTree = "<group>"; };
+		334F3AB6264C199900A6AC00 /* SubViewProduct.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubViewProduct.swift; sourceTree = "<group>"; };
+		334F3AB7264C199900A6AC00 /* ViewProductCategory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewProductCategory.swift; sourceTree = "<group>"; };
+		334F3AB8264C199900A6AC00 /* Promocode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Promocode.swift; sourceTree = "<group>"; };
+		334F3AB9264C199900A6AC00 /* Coupon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Coupon.swift; sourceTree = "<group>"; };
+		334F3ABA264C199900A6AC00 /* ProductCategory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductCategory.swift; sourceTree = "<group>"; };
+		334F3ABB264C199900A6AC00 /* RemoveProductFromList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoveProductFromList.swift; sourceTree = "<group>"; };
+		334F3ABC264C199900A6AC00 /* ReferencedCustomer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferencedCustomer.swift; sourceTree = "<group>"; };
+		334F3ABD264C199900A6AC00 /* AddProductToList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddProductToList.swift; sourceTree = "<group>"; };
+		334F3ABE264C199900A6AC00 /* CatalogProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CatalogProductList.swift; sourceTree = "<group>"; };
+		334F3ABF264C199900A6AC00 /* Item.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		334F3AC0264C199900A6AC00 /* Order.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Order.swift; sourceTree = "<group>"; };
+		334F3AC1264C199900A6AC00 /* Customer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Customer.swift; sourceTree = "<group>"; };
+		334F3AC2264C199900A6AC00 /* DiscountCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DiscountCard.swift; sourceTree = "<group>"; };
+		334F3AC3264C199900A6AC00 /* RequestedPromotion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestedPromotion.swift; sourceTree = "<group>"; };
+		334F3AC4264C199900A6AC00 /* Subscription.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
+		334F3AC5264C199900A6AC00 /* Segmentation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Segmentation.swift; sourceTree = "<group>"; };
+		334F3AC6264C199900A6AC00 /* DiscountPromoCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DiscountPromoCode.swift; sourceTree = "<group>"; };
+		334F3AC7264C199900A6AC00 /* Discount.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Discount.swift; sourceTree = "<group>"; };
+		334F3AC8264C199900A6AC00 /* Pool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Pool.swift; sourceTree = "<group>"; };
+		334F3AC9264C199900A6AC00 /* Line.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Line.swift; sourceTree = "<group>"; };
+		334F3ACA264C199900A6AC00 /* Area.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Area.swift; sourceTree = "<group>"; };
+		334F3ACB264C199900A6AC00 /* Product.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
+		334F3ACC264C199900A6AC00 /* CustomFields.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomFields.swift; sourceTree = "<group>"; };
+		334F3ACD264C199900A6AC00 /* ProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductList.swift; sourceTree = "<group>"; };
+		334F3ACE264C199900A6AC00 /* CustomerAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomerAction.swift; sourceTree = "<group>"; };
+		334F3ACF264C199900A6AC00 /* ViewCategory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewCategory.swift; sourceTree = "<group>"; };
+		334F3AD0264C199900A6AC00 /* CreateCustomer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateCustomer.swift; sourceTree = "<group>"; };
+		334F3AD1264C199900A6AC00 /* AddToProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddToProductList.swift; sourceTree = "<group>"; };
+		334F3AD2264C199900A6AC00 /* FindOrCreateCustomer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FindOrCreateCustomer.swift; sourceTree = "<group>"; };
+		334F3AD3264C199900A6AC00 /* DeleteCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeleteCard.swift; sourceTree = "<group>"; };
+		334F3AD5264C199900A6AC00 /* SetProductList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SetProductList.swift; sourceTree = "<group>"; };
+		334F3AD6264C199900A6AC00 /* ReferrenceCustomer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferrenceCustomer.swift; sourceTree = "<group>"; };
+		334F3AD7264C199900A6AC00 /* AddAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddAction.swift; sourceTree = "<group>"; };
 		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
 		339ACE4F262DAC74003590D2 /* CustomEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEvent.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
@@ -392,6 +472,61 @@
 				3328FE4126303F2F000A30D0 /* String+Regex.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		334F3AAD264C199900A6AC00 /* RequestModels */ = {
+			isa = PBXGroup;
+			children = (
+				334F3AD7264C199900A6AC00 /* AddAction.swift */,
+				334F3AD1264C199900A6AC00 /* AddToProductList.swift */,
+				334F3AB2264C199900A6AC00 /* CalculateCatalog.swift */,
+				334F3AAE264C199900A6AC00 /* CheckSegment.swift */,
+				334F3AD0264C199900A6AC00 /* CreateCustomer.swift */,
+				334F3AB1264C199900A6AC00 /* CreateOrder.swift */,
+				334F3AD3264C199900A6AC00 /* DeleteCard.swift */,
+				334F3AD2264C199900A6AC00 /* FindOrCreateCustomer.swift */,
+				334F3AD6264C199900A6AC00 /* ReferrenceCustomer.swift */,
+				334F3AB4264C199900A6AC00 /* RemoveFromProductList.swift */,
+				334F3AB3264C199900A6AC00 /* SetCountInProductList.swift */,
+				334F3AD5264C199900A6AC00 /* SetProductList.swift */,
+				334F3AB0264C199900A6AC00 /* SetPromocode.swift */,
+				334F3ACF264C199900A6AC00 /* ViewCategory.swift */,
+				334F3AAF264C199900A6AC00 /* ViewProduct.swift */,
+				334F3AB5264C199900A6AC00 /* Common */,
+			);
+			path = RequestModels;
+			sourceTree = "<group>";
+		};
+		334F3AB5264C199900A6AC00 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				334F3AB6264C199900A6AC00 /* SubViewProduct.swift */,
+				334F3AB7264C199900A6AC00 /* ViewProductCategory.swift */,
+				334F3AB8264C199900A6AC00 /* Promocode.swift */,
+				334F3AB9264C199900A6AC00 /* Coupon.swift */,
+				334F3ABA264C199900A6AC00 /* ProductCategory.swift */,
+				334F3ABB264C199900A6AC00 /* RemoveProductFromList.swift */,
+				334F3ABC264C199900A6AC00 /* ReferencedCustomer.swift */,
+				334F3ABD264C199900A6AC00 /* AddProductToList.swift */,
+				334F3ABE264C199900A6AC00 /* CatalogProductList.swift */,
+				334F3ABF264C199900A6AC00 /* Item.swift */,
+				334F3AC0264C199900A6AC00 /* Order.swift */,
+				334F3AC1264C199900A6AC00 /* Customer.swift */,
+				334F3AC2264C199900A6AC00 /* DiscountCard.swift */,
+				334F3AC3264C199900A6AC00 /* RequestedPromotion.swift */,
+				334F3AC4264C199900A6AC00 /* Subscription.swift */,
+				334F3AC5264C199900A6AC00 /* Segmentation.swift */,
+				334F3AC6264C199900A6AC00 /* DiscountPromoCode.swift */,
+				334F3AC7264C199900A6AC00 /* Discount.swift */,
+				334F3AC8264C199900A6AC00 /* Pool.swift */,
+				334F3AC9264C199900A6AC00 /* Line.swift */,
+				334F3ACA264C199900A6AC00 /* Area.swift */,
+				334F3ACB264C199900A6AC00 /* Product.swift */,
+				334F3ACC264C199900A6AC00 /* CustomFields.swift */,
+				334F3ACD264C199900A6AC00 /* ProductList.swift */,
+				334F3ACE264C199900A6AC00 /* CustomerAction.swift */,
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 		337EDF302636DA290089559F /* Notifications */ = {
@@ -642,6 +777,7 @@
 		84CC797E25CABABB00C062BD /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				334F3AAD264C199900A6AC00 /* RequestModels */,
 				8400428F2614C64900CA17C5 /* NotificationPayload */,
 				84C65E5B25D4FB71008996FA /* Bodies */,
 				84CC797F25CABB0B00C062BD /* Event.swift */,
@@ -932,33 +1068,55 @@
 			buildActionMask = 2147483647;
 			files = (
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
+				334F3AE1264C199900A6AC00 /* Promocode.swift in Sources */,
 				840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */,
 				842DE34625E1508F002BE5C6 /* DeliveredNotificationManagerError.swift in Sources */,
+				334F3AED264C199900A6AC00 /* Subscription.swift in Sources */,
+				334F3AF4264C199900A6AC00 /* Product.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
+				334F3AF9264C199900A6AC00 /* CreateCustomer.swift in Sources */,
+				334F3ADE264C199900A6AC00 /* RemoveFromProductList.swift in Sources */,
+				334F3ADF264C199900A6AC00 /* SubViewProduct.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
+				334F3AE8264C199900A6AC00 /* Item.swift in Sources */,
 				840C387825CC7C4300D50183 /* NSManagedObjectContext+.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
+				334F3AE0264C199900A6AC00 /* ViewProductCategory.swift in Sources */,
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */,
+				334F3AE5264C199900A6AC00 /* ReferencedCustomer.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
+				334F3AFC264C199900A6AC00 /* DeleteCard.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
+				334F3AE3264C199900A6AC00 /* ProductCategory.swift in Sources */,
 				334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */,
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
+				334F3B00264C199A00A6AC00 /* AddAction.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
+				334F3AE6264C199900A6AC00 /* AddProductToList.swift in Sources */,
+				334F3AF2264C199900A6AC00 /* Line.swift in Sources */,
+				334F3AF7264C199900A6AC00 /* CustomerAction.swift in Sources */,
+				334F3AEC264C199900A6AC00 /* RequestedPromotion.swift in Sources */,
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
 				842DE32C25E01B9A002BE5C6 /* PushDelivered.swift in Sources */,
+				334F3AE7264C199900A6AC00 /* CatalogProductList.swift in Sources */,
 				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
+				334F3AE2264C199900A6AC00 /* Coupon.swift in Sources */,
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
+				334F3ADD264C199900A6AC00 /* SetCountInProductList.swift in Sources */,
 				840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */,
 				846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */,
 				8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */,
+				334F3AEB264C199900A6AC00 /* DiscountCard.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
+				334F3AF5264C199900A6AC00 /* CustomFields.swift in Sources */,
+				334F3AF3264C199900A6AC00 /* Area.swift in Sources */,
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,
@@ -970,22 +1128,35 @@
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
 				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
+				334F3AF6264C199900A6AC00 /* ProductList.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
+				334F3AEA264C199900A6AC00 /* Customer.swift in Sources */,
 				84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */,
+				334F3ADA264C199900A6AC00 /* SetPromocode.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
+				334F3ADC264C199900A6AC00 /* CalculateCatalog.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
+				334F3AF8264C199900A6AC00 /* ViewCategory.swift in Sources */,
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
+				334F3AF0264C199900A6AC00 /* Discount.swift in Sources */,
+				334F3AD9264C199900A6AC00 /* ViewProduct.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
+				334F3AE9264C199900A6AC00 /* Order.swift in Sources */,
 				84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
+				334F3AEF264C199900A6AC00 /* DiscountPromoCode.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
+				334F3AFF264C199900A6AC00 /* ReferrenceCustomer.swift in Sources */,
+				334F3AE4264C199900A6AC00 /* RemoveProductFromList.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
 				33C81EA4264145CD00863380 /* TimerManager.swift in Sources */,
+				334F3AFB264C199900A6AC00 /* FindOrCreateCustomer.swift in Sources */,
 				337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */,
 				339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */,
+				334F3AFE264C199900A6AC00 /* SetProductList.swift in Sources */,
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
 				843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */,
@@ -995,14 +1166,19 @@
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */,
+				334F3AD8264C199900A6AC00 /* CheckSegment.swift in Sources */,
+				334F3AF1264C199900A6AC00 /* Pool.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3159FFB225B5990300EE80E9 /* BaseResponse.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
+				334F3AEE264C199900A6AC00 /* Segmentation.swift in Sources */,
+				334F3ADB264C199900A6AC00 /* CreateOrder.swift in Sources */,
 				84C65E6425D4FBBB008996FA /* MobileApplicationInfoUpdated.swift in Sources */,
 				84F705372611F873009C7A07 /* MBPersistentContainer.swift in Sources */,
+				334F3AFA264C199900A6AC00 /* AddToProductList.swift in Sources */,
 				84DEE8AD25CC036A00C98CC7 /* MBDatabaseRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
