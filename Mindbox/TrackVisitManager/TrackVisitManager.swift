@@ -64,7 +64,8 @@ final class TrackVisitManager {
         let userInfo = response.notification.request.content.userInfo
         guard
             let urlString = userInfo["clickUrl"] as? String,
-            let url = URL(string: urlString) else {
+            let preparedUrlString = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+            let url = URL(string: preparedUrlString) else {
             Log("Invalid URL in userInfo to track: \(userInfo)").category(.visit).level(.error).make()
             return
         }
@@ -73,7 +74,7 @@ final class TrackVisitManager {
         try sendTrackVisit(encodable)
         Log("Tracked Visit event type: push").category(.visit).level(.info).make()
     }
-
+    
     private func sendTrackVisit<E: Encodable>(_ encodable: E) throws {
         let event = Event(type: .trackVisit, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
