@@ -9,7 +9,6 @@
 import Foundation
 
 protocol DependencyContainer {
-    
     var utilitiesFetcher: UtilitiesFetcher { get }
     var persistenceStorage: PersistenceStorage { get }
     var databaseLoader: DataBaseLoader { get }
@@ -17,13 +16,11 @@ protocol DependencyContainer {
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
     var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
     var instanceFactory: InstanceFactory { get }
-
+    var sessionManager: SessionManager { get }
 }
 
 protocol InstanceFactory {
-    
     func makeNetworkFetcher() -> NetworkFetcher
     func makeEventRepository() -> EventRepository
     func makeTrackVisitManager() -> TrackVisitManager
-    
 }

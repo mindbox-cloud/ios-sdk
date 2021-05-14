@@ -23,7 +23,8 @@ class EventRepositoryTestCase: XCTestCase {
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager()
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
+            sessionManager: container.sessionManager
         )
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()

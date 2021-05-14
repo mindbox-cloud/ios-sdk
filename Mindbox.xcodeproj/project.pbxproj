@@ -79,6 +79,7 @@
 		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339ACE4F262DAC74003590D2 /* CustomEvent.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
+		33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* SessionManager.swift */; };
 		8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */; };
 		840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042902614C65900CA17C5 /* NotificationsPayloads.swift */; };
 		840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */; };
@@ -242,6 +243,7 @@
 		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
 		339ACE4F262DAC74003590D2 /* CustomEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEvent.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
+		33EBF0AF264E6283002A35D5 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		446EBBC3A43EEB99FB63A476 /* Pods-Mindbox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox.debug.xcconfig"; path = "Target Support Files/Pods-Mindbox/Pods-Mindbox.debug.xcconfig"; sourceTree = "<group>"; };
 		4BD30AFF3BC4E1BE3FAADDEE /* Pods-MindBox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.release.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.release.xcconfig"; sourceTree = "<group>"; };
 		67F031A4BB4C40B110009B9C /* Pods-Mindbox-MindboxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox-MindboxTests.debug.xcconfig"; path = "Target Support Files/Pods-Mindbox-MindboxTests/Pods-Mindbox-MindboxTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -384,6 +386,7 @@
 				84B625D425C94F6F00AB6228 /* NetworkRepository */,
 				337EDF302636DA290089559F /* Notifications */,
 				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
+				33EBF0AE264E6269002A35D5 /* SessionManager */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				84B625E725C989B100AB6228 /* Validators */,
@@ -535,6 +538,14 @@
 				337EDF332636DA3F0089559F /* MindboxNotificationService.swift */,
 			);
 			path = Notifications;
+			sourceTree = "<group>";
+		};
+		33EBF0AE264E6269002A35D5 /* SessionManager */ = {
+			isa = PBXGroup;
+			children = (
+				33EBF0AF264E6283002A35D5 /* SessionManager.swift */,
+			);
+			path = SessionManager;
 			sourceTree = "<group>";
 		};
 		7ECBF932967E50162EE94F12 /* Pods */ = {
@@ -1165,6 +1176,7 @@
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
+				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
 				842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */,
 				334F3AD8264C199900A6AC00 /* CheckSegment.swift in Sources */,
 				334F3AF1264C199900A6AC00 /* Pool.swift in Sources */,

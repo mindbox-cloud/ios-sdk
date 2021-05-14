@@ -175,7 +175,8 @@ class CoreController {
         notificationStatusProvider: UNAuthorizationStatusProviding,
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
-        trackVisitManager: TrackVisitManager
+        trackVisitManager: TrackVisitManager,
+        sessionManager: SessionManager
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
@@ -184,16 +185,14 @@ class CoreController {
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
 
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
-            object: nil,
-            queue: nil) { [weak self] _ in
-            self?.checkNotificationStatus()
-            self?.trackDirect()
+        sessionManager.sessionHandler = { [weak self] isActive in
+            if isActive {
+                self?.checkNotificationStatus()
+            }
         }
 
-        TimerManager.shared.configurate(trackEvery: 20 * 60) { [weak self] in
-            self?.trackDirect()
+        TimerManager.shared.configurate(trackEvery: 20 * 60) {
+            sessionManager.trackDirect()
         }
         TimerManager.shared.setupTimer()
     }

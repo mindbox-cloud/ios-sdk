@@ -6,17 +6,17 @@
 //  Copyright © 2021 Mikhail Barilov. All rights reserved.
 //
 
-import Foundation
 import CoreData
+import Foundation
 
 final class DependencyProvider: DependencyContainer {
-    
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let authorizationStatusProvider: UNAuthorizationStatusProviding
+    let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
 
     init() throws {
@@ -36,16 +36,15 @@ final class DependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
+        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
     }
-
 }
 
 class MBInstanceFactory: InstanceFactory {
-    
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
     private let databaseRepository: MBDatabaseRepository
-    
+
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
@@ -69,9 +68,8 @@ class MBInstanceFactory: InstanceFactory {
             persistenceStorage: persistenceStorage
         )
     }
-    
+
     func makeTrackVisitManager() -> TrackVisitManager {
         return TrackVisitManager(databaseRepository: databaseRepository)
     }
-    
 }
