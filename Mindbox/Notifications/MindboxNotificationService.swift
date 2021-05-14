@@ -46,6 +46,7 @@ public class MindboxNotificationService {
             } else {
                 bestAttemptContent.title = "\(bestAttemptContent.title) [Send status failed]"
             }
+            
             showSeconds(for: bestAttemptContent)
             contentHandler(bestAttemptContent)
         }
