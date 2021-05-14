@@ -30,7 +30,7 @@ final class SessionManager {
 
     private var isActive: Bool = false {
         didSet {
-            guard isActive != oldValue else { return }
+            guard isActive, isActive != oldValue else { return }
             sessionHandler?(isActive)
             trackDirect()
         }
