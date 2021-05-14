@@ -38,7 +38,7 @@ final class SessionManager {
 
     private func subscribe() {
         NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
+            forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: nil) { [weak self] _ in
             if UIApplication.shared.applicationState == .active {
