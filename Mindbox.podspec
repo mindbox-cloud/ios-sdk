@@ -3,9 +3,9 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "Mindbox"
-  
-  spec.version      = "1.0.2"
-  
+
+  spec.version      = "1.0.3"
+
   spec.summary      = "Library for integration with Mindbox"
 
   spec.description  = "This library allows you to integrate data transfer to Mindbox Marketing Cloud"
@@ -49,5 +49,5 @@ Pod::Spec.new do |spec|
   #  you can include multiple dependencies to ensure it works.
 
   spec.swift_version = "5"
-    
+
 end
