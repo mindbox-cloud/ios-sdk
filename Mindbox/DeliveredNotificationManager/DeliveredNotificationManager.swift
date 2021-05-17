@@ -24,7 +24,7 @@ final class DeliveredNotificationManager {
     
     private let semaphore = DispatchSemaphore(value: 0)
     
-    private let timeout: TimeInterval = 5.0
+    private let timeout: TimeInterval = 28.0
         
     init(
         persistenceStorage: PersistenceStorage,

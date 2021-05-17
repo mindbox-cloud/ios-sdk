@@ -18,6 +18,7 @@ final class TestDependencyProvider: DependencyContainer {
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let authorizationStatusProvider: UNAuthorizationStatusProviding
+    let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     
     init() throws {
@@ -37,6 +38,7 @@ final class TestDependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
+        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
     }
 
 }
