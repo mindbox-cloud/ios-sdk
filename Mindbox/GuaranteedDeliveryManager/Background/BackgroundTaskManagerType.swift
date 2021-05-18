@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-protocol BackgroundTaskManagerType: AnyObject {
+protocol BackgroundTaskManagerType: class {
     
     var gdManager: GuaranteedDeliveryManager? { get set }
     

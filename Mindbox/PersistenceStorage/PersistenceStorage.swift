@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol PersistenceStorage: AnyObject {
+protocol PersistenceStorage: class {
         
     var installationDate: Date? { get set }
 
