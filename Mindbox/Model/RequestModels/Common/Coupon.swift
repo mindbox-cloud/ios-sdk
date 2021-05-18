@@ -10,8 +10,8 @@ import Foundation
 
 // MARK: - Coupon
 public class Coupon: Codable {
-    public let ids: IDS?
-    public let pool: Pool?
+    public var ids: IDS?
+    public var pool: Pool?
 
     public init(ids: IDS?, pool: Pool?) {
         self.ids = ids
@@ -20,7 +20,7 @@ public class Coupon: Codable {
     
     // MARK: - IDS
     public class IDS: Codable {
-        public let code: String?
+        public var code: String?
 
         public init(code: String?) {
             self.code = code

@@ -11,8 +11,8 @@ import Foundation
 // MARK: - AddAction
 
 public class AddAction: Codable {
-    public let customerAction: CustomerAction?
-    public let pointOfContact: String?
+    public var customerAction: CustomerAction?
+    public var pointOfContact: String?
 
     public init(
         customerAction: CustomerAction?,

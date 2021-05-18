@@ -9,7 +9,7 @@
 import Foundation
 
 public class ViewProduct: Codable {
-    public let viewProduct: SubViewProduct?
+    public var viewProduct: SubViewProduct?
 
     public init(viewProduct: SubViewProduct?) {
         self.viewProduct = viewProduct

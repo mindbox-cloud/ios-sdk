@@ -10,15 +10,15 @@ import Foundation
 
 // MARK: - Order
 public class Order: Codable {
-    public let ids: IDS
-    public let cashdesk: Area?
-    public let deliveryCost: Double?
-    public let customFields: CustomFields?
-    public let area: Area?
-    public let totalPrice: Double?
-    public let discounts: [Discount]?
-    public let lines: [Line]
-    public let email, mobilePhone: String
+    public var ids: IDS
+    public var cashdesk: Area?
+    public var deliveryCost: Double?
+    public var customFields: CustomFields?
+    public var area: Area?
+    public var totalPrice: Double?
+    public var discounts: [Discount]?
+    public var lines: [Line]
+    public var email, mobilePhone: String
 
     public init(
         ids: IDS,
@@ -46,8 +46,8 @@ public class Order: Codable {
     
     // MARK: - IDS
     public class IDS: Codable {
-        public let mindboxId: Int?
-        public let websiteId: String?
+        public var mindboxId: Int?
+        public var websiteId: String?
 
         public init(mindboxId: Int?, websiteId: String?) {
             self.mindboxId = mindboxId

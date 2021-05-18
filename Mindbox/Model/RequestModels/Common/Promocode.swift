@@ -9,8 +9,8 @@
 import Foundation
 
 public class PromoCode: Codable {
-    public let availableFromDateTimeUtc, availableTillDateTimeUtc: String?
-    public let ids: IDS?
+    public var availableFromDateTimeUtc, availableTillDateTimeUtc: String?
+    public var ids: IDS?
 
     public init(availableFromDateTimeUtc: String?, availableTillDateTimeUtc: String?, ids: IDS?) {
         self.availableFromDateTimeUtc = availableFromDateTimeUtc
@@ -21,7 +21,7 @@ public class PromoCode: Codable {
     // MARK: - IDS
 
     public class IDS: Codable {
-        public let value: String?
+        public var value: String?
 
         public init(value: String?) {
             self.value = value

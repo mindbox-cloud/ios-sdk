@@ -11,7 +11,7 @@ import Foundation
 // MARK: - DiscountCard
 
 public class DiscountCard: Codable {
-    public let ids: IDS?
+    public var ids: IDS?
 
     public init(ids: IDS?) {
         self.ids = ids
@@ -20,7 +20,7 @@ public class DiscountCard: Codable {
     // MARK: - IDS
 
     public class IDS: Codable {
-        public let number: String?
+        public var number: String?
 
         public init(number: String?) {
             self.number = number

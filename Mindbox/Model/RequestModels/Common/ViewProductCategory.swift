@@ -9,8 +9,8 @@
 import Foundation
 
 public class ViewProductCategory: Codable {
-    public let productCategory: ProductCategory?
-    public let customerAction: CustomerAction?
+    public var productCategory: ProductCategory?
+    public var customerAction: CustomerAction?
 
     public init(productCategory: ProductCategory?, customerAction: CustomerAction?) {
         self.productCategory = productCategory

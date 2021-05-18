@@ -10,8 +10,8 @@ import Foundation
 
 // MARK: - Subscription
 public class Subscription: Codable {
-    public let brand, pointOfContact, topic: String?
-    public let isSubscribed: Bool?
+    public var brand, pointOfContact, topic: String?
+    public var isSubscribed: Bool?
 
     public init(brand: String?, pointOfContact: String?, topic: String?, isSubscribed: Bool) {
         self.brand = brand

@@ -9,7 +9,7 @@
 import Foundation
 
 public class RemoveFromProductList: Codable {
-    public let removeProductFromList: RemoveProductFromList?
+    public var removeProductFromList: RemoveProductFromList?
 
     public init(removeProductFromList: RemoveProductFromList?) {
         self.removeProductFromList = removeProductFromList

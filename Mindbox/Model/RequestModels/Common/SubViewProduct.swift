@@ -9,8 +9,8 @@
 import Foundation
 
 public class SubViewProduct: Codable {
-    public let productGroup, product: Product?
-    public let customerAction: CustomerAction?
+    public var productGroup, product: Product?
+    public var customerAction: CustomerAction?
 
     public init(productGroup: Product?, product: Product?, customerAction: CustomerAction?) {
         self.productGroup = productGroup

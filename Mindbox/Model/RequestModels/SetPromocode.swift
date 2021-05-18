@@ -9,7 +9,7 @@
 import Foundation
 
 public class SetPromocode: Codable {
-    public let promoCode: PromoCode?
+    public var promoCode: PromoCode?
 
     public init(promoCode: PromoCode?) {
         self.promoCode = promoCode

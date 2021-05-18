@@ -9,7 +9,7 @@
 import Foundation
 
 public class SetCountInProductList: Codable {
-    public let setProductCountInList: ProductList
+    public var setProductCountInList: ProductList
 
     public init(setProductCountInList: ProductList) {
         self.setProductCountInList = setProductCountInList

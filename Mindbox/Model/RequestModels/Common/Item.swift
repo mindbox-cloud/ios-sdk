@@ -11,10 +11,10 @@ import Foundation
 // MARK: - Item
 
 public class Item: Codable {
-    public let product: Product?
-    public let basePricePerItem: Double
-    public let minPricePerItem: Double?
-    public let requestedPromotions: [RequestedPromotion]
+    public var product: Product?
+    public var basePricePerItem: Double
+    public var minPricePerItem: Double?
+    public var requestedPromotions: [RequestedPromotion]
 
     public init(
         product: Product?,

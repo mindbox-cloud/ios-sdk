@@ -11,7 +11,7 @@ import Foundation
 // MARK: - Area
 
 public class Area: Codable {
-    public let ids: IDS?
+    public var ids: IDS?
 
     public init(ids: IDS?) {
         self.ids = ids
@@ -20,7 +20,7 @@ public class Area: Codable {
     // MARK: - IDS
 
     public class IDS: Codable {
-        public let externalId: String?
+        public var externalId: String?
 
         public init(externalId: String?) {
             self.externalId = externalId

@@ -9,7 +9,7 @@
 import Foundation
 
 public class AddToProductList: Codable {
-    public let addProductToList: AddProductToList?
+    public var addProductToList: AddProductToList?
 
     public init(addProductToList: AddProductToList?) {
         self.addProductToList = addProductToList

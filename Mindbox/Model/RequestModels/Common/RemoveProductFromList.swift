@@ -9,8 +9,8 @@
 import Foundation
 
 public class RemoveProductFromList: Codable {
-    public let product, productGroup: Product?
-    public let pricePerItem: Double?
+    public var product, productGroup: Product?
+    public var pricePerItem: Double?
 
     public init(product: Product?, productGroup: Product?, pricePerItem: Double?) {
         self.product = product

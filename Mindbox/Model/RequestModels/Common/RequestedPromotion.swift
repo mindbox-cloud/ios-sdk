@@ -11,10 +11,10 @@ import Foundation
 // MARK: - RequestedPromotion
 
 public class RequestedPromotion: Codable {
-    public let type: String
-    public let promotion: Area?
-    public let coupon: Coupon?
-    public let amount: Double?
+    public var type: String
+    public var promotion: Area?
+    public var coupon: Coupon?
+    public var amount: Double?
 
     public init(type: String, promotion: Area, coupon: Coupon?, amount: Double) {
         self.type = type
