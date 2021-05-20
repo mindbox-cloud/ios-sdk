@@ -21,3 +21,7 @@ open class ProductListRequest: Encodable {
         self.priceOfLine = priceOfLine
     }
 }
+
+ProductListRequest(
+    count: 0
+)
