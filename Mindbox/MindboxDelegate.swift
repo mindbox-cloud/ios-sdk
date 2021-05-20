@@ -8,8 +8,6 @@
 
 import Foundation
 
-protocol MindboxDelegate: class {
-
+protocol MindboxDelegate: AnyObject {
     func mindBox(_ mindBox: Mindbox, failedWithError error: Error)
-    
 }
