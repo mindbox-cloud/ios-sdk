@@ -30,6 +30,7 @@ class MindboxTests: XCTestCase {
 
     func testInitialization() {
         coreController = CoreController(
+            shouldCreateCustomer: true,
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
@@ -64,6 +65,7 @@ class MindboxTests: XCTestCase {
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
         coreController = CoreController(
+            shouldCreateCustomer: true,
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
