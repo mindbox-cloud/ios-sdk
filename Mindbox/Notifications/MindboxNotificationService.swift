@@ -69,12 +69,19 @@ public class MindboxNotificationService {
     
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     public func serviceExtensionTimeWillExpire() {
+        defer { clean() }
+        
         if let contentHandler = contentHandler, let bestAttemptContent = bestAttemptContent {
             bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
             bestAttemptContent.title = "\(bestAttemptContent.title) [Send status failed]"
             showSeconds(for: bestAttemptContent)
             contentHandler(bestAttemptContent)
         }
+    }
+    
+    private func clean() {
+        self.contentHandler = nil
+        self.bestAttemptContent = nil
     }
     
     private func createButtons(for notification: UNNotification, extensionContext: NSExtensionContext?) {
@@ -114,11 +121,10 @@ public class MindboxNotificationService {
             return
         }
         
-        let url = URL(fileURLWithPath: imagePath)
-        
-        guard let data = try? Data(contentsOf: url) else {
+        guard let data = FileManager.default.contents(atPath: imagePath) else {
             return
         }
+        
         let imageView = UIImageView(image: UIImage(data: data))
         imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
