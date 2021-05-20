@@ -11,6 +11,7 @@ import Foundation
 struct Event {
     
     enum Operation: String {
+        case installedWithoutCustomer = "MobilePush.ApplicationInstalledWithoutCustomer"
         case installed = "MobilePush.ApplicationInstalled"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
         case pushDelivered = ""

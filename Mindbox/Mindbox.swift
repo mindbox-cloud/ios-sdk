@@ -15,7 +15,7 @@ public class Mindbox {
 
      - Imporatant: All sdk calls should go through `Mindbox.shared` invocation
      */
-    public static let shared = Mindbox()
+    public static let shared = Mindbox(shouldCreateCustomer: true)
 
     /**
      Singleton for iteraction with logger.
@@ -32,7 +32,6 @@ public class Mindbox {
     public static let logger = MBLogger()
 
     // MARK: - Dependencies
-
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
@@ -41,6 +40,8 @@ public class Mindbox {
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
+    private var shouldCreateCustomer: Bool
+    
     var coreController: CoreController?
     var container: DependencyContainer?
 
@@ -353,12 +354,20 @@ public class Mindbox {
     ) {
         guaranteedDeliveryManager?.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
+    
+    public func configurate(shouldCreateCustomer: Bool) {
+        self.shouldCreateCustomer = shouldCreateCustomer
+    }
 
     private var initError: Error?
 
-    private init() {
+    private init(shouldCreateCustomer: Bool) {
+        
+        self.shouldCreateCustomer = shouldCreateCustomer
+        
         queue.sync(flags: .barrier) {
             do {
+                
                 let container = try DependencyProvider()
                 self.container = container
                 self.assembly(with: container)
@@ -381,6 +390,7 @@ public class Mindbox {
         databaseRepository = container.databaseRepository
 
         coreController = CoreController(
+            shouldCreateCustomer: shouldCreateCustomer,
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
@@ -390,4 +400,5 @@ public class Mindbox {
             sessionManager: container.sessionManager
         )
     }
+    
 }

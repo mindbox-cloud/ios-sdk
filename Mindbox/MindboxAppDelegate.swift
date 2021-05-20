@@ -21,7 +21,6 @@ open class MindboxAppDelegate: NSObject, UNUserNotificationCenterDelegate, UIApp
         if #available(iOS 13.0, *) {
             Mindbox.shared.registerBGTasks()
         }
-
         Mindbox.shared.track(.launch(launchOptions))
 
         return true
