@@ -61,16 +61,8 @@ final class TrackVisitManager {
     }
 
     private func handlePush(_ response: UNNotificationResponse) throws {
-        let userInfo = response.notification.request.content.userInfo
-        guard
-            let urlString = userInfo["clickUrl"] as? String,
-            let preparedUrlString = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-            let url = URL(string: preparedUrlString) else {
-            Log("Invalid URL in userInfo to track: \(userInfo)").category(.visit).level(.error).make()
-            return
-        }
 
-        let encodable = TrackVisit(url: url, source: .push)
+        let encodable = TrackVisit(source: .push)
         try sendTrackVisit(encodable)
         Log("Tracked Visit event type: push").category(.visit).level(.info).make()
     }

@@ -43,6 +43,11 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
+    override func tearDown() {
+        observationToken?.invalidate()
+        observationToken = nil
+    }
+    
     private func updateInstanceFactory(withFailureNetworkFetcher: Bool) {
         (container.instanceFactory as! MockInstanceFactory).isFailureNetworkFetcher = withFailureNetworkFetcher
     }
