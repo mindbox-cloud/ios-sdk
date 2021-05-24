@@ -12,13 +12,13 @@ import Foundation
 class MockFailureNetworkFetcher: NetworkFetcher {
     
     init() {
-        print("failableRouteIndex: \(failableRouteIndex)")
-        print("RoutesCount: \(routesCount)")
+//        print("failableRouteIndex: \(failableRouteIndex)")
+//        print("RoutesCount: \(routesCount)")
     }
     
     private var routesCount: Int = 0 {
         didSet {
-            print("RoutesCount: \(routesCount)")
+//            print("RoutesCount: \(routesCount)")
         }
     }
     
