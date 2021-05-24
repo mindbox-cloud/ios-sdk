@@ -70,7 +70,6 @@
 		337C79562656533F0092B580 /* ViewProductRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C79552656533F0092B580 /* ViewProductRequest.swift */; };
 		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339ACE4F262DAC74003590D2 /* CustomEvent.swift */; };
-		33B1C976265B910F00E293F8 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B1C975265B910F00E293F8 /* SwiftyJSON.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* SessionManager.swift */; };
 		8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8400428B2614C4D100CA17C5 /* NotificationDecoder.swift */; };
@@ -227,7 +226,6 @@
 		337C79552656533F0092B580 /* ViewProductRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewProductRequest.swift; sourceTree = "<group>"; };
 		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
 		339ACE4F262DAC74003590D2 /* CustomEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEvent.swift; sourceTree = "<group>"; };
-		33B1C975265B910F00E293F8 /* SwiftyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		446EBBC3A43EEB99FB63A476 /* Pods-Mindbox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox.debug.xcconfig"; path = "Target Support Files/Pods-Mindbox/Pods-Mindbox.debug.xcconfig"; sourceTree = "<group>"; };
@@ -503,7 +501,6 @@
 				337A473B265510AA000DC613 /* IDS.swift */,
 				337A473D265528B5000DC613 /* MBDate.swift */,
 				337A473F26553938000DC613 /* Sex.swift */,
-				33B1C975265B910F00E293F8 /* SwiftyJSON.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -1102,7 +1099,6 @@
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				334F3AF5264C199900A6AC00 /* CodableDictionary.swift in Sources */,
 				334F3AF3264C199900A6AC00 /* AreaRequest.swift in Sources */,
-				33B1C976265B910F00E293F8 /* SwiftyJSON.swift in Sources */,
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,

@@ -24,12 +24,17 @@ public struct IDS: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        value = try container.decode([String: String].self)
+        let data = try container.decode(Data.self)
+        guard let value = try JSONSerialization.jsonObject(with: data, options: []) as? [String: String] else {
+            throw CustomFieldsError.decodingError
+        }
+        self.value = value
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(value)
+        let data = try JSONSerialization.data(withJSONObject: value, options: [])
+        try container.encode(data)
     }
 
     public enum CustomFieldsError: Error {

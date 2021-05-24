@@ -7,11 +7,3 @@ open class DiscountPromoCodeRequest: Codable {
         self.ids = ids
     }
 }
-
-open class DiscountExternalPromoActionRequest: Codable {
-    public var ids: IDS?
-
-    public init(ids: IDS? = nil) {
-        self.ids = ids
-    }
-}
