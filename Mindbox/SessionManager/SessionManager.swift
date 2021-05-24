@@ -17,9 +17,9 @@ final class SessionManager {
 
     var sessionHandler: ((Bool) -> Void)?
 
-    func trackDirect() {
+    func trackForeground() {
         do {
-            try trackVisitManager.trackDirect()
+            try trackVisitManager.trackForeground()
         } catch {
             Log("Track Visit failed with error: \(error)")
                 .category(.visit).level(.info).make()
@@ -32,7 +32,7 @@ final class SessionManager {
         didSet {
             guard isActive, isActive != oldValue else { return }
             sessionHandler?(isActive)
-            trackDirect()
+            trackForeground()
         }
     }
 

@@ -31,6 +31,12 @@ final class TrackVisitManager {
             }
         }
     }
+    
+    func trackForeground() throws {
+        let encodable = TrackVisit()
+        Log("Tracked Visit event type direct").category(.visit).level(.info).make()
+        try sendTrackVisit(encodable)
+    }
 
     func trackDirect() throws {
         let encodable = TrackVisit(source: .direct)

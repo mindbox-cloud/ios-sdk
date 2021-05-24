@@ -219,7 +219,7 @@ class CoreController {
         }
         
         TimerManager.shared.configurate(trackEvery: 20 * 60) {
-            sessionManager.trackDirect()
+            sessionManager.trackForeground()
         }
         TimerManager.shared.setupTimer()
     }
