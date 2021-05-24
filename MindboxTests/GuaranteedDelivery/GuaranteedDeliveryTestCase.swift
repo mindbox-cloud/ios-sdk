@@ -29,8 +29,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     
     var container = try! TestDependencyProvider()
     
-    private var observationToken: NSKeyValueObservation?
-    
     override func setUp() {
         Mindbox.logger.logLevel = .none
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
@@ -108,7 +106,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Full erase database
         try! databaseRepository.erase()
         // Lock update
-        observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
+        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   simpleCase.indices.contains(iterator) else {
                 XCTFail("New state is not expected type. SimpleCase:\(simpleCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
@@ -132,7 +130,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 1) * 2)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2) {_ in 
+            observationToken?.invalidate()
+            observationToken = nil
+        }
     }
     
     func testFailureScheduleByTimer() {
@@ -163,7 +164,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
-        observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
+        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
                 XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
@@ -188,7 +189,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 5) * 2)
+        waitForExpectations(timeout: (retryDeadline + 5) * 2) {_ in 
+            observationToken?.invalidate()
+            observationToken = nil
+        }
     }
     
     private func generateAndSaveToDatabaseEvents() {

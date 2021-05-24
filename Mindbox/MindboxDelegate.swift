@@ -9,7 +9,5 @@
 import Foundation
 
 protocol MindboxDelegate: AnyObject {
-
     func mindBox(_ mindBox: Mindbox, failedWithError error: Error)
-    
 }
