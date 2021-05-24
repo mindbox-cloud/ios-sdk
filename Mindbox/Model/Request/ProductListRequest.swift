@@ -30,4 +30,20 @@ open class ProductListRequest: Encodable {
         self.pricePerItem = pricePerItem
         self.priceOfLine = priceOfLine
     }
+
+    public init(
+        productGroup: ProductGroupRequest? = nil,
+        pricePerItem: Decimal? = nil
+    ) {
+        self.productGroup = productGroup
+        self.pricePerItem = pricePerItem
+    }
+
+    public init(
+        product: ProductRequest? = nil,
+        pricePerItem: Decimal? = nil
+    ) {
+        self.product = product
+        self.pricePerItem = pricePerItem
+    }
 }
