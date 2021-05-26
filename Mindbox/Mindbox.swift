@@ -100,10 +100,6 @@ public class Mindbox {
         } else {
             observe(value: self.persistenceStorage?.apnsToken, with: completion)
         }
-
-        let body = OperationBodyRequest()
-
-        body.customAction = CustomerActionRequest(customFields: ["id1": 1234, "id2": "1234"])
     }
 
     private func observe(value: @escaping @autoclosure () -> String?, with completion: @escaping (String) -> Void) {
@@ -255,38 +251,8 @@ public class Mindbox {
 
      - Parameters:
         - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
-        - operationBody: Provided `OperationBodyRequestBase` payload to send
-     */
-    public func executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T) {
-        guard operationSystemName.operationNameIsValid else {
-            Log("Invalid operation name: \(operationSystemName)")
-                .category(.notification).level(.error).make()
-            return
-        }
-        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        do {
-            try databaseRepository?.create(event: event)
-            Log("Track executeAsyncOperation")
-                .category(.notification).level(.info).make()
-        } catch {
-            Log("Track executeAsyncOperation failed with error: \(error)")
-                .category(.notification).level(.error).make()
-        }
-    }
-
-    /**
-     - Warning:
-     Deprecated. Use `executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName:operationBody:)` instead.
-
-     - Note:
-     Method for register a custom event.
-
-     - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
         - operationBody: Provided `Encodable` payload to send
      */
-    @available(*, deprecated, message: "Use `executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T)` instead.")
     public func executeAsyncOperation<T: Encodable>(operationSystemName: String, operationBody: T) {
         guard operationSystemName.operationNameIsValid else {
             Log("Invalid operation name: \(operationSystemName)")
