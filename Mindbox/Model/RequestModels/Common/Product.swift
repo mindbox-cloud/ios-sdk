@@ -11,7 +11,7 @@ import Foundation
 // MARK: - Product
 
 public class Product: Codable {
-    public let ids: IDS?
+    public var ids: IDS?
 
     public init(ids: IDS?) {
         self.ids = ids
@@ -20,7 +20,7 @@ public class Product: Codable {
     // MARK: - IDS
 
     public class IDS: Codable {
-        public let website: String?
+        public var website: String?
 
         public init(website: String?) {
             self.website = website

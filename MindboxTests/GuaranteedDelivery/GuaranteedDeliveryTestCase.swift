@@ -6,31 +6,29 @@
 //  Copyright © 2021 Mikhail Barilov. All rights reserved.
 //
 
-import XCTest
 import CoreData
 @testable import Mindbox
+import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
-    
     var databaseRepository: MBDatabaseRepository {
         container.databaseRepository
     }
+
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
-    
+
     var persistenceStorage: PersistenceStorage {
         container.persistenceStorage
     }
-    
+
     let eventGenerator = EventGenerator()
-    
+
     var isDelivering: Bool {
         guaranteedDeliveryManager.state.isDelivering
     }
-    
+
     var container = try! TestDependencyProvider()
-    
-    private var observationToken: NSKeyValueObservation?
-    
+
     override func setUp() {
         Mindbox.logger.logLevel = .none
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
@@ -42,11 +40,11 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         updateInstanceFactory(withFailureNetworkFetcher: false)
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     private func updateInstanceFactory(withFailureNetworkFetcher: Bool) {
         (container.instanceFactory as! MockInstanceFactory).isFailureNetworkFetcher = withFailureNetworkFetcher
     }
-    
+
     func testDeliverMultipleEvents() {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -67,21 +65,21 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         expectation(for: deliveringExpectation, evaluatedWith: self, handler: nil)
         waitForExpectations(timeout: 20, handler: nil)
     }
-    
+
     var state: NSString {
         NSString(string: guaranteedDeliveryManager.state.rawValue)
     }
-    
+
     func testDateTimeOffset() {
         let events = eventGenerator.generateEvents(count: 100)
-        events.forEach { (event) in
+        events.forEach { event in
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
             XCTAssertTrue(expectation == dateTimeOffset)
         }
     }
-    
+
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -103,7 +101,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Full erase database
         try! databaseRepository.erase()
         // Lock update
-        observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
+        guaranteedDeliveryManager.canScheduleOperations = false
+        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   simpleCase.indices.contains(iterator) else {
                 XCTFail("New state is not expected type. SimpleCase:\(simpleCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
@@ -114,7 +113,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
             iterator += 1
         }
-        guaranteedDeliveryManager.canScheduleOperations = false
         // Generating new events
         let events = eventGenerator.generateEvents(count: 10)
         do {
@@ -127,9 +125,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 1) * 2)
+        waitForExpectations(timeout: (retryDeadline + 1) * 2) { _ in
+            observationToken?.invalidate()
+            observationToken = nil
+        }
     }
-    
+
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
@@ -145,7 +146,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             .delivering,
             .waitingForRetry,
             .delivering,
-            .idle
+            .idle,
         ]
         let errorExpectations: [XCTestExpectation] = errorCase
             .map {
@@ -158,7 +159,10 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
-        observationToken = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
+        // Lock update
+        guaranteedDeliveryManager.canScheduleOperations = false
+        
+        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
                 XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
@@ -169,8 +173,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
             iterator += 1
         }
-        // Lock update
-        guaranteedDeliveryManager.canScheduleOperations = false
         // Generating new events
         let events = eventGenerator.generateEvents(count: 10)
         do {
@@ -183,9 +185,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 5) * 2)
+        waitForExpectations(timeout: (retryDeadline + 5) * 2) { _ in
+            observationToken?.invalidate()
+            observationToken = nil
+        }
     }
-    
+
     private func generateAndSaveToDatabaseEvents() {
         let event = eventGenerator.generateEvent()
         do {
@@ -194,5 +199,4 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
-    
 }

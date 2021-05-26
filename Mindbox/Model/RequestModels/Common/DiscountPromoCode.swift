@@ -10,7 +10,7 @@ import Foundation
 
 // MARK: - PromoCode
 public class DiscountPromoCode: Codable {
-    public let ids: IDS?
+    public var ids: IDS?
 
     public init(ids: IDS?) {
         self.ids = ids
@@ -18,7 +18,7 @@ public class DiscountPromoCode: Codable {
     
     // MARK: - IDS
     public class IDS: Codable {
-        public let code: String?
+        public var code: String?
 
         public init(code: String?) {
             self.code = code

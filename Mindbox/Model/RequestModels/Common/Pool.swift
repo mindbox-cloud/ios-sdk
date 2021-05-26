@@ -11,7 +11,7 @@ import Foundation
 // MARK: - Pool
 
 public class Pool: Codable {
-    public let ids: IDS?
+    public var ids: IDS?
 
     public init(ids: IDS?) {
         self.ids = ids
@@ -20,8 +20,8 @@ public class Pool: Codable {
     // MARK: - Poolids
 
     public class IDS: Codable {
-        public let externalId: String?
-        public let mindboxId: Int?
+        public var externalId: String?
+        public var mindboxId: Int?
 
         public init(externalId: String?, mindboxId: Int?) {
             self.externalId = externalId

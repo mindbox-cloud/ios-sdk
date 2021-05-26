@@ -9,7 +9,7 @@
 import Foundation
 
 public class CreateOrder: Codable {
-    public let order: Order
+    public var order: Order
 
     public init(order: Order) {
         self.order = order

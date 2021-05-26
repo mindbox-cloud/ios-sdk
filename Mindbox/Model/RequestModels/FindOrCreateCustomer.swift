@@ -9,7 +9,7 @@
 import Foundation
 
 public class FindOrCreateCustomer: Codable {
-    public let customer: Customer
+    public var customer: Customer
 
     public init(customer: Customer) {
         self.customer = customer

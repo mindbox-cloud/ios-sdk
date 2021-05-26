@@ -9,8 +9,8 @@
 import Foundation
 
 public class CatalogProductList: Codable {
-    public let area: Area?
-    public let items: [Item]?
+    public var area: Area?
+    public var items: [Item]?
 
     public init(area: Area?, items: [Item]) {
         self.area = area

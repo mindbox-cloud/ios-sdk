@@ -11,15 +11,15 @@ import Foundation
 // MARK: - Customer
 
 public class Customer: Codable {
-    public let authenticationTicket: String?
-    public let discountCard: DiscountCard?
-    public let birthDate, sex, timeZone, lastName: String?
-    public let firstName, middleName, fullName: String?
-    public let area: Area?
-    public let email, mobilePhone: String?
-    public let ids: IDS?
-    public let customFields: CustomFields?
-    public let subscriptions: [Subscription]
+    public var authenticationTicket: String?
+    public var discountCard: DiscountCard?
+    public var birthDate, sex, timeZone, lastName: String?
+    public var firstName, middleName, fullName: String?
+    public var area: Area?
+    public var email, mobilePhone: String?
+    public var ids: IDS?
+    public var customFields: CustomFields?
+    public var subscriptions: [Subscription]
 
     public init(
         authenticationTicket: String?,
@@ -58,7 +58,7 @@ public class Customer: Codable {
     // MARK: - Customerids
 
     public class IDS: Codable {
-        public let websiteid, myAwesomeId: String?
+        public var websiteid, myAwesomeId: String?
 
         public init(websiteid: String, myAwesomeId: String) {
             self.websiteid = websiteid

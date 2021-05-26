@@ -152,6 +152,7 @@
 		84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */; };
 		84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */; };
 		987742A80C938544942434BC /* Pods_Mindbox_MindboxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B1A023255C78DD260B208DD /* Pods_Mindbox_MindboxTests.framework */; };
+		B35334322653E15E00FFE4F7 /* CustomEventModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35334312653E15E00FFE4F7 /* CustomEventModel.swift */; };
 		D38BCDC0922CFDB3BEFF6843 /* Pods_Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E20394908AFBD7C785CD9D4 /* Pods_Mindbox.framework */; };
 /* End PBXBuildFile section */
 
@@ -320,6 +321,7 @@
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
 		9F21C5FA3537762C986CF380 /* Pods-MindBox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox.debug.xcconfig"; path = "Target Support Files/Pods-MindBox/Pods-MindBox.debug.xcconfig"; sourceTree = "<group>"; };
 		A20FDB716211CD7C1088F3C6 /* Pods-Mindbox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mindbox.release.xcconfig"; path = "Target Support Files/Pods-Mindbox/Pods-Mindbox.release.xcconfig"; sourceTree = "<group>"; };
+		B35334312653E15E00FFE4F7 /* CustomEventModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEventModel.swift; sourceTree = "<group>"; };
 		D1937B91FB52DD585A23B9AF /* Pods-MindBox-MindboxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox-MindboxTests.debug.xcconfig"; path = "Target Support Files/Pods-MindBox-MindBoxTests/Pods-MindBox-MindboxTests.debug.xcconfig"; sourceTree = "<group>"; };
 		D8CBB0BDBCD1E4839EE4BA42 /* Pods-MindBox-MindboxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox-MindboxTests.release.xcconfig"; path = "Target Support Files/Pods-MindBox-MindBoxTests/Pods-MindBox-MindboxTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -496,6 +498,7 @@
 				334F3ACF264C199900A6AC00 /* ViewCategory.swift */,
 				334F3AAF264C199900A6AC00 /* ViewProduct.swift */,
 				334F3AB5264C199900A6AC00 /* Common */,
+				B35334312653E15E00FFE4F7 /* CustomEventModel.swift */,
 			);
 			path = RequestModels;
 			sourceTree = "<group>";
@@ -1101,6 +1104,7 @@
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				840042912614C65900CA17C5 /* NotificationsPayloads.swift in Sources */,
 				334F3AE5264C199900A6AC00 /* ReferencedCustomer.swift in Sources */,
+				B35334322653E15E00FFE4F7 /* CustomEventModel.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				334F3AFC264C199900A6AC00 /* DeleteCard.swift in Sources */,
 				317054E825B01BDD00AE624C /* ErrorModel.swift in Sources */,
@@ -1236,7 +1240,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1305,7 +1308,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1368,7 +1370,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 446EBBC3A43EEB99FB63A476 /* Pods-Mindbox.debug.xcconfig */;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
@@ -1398,7 +1399,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = A20FDB716211CD7C1088F3C6 /* Pods-Mindbox.release.xcconfig */;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;

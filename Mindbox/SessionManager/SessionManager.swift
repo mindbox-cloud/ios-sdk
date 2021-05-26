@@ -16,10 +16,19 @@ final class SessionManager {
     }
 
     var sessionHandler: ((Bool) -> Void)?
-
+    
     func trackDirect() {
         do {
             try trackVisitManager.trackDirect()
+        } catch {
+            Log("Track Visit failed with error: \(error)")
+                .category(.visit).level(.info).make()
+        }
+    }
+
+    func trackForeground() {
+        do {
+            try trackVisitManager.trackForeground()
         } catch {
             Log("Track Visit failed with error: \(error)")
                 .category(.visit).level(.info).make()

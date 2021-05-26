@@ -11,8 +11,8 @@ import Foundation
 // MARK: - ProductList
 
 public class ProductList: Codable {
-    public let product, productGroup: Product?
-    public let count, pricePerItem, priceOfLine: Double?
+    public var product, productGroup: Product?
+    public var count, pricePerItem, priceOfLine: Double?
 
     public init(product: Product?, productGroup: Product?, count: Double, pricePerItem: Double?, priceOfLine: Double?) {
         self.product = product

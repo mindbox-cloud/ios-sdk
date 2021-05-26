@@ -9,7 +9,7 @@
 import Foundation
 
 public class DeleteCard: Codable {
-    public let discountCard: DiscountCard?
+    public var discountCard: DiscountCard?
 
     public init(discountCard: DiscountCard?) {
         self.discountCard = discountCard

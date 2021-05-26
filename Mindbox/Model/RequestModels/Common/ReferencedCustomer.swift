@@ -9,9 +9,9 @@
 import Foundation
 
 public class ReferencedCustomer: Codable {
-    public let email, mobilePhone: String?
-    public let ids: IDS?
-    public let discountCard: DiscountCard?
+    public var email, mobilePhone: String?
+    public var ids: IDS?
+    public var discountCard: DiscountCard?
 
     public init(email: String?, mobilePhone: String?, ids: IDS?, discountCard: DiscountCard?) {
         self.email = email
@@ -23,8 +23,8 @@ public class ReferencedCustomer: Codable {
     // MARK: - ReferencedCustomerids
 
     public class IDS: Codable {
-        public let mindboxId: Int?
-        public let myAwesomeId, websiteid: String?
+        public var mindboxId: Int?
+        public var myAwesomeId, websiteid: String?
 
         public init(mindboxId: Int?, myAwesomeId: String?, websiteid: String?) {
             self.mindboxId = mindboxId

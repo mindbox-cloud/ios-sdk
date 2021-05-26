@@ -11,15 +11,15 @@ import Foundation
 // MARK: - Line
 
 public class Line: Codable {
-    public let minPricePerItem, costPricePerItem: Double?
-    public let customFields: CustomFields?
-    public let basePricePerItem, quantity: Double?
-    public let quantityType: String?
-    public let discountedPricePerLine: Double?
-    public let lineId: String?
-    public let lineNumber: Int?
-    public let discounts: [Discount]?
-    public let product: Product?
+    public var minPricePerItem, costPricePerItem: Double?
+    public var customFields: CustomFields?
+    public var basePricePerItem, quantity: Double?
+    public var quantityType: String?
+    public var discountedPricePerLine: Double?
+    public var lineId: String?
+    public var lineNumber: Int?
+    public var discounts: [Discount]?
+    public var product: Product?
 
     public init(
         minPricePerItem: Double?,

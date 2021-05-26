@@ -11,7 +11,7 @@ import Foundation
 // MARK: - CustomerAction
 
 public class CustomerAction: Codable {
-    public let customFields: CustomFields?
+    public var customFields: CustomFields?
 
     public init(customFields: CustomFields?) {
         self.customFields = customFields

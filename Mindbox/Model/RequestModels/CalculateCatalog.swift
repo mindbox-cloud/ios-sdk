@@ -9,7 +9,7 @@
 import Foundation
 
 public class CalculateCatalog: Codable {
-    public let productList: CatalogProductList
+    public var productList: CatalogProductList
 
     public init(productList: CatalogProductList) {
         self.productList = productList

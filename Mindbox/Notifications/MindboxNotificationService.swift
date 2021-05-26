@@ -14,81 +14,76 @@ public class MindboxNotificationService {
     // Public
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
-    public var date = Date()
-    
+
     // Private
     private var context: NSExtensionContext?
     private var viewController: UIViewController?
-    private var attachmentUrl: URL?
-    
+
     /// Mindbox proxy for NotificationsService and NotificationViewController
     public init() {}
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
         context = extensionContext
         self.viewController = viewController
-        
-        createButtons(for: notification, extensionContext: extensionContext)
+
+        createContent(for: notification, extensionContext: extensionContext)
     }
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of `NotificationService`
     public func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
         guard let bestAttemptContent = bestAttemptContent else { return }
-        date = Date()
-        
-        func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
-            if Mindbox.shared.pushDelivered(request: request) {
-                bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
-                bestAttemptContent.title = "\(bestAttemptContent.title) [Send status success]"
-            } else {
-                bestAttemptContent.title = "\(bestAttemptContent.title) [Send status failed]"
-            }
-            
-            showSeconds(for: bestAttemptContent)
-            contentHandler(bestAttemptContent)
-        }
-        
+
+        Mindbox.shared.pushDelivered(request: request)
+
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: allowedUrl) {
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                defer { proceedFinalStage(bestAttemptContent) }
-                guard let self = self, let data = data else { return }
-                if let attachment = self.saveImage(url.lastPathComponent, data: data, options: nil) {
-                    bestAttemptContent.attachments = [attachment]
-                }
-            }.resume()
+            downloadImage(with: url) { [weak self] in
+                self?.proceedFinalStage(bestAttemptContent)
+            }
         } else {
             proceedFinalStage(bestAttemptContent)
         }
-        
     }
-    
+
+    private func downloadImage(with url: URL, completion: @escaping () -> Void) {
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            defer { completion() }
+            guard let self = self else { return }
+            guard let data = data else { return }
+
+            if let attachment = self.saveImage(data) {
+                self.bestAttemptContent?.attachments = [attachment]
+            }
+        }.resume()
+    }
+
+    private func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
+        bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
+        contentHandler?(bestAttemptContent)
+    }
+
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     public func serviceExtensionTimeWillExpire() {
-        if let contentHandler = contentHandler, let bestAttemptContent = bestAttemptContent {
-            bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
-            bestAttemptContent.title = "\(bestAttemptContent.title) [Send status failed]"
-            showSeconds(for: bestAttemptContent)
-            contentHandler(bestAttemptContent)
+        if let bestAttemptContent = bestAttemptContent {
+            proceedFinalStage(bestAttemptContent)
         }
     }
-    
-    private func createButtons(for notification: UNNotification, extensionContext: NSExtensionContext?) {
+
+    private func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
-        guard let payload = parse(request: request) else {
-            return
+        guard let payload = parse(request: request) else { return }
+
+        if let attachment = notification.request.content.attachments.first,
+           attachment.url.startAccessingSecurityScopedResource() {
+            createImageView(with: attachment.url.path, view: viewController?.view)
         }
-        if let attachment = notification.request.content.attachments.first, attachment.url.startAccessingSecurityScopedResource() {
-            attachmentUrl = attachment.url
-            createImageView(with: attachment.url.path, view: self.viewController?.view)
-        }
-        createActions(with: payload, context: self.context)
+        createActions(with: payload, context: context)
     }
-    
+
     private func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
             return
@@ -100,7 +95,7 @@ public class MindboxNotificationService {
                 options: [.foreground]
             )
         }
-        
+
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
@@ -108,17 +103,11 @@ public class MindboxNotificationService {
             }
         }
     }
-    
+
     private func createImageView(with imagePath: String, view: UIView?) {
-        guard let view = view else {
-            return
-        }
-        
-        let url = URL(fileURLWithPath: imagePath)
-        
-        guard let data = try? Data(contentsOf: url) else {
-            return
-        }
+        guard let view = view,
+              let data = FileManager.default.contents(atPath: imagePath) else { return }
+
         let imageView = UIImageView(image: UIImage(data: data))
         imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -129,26 +118,22 @@ public class MindboxNotificationService {
             imageView.rightAnchor.constraint(equalTo: view.rightAnchor),
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300)
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
         ])
     }
-    
+
     private func parse(request: UNNotificationRequest) -> Payload? {
-        guard let userInfo = getUserInfo(from: request) else {
-            return nil
-        }
-        guard let data = try? JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted) else {
-            return nil
-        }
-        
+        guard let userInfo = getUserInfo(from: request) else { return nil }
+        guard let data = try? JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted) else { return nil }
+
         var payload = Payload()
-        
+
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
         payload.withImageURL = try? JSONDecoder().decode(Payload.ImageURL.self, from: data)
-        
+
         return payload
     }
-    
+
     private func getUserInfo(from request: UNNotificationRequest) -> [AnyHashable: Any]? {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             return nil
@@ -159,23 +144,20 @@ public class MindboxNotificationService {
             return userInfo
         }
     }
-    
-    private func showSeconds(for content: UNMutableNotificationContent) {
-        let delta = Date().timeIntervalSince(date)
-        let ms = Int64((delta * 1000).rounded())
-        let s = Int64(ms / 1000)
-        let remainsMS = s > 0 ? (ms - s * 1000) : ms
-        content.title = "\(content.title) \(s)s \(remainsMS)ms"
-    }
-    
-    private func saveImage(_ identifire: String, data: Data, options: [AnyHashable: Any]?) -> UNNotificationAttachment? {
+
+    private func saveImage(_ data: Data) -> UNNotificationAttachment? {
+        let name = UUID().uuidString
+        guard let format = ImageFormat(data) else {
+            // not an image
+            return nil
+        }
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
         let directory = url.appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-            let fileURL = directory.appendingPathComponent(identifire)
-            try data.write(to: fileURL, options: [])
-            return try UNNotificationAttachment(identifier: identifire, url: fileURL, options: options)
+            let fileURL = directory.appendingPathComponent(name, isDirectory: true).appendingPathExtension(format.extension)
+            try data.write(to: fileURL, options: .atomic)
+            return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
         } catch {
             return nil
         }
@@ -186,24 +168,55 @@ fileprivate struct Payload {
     struct ImageURL: Codable {
         let imageUrl: String?
     }
-    
+
     struct Button: Codable {
         struct Buttons: Codable {
             let text: String
             let uniqueKey: String
         }
-        
+
         let uniqueKey: String
-        
+
         let buttons: [Buttons]?
-        
+
         let imageUrl: String?
-        
+
         var debugDescription: String {
             "uniqueKey: \(uniqueKey)"
         }
     }
-    
+
     var withImageURL: ImageURL?
     var withButton: Button?
+}
+
+fileprivate enum ImageFormat: String {
+    case png, jpg, gif
+
+    init?(_ data: Data) {
+        if let type = ImageFormat.get(from: data) {
+            self = type
+        } else {
+            return nil
+        }
+    }
+
+    var `extension`: String {
+        return rawValue
+    }
+}
+
+fileprivate extension ImageFormat {
+    static func get(from data: Data) -> ImageFormat? {
+        switch data[0] {
+        case 0x89:
+            return .png
+        case 0xFF:
+            return .jpg
+        case 0x47:
+            return .gif
+        default:
+            return nil
+        }
+    }
 }

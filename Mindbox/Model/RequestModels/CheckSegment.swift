@@ -9,7 +9,7 @@
 import Foundation
 
 public class CheckSegment: Codable {
-    public let segmentations: [Segmentation]
+    public var segmentations: [Segmentation]
 
     public init(segmentations: [Segmentation]) {
         self.segmentations = segmentations

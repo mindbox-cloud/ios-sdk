@@ -9,7 +9,7 @@
 import Foundation
 
 public class ViewCategory: Codable {
-    public let viewProductCategory: ViewProductCategory?
+    public var viewProductCategory: ViewProductCategory?
 
     public init(viewProductCategory: ViewProductCategory?) {
         self.viewProductCategory = viewProductCategory

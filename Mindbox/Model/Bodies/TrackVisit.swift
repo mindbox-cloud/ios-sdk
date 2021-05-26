@@ -15,9 +15,9 @@ struct TrackVisit: Codable {
     /// ссылка, по которой перешли в приложение, либо null
     let requestUrl: URL?
 
-    let source: TrackVisitSource
+    let source: TrackVisitSource?
 
-    init(url: URL? = nil, source: TrackVisitSource) {
+    init(url: URL? = nil, source: TrackVisitSource? = nil) {
         requestUrl = url
         self.source = source
         ianaTimeZone = TimeZone.current.identifier

@@ -9,7 +9,7 @@
 import Foundation
 
 public class ReferrenceCustomer: Codable {
-    public let referencedCustomer: ReferencedCustomer?
+    public var referencedCustomer: ReferencedCustomer?
 
     public init(referencedCustomer: ReferencedCustomer?) {
         self.referencedCustomer = referencedCustomer
