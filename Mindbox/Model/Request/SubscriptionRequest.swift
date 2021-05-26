@@ -18,3 +18,11 @@ open class SubscriptionRequest: Codable {
         self.isSubscribed = isSubscribed
     }
 }
+
+public enum Channel: String, Codable {
+    case email = "Email"
+    case sms = "SMS"
+    case viber = "Viber"
+    case webPush = "Webpush"
+    case mobilePush = "Mobilepush"
+}

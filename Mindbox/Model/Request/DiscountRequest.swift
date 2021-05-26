@@ -18,3 +18,8 @@ open class DiscountRequest: Encodable {
         self.externalPromoAction = externalPromoAction
     }
 }
+
+public enum DiscountTypeRequest: String, Encodable {
+    case promoCode
+    case externalPromoAction
+}
