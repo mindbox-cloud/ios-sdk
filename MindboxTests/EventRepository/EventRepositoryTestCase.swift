@@ -18,7 +18,6 @@ class EventRepositoryTestCase: XCTestCase {
     override func setUp() {
         container = try! TestDependencyProvider()
         coreController = CoreController(
-            shouldCreateCustomer: true,
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,

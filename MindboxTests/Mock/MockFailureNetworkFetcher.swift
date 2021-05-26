@@ -12,25 +12,20 @@ import Foundation
 class MockFailureNetworkFetcher: NetworkFetcher {
     
     init() {
-//        print("failableRouteIndex: \(failableRouteIndex)")
-//        print("RoutesCount: \(routesCount)")
+        //        print("failableRouteIndex: \(failableRouteIndex)")
+        //        print("RoutesCount: \(routesCount)")
     }
     
     private var routesCount: Int = 0 {
         didSet {
-//            print("RoutesCount: \(routesCount)")
+            //            print("RoutesCount: \(routesCount)")
         }
     }
     
     var failableRouteIndex = Int.random(in: 0...9)
-     
+    
     private func errorForRoute() -> ErrorModel? {
         if routesCount >= 9 {
-            routesCount = 0
-            failableRouteIndex = Int.random(in: 0...9)
-        }
-        
-        if routesCount == failableRouteIndex {
             let error: ErrorModel = ErrorModel(
                 errorKey: ErrorKey.parsing.rawValue,
                 rawError: nil
@@ -40,12 +35,12 @@ class MockFailureNetworkFetcher: NetworkFetcher {
             error.httpStatusCode = 501
             error.responseStatusCode = 501
             
-            routesCount += 1
             return error
-        } else {
-            routesCount += 1
-            return nil
         }
+        
+        routesCount += 1
+        return nil
+        
     }
     
     func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
