@@ -9,12 +9,22 @@ open class ProductListRequest: Encodable {
 
     public init(
         product: ProductRequest? = nil,
-        productGroup: ProductGroupRequest? = nil,
         count: Decimal? = nil,
         pricePerItem: Decimal? = nil,
         priceOfLine: Decimal? = nil
     ) {
         self.product = product
+        self.count = count
+        self.pricePerItem = pricePerItem
+        self.priceOfLine = priceOfLine
+    }
+
+    public init(
+        productGroup: ProductGroupRequest? = nil,
+        count: Decimal? = nil,
+        pricePerItem: Decimal? = nil,
+        priceOfLine: Decimal? = nil
+    ) {
         self.productGroup = productGroup
         self.count = count
         self.pricePerItem = pricePerItem

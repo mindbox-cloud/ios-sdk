@@ -23,7 +23,7 @@ open class OperationBodyRequest: OperationBodyRequestBase {
     public var setProductCountInList: ProductListRequest?
     public var addProductToList: ProductListRequest?
     public var removeProductFromList: ProductListRequest?
-    /** This field used for product and will be serialized as productList**/
+    /** This field used for product and will be serialized as productList */
     public var productListItems: [ProductListRequest]?
 
     public init() { }
@@ -40,8 +40,11 @@ open class OperationBodyRequest: OperationBodyRequestBase {
         try container.encodeIfPresent(discountCard, forKey: .discountCard)
         try container.encodeIfPresent(removeProductFromList, forKey: .removeProductFromList)
         try container.encodeIfPresent(setProductCountInList, forKey: .setProductCountInList)
-        try container.encodeIfPresent(productList, forKey: .productList)
-        try container.encodeIfPresent(productListItems, forKey: .productList)
+        if productList != nil {
+            try container.encodeIfPresent(productList, forKey: .productList)
+        } else if productListItems != nil {
+            try container.encodeIfPresent(productListItems, forKey: .productList)
+        }
         try container.encodeIfPresent(promoCode, forKey: .promoCode)
         try container.encodeIfPresent(viewProductCategory, forKey: .viewProductCategory)
         try container.encodeIfPresent(viewProduct, forKey: .viewProduct)
