@@ -50,7 +50,6 @@ class MBEventRepository: EventRepository {
         case .pushDelivered:
              return EventRoute.pushDeleveried(wrapper)
         case .installed,
-             .installedWithoutCustomer,
              .infoUpdated,
              .trackClick:
             return EventRoute.asyncEvent(wrapper)

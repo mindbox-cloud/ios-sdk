@@ -10,18 +10,17 @@ import Foundation
 import UIKit
 
 class CoreController {
-    private let shouldCreateCustomer: Bool
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
     private let notificationStatusProvider: UNAuthorizationStatusProviding
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
-    
+
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
     private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
     private let checkNotificationStatusQueue = DispatchQueue(label: "com.Mindbox.checkNotificationStatus")
-    
+
     func initialization(configuration: MBConfiguration) {
         persistenceStorage.configuration = configuration
         if !persistenceStorage.isInstalled {
@@ -31,7 +30,7 @@ class CoreController {
         }
         guaranteedDeliveryManager.canScheduleOperations = true
     }
-    
+
     func apnsTokenDidUpdate(token: String) {
         notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
             guard let self = self else { return }
@@ -47,7 +46,7 @@ class CoreController {
         }
         persistenceStorage.apnsToken = token
     }
-    
+
     func checkNotificationStatus(granted: Bool? = nil) {
         checkNotificationStatusQueue.sync {
             notificationStatusProvider.getStatus { [weak self] isNotificationsEnabled in
@@ -69,21 +68,20 @@ class CoreController {
             }
         }
     }
-    
+
     // MARK: - Private
-    
+
     private func primaryInitialization(with configutaion: MBConfiguration) {
         utilitiesFetcher.getDeviceUUID(completion: { [self] deviceUUID in
             installQueue.sync {
                 install(
                     deviceUUID: deviceUUID,
-                    configuration: configutaion,
-                    shouldCreateCustomer: shouldCreateCustomer
+                    configuration: configutaion
                 )
             }
         })
     }
-    
+
     private func repeatInitialization() {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Log("Unable to find deviceUUID in persistenceStorage")
@@ -93,10 +91,10 @@ class CoreController {
         persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         checkNotificationStatus()
     }
-    
+
     private var installSemathore = DispatchSemaphore(value: 1)
-    
-    private func install(deviceUUID: String, configuration: MBConfiguration, shouldCreateCustomer: Bool) {
+
+    private func install(deviceUUID: String, configuration: MBConfiguration) {
         installSemathore.wait(); defer { installSemathore.signal() }
         let previousVersion = databaseRepository.installVersion ?? -1
         let newVersion = previousVersion + 1
@@ -117,35 +115,26 @@ class CoreController {
                 instanceId: instanceId
             )
             let body = BodyEncoder(encodable: encodable).body
-            
-            let event = self.configurateEvent(shouldCreateCustomer: shouldCreateCustomer, body: body)
-            
+            let event = Event(
+                type: .installed,
+                body: body
+            )
             do {
                 try self.databaseRepository.create(event: event)
                 self.databaseRepository.installVersion = newVersion
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
                 self.persistenceStorage.installationDate = Date()
-                if shouldCreateCustomer {
-                    Log("MobileApplicationInstalled")
-                        .category(.general).level(.default).make()
-                } else {
-                    Log("MobileApplicationInstalledWithoutCustomer")
-                        .category(.general).level(.default).make()
-                }
+                Log("MobileApplicationInstalled")
+                    .category(.general).level(.default).make()
             } catch {
-                if shouldCreateCustomer {
-                    Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
-                        .category(.general).level(.error).make()
-                } else {
-                    Log("MobileApplicationInstalledWithoutCustomer failed with error: \(error.localizedDescription)")
-                        .category(.general).level(.error).make()
-                }
+                Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
+                    .category(.general).level(.error).make()
             }
         }
     }
-    
+
     private var infoUpdateSemathore = DispatchSemaphore(value: 1)
-    
+
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
         infoUpdateSemathore.wait(); defer { infoUpdateSemathore.signal() }
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
@@ -170,7 +159,7 @@ class CoreController {
                 .category(.general).level(.error).make()
         }
     }
-    
+
     private func trackDirect() {
         do {
             try trackVisitManager.trackDirect()
@@ -179,23 +168,8 @@ class CoreController {
                 .category(.visit).level(.info).make()
         }
     }
-    
-    private func configurateEvent(shouldCreateCustomer: Bool, body: String) -> Event {
-        if shouldCreateCustomer {
-            return Event(
-                type: .installed,
-                body: body
-            )
-        }
-        
-        return Event(
-            type: .installedWithoutCustomer,
-            body: body
-        )
-    }
-    
+
     init(
-        shouldCreateCustomer: Bool,
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
         notificationStatusProvider: UNAuthorizationStatusProviding,
@@ -204,20 +178,19 @@ class CoreController {
         trackVisitManager: TrackVisitManager,
         sessionManager: SessionManager
     ) {
-        self.shouldCreateCustomer = shouldCreateCustomer
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
         self.notificationStatusProvider = notificationStatusProvider
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
-        
+
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive {
                 self?.checkNotificationStatus()
             }
         }
-        
+
         TimerManager.shared.configurate(trackEvery: 20 * 60) {
             sessionManager.trackForeground()
         }
