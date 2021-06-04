@@ -9,10 +9,9 @@
 import Foundation
 /// This struct contains init options and  behavior configuration options
 ///
-/// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
+/// - Throws:`MindboxError.internalError` for invalid initialization parameters
 
 public struct MBConfiguration: Codable {
-    
     public let endpoint: String
     public let domain: String
     public var previousInstallationId: String?
@@ -26,7 +25,7 @@ public struct MBConfiguration: Codable {
     /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter previousDeviceUUID: Used instead of the generated value
     ///
-    /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
+    /// - Throws:`MindboxError.internalError` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
@@ -34,36 +33,53 @@ public struct MBConfiguration: Codable {
         previousDeviceUUID: String? = nil,
         subscribeCustomerIfCreated: Bool = false
     ) throws {
-
         self.endpoint = endpoint
         self.domain = domain
-        
+
         guard let url = URL(string: "https://" + domain), URLValidator(url: url).evaluate() else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "Invalid domain. Domain is unreachable")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Invalid domain. Domain is unreachable"
+            ))
         }
 
         guard !endpoint.isEmpty else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "Value endpoint can not be empty")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Value endpoint can not be empty"
+            ))
         }
 
         if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
             guard UUID(uuidString: previousInstallationId) != nil else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousInstallationId doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousInstallationId doesn't match the UUID format"
+                ))
             }
 
             guard UDIDValidator(udid: previousInstallationId).evaluate() else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousInstallationId doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousInstallationId doesn't match the UUID format"
+                ))
             }
 
             self.previousInstallationId = previousInstallationId
         }
         if let previousDeviceUUID = previousDeviceUUID, !previousDeviceUUID.isEmpty {
             guard UUID(uuidString: previousDeviceUUID) != nil else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousDeviceUUID doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousDeviceUUID doesn't match the UUID format"
+                ))
             }
 
             guard UDIDValidator(udid: previousDeviceUUID).evaluate() else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousDeviceUUID doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousDeviceUUID doesn't match the UUID format"
+                ))
             }
 
             self.previousDeviceUUID = previousDeviceUUID
@@ -90,7 +106,7 @@ public struct MBConfiguration: Codable {
     /// </plist>
     /// ```
     /// - Parameter plistName: name of plist file without extension
-    /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters or  incorrect format file
+    /// - Throws:`MindboxError.internalError` for invalid initialization parameters or incorrect format file
     public init(plistName: String) throws {
         let decoder = PropertyListDecoder()
         var findeURL: URL?
@@ -103,15 +119,24 @@ public struct MBConfiguration: Codable {
         }
 
         guard let url = findeURL else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) not found")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) not found"
+            ))
         }
 
         guard let data = try? Data(contentsOf: url) else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) cannot be read")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) cannot be read"
+            ))
         }
 
         guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) contains invalid properties")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) contains invalid properties"
+            ))
         }
         self = configuration
     }
@@ -128,13 +153,13 @@ public struct MBConfiguration: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
-        var previousInstallationId: String? = nil
+        var previousInstallationId: String?
         if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {
                 previousInstallationId = value
             }
         }
-        var previousDeviceUUID: String? = nil
+        var previousDeviceUUID: String?
         if let value = try? values.decode(String.self, forKey: .previousDeviceUUID) {
             if !value.isEmpty {
                 previousDeviceUUID = value
@@ -149,5 +174,4 @@ public struct MBConfiguration: Codable {
             subscribeCustomerIfCreated: subscribeCustomerIfCreated
         )
     }
-
 }

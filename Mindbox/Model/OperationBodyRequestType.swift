@@ -1,5 +1,5 @@
 //
-//  OperationBodyRequestBase.swift
+//  OperationBodyRequestType.swift
 //  Mindbox
 //
 //  Created by Ihor Kandaurov on 20.05.2021.
@@ -8,4 +8,4 @@
 
 import Foundation
 
-public protocol OperationBodyRequestBase: Encodable { }
+public protocol OperationBodyRequestType: Encodable { }

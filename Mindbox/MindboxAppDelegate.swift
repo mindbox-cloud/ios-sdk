@@ -21,6 +21,7 @@ open class MindboxAppDelegate: NSObject, UNUserNotificationCenterDelegate, UIApp
         if #available(iOS 13.0, *) {
             Mindbox.shared.registerBGTasks()
         }
+        UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
 
         Mindbox.shared.track(.launch(launchOptions))
 

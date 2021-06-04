@@ -257,7 +257,7 @@ public class Mindbox {
         - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
         - operationBody: Provided `OperationBodyRequestBase` payload to send
      */
-    public func executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T) {
+    public func executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName: String, operationBody: T) {
         guard operationSystemName.operationNameIsValid else {
             Log("Invalid operation name: \(operationSystemName)")
                 .category(.notification).level(.error).make()
@@ -273,6 +273,58 @@ public class Mindbox {
             Log("Track executeAsyncOperation failed with error: \(error)")
                 .category(.notification).level(.error).make()
         }
+    }
+
+    /**
+     Method for executing an operation synchronously.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationBody: Provided `OperationBodyRequestType` payload to send
+        - completion: Result of sending operation. Contains `OperationResponse` or `MindboxError`.
+     */
+    public func executeSyncOperation<T>(
+        operationSystemName: String,
+        operationBody: T,
+        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+    ) where T: OperationBodyRequestType {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
+    }
+
+    /**
+     Method for executing an operation synchronously.
+     
+     - Note: use this method if you have your own object that extends `OperationResponseType`.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationBody: Provided `OperationBodyRequestType` payload to send
+        - customResponseType: Expected result type in completion.
+        - completion: Result of sending operation. Contains `OperationResponseType` or `MindboxError`.
+     */
+    public func executeSyncOperation<T, P>(
+        operationSystemName: String,
+        operationBody: T,
+        customResponseType: P.Type,
+        completion: @escaping (Result<P, MindboxError>) -> Void
+    ) where T: OperationBodyRequestType, P: OperationResponseType {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
     /**

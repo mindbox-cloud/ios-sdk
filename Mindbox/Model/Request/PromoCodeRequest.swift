@@ -9,13 +9,13 @@
 import Foundation
 
 open class PromoCodeRequest: Encodable {
-    public var availableFromDateTimeUtc: DateTimeRequest?
-    public var availableTillDateTimeUtc: DateTimeRequest?
+    public var availableFromDateTimeUtc: DateTime?
+    public var availableTillDateTimeUtc: DateTime?
     public var ids: IDS?
 
     public init(
-        availableFromDateTimeUtc: DateTimeRequest? = nil,
-        availableTillDateTimeUtc: DateTimeRequest? = nil,
+        availableFromDateTimeUtc: DateTime? = nil,
+        availableTillDateTimeUtc: DateTime? = nil,
         ids: IDS? = nil
     ) {
         self.availableFromDateTimeUtc = availableFromDateTimeUtc

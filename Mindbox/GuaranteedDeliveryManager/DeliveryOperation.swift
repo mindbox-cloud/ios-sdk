@@ -9,9 +9,8 @@
 import Foundation
 
 class DeliveryOperation: Operation {
-    
     private let event: Event
-    
+
     private let databaseRepository: MBDatabaseRepository
     private let eventRepository: EventRepository
 
@@ -20,9 +19,9 @@ class DeliveryOperation: Operation {
         self.eventRepository = eventRepository
         self.event = event
     }
-    
-    var onCompleted: ((_ event: Event, _ error: ErrorModel?) -> Void)?
-    
+
+    var onCompleted: ((_ event: Event, _ error: MindboxError?) -> Void)?
+
     private var _isFinished: Bool = false
     override var isFinished: Bool {
         get {
@@ -40,14 +39,14 @@ class DeliveryOperation: Operation {
             }
         }
     }
-    
+
     override func main() {
         guard !isCancelled else {
             return
         }
         Log("Sending event with transactionId: \(event.transactionId)")
             .category(.delivery).level(.info).make()
-        eventRepository.send(event: event) { [weak self] (result) in
+        eventRepository.send(event: event) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success:
@@ -56,11 +55,11 @@ class DeliveryOperation: Operation {
                     .category(.delivery).level(.info).make()
                 try? self.databaseRepository.delete(event: self.event)
                 self.isFinished = true
-            case .failure(let error):
+            case let .failure(error):
                 self.onCompleted?(self.event, error)
                 Log("Did send event failed with error: \(error.localizedDescription)")
                     .category(.delivery).level(.error).make()
-                if let statusCode = error.responseStatusCode, HTTPURLResponseStatusCodeValidator(statusCode: statusCode).isClientError {
+                if case let MindboxError.protocolError(response) = error, HTTPURLResponseStatusCodeValidator(statusCode: response.httpStatusCode).isClientError {
                     try? self.databaseRepository.delete(event: self.event)
                 } else {
                     try? self.databaseRepository.update(event: self.event)
@@ -69,5 +68,4 @@ class DeliveryOperation: Operation {
             }
         }
     }
-    
 }

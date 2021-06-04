@@ -11,5 +11,3 @@ import Foundation
 typealias HTTPHeaders = [String: String]
 
 typealias QueryParameters = [String: CustomStringConvertible]
-
-typealias Completion<T: BaseResponse> = (Result<ResponseModel<T>, ErrorModel>) -> Void

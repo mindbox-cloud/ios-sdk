@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class OperationBodyRequest: OperationBodyRequestBase {
+open class OperationBodyRequest: OperationBodyRequestType {
     public var customAction: CustomerActionRequest?
     public var pointOfContact: String?
     public var segmentations: [SegmentationRequest]?
@@ -25,6 +25,7 @@ open class OperationBodyRequest: OperationBodyRequestBase {
     public var removeProductFromList: ProductListRequest?
     /** This field used for product and will be serialized as productList */
     public var productListItems: [ProductListRequest]?
+    public var recommendation: RecommendationRequest?
 
     public init() { }
 
@@ -48,6 +49,7 @@ open class OperationBodyRequest: OperationBodyRequestBase {
         try container.encodeIfPresent(promoCode, forKey: .promoCode)
         try container.encodeIfPresent(viewProductCategory, forKey: .viewProductCategory)
         try container.encodeIfPresent(viewProduct, forKey: .viewProduct)
+        try container.encodeIfPresent(recommendation, forKey: .recommendation)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -65,5 +67,6 @@ open class OperationBodyRequest: OperationBodyRequestBase {
         case viewProductCategory
         case viewProduct
         case referencedCustomer
+        case recommendation
     }
 }

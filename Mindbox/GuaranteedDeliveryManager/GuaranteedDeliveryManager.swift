@@ -28,7 +28,7 @@ final class GuaranteedDeliveryManager: NSObject {
     
     private let semaphore = DispatchSemaphore(value: 1)
     
-    var onCompletedEvent: ((_ event: Event, _ error: ErrorModel?) -> Void)?
+    var onCompletedEvent: ((_ event: Event, _ error: MindboxError?) -> Void)?
     
     @objc dynamic var stateObserver: NSString
     
