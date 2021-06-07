@@ -257,7 +257,7 @@ public class Mindbox {
         - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
         - operationBody: Provided `OperationBodyRequestBase` payload to send
      */
-    public func executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T) {
+    public func executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName: String, operationBody: T) {
         guard operationSystemName.operationNameIsValid else {
             Log("Invalid operation name: \(operationSystemName)")
                 .category(.notification).level(.error).make()

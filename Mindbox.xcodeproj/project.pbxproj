@@ -65,7 +65,7 @@
 		337A473E265528B5000DC613 /* MBDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337A473D265528B5000DC613 /* MBDate.swift */; };
 		337A474026553938000DC613 /* Sex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337A473F26553938000DC613 /* Sex.swift */; };
 		337C7950265646230092B580 /* ProductGroupRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C794F265646230092B580 /* ProductGroupRequest.swift */; };
-		337C7952265646D10092B580 /* OperationBodyRequestBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C7951265646D10092B580 /* OperationBodyRequestBase.swift */; };
+		337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C7951265646D10092B580 /* OperationBodyRequestType.swift */; };
 		337C7954265652A80092B580 /* ProductCategoryRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C7953265652A80092B580 /* ProductCategoryRequest.swift */; };
 		337C79562656533F0092B580 /* ViewProductRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337C79552656533F0092B580 /* ViewProductRequest.swift */; };
 		337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
@@ -222,7 +222,7 @@
 		337A473D265528B5000DC613 /* MBDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDate.swift; sourceTree = "<group>"; };
 		337A473F26553938000DC613 /* Sex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sex.swift; sourceTree = "<group>"; };
 		337C794F265646230092B580 /* ProductGroupRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductGroupRequest.swift; sourceTree = "<group>"; };
-		337C7951265646D10092B580 /* OperationBodyRequestBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationBodyRequestBase.swift; sourceTree = "<group>"; };
+		337C7951265646D10092B580 /* OperationBodyRequestType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationBodyRequestType.swift; sourceTree = "<group>"; };
 		337C7953265652A80092B580 /* ProductCategoryRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductCategoryRequest.swift; sourceTree = "<group>"; };
 		337C79552656533F0092B580 /* ViewProductRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewProductRequest.swift; sourceTree = "<group>"; };
 		337EDF332636DA3F0089559F /* MindboxNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationService.swift; sourceTree = "<group>"; };
@@ -765,7 +765,7 @@
 			isa = PBXGroup;
 			children = (
 				84CC797F25CABB0B00C062BD /* Event.swift */,
-				337C7951265646D10092B580 /* OperationBodyRequestBase.swift */,
+				337C7951265646D10092B580 /* OperationBodyRequestType.swift */,
 				337A47352654F995000DC613 /* OperationBodyRequest.swift */,
 				84C65E5B25D4FB71008996FA /* Bodies */,
 				337A473826550EEB000DC613 /* Common */,
@@ -1150,7 +1150,7 @@
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
-				337C7952265646D10092B580 /* OperationBodyRequestBase.swift in Sources */,
+				337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */,
 				842DE34125E14F62002BE5C6 /* DeliveredNotificationManager.swift in Sources */,
 				337C7954265652A80092B580 /* ProductCategoryRequest.swift in Sources */,
 				334F3AF1264C199900A6AC00 /* PoolRequest.swift in Sources */,

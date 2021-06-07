@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class OperationBodyRequest: OperationBodyRequestBase {
+open class OperationBodyRequest: OperationBodyRequestType {
     public var customAction: CustomerActionRequest?
     public var pointOfContact: String?
     public var segmentations: [SegmentationRequest]?

@@ -3,7 +3,7 @@ import Foundation
 open class CustomerRequest: Encodable {
     public var authenticationTicket: String?
     public var discountCard: DiscountCardRequest?
-    public var birthDate: DateOnlyRequest?
+    public var birthDate: DateOnly?
     public var sex: Sex?
     public var timeZone: String?
     public var lastName: String?
@@ -20,7 +20,7 @@ open class CustomerRequest: Encodable {
     public init(
         authenticationTicket: String? = nil,
         discountCard: DiscountCardRequest? = nil,
-        birthDate: DateOnlyRequest? = nil,
+        birthDate: DateOnly? = nil,
         sex: Sex? = nil,
         timeZone: TimeZone? = nil,
         lastName: String? = nil,
