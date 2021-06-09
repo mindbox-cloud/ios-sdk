@@ -68,7 +68,7 @@ class MBEventRepository: EventRepository {
         )
         let route = makeRoute(wrapper: wrapper)
         fetcher.request(type: type, route: route, completion: { result in
-            DispatchQueue.main.sync {
+            DispatchQueue.main.async {
                 switch result {
                 case let .failure(error):
                     completion(.failure(error))

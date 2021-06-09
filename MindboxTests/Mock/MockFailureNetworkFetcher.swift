@@ -23,16 +23,12 @@ class MockFailureNetworkFetcher: NetworkFetcher {
     
     var failableRouteIndex = Int.random(in: 0...9)
     
-    private func errorForRoute() -> ErrorModel? {
+    private func errorForRoute() -> MindboxError? {
         if routesCount >= 9 {
-            let error: ErrorModel = ErrorModel(
-                errorKey: ErrorKey.parsing.rawValue,
+            let error: MindboxError = .internalError(.init(
+                errorKey: .parsing,
                 rawError: nil
-            )
-
-            error.status = .InternalServerError
-            error.httpStatusCode = 501
-            error.responseStatusCode = 501
+            ))
             
             return error
         }
@@ -62,7 +58,7 @@ class MockFailureNetworkFetcher: NetworkFetcher {
                 let decoded = try JSONDecoder().decode(type, from: data)
                 completion(Result.success(decoded))
             } catch let decodeError {
-                let error: MindboxError = MindboxError(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
+                let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
                 Log(error: error).withDate().make()
                 completion(Result.failure(error))
             }
