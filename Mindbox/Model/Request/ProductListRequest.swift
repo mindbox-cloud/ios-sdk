@@ -3,15 +3,15 @@ import Foundation
 open class ProductListRequest: Encodable {
     public var product: ProductRequest?
     public var productGroup: ProductGroupRequest?
-    public var count: Decimal?
-    public var pricePerItem: Decimal?
-    public var priceOfLine: Decimal?
+    public var count: Double?
+    public var pricePerItem: Double?
+    public var priceOfLine: Double?
 
     public init(
         product: ProductRequest? = nil,
-        count: Decimal? = nil,
-        pricePerItem: Decimal? = nil,
-        priceOfLine: Decimal? = nil
+        count: Double? = nil,
+        pricePerItem: Double? = nil,
+        priceOfLine: Double? = nil
     ) {
         self.product = product
         self.count = count
@@ -21,9 +21,9 @@ open class ProductListRequest: Encodable {
 
     public init(
         productGroup: ProductGroupRequest? = nil,
-        count: Decimal? = nil,
-        pricePerItem: Decimal? = nil,
-        priceOfLine: Decimal? = nil
+        count: Double? = nil,
+        pricePerItem: Double? = nil,
+        priceOfLine: Double? = nil
     ) {
         self.productGroup = productGroup
         self.count = count
@@ -33,7 +33,7 @@ open class ProductListRequest: Encodable {
 
     public init(
         productGroup: ProductGroupRequest? = nil,
-        pricePerItem: Decimal? = nil
+        pricePerItem: Double? = nil
     ) {
         self.productGroup = productGroup
         self.pricePerItem = pricePerItem
@@ -41,7 +41,7 @@ open class ProductListRequest: Encodable {
 
     public init(
         product: ProductRequest? = nil,
-        pricePerItem: Decimal? = nil
+        pricePerItem: Double? = nil
     ) {
         self.product = product
         self.pricePerItem = pricePerItem

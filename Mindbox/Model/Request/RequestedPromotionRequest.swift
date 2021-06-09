@@ -4,13 +4,13 @@ open class RequestedPromotionRequest: Encodable {
     public var type: PromotionType?
     public var promotion: AreaRequest?
     public var coupon: CouponRequest?
-    public var amount: Decimal?
+    public var amount: Double?
 
     public init(
         type: PromotionType? = nil,
         promotion: AreaRequest? = nil,
         coupon: CouponRequest? = nil,
-        amount: Decimal? = nil
+        amount: Double? = nil
     ) {
         self.type = type
         self.promotion = promotion

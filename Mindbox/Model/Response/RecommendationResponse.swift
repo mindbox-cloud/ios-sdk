@@ -6,8 +6,8 @@ open class RecommendationResponse: Decodable {
     public let displayName: String?
     public let url: URL?
     public let pictureUrl: URL?
-    public let price: Decimal?
-    public let oldPrice: Decimal?
+    public let price: Double?
+    public let oldPrice: Double?
     public let category: String?
     public let vendorCode: String?
     public let ids: IDS?

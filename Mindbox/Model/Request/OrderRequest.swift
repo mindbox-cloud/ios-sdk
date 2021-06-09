@@ -3,10 +3,10 @@ import Foundation
 open class OrderRequest: Encodable {
     public var ids: IDS?
     public var cashdesk: AreaRequest?
-    public var deliveryCost: Decimal?
+    public var deliveryCost: Double?
     public var customFields: CustomFields?
     public var area: AreaRequest?
-    public var totalPrice: Decimal?
+    public var totalPrice: Double?
     public var discounts: [DiscountRequest]?
     public var lines: [LineRequest]?
     public var email: String?
@@ -15,10 +15,10 @@ open class OrderRequest: Encodable {
     public init(
         ids: IDS? = nil,
         cashdesk: AreaRequest? = nil,
-        deliveryCost: Decimal? = nil,
+        deliveryCost: Double? = nil,
         customFields: CustomFields? = nil,
         area: AreaRequest? = nil,
-        totalPrice: Decimal? = nil,
+        totalPrice: Double? = nil,
         discounts: [DiscountRequest]? = nil,
         lines: [LineRequest]? = nil,
         email: String? = nil,

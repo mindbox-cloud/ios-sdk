@@ -4,12 +4,12 @@ open class DiscountRequest: Encodable {
     public var type: DiscountTypeRequest?
     public var promoCode: DiscountPromoCodeRequest?
     public var externalPromoAction: DiscountExternalPromoActionRequest?
-    public var amount: Decimal?
+    public var amount: Double?
 
     public init(
         type: DiscountTypeRequest? = nil,
         promoCode: DiscountPromoCodeRequest? = nil,
-        amount: Decimal? = nil
+        amount: Double? = nil
     ) {
         self.type = type
         self.promoCode = promoCode
@@ -19,7 +19,7 @@ open class DiscountRequest: Encodable {
     public init(
         type: DiscountTypeRequest? = nil,
         externalPromoAction: DiscountExternalPromoActionRequest? = nil,
-        amount: Decimal? = nil
+        amount: Double? = nil
     ) {
         self.type = type
         self.amount = amount

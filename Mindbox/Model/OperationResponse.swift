@@ -11,8 +11,8 @@ import Foundation
 open class OperationResponse: OperationResponseType {
     public var status: Status
     public let customer: CustomerResponse?
-    public let productList: ProductListResponse?
-    public let productListIte
+    public let productList: [ProductListResponse]?
+    public let productListItems: ProductListItemsResponse?
     public let recommendation: [RecommendationResponse]?
     public let customerSegmentations: [CustomerSegmentationResponse]?
     public let setProductCountInList: ProductListResponse?
@@ -22,8 +22,13 @@ open class OperationResponse: OperationResponseType {
         let container = try decoder.container(keyedBy: Keys.self)
         status = try container.decode(Status.self, forKey: .status)
         customer = try container.decodeIfPresent(CustomerResponse.self, forKey: .customer)
-        let
-        productList =
+        if let list = try? container.decodeIfPresent([ProductListResponse].self, forKey: .productList) {
+            productList = list
+            productListItems = nil
+        } else {
+            productListItems = try container.decodeIfPresent(ProductListItemsResponse.self, forKey: .productList)
+            productList = nil
+        }
         recommendation = try container.decodeIfPresent([RecommendationResponse].self, forKey: .recommendation)
         customerSegmentations = try container.decodeIfPresent([CustomerSegmentationResponse].self, forKey: .customerSegmentations)
         setProductCountInList = try container.decodeIfPresent(ProductListResponse.self, forKey: .setProductCountInList)

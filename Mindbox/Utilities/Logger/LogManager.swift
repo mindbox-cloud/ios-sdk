@@ -199,6 +199,10 @@ struct Log {
            let prettyPrintedString = NSString(data: data, encoding: String.Encoding.utf8.rawValue) {
             responseLog += "\n\(prettyPrintedString)\n"
         }
+        
+        if let body = data {
+            responseLog += "\n\(String(data: body, encoding: .utf8) ?? "")\n"
+        }
         level = .debug
         if let error = error {
             responseLog += "\nError: \(error.localizedDescription)\n"
