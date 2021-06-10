@@ -11,6 +11,7 @@ import CoreData
 import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
+    
     var databaseRepository: MBDatabaseRepository {
         container.databaseRepository
     }
