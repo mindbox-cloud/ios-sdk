@@ -101,9 +101,8 @@ public class MindboxNotificationService {
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
-                
-                Mindbox.logger.log(level: .default, message: "Button UniqueKey: \($0.identifier)")
-                
+                Log("Button title: \($0.title), id: \($0.identifier)")
+                    .level(.info).category(.notification).make()
                 context.notificationActions.append($0)
             }
         }
