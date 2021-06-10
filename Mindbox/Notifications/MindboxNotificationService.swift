@@ -36,6 +36,8 @@ public class MindboxNotificationService {
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
         guard let bestAttemptContent = bestAttemptContent else { return }
 
+        Mindbox.logger.log(level: .default, message: "Push notification UniqueKey: \(request.identifier)")
+        
         Mindbox.shared.pushDelivered(request: request)
 
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
@@ -99,6 +101,9 @@ public class MindboxNotificationService {
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
+                
+                Mindbox.logger.log(level: .default, message: "Button UniqueKey: \($0.identifier)")
+                
                 context.notificationActions.append($0)
             }
         }

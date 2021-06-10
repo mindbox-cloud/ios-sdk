@@ -30,6 +30,8 @@ struct Event {
     // Время добавляения персистентно в очередь событий
     let enqueueTimeStamp: Double
     
+    let serialNumber: String?
+    
     let type: Operation
     
     // Data according to Operation
@@ -40,6 +42,7 @@ struct Event {
         self.enqueueTimeStamp = Date().timeIntervalSince1970
         self.type = type
         self.body = body
+        self.serialNumber = nil
     }
     
     init?(_ event: CDEvent) {
@@ -62,6 +65,7 @@ struct Event {
         self.enqueueTimeStamp = event.timestamp
         self.type = operation
         self.body = body
+        self.serialNumber = event.objectID.uriRepresentation().lastPathComponent
     }
     
 }
