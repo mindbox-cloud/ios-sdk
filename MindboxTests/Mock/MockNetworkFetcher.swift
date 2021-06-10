@@ -26,7 +26,7 @@ class MockNetworkFetcher: NetworkFetcher {
             let decoded = try JSONDecoder().decode(type, from: data)
             completion(Result.success(decoded))
         } catch let decodeError {
-            let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
+            let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError, statusCode: nil))
             Log(error: error).withDate().make()
             completion(Result.failure(error))
         }

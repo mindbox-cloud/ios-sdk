@@ -17,8 +17,8 @@ public enum Status: String, Decodable {
     case unknown
 
     public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        self = .init(rawValue: string) ?? .unknown
+//        let container = try decoder.singleValueContainer()
+//        let string = try container.decode(String.self)
+        self = try .init(from: decoder)
     }
 }
