@@ -15,10 +15,4 @@ public enum Status: String, Decodable {
     case serverError = "InternalServerError"
     case transactionProcessed = "TransactionAlreadyProcessed"
     case unknown
-
-    public init(from decoder: Decoder) throws {
-//        let container = try decoder.singleValueContainer()
-//        let string = try container.decode(String.self)
-        self = try .init(from: decoder)
-    }
 }

@@ -38,7 +38,12 @@ enum EventRoute: Route {
     }
 
     var headers: HTTPHeaders? {
-        return nil
+        switch self {
+        case .asyncEvent, .customAsyncEvent, .syncEvent:
+            return ["Content-Type": "application/json; charset=utf-8"]
+        default:
+            return nil
+        }
     }
 
     var queryParameters: QueryParameters {
