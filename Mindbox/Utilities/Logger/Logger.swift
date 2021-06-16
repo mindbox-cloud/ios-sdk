@@ -14,14 +14,16 @@ public class MBLogger {
     
     /**
      ### Levels:
-     1. none
-     2. debug 🪲
-     3. info ℹ️
-     4. default 💡
-     5. error ‼️
-     6. fault ⚠️
+     0. debug - 🪲
+     1. info - ℹ️
+     2. default - 💡
+     3. error - ‼️
+     4. fault - ⚠️
+     5. none
+     
+     - Note: `.error` by default; `.none` for disable logging
      */
-    public var logLevel: LogLevel = .none
+    public var logLevel: LogLevel = .error
         
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)
@@ -39,7 +41,7 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
-        guard logLevel.rawValue >= level.rawValue else {
+        guard logLevel.rawValue <= level.rawValue else {
             return
         }
         let categories: [LogCategory] = LogCategory.allCases
