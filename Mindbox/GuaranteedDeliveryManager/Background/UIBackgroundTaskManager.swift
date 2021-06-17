@@ -168,6 +168,8 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
                     info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
                 )
                 self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
+                self?.observationToken?.invalidate()
+                self?.observationToken = nil
                 completionHandler(.newData)
             }
         }
