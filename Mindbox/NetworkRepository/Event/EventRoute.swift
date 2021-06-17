@@ -39,8 +39,8 @@ enum EventRoute: Route {
 
     var headers: HTTPHeaders? {
         switch self {
-        case .asyncEvent, .customAsyncEvent, .syncEvent:
-            return ["Content-Type": "application/json; charset=utf-8"]
+        case .syncEvent:
+            return ["Accept": "application/json"]
         default:
             return nil
         }
