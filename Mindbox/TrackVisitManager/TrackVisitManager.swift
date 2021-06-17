@@ -45,11 +45,6 @@ final class TrackVisitManager {
     }
 
     private func handleLaunch(_ options: [UIApplication.LaunchOptionsKey: Any]?) throws {
-        if let options = options, let dict = options[.userActivityDictionary] as? NSDictionary {
-            if let userActivity = dict.first(where: { $0.value as? NSUserActivity != nil })?.value as? NSUserActivity {
-                try handleUniversalLink(userActivity)
-            }
-        }
     }
 
     @available(iOS 13.0, *)
