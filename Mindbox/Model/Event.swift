@@ -12,6 +12,7 @@ struct Event {
     
     enum Operation: String {
         case installed = "MobilePush.ApplicationInstalled"
+        case installedWithoutCustomer = "MobilePush.ApplicationInstalledWithoutCustomer"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
         case pushDelivered = ""
         case trackClick = "MobilePush.TrackClick"

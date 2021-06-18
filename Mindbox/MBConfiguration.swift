@@ -18,6 +18,7 @@ public struct MBConfiguration: Codable {
     public var previousInstallationId: String?
     public var previousDeviceUUID: String?
     public var subscribeCustomerIfCreated: Bool
+    public var shouldCreateCustomer: Bool
 
     /// Init with params
     ///
@@ -25,6 +26,8 @@ public struct MBConfiguration: Codable {
     /// - Parameter domain: Used for generating baseurl for REST
     /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter previousDeviceUUID: Used instead of the generated value
+    /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
+    /// - Parameter shouldCreateCustomer: Flag which determines create or not anonymous users. Usable only during first initialisation. Default value is `true`.
     ///
     /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
     public init(
@@ -32,7 +35,8 @@ public struct MBConfiguration: Codable {
         domain: String,
         previousInstallationId: String? = nil,
         previousDeviceUUID: String? = nil,
-        subscribeCustomerIfCreated: Bool = false
+        subscribeCustomerIfCreated: Bool = false,
+        shouldCreateCustomer: Bool = true
     ) throws {
 
         self.endpoint = endpoint
@@ -69,6 +73,7 @@ public struct MBConfiguration: Codable {
             self.previousDeviceUUID = previousDeviceUUID
         }
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
+        self.shouldCreateCustomer = shouldCreateCustomer
     }
 
     /// Init with plist file
@@ -86,6 +91,7 @@ public struct MBConfiguration: Codable {
     ///    <string></string>
     ///    <key>previousDeviceUUID</key>
     ///    <string></string>
+    ///    ...
     /// </dict>
     /// </plist>
     /// ```
@@ -122,6 +128,7 @@ public struct MBConfiguration: Codable {
         case previousInstallationId
         case previousDeviceUUID
         case subscribeCustomerIfCreated
+        case shouldCreateCustomer
     }
 
     public init(from decoder: Decoder) throws {
@@ -141,12 +148,14 @@ public struct MBConfiguration: Codable {
             }
         }
         let subscribeCustomerIfCreated = try values.decodeIfPresent(Bool.self, forKey: .subscribeCustomerIfCreated) ?? false
+        let shouldCreateCustomer = try values.decodeIfPresent(Bool.self, forKey: .shouldCreateCustomer) ?? true
         try self.init(
             endpoint: endpoint,
             domain: domain,
             previousInstallationId: previousInstallationId,
             previousDeviceUUID: previousDeviceUUID,
-            subscribeCustomerIfCreated: subscribeCustomerIfCreated
+            subscribeCustomerIfCreated: subscribeCustomerIfCreated,
+            shouldCreateCustomer: shouldCreateCustomer
         )
     }
 

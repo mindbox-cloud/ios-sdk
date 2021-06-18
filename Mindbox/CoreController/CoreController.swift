@@ -115,10 +115,18 @@ class CoreController {
                 instanceId: instanceId
             )
             let body = BodyEncoder(encodable: encodable).body
-            let event = Event(
-                type: .installed,
-                body: body
-            )
+            var event: Event
+            if configuration.shouldCreateCustomer {
+                event = Event(
+                    type: .installed,
+                    body: body
+                )
+            } else {
+                event = Event(
+                    type: .installedWithoutCustomer,
+                    body: body
+                )
+            }
             do {
                 try self.databaseRepository.create(event: event)
                 self.databaseRepository.installVersion = newVersion
