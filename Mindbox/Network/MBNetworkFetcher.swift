@@ -169,7 +169,7 @@ class MBNetworkFetcher: NetworkFetcher {
                 case .serverError:
                     completion(.failure(.serverError(.init(errorKey: .serverError, statusCode: httpResponse.statusCode))))
                 default:
-                    if emptyData, data.isEmpty {
+                    if emptyData {
                         completion(.success(data))
                     } else {
                         completion(.failure(.internalError(.init(errorKey: .parsing, rawError: decodingError))))

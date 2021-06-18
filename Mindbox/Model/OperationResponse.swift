@@ -13,7 +13,7 @@ open class OperationResponse: OperationResponseType {
     public let customer: CustomerResponse?
     public let productList: [ProductListResponse]?
     public let productListItems: ProductListItemsResponse?
-    public let recommendation: [RecommendationResponse]?
+    public let recommendations: [RecommendationResponse]?
     public let customerSegmentations: [CustomerSegmentationResponse]?
     public let setProductCountInList: ProductListResponse?
     public let promoCode: PromoCodeResponse?
@@ -29,7 +29,7 @@ open class OperationResponse: OperationResponseType {
             productListItems = try container.decodeIfPresent(ProductListItemsResponse.self, forKey: .productList)
             productList = nil
         }
-        recommendation = try container.decodeIfPresent([RecommendationResponse].self, forKey: .recommendation)
+        recommendations = try container.decodeIfPresent([RecommendationResponse].self, forKey: .recommendations)
         customerSegmentations = try container.decodeIfPresent([CustomerSegmentationResponse].self, forKey: .customerSegmentations)
         setProductCountInList = try container.decodeIfPresent(ProductListResponse.self, forKey: .setProductCountInList)
         promoCode = try container.decodeIfPresent(PromoCodeResponse.self, forKey: .promoCode)
@@ -39,7 +39,7 @@ open class OperationResponse: OperationResponseType {
         case status
         case customer
         case productList
-        case recommendation
+        case recommendations
         case customerSegmentations
         case setProductCountInList
         case promoCode
