@@ -13,12 +13,9 @@ enum EventRoute: Route {
     case asyncEvent(EventWrapper)
     case customAsyncEvent(EventWrapper)
     case trackVisit(EventWrapper)
-    case pushDeleveried(EventWrapper)
 
     var method: HTTPMethod {
         switch self {
-        case .pushDeleveried:
-            return .get
         default:
             return .post
         }
@@ -32,8 +29,6 @@ enum EventRoute: Route {
             return "/v3/operations/async"
         case .trackVisit:
             return "/v1.1/customer/mobile-track-visit"
-        case .pushDeleveried:
-            return "/mobile-push/delivered"
         }
     }
 
@@ -69,11 +64,6 @@ enum EventRoute: Route {
                 .appending(["deviceUUID": wrapper.deviceUUID])
                 .appending(["operation": decoded.body.name])
                 .appending(["endpointId": wrapper.endpoint])
-        case let .pushDeleveried(wrapper):
-            let decoded = BodyDecoder<PushDelivered>(decodable: wrapper.event.body)
-            return makeBasicQueryParameters(with: wrapper)
-                .appending(["uniqKey": decoded?.body.uniqKey ?? ""])
-                .appending(["endpointId": wrapper.endpoint])
         case let .trackVisit(wrapper):
             return makeBasicQueryParameters(with: wrapper)
         }
@@ -89,8 +79,6 @@ enum EventRoute: Route {
             }
 
             return decoded.body.payload.data(using: .utf8)
-        case .pushDeleveried:
-            return nil
         case let .trackVisit(wrapper):
             guard let data = wrapper.event.body.data(using: .utf8),
                   var json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] else {

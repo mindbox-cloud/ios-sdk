@@ -172,25 +172,9 @@ public class Mindbox {
      Blockes calling thread no more than by 5sec
 
      */
+    @available(*, deprecated, message: "")
     @discardableResult
-    public func pushDelivered(request: UNNotificationRequest) -> Bool {
-        coreController?.checkNotificationStatus()
-        guard let container = container else { return false }
-        let tracker = DeliveredNotificationManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository()
-        )
-        do {
-            Log("Track delivery")
-                .category(.notification).level(.info).make()
-            return try tracker.track(request: request)
-        } catch {
-            Log("Track UNNotificationRequest failed with error: \(error)")
-                .category(.notification).level(.error).make()
-            return false
-        }
-    }
+    public func pushDelivered(request: UNNotificationRequest) -> Bool { return false }
 
     /**
      Method of transmitting the fact of receiving a push on the device.
@@ -205,25 +189,9 @@ public class Mindbox {
      Blockes calling thread no more than by 5sec
 
      */
+    @available(*, deprecated, message: "")
     @discardableResult
-    public func pushDelivered(uniqueKey: String) -> Bool {
-        coreController?.checkNotificationStatus()
-        guard let container = container else { return false }
-        let tracker = DeliveredNotificationManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository()
-        )
-        do {
-            Log("Track delivery")
-                .category(.notification).level(.info).make()
-            return try tracker.track(uniqueKey: uniqueKey)
-        } catch {
-            Log("Track UNNotificationRequest failed with error: \(error)")
-                .category(.notification).level(.error).make()
-            return false
-        }
-    }
+    public func pushDelivered(uniqueKey: String) -> Bool { return false }
 
     /**
      Method for transmitting the fact of a click on a push notification.
