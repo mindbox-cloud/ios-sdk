@@ -7,7 +7,7 @@ open class LineRequest: Encodable {
     public var basePricePerItem: Double?
     public var quantityType: QuantityTypeRequest?
     public var discountedPricePerLine: Double?
-    public var lineId: Int?
+    public var lineId: String?
     public var lineNumber: Int?
     public var discounts: [DiscountRequest]?
     public var product: ProductRequest?
@@ -19,7 +19,7 @@ open class LineRequest: Encodable {
         basePricePerItem: Double? = nil,
         quantity: QuantityTypeRequest? = nil,
         discountedPricePerLine: Double? = nil,
-        lineId: Int? = nil,
+        lineId: String? = nil,
         lineNumber: Int? = nil,
         discounts: [DiscountRequest]? = nil,
         product: ProductRequest? = nil

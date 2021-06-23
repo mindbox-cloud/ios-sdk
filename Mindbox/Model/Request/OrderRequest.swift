@@ -2,7 +2,7 @@ import Foundation
 
 open class OrderRequest: Encodable {
     public var ids: IDS?
-    public var cashdesk: AreaRequest?
+    public var cashdesk: CashdeskRequest?
     public var deliveryCost: Double?
     public var customFields: CustomFields?
     public var area: AreaRequest?
@@ -14,7 +14,7 @@ open class OrderRequest: Encodable {
 
     public init(
         ids: IDS? = nil,
-        cashdesk: AreaRequest? = nil,
+        cashdesk: CashdeskRequest? = nil,
         deliveryCost: Double? = nil,
         customFields: CustomFields? = nil,
         area: AreaRequest? = nil,
