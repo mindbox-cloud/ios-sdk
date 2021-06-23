@@ -14,13 +14,13 @@ public struct ValidationError: Decodable, CustomStringConvertible {
     public let validationMessages: [ValidationMessage]
 
     public var description: String {
-        return validationMessages.map { "Field \($0.location) error. Message: \($0.message)" }.joined(separator: ";\n")
+        return validationMessages.map { "Field \($0.location ?? "no location") error. Message: \($0.message ?? "no message")" }.joined(separator: ";\n")
     }
 }
 
 public struct ValidationMessage: Codable {
     /// Message for specified field
-    public let message: String
+    public let message: String?
     /// Location of field
-    public let location: String
+    public let location: String?
 }
