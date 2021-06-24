@@ -29,6 +29,13 @@ public struct ProtocolError: Decodable, CustomStringConvertible {
         return string
     }
 
+    public init(status: Status, errorMessage: String, httpStatusCode: Int, errorId: String? = nil) {
+        self.status = status
+        self.errorMessage = errorMessage
+        self.httpStatusCode = httpStatusCode
+        self.errorId = errorId
+    }
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Keys.self)
         httpStatusCode = try container.decode(Int.self, forKey: .httpStatusCode)
