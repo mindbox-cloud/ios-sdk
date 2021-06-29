@@ -13,7 +13,7 @@ public enum MindboxError: LocalizedError {
     /// Request error/server error
     case protocolError(ProtocolError)
     /// Error for code 5xx
-    case serverError(InternalError)
+    case serverError(ProtocolError)
     /// Internal mindbox errors wrapper
     case internalError(InternalError)
     /// Other response error
@@ -47,16 +47,16 @@ public enum MindboxError: LocalizedError {
     public var failureReason: String? {
         switch self {
         case let .serverError(error):
-            return error.reason
+            return error.errorMessage
         case let .internalError(error):
             return error.reason
-        case let .validationError(error):
+        case .validationError:
             return "Validation error"
         case let .protocolError(error):
             return error.errorMessage
-        case let .unknown(error):
+        case .unknown:
             return "Unknown error"
-        case let .invalidResponse(error):
+        case .invalidResponse:
             return "Invalid response"
         case .connectionError:
             return "Connection error"

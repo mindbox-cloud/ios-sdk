@@ -12,7 +12,7 @@ public enum Status: String, Decodable {
     case success = "Success"
     case validationError = "ValidationError"
     case protocolError = "ProtocolError"
-    case serverError = "InternalServerError"
-    case transactionProcessed = "TransactionAlreadyProcessed"
+    case internalServerError = "InternalServerError"
+    case transactionAlreadyProcessed = "TransactionAlreadyProcessed"
     case unknown
 }
