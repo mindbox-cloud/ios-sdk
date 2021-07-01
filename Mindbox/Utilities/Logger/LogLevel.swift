@@ -12,21 +12,20 @@ import Foundation
  Logging levels supported by the sdk.
  
  ### Levels:
- 1. none
- 2. debug 🪲
- 3. info ℹ️
- 4. default 💡
- 5. error ‼️
- 6. fault ⚠️
+ 0. debug 🪲
+ 1. info ℹ️
+ 2. default 💡
+ 3. error ‼️
+ 4. fault ⚠️
+ 5. none
  */
 public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
-    
-    case none = 0   //  X
-    case debug      //  |
-    case info       //  |
-    case `default`  //  |
-    case error      //  |
-    case fault      //  V
+    case debug = 0
+    case info = 1
+    case `default` = 2
+    case error = 3
+    case fault = 4
+    case none = 5
     
     var emoji: String {
         switch self {

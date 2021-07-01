@@ -55,6 +55,8 @@ final class DeliveredNotificationManager {
             return false
         }
         let payload = try decoder.decode()
+        Log("Mindbox notification uniqueKey: \(payload.uniqueKey)")
+            .category(.notification).level(.info).make()
         return try track(uniqueKey: payload.uniqueKey)
     }
     
