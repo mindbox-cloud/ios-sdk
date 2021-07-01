@@ -10,7 +10,7 @@ import Foundation
 
 public enum Channel: String, Codable {
     case email = "Email"
-    case sms = "SMS"
+    case sms = "Sms"
     case viber = "Viber"
     case webPush = "Webpush"
     case mobilePush = "Mobilepush"
