@@ -12,6 +12,6 @@ public enum Channel: String, Codable {
     case email = "Email"
     case sms = "Sms"
     case viber = "Viber"
-    case webPush = "Webpush"
+    case webPush = "WebPush"
     case mobilePush = "Mobilepush"
 }
