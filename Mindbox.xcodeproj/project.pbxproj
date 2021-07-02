@@ -197,6 +197,12 @@
 		B3A625562689FDD400B6A3B7 /* BalanceResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A625552689FDD400B6A3B7 /* BalanceResponse.swift */; };
 		B3A6255C268A025600B6A3B7 /* NearestExpirationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6255B268A025600B6A3B7 /* NearestExpirationResponse.swift */; };
 		B3A62560268A052C00B6A3B7 /* PromoActionsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6255F268A052B00B6A3B7 /* PromoActionsResponse.swift */; };
+		B3F4F97C268EEA950092EC3C /* StatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F97B268EEA950092EC3C /* StatusResponse.swift */; };
+		B3F4F981268EEAC90092EC3C /* AmountBenefisTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F97F268EEAC90092EC3C /* AmountBenefisTypeResponse.swift */; };
+		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
+		B3F4F986268EEADE0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */; };
+		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
+		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
 		D38BCDC0922CFDB3BEFF6843 /* Pods_Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E20394908AFBD7C785CD9D4 /* Pods_Mindbox.framework */; };
 /* End PBXBuildFile section */
 
@@ -410,6 +416,12 @@
 		B3A625552689FDD400B6A3B7 /* BalanceResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceResponse.swift; sourceTree = "<group>"; };
 		B3A6255B268A025600B6A3B7 /* NearestExpirationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearestExpirationResponse.swift; sourceTree = "<group>"; };
 		B3A6255F268A052B00B6A3B7 /* PromoActionsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoActionsResponse.swift; sourceTree = "<group>"; };
+		B3F4F97B268EEA950092EC3C /* StatusResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusResponse.swift; sourceTree = "<group>"; };
+		B3F4F97F268EEAC90092EC3C /* AmountBenefisTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AmountBenefisTypeResponse.swift; sourceTree = "<group>"; };
+		B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AmountBenefitsResponse.swift; sourceTree = "<group>"; };
+		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
+		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		D1937B91FB52DD585A23B9AF /* Pods-MindBox-MindboxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox-MindboxTests.debug.xcconfig"; path = "Target Support Files/Pods-MindBox-MindBoxTests/Pods-MindBox-MindboxTests.debug.xcconfig"; sourceTree = "<group>"; };
 		D8CBB0BDBCD1E4839EE4BA42 /* Pods-MindBox-MindboxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindBox-MindboxTests.release.xcconfig"; path = "Target Support Files/Pods-MindBox-MindBoxTests/Pods-MindBox-MindboxTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -562,6 +574,12 @@
 		3337E699265FA559006949EB /* Response */ = {
 			isa = PBXGroup;
 			children = (
+				B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */,
+				B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */,
+				B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */,
+				B3F4F97F268EEAC90092EC3C /* AmountBenefisTypeResponse.swift */,
+				B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */,
+				B3F4F97B268EEA950092EC3C /* StatusResponse.swift */,
 				6FDD144A266F7C5A00A50C35 /* AmountResponse.swift */,
 				6FDD144C266F7C6600A50C35 /* AmountTypeResponse.swift */,
 				6FDD143E266F7BF900A50C35 /* AppliedPromotionResponse.swift */,
@@ -1237,6 +1255,7 @@
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
 				334F3AF4264C199900A6AC00 /* ProductRequest.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
+				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,
 				6FDD1463266F7CED00A50C35 /* ProductElementReponse.swift in Sources */,
@@ -1267,6 +1286,7 @@
 				334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */,
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
+				B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */,
 				6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
 				3333D7BE265E56F2004279B0 /* OperationResponseType.swift in Sources */,
@@ -1285,6 +1305,7 @@
 				846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */,
 				33072F3C2664C713001F1AB2 /* CustomerSegmentationsResponse.swift in Sources */,
 				33072F3A2664C5CB001F1AB2 /* ManufacturerResponse.swift in Sources */,
+				B3F4F986268EEADE0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				3337E69D265FA5BD006949EB /* ValidationError.swift in Sources */,
 				8400428C2614C4D100CA17C5 /* NotificationDecoder.swift in Sources */,
 				6FDD1455266F7C9A00A50C35 /* PromotionTypeResponse.swift in Sources */,
@@ -1327,6 +1348,7 @@
 				B3A62560268A052C00B6A3B7 /* PromoActionsResponse.swift in Sources */,
 				6FDD1457266F7CAB00A50C35 /* PlaceholderResponse.swift in Sources */,
 				B3A625442689F59000B6A3B7 /* CustomerAllFieldsResponse.swift in Sources */,
+				B3F4F97C268EEA950092EC3C /* StatusResponse.swift in Sources */,
 				334F3AF6264C199900A6AC00 /* ProductListRequest.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
@@ -1352,9 +1374,11 @@
 				334F3AEF264C199900A6AC00 /* DiscountPromoCodeRequest.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
+				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				3337E6A1265FA99F006949EB /* Status.swift in Sources */,
 				84CC798725CACABF00C062BD /* EventRoute.swift in Sources */,
 				33C81EA4264145CD00863380 /* TimerManager.swift in Sources */,
+				B3F4F981268EEAC90092EC3C /* AmountBenefisTypeResponse.swift in Sources */,
 				33072F422664CB81001F1AB2 /* PromoCodeResponse.swift in Sources */,
 				337EDF342636DA3F0089559F /* MindboxNotificationService.swift in Sources */,
 				339ACE50262DAC74003590D2 /* CustomEvent.swift in Sources */,
