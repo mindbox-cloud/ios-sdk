@@ -280,10 +280,13 @@ class MBDatabaseRepository {
         }
     }
     
-    private func saveContext(_ context: NSManagedObjectContext) throws {
-        guard context.hasChanges else {
-            return
+    private func saveContext(_ context: NSManagedObjectContext, needCheckChanges check: Bool = true) throws {
+        if check {
+            guard context.hasChanges else {
+                return
+            }
         }
+        
         do {
             try context.save()
             Log("Context did save")
@@ -323,7 +326,7 @@ class MBDatabaseRepository {
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
-            try saveContext(context)
+            try saveContext(context, needCheckChanges: false)
             Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
                 .category(.database).level(.info).make()
         } catch {
