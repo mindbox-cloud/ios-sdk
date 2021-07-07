@@ -279,9 +279,11 @@ class MBDatabaseRepository {
             count -= 1
         }
     }
-    
-    private func saveContext(_ context: NSManagedObjectContext, forceSave: Bool = true) throws {
-        if forceSave && !context.hasChanges {
+    /*
+     true false
+     */
+    private func saveContext(_ context: NSManagedObjectContext, forceSave: Bool = false) throws {
+        if !forceSave && !context.hasChanges {
             return
         }
         
@@ -324,7 +326,7 @@ class MBDatabaseRepository {
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
-            try saveContext(context, forceSave: false)
+            try saveContext(context, forceSave: true)
             Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
                 .category(.database).level(.info).make()
         } catch {
