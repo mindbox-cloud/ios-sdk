@@ -161,7 +161,7 @@ class MBDatabaseRepository {
         try context.performAndWait {
             Log("Quering events with fetchLimit: \(fetchLimit)")
                 .category(.database).level(.info).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
             let events = try context.fetch(request)
             guard !events.isEmpty else {
@@ -261,7 +261,7 @@ class MBDatabaseRepository {
     }
     
     private func cleanUp() throws {
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate)
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete(lifeLimitDate: lifeLimitDate)
         request.fetchLimit = 1
         
         try context.performAndWait {
