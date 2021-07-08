@@ -14,7 +14,7 @@ open class PromoCodeResponse: Decodable {
     public let blockedDateTimeUtc: DateTime?
 }
 
-public enum IssueStatusResponse: String, Codable {
+public enum IssueStatusResponse: String, Encodable, UnknownDecodable {
     case received = "Received"
     case promoCodeNotFound = "PromoCodeNotFound"
     case promoCodePoolNotFound = "PromoCodePoolNotFound"
@@ -22,6 +22,7 @@ public enum IssueStatusResponse: String, Codable {
     case notInIssueDateTimeRange = "NotInIssueDateTimeRange"
     case notAvailableForIssue = "NotAvailableForIssue"
     case issued = "Issued"
+    case unknown
 }
 
 
