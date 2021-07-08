@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum Sex: String, Encodable, UnknownDecodable {
+public enum Sex: String, UnknownCodable {
     case male, female, unknown
 }

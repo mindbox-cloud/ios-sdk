@@ -8,7 +8,10 @@
 
 import Foundation
 
+
 public protocol UnknownDecodable: Decodable {}
+
+typealias UnknownCodable = Encodable & UnknownDecodable
 
 extension UnknownDecodable where Self: RawRepresentable, Self.RawValue == String {
     public init(from decoder: Decoder) throws {

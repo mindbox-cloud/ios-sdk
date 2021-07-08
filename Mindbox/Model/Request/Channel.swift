@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum Channel: String, Encodable, UnknownDecodable {
+public enum Channel: String, UnknownCodable {
     case email = "Email"
     case sms = "Sms"
     case viber = "Viber"
