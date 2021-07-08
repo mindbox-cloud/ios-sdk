@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum AmountTypeResponse: String, Decodable {
-    case quantity, discountAmount
+public enum AmountTypeResponse: String, UnknownDecodable {
+    case quantity, discountAmount, unknown
 }

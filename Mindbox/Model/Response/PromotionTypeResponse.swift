@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum PromotionTypeResponse: String, Decodable {
-    case mindbox, external
+public enum PromotionTypeResponse: String, UnknownDecodable {
+    case mindbox, external, unknown
 }

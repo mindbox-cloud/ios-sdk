@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum AppliedPromotionTypeResponse: String, Decodable {
+public enum AppliedPromotionTypeResponse: String, UnknownDecodable {
     case discount
     case correctionDiscount
     case deliveryDiscount
@@ -17,4 +17,5 @@ public enum AppliedPromotionTypeResponse: String, Decodable {
     case issuedCoupon
     case message
     case preconditionMarker
+    case unknown
 }

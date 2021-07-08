@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum ProcessingStatusResponse: String, Decodable {
+public enum ProcessingStatusResponse: String, UnknownDecodable {
     case success = "Success"
     case processed = "Processed"
     case found = "Found"
@@ -28,4 +28,5 @@ public enum ProcessingStatusResponse: String, Decodable {
     case priceHasBeenChanged = "PriceHasBeenChanged"
     case personalDiscountsCalculationIsUnavailable = "PersonalDiscountsCalculationIsUnavailable"
     case discountsCalculationIsUnavailable = "DiscountsCalculationIsUnavailable"
+    case unknown
 }

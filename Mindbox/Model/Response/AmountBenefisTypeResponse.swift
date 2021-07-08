@@ -7,8 +7,9 @@
 
 import Foundation
 
-public enum AmountBenefitsTypeResponse: String, Decodable {
+public enum AmountBenefitsTypeResponse: String, UnknownDecodable {
     case price = "Price"
     case percent = "Percent"
     case absolute = "Absolute"
+    case unknown
 }
