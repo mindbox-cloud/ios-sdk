@@ -17,6 +17,11 @@ open class OperationResponse: OperationResponseType {
     public let customerSegmentations: [CustomerSegmentationResponse]?
     public let setProductCountInList: ProductListResponse?
     public let promoCode: PromoCodeResponse?
+    public let personalOffers: [PersonalOffersResponse]?
+    public let balances: [BalanceResponse]?
+    public let discountCards: [DiscountCardResponse]?
+    public let promoAction: [PromoActionsResponse]?
+    public let retailOrderStatistics: RetailOrderStatisticsResponse?
 
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Keys.self)
@@ -33,6 +38,11 @@ open class OperationResponse: OperationResponseType {
         customerSegmentations = try container.decodeIfPresent([CustomerSegmentationResponse].self, forKey: .customerSegmentations)
         setProductCountInList = try container.decodeIfPresent(ProductListResponse.self, forKey: .setProductCountInList)
         promoCode = try container.decodeIfPresent(PromoCodeResponse.self, forKey: .promoCode)
+        personalOffers = try container.decodeIfPresent([PersonalOffersResponse].self, forKey: .personalOffers)
+        balances = try container.decodeIfPresent([BalanceResponse].self, forKey: .balances)
+        discountCards = try container.decodeIfPresent([DiscountCardResponse].self, forKey: .discountCards)
+        promoAction = try container.decodeIfPresent([PromoActionsResponse].self, forKey: .promoAction)
+        retailOrderStatistics = try container.decodeIfPresent(RetailOrderStatisticsResponse.self, forKey: .retailOrderStatistics)
     }
 
     enum Keys: String, CodingKey {
@@ -43,5 +53,10 @@ open class OperationResponse: OperationResponseType {
         case customerSegmentations
         case setProductCountInList
         case promoCode
+        case personalOffers
+        case balances
+        case discountCards
+        case promoAction
+        case retailOrderStatistics
     }
 }

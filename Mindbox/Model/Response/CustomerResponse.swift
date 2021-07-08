@@ -15,4 +15,10 @@ open class CustomerResponse: Decodable {
     public let email: String?
     public let mobilePhone: String?
     public let customFields: CustomFields?
+    public let processingStatus: String?
+    public let isEmailInvalid: Bool?
+    public let isMobilePhoneInvalid: Bool?
+    public let changeDateTimeUtc: DateTime?
+    public let ianaTimeZone: String?
+    public let timeZoneSource: String?
 }
