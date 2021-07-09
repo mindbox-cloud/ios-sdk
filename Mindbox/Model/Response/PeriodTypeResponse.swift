@@ -10,5 +10,6 @@ import Foundation
 public enum PeriodTypeResponse: String, UnknownDecodable {
     case fixedDays = "FixedDays"
     case fixedMonths = "FixedMonths"
+    case fixedWeeks = "FixedWeeks"
     case unknown
 }

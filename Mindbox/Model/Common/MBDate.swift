@@ -16,6 +16,7 @@ public final class DateOnly: MBDate {
     override func decodeWithFormat(_ rawString: String) -> Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter.date(from: rawString)
     }
 }

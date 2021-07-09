@@ -13,6 +13,6 @@ public enum Channel: String, UnknownCodable {
     case sms = "Sms"
     case viber = "Viber"
     case webPush = "WebPush"
-    case mobilePush = "Mobilepush"
+    case mobilePush = "MobilePush"
     case unknown
 }

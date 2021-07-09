@@ -13,7 +13,7 @@ open class CustomerResponse: Decodable {
     public let middleName: String?
     public let fullName: String?
     public let email: String?
-    public let mobilePhone: String?
+    public let mobilePhone: Int?
     public let customFields: CustomFields?
     public let processingStatus: String?
     public let isEmailInvalid: Bool?
