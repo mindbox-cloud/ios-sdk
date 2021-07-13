@@ -26,7 +26,8 @@ enum ImageFormat: String {
 
 extension ImageFormat {
     static func get(from data: Data) -> ImageFormat? {
-        switch data[0] {
+        guard let firstByte = data.first else { return nil }
+        switch firstByte {
         case 0x89:
             return .png
         case 0xFF:
