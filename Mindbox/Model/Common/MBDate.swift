@@ -16,6 +16,7 @@ public final class DateOnly: MBDate {
     override func decodeWithFormat(_ rawString: String) -> Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter.date(from: rawString)
     }
 }
@@ -56,7 +57,10 @@ public class MBDate: Codable {
         let string = try container.decode(String.self)
         print(string)
         date = Date()
-        date = decodeWithFormat(string)!
+        guard let decodedDate = decodeWithFormat(string) else {
+            throw MindboxError.internalError(InternalError(errorKey: "Invalid date specified in JSON."))
+        }
+        date = decodedDate
     }
 
     public func encode(to encoder: Encoder) throws {

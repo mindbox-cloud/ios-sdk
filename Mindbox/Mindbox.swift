@@ -174,25 +174,9 @@ public class Mindbox {
      Blockes calling thread no more than by 5sec
 
      */
+    @available(*, deprecated, message: "")
     @discardableResult
-    public func pushDelivered(request: UNNotificationRequest) -> Bool {
-        coreController?.checkNotificationStatus()
-        guard let container = container else { return false }
-        let tracker = DeliveredNotificationManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository()
-        )
-        do {
-            Log("Track delivery")
-                .category(.notification).level(.info).make()
-            return try tracker.track(request: request)
-        } catch {
-            Log("Track UNNotificationRequest failed with error: \(error)")
-                .category(.notification).level(.error).make()
-            return false
-        }
-    }
+    public func pushDelivered(request: UNNotificationRequest) -> Bool { return false }
 
     /**
      Method of transmitting the fact of receiving a push on the device.
@@ -207,25 +191,9 @@ public class Mindbox {
      Blockes calling thread no more than by 5sec
 
      */
+    @available(*, deprecated, message: "")
     @discardableResult
-    public func pushDelivered(uniqueKey: String) -> Bool {
-        coreController?.checkNotificationStatus()
-        guard let container = container else { return false }
-        let tracker = DeliveredNotificationManager(
-            persistenceStorage: container.persistenceStorage,
-            databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository()
-        )
-        do {
-            Log("Track delivery")
-                .category(.notification).level(.info).make()
-            return try tracker.track(uniqueKey: uniqueKey)
-        } catch {
-            Log("Track UNNotificationRequest failed with error: \(error)")
-                .category(.notification).level(.error).make()
-            return false
-        }
-    }
+    public func pushDelivered(uniqueKey: String) -> Bool { return false }
 
     /**
      Method for transmitting the fact of a click on a push notification.
@@ -275,6 +243,58 @@ public class Mindbox {
             Log("Track executeAsyncOperation failed with error: \(error)")
                 .category(.notification).level(.error).make()
         }
+    }
+
+    /**
+     Method for executing an operation synchronously.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationBody: Provided `OperationBodyRequestType` payload to send
+        - completion: Result of sending operation. Contains `OperationResponse` or `MindboxError`.
+     */
+    public func executeSyncOperation<T>(
+        operationSystemName: String,
+        operationBody: T,
+        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+    ) where T: OperationBodyRequestType {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
+    }
+
+    /**
+     Method for executing an operation synchronously.
+     
+     - Note: use this method if you have your own object that extends `OperationResponseType`.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationBody: Provided `OperationBodyRequestType` payload to send
+        - customResponseType: Expected result type in completion.
+        - completion: Result of sending operation. Contains `OperationResponseType` or `MindboxError`.
+     */
+    public func executeSyncOperation<T, P>(
+        operationSystemName: String,
+        operationBody: T,
+        customResponseType: P.Type,
+        completion: @escaping (Result<P, MindboxError>) -> Void
+    ) where T: OperationBodyRequestType, P: OperationResponseType {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
     /**

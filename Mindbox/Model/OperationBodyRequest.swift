@@ -25,6 +25,7 @@ open class OperationBodyRequest: OperationBodyRequestType {
     public var removeProductFromList: ProductListRequest?
     /** This field used for product and will be serialized as productList */
     public var productListItems: [ProductListRequest]?
+    public var recommendation: RecommendationRequest?
 
     public init() { }
 
@@ -48,6 +49,7 @@ open class OperationBodyRequest: OperationBodyRequestType {
         try container.encodeIfPresent(promoCode, forKey: .promoCode)
         try container.encodeIfPresent(viewProductCategory, forKey: .viewProductCategory)
         try container.encodeIfPresent(viewProduct, forKey: .viewProduct)
+        try container.encodeIfPresent(recommendation, forKey: .recommendation)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -65,5 +67,6 @@ open class OperationBodyRequest: OperationBodyRequestType {
         case viewProductCategory
         case viewProduct
         case referencedCustomer
+        case recommendation
     }
 }

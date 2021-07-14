@@ -2,14 +2,14 @@ import Foundation
 
 open class ItemRequest: Encodable {
     public var product: ProductRequest?
-    public var basePricePerItem: Decimal?
-    public var minPricePerItem: Decimal?
+    public var basePricePerItem: Double?
+    public var minPricePerItem: Double?
     public var requestedPromotions: [RequestedPromotionRequest]?
 
     public init(
         product: ProductRequest? = nil,
-        basePricePerItem: Decimal? = nil,
-        minPricePerItem: Decimal? = nil,
+        basePricePerItem: Double? = nil,
+        minPricePerItem: Double? = nil,
         requestedPromotions: [RequestedPromotionRequest]? = nil
     ) {
         self.product = product

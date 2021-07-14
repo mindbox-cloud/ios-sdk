@@ -161,7 +161,7 @@ class MBDatabaseRepository {
         try context.performAndWait {
             Log("Quering events with fetchLimit: \(fetchLimit)")
                 .category(.database).level(.info).make()
-            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
+            let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
             let events = try context.fetch(request)
             guard !events.isEmpty else {
@@ -261,7 +261,7 @@ class MBDatabaseRepository {
     }
     
     private func cleanUp() throws {
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(lifeLimitDate: lifeLimitDate)
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete(lifeLimitDate: lifeLimitDate)
         request.fetchLimit = 1
         
         try context.performAndWait {
@@ -279,11 +279,14 @@ class MBDatabaseRepository {
             count -= 1
         }
     }
-    
-    private func saveContext(_ context: NSManagedObjectContext) throws {
-        guard context.hasChanges else {
+    /*
+     true false
+     */
+    private func saveContext(_ context: NSManagedObjectContext, forceSave: Bool = false) throws {
+        if !forceSave && !context.hasChanges {
             return
         }
+        
         do {
             try context.save()
             Log("Context did save")
@@ -323,7 +326,7 @@ class MBDatabaseRepository {
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
-            try saveContext(context)
+            try saveContext(context, forceSave: true)
             Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
                 .category(.database).level(.info).make()
         } catch {

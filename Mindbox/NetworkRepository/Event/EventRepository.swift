@@ -9,7 +9,6 @@
 import Foundation
 
 protocol EventRepository {
-    
-    func send(event: Event, completion: @escaping (Result<Void, ErrorModel>) -> Void)
-    
+    func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void)
+    func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable
 }

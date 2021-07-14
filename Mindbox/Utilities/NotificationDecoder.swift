@@ -19,7 +19,7 @@ struct NotificationDecoder<T: Codable> {
         
     init(request: UNNotificationRequest) throws {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
-            throw DeliveredNotificationManagerError.unableToFetchUserInfo
+            throw MindboxError.internalError(InternalError(errorKey: "unableToFetchUserInfo"))
         }
         try self.init(userInfo: userInfo)
     }
