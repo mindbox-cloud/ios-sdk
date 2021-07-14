@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum ContentTypeResponse: String, Decodable {
-    case possibleDiscounts, text
+public enum ContentTypeResponse: String, UnknownDecodable {
+    case possibleDiscounts, text, unknown
 }

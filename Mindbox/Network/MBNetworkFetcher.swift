@@ -137,7 +137,7 @@ class MBNetworkFetcher: NetworkFetcher {
         // Make sure response has status code
         guard let statusCode = HTTPURLResponseStatusCodeValidator.StatusCodes(statusCode: httpResponse.statusCode) else {
             if let error = error {
-                completion(.failure(.serverError(.init(errorKey: .serverError, rawError: error))))
+                completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Unknown status code", httpStatusCode: httpResponse.statusCode))))
             } else {
                 completion(.failure(.invalidResponse(response)))
             }
@@ -153,24 +153,29 @@ class MBNetworkFetcher: NetworkFetcher {
                 let base = try decoder.decode(BaseResponse.self, from: data)
                 // Figure out what server returned
                 switch base.status {
-                case .success, .transactionProcessed:
+                case .success, .transactionAlreadyProcessed:
                     completion(.success(data))
                 case .validationError:
                     let error = try decoder.decode(ValidationError.self, from: data)
                     completion(.failure(.validationError(error)))
-                case .protocolError, .serverError:
+                case .protocolError:
                     let error = try decoder.decode(ProtocolError.self, from: data)
                     completion(.failure(.protocolError(error)))
+                case .internalServerError:
+                    let error = try decoder.decode(ProtocolError.self, from: data)
+                    completion(.failure(.serverError(error)))
                 case .unknown:
                     completion(.failure(.invalidResponse(response)))
                 }
             } catch let decodingError {
                 switch statusCode {
                 case .serverError:
-                    completion(.failure(.serverError(.init(errorKey: .serverError, statusCode: httpResponse.statusCode))))
+                    completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: httpResponse.statusCode))))
                 default:
-                    if emptyData {
+                     if emptyData {
                         completion(.success(data))
+                    } else if httpResponse.statusCode == 404 {
+                        completion(.failure(.protocolError(.init(status: .protocolError, errorMessage: "Invalid request url", httpStatusCode: httpResponse.statusCode))))
                     } else {
                         completion(.failure(.internalError(.init(errorKey: .parsing, rawError: decodingError))))
                     }
@@ -180,7 +185,7 @@ class MBNetworkFetcher: NetworkFetcher {
             // Handle server errors
             switch statusCode {
             case .serverError:
-                completion(.failure(.serverError(.init(errorKey: .serverError, rawError: error, statusCode: httpResponse.statusCode))))
+                completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: httpResponse.statusCode))))
             default:
                 completion(.failure(.unknown(error)))
             }

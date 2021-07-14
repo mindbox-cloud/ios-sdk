@@ -98,7 +98,7 @@ public final class TimerManager {
         
         guard let timer = TimerManager.shared.timer else { return }
         
-        RunLoop.main.add(timer, forMode: .default)
+        RunLoop.main.add(timer, forMode: .common)
         print("The timer is running")
     }
     

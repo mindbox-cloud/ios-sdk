@@ -13,7 +13,25 @@ import CoreData
 
 extension CDEvent {
     
-    public class func fetchRequest(lifeLimitDate: Date?, retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
+    public class func fetchRequestForDelete(lifeLimitDate: Date?) -> NSFetchRequest<CDEvent> {
+        let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
+        var predicate = NSPredicate()
+        if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
+            predicate = NSPredicate(
+                format: "%K > %@",
+                argumentArray: [
+                    #keyPath(CDEvent.timestamp), monthLimitDateStamp,
+                    ]
+            )
+        }
+        request.predicate = predicate
+        request.sortDescriptors = [
+            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
+        ]
+        return request
+    }
+    
+    public class func fetchRequestForSend(lifeLimitDate: Date?, retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         var subpredicates: [NSPredicate] = []
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {

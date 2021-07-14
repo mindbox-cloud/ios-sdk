@@ -5,4 +5,5 @@ open class ProductListResponse: Decodable {
     public let productGroup: ProductGroupResponse?
     public let count: Double?
     public let priceOfLine: Double?
+    public let price: Double?
 }

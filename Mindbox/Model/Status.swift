@@ -8,11 +8,11 @@
 
 import Foundation
 
-public enum Status: String, Decodable {
+public enum Status: String, UnknownDecodable {
     case success = "Success"
     case validationError = "ValidationError"
     case protocolError = "ProtocolError"
-    case serverError = "InternalServerError"
-    case transactionProcessed = "TransactionAlreadyProcessed"
+    case internalServerError = "InternalServerError"
+    case transactionAlreadyProcessed = "TransactionAlreadyProcessed"
     case unknown
 }
