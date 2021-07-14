@@ -83,7 +83,8 @@ class MBEventRepository: EventRepository {
         switch wrapper.event.type {
         case .installed,
              .infoUpdated,
-             .trackClick:
+             .trackClick,
+             .installedWithoutCustomer:
             return EventRoute.asyncEvent(wrapper)
         case .customEvent:
             return EventRoute.customAsyncEvent(wrapper)
