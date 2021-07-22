@@ -14,6 +14,12 @@ class Fastfile: LaneFile {
     func buildLane() {
         desc("Build for testing")
         scan(workspace: workspace,
+             scheme: "Mindbox",
+             derivedDataPath: "derivedData",
+             buildForTesting: true,
+             xcargs: "CI=true"
+        )
+        scan(workspace: workspace,
              scheme: "MindboxNotifications",
              derivedDataPath: "derivedData",
              buildForTesting: true,
@@ -23,6 +29,13 @@ class Fastfile: LaneFile {
 
     func unitTestLane() {
         desc("Run unit tests")
+        scan(workspace: workspace,
+             scheme: "Mindbox",
+             onlyTesting: ["MindboxTests"],
+             clean: true,
+             testWithoutBuilding: false,
+             xcargs: "CI=true"
+        )
         scan(workspace: workspace,
              scheme: "MindboxNotifications",
              onlyTesting: ["MindboxNotificationsTests"],
