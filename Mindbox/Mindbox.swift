@@ -156,9 +156,7 @@ public class Mindbox {
 
     /// Use this method to notify Mindbox for notification request authorization changes.
     public func notificationsRequestAuthorization(granted: Bool) {
-        DispatchQueue.main.async {
-            self.coreController?.checkNotificationStatus(granted: granted)
-        }
+        coreController?.checkNotificationStatus(granted: granted)
     }
 
     /**
@@ -386,13 +384,11 @@ public class Mindbox {
         guard let appDBCleanProcessingIdentifier = identifiers.first(where: { $0.contains("DBCleanAppProcessing") }) else {
             return
         }
-        DispatchQueue.main.async {
-            self.guaranteedDeliveryManager?.backgroundTaskManager.registerBGTasks(
-                appGDRefreshIdentifier: appGDRefreshIdentifier,
-                appGDProcessingIdentifier: appGDProcessingIdentifier,
-                appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
-            )
-        }
+        guaranteedDeliveryManager?.backgroundTaskManager.registerBGTasks(
+            appGDRefreshIdentifier: appGDRefreshIdentifier,
+            appGDProcessingIdentifier: appGDProcessingIdentifier,
+            appDBCleanProcessingIdentifire: appDBCleanProcessingIdentifier
+        )
     }
 
     /**
@@ -438,16 +434,14 @@ public class Mindbox {
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
 
-        DispatchQueue.main.async {
-            self.coreController = CoreController(
-                persistenceStorage: container.persistenceStorage,
-                utilitiesFetcher: container.utilitiesFetcher,
-                notificationStatusProvider: container.authorizationStatusProvider,
-                databaseRepository: container.databaseRepository,
-                guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-                trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-                sessionManager: container.sessionManager
-            )
-        }
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
+            sessionManager: container.sessionManager
+        )
     }
 }
