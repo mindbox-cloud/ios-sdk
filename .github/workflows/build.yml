@@ -21,7 +21,7 @@ jobs:
     - name: Pods setup
       run: pod install
     - name: Run unit tests
-      run: fastlane unitTestLane
+      run: bundle exec fastlane unitTestLane
       env:
         CI: true
 
@@ -35,6 +35,6 @@ jobs:
     - name: Pods setup
       run: pod install
     - name: Run build
-      run: fastlane buildLane
+      run: bundle exec fastlane buildLane
       env:
         CI: true
