@@ -33,8 +33,8 @@ class Fastfile: LaneFile {
              scheme: "Mindbox",
              onlyTesting: ["MindboxTests"],
              clean: true,
-             testWithoutBuilding: false,
              disableConcurrentTesting: true,
+             testWithoutBuilding: false,
              xcargs: "CI=true"
         )
         scan(workspace: workspace,
