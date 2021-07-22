@@ -10,34 +10,25 @@ import Foundation
 @testable import Mindbox
 
 class MockNetworkFetcher: NetworkFetcher {
-    
     init() {
     }
-    
-    func request(route: Route, completion: @escaping ((Result<Void, ErrorModel>) -> Void)) {
+
+    func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
         completion(Result.success(()))
     }
-    
-    func requestObject<T>(route: Route, completion: @escaping Completion<T>) where T : BaseResponse {
+
+    func request<T>(type: T.Type, route: Route, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T: Decodable {
         let bundle = Bundle(for: MockNetworkFetcher.self)
         let path = bundle.path(forResource: "SuccessResponse", ofType: "json")!
         let url = URL(fileURLWithPath: path)
         let data = try! Data(contentsOf: url, options: .mappedIfSafe)
         do {
-            let responseModel = ResponseModel<T>()
-            responseModel.rawData = data
-            responseModel.data = try JSONDecoder().decode(T.self, from: data)
-            responseModel.route = route
-            if responseModel.data != nil {
-                completion(Result.success(responseModel))
-            } else {
-                completion(Result.failure(ErrorModel(errorKey: ErrorKey.general.rawValue)))
-            }
+            let decoded = try JSONDecoder().decode(type, from: data)
+            completion(Result.success(decoded))
         } catch let decodeError {
-            let error: ErrorModel = ErrorModel(errorKey: ErrorKey.parsing.rawValue, rawError: decodeError)
+            let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError, statusCode: nil))
             Log(error: error).withDate().make()
             completion(Result.failure(error))
         }
     }
-
 }

@@ -9,15 +9,15 @@
 import Foundation
 /// This struct contains init options and  behavior configuration options
 ///
-/// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
+/// - Throws:`MindboxError.internalError` for invalid initialization parameters
 
 public struct MBConfiguration: Codable {
-    
     public let endpoint: String
     public let domain: String
     public var previousInstallationId: String?
     public var previousDeviceUUID: String?
     public var subscribeCustomerIfCreated: Bool
+    public var shouldCreateCustomer: Bool
 
     /// Init with params
     ///
@@ -25,50 +25,71 @@ public struct MBConfiguration: Codable {
     /// - Parameter domain: Used for generating baseurl for REST
     /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter previousDeviceUUID: Used instead of the generated value
+    /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
+    /// - Parameter shouldCreateCustomer: Flag which determines create or not anonymous users. Usable only during first initialisation. Default value is `true`.
     ///
-    /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters
+    /// - Throws:`MindboxError.internalError` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
         previousInstallationId: String? = nil,
         previousDeviceUUID: String? = nil,
-        subscribeCustomerIfCreated: Bool = false
+        subscribeCustomerIfCreated: Bool = false,
+        shouldCreateCustomer: Bool = true
     ) throws {
-
         self.endpoint = endpoint
         self.domain = domain
-        
+
         guard let url = URL(string: "https://" + domain), URLValidator(url: url).evaluate() else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "Invalid domain. Domain is unreachable")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Invalid domain. Domain is unreachable"
+            ))
         }
 
         guard !endpoint.isEmpty else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "Value endpoint can not be empty")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Value endpoint can not be empty"
+            ))
         }
 
         if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
             guard UUID(uuidString: previousInstallationId) != nil else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousInstallationId doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousInstallationId doesn't match the UUID format"
+                ))
             }
 
             guard UDIDValidator(udid: previousInstallationId).evaluate() else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousInstallationId doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousInstallationId doesn't match the UUID format"
+                ))
             }
 
             self.previousInstallationId = previousInstallationId
         }
         if let previousDeviceUUID = previousDeviceUUID, !previousDeviceUUID.isEmpty {
             guard UUID(uuidString: previousDeviceUUID) != nil else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousDeviceUUID doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousDeviceUUID doesn't match the UUID format"
+                ))
             }
 
             guard UDIDValidator(udid: previousDeviceUUID).evaluate() else {
-                throw Mindbox.Errors.invalidConfiguration(reason: "previousDeviceUUID doesn't match the UUID format", suggestion: nil)
+                throw MindboxError(.init(
+                    errorKey: .invalidConfiguration,
+                    reason: "previousDeviceUUID doesn't match the UUID format"
+                ))
             }
 
             self.previousDeviceUUID = previousDeviceUUID
         }
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
+        self.shouldCreateCustomer = shouldCreateCustomer
     }
 
     /// Init with plist file
@@ -86,11 +107,12 @@ public struct MBConfiguration: Codable {
     ///    <string></string>
     ///    <key>previousDeviceUUID</key>
     ///    <string></string>
+    ///    ...
     /// </dict>
     /// </plist>
     /// ```
     /// - Parameter plistName: name of plist file without extension
-    /// - Throws:`Mindbox.Errors.invalidConfiguration` for invalid initialization parameters or  incorrect format file
+    /// - Throws:`MindboxError.internalError` for invalid initialization parameters or incorrect format file
     public init(plistName: String) throws {
         let decoder = PropertyListDecoder()
         var findeURL: URL?
@@ -103,15 +125,24 @@ public struct MBConfiguration: Codable {
         }
 
         guard let url = findeURL else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) not found")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) not found"
+            ))
         }
 
         guard let data = try? Data(contentsOf: url) else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) cannot be read")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) cannot be read"
+            ))
         }
 
         guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
-            throw Mindbox.Errors.invalidConfiguration(reason: "file with name \(plistName) contains invalid properties")
+            throw MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "file with name \(plistName) contains invalid properties"
+            ))
         }
         self = configuration
     }
@@ -122,32 +153,34 @@ public struct MBConfiguration: Codable {
         case previousInstallationId
         case previousDeviceUUID
         case subscribeCustomerIfCreated
+        case shouldCreateCustomer
     }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
-        var previousInstallationId: String? = nil
+        var previousInstallationId: String?
         if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {
                 previousInstallationId = value
             }
         }
-        var previousDeviceUUID: String? = nil
+        var previousDeviceUUID: String?
         if let value = try? values.decode(String.self, forKey: .previousDeviceUUID) {
             if !value.isEmpty {
                 previousDeviceUUID = value
             }
         }
         let subscribeCustomerIfCreated = try values.decodeIfPresent(Bool.self, forKey: .subscribeCustomerIfCreated) ?? false
+        let shouldCreateCustomer = try values.decodeIfPresent(Bool.self, forKey: .shouldCreateCustomer) ?? true
         try self.init(
             endpoint: endpoint,
             domain: domain,
             previousInstallationId: previousInstallationId,
             previousDeviceUUID: previousDeviceUUID,
-            subscribeCustomerIfCreated: subscribeCustomerIfCreated
+            subscribeCustomerIfCreated: subscribeCustomerIfCreated,
+            shouldCreateCustomer: shouldCreateCustomer
         )
     }
-
 }

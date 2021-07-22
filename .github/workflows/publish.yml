@@ -17,7 +17,7 @@ jobs:
     - name: Pods setup
       run: pod install
     - name: Run unit tests
-      run: fastlane unitTestLane
+      run: bundle exec fastlane unitTestLane
       env:
         CI: true
 
@@ -27,13 +27,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Release generation
-      run: ./git-release.sh "Automatically generated Pre-release" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"  
+      run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
     - name: Install bundler dependencies
       run: bundle install
     - name: Pods setup
       run: pod install
     - name: Run build
-      run: fastlane buildLane
+      run: bundle exec fastlane buildLane
       env:
         CI: true
     - name: Deploy to Cocoapods
@@ -43,6 +43,13 @@ jobs:
         pod trunk push --allow-warnings
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+    - name: Info resouces for system of docker
+      run: |
+        echo Info for resources:
+        uname -a
+        hostinfo | grep memory
+        top -l 1 -s 0 | grep PhysMem
+        df -h
 
   notify:
     needs: [publish]

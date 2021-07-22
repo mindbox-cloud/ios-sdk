@@ -12,9 +12,7 @@ import Foundation
 
 /// [String: Any] that conforms to Codable
 public struct CodableDictionary: Codable {
-    public typealias DictionaryType = [String: Any]
-
-    private var value: JSON
+    var value: JSON
 
     public init(_ value: [String: Any]) {
         self.value = JSON(value)
@@ -49,9 +47,19 @@ extension CodableDictionary: ExpressibleByDictionaryLiteral {
 
 // MARK: - Subscript
 
-// extension CodableDictionary {
-//    subscript(key: String) -> Any {
-//        get { return value[key] }
-//        set { value[key] = newValue }
-//    }
-// }
+extension CodableDictionary {
+    subscript(key: String) -> Any {
+        get { return value[key] }
+        set { try? value.merge(with: JSON([key: newValue])) }
+    }
+}
+
+extension CodableDictionary {
+    public func decode<T: Decodable>(to type: T.Type) -> T? {
+        do {
+            return try JSONDecoder().decode(type, from: try value.rawData())
+        } catch {
+            return nil
+        }
+    }
+}

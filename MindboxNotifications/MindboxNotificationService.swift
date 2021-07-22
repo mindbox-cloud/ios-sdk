@@ -9,6 +9,7 @@
 import UIKit
 import UserNotifications
 import UserNotificationsUI
+import os
 
 public class MindboxNotificationService {
     // Public
@@ -18,6 +19,7 @@ public class MindboxNotificationService {
     // Private
     private var context: NSExtensionContext?
     private var viewController: UIViewController?
+    private let log = OSLog(subsystem: "cloud.Mindbox", category: "Notifications")
 
     /// Mindbox proxy for NotificationsService and NotificationViewController
     public init() {}
@@ -36,9 +38,8 @@ public class MindboxNotificationService {
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
         guard let bestAttemptContent = bestAttemptContent else { return }
 
-        Mindbox.logger.log(level: .default, message: "Push notification UniqueKey: \(request.identifier)")
-        
-        Mindbox.shared.pushDelivered(request: request)
+        pushDelivered(request)
+        Logger.log("Push notification UniqueKey: \(request.identifier)", type: .info)
 
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -48,6 +49,23 @@ public class MindboxNotificationService {
             }
         } else {
             proceedFinalStage(bestAttemptContent)
+        }
+    }
+    
+    public func pushDelivered(_ request: UNNotificationRequest) {
+        let utilities = MBUtilitiesFetcher()
+        guard let configuration = utilities.configuration else {
+            Logger.log("No configuration", type: .error)
+            return
+        }
+        
+        let networkService = NetworkService(utilitiesFetcher: utilities, configuration: configuration)
+        let deliveryService = DeliveryService(utilitiesFetcher: utilities, networkService: networkService)
+        
+        do {
+            try deliveryService.track(request: request)
+        } catch {
+            Logger.log("Push delivery error: \(error)", type: .error)
         }
     }
 
@@ -101,8 +119,7 @@ public class MindboxNotificationService {
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
-                Log("Button title: \($0.title), id: \($0.identifier)")
-                    .level(.info).category(.notification).make()
+                Logger.log("Button title: \($0.title), id: \($0.identifier)", type: .info)
                 context.notificationActions.append($0)
             }
         }
@@ -168,59 +185,6 @@ public class MindboxNotificationService {
     }
 }
 
-fileprivate struct Payload {
-    struct ImageURL: Codable {
-        let imageUrl: String?
-    }
 
-    struct Button: Codable {
-        struct Buttons: Codable {
-            let text: String
-            let uniqueKey: String
-        }
 
-        let uniqueKey: String
 
-        let buttons: [Buttons]?
-
-        let imageUrl: String?
-
-        var debugDescription: String {
-            "uniqueKey: \(uniqueKey)"
-        }
-    }
-
-    var withImageURL: ImageURL?
-    var withButton: Button?
-}
-
-fileprivate enum ImageFormat: String {
-    case png, jpg, gif
-
-    init?(_ data: Data) {
-        if let type = ImageFormat.get(from: data) {
-            self = type
-        } else {
-            return nil
-        }
-    }
-
-    var `extension`: String {
-        return rawValue
-    }
-}
-
-fileprivate extension ImageFormat {
-    static func get(from data: Data) -> ImageFormat? {
-        switch data[0] {
-        case 0x89:
-            return .png
-        case 0xFF:
-            return .jpg
-        case 0x47:
-            return .gif
-        default:
-            return nil
-        }
-    }
-}

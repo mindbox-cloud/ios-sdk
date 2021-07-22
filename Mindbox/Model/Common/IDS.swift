@@ -24,7 +24,10 @@ public struct IDS: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        value = try container.decode([String: String].self)
+        let json = try container.decode(JSON.self)
+        json.forEach {
+            value[$0.0] = $0.1.rawString()
+        }
     }
 
     public func encode(to encoder: Encoder) throws {

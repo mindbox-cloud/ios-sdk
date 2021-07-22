@@ -1,25 +1,25 @@
 import Foundation
 
 open class LineRequest: Encodable {
-    public var minPricePerItem: Decimal?
-    public var costPricePerItem: Decimal?
+    public var minPricePerItem: Double?
+    public var costPricePerItem: Double?
     public var customFields: CustomFields?
-    public var basePricePerItem: Decimal?
+    public var basePricePerItem: Double?
     public var quantityType: QuantityTypeRequest?
-    public var discountedPricePerLine: Decimal?
-    public var lineId: Int?
+    public var discountedPricePerLine: Double?
+    public var lineId: String?
     public var lineNumber: Int?
     public var discounts: [DiscountRequest]?
     public var product: ProductRequest?
 
     public init(
-        minPricePerItem: Decimal? = nil,
-        costPricePerItem: Decimal? = nil,
+        minPricePerItem: Double? = nil,
+        costPricePerItem: Double? = nil,
         customFields: CustomFields? = nil,
-        basePricePerItem: Decimal? = nil,
+        basePricePerItem: Double? = nil,
         quantity: QuantityTypeRequest? = nil,
-        discountedPricePerLine: Decimal? = nil,
-        lineId: Int? = nil,
+        discountedPricePerLine: Double? = nil,
+        lineId: String? = nil,
         lineNumber: Int? = nil,
         discounts: [DiscountRequest]? = nil,
         product: ProductRequest? = nil
@@ -79,7 +79,7 @@ open class LineRequest: Encodable {
 
 public enum QuantityTypeRequest: CustomStringConvertible {
     case int(Int)
-    case double(Decimal)
+    case double(Double)
 
     public var description: String {
         switch self {

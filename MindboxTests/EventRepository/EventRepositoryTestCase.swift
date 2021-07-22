@@ -6,13 +6,12 @@
 //  Copyright © 2021 Mikhail Barilov. All rights reserved.
 //
 
-import XCTest
 @testable import Mindbox
+import XCTest
 
 class EventRepositoryTestCase: XCTestCase {
-    
     var coreController: CoreController!
-        
+
     var container: DependencyContainer!
 
     override func setUp() {
@@ -29,7 +28,7 @@ class EventRepositoryTestCase: XCTestCase {
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
     }
-    
+
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
@@ -39,7 +38,7 @@ class EventRepositoryTestCase: XCTestCase {
             body: ""
         )
         let expectation = self.expectation(description: "send event")
-        repository.send(event: event) { (result) in
+        repository.send(event: event) { result in
             switch result {
             case .success:
                 expectation.fulfill()
@@ -49,7 +48,29 @@ class EventRepositoryTestCase: XCTestCase {
         }
         waitForExpectations(timeout: 10, handler: nil)
     }
-    
+
+    func testSendDecodableEvent() {
+        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
+        coreController.initialization(configuration: configuration)
+        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let event = Event(type: .syncEvent, body: "")
+        let expectation = self.expectation(description: "send event")
+        repository.send(type: SuccessCase.self, event: event) { result in
+            switch result {
+            case let .success(data):
+                if data.status == "Success" {
+                    expectation.fulfill()
+                } else {
+                    XCTFail()
+                }
+            case .failure:
+                XCTFail()
+            }
+        }
+        waitForExpectations(timeout: 10, handler: nil)
+    }
+
+    private struct SuccessCase: Decodable {
+        let status: String
+    }
 }
-
-
