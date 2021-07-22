@@ -29,9 +29,8 @@ class Fastfile: LaneFile {
         func unitTestLane() {
                 desc("Run unit tests")
                 scan(workspace: workspace,
-                     onlyTesting: ["MindboxTests", "MindboxNotificationsTests"],
+                     onlyTesting: ["MindboxTests"],
                      clean: true,
-                     disableConcurrentTesting: true,
                      testWithoutBuilding: false,
                      xcargs: "CI=true"
                 )
