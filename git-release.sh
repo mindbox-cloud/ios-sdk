@@ -12,10 +12,10 @@ generate_post_data()
 {
   "tag_name": "$version",
   "target_commitish": "$branch",
-  "name": "Pre-release-$version",
+  "name": "Release $version",
   "body": "$text",
   "draft": false,
-  "prerelease": true
+  "prerelease": false
 }
 EOF
 }

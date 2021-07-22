@@ -21,11 +21,16 @@ jobs:
     - name: Pods setup
       run: pod install
     - name: Run unit tests
-      run: |
-        bundle exec fastlane unitTestLane
-        echo "${{ github.event.head_commit.message }}"
+      run: bundle exec fastlane unitTestLane
       env:
         CI: true
+    - name: Info resouces for system of docker
+      run: |
+        echo Info for resources:
+        uname -a
+        hostinfo | grep memory
+        top -l 1 -s 0 | grep PhysMem
+        df -h
 
   build:
     needs: [unit]
