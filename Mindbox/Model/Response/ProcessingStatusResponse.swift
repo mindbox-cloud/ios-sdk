@@ -11,6 +11,7 @@ import Foundation
 public enum ProcessingStatusResponse: String, UnknownDecodable {
     case success = "Success"
     case processed = "Processed"
+    case notProcessed = "NotProcessed"
     case found = "Found"
     case created = "Created"
     case changed = "Changed"
