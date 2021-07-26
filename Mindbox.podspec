@@ -4,7 +4,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "Mindbox"
 
-  spec.version      = "1.0.7"
+  spec.version      = "1.1.0"
 
   spec.summary      = "Library for integration with Mindbox"
 
