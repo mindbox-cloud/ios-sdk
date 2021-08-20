@@ -5,7 +5,7 @@ Pod::Spec.new do |spec|
 
   spec.version      = "1.1.0"
 
-  spec.summary      = "Library for integration notifications with Mindbox"
+  spec.summary      = "SDK for integration notifications with Mindbox"
 
   spec.description  = "This library allows you to integrate notifications and transfer them to Mindbox Marketing Cloud"
 
