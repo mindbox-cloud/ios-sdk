@@ -136,7 +136,7 @@ class MBNetworkFetcher: NetworkFetcher {
 
         // Make sure response has status code
         guard let statusCode = HTTPURLResponseStatusCodeValidator.StatusCodes(statusCode: httpResponse.statusCode) else {
-            if let error = error {
+            if error != nil {
                 completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Unknown status code", httpStatusCode: httpResponse.statusCode))))
             } else {
                 completion(.failure(.invalidResponse(response)))
