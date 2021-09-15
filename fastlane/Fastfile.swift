@@ -9,17 +9,17 @@
 import Foundation
 
 class Fastfile: LaneFile {
-    private let workspace = "Mindbox.xcworkspace"
+    private let project = "Mindbox.xcodeproj"
 
     func buildLane() {
         desc("Build for testing")
-        scan(workspace: workspace,
+        scan(project: project,
              scheme: "Mindbox",
              derivedDataPath: "derivedData",
              buildForTesting: true,
              xcargs: "CI=true"
         )
-        scan(workspace: workspace,
+        scan(project: project,
              scheme: "MindboxNotifications",
              derivedDataPath: "derivedData",
              buildForTesting: true,
@@ -29,7 +29,7 @@ class Fastfile: LaneFile {
 
     func unitTestLane() {
         desc("Run unit tests")
-        scan(workspace: workspace,
+        scan(project: project,
              scheme: "Mindbox",
              onlyTesting: ["MindboxTests"],
              clean: true,
@@ -37,7 +37,7 @@ class Fastfile: LaneFile {
              testWithoutBuilding: false,
              xcargs: "CI=true"
         )
-        scan(workspace: workspace,
+        scan(project: project,
              scheme: "MindboxNotifications",
              onlyTesting: ["MindboxNotificationsTests"],
              clean: true,
