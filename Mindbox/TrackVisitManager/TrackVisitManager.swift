@@ -20,15 +20,20 @@ final class TrackVisitManager {
     func track(_ type: TrackVisitType) throws {
         switch type {
         case let .launch(options):
-            try handleLaunch(options)
+            try handleLaunch(options as? [UIApplication.LaunchOptionsKey : Any])
         case let .universalLink(userActivity):
+            guard let userActivity = userActivity as? NSUserActivity else { fatalError("Cant cust") }
             try handleUniversalLink(userActivity)
         case let .push(response):
+            guard let response = response as? UNNotificationResponse else { fatalError("Cant cust") }
             try handlePush(response)
         case let .launchScene(options):
             if #available(iOS 13.0, *) {
+                guard let options = options as? UIScene.ConnectionOptions else { fatalError("Cant cust") }
                 try handleLaunchScene(options)
             }
+        case .error:
+            fatalError("Unknown type")
         }
     }
     
@@ -75,9 +80,33 @@ final class TrackVisitManager {
 }
 
 public enum TrackVisitType {
-    case universalLink(NSUserActivity)
-    case push(UNNotificationResponse)
-    case launch([UIApplication.LaunchOptionsKey: Any]?)
-    @available(iOS 13.0, *)
-    case launchScene(UIScene.ConnectionOptions)
+    
+    case universalLink(NSObject)
+    case push(NSObject)
+    case launch(NSObject?)
+    case launchScene(NSObject)
+    case error
+}
+
+extension TrackVisitType {
+    init(type: PlaceType, options: NSObject?) {
+        if type == .universalLink {
+            self = .universalLink(options!)
+        } else if type == .launch {
+            self = .launch(options)
+        } else if type == .launchScene {
+            self = .launchScene(options!)
+        } else if type == .push {
+            self = .push(options!)
+        } else {
+            self = .error
+        }
+    }
+}
+public enum PlaceType {
+    
+    case universalLink
+    case push
+    case launch
+    case launchScene
 }

@@ -23,7 +23,7 @@ open class MindboxAppDelegate: NSObject, UNUserNotificationCenterDelegate, UIApp
         }
         UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
 
-        Mindbox.shared.track(.launch(launchOptions))
+        Mindbox.shared.track(.launch(launchOptions as NSObject?))
 
         return true
     }
