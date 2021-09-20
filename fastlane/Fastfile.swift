@@ -9,39 +9,43 @@
 import Foundation
 
 class Fastfile: LaneFile {
-    private let workspace = "Mindbox.xcworkspace"
+    private let project = "Mindbox.xcodeproj"
 
     func buildLane() {
         desc("Build for testing")
-        scan(workspace: workspace,
+        scan(project: .userDefined(project),
              scheme: "Mindbox",
+             device: .userDefined("iPhone 12"),
              derivedDataPath: "derivedData",
-             buildForTesting: true,
+             buildForTesting: .userDefined(true),
              xcargs: "CI=true"
         )
-        scan(workspace: workspace,
+        scan(project: .userDefined(project),
              scheme: "MindboxNotifications",
+             device: .userDefined("iPhone 12"),
              derivedDataPath: "derivedData",
-             buildForTesting: true,
+             buildForTesting: .userDefined(true),
              xcargs: "CI=true"
         )
     }
 
     func unitTestLane() {
         desc("Run unit tests")
-        scan(workspace: workspace,
+        scan(project: .userDefined(project),
              scheme: "Mindbox",
+             device: .userDefined("iPhone 12"),
              onlyTesting: ["MindboxTests"],
              clean: true,
              disableConcurrentTesting: true,
-             testWithoutBuilding: false,
+             testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
         )
-        scan(workspace: workspace,
+        scan(project: .userDefined(project),
              scheme: "MindboxNotifications",
+             device: .userDefined("iPhone 12"),
              onlyTesting: ["MindboxNotificationsTests"],
              clean: true,
-             testWithoutBuilding: false,
+             testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
         )
     }

@@ -19,16 +19,12 @@ final class TrackVisitManager {
 
     func track(_ type: TrackVisitType) throws {
         switch type {
-        case let .launch(options):
+        case let .launch(options), let .launchScene(options):
             try handleLaunch(options)
         case let .universalLink(userActivity):
             try handleUniversalLink(userActivity)
         case let .push(response):
             try handlePush(response)
-        case let .launchScene(options):
-            if #available(iOS 13.0, *) {
-                try handleLaunchScene(options)
-            }
         }
     }
     
@@ -44,13 +40,14 @@ final class TrackVisitManager {
         try sendTrackVisit(encodable)
     }
 
-    private func handleLaunch(_ options: [UIApplication.LaunchOptionsKey: Any]?) throws {
-    }
-
-    @available(iOS 13.0, *)
-    private func handleLaunchScene(_ options: UIScene.ConnectionOptions) throws {
-        if let userActivity = options.userActivities.first,
-           userActivity.activityType == NSUserActivityTypeBrowsingWeb {
+    private func handleLaunch(_ options: LaunchOptions?) throws {
+        guard let options = options else { return }
+        
+        if #available(iOS 13.0, *),
+           case let sceneOptions as UIScene.ConnectionOptions = options,
+           let userActivity = sceneOptions.userActivities.first,
+           userActivity.activityType == NSUserActivityTypeBrowsingWeb
+        {
             try handleUniversalLink(userActivity)
         }
     }
@@ -77,7 +74,13 @@ final class TrackVisitManager {
 public enum TrackVisitType {
     case universalLink(NSUserActivity)
     case push(UNNotificationResponse)
-    case launch([UIApplication.LaunchOptionsKey: Any]?)
-    @available(iOS 13.0, *)
-    case launchScene(UIScene.ConnectionOptions)
+    case launch(LaunchOptions?)
+    case launchScene(LaunchOptions?)
 }
+
+public protocol LaunchOptions {}
+
+extension Dictionary: LaunchOptions where Key == UIApplication.LaunchOptionsKey, Value == Any {}
+
+@available(iOS 13.0, *)
+extension UIScene.ConnectionOptions: LaunchOptions {}

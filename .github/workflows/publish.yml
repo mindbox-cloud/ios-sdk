@@ -9,13 +9,11 @@ on:
 
 jobs:
   unit:
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - name: Install bundler dependencies
       run: bundle install
-    - name: Pods setup
-      run: pod install
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
       env:
@@ -23,15 +21,13 @@ jobs:
 
   publish:
     needs: [unit]
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - name: Release generation
       run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
     - name: Install bundler dependencies
       run: bundle install
-    - name: Pods setup
-      run: pod install
     - name: Run build
       run: bundle exec fastlane buildLane
       env:
@@ -44,25 +40,3 @@ jobs:
         pod trunk push MindboxNotifications.podspec --allow-warnings
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-    - name: Info resouces for system of docker
-      run: |
-        echo Info for resources:
-        uname -a
-        hostinfo | grep memory
-        top -l 1 -s 0 | grep PhysMem
-        df -h
-
-  notify:
-    needs: [publish]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Job status notification
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_MESSAGE: 'SDK is available for public https://cocoapods.org/pods/Mindbox'
-        SLACK_USERNAME: MindBox-bot
-        SLACK_ICON: 'https://mindbox.ru/blog/wp-content/uploads/2020/06/favicon.png'
-        SLACK_COLOR: ${{job.status}}

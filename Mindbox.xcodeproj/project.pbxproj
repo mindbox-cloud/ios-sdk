@@ -505,7 +505,6 @@
 				3333C1992681D3CF00B60D84 /* MindboxNotifications */,
 				3333C1A42681D3CF00B60D84 /* MindboxNotificationsTests */,
 				313B233125ADEA0F00A1CB72 /* Products */,
-				7ECBF932967E50162EE94F12 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -828,13 +827,6 @@
 				33EBF0AF264E6283002A35D5 /* SessionManager.swift */,
 			);
 			path = SessionManager;
-			sourceTree = "<group>";
-		};
-		7ECBF932967E50162EE94F12 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		8400429F2614CDED00CA17C5 /* ClickNotificationManager */ = {
