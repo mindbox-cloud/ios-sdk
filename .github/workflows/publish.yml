@@ -3,7 +3,7 @@ name: SDK publish
 on:
   push:
     branches:
-      - 'feature/ci_update'
+      - 'master'
     tags-ignore:
       - '**'
 
@@ -24,6 +24,8 @@ jobs:
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
+    - name: Release generation
+      run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
     - name: Install bundler dependencies
       run: bundle install
     - name: Run build
@@ -34,3 +36,7 @@ jobs:
       run: |
         set -eo pipefail
         pod lib lint --allow-warnings
+        pod trunk push Mindbox.podspec --allow-warnings
+        pod trunk push MindboxNotifications.podspec --allow-warnings
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
