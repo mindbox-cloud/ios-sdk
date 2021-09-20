@@ -13,35 +13,12 @@ on:
 
 jobs:
   unit:
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - name: Install bundler dependencies
       run: bundle install
-    - name: Pods setup
-      run: pod install
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
-      env:
-        CI: true
-    - name: Info resouces for system of docker
-      run: |
-        echo Info for resources:
-        uname -a
-        hostinfo | grep memory
-        top -l 1 -s 0 | grep PhysMem
-        df -h
-
-  build:
-    needs: [unit]
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install bundler dependencies
-      run: bundle install
-    - name: Pods setup
-      run: pod install
-    - name: Run build
-      run: bundle exec fastlane buildLane
       env:
         CI: true
