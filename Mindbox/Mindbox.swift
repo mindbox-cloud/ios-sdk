@@ -243,6 +243,30 @@ public class Mindbox {
         }
     }
 
+    public func executeAsyncOperation(operationSystemName: String, operationBody: String) {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        guard let jsonData = operationBody.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+            Log("Operation body is not valid JSON")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBody)
+        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        do {
+            try databaseRepository?.create(event: event)
+            Log("Track executeAsyncOperation")
+                .category(.notification).level(.info).make()
+        } catch {
+            Log("Track executeAsyncOperation failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+    }
+
     /**
      Method for executing an operation synchronously.
 
@@ -262,6 +286,28 @@ public class Mindbox {
             return
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
+    }
+
+    public func executeSyncOperation(
+        operationSystemName: String,
+        operationBody: String,
+        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+    ) {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        guard let jsonData = operationBody.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+            Log("Operation body is not valid JSON")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBody)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
