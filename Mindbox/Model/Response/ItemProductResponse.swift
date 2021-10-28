@@ -8,6 +8,6 @@
 
 import Foundation
 
-open class ItemProductResponse: Decodable {
+open class ItemProductResponse: Codable {
     public let ids: IDS?
 }

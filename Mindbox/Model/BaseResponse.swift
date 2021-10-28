@@ -8,8 +8,6 @@
 
 import Foundation
 
-import Foundation
-
 class BaseResponse: Decodable {
     var status: Status = .unknown
 }

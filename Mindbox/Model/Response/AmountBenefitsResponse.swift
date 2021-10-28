@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class AmountBenefitsResponse: Decodable {
+open class AmountBenefitsResponse: Codable {
     public let type: AmountBenefitsTypeResponse?
     public let value: Double?
 }

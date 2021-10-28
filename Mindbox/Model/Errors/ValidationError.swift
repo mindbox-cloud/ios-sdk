@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct ValidationError: Decodable, CustomStringConvertible {
+public struct ValidationError: Codable, CustomStringConvertible {
     public let status: Status
     /// Array of validation problems
     public let validationMessages: [ValidationMessage]

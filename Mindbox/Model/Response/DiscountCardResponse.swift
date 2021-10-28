@@ -1,6 +1,6 @@
 import Foundation
 
-open class DiscountCardResponse: Decodable {
+open class DiscountCardResponse: Codable {
     public let ids: IDS?
     public let customFields: CustomFields?
     public let status: StatusResponse?

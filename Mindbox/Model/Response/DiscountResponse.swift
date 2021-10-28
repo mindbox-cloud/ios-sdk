@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class DiscountResponse: Decodable {
+open class DiscountResponse: Codable {
     public let amount: Double?
     public let amountType: DiscountAmountTypeResponse?
 }

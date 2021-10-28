@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class LimitBenefitsResponse: Decodable {
+open class LimitBenefitsResponse: Codable {
     public let period: PeriodTypeResponse?
     public let amount: AmountResponse?
     public let used: Double?

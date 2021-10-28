@@ -1,5 +1,5 @@
 import Foundation
 
-open class ProductGroupResponse: Decodable {
+open class ProductGroupResponse: Codable {
     public let ids: IDS?
 }

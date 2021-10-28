@@ -1,10 +1,10 @@
 import Foundation
 
-open class CustomerSegmentationResponse: Decodable {
+open class CustomerSegmentationResponse: Codable {
     public let segmentation: SegmentResponse?
     public let segment: SegmentResponse?
 }
 
-open class SegmentResponse: Decodable {
+open class SegmentResponse: Codable {
     public let ids: IDS?
 }

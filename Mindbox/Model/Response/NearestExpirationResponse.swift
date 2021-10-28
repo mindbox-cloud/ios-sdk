@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class NearestExpirationResponse: Decodable {
+open class NearestExpirationResponse: Codable {
     public let total: Double?
     public let date: DateOnly?
 }

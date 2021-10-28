@@ -1,6 +1,6 @@
 import Foundation
 
-open class RecommendationResponse: Decodable {
+open class RecommendationResponse: Codable {
     public let name: String?
     public let description: String?
     public let displayName: String?

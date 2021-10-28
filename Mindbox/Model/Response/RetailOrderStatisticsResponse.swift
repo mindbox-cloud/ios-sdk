@@ -7,6 +7,6 @@
 
 import Foundation
 
-open class RetailOrderStatisticsResponse: Decodable {
+open class RetailOrderStatisticsResponse: Codable {
     public let totalPaidAmount: Double?
 }

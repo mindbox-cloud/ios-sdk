@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class BalanceTypeReponse: Decodable {
+open class BalanceTypeReponse: Codable {
     public let ids: IDS?
     public let name: String?
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-open class PoolResponse: Decodable {
+open class PoolResponse: Codable {
     public let ids: IDS?
     public let name: String?
     public let poolDescription: String?

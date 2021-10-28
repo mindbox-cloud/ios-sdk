@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum Status: String, UnknownDecodable {
+public enum Status: String, UnknownCodable {
     case success = "Success"
     case validationError = "ValidationError"
     case protocolError = "ProtocolError"

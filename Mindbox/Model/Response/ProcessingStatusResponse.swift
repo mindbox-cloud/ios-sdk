@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum ProcessingStatusResponse: String, UnknownDecodable {
+public enum ProcessingStatusResponse: String, UnknownCodable {
     case success = "Success"
     case processed = "Processed"
     case notProcessed = "NotProcessed"

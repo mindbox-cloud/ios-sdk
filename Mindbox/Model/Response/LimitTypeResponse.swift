@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum LimitTypeResponse: String, UnknownDecodable {
+public enum LimitTypeResponse: String, UnknownCodable {
     case groupLimit, personalLimit, unknown
 }

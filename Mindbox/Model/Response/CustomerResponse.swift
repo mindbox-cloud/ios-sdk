@@ -1,6 +1,6 @@
 import Foundation
 
-open class CustomerResponse: Decodable {
+open class CustomerResponse: Codable {
     public let ids: IDS?
     public let area: AreaResponse?
     public let subscriptions: [SubscriptionResponse]?
