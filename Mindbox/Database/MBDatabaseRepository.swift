@@ -326,11 +326,9 @@ class MBDatabaseRepository {
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
-            try context.performAndWait {
-                try saveContext(context, forceSave: true)
-                Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
-                    .category(.database).level(.info).make()
-            }
+            try saveContext(context, forceSave: true)
+            Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
+                .category(.database).level(.info).make()
         } catch {
             Log("Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)")
                 .category(.database).level(.error).make()
