@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct ProtocolError: Decodable, CustomStringConvertible {
+public struct ProtocolError: Codable, CustomStringConvertible {
     public let status: Status
     /// Error description
     public let errorMessage: String

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum PeriodTypeResponse: String, UnknownDecodable {
+public enum PeriodTypeResponse: String, UnknownCodable {
     case fixedDays = "FixedDays"
     case fixedMonths = "FixedMonths"
     case fixedWeeks = "FixedWeeks"

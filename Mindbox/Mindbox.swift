@@ -223,7 +223,7 @@ public class Mindbox {
 
      - Parameters:
         - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
-        - operationBody: Provided `OperationBodyRequestBase` payload to send
+        - operationBody: Provided `OperationBodyRequestBase` payload to send.
      */
     public func executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName: String, operationBody: T) {
         guard operationSystemName.operationNameIsValid else {
@@ -232,6 +232,37 @@ public class Mindbox {
             return
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        do {
+            try databaseRepository?.create(event: event)
+            Log("Track executeAsyncOperation")
+                .category(.notification).level(.info).make()
+        } catch {
+            Log("Track executeAsyncOperation failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+    }
+
+    /**
+     Method for register a custom event.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - json: String which contains JSON to send.
+     */
+    public func executeAsyncOperation(operationSystemName: String, json: String) {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        guard let jsonData = json.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+            Log("Operation body is not valid JSON")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
         do {
             try databaseRepository?.create(event: event)
@@ -269,12 +300,42 @@ public class Mindbox {
 
     /**
      Method for executing an operation synchronously.
+
+     - Parameters:
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - json: String which contains JSON to send.
+        - completion: Result of sending operation. Contains `OperationResponse` or `MindboxError`.
+     */
+    public func executeSyncOperation(
+        operationSystemName: String,
+        json: String,
+        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+    ) {
+        guard operationSystemName.operationNameIsValid else {
+            Log("Invalid operation name: \(operationSystemName)")
+                .category(.notification).level(.error).make()
+            return
+        }
+        guard let jsonData = json.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+            Log("Operation body is not valid JSON")
+                .category(.notification).level(.error).make()
+            return
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: json)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        Log("Track executeSyncOperation").category(.notification).level(.info).make()
+    }
+
+    /**
+     Method for executing an operation synchronously.
      
      - Note: use this method if you have your own object that extends `OperationResponseType`.
 
      - Parameters:
         - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
-        - operationBody: Provided `OperationBodyRequestType` payload to send
+        - operationBody: Provided `OperationBodyRequestType` payload to send.
         - customResponseType: Expected result type in completion.
         - completion: Result of sending operation. Contains `OperationResponseType` or `MindboxError`.
      */

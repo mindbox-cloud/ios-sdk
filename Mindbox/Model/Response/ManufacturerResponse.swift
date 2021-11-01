@@ -1,5 +1,5 @@
 import Foundation
 
-open class ManufacturerResponse: Decodable {
+open class ManufacturerResponse: Codable {
     public let name: String?
 }

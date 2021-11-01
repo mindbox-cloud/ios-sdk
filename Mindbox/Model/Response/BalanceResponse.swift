@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class BalanceResponse: Decodable {
+open class BalanceResponse: Codable {
     public let total: Double?
     public let available: Double?
     public let blocked: Double?

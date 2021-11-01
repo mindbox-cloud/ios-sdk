@@ -1,6 +1,6 @@
 import Foundation
 
-open class ProductResponse: Decodable {
+open class ProductResponse: Codable {
     public let ids: IDS?
     public let name: String?
     public let displayName: String?

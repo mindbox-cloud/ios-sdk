@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class CouponResponse: Decodable {
+open class CouponResponse: Codable {
     public let ids: IDS?
     public let pool: PoolResponse?
 }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class AppliedPromotionResponse: Decodable {
+open class AppliedPromotionResponse: Codable {
     public let type: AppliedPromotionTypeResponse?
     public let coupon: CouponResponse?
     public let promotion: PromotionResponse?

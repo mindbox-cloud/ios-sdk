@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class PlaceholderResponse: Decodable {
+open class PlaceholderResponse: Codable {
     public let ids: IDS?
     public let content: [ContentResponse]?
 }
