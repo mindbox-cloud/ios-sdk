@@ -11,7 +11,8 @@ import UserNotifications
 import UserNotificationsUI
 import os
 
-public class MindboxNotificationService {
+@objcMembers
+public class MindboxNotificationService: NSObject {
     // Public
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
@@ -22,7 +23,9 @@ public class MindboxNotificationService {
     private let log = OSLog(subsystem: "cloud.Mindbox", category: "Notifications")
 
     /// Mindbox proxy for NotificationsService and NotificationViewController
-    public init() {}
+    public override init() {
+        super.init()
+    }
 
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
