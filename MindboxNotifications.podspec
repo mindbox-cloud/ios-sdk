@@ -3,7 +3,7 @@ Pod::Spec.new do |spec|
 
   spec.name         = "MindboxNotifications"
 
-  spec.version      = "1.2.0"
+  spec.version      = "1.3.0"
 
   spec.summary      = "SDK for integration notifications with Mindbox"
 
