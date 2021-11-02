@@ -9,8 +9,8 @@
 import Foundation
 import os
 
-
-public class MBLogger {
+@objcMembers
+public class MBLogger: NSObject {
     
     /**
      ### Levels:
@@ -32,12 +32,13 @@ public class MBLogger {
     
     private let executionMethod: ExecutionMethod
     
-    public init() {
+    public override init() {
         #if DEBUG
             executionMethod = .sync(lock: NSRecursiveLock())
         #else
             executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
+        super.init()
     }
 
     func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {

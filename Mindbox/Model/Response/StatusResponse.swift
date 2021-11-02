@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class StatusResponse: Decodable {
+open class StatusResponse: Codable {
     public let ids: IDS?
     public let dateTimeUtc: DateTime?
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-open class AreaResponse: Decodable {
+open class AreaResponse: Codable {
     public var ids: IDS?
     public var name: String?
 }

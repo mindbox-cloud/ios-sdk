@@ -8,6 +8,6 @@
 
 import Foundation
 
-public enum UsageServiceStatusResponse: String, UnknownDecodable {
+public enum UsageServiceStatusResponse: String, UnknownCodable {
     case available, unavailable, unknown
 }

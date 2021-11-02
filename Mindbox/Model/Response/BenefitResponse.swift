@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class BenefitResponse: Decodable {
+open class BenefitResponse: Codable {
     public let amount: AmountBenefitsResponse?
     public let limit: LimitBenefitsResponse?
 }

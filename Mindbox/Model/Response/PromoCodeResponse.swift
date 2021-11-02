@@ -1,6 +1,6 @@
 import Foundation
 
-open class PromoCodeResponse: Decodable {
+open class PromoCodeResponse: Codable {
     public let issueStatus: IssueStatusResponse?
     public let ids: IDS?
     public let pool: PoolResponse?

@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class PersonalOffersResponse: Decodable {
+open class PersonalOffersResponse: Codable {
     public let product: ProductResponse?
     public let benefit: BenefitResponse?
     public let startDateTimeUtc: DateTime?

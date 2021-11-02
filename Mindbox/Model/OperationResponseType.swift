@@ -8,6 +8,6 @@
 
 import Foundation
 
-public protocol OperationResponseType: Decodable {
+public protocol OperationResponseType: Codable {
     var status: Status { get }
 }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class PromoActionsResponse: Decodable {
+open class PromoActionsResponse: Codable {
     public let ids: IDS?
     public let name: String?
     public let description: String?

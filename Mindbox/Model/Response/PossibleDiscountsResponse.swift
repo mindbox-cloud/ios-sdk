@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class PossibleDiscountsResponse: Decodable {
+open class PossibleDiscountsResponse: Codable {
     public let discountsCount: Int?
     public let discount: DiscountResponse?
     public let products: [ProductElementReponse]?

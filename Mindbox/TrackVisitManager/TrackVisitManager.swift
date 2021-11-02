@@ -27,7 +27,19 @@ final class TrackVisitManager {
             try handlePush(response)
         }
     }
-    
+
+    @objc func track(data: TrackVisitData) throws {
+        if let userActivity = data.universalLink {
+            try handleUniversalLink(userActivity)
+        } else if let response = data.push {
+            try handlePush(response)
+        } else if #available(iOS 13.0, *), let sceneOptions = data.sceneOptions as? UIScene.ConnectionOptions {
+            try handleLaunch(sceneOptions)
+        } else if let launchOptions = data.launchOptions {
+            try handleLaunch(launchOptions)
+        }
+    }
+
     func trackForeground() throws {
         let encodable = TrackVisit()
         Log("Tracked Visit event type direct").category(.visit).level(.info).make()
@@ -42,12 +54,11 @@ final class TrackVisitManager {
 
     private func handleLaunch(_ options: LaunchOptions?) throws {
         guard let options = options else { return }
-        
+
         if #available(iOS 13.0, *),
            case let sceneOptions as UIScene.ConnectionOptions = options,
            let userActivity = sceneOptions.userActivities.first,
-           userActivity.activityType == NSUserActivityTypeBrowsingWeb
-        {
+           userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             try handleUniversalLink(userActivity)
         }
     }
@@ -59,12 +70,11 @@ final class TrackVisitManager {
     }
 
     private func handlePush(_ response: UNNotificationResponse) throws {
-
         let encodable = TrackVisit(source: .push)
         try sendTrackVisit(encodable)
         Log("Tracked Visit event type: push").category(.visit).level(.info).make()
     }
-    
+
     private func sendTrackVisit<E: Encodable>(_ encodable: E) throws {
         let event = Event(type: .trackVisit, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
@@ -76,6 +86,14 @@ public enum TrackVisitType {
     case push(UNNotificationResponse)
     case launch(LaunchOptions?)
     case launchScene(LaunchOptions?)
+}
+
+@objcMembers
+public class TrackVisitData: NSObject {
+    public var universalLink: NSUserActivity?
+    public var push: UNNotificationResponse?
+    public var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    public var sceneOptions: Any?
 }
 
 public protocol LaunchOptions {}

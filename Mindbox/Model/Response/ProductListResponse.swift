@@ -1,6 +1,6 @@
 import Foundation
 
-open class ProductListResponse: Decodable {
+open class ProductListResponse: Codable {
     public let product: ProductResponse?
     public let productGroup: ProductGroupResponse?
     public let count: Double?

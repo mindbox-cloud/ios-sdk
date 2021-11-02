@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class ItemResponse: Decodable {
+open class ItemResponse: Codable {
     public let product: ItemProductResponse?
     public let basePricePerItem: Double?
     public let minPricePerItem: Double?

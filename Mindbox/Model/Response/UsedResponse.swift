@@ -8,7 +8,7 @@
 
 import Foundation
 
-open class UsedResponse: Decodable {
+open class UsedResponse: Codable {
     public let usageServiceStatus: UsageServiceStatusResponse?
     public let amount: Double?
 }
