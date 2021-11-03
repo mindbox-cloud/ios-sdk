@@ -310,7 +310,7 @@ public class Mindbox: NSObject {
     public func executeSyncOperation(
         operationSystemName: String,
         json: String,
-        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+        completion: @escaping (ResultMindbox) -> Void
     ) {
         guard operationSystemName.operationNameIsValid else {
             Log("Invalid operation name: \(operationSystemName)")
@@ -325,7 +325,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, withMindboxResultCompletion: completion)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 

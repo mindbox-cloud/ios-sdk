@@ -79,6 +79,36 @@ class MBEventRepository: EventRepository {
         })
     }
 
+    func send<T>(type: T.Type, event: Event, withMindboxResultCompletion completion: @escaping ((ResultMindbox)) -> Void) where T: Decodable {
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            completion(.clientFailure(error))
+            return
+        }
+        guard let deviceUUID = configuration.previousDeviceUUID else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "DeviceUUID is not set"
+            ))
+            completion(.clientFailure(error))
+            return
+        }
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+        let route = makeRoute(wrapper: wrapper)
+        fetcher.request(type: type, route: route, withResultMindboxCompetion: { result in
+            DispatchQueue.main.async {
+                completion(result)
+            }
+        })
+    }
+
     private func makeRoute(wrapper: EventWrapper) -> Route {
         switch wrapper.event.type {
         case .installed,

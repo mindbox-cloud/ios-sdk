@@ -10,6 +10,13 @@ import Foundation
 
 protocol NetworkFetcher {
     func request<T>(
+            type: T.Type,
+            route: Route,
+            withResultMindboxCompetion completion: @escaping (ResultMindbox) -> Void
+        ) where T: Decodable
+
+
+    func request<T>(
         type: T.Type,
         route: Route,
         completion: @escaping ((Result<T, MindboxError>) -> Void)
