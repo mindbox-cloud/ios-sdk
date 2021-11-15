@@ -77,13 +77,119 @@ public enum MindboxError: LocalizedError {
     }
 }
 
+public extension MindboxError {
+
+    private struct MindboxErrorJSON: Encodable {
+        let type: String
+        var data = MindboxErrorData()
+
+        struct MindboxErrorData: Encodable {
+            var errorId: String?
+            var errorKey: String?
+            var errorName: String?
+            var errorMessage: String?
+            var httpStatusCode: String?
+            var status: Status?
+            var validationMessages: [ValidationMessage]?
+        }
+
+        init(errorKey: String, errorName: String, errorMessage: String) {
+            self.type = "InternalError"
+
+            data.errorKey = errorKey
+            data.errorName = errorName
+            data.errorMessage = errorMessage
+        }
+
+        init(httpStatusCode: String, errorMessage: String) {
+            self.type = "NetworkError"
+            data.httpStatusCode = httpStatusCode
+            data.errorMessage = errorMessage
+        }
+
+        init(status: Status, errorMessage: String, errorId: String, httpStatusCode: Int) {
+            self.type = "MindboxError"
+            data.status = status
+            data.errorMessage = errorMessage
+            data.errorId = errorId
+            data.httpStatusCode = String(httpStatusCode)
+        }
+
+        init(status: Status, validationMessages: [ValidationMessage]) {
+            self.type = "MindboxError"
+            data.status = status
+            data.validationMessages = validationMessages
+        }
+
+        func convertToString() -> String {
+            guard
+                let errorData = try? JSONEncoder().encode(self),
+                let errorString = String(data: errorData, encoding: .utf8) else {
+                return
+                    """
+                    {
+                        type: "InternalError",
+                        data: {
+                            errroKey: "\(self.data.errorKey ?? "null")",
+                            errroName: "JSON encoding error",
+                            errorMessage: "Unable to convert Data to JSON",
+                        }
+                    }
+                    """
+            }
+            return errorString
+        }
+    }
+
+    func createJSON() -> String {
+        switch self {
+        case .validationError(let error):
+            return MindboxErrorJSON(status: error.status,
+                                    validationMessages: error.validationMessages).convertToString()
+        case .protocolError(let error):
+            return MindboxErrorJSON(status: error.status,
+                                    errorMessage: error.errorMessage,
+                                    errorId: error.errorId ?? "",
+                                    httpStatusCode: error.httpStatusCode).convertToString()
+        case .serverError(let error):
+            return MindboxErrorJSON(status: error.status,
+                                    errorMessage: error.errorMessage,
+                                    errorId: error.errorId ?? "",
+                                    httpStatusCode: error.httpStatusCode).convertToString()
+        case .internalError(let error):
+            return MindboxErrorJSON(errorKey: error.errorKey,
+                                    errorName: error.reason ?? "",
+                                    errorMessage: error.description).convertToString()
+        case .invalidResponse(let response):
+            if let httpResponse = response as? HTTPURLResponse {
+                let httpStatusCode = String(httpResponse.statusCode)
+                let errorMessage = httpResponse.description
+
+                return MindboxErrorJSON(httpStatusCode: httpStatusCode,
+                                        errorMessage: errorMessage).convertToString()
+            } else {
+                return MindboxErrorJSON(httpStatusCode: "null",
+                                        errorMessage: "Connection error").convertToString()
+            }
+        case .connectionError:
+            return MindboxErrorJSON(httpStatusCode: "null",
+                                    errorMessage: "Connection error").convertToString()
+        case .unknown(let error):
+            return MindboxErrorJSON(errorKey: "unknown",
+                                    errorName: "",
+                                    errorMessage: error.localizedDescription).convertToString()
+        }
+    }
+
+}
+
 public struct InternalError: CustomStringConvertible {
     let errorKey: String
     var rawError: Error?
     var statusCode: Int?
     var reason: String?
     var suggestion: String?
-    
+
     init(
         errorKey: String,
         rawError: Error? = nil,
