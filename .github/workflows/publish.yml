@@ -12,6 +12,8 @@ jobs:
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
+    - name: Update bundler
+      run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
     - name: Select Xcode
@@ -28,6 +30,8 @@ jobs:
     - uses: actions/checkout@v2
     - name: Release generation
       run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
+    - name: Update bundler
+      run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
     - name: Select Xcode

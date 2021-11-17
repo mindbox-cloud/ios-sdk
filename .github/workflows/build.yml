@@ -16,6 +16,8 @@ jobs:
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
+    - name: Update bundler
+      run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
     - name: Run unit tests
