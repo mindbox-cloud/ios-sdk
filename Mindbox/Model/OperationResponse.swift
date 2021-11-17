@@ -60,3 +60,25 @@ open class OperationResponse: OperationResponseType {
         case retailOrderStatistics
     }
 }
+
+public extension OperationResponse {
+    func createJSON() -> String {
+        guard
+            let jsonData = try? JSONEncoder().encode(self),
+            let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return
+                    """
+                    {
+                        type: "InternalError",
+                        data: {
+                            errroKey: "null",
+                            errroName: "JSON encoding error",
+                            errorMessage: "Unable to convert Data to JSON",
+                        }
+                    }
+                    """
+
+        }
+        return jsonString
+    }
+}
