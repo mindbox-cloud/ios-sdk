@@ -55,39 +55,23 @@ public struct MBConfiguration: Codable {
         }
 
         if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
-            guard UUID(uuidString: previousInstallationId) != nil else {
-                throw MindboxError(.init(
-                    errorKey: .invalidConfiguration,
-                    reason: "previousInstallationId doesn't match the UUID format"
-                ))
+            if UUID(uuidString: previousInstallationId) != nil && UDIDValidator(udid: previousInstallationId).evaluate() {
+                self.previousInstallationId = previousInstallationId
+            } else {
+                Mindbox.logger.log(level: .error, message: "previousInstallationId doesn't match the UUID format")
+                self.previousInstallationId = ""
             }
-
-            guard UDIDValidator(udid: previousInstallationId).evaluate() else {
-                throw MindboxError(.init(
-                    errorKey: .invalidConfiguration,
-                    reason: "previousInstallationId doesn't match the UUID format"
-                ))
-            }
-
-            self.previousInstallationId = previousInstallationId
         }
+
         if let previousDeviceUUID = previousDeviceUUID, !previousDeviceUUID.isEmpty {
-            guard UUID(uuidString: previousDeviceUUID) != nil else {
-                throw MindboxError(.init(
-                    errorKey: .invalidConfiguration,
-                    reason: "previousDeviceUUID doesn't match the UUID format"
-                ))
+            if UUID(uuidString: previousDeviceUUID) != nil && UDIDValidator(udid: previousDeviceUUID).evaluate() {
+                self.previousDeviceUUID = previousDeviceUUID
+            } else {
+                Mindbox.logger.log(level: .error, message: "previousDeviceUUID doesn't match the UUID format")
+                self.previousDeviceUUID = ""
             }
-
-            guard UDIDValidator(udid: previousDeviceUUID).evaluate() else {
-                throw MindboxError(.init(
-                    errorKey: .invalidConfiguration,
-                    reason: "previousDeviceUUID doesn't match the UUID format"
-                ))
-            }
-
-            self.previousDeviceUUID = previousDeviceUUID
         }
+        
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
         self.shouldCreateCustomer = shouldCreateCustomer
     }
