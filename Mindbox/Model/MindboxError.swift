@@ -6,6 +6,8 @@
 //  Copyright © 2020 Yusuf Demirci. All rights reserved.
 //
 
+import Foundation
+
 /// Data types that thrown the possible errors from Mindbox.
 public enum MindboxError: LocalizedError {
     /// Client error
