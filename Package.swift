@@ -4,28 +4,30 @@
 import PackageDescription
 
 let package = Package(
-    name: "Mindbox",
+	name: "Mindbox",
 	platforms: [.iOS(.v10)],
-    products: [
-        // Products define the executables and libraries a package produces, and make them visible to other packages.
-        .library(
-            name: "Mindbox",
-            targets: ["Mindbox"]),
-    ],
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
-        .target(
-            name: "Mindbox",
-            dependencies: [],
-			path: "Mindbox"),
-        .testTarget(
-            name: "MindboxTests",
-            dependencies: ["Mindbox"],
-			path: "MindboxTests"),
-    ]
+	products: [
+		.library(
+			name: "Mindbox",
+			targets: ["Mindbox"]),
+	],
+	dependencies: [],
+	targets: [
+		.target(
+			name: "Mindbox",
+			dependencies: [],
+			path: "Mindbox",
+			resources: [
+				.copy("Model/Bodies/MobileApplication")
+			]),
+		.testTarget(
+			name: "MindboxTests",
+			dependencies: ["Mindbox"],
+			path: "MindboxTests",
+			resources: [
+				.copy("Supporting Files"),
+				.copy("Mock/SuccessResponse.json"),
+				.copy("EventRepository/TestEventConfig.plist")
+			]),
+	]
 )
