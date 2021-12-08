@@ -10,6 +10,9 @@ let package = Package(
 		.library(
 			name: "Mindbox",
 			targets: ["Mindbox"]),
+		.library(
+			name: "MindboxNotifications",
+			targets: ["MindboxNotifications"])
 	],
 	dependencies: [],
 	targets: [
@@ -20,6 +23,11 @@ let package = Package(
 			resources: [
 				.copy("Model/Bodies/MobileApplication")
 			]),
+		.target(
+			name: "MindboxNotifications",
+			dependencies: [],
+			path: "MindboxNotifications",
+			resources: []),
 		.testTarget(
 			name: "MindboxTests",
 			dependencies: ["Mindbox"],
@@ -29,5 +37,10 @@ let package = Package(
 				.copy("Mock/SuccessResponse.json"),
 				.copy("EventRepository/TestEventConfig.plist")
 			]),
+		.testTarget(
+			name: "MindboxNotificationsTests",
+			dependencies: ["MindboxNotifications"],
+			path: "MindboxNotificationsTests",
+			resources: []),
 	]
 )
