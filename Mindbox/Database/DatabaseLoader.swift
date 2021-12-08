@@ -22,9 +22,17 @@ class DataBaseLoader {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
         let bundle = Bundle(for: DataBaseLoader.self)
         let momdName = Constants.Database.mombName
+
+        #if SWIFT_PACKAGE
+        guard let modelURL = bundle.url(forResource: "Mindbox_Mindbox.bundle/\(momdName)", withExtension: "momd") else {
+            throw MBDatabaseError.unableCreateDatabaseModel
+        }
+        #else
         guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
         }
+        #endif
+
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
             throw MBDatabaseError.unableCreateManagedObjectModel(with: modelURL)
         }
