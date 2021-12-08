@@ -20,7 +20,7 @@ let package = Package(
             name: "Mindbox",
             dependencies: [],
             path: "Mindbox"),
-        .testTarget(
+        .target(
             name: "MindboxNotifications",
             dependencies: [],
             path: "MindboxNotifications"),
