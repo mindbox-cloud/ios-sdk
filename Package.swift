@@ -24,10 +24,10 @@ let package = Package(
         .target(
             name: "Mindbox",
             dependencies: [],
-            path: "Mindbox/Mindbox"),
+            path: "ios-sdk/Mindbox"),
         .testTarget(
             name: "MindboxNotifications",
             dependencies: [],
-            path: "Mindbox/MindboxNotifications"),
+            path: "ios-sdk/MindboxNotifications"),
     ]
 )
