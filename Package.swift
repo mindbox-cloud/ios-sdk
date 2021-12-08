@@ -10,8 +10,12 @@ let package = Package(
             name: "Mindbox",
             targets: ["Mindbox"]),
         .library(
-            name: "MindboxNotifications",
+            name: "MindboxNotificationsService",
             targets: ["MindboxNotifications"])
+        .library(
+            name: "MindboxNotificationsContent",
+            targets: ["MindboxNotifications"])
+
     ],
     dependencies: [
     ],
