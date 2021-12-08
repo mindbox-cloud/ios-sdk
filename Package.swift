@@ -23,9 +23,11 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "Mindbox",
-            dependencies: []),
+            dependencies: [],
+            path: "Mindbox"),
         .testTarget(
             name: "MindboxNotifications",
-            dependencies: []),
+            dependencies: [],
+            path: "MindboxNotifications"),
     ]
 )
