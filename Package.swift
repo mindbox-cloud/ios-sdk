@@ -19,10 +19,12 @@ let package = Package(
         .target(
             name: "Mindbox",
             dependencies: [],
-            path: "Mindbox"),
+            path: "Mindbox",
+            exclude: ["Info.plist"]),
         .target(
             name: "MindboxNotifications",
             dependencies: [],
-            path: "MindboxNotifications"),
+            path: "MindboxNotifications",
+            exclude:  ["Info.plist"])
     ]
 )
