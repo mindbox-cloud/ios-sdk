@@ -18,10 +18,10 @@ let package = Package(
         .target(
             name: "Mindbox",
             dependencies: [],
-            path: "/Mindbox"),
+            path: "Mindbox"),
         .testTarget(
             name: "MindboxNotifications",
             dependencies: [],
-            path: "/MindboxNotifications"),
+            path: "MindboxNotifications"),
     ]
 )
