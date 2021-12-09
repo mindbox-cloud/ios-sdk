@@ -20,9 +20,8 @@ class DataBaseLoader {
     
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
-        let bundle = Bundle(for: DataBaseLoader.self)
         let momdName = Constants.Database.mombName
-        guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
+		guard let modelURL = Bundle.module.url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
