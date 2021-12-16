@@ -20,15 +20,14 @@ class DataBaseLoader {
     
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
-        let bundle = Bundle(for: DataBaseLoader.self)
         let momdName = Constants.Database.mombName
 
         #if SWIFT_PACKAGE
-        guard let modelURL = bundle.url(forResource: "Mindbox_Mindbox.bundle/\(momdName)", withExtension: "momd") else {
+        guard let modelURL = Bundle.module.url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         #else
-        guard let modelURL = bundle.url(forResource: momdName, withExtension: "momd") else {
+        guard let modelURL = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") else {
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         #endif
