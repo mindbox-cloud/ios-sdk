@@ -9,7 +9,9 @@
 import Foundation
 
 struct MobileApplicationInstalled: Codable {
-    
+
+    let notificationProvider: String
+
     let token: String
     
     var isTokenAvailable: Bool
@@ -33,7 +35,8 @@ struct MobileApplicationInstalled: Codable {
         subscribe: Bool?,
         externalDeviceUUID: String?,
         version: Int,
-        instanceId: String
+        instanceId: String,
+        notificationProvider: String = "APNS"
     ) {
         self.token = token ?? ""
         self.isTokenAvailable = !self.token.isEmpty
@@ -43,6 +46,7 @@ struct MobileApplicationInstalled: Codable {
         self.externalDeviceUUID = externalDeviceUUID
         self.version = version
         self.instanceId = instanceId
+        self.notificationProvider = notificationProvider
     }
 
 }
