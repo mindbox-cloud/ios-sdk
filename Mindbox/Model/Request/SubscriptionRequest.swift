@@ -4,13 +4,13 @@ open class SubscriptionRequest: Codable {
     public var brand: String?
     public var pointOfContact: Channel?
     public var topic: String?
-    public var isSubscribed: Bool
+    public var isSubscribed: Bool?
 
     public init(
         brand: String? = nil,
         pointOfContact: Channel? = nil,
         topic: String? = nil,
-        isSubscribed: Bool
+        isSubscribed: Bool? = nil
     ) {
         self.brand = brand
         self.pointOfContact = pointOfContact
