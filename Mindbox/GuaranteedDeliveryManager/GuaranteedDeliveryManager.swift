@@ -140,5 +140,9 @@ final class GuaranteedDeliveryManager: NSObject {
         queue.addOperations(operations, waitUntilFinished: false)
     }
     
+    /// Cancels all queued and executing operations
+    func cancelAllOperations() {
+        queue.cancelAllOperations()
+    }
+    
 }
-

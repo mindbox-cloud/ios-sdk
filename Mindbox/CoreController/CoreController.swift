@@ -16,17 +16,19 @@ class CoreController {
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
+    private var configValidation = ConfigValidation()
 
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
     private let installQueue = DispatchQueue(label: "com.Mindbox.installUpdate")
     private let checkNotificationStatusQueue = DispatchQueue(label: "com.Mindbox.checkNotificationStatus")
 
     func initialization(configuration: MBConfiguration) {
+        configValidation.compare(configuration, persistenceStorage.configuration)
         persistenceStorage.configuration = configuration
         if !persistenceStorage.isInstalled {
             primaryInitialization(with: configuration)
         } else {
-            repeatInitialization()
+            repeatInitialization(with: configuration)
         }
         guaranteedDeliveryManager.canScheduleOperations = true
     }
@@ -82,22 +84,31 @@ class CoreController {
         })
     }
 
-    private func repeatInitialization() {
+    private func repeatInitialization(with configutaion: MBConfiguration) {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Log("Unable to find deviceUUID in persistenceStorage")
                 .category(.general).level(.error).make()
             return
         }
-        persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
-        checkNotificationStatus()
+        
+        if configValidation.changedState != .none {
+            installQueue.sync {
+                install(
+                    deviceUUID: deviceUUID,
+                    configuration: configutaion
+                )
+            }
+        } else {
+            checkNotificationStatus()
+            persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
+        }
     }
 
     private var installSemathore = DispatchSemaphore(value: 1)
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
         installSemathore.wait(); defer { installSemathore.signal() }
-        let previousVersion = databaseRepository.installVersion ?? -1
-        let newVersion = previousVersion + 1
+        let newVersion = 0 // Variable from an older version of this framework
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
         let apnsToken = persistenceStorage.apnsToken
@@ -114,22 +125,10 @@ class CoreController {
                 version: newVersion,
                 instanceId: instanceId
             )
-            let body = BodyEncoder(encodable: encodable).body
-            var event: Event
-            if configuration.shouldCreateCustomer {
-                event = Event(
-                    type: .installed,
-                    body: body
-                )
-            } else {
-                event = Event(
-                    type: .installedWithoutCustomer,
-                    body: body
-                )
-            }
             do {
-                try self.databaseRepository.create(event: event)
-                self.databaseRepository.installVersion = newVersion
+                try self.databaseRepository.erase()
+                self.guaranteedDeliveryManager.cancelAllOperations()
+                try self.installEvent(encodable, config: configuration)
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
                 self.persistenceStorage.installationDate = Date()
                 Log("MobileApplicationInstalled")
@@ -139,6 +138,27 @@ class CoreController {
                     .category(.general).level(.error).make()
             }
         }
+    }
+
+    private func installEvent<T: Encodable>(_ body: T, config: MBConfiguration) throws {
+        guard let event: Event = {
+            let body = BodyEncoder(encodable: body).body
+            if config.shouldCreateCustomer {
+                return Event(
+                    type: .installed,
+                    body: body
+                )
+            } else if !persistenceStorage.isInstalled || configValidation.changedState == .rest {
+                return Event(
+                    type: .installedWithoutCustomer,
+                    body: body
+                )
+            } else {
+                return nil
+            }
+        }() else { return }
+
+        try databaseRepository.create(event: event)
     }
 
     private var infoUpdateSemathore = DispatchSemaphore(value: 1)

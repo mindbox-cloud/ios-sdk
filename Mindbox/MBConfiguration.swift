@@ -168,3 +168,31 @@ public struct MBConfiguration: Codable {
         )
     }
 }
+
+struct ConfigValidation {
+
+    struct ChangedState: OptionSet {
+        let rawValue: Int
+
+        static let none                 = ChangedState(rawValue: 1 << 0)
+        static let endpoint             = ChangedState(rawValue: 1 << 1)
+        static let domain               = ChangedState(rawValue: 1 << 2)
+        static let shouldCreateCustomer = ChangedState(rawValue: 1 << 3)
+
+        /// Change affecting the REST API for the application
+        static let rest: ChangedState = [.endpoint, .domain]
+    }
+
+    var changedState: ChangedState = .none
+
+    mutating func compare(_ lhs: MBConfiguration?, _ rhs: MBConfiguration?) {
+        if !(lhs?.domain == rhs?.domain && lhs?.endpoint == rhs?.endpoint) {
+            changedState = .rest
+        } else if !(lhs?.shouldCreateCustomer == rhs?.shouldCreateCustomer) {
+            changedState = .shouldCreateCustomer
+        } else {
+            changedState = .none
+        }
+    }
+
+}
