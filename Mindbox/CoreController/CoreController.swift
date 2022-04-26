@@ -108,6 +108,8 @@ class CoreController {
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
         installSemathore.wait(); defer { installSemathore.signal() }
+        try? databaseRepository.erase()
+        guaranteedDeliveryManager.cancelAllOperations()
         let newVersion = 0 // Variable from an older version of this framework
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
@@ -126,8 +128,7 @@ class CoreController {
                 instanceId: instanceId
             )
             do {
-                try self.databaseRepository.erase()
-                self.guaranteedDeliveryManager.cancelAllOperations()
+                self.trackDirect()
                 try self.installEvent(encodable, config: configuration)
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
                 self.persistenceStorage.installationDate = Date()
