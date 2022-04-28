@@ -19,6 +19,7 @@ struct IDFVFetcher {
         let timer = Timer(timeInterval: 1, repeats: true) { (timer) in
             guard countdown > 0 else {
                 completion(nil)
+                timer.invalidate()
                 return
             }
             if let udid = UIDevice.current.identifierForVendor, isValid(udid: udid.uuidString) {
