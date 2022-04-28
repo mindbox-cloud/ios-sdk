@@ -117,7 +117,8 @@ final class GuaranteedDeliveryManager: NSObject {
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
-        let completion = BlockOperation { [weak self] in
+        let completion = BlockOperation()
+        completion.completionBlock = { [weak self] in
             Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
                 .category(.delivery).level(.info).make()
             self?.state = .idle
@@ -140,5 +141,82 @@ final class GuaranteedDeliveryManager: NSObject {
         queue.addOperations(operations, waitUntilFinished: false)
     }
     
+    /// Cancels all queued and executing operations
+    func cancelAllOperations() {
+        queue.cancelAllOperations()
+    }
+    
 }
 
+class AsyncOperation: Operation {
+    private let lockQueue = DispatchQueue(label: "com.mindbox.asyncoperation", attributes: .concurrent)
+        
+    override var isAsynchronous: Bool {
+        return true
+    }
+    
+    private var _isExecuting: Bool = false
+    override private(set) var isExecuting: Bool {
+        get {
+            return lockQueue.sync { () -> Bool in
+                return _isExecuting
+            }
+        }
+        set {
+            if #available(iOS 11.0, *) {
+                willChangeValue(for: \.isExecuting)
+                lockQueue.sync(flags: [.barrier]) {
+                    _isExecuting = newValue
+                }
+                didChangeValue(for: \.isExecuting)
+            } else {
+                willChangeValue(forKey: "isExecuting")
+                lockQueue.sync(flags: [.barrier]) {
+                    _isExecuting = newValue
+                }
+                didChangeValue(forKey: "isExecuting")
+            }
+        }
+    }
+    
+    private var _isFinished: Bool = false
+    override private(set) var isFinished: Bool {
+        get {
+            return lockQueue.sync { () -> Bool in
+                return _isFinished
+            }
+        }
+        set {
+            if #available(iOS 11.0, *) {
+                willChangeValue(for: \.isFinished)
+                lockQueue.sync(flags: [.barrier]) {
+                    _isFinished = newValue
+                }
+                didChangeValue(for: \.isFinished)
+            } else {
+                willChangeValue(forKey: "isFinished")
+                lockQueue.sync(flags: [.barrier]) {
+                    _isFinished = newValue
+                }
+                didChangeValue(forKey: "isFinished")
+            }
+        }
+    }
+    
+    override func start() {
+        guard !isCancelled else { return finish() }
+        
+        isFinished = false
+        isExecuting = true
+        main()
+    }
+    
+    override func main() {
+        fatalError("Subclasses must implement `main` without overriding super.")
+    }
+    
+    func finish() {
+        isExecuting = false
+        isFinished = true
+    }
+}

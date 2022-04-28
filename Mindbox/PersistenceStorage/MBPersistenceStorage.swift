@@ -14,9 +14,14 @@ class MBPersistenceStorage: PersistenceStorage {
 
     // MARK: - Dependency
     static var defaults: UserDefaults = .standard
-    
-    private let dateFormatter = DateFormatter()
-    
+
+    private let dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .full
+        dateFormatter.timeStyle = .full
+        return dateFormatter
+    }()
+
     // MARK: - Property
     var isInstalled: Bool {
         installationDate != nil
@@ -24,8 +29,6 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var installationDate: Date? {
         get {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let dateString = installationDateString {
                 return dateFormatter.date(from: dateString)
             } else {
@@ -33,8 +36,6 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
         set {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let date = newValue {
                 installationDateString = dateFormatter.string(from: date)
             } else {
@@ -45,8 +46,6 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var apnsTokenSaveDate: Date? {
         get {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let dateString = apnsTokenSaveDateString {
                 return dateFormatter.date(from: dateString)
             } else {
@@ -54,8 +53,6 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
         set {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let date = newValue {
                 apnsTokenSaveDateString = dateFormatter.string(from: date)
             } else {
@@ -66,8 +63,6 @@ class MBPersistenceStorage: PersistenceStorage {
     
     var deprecatedEventsRemoveDate: Date? {
         get {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let dateString = deprecatedEventsRemoveDateString {
                 return dateFormatter.date(from: dateString)
             } else {
@@ -75,8 +70,6 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
         set {
-            dateFormatter.dateStyle = .full
-            dateFormatter.timeStyle = .full
             if let date = newValue {
                 deprecatedEventsRemoveDateString = dateFormatter.string(from: date)
             } else {

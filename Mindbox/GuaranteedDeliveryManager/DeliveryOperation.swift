@@ -8,7 +8,7 @@
 
 import Foundation
 
-class DeliveryOperation: Operation {
+class DeliveryOperation: AsyncOperation {
     private let event: Event
 
     private let databaseRepository: MBDatabaseRepository
@@ -22,28 +22,7 @@ class DeliveryOperation: Operation {
 
     var onCompleted: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
-    private var _isFinished: Bool = false
-    override var isFinished: Bool {
-        get {
-            return _isFinished
-        }
-        set {
-            if #available(iOS 11.0, *) {
-                willChangeValue(for: \.isFinished)
-                _isFinished = newValue
-                didChangeValue(for: \.isFinished)
-            } else {
-                willChangeValue(forKey: "isFinished")
-                _isFinished = newValue
-                didChangeValue(forKey: "isFinished")
-            }
-        }
-    }
-
     override func main() {
-        guard !isCancelled else {
-            return
-        }
         Log("Sending event with transactionId: \(event.transactionId), with number: \(event.serialNumber ?? "unknown")")
             .category(.delivery).level(.info).make()
         eventRepository.send(event: event) { [weak self] result in
@@ -54,7 +33,6 @@ class DeliveryOperation: Operation {
                 Log("Did send event with transactionId: \(self.event.transactionId), with number: \(self.event.serialNumber ?? "unknown")")
                     .category(.delivery).level(.info).make()
                 try? self.databaseRepository.delete(event: self.event)
-                self.isFinished = true
             case let .failure(error):
                 self.onCompleted?(self.event, error)
                 Log("Did send event failed with error: \(error.localizedDescription), with number: \(self.event.serialNumber ?? "unknown")")
@@ -64,8 +42,9 @@ class DeliveryOperation: Operation {
                 } else {
                     try? self.databaseRepository.update(event: self.event)
                 }
-                self.isFinished = true
             }
+            self.finish()
         }
     }
+
 }
