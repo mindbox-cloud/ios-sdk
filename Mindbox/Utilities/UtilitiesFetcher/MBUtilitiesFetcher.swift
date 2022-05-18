@@ -35,7 +35,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             #if targetEnvironment(simulator)
             return ""
             #else
-            let message = "containerURL not found for group: \(identifier)"
+            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
             Log(message)
                 .category(.general).level(.fault).make()
             fatalError(message)
