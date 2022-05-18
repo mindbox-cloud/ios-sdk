@@ -107,16 +107,21 @@ public class Mindbox: NSObject {
         body.customAction = CustomerActionRequest(customFields: ["id1": 1234, "id2": "1234"])
     }
 
+    private var observeSemaphore = DispatchSemaphore(value: 1)
+
     private func observe(value: @escaping @autoclosure () -> String?, with completion: @escaping (String) -> Void) {
-        let token = UUID()
-        persistenceStorage?.onDidChange = { [weak self] in
-            guard let value = value(), let index = self?.observeTokens.firstIndex(of: token) else {
-                return
+        observeSemaphore.lock {
+            let token = UUID()
+            persistenceStorage?.onDidChange = { [weak self] in
+                guard let self = self else { return }
+                self.observeSemaphore.lock {
+                    guard let value = value(), let index = self.observeTokens.firstIndex(of: token) else { return }
+                    self.observeTokens.remove(at: index)
+                    completion(value)
+                }
             }
-            self?.observeTokens.remove(at: index)
-            completion(value)
+            observeTokens.append(token)
         }
-        observeTokens.append(token)
     }
 
     /**
