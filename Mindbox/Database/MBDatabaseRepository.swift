@@ -27,23 +27,25 @@ class MBDatabaseRepository {
         }
         return monthLimitDate
     }
-    
-    private(set) var count = AtomicValue(0) {
-        didSet {
-            Log("Count didSet with value: \(count.value)")
-                .category(.database).level(.info).make()
-            if count.value != oldValue.value {
-                onObjectsDidChange?()
-            }
-            guard count.value > limit else {
-                return
-            }
-            do {
-                try cleanUp()
-            } catch {
-                Log("Unable to remove first element")
-                    .category(.database).level(.error).make()
-            }
+
+    /// When trying to mutate, you need to call the `countDidSet()` function.
+    private(set) var count = AtomicValue(0)
+
+    private func countDidSet() {
+        let value = count.value
+
+        Log("Count didSet with value: \(value)")
+            .category(.database).level(.info).make()
+
+        onObjectsDidChange?()
+
+        guard value > limit else { return }
+
+        do {
+            try cleanUp()
+        } catch {
+            Log("Unable to remove first element")
+                .category(.database).level(.error).make()
         }
     }
     
@@ -107,6 +109,7 @@ class MBDatabaseRepository {
                 .category(.database).level(.info).make()
             try saveContext(context)
             count.mutate { $0 += 1 }
+            countDidSet()
         }
     }
     
@@ -154,6 +157,7 @@ class MBDatabaseRepository {
             context.delete(entity)
             try saveContext(context)
             count.mutate { $0 -= 1 }
+            countDidSet()
         }
     }
     
@@ -203,6 +207,7 @@ class MBDatabaseRepository {
                 context.delete($0)
                 count.mutate { $0 -= 1 }
             }
+            countDidSet()
             try saveContext(context)
         }
     }
@@ -277,6 +282,7 @@ class MBDatabaseRepository {
             context.delete(entity)
             try saveContext(context)
             count.mutate { $0 -= 1 }
+            countDidSet()
         }
     }
     /*

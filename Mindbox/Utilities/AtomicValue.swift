@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct AtomicValue<Value> {
+class AtomicValue<Value> {
 
     private let queue = DispatchQueue(label: "com.Mindbox.AtomicValue", attributes: .concurrent)
     private var _value: Value
@@ -21,7 +21,7 @@ struct AtomicValue<Value> {
         queue.sync { _value }
     }
 
-    mutating func mutate<T>(_ transform: (inout Value) throws -> T) rethrows -> T {
+    func mutate<T>(_ transform: (inout Value) throws -> T) rethrows -> T {
         try queue.sync(flags: .barrier) {
             try transform(&_value)
         }

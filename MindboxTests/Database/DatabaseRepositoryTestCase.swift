@@ -178,6 +178,27 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
+
+    // MARK: - Not valid with ci/cd
+//    func testAtomicCount() {
+//        let expectation = self.expectation(description: "Atomic Count")
+//        let expectedTime: Double = 5
+//        DispatchQueue.main.asyncAfter(deadline: .now() + expectedTime) { expectation.fulfill() }
+//
+//        let iterations = 2
+//        let loop = 10000
+//        let increment = 2
+//        let solution = increment * loop * iterations
+//
+//        DispatchQueue.concurrentPerform(iterations: iterations) { _ in
+//            for _ in 0 ..< loop {
+//                databaseRepository.count.mutate { $0 += increment }
+//            }
+//        }
+//
+//        waitForExpectations(timeout: expectedTime, handler: nil)
+//        XCTAssertTrue(databaseRepository.count.value == solution, "\(databaseRepository.count.value)")
+//    }
     
     func testDeprecatedEventsCount() {
         updateDatabaseRepositoryWith(createsDeprecated: true)
