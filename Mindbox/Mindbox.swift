@@ -101,10 +101,6 @@ public class Mindbox: NSObject {
         } else {
             observe(value: self.persistenceStorage?.apnsToken, with: completion)
         }
-
-        let body = OperationBodyRequest()
-
-        body.customAction = CustomerActionRequest(customFields: ["id1": 1234, "id2": "1234"])
     }
 
     private var observeSemaphore = DispatchSemaphore(value: 1)

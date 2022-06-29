@@ -28,14 +28,14 @@ class MBDatabaseRepository {
         return monthLimitDate
     }
     
-    private(set) var count: Int = 0 {
+    private(set) var count = AtomicValue(0) {
         didSet {
-            Log("Count didSet with value: \(count)")
+            Log("Count didSet with value: \(count.value)")
                 .category(.database).level(.info).make()
-            if count != oldValue {
+            if count.value != oldValue.value {
                 onObjectsDidChange?()
             }
-            guard count > limit else {
+            guard count.value > limit else {
                 return
             }
             do {
@@ -106,7 +106,7 @@ class MBDatabaseRepository {
             Log("Creating event with transactionId: \(event.transactionId)")
                 .category(.database).level(.info).make()
             try saveContext(context)
-            count += 1
+            count.mutate { $0 += 1 }
         }
     }
     
@@ -153,7 +153,7 @@ class MBDatabaseRepository {
             }
             context.delete(entity)
             try saveContext(context)
-            count -= 1
+            count.mutate { $0 -= 1 }
         }
     }
     
@@ -201,7 +201,7 @@ class MBDatabaseRepository {
                 Log("Deleting event with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
                     .category(.database).level(.info).make()
                 context.delete($0)
-                count -= 1
+                count.mutate { $0 -= 1 }
             }
             try saveContext(context)
         }
@@ -248,7 +248,7 @@ class MBDatabaseRepository {
                 .category(.database).level(.info).make()
             do {
                 let count = try context.count(for: request)
-                self.count = count
+                self.count.mutate { $0 = count }
                 Log("Events count: \(count)")
                     .category(.database).level(.info).make()
                 return count
@@ -276,7 +276,7 @@ class MBDatabaseRepository {
                 .category(.database).level(.info).make()
             context.delete(entity)
             try saveContext(context)
-            count -= 1
+            count.mutate { $0 -= 1 }
         }
     }
     /*
@@ -292,9 +292,16 @@ class MBDatabaseRepository {
             Log("Context did save")
                 .category(.database).level(.info).make()
         } catch {
-            context.rollback()
-            Log("Context did save failed with error: \(error)")
-                .category(.database).level(.error).make()
+            switch error {
+            case let error as NSError where error.domain == NSSQLiteErrorDomain && error.code == 13:
+                Log("Context did save failed with SQLite Database out of space error: \(error)")
+                    .category(.database).level(.error).make()
+                fallthrough
+            default:
+                context.rollback()
+                Log("Context did save failed with error: \(error)")
+                    .category(.database).level(.error).make()
+            }
             throw error
         }
     }
