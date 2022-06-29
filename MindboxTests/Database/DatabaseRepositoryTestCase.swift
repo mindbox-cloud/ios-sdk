@@ -137,7 +137,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     
     func testHasEventsAfterCreation() {
         databaseRepository.onObjectsDidChange = { [self] in
-            XCTAssertTrue(databaseRepository.count > 0)
+            XCTAssertTrue(databaseRepository.count.value > 0)
         }
         testCreateEvent()
     }
@@ -152,7 +152,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        XCTAssertTrue(databaseRepository.count <= databaseRepository.limit)
+        XCTAssertTrue(databaseRepository.count.value <= databaseRepository.limit)
     }
     
     func testLifeTimeLimit() {
