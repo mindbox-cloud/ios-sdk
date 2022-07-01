@@ -32,7 +32,7 @@ open class OperationBodyRequest: OperationBodyRequestType {
     open func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encodeIfPresent(customAction, forKey: .customAction)
+        try container.encodeIfPresent(customAction, forKey: .customerAction)
         try container.encodeIfPresent(pointOfContact, forKey: .pointOfContact)
         try container.encodeIfPresent(addProductToList, forKey: .addProductToList)
         try container.encodeIfPresent(segmentations, forKey: .segmentations)
@@ -53,7 +53,7 @@ open class OperationBodyRequest: OperationBodyRequestType {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case customAction
+        case customerAction
         case pointOfContact
         case addProductToList
         case segmentations
