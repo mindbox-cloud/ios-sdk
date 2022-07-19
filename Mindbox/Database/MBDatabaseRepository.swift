@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 
-final class MBDatabaseRepository {
+class MBDatabaseRepository {
 
     enum MetadataKey: String {
         case install = "ApplicationInstalledVersion"
