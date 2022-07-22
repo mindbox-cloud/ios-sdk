@@ -104,6 +104,10 @@ public class MindboxNotificationService: NSObject {
            attachment.url.startAccessingSecurityScopedResource() {
             createImageView(with: attachment.url.path, view: viewController?.view)
         }
+        
+        if request.content.isHaveTitleOrBody {
+            createLabels(with: request.content, view: viewController?.view)
+        }
         createActions(with: payload, context: context)
     }
 
@@ -145,7 +149,33 @@ public class MindboxNotificationService: NSObject {
             imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
         ])
     }
+    
+    private func createLabels(with content: UNNotificationContent, view: UIView?) {
+        guard let view = view else { return }
+        let text = content.body
+        let title = content.title
+        let backView = UIView(color: .white.withAlphaComponent(0.9))
+        let titleLabel = UILabel(text: title, font: .boldSystemFont(ofSize: 15))
+        let bodyLabel = UILabel(text: text)
+        view.addSubview(backView)
+        backView.addSubview(titleLabel)
+        backView.addSubview(bodyLabel)
+        NSLayoutConstraint.activate([
+            backView.widthAnchor.constraint(equalTo: view.widthAnchor),
+            backView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            bodyLabel.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 12),
+            bodyLabel.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -12),
+            bodyLabel.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -12),
 
+            titleLabel.topAnchor.constraint(equalTo: backView.topAnchor, constant: 12),
+            titleLabel.leadingAnchor.constraint(equalTo: bodyLabel.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: bodyLabel.trailingAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: bodyLabel.topAnchor),
+        ])
+    }
+    
     private func parse(request: UNNotificationRequest) -> Payload? {
         guard let userInfo = getUserInfo(from: request) else { return nil }
         guard let data = try? JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted) else { return nil }
@@ -188,6 +218,26 @@ public class MindboxNotificationService: NSObject {
     }
 }
 
+extension UILabel {
+    
+    convenience init(text: String, font: UIFont = .systemFont(ofSize: 15)) {
+        self.init()
+        self.text = text
+        self.font = font
+        translatesAutoresizingMaskIntoConstraints = false
+        numberOfLines = 0
+        textColor = .black
+    }
+}
 
+extension UIView {
+    convenience init(color: UIColor) {
+        self.init()
+        backgroundColor = color
+        translatesAutoresizingMaskIntoConstraints = false
+    }
+}
 
-
+extension UNNotificationContent {
+    var isHaveTitleOrBody: Bool { !(body.isEmpty && title.isEmpty) }
+}
