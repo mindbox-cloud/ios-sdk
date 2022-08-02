@@ -82,6 +82,7 @@ class CoreController {
                     configuration: configutaion
                 )
             }
+            uuidDebugService.start(with: deviceUUID)
         })
     }
 
@@ -103,6 +104,7 @@ class CoreController {
             checkNotificationStatus()
             persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         }
+        uuidDebugService.start(with: deviceUUID)
     }
 
     private var installSemathore = DispatchSemaphore(value: 1)
