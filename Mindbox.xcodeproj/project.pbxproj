@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DF505AF28991462009B63A6 /* UUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505AE28991462009B63A6 /* UUIDDebugService.swift */; };
+		0DF505B12899163A009B63A6 /* PasteboardUUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */; };
+		0DF505B5289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */; };
 		3132DFF625C2A811007FE358 /* TestDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */; };
 		313B233A25ADEA0F00A1CB72 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* Mindbox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */; };
@@ -242,6 +245,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0DF505AE28991462009B63A6 /* UUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUIDDebugService.swift; sourceTree = "<group>"; };
+		0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugService.swift; sourceTree = "<group>"; };
+		0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugServiceTest.swift; sourceTree = "<group>"; };
 		3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDependencyProvider.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* Mindbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mindbox.h; sourceTree = "<group>"; };
@@ -500,6 +506,31 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0DF505AD289913FA009B63A6 /* UUIDDebugService */ = {
+			isa = PBXGroup;
+			children = (
+				0DF505AE28991462009B63A6 /* UUIDDebugService.swift */,
+				0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */,
+			);
+			path = UUIDDebugService;
+			sourceTree = "<group>";
+		};
+		0DF505B2289930E1009B63A6 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				0DF505B32899316B009B63A6 /* UUIDDebugService */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		0DF505B32899316B009B63A6 /* UUIDDebugService */ = {
+			isa = PBXGroup;
+			children = (
+				0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */,
+			);
+			path = UUIDDebugService;
+			sourceTree = "<group>";
+		};
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
@@ -553,6 +584,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindboxTests */ = {
 			isa = PBXGroup;
 			children = (
+				0DF505B2289930E1009B63A6 /* Utilities */,
 				848A895C2620C53900EDFB6D /* Versioning */,
 				840C38B625D13A6800D50183 /* Helpers */,
 				840C38AF25D12E7800D50183 /* GuaranteedDelivery */,
@@ -611,6 +643,7 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				0DF505AD289913FA009B63A6 /* UUIDDebugService */,
 				33BEE80C2681EB7700993720 /* NotificationDecoder.swift */,
 				317054CC25AF191100AE624C /* Logger */,
 				84BAB89B260231E800D694D0 /* IDFetcher */,
@@ -1385,6 +1418,7 @@
 				B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */,
 				6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
+				0DF505B12899163A009B63A6 /* PasteboardUUIDDebugService.swift in Sources */,
 				3333D7BE265E56F2004279B0 /* OperationResponseType.swift in Sources */,
 				334F3AF2264C199900A6AC00 /* LineRequest.swift in Sources */,
 				334F3AF7264C199900A6AC00 /* CustomerActionRequest.swift in Sources */,
@@ -1497,6 +1531,7 @@
 				33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3337E69F265FA649006949EB /* ProtocolError.swift in Sources */,
+				0DF505AF28991462009B63A6 /* UUIDDebugService.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,
 				B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */,
@@ -1527,6 +1562,7 @@
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
+				0DF505B5289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift in Sources */,
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
