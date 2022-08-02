@@ -10,6 +10,8 @@
 		0DF505AF28991462009B63A6 /* UUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505AE28991462009B63A6 /* UUIDDebugService.swift */; };
 		0DF505B12899163A009B63A6 /* PasteboardUUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */; };
 		0DF505B5289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */; };
+		0DF505B728993268009B63A6 /* MockNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B628993268009B63A6 /* MockNotificationCenter.swift */; };
+		0DF505BD28993652009B63A6 /* MockDateProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505BC28993652009B63A6 /* MockDateProvider.swift */; };
 		3132DFF625C2A811007FE358 /* TestDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */; };
 		313B233A25ADEA0F00A1CB72 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* Mindbox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */; };
@@ -248,6 +250,8 @@
 		0DF505AE28991462009B63A6 /* UUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUIDDebugService.swift; sourceTree = "<group>"; };
 		0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugService.swift; sourceTree = "<group>"; };
 		0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugServiceTest.swift; sourceTree = "<group>"; };
+		0DF505B628993268009B63A6 /* MockNotificationCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNotificationCenter.swift; sourceTree = "<group>"; };
+		0DF505BC28993652009B63A6 /* MockDateProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDateProvider.swift; sourceTree = "<group>"; };
 		3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDependencyProvider.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* Mindbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mindbox.h; sourceTree = "<group>"; };
@@ -527,6 +531,8 @@
 			isa = PBXGroup;
 			children = (
 				0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */,
+				0DF505B628993268009B63A6 /* MockNotificationCenter.swift */,
+				0DF505BC28993652009B63A6 /* MockDateProvider.swift */,
 			);
 			path = UUIDDebugService;
 			sourceTree = "<group>";
@@ -1557,7 +1563,9 @@
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
+				0DF505BD28993652009B63A6 /* MockDateProvider.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
+				0DF505B728993268009B63A6 /* MockNotificationCenter.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,

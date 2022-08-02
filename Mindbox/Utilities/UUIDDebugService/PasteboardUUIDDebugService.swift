@@ -16,7 +16,7 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
     private let pasteboard: UIPasteboard
     private var uuid: String?
 
-    private var lastReceivedDate: Date?
+    private var lastReceivedDate: Date
     private var notificationCount = 0
 
     internal init(
@@ -27,6 +27,7 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
         self.notificationCenter = notificationCenter
         self.currentDateProvider = currentDateProvider
         self.pasteboard = pasteboard
+        self.lastReceivedDate = currentDateProvider()
     }
 
     internal func start(with uuid: String) {
@@ -42,9 +43,7 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
     @objc private func didReceiveNotification() {
         let now = currentDateProvider()
 
-        if let lastReceived = lastReceivedDate,
-           now.timeIntervalSince(lastReceived) < 2
-        {
+        if now.timeIntervalSince(lastReceivedDate) < 2 {
             notificationCount += 1
         } else {
             notificationCount = 1
