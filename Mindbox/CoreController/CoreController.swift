@@ -125,7 +125,8 @@ class CoreController {
                 subscribe: configuration.subscribeCustomerIfCreated,
                 externalDeviceUUID: configuration.previousDeviceUUID,
                 version: newVersion,
-                instanceId: instanceId
+                instanceId: instanceId,
+                ianaTimeZone: self.customerTimeZone(for: configuration)
             )
             do {
                 self.trackDirect()
@@ -139,6 +140,10 @@ class CoreController {
                     .category(.general).level(.error).make()
             }
         }
+    }
+
+    private func customerTimeZone(for config: MBConfiguration) -> String? {
+        return config.shouldCreateCustomer ? TimeZone.current.identifier : nil
     }
 
     private func installEvent<T: Encodable>(_ body: T, config: MBConfiguration) throws {
