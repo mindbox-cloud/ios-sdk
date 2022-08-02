@@ -16,6 +16,7 @@ class CoreController {
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
+    private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
 
     private let infoUpdateQueue = DispatchQueue(label: "com.Mindbox.infoUpdate")
@@ -205,7 +206,8 @@ class CoreController {
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         trackVisitManager: TrackVisitManager,
-        sessionManager: SessionManager
+        sessionManager: SessionManager,
+        uuidDebugService: UUIDDebugService
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
@@ -213,6 +215,7 @@ class CoreController {
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
+        self.uuidDebugService = uuidDebugService
 
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive {

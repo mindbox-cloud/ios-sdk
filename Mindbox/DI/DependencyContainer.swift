@@ -17,6 +17,7 @@ protocol DependencyContainer {
     var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
     var instanceFactory: InstanceFactory { get }
     var sessionManager: SessionManager { get }
+    var uuidDebugService: UUIDDebugService { get }
 }
 
 protocol InstanceFactory {

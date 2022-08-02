@@ -527,7 +527,8 @@ public class Mindbox: NSObject {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            uuidDebugService: container.uuidDebugService
         )
     }
 }
