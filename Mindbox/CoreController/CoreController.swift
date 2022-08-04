@@ -82,7 +82,7 @@ class CoreController {
                     configuration: configutaion
                 )
             }
-            uuidDebugService.start(with: deviceUUID)
+            startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
         })
     }
 
@@ -104,6 +104,12 @@ class CoreController {
             checkNotificationStatus()
             persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         }
+        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
+    }
+
+    private func startUUIDDebugServiceIfNeeded(deviceUUID: String, configuration: MBConfiguration) {
+        guard configuration.uuidDebugEnabled else { return }
+
         uuidDebugService.start(with: deviceUUID)
     }
 
