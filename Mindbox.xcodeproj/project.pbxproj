@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D9EFF9D28A62E12006E501E /* MockUUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D9EFF9C28A62E12006E501E /* MockUUIDDebugService.swift */; };
 		0DF505AF28991462009B63A6 /* UUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505AE28991462009B63A6 /* UUIDDebugService.swift */; };
 		0DF505B12899163A009B63A6 /* PasteboardUUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */; };
 		0DF505B5289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */; };
@@ -247,6 +248,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0D9EFF9C28A62E12006E501E /* MockUUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUUIDDebugService.swift; sourceTree = "<group>"; };
 		0DF505AE28991462009B63A6 /* UUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUIDDebugService.swift; sourceTree = "<group>"; };
 		0DF505B02899163A009B63A6 /* PasteboardUUIDDebugService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugService.swift; sourceTree = "<group>"; };
 		0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugServiceTest.swift; sourceTree = "<group>"; };
@@ -533,6 +535,7 @@
 				0DF505B4289931C0009B63A6 /* PasteboardUUIDDebugServiceTest.swift */,
 				0DF505B628993268009B63A6 /* MockNotificationCenter.swift */,
 				0DF505BC28993652009B63A6 /* MockDateProvider.swift */,
+				0D9EFF9C28A62E12006E501E /* MockUUIDDebugService.swift */,
 			);
 			path = UUIDDebugService;
 			sourceTree = "<group>";
@@ -1561,6 +1564,7 @@
 				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
+				0D9EFF9D28A62E12006E501E /* MockUUIDDebugService.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				0DF505BD28993652009B63A6 /* MockDateProvider.swift in Sources */,

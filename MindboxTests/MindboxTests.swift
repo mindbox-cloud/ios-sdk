@@ -36,7 +36,8 @@ class MindboxTests: XCTestCase {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            uuidDebugService: MockUUIDDebugService()
         )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
@@ -70,7 +71,8 @@ class MindboxTests: XCTestCase {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            uuidDebugService: MockUUIDDebugService()
         )
 
         //        //        //        //        //        //        //        //        //        //        //        //
