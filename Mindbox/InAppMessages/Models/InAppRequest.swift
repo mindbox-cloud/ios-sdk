@@ -8,4 +8,8 @@
 
 import Foundation
 
-struct InAppRequest {}
+/// Contains data needed to request in-app messages that should be shown
+struct InAppRequest {
+    var segment = ""
+    var segmentation = ""
+}

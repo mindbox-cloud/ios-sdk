@@ -8,4 +8,5 @@
 
 import Foundation
 
+/// Domain model that contains all data needed to show inapp on screen
 struct InAppMessage {}

@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 
+/// Prepares UI for in-app messages and shows them
 class InAppPresentationManager {
 
     public init(imagesStorage: InAppImagesStorage) {

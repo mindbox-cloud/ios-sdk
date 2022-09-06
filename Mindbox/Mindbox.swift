@@ -360,6 +360,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        inAppMessagesManager?.handleEvent(event: operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -383,6 +384,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        inAppMessagesManager?.handleEvent(event: operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")

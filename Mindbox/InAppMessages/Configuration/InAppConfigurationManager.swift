@@ -8,6 +8,8 @@
 
 import Foundation
 
+/// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
+/// Also builds domain models on the base of configuration: in-app requests, in-app message models.
 class InAppConfigurationManager {
     func prepareConfiguration(_ completion: @escaping (Bool) -> Void) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {

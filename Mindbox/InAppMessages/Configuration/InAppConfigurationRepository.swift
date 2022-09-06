@@ -7,3 +7,6 @@
 //
 
 import Foundation
+
+/// Stores in-app configuration
+class InAppConfigurationRepository {}

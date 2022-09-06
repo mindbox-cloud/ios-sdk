@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Makes request to network and returns in-app messages that should be shown
 class InAppPresentChecker {
 
     func getInAppToPresent(request: InAppRequest, _ completion: @escaping (InAppResponse?) -> Void) {

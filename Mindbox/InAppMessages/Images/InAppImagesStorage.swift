@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// This class stores images from in-app messages
 class InAppImagesStorage {
 
 }

@@ -8,6 +8,8 @@
 
 import Foundation
 
+/// The class is an entry point for all in-app messages logic.
+/// The main responsibility it to handle incoming events and decide whether to show in-app message
 final class InAppCoreManager {
 
     init(
@@ -33,7 +35,7 @@ final class InAppCoreManager {
         }
     }
 
-    /// This method hanled event and check in-app message should be shown
+    /// This method handles events and decides if in-app message should be shown
     func handleEvent(event: String) {
         // if config is not ready, store event in the queue and when config prepared — handle events from queue
         // if isConfigurationReady {} else {}
