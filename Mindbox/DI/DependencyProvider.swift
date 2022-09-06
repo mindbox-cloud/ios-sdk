@@ -18,6 +18,7 @@ final class DependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
+    let inAppMessagesManager: InAppCoreManager
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -37,6 +38,11 @@ final class DependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        inAppMessagesManager = InAppCoreManager(
+            configManager: InAppConfigurationManager(),
+            presentChecker: InAppPresentChecker(),
+            presentationManager: InAppPresentationManager(imagesStorage: InAppImagesStorage())
+        )
     }
 }
 

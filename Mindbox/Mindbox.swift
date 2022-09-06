@@ -39,6 +39,7 @@ public class Mindbox: NSObject {
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
+    private var inAppMessagesManager: InAppCoreManager?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -519,6 +520,7 @@ public class Mindbox: NSObject {
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
+        inAppMessagesManager = container.inAppMessagesManager
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
