@@ -45,8 +45,8 @@ final class InAppCoreManager {
 
             self.presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
                 guard let inAppResponse = inAppResponse else { return }
-                let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
 
+                let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
                 self.presentationManager.present(inAppMessage: inAppMessage)
             }
         }

@@ -513,6 +513,7 @@ public class Mindbox: NSObject {
                 self.initError = error
             }
             self.persistenceStorage?.storeToFileBackgroundExecution()
+            self.inAppMessagesManager?.start()
         }
     }
 
