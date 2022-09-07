@@ -10,31 +10,27 @@ import UIKit
 class InAppMessageViewController: UIViewController {
 
     var onClose: (() -> Void)?
-
     let inAppView = InAppMessageImageView(frame: .zero)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .gray.withAlphaComponent(0.4)
 
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(onCloseInAppMessage))
-        view.addGestureRecognizer(tapGesture)
-
         view.addSubview(inAppView)
-        inAppView.bounds.size = .init(width: 150, height: 250)
-    }
-
-    override func viewDidLayoutSubviews() {
-        inAppView.center = view.center
-    }
-
-    @objc func onCloseInAppMessage() {
-        onClose?()
+        inAppView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            inAppView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            inAppView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            inAppView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            inAppView.heightAnchor.constraint(equalToConstant: 350)
+        ])
+        inAppView.onClose = { [weak self] in self?.onClose?() }
     }
 }
 
 class InAppMessageImageView: UIView {
 
+    var onClose: (() -> Void)?
     let imageView = UIImageView()
     let closeButton = UIButton(frame: .zero)
 
@@ -50,7 +46,7 @@ class InAppMessageImageView: UIView {
 
     func customInit() {
         let bundle = Bundle(for: InAppMessageImageView.self)
-        // TODO: Remove testImage from resources!
+        // TODO: Remove testImage from resources when downloading image from server is ready
         let testImage = UIImage(named: "testImage", in: bundle, compatibleWith: nil)
         imageView.contentMode = .scaleAspectFill
         imageView.image = testImage
@@ -58,12 +54,24 @@ class InAppMessageImageView: UIView {
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(imageView)
 
+        let closeImage = UIImage(named: "cross", in: bundle, compatibleWith: nil)
+        closeButton.setImage(closeImage, for: .normal)
+        closeButton.addTarget(self, action: #selector(onTapCloseButton), for: .touchUpInside)
+        addSubview(closeButton)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            closeButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 12),
+            closeButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -12),
+            closeButton.widthAnchor.constraint(equalToConstant: 44),
+            closeButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
         backgroundColor = .white
         layer.cornerRadius = 16
         layer.masksToBounds = true
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
+    @objc func onTapCloseButton() {
+        self.onClose?()
     }
 }
