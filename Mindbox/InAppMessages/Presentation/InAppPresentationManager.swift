@@ -61,20 +61,3 @@ final class InAppPresentationManager {
         }
     }
 }
-
-class InAppMessageViewController: UIViewController {
-
-    var onClose: (() -> Void)?
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .red
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(onCloseInAppMessage))
-        view.addGestureRecognizer(tapGesture)
-    }
-
-    @objc func onCloseInAppMessage() {
-        onClose?()
-    }
-}
