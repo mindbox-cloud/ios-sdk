@@ -39,6 +39,8 @@ public class Mindbox: NSObject {
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
+    private var inAppMessagesManager: InAppCoreManager?
+    private var inAppMessagesEnabled = false
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -239,6 +241,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -270,6 +273,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -301,6 +305,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -331,6 +336,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -359,6 +365,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -382,6 +389,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -510,6 +518,7 @@ public class Mindbox: NSObject {
                 self.initError = error
             }
             self.persistenceStorage?.storeToFileBackgroundExecution()
+            self.inAppMessagesManager?.start()
         }
     }
 
@@ -519,6 +528,7 @@ public class Mindbox: NSObject {
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
+        inAppMessagesManager = container.inAppMessagesManager
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
@@ -529,5 +539,10 @@ public class Mindbox: NSObject {
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager
         )
+    }
+
+    private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
+        guard inAppMessagesEnabled else { return }
+        inAppMessagesManager?.handleEvent(event: operationSystemName)
     }
 }
