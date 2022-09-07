@@ -40,7 +40,7 @@ public class Mindbox: NSObject {
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManager?
-    private var inAppMessagesEnabled = false
+    private var inAppMessagesEnabled = true
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
