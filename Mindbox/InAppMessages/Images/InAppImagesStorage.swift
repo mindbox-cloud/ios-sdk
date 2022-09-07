@@ -7,8 +7,23 @@
 //
 
 import Foundation
+import UIKit
 
-/// This class stores images from in-app messages
-class InAppImagesStorage {
+/// This class manages images from in-app messages
+final class InAppImagesStorage {
 
+    func getImage(url: URL, completion: @escaping (Data?) -> Void) {
+        downloadImage(url: url, completion: completion)
+    }
+
+    private func downloadImage(url: URL, completion: @escaping (Data?) -> Void) {
+        URLSession.shared.dataTask(with: url) { (data, _, _) in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            completion(data)
+        }
+        .resume()
+    }
 }

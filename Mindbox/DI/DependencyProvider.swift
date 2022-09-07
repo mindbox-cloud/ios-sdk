@@ -41,7 +41,8 @@ final class DependencyProvider: DependencyContainer {
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(),
             presentChecker: InAppPresentChecker(),
-            presentationManager: InAppPresentationManager(imagesStorage: InAppImagesStorage())
+            presentationManager: InAppPresentationManager(),
+            imagesStorage: InAppImagesStorage()
         )
     }
 }

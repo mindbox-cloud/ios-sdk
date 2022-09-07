@@ -15,16 +15,19 @@ final class InAppCoreManager {
     init(
         configManager: InAppConfigurationManager,
         presentChecker: InAppPresentChecker,
-        presentationManager: InAppPresentationManager
+        presentationManager: InAppPresentationManager,
+        imagesStorage: InAppImagesStorage
     ) {
         self.configManager = configManager
         self.presentChecker = presentChecker
         self.presentationManager = presentationManager
+        self.imagesStorage = imagesStorage
     }
 
     private let configManager: InAppConfigurationManager
     private let presentChecker: InAppPresentChecker
     private let presentationManager: InAppPresentationManager
+    private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
 
     /// This method called on app start.
@@ -49,8 +52,23 @@ final class InAppCoreManager {
                 guard let inAppResponse = inAppResponse else { return }
 
                 let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
-                self.presentationManager.present(inAppMessage: inAppMessage)
+                self.buildInAppUIModel(inAppMessage, completion: { inAppUIModel in
+                    guard let inAppUIModel = inAppUIModel else {
+                        return
+                    }
+
+                    DispatchQueue.main.async {
+                        self.presentationManager.present(inAppUIModel: inAppUIModel)
+                    }
+                })
             }
+        }
+    }
+
+    private func buildInAppUIModel(_ inAppMessage: InAppMessage, completion: @escaping (InAppMessageUIModel?) -> Void) {
+        imagesStorage.getImage(url: inAppMessage.imageUrl) { imageData in
+            let uiModel = imageData.map(InAppMessageUIModel.init)
+            completion(uiModel)
         }
     }
 }

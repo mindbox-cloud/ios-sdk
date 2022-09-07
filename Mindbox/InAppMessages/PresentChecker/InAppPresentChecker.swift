@@ -9,7 +9,7 @@
 import Foundation
 
 /// Makes request to network and returns in-app messages that should be shown
-class InAppPresentChecker {
+final class InAppPresentChecker {
 
     func getInAppToPresent(request: InAppRequest, _ completion: @escaping (InAppResponse?) -> Void) {
         // make network request to get if there're in apps to show for the client
