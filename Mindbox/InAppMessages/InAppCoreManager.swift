@@ -37,6 +37,8 @@ final class InAppCoreManager {
 
     /// This method handles events and decides if in-app message should be shown
     func handleEvent(event: String) {
+        Log("Received event: \(event)")
+            .category(.inAppMessages).level(.debug).make()
         // if config is not ready, store event in the queue and when config prepared — handle events from queue
         // if isConfigurationReady {} else {}
 
