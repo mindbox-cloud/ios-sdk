@@ -51,12 +51,15 @@ final class InAppCoreManager {
     func start() {
         configManager.delegate = self
         configManager.prepareConfiguration()
-        handleEvent(.start)
+        sendEvent(.start)
     }
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
         eventsQueue.async {
+            Log("Received event: \(event)")
+                .category(.inAppMessages).level(.debug).make()
+
             guard self.isConfigurationReady else {
                 self.unhandledEvents.append(event)
                 return
@@ -69,9 +72,6 @@ final class InAppCoreManager {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        Log("Received event: \(event)")
-            .category(.inAppMessages).level(.debug).make()
-
         guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
         presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in

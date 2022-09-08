@@ -16,7 +16,7 @@ protocol InAppConfigurationDelegate: AnyObject {
 /// Also builds domain models on the base of configuration: in-app requests, in-app message models.
 class InAppConfigurationManager {
 
-    private let configUrl = URL(string: "https://web-bucket-inapps-configs-staging.storage.yandexcloud.net/byendpoint/someTestMobileEndpoint.json")!
+    private let configUrl = URL(string: "https://web-bucket-inapps-configs-production.storage.yandexcloud.net/byendpoint/someTestMobileEndpoint.json")!
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configuration: InAppConfigResponse!
@@ -42,7 +42,7 @@ class InAppConfigurationManager {
         guard let configuration = configuration else { return nil }
         switch event {
         case .start:
-            guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .sample }) else {
+            guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .simple }) else {
                 return nil
             }
             return InAppRequest(
@@ -79,11 +79,21 @@ class InAppConfigurationManager {
     }
 
     private func completeDownloadTask(_ data: Data?, error: Error?) {
-        guard let data = data, let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
+        guard let data = data else {
+            Log("Failed to download config file. Error: \(error?.localizedDescription ?? "" )")
+                .category(.inAppMessages).level(.debug).make()
             return
         }
-        saveConfigToCache(data)
-        setConfigPrepared(config)
+        Log("Successfuly downloaded config file. Size: \(data.count) Bytes")
+            .category(.inAppMessages).level(.debug).make()
+        do {
+            let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
+            saveConfigToCache(data)
+            setConfigPrepared(config)
+        } catch {
+            Log("Failed to parse downloaded config file. Error: \(error)")
+                .category(.inAppMessages).level(.debug).make()
+        }
     }
 
     private func fetchConfigFromCache() -> InAppConfigResponse? {

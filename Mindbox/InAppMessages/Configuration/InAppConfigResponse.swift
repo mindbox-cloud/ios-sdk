@@ -38,7 +38,7 @@ struct InAppConfigResponse: Decodable {
             }
             switch type {
             case .simpleImage:
-                let simpleImagePayload = try container.decode(SimpleImageInApp.self, forKey: .type)
+                let simpleImagePayload = try container.decode(SimpleImageInApp.self, forKey: .payload)
                 self.payload = .simpleImage(simpleImagePayload)
             }
         }
@@ -48,7 +48,7 @@ struct InAppConfigResponse: Decodable {
 }
 
 enum InAppTargetingType: String, Decodable {
-    case sample
+    case simple
 }
 
 enum InAppFormType: String, Decodable {
