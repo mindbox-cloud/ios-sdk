@@ -11,13 +11,18 @@ import Foundation
 /// Makes request to network and returns in-app messages that should be shown
 final class InAppPresentChecker {
 
-    func getInAppToPresent(request: InAppRequest, _ completion: @escaping (InAppResponse?) -> Void) {
+    func getInAppToPresent(request: InAppRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void) {
         // make network request to get if there're in apps to show for the client
         switch request.triggerEvent {
         case .start:
-            completion(InAppResponse(inAppIds: [request.inAppId]))
+            completionQueue.async {
+                completion(InAppResponse(inAppIds: [request.inAppId]))
+            }
+
         case .applicationEvent:
-            completion(nil)
+            completionQueue.async {
+                completion(nil)
+            }
         }
     }
 }

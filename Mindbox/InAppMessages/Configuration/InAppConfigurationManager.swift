@@ -39,33 +39,37 @@ class InAppConfigurationManager {
     }
 
     func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppRequest? {
-        guard let configuration = configuration else { return nil }
-        switch event {
-        case .start:
-            guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .simple }) else {
+        queue.sync {
+            guard let configuration = configuration else { return nil }
+            switch event {
+            case .start:
+                guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .simple }) else {
+                    return nil
+                }
+                return InAppRequest(
+                    inAppId: inAppForStartEvent.id,
+                    triggerEvent: event,
+                    targeting: nil
+                )
+            case .applicationEvent:
                 return nil
             }
-            return InAppRequest(
-                inAppId: inAppForStartEvent.id,
-                triggerEvent: event,
-                targeting: nil
-            )
-        case .applicationEvent:
-            return nil
         }
     }
 
     func buildInAppMessage(inAppResponse: InAppResponse) -> InAppMessage? {
-        let inAppsToShow = configuration.inapps.filter { inAppResponse.inAppIds.contains($0.id)  }
-        guard let firstInAppToShow = inAppsToShow.first,
-              let inAppFormData = firstInAppToShow.form.variants.first?.payload else { return nil }
+        queue.sync {
+            let inAppsToShow = configuration.inapps.filter { inAppResponse.inAppIds.contains($0.id)  }
+            guard let firstInAppToShow = inAppsToShow.first,
+                  let inAppFormData = firstInAppToShow.form.variants.first?.payload else { return nil }
 
-        switch inAppFormData {
-        case let .simpleImage(simpleImageInApp):
-            guard let imageUrl = URL(string: simpleImageInApp.imageUrl) else {
-                return nil
+            switch inAppFormData {
+            case let .simpleImage(simpleImageInApp):
+                guard let imageUrl = URL(string: simpleImageInApp.imageUrl) else {
+                    return nil
+                }
+                return InAppMessage(imageUrl: imageUrl)
             }
-            return InAppMessage(imageUrl: imageUrl)
         }
     }
 
@@ -117,11 +121,5 @@ class InAppConfigurationManager {
     private func setConfigPrepared(_ config: InAppConfigResponse) {
         configuration = config
         delegate?.didPreparedConfiguration()
-    }
-
-    private var inAppConfigFileUrl: URL {
-        FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("InAppMessagesConfiguration.json")
     }
 }

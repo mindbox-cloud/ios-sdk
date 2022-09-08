@@ -43,7 +43,7 @@ final class InAppCoreManager {
     private let presentationManager: InAppPresentationManager
     private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
-    private var eventsQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
+    private var serialQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
     /// This method called on app start.
@@ -56,7 +56,7 @@ final class InAppCoreManager {
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
-        eventsQueue.async {
+        serialQueue.async {
             Log("Received event: \(event)")
                 .category(.inAppMessages).level(.debug).make()
 
@@ -74,20 +74,21 @@ final class InAppCoreManager {
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
-        presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
-            guard let inAppResponse = inAppResponse,
-                  let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
-            else { return }
+        presentChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
+            self.onReceivedInAppResponse(inAppResponse)
+        }
+    }
 
-            self.buildInAppUIModel(inAppMessage, completion: { inAppUIModel in
-                guard let inAppUIModel = inAppUIModel else {
-                    return
-                }
+    private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
+        guard let inAppResponse = inAppResponse,
+              let inAppMessage = configManager.buildInAppMessage(inAppResponse: inAppResponse)
+        else { return }
 
-                DispatchQueue.main.async {
-                    self.presentationManager.present(inAppUIModel: inAppUIModel)
-                }
-            })
+        imagesStorage.getImage(url: inAppMessage.imageUrl, completionQueue: .main) { imageData in
+            guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
+                return
+            }
+            self.presentationManager.present(inAppUIModel: inAppUIModel)
         }
     }
 
@@ -99,18 +100,11 @@ final class InAppCoreManager {
             handleEvent(event)
         }
     }
-
-    private func buildInAppUIModel(_ inAppMessage: InAppMessage, completion: @escaping (InAppMessageUIModel?) -> Void) {
-        imagesStorage.getImage(url: inAppMessage.imageUrl) { imageData in
-            let uiModel = imageData.map(InAppMessageUIModel.init)
-            completion(uiModel)
-        }
-    }
 }
 
 extension InAppCoreManager: InAppConfigurationDelegate {
     func didPreparedConfiguration() {
-        eventsQueue.async {
+        serialQueue.async {
             self.isConfigurationReady = true
             self.handleQueuedEvents()
         }
