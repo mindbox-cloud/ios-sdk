@@ -9,4 +9,6 @@
 import Foundation
 
 /// Contains information of what in-apps should be shown in the app
-struct InAppResponse {}
+struct InAppResponse {
+    let inAppIds: [String]
+}

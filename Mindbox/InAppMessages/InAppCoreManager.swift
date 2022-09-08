@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum InAppMessageIncomingEvent {
+enum InAppMessageTriggerEvent {
     case start
     case applicationEvent(String)
 
@@ -44,7 +44,7 @@ final class InAppCoreManager {
     private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
     private var eventsQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
-    private var unhandledEvents: [InAppMessageIncomingEvent] = []
+    private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
@@ -55,7 +55,7 @@ final class InAppCoreManager {
     }
 
     /// This method handles events and decides if in-app message should be shown
-    func sendEvent(_ event: InAppMessageIncomingEvent) {
+    func sendEvent(_ event: InAppMessageTriggerEvent) {
         eventsQueue.async {
             guard self.isConfigurationReady else {
                 self.unhandledEvents.append(event)
@@ -68,27 +68,26 @@ final class InAppCoreManager {
     // MARK: - Private
 
     /// Core flow that decised to show in-app message based on incoming event
-    private func handleEvent(_ event: InAppMessageIncomingEvent) {
+    private func handleEvent(_ event: InAppMessageTriggerEvent) {
         Log("Received event: \(event)")
             .category(.inAppMessages).level(.debug).make()
 
-        self.configManager.buildInAppRequest(event: event.eventName) { inAppRequest in
-            guard let inAppRequest = inAppRequest else { return }
+        guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
-            self.presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
-                guard let inAppResponse = inAppResponse else { return }
+        presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
+            guard let inAppResponse = inAppResponse,
+                  let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
+            else { return }
 
-                let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
-                self.buildInAppUIModel(inAppMessage, completion: { inAppUIModel in
-                    guard let inAppUIModel = inAppUIModel else {
-                        return
-                    }
+            self.buildInAppUIModel(inAppMessage, completion: { inAppUIModel in
+                guard let inAppUIModel = inAppUIModel else {
+                    return
+                }
 
-                    DispatchQueue.main.async {
-                        self.presentationManager.present(inAppUIModel: inAppUIModel)
-                    }
-                })
-            }
+                DispatchQueue.main.async {
+                    self.presentationManager.present(inAppUIModel: inAppUIModel)
+                }
+            })
         }
     }
 

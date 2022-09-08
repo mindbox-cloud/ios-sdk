@@ -19,7 +19,7 @@ class InAppConfigurationManager {
     private let configUrl = URL(string: "https://web-bucket-inapps-configs-staging.storage.yandexcloud.net/byendpoint/someTestMobileEndpoint.json")!
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
-    private var configuration: InAppConfig!
+    private var configuration: InAppConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
 
     init(inAppConfigRepository: InAppConfigurationRepository) {
@@ -38,14 +38,35 @@ class InAppConfigurationManager {
         }
     }
 
-    func buildInAppRequest(event: String, _ completion: @escaping (InAppRequest?) -> Void) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            completion(InAppRequest())
+    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppRequest? {
+        guard let configuration = configuration else { return nil }
+        switch event {
+        case .start:
+            guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .sample }) else {
+                return nil
+            }
+            return InAppRequest(
+                inAppId: inAppForStartEvent.id,
+                triggerEvent: event,
+                targeting: nil
+            )
+        case .applicationEvent:
+            return nil
         }
     }
 
-    func buildInAppMessage(inAppResponse: InAppResponse) -> InAppMessage {
-        return InAppMessage(imageUrl: URL(string: "https://random.imagecdn.app/500/150")!)
+    func buildInAppMessage(inAppResponse: InAppResponse) -> InAppMessage? {
+        let inAppsToShow = configuration.inapps.filter { inAppResponse.inAppIds.contains($0.id)  }
+        guard let firstInAppToShow = inAppsToShow.first,
+              let inAppFormData = firstInAppToShow.form.variants.first?.payload else { return nil }
+
+        switch inAppFormData {
+        case let .simpleImage(simpleImageInApp):
+            guard let imageUrl = URL(string: simpleImageInApp.imageUrl) else {
+                return nil
+            }
+            return InAppMessage(imageUrl: imageUrl)
+        }
     }
 
     // MARK: - Private
@@ -58,18 +79,18 @@ class InAppConfigurationManager {
     }
 
     private func completeDownloadTask(_ data: Data?, error: Error?) {
-        guard let data = data, let config = try? jsonDecoder.decode(InAppConfig.self, from: data) else {
+        guard let data = data, let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
             return
         }
         saveConfigToCache(data)
         setConfigPrepared(config)
     }
 
-    private func fetchConfigFromCache() -> InAppConfig? {
+    private func fetchConfigFromCache() -> InAppConfigResponse? {
         guard let data = inAppConfigRepository.fetchConfigFromCache() else {
             return nil
         }
-        guard let config = try? jsonDecoder.decode(InAppConfig.self, from: data) else {
+        guard let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
             Log("Failed to parse config file")
                 .category(.inAppMessages).level(.debug).make()
             return nil
@@ -83,7 +104,7 @@ class InAppConfigurationManager {
         inAppConfigRepository.saveConfigToCache(data)
     }
 
-    private func setConfigPrepared(_ config: InAppConfig) {
+    private func setConfigPrepared(_ config: InAppConfigResponse) {
         configuration = config
         delegate?.didPreparedConfiguration()
     }
@@ -93,8 +114,4 @@ class InAppConfigurationManager {
             .urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("InAppMessagesConfiguration.json")
     }
-}
-
-struct InAppConfig: Decodable {
-
 }

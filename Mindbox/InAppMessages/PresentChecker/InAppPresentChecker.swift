@@ -13,9 +13,11 @@ final class InAppPresentChecker {
 
     func getInAppToPresent(request: InAppRequest, _ completion: @escaping (InAppResponse?) -> Void) {
         // make network request to get if there're in apps to show for the client
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            completion(InAppResponse())
+        switch request.triggerEvent {
+        case .start:
+            completion(InAppResponse(inAppIds: [request.inAppId]))
+        case .applicationEvent:
+            completion(nil)
         }
     }
 }
