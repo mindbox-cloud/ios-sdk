@@ -8,6 +8,20 @@
 
 import Foundation
 
+enum InAppMessageIncomingEvent {
+    case start
+    case applicationEvent(String)
+
+    var eventName: String {
+        switch self {
+        case .start:
+            return "start"
+        case let .applicationEvent(name):
+            return name
+        }
+    }
+}
+
 /// The class is an entry point for all in-app messages logic.
 /// The main responsibility it to handle incoming events and decide whether to show in-app message
 final class InAppCoreManager {
@@ -29,23 +43,36 @@ final class InAppCoreManager {
     private let presentationManager: InAppPresentationManager
     private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
+    private var eventsQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
+    private var unhandledEvents: [InAppMessageIncomingEvent] = []
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
-        configManager.prepareConfiguration {
-            self.isConfigurationReady = $0
-        }
+        configManager.delegate = self
+        configManager.prepareConfiguration()
+        handleEvent(.start)
     }
 
     /// This method handles events and decides if in-app message should be shown
-    func handleEvent(event: String) {
+    func sendEvent(_ event: InAppMessageIncomingEvent) {
+        eventsQueue.async {
+            guard self.isConfigurationReady else {
+                self.unhandledEvents.append(event)
+                return
+            }
+            self.handleEvent(event)
+        }
+    }
+
+    // MARK: - Private
+
+    /// Core flow that decised to show in-app message based on incoming event
+    private func handleEvent(_ event: InAppMessageIncomingEvent) {
         Log("Received event: \(event)")
             .category(.inAppMessages).level(.debug).make()
-        // if config is not ready, store event in the queue and when config prepared — handle events from queue
-        // if isConfigurationReady {} else {}
 
-        configManager.buildInAppRequest(event: event) { inAppRequest in
+        self.configManager.buildInAppRequest(event: event.eventName) { inAppRequest in
             guard let inAppRequest = inAppRequest else { return }
 
             self.presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
@@ -65,10 +92,28 @@ final class InAppCoreManager {
         }
     }
 
+    private func handleQueuedEvents() {
+        Log("Start handling waiting events. Count: \(unhandledEvents.count)")
+            .category(.inAppMessages).level(.debug).make()
+        while unhandledEvents.count > 0 {
+            let event = unhandledEvents.removeFirst()
+            handleEvent(event)
+        }
+    }
+
     private func buildInAppUIModel(_ inAppMessage: InAppMessage, completion: @escaping (InAppMessageUIModel?) -> Void) {
         imagesStorage.getImage(url: inAppMessage.imageUrl) { imageData in
             let uiModel = imageData.map(InAppMessageUIModel.init)
             completion(uiModel)
+        }
+    }
+}
+
+extension InAppCoreManager: InAppConfigurationDelegate {
+    func didPreparedConfiguration() {
+        eventsQueue.async {
+            self.isConfigurationReady = true
+            self.handleQueuedEvents()
         }
     }
 }

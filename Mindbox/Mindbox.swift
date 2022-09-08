@@ -543,6 +543,6 @@ public class Mindbox: NSObject {
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
         guard inAppMessagesEnabled else { return }
-        inAppMessagesManager?.handleEvent(event: operationSystemName)
+        inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
     }
 }
