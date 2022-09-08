@@ -64,30 +64,3 @@ struct SimpleImageInApp: Decodable {
     let redirectUrl: String
     let intentPayload: String
 }
-
-//{
-//    "inapps": [
-//        {
-//            "id": "8dc2094d-2f9d-4f1d-b247-56d2e8c17e5e",
-//            "targeting": {
-//                "type": "simple",
-//                "payload": {
-//                    "segmentation": "d2554859-03cf-4b80-b972-25eb54afc68c",
-//                    "segment": "d2554859-03cf-4b80-b972-25eb54afc68c"
-//                }
-//            },
-//            "form": {
-//                "variants": [
-//                    {
-//                        "type": "simpleImage",
-//                        "payload": {
-//                            "imageUrl": "https://placeimg.com/640/360/any",
-//                            "redirectUrl": "https://mpush-test.mindbox.ru/newcustomers/customers?filter=segment(s(20)e(filter-mode(Present))h(f)a(f)n(f))",
-//                            "intentPayload": "ooo some custom intent payload ooo"
-//                        }
-//                    }
-//                ]
-//            }
-//        }
-//    ]
-//}
