@@ -9,27 +9,29 @@
 import Foundation
 import UIKit
 
+struct InAppMessageUIModel {
+    let imageData: Data
+}
+
 /// Prepares UI for in-app messages and shows them
 final class InAppPresentationManager {
 
-    public init(imagesStorage: InAppImagesStorage) {
-        self.imagesStorage = imagesStorage
-    }
-
-    private let imagesStorage: InAppImagesStorage
     private var inAppWindow: UIWindow?
 
-    func present(inAppMessage: InAppMessage) {
+    func present(inAppUIModel: InAppMessageUIModel) {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
         let currentKeyWindow = currentKeyWindow()
         let inAppWindow = makeInAppMessageWindow()
-        let inAppViewController = InAppMessageViewController()
-        inAppViewController.onClose = { [currentKeyWindow, weak self] in
-            self?.inAppWindow = nil
-            currentKeyWindow?.makeKeyAndVisible()
-        }
+
+        let inAppViewController = InAppMessageViewController(
+            inAppUIModel: inAppUIModel,
+            onClose: { [currentKeyWindow, weak self] in
+                self?.inAppWindow = nil
+                currentKeyWindow?.makeKeyAndVisible()
+            })
+
         inAppWindow.rootViewController = inAppViewController
         inAppWindow.makeKeyAndVisible()
     }

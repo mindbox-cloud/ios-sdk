@@ -24,6 +24,6 @@ class InAppConfigurationManager {
     }
 
     func buildInAppMessage(inAppResponse: InAppResponse) -> InAppMessage {
-        return InAppMessage()
+        return InAppMessage(imageUrl: URL(string: "https://random.imagecdn.app/500/150")!)
     }
 }
