@@ -20,6 +20,11 @@ class InAppConfigurationManager {
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configuration: InAppConfig!
+    private let inAppConfigRepository: InAppConfigurationRepository
+
+    init(inAppConfigRepository: InAppConfigurationRepository) {
+        self.inAppConfigRepository = inAppConfigRepository
+    }
 
     weak var delegate: InAppConfigurationDelegate?
 
@@ -61,35 +66,21 @@ class InAppConfigurationManager {
     }
 
     private func fetchConfigFromCache() -> InAppConfig? {
-        guard FileManager.default.fileExists(atPath: inAppConfigFileUrl.path) else {
-            Log("Config file doesn't exist on a disk")
-                .category(.inAppMessages).level(.debug).make()
+        guard let data = inAppConfigRepository.fetchConfigFromCache() else {
             return nil
         }
-        Log("Config file exists on a disk")
-            .category(.inAppMessages).level(.debug).make()
-        do {
-            let data = try Data(contentsOf: inAppConfigFileUrl)
-            let config = try jsonDecoder.decode(InAppConfig.self, from: data)
-            Log("Successfuly parsed config file")
-                .category(.inAppMessages).level(.debug).make()
-            return config
-        } catch {
+        guard let config = try? jsonDecoder.decode(InAppConfig.self, from: data) else {
             Log("Failed to parse config file")
                 .category(.inAppMessages).level(.debug).make()
             return nil
         }
+        Log("Successfuly parsed config file")
+            .category(.inAppMessages).level(.debug).make()
+        return config
     }
 
     private func saveConfigToCache(_ data: Data) {
-        do {
-            try data.write(to: inAppConfigFileUrl)
-            Log("Successfuly saved config file on a disk.")
-                .category(.inAppMessages).level(.debug).make()
-        } catch {
-            Log("Failed to save config file on a disk. Error: \(error.localizedDescription)")
-                .category(.inAppMessages).level(.debug).make()
-        }
+        inAppConfigRepository.saveConfigToCache(data)
     }
 
     private func setConfigPrepared(_ config: InAppConfig) {

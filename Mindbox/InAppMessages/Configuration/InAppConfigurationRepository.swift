@@ -8,5 +8,43 @@
 
 import Foundation
 
-/// Stores in-app configuration
-class InAppConfigurationRepository {}
+/// Stores in-app messages configuration
+class InAppConfigurationRepository {
+    func fetchConfigFromCache() -> Data? {
+        guard FileManager.default.fileExists(atPath: inAppConfigFileUrl.path) else {
+            Log("Config file doesn't exist on a disk")
+                .category(.inAppMessages).level(.debug).make()
+            return nil
+        }
+        Log("Config file exists on a disk")
+            .category(.inAppMessages).level(.debug).make()
+        do {
+            let data = try Data(contentsOf: inAppConfigFileUrl)
+            Log("Successfuly load config file from disk")
+                .category(.inAppMessages).level(.debug).make()
+            return data
+        } catch {
+            Log("Failed to load config file from disk")
+                .category(.inAppMessages).level(.debug).make()
+            return nil
+        }
+    }
+
+    func saveConfigToCache(_ data: Data) {
+        do {
+            try data.write(to: inAppConfigFileUrl)
+            Log("Successfuly saved config file on a disk.")
+                .category(.inAppMessages).level(.debug).make()
+        } catch {
+            Log("Failed to save config file on a disk. Error: \(error.localizedDescription)")
+                .category(.inAppMessages).level(.debug).make()
+        }
+    }
+
+    private var inAppConfigFileUrl: URL {
+        FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("InAppMessagesConfiguration.json")
+    }
+
+}
