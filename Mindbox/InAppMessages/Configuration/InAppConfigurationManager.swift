@@ -38,18 +38,23 @@ class InAppConfigurationManager {
         }
     }
 
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppRequest? {
+    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest? {
         queue.sync {
             guard let configuration = configuration else { return nil }
             switch event {
             case .start:
-                guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .simple }) else {
-                    return nil
-                }
-                return InAppRequest(
-                    inAppId: inAppForStartEvent.id,
+                let possibleInAppsForEvent = configuration.inapps
+                    .filter({ $0.targeting.type == .simple })
+                    .map {
+                        InAppsCheckRequest.InAppInfo(
+                            inAppId: $0.id,
+                            targetings: [] // todo map targeting
+                        )
+                    }
+
+                return InAppsCheckRequest(
                     triggerEvent: event,
-                    targeting: nil
+                    possibleInApps: possibleInAppsForEvent
                 )
             case .applicationEvent:
                 return nil

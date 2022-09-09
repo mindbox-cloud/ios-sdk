@@ -1,5 +1,5 @@
 //
-//  InAppRequest.swift
+//  InAppsCheckRequest.swift
 //  Mindbox
 //
 //  Created by Максим Казаков on 06.09.2022.
@@ -9,12 +9,17 @@
 import Foundation
 
 /// Contains data needed to request in-app messages that should be shown
-struct InAppRequest {    
-    let inAppId: String
+struct InAppsCheckRequest {
     let triggerEvent: InAppMessageTriggerEvent
-    let targeting: InAppRequestTargeting?
+
+    let possibleInApps: [InAppInfo]
+
+    struct InAppInfo {
+        let inAppId: String
+        let targetings: [InAppRequestTargeting]
+    }
 }
 
 enum InAppRequestTargeting {
-    case segment(segment: String, segmentation: String)
+    case segment(segmentation: String, segment: String)
 }
