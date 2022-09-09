@@ -8,6 +8,20 @@
 
 import Foundation
 
+enum InAppMessageTriggerEvent {
+    case start
+    case applicationEvent(String)
+
+    var eventName: String {
+        switch self {
+        case .start:
+            return "start"
+        case let .applicationEvent(name):
+            return name
+        }
+    }
+}
+
 /// The class is an entry point for all in-app messages logic.
 /// The main responsibility it to handle incoming events and decide whether to show in-app message
 final class InAppCoreManager {
@@ -29,46 +43,70 @@ final class InAppCoreManager {
     private let presentationManager: InAppPresentationManager
     private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
+    private var serialQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
+    private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
-        configManager.prepareConfiguration {
-            self.isConfigurationReady = $0
-        }
+        configManager.delegate = self
+        configManager.prepareConfiguration()
+        sendEvent(.start)
     }
 
     /// This method handles events and decides if in-app message should be shown
-    func handleEvent(event: String) {
-        Log("Received event: \(event)")
-            .category(.inAppMessages).level(.debug).make()
-        // if config is not ready, store event in the queue and when config prepared — handle events from queue
-        // if isConfigurationReady {} else {}
+    func sendEvent(_ event: InAppMessageTriggerEvent) {
+        serialQueue.async {
+            Log("Received event: \(event)")
+                .category(.inAppMessages).level(.debug).make()
 
-        configManager.buildInAppRequest(event: event) { inAppRequest in
-            guard let inAppRequest = inAppRequest else { return }
-
-            self.presentChecker.getInAppToPresent(request: inAppRequest) { inAppResponse in
-                guard let inAppResponse = inAppResponse else { return }
-
-                let inAppMessage = self.configManager.buildInAppMessage(inAppResponse: inAppResponse)
-                self.buildInAppUIModel(inAppMessage, completion: { inAppUIModel in
-                    guard let inAppUIModel = inAppUIModel else {
-                        return
-                    }
-
-                    DispatchQueue.main.async {
-                        self.presentationManager.present(inAppUIModel: inAppUIModel)
-                    }
-                })
+            guard self.isConfigurationReady else {
+                self.unhandledEvents.append(event)
+                return
             }
+            self.handleEvent(event)
         }
     }
 
-    private func buildInAppUIModel(_ inAppMessage: InAppMessage, completion: @escaping (InAppMessageUIModel?) -> Void) {
-        imagesStorage.getImage(url: inAppMessage.imageUrl) { imageData in
-            let uiModel = imageData.map(InAppMessageUIModel.init)
-            completion(uiModel)
+    // MARK: - Private
+
+    /// Core flow that decised to show in-app message based on incoming event
+    private func handleEvent(_ event: InAppMessageTriggerEvent) {
+        guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
+
+        presentChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
+            self.onReceivedInAppResponse(inAppResponse)
+        }
+    }
+
+    private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
+        guard let inAppResponse = inAppResponse,
+              let inAppMessage = configManager.buildInAppMessage(inAppResponse: inAppResponse)
+        else { return }
+
+        imagesStorage.getImage(url: inAppMessage.imageUrl, completionQueue: .main) { imageData in
+            guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
+                return
+            }
+            self.presentationManager.present(inAppUIModel: inAppUIModel)
+        }
+    }
+
+    private func handleQueuedEvents() {
+        Log("Start handling waiting events. Count: \(unhandledEvents.count)")
+            .category(.inAppMessages).level(.debug).make()
+        while unhandledEvents.count > 0 {
+            let event = unhandledEvents.removeFirst()
+            handleEvent(event)
+        }
+    }
+}
+
+extension InAppCoreManager: InAppConfigurationDelegate {
+    func didPreparedConfiguration() {
+        serialQueue.async {
+            self.isConfigurationReady = true
+            self.handleQueuedEvents()
         }
     }
 }

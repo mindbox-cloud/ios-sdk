@@ -65,6 +65,7 @@ public class Mindbox: NSObject {
      */
     public func initialization(configuration: MBConfiguration) {
         coreController?.initialization(configuration: configuration)
+        inAppMessagesManager?.start()
     }
 
     private var observeTokens: [UUID] = []
@@ -517,8 +518,7 @@ public class Mindbox: NSObject {
                     .category(.general).level(.fault).make()
                 self.initError = error
             }
-            self.persistenceStorage?.storeToFileBackgroundExecution()
-            self.inAppMessagesManager?.start()
+            self.persistenceStorage?.storeToFileBackgroundExecution()            
         }
     }
 
@@ -543,6 +543,6 @@ public class Mindbox: NSObject {
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
         guard inAppMessagesEnabled else { return }
-        inAppMessagesManager?.handleEvent(event: operationSystemName)
+        inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
     }
 }
