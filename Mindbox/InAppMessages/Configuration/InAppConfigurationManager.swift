@@ -123,8 +123,9 @@ class InAppConfigurationManager {
         inAppConfigRepository.saveConfigToCache(data)
     }
 
-    private func setConfigPrepared(_ config: InAppConfigResponse) {
-        configuration = config
+    private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
+//        let configuration = mapConfigResponse(configResponse)
+        configuration = configResponse
         delegate?.didPreparedConfiguration()
     }
 }

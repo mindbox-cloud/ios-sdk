@@ -7,6 +7,51 @@
 
 import Foundation
 
+/// Maps config response to business-logic handy InAppConfig model
+func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
+    var inAppConfig = InAppConfig(inAppsByEvent: [:])
+    response.inapps.forEach { inApp in
+        var event: InAppMessageTriggerEvent?
+        if inApp.targeting.type == .simple {
+            event = .start
+        }
+        guard let inAppTriggetEvent = event else {
+            return
+        }
+
+        let inAppFormVariants = inApp.form.variants.compactMap { $0.payload }
+        let simpleImageInApps: [SimpleImageInApp] = inAppFormVariants.map {
+            switch $0 {
+            case let .simpleImage(simpleImageInApp):
+                return SimpleImageInApp(
+                    imageUrl: simpleImageInApp.imageUrl,
+                    redirectUrl: simpleImageInApp.redirectUrl,
+                    intentPayload: simpleImageInApp.intentPayload
+                )
+            }
+        }
+        guard !simpleImageInApps.isEmpty else {
+            return
+        }
+
+        var targeting: SegmentationTargeting?
+        if let segmentation = inApp.targeting.payload?.segmention,
+           let segment = inApp.targeting.payload?.segment {
+            targeting = SegmentationTargeting(segmention: segmentation, segment: segment)
+        }
+
+        let inAppInfo = InAppConfig.InAppInfo(
+            id: inApp.id,
+            targeting: targeting,
+            formDataVariants: simpleImageInApps
+        )
+
+        inAppConfig.inAppsByEvent[inAppTriggetEvent] = inAppInfo
+    }
+    return inAppConfig
+}
+
+
 struct InAppConfigResponse: Decodable {
     struct InApp: Decodable {
         let id: String
@@ -14,12 +59,14 @@ struct InAppConfigResponse: Decodable {
         let form: InAppFormVariants
     }
 
-    struct InAppTargeting: Decodable {
-        let type: InAppTargetingType?
+    struct SegmentationTargeting: Decodable {
+        let segment: String?
+        let segmention: String?
     }
 
-    struct InAppFormVariants: Decodable {
-        let variants: [InAppForm]
+    struct InAppTargeting: Decodable {
+        let type: InAppTargetingType?
+        let payload: SegmentationTargeting?
     }
 
     struct InAppForm: Decodable {
@@ -28,7 +75,7 @@ struct InAppConfigResponse: Decodable {
             case payload
         }
 
-        var payload: InAppFormPayload?
+        let payload: InAppFormPayload?
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -44,23 +91,27 @@ struct InAppConfigResponse: Decodable {
         }
     }
 
+    struct SimpleImageInApp: Decodable {
+        let imageUrl: String
+        let redirectUrl: String
+        let intentPayload: String
+    }
+
+    enum InAppTargetingType: String, Decodable {
+        case simple
+    }
+
+    enum InAppFormType: String, Decodable {
+        case simpleImage
+    }
+
+    enum InAppFormPayload {
+        case simpleImage(SimpleImageInApp)
+    }
+
+    struct InAppFormVariants: Decodable {
+        let variants: [InAppForm]
+    }
+
     let inapps: [InApp]
-}
-
-enum InAppTargetingType: String, Decodable {
-    case simple
-}
-
-enum InAppFormType: String, Decodable {
-    case simpleImage
-}
-
-enum InAppFormPayload {
-    case simpleImage(SimpleImageInApp)
-}
-
-struct SimpleImageInApp: Decodable {
-    let imageUrl: String
-    let redirectUrl: String
-    let intentPayload: String
 }

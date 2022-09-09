@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum InAppMessageTriggerEvent {
+enum InAppMessageTriggerEvent: Hashable {
     case start
     case applicationEvent(String)
 
