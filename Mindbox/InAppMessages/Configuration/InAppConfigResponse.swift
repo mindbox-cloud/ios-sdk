@@ -9,15 +9,17 @@ import Foundation
 
 /// Maps config response to business-logic handy InAppConfig model
 func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
-    var inAppConfig = InAppConfig(inAppsByEvent: [:])
-    response.inapps.forEach { inApp in
+    var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
+
+    for inApp in response.inapps {
         var event: InAppMessageTriggerEvent?
         if inApp.targeting.type == .simple {
             event = .start
         }
         guard let inAppTriggetEvent = event else {
-            return
+            continue
         }
+        var inAppsForEvent = inAppsByEvent[inAppTriggetEvent] ?? [InAppConfig.InAppInfo]()
 
         let inAppFormVariants = inApp.form.variants.compactMap { $0.payload }
         let simpleImageInApps: [SimpleImageInApp] = inAppFormVariants.map {
@@ -31,7 +33,7 @@ func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
             }
         }
         guard !simpleImageInApps.isEmpty else {
-            return
+            continue
         }
 
         var targeting: SegmentationTargeting?
@@ -46,9 +48,11 @@ func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
             formDataVariants: simpleImageInApps
         )
 
-        inAppConfig.inAppsByEvent[inAppTriggetEvent] = inAppInfo
+        inAppsForEvent.append(inAppInfo)
+        inAppsByEvent[inAppTriggetEvent] = inAppsForEvent
     }
-    return inAppConfig
+
+    return InAppConfig(inAppsByEvent: inAppsByEvent)
 }
 
 

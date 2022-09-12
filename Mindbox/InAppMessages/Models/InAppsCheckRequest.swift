@@ -11,15 +11,10 @@ import Foundation
 /// Contains data needed to request in-app messages that should be shown
 struct InAppsCheckRequest {
     let triggerEvent: InAppMessageTriggerEvent
-
     let possibleInApps: [InAppInfo]
 
     struct InAppInfo {
         let inAppId: String
-        let targetings: [InAppRequestTargeting]
+        let targeting: SegmentationTargeting?
     }
-}
-
-enum InAppRequestTargeting {
-    case segment(segmentation: String, segment: String)
 }

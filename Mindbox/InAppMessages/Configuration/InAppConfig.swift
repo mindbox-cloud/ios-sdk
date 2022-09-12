@@ -8,7 +8,7 @@
 import Foundation
 
 struct InAppConfig {
-    var inAppsByEvent: [InAppMessageTriggerEvent: InAppInfo]
+    var inAppsByEvent: [InAppMessageTriggerEvent: [InAppInfo]]
 
     struct InAppInfo {
         let id: String
