@@ -22,7 +22,10 @@ final class InAppSegmentationChecker {
         )
         fetchSegments(segmentationCheckRequest: segmentationRequest) { response in
             guard let response = response,
-                  response.status == .success else { return }
+                  response.status == .success else {
+                completion(nil)
+                return
+            }
 
             // [SegmentationId: SegmentId] from response
             let customerSegmentationDict: [String: String] = Dictionary(
@@ -62,7 +65,7 @@ final class InAppSegmentationChecker {
                 case .success(let response):
                     completion(response)
                 case .failure:
-                    break
+                    completion(nil)
                 }
             }
         )
