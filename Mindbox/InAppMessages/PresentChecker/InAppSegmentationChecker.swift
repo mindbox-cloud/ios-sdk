@@ -31,13 +31,22 @@ final class InAppSegmentationChecker {
                     return ($0.segmentation.ids.externalId, segment.externalId)
                 }
             )
-            
+            Log("Fetched customer segments ([segmentationId: segmentId]): \(customerSegmentationDict)")
+                .category(.inAppMessages).level(.debug).make()
+
+            Log("InApps segments: \(targetings)")
+                .category(.inAppMessages).level(.debug).make()
+
             if let inAppToShow = request.possibleInApps.first(where: { inApp in
                 guard let targeting = inApp.targeting else { return false }
-                return customerSegmentationDict[targeting.segmentation] == targeting.segment
+                return targeting.segment == customerSegmentationDict[targeting.segmentation] 
             }) {
+                Log("Found segment match for in-app: \(inAppToShow.inAppId)")
+                    .category(.inAppMessages).level(.debug).make()
                 completion(InAppResponse(triggerEvent: request.triggerEvent, inAppToShowId: inAppToShow.inAppId))
             } else {
+                Log("Didn't find in-app that match segments")
+                    .category(.inAppMessages).level(.debug).make()
                 completion(nil)
             }
         }

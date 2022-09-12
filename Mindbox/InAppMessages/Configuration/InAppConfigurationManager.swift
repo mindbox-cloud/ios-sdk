@@ -57,7 +57,7 @@ class InAppConfigurationManager {
         }
     }
 
-    func getInAppFormData(for event: InAppMessageTriggerEvent, inAppId: String) -> InAppMessage? {
+    func getInAppFormData(for event: InAppMessageTriggerEvent, inAppId: String) -> InAppFormData? {
         queue.sync {
             guard let inApps = configuration.inAppsByEvent[event],
                   let inApp = inApps.first(where: { $0.id == inAppId }),
@@ -69,7 +69,7 @@ class InAppConfigurationManager {
             guard let imageUrl = URL(string: formData.imageUrl) else {
                 return nil
             }
-            return InAppMessage(imageUrl: imageUrl)
+            return InAppFormData(imageUrl: imageUrl)
         }
     }
 
