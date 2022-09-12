@@ -8,18 +8,12 @@
 
 import Foundation
 
+/// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {
+    /// Application start event. Fires when SDK is being configurated
     case start
+    /// Any other event sent to SDK
     case applicationEvent(String)
-
-    var eventName: String {
-        switch self {
-        case .start:
-            return "start"
-        case let .applicationEvent(name):
-            return name
-        }
-    }
 }
 
 /// The class is an entry point for all in-app messages logic.
@@ -85,7 +79,7 @@ final class InAppCoreManager {
 
     private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
         guard let inAppResponse = inAppResponse,
-              let inAppMessage = configManager.getInAppFormData(for: inAppResponse.triggerEvent, inAppId: inAppResponse.inAppToShowId)
+              let inAppMessage = configManager.getInAppFormData(by: inAppResponse)
         else { return }
 
         imagesStorage.getImage(url: inAppMessage.imageUrl, completionQueue: .main) { imageData in

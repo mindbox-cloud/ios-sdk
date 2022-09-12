@@ -57,10 +57,10 @@ class InAppConfigurationManager {
         }
     }
 
-    func getInAppFormData(for event: InAppMessageTriggerEvent, inAppId: String) -> InAppFormData? {
+    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
         queue.sync {
-            guard let inApps = configuration.inAppsByEvent[event],
-                  let inApp = inApps.first(where: { $0.id == inAppId }),
+            guard let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
+                  let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
                   inApp.formDataVariants.count > 0
             else {
                 return nil
