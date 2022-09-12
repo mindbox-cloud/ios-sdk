@@ -37,9 +37,9 @@ func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
         }
 
         var targeting: SegmentationTargeting?
-        if let segmentation = inApp.targeting.payload?.segmention,
+        if let segmentation = inApp.targeting.payload?.segmentation,
            let segment = inApp.targeting.payload?.segment {
-            targeting = SegmentationTargeting(segmention: segmentation, segment: segment)
+            targeting = SegmentationTargeting(segmentation: segmentation, segment: segment)
         }
 
         let inAppInfo = InAppConfig.InAppInfo(
@@ -65,7 +65,7 @@ struct InAppConfigResponse: Decodable {
 
     struct SegmentationTargeting: Decodable {
         let segment: String?
-        let segmention: String?
+        let segmentation: String?
     }
 
     struct InAppTargeting: Decodable {

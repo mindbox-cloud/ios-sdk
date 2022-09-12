@@ -12,19 +12,11 @@ import Foundation
 final class InAppSegmentationChecker {
 
     func getInAppToPresent(request: InAppsCheckRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void) {
-//        POST https://api(-staging).mindbox.ru/v3/operations/sync?endpointId={Идентификатор точки интеграции}&operation=Tracker.CheckCustomerSegments&deviceUUID={UUID устройства}
-//
-//    Headers:
-//        Content-Type: application/json; charset=utf-8
-//    Accept: application/json
-//        User-Agent: {User-Agent устройства клиента}
-//        X-Customer-IP: {IP адрес клиента}
-
         let targetings = request.possibleInApps.compactMap { $0.targeting }
         let segmentationRequest = SegmentationCheckRequest(
             segmentations: targetings.map {
                 SegmentationCheckRequest.Segmentation(
-                    ids: SegmentationCheckRequest.Segmentation.Id(externalId: $0.segmention)
+                    ids: SegmentationCheckRequest.Segmentation.Id(externalId: $0.segmentation)
                 )
             }
         )
@@ -39,10 +31,10 @@ final class InAppSegmentationChecker {
                     return ($0.segmentation.ids.externalId, segment.externalId)
                 }
             )
-
+            
             if let inAppToShow = request.possibleInApps.first(where: { inApp in
                 guard let targeting = inApp.targeting else { return false }
-                return customerSegmentationDict[targeting.segmention] == targeting.segment
+                return customerSegmentationDict[targeting.segmentation] == targeting.segment
             }) {
                 completion(InAppResponse(triggerEvent: request.triggerEvent, inAppToShowId: inAppToShow.inAppId))
             } else {
@@ -52,12 +44,24 @@ final class InAppSegmentationChecker {
     }
 
     private func fetchSegments(segmentationCheckRequest: SegmentationCheckRequest, completion: @escaping (SegmentationCheckResponse?) -> Void) {
-
+        Mindbox.shared.executeSyncOperation(
+            operationSystemName: "Tracker.CheckCustomerSegments",
+            operationBody: segmentationCheckRequest,
+            customResponseType: SegmentationCheckResponse.self,
+            completion: { result in
+                switch result {
+                case .success(let response):
+                    completion(response)
+                case .failure:
+                    break
+                }
+            }
+        )
     }
 }
 
 
-struct SegmentationCheckRequest: Encodable {
+struct SegmentationCheckRequest: OperationBodyRequestType {
     let segmentations: [Segmentation]
 
     struct Segmentation: Encodable {
@@ -69,30 +73,24 @@ struct SegmentationCheckRequest: Encodable {
     }
 }
 
-struct SegmentationCheckResponse: Decodable {
-    enum Status: String, Decodable {
-        case success = "Success"
-        case validationError = "ValidationError"
-        case protocolError = "ProtocolError"
-    }
-
-    let status: Status?
+struct SegmentationCheckResponse: OperationResponseType {
+    let status: Status
     let customerSegmentations: [CustomerSegmentation]
 
-    struct CustomerSegmentation: Decodable {
+    struct CustomerSegmentation: Codable {
         let segmentation: Segmentation
         let segment: Segment?
     }
 
-    struct Segmentation: Decodable {
+    struct Segmentation: Codable {
         let ids: Id
     }
 
-    struct Segment: Decodable {
+    struct Segment: Codable {
         let ids: Id?
     }
 
-    struct Id: Decodable {
+    struct Id: Codable {
         let externalId: String
     }
 }

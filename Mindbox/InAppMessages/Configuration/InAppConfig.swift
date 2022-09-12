@@ -24,6 +24,6 @@ struct SimpleImageInApp {
 }
 
 struct SegmentationTargeting {
-    let segmention: String
+    let segmentation: String
     let segment: String
 }
