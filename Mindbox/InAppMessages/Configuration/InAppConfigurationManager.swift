@@ -21,9 +21,11 @@ class InAppConfigurationManager {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configuration: InAppConfig!
     private let inAppConfigRepository: InAppConfigurationRepository
+    private let inAppConfigurationMapper: InAppConfigutationMapper
 
-    init(inAppConfigRepository: InAppConfigurationRepository) {
+    init(inAppConfigRepository: InAppConfigurationRepository, inAppConfigurationMapper: InAppConfigutationMapper) {
         self.inAppConfigRepository = inAppConfigRepository
+        self.inAppConfigurationMapper = inAppConfigurationMapper
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -119,7 +121,7 @@ class InAppConfigurationManager {
     }
 
     private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
-        configuration = mapConfigResponse(configResponse)
+        configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
         delegate?.didPreparedConfiguration()
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 
 /// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {
-    /// Application start event. Fires when SDK is being configurated
+    /// Application start event. Fires after SDK configurated
     case start
     /// Any other event sent to SDK
     case applicationEvent(String)
