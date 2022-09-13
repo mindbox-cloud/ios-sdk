@@ -30,10 +30,10 @@ final class InAppMessageViewController: UIViewController {
         view.addSubview(inAppView)
         inAppView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            inAppView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            inAppView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            inAppView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            inAppView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             inAppView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            inAppView.heightAnchor.constraint(equalToConstant: 350)
+            inAppView.widthAnchor.constraint(equalTo: inAppView.heightAnchor, multiplier: 9 / 16)
         ])
         inAppView.onClose = { [weak self] in self?.onClose() }
     }
