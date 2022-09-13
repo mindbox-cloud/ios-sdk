@@ -19,11 +19,13 @@ class InAppConfigurationManager {
     private let configUrl = URL(string: "https://web-bucket-inapps-configs-production.storage.yandexcloud.net/byendpoint/someTestMobileEndpoint.json")!
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
-    private var configuration: InAppConfigResponse!
+    private var configuration: InAppConfig!
     private let inAppConfigRepository: InAppConfigurationRepository
+    private let inAppConfigurationMapper: InAppConfigutationMapper
 
-    init(inAppConfigRepository: InAppConfigurationRepository) {
+    init(inAppConfigRepository: InAppConfigurationRepository, inAppConfigurationMapper: InAppConfigutationMapper) {
         self.inAppConfigRepository = inAppConfigRepository
+        self.inAppConfigurationMapper = inAppConfigurationMapper
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -38,38 +40,38 @@ class InAppConfigurationManager {
         }
     }
 
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppRequest? {
+    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest? {
         queue.sync {
-            guard let configuration = configuration else { return nil }
-            switch event {
-            case .start:
-                guard let inAppForStartEvent = configuration.inapps.first(where: { $0.targeting.type == .simple }) else {
-                    return nil
+            guard let configuration = configuration,
+                  let inAppInfos = configuration.inAppsByEvent[event],
+                  !inAppInfos.isEmpty
+            else { return nil }
+
+            return InAppsCheckRequest(
+                triggerEvent: event,
+                possibleInApps: inAppInfos.map {
+                    InAppsCheckRequest.InAppInfo(
+                        inAppId: $0.id,
+                        targeting: $0.targeting
+                    )
                 }
-                return InAppRequest(
-                    inAppId: inAppForStartEvent.id,
-                    triggerEvent: event,
-                    targeting: nil
-                )
-            case .applicationEvent:
-                return nil
-            }
+            )
         }
     }
 
-    func buildInAppMessage(inAppResponse: InAppResponse) -> InAppMessage? {
+    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
         queue.sync {
-            let inAppsToShow = configuration.inapps.filter { inAppResponse.inAppIds.contains($0.id)  }
-            guard let firstInAppToShow = inAppsToShow.first,
-                  let inAppFormData = firstInAppToShow.form.variants.first?.payload else { return nil }
-
-            switch inAppFormData {
-            case let .simpleImage(simpleImageInApp):
-                guard let imageUrl = URL(string: simpleImageInApp.imageUrl) else {
-                    return nil
-                }
-                return InAppMessage(imageUrl: imageUrl)
+            guard let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
+                  let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
+                  inApp.formDataVariants.count > 0
+            else {
+                return nil
             }
+            let formData = inApp.formDataVariants[0]
+            guard let imageUrl = URL(string: formData.imageUrl) else {
+                return nil
+            }
+            return InAppFormData(imageUrl: imageUrl)
         }
     }
 
@@ -118,8 +120,8 @@ class InAppConfigurationManager {
         inAppConfigRepository.saveConfigToCache(data)
     }
 
-    private func setConfigPrepared(_ config: InAppConfigResponse) {
-        configuration = config
+    private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
+        configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
         delegate?.didPreparedConfiguration()
     }
 }

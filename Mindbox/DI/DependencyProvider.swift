@@ -39,8 +39,8 @@ final class DependencyProvider: DependencyContainer {
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         inAppMessagesManager = InAppCoreManager(
-            configManager: InAppConfigurationManager(inAppConfigRepository: InAppConfigurationRepository()),
-            presentChecker: InAppPresentChecker(),
+            configManager: InAppConfigurationManager(inAppConfigRepository: InAppConfigurationRepository(), inAppConfigurationMapper: InAppConfigutationMapper()),
+            presentChecker: InAppSegmentationChecker(),
             presentationManager: InAppPresentationManager(),
             imagesStorage: InAppImagesStorage()
         )

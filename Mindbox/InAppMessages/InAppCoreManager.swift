@@ -8,18 +8,12 @@
 
 import Foundation
 
-enum InAppMessageTriggerEvent {
+/// Event that may trigger showing in-app message
+enum InAppMessageTriggerEvent: Hashable {
+    /// Application start event. Fires after SDK configurated
     case start
+    /// Any other event sent to SDK
     case applicationEvent(String)
-
-    var eventName: String {
-        switch self {
-        case .start:
-            return "start"
-        case let .applicationEvent(name):
-            return name
-        }
-    }
 }
 
 /// The class is an entry point for all in-app messages logic.
@@ -28,18 +22,18 @@ final class InAppCoreManager {
 
     init(
         configManager: InAppConfigurationManager,
-        presentChecker: InAppPresentChecker,
+        presentChecker: InAppSegmentationChecker,
         presentationManager: InAppPresentationManager,
         imagesStorage: InAppImagesStorage
     ) {
         self.configManager = configManager
-        self.presentChecker = presentChecker
+        self.segmentationChecker = presentChecker
         self.presentationManager = presentationManager
         self.imagesStorage = imagesStorage
     }
 
     private let configManager: InAppConfigurationManager
-    private let presentChecker: InAppPresentChecker
+    private let segmentationChecker: InAppSegmentationChecker
     private let presentationManager: InAppPresentationManager
     private let imagesStorage: InAppImagesStorage
     private var isConfigurationReady = false
@@ -74,14 +68,18 @@ final class InAppCoreManager {
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
-        presentChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
-            self.onReceivedInAppResponse(inAppResponse)
+        if let firstInAppWithoutTargeting = inAppRequest.possibleInApps.first(where: { $0.targeting == nil }) {
+            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInAppWithoutTargeting.inAppId))
+        } else {
+            segmentationChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
+                self.onReceivedInAppResponse(inAppResponse)
+            }
         }
     }
 
     private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
         guard let inAppResponse = inAppResponse,
-              let inAppMessage = configManager.buildInAppMessage(inAppResponse: inAppResponse)
+              let inAppMessage = configManager.getInAppFormData(by: inAppResponse)
         else { return }
 
         imagesStorage.getImage(url: inAppMessage.imageUrl, completionQueue: .main) { imageData in
