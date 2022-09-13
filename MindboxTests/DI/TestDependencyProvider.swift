@@ -11,7 +11,7 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-    
+    let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
     let databaseLoader: DataBaseLoader
@@ -39,6 +39,7 @@ final class TestDependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        inAppMessagesManager = InAppCoreManagerMock()
     }
 
 }

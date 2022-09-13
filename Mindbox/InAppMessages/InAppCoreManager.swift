@@ -16,9 +16,14 @@ enum InAppMessageTriggerEvent: Hashable {
     case applicationEvent(String)
 }
 
+protocol InAppCoreManagerProtocol: AnyObject {
+    func start()
+    func sendEvent(_ event: InAppMessageTriggerEvent)
+}
+
 /// The class is an entry point for all in-app messages logic.
 /// The main responsibility it to handle incoming events and decide whether to show in-app message
-final class InAppCoreManager {
+final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
         configManager: InAppConfigurationManager,

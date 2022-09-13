@@ -18,7 +18,7 @@ final class DependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
-    let inAppMessagesManager: InAppCoreManager
+    let inAppMessagesManager: InAppCoreManagerProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
