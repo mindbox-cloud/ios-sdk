@@ -68,6 +68,13 @@ final class InAppCoreManager {
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
+        #if DEBUG
+        if let inAppDebug = inAppRequest.possibleInApps.first {
+            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
+        }
+        return
+        #endif
+
         if let firstInAppWithoutTargeting = inAppRequest.possibleInApps.first(where: { $0.targeting == nil }) {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInAppWithoutTargeting.inAppId))
         } else {
