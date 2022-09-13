@@ -215,6 +215,7 @@
 		9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */; };
 		9B24FAB528C751E400F10B5D /* InAppImagesStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FAB428C751E400F10B5D /* InAppImagesStorage.swift */; };
 		9B24FABD28C757A700F10B5D /* InAppResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FABC28C757A700F10B5D /* InAppResponse.swift */; };
+		9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */; };
 		9B4F9DEF28D08897002C9CF0 /* InAppSegmentationChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* InAppSegmentationChecker.swift */; };
 		9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */; };
 		9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */; };
@@ -471,6 +472,7 @@
 		9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationManager.swift; sourceTree = "<group>"; };
 		9B24FAB428C751E400F10B5D /* InAppImagesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImagesStorage.swift; sourceTree = "<group>"; };
 		9B24FABC28C757A700F10B5D /* InAppResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppResponse.swift; sourceTree = "<group>"; };
+		9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSegmentsAPI.swift; sourceTree = "<group>"; };
 		9B4F9DEE28D08897002C9CF0 /* InAppSegmentationChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppSegmentationChecker.swift; sourceTree = "<group>"; };
 		9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppsCheckRequest.swift; sourceTree = "<group>"; };
 		9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppFormData.swift; sourceTree = "<group>"; };
@@ -1227,6 +1229,7 @@
 			isa = PBXGroup;
 			children = (
 				9B4F9DEE28D08897002C9CF0 /* InAppSegmentationChecker.swift */,
+				9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */,
 			);
 			path = PresentChecker;
 			sourceTree = "<group>";
@@ -1480,6 +1483,7 @@
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
 				334F3AF4264C199900A6AC00 /* ProductRequest.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
+				9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */,
 				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,

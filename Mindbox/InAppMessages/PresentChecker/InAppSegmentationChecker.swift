@@ -11,6 +11,12 @@ import Foundation
 /// Makes request to network and returns in-app messages that should be shown
 final class InAppSegmentationChecker {
 
+    private let customerSegmentsAPI: CustomerSegmentsAPI
+
+    init(customerSegmentsAPI: CustomerSegmentsAPI) {
+        self.customerSegmentsAPI = customerSegmentsAPI
+    }
+
     func getInAppToPresent(request: InAppsCheckRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void) {
         let targetings = request.possibleInApps.compactMap { $0.targeting }
         let segmentationRequest = SegmentationCheckRequest(
@@ -20,7 +26,7 @@ final class InAppSegmentationChecker {
                 )
             }
         )
-        fetchSegments(segmentationCheckRequest: segmentationRequest) { response in
+        customerSegmentsAPI.fetchSegments(segmentationRequest) { response in
             guard let response = response,
                   response.status == .success else {
                 completion(nil)
@@ -53,22 +59,6 @@ final class InAppSegmentationChecker {
                 completion(nil)
             }
         }
-    }
-
-    private func fetchSegments(segmentationCheckRequest: SegmentationCheckRequest, completion: @escaping (SegmentationCheckResponse?) -> Void) {
-        Mindbox.shared.executeSyncOperation(
-            operationSystemName: "Tracker.CheckCustomerSegments",
-            operationBody: segmentationCheckRequest,
-            customResponseType: SegmentationCheckResponse.self,
-            completion: { result in
-                switch result {
-                case .success(let response):
-                    completion(response)
-                case .failure:
-                    completion(nil)
-                }
-            }
-        )
     }
 }
 

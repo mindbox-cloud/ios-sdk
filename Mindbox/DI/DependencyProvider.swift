@@ -40,7 +40,7 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(inAppConfigRepository: InAppConfigurationRepository(), inAppConfigurationMapper: InAppConfigutationMapper()),
-            presentChecker: InAppSegmentationChecker(),
+            presentChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(),
             imagesStorage: InAppImagesStorage()
         )
