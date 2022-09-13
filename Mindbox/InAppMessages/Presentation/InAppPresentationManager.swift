@@ -22,44 +22,46 @@ final class InAppPresentationManager {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
-        let currentKeyWindow = currentKeyWindow()
         let inAppWindow = makeInAppMessageWindow()
 
         let inAppViewController = InAppMessageViewController(
             inAppUIModel: inAppUIModel,
-            onClose: { [currentKeyWindow, weak self] in
-                self?.inAppWindow = nil
-                currentKeyWindow?.makeKeyAndVisible()
+            onClose: { [weak self] in
+                self?.inAppWindow?.isHidden = true
+                self?.inAppWindow?.rootViewController = nil
             })
-
         inAppWindow.rootViewController = inAppViewController
-        inAppWindow.makeKeyAndVisible()
     }
 
     private func makeInAppMessageWindow() -> UIWindow {
         let window: UIWindow
-        if #available(iOS 13.0, *),
-           let currentWindowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            window = UIWindow(windowScene: currentWindowScene)
+        if #available(iOS 13.0, *) {
+            window = iOS13PlusWindow
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
         self.inAppWindow = window
-        window.windowLevel = UIWindow.Level.alert + 1
+        window.windowLevel = UIWindow.Level.normal
         window.isHidden = false
         return window
     }
 
-    private func currentKeyWindow() -> UIWindow? {
-        if #available(iOS 13.0, *) {
-            return UIApplication
-                .shared
-                .connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow }
+    @available(iOS 13.0, *)
+    private var foregroundedScene: UIWindowScene? {
+        for connectedScene in UIApplication.shared.connectedScenes {
+            if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
+                return windowScene
+            }
+        }
+        return nil
+    }
+
+    @available(iOS 13.0, *)
+    private var iOS13PlusWindow: UIWindow {
+        if let foregroundedScene = foregroundedScene, foregroundedScene.delegate != nil {
+            return UIWindow(windowScene: foregroundedScene)
         } else {
-            return UIApplication.shared.windows.first { $0.isKeyWindow }
+            return UIWindow(frame: UIScreen.main.bounds)
         }
     }
 }
