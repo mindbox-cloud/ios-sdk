@@ -10,6 +10,6 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => spec.version }
   spec.source_files  = "Mindbox/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
-  spec.resources = ["Mindbox/**/*.xcdatamodeld, Mindbox/**/*.xcassets"]
+  spec.resources = ["Mindbox/**/*.xcdatamodeld", "Mindbox/**/*.xcassets"]
   spec.swift_version = "5"
 end
