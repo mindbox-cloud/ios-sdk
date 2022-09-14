@@ -12,9 +12,19 @@ protocol InAppConfigurationDelegate: AnyObject {
     func didPreparedConfiguration()
 }
 
+protocol InAppConfigurationManagerProtocol: AnyObject {
+    var delegate: InAppConfigurationDelegate? { get set }
+
+    func prepareConfiguration()
+
+    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest?
+
+    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData?
+}
+
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
 /// Also builds domain models on the base of configuration: in-app requests, in-app message models.
-class InAppConfigurationManager {
+class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")

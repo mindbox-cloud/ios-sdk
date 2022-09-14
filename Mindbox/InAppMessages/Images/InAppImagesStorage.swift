@@ -9,12 +9,18 @@
 import Foundation
 import UIKit
 
+protocol InAppImagesStorageProtocol: AnyObject {
+    func getImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void)
+}
+
 /// This class manages images from in-app messages
-final class InAppImagesStorage {
+final class InAppImagesStorage: InAppImagesStorageProtocol {
 
     func getImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void) {
         downloadImage(url: url, completionQueue: completionQueue, completion: completion)
     }
+
+    // MARK: - Private
 
     private func downloadImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void) {
         URLSession.shared.dataTask(with: url) { (data, _, _) in

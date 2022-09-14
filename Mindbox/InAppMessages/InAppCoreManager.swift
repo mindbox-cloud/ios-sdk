@@ -26,23 +26,25 @@ protocol InAppCoreManagerProtocol: AnyObject {
 final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
-        configManager: InAppConfigurationManager,
-        segmentationChecker: InAppSegmentationChecker,
-        presentationManager: InAppPresentationManager,
-        imagesStorage: InAppImagesStorage
+        configManager: InAppConfigurationManagerProtocol,
+        segmentationChecker: InAppSegmentationCheckerProtocol,
+        presentationManager: InAppPresentationManagerProtocol,
+        imagesStorage: InAppImagesStorageProtocol,
+        serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
         self.imagesStorage = imagesStorage
+        self.serialQueue = serialQueue
     }
 
-    private let configManager: InAppConfigurationManager
-    private let segmentationChecker: InAppSegmentationChecker
-    private let presentationManager: InAppPresentationManager
-    private let imagesStorage: InAppImagesStorage
+    private let configManager: InAppConfigurationManagerProtocol
+    private let segmentationChecker: InAppSegmentationCheckerProtocol
+    private let presentationManager: InAppPresentationManagerProtocol
+    private let imagesStorage: InAppImagesStorageProtocol
     private var isConfigurationReady = false
-    private var serialQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
+    private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
     /// This method called on app start.
@@ -73,12 +75,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
-        #if DEBUG
-        if let inAppDebug = inAppRequest.possibleInApps.first {
-            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
-        }
-        return
-        #endif
+//        #if DEBUG
+//        if let inAppDebug = inAppRequest.possibleInApps.first {
+//            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
+//        }
+//        return
+//        #endif
 
         if let firstInAppWithoutTargeting = inAppRequest.possibleInApps.first(where: { $0.targeting == nil }) {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInAppWithoutTargeting.inAppId))

@@ -13,8 +13,12 @@ struct InAppMessageUIModel {
     let imageData: Data
 }
 
+protocol InAppPresentationManagerProtocol: AnyObject {
+    func present(inAppUIModel: InAppMessageUIModel)
+}
+
 /// Prepares UI for in-app messages and shows them
-final class InAppPresentationManager {
+final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     private var inAppWindow: UIWindow?
 

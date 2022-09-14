@@ -8,8 +8,12 @@
 
 import Foundation
 
+protocol InAppSegmentationCheckerProtocol: AnyObject {
+    func getInAppToPresent(request: InAppsCheckRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void)
+}
+
 /// Makes request to network and returns in-app messages that should be shown
-final class InAppSegmentationChecker {
+final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
 
     private let customerSegmentsAPI: CustomerSegmentsAPI
 
