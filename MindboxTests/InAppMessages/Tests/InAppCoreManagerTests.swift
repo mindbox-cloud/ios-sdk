@@ -13,24 +13,30 @@ import XCTest
 
 class InAppCoreManagerTests: XCTestCase {
 
+    var configManager: InAppConfigurationManagerMock!
+    var segmentationChecker: InAppSegmentationCheckerMock!
+    var presentationManager: InAppPresentationManagerMock!
+    var imagesStorage: InAppImagesStorageMock!
+    var serialQueue: DispatchQueue!
+    var sut: InAppCoreManager!
+
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
+        configManager = InAppConfigurationManagerMock()
+        segmentationChecker = InAppSegmentationCheckerMock()
+        presentationManager = InAppPresentationManagerMock()
+        imagesStorage = InAppImagesStorageMock()
+        serialQueue = DispatchQueue(label: "core-manager-tests")
 
-    func test_startEvent_withSegmentation_happyFlow() throws {
-        let configManager = InAppConfigurationManagerMock()
-        let segmentationChecker = InAppSegmentationCheckerMock()
-        let presentationManager = InAppPresentationManagerMock()
-        let imagesStorage = InAppImagesStorageMock()
-        let serialQueue = DispatchQueue(label: "core-manager-tests")
-
-        let sut = InAppCoreManager(
+        sut = InAppCoreManager(
             configManager: configManager,
             segmentationChecker: segmentationChecker,
             presentationManager: presentationManager,
             imagesStorage: imagesStorage,
             serialQueue: serialQueue
         )
+    }
+
+    func test_startEvent_withSegmentation_happyFlow() throws {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
             .init(
@@ -38,19 +44,46 @@ class InAppCoreManagerTests: XCTestCase {
                 targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
             )
         ]
+        let inAppCheckRequest = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
-        imagesStorage.imageResult = "image-data-bytes".data(using: .utf8)!
         configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!)
+        imagesStorage.imageResult = "image-data-bytes".data(using: .utf8)!
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
         let serialQueueFinishExpectation = self.expectation(description: "core manager queue finish")
-        serialQueue.async {
-            serialQueueFinishExpectation.fulfill()
-        }
+        serialQueue.async { serialQueueFinishExpectation.fulfill() }
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
+        XCTAssertEqual(segmentationChecker.requestReceived, inAppCheckRequest)
+        XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageData, "image-data-bytes".data(using: .utf8)!)
+    }
+
+    func test_startEvent_withoutSegmentation_happyFlow() throws {
+        let triggerEvent = InAppMessageTriggerEvent.start
+        let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
+            .init(
+                inAppId: "in-app-with-segmentation",
+                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
+            ),
+            .init(
+                inAppId: "in-app-without-segmentation",
+                targeting: nil
+            )
+        ]
+        configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
+        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
+        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!)
+        imagesStorage.imageResult = "image-data-bytes".data(using: .utf8)!
+
+        sut.start()
+        configManager.delegate?.didPreparedConfiguration()
+        let serialQueueFinishExpectation = self.expectation(description: "core manager queue finish")
+        serialQueue.async { serialQueueFinishExpectation.fulfill() }
+
+        self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
+        XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageData, "image-data-bytes".data(using: .utf8)!)
     }
 }

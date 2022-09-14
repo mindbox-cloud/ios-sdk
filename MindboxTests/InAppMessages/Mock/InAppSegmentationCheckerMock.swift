@@ -11,7 +11,10 @@ import Foundation
 
 class InAppSegmentationCheckerMock: InAppSegmentationCheckerProtocol {
     var inAppToPresentResult: InAppResponse?
+    var requestReceived: InAppsCheckRequest?
+    
     func getInAppToPresent(request: InAppsCheckRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void) {
+        requestReceived = request
         completion(inAppToPresentResult)
     }
 }

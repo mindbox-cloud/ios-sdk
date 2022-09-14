@@ -23,7 +23,7 @@ struct SimpleImageInApp {
     let intentPayload: String
 }
 
-struct SegmentationTargeting {
+struct SegmentationTargeting: Equatable {
     let segmentation: String
     let segment: String
 }
