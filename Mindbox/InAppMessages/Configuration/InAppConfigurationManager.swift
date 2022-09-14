@@ -15,17 +15,22 @@ protocol InAppConfigurationDelegate: AnyObject {
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
 /// Also builds domain models on the base of configuration: in-app requests, in-app message models.
 class InAppConfigurationManager {
-
-    private let configUrl = URL(string: "https://web-bucket-inapps-configs-production.storage.yandexcloud.net/byendpoint/someTestMobileEndpoint.json")!
+    
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configuration: InAppConfig!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
+    private let persistenceStorage: PersistenceStorage
 
-    init(inAppConfigRepository: InAppConfigurationRepository, inAppConfigurationMapper: InAppConfigutationMapper) {
+    init(
+        persistenceStorage: PersistenceStorage,
+        inAppConfigRepository: InAppConfigurationRepository,
+        inAppConfigurationMapper: InAppConfigutationMapper
+    ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
+        self.persistenceStorage = persistenceStorage
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -78,10 +83,26 @@ class InAppConfigurationManager {
     // MARK: - Private
 
     private func downloadConfig() {
-        URLSession.shared.dataTask(with: configUrl) { [self] data, response, error in
-            queue.async { self.completeDownloadTask(data, error: error) }
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            completeDownloadTask(nil, error: error)
+            return
         }
-        .resume()
+
+        do {
+            let route = FetchInAppConfigRoute()
+            let builder = URLRequestBuilder(domain: configuration.domain)
+            let urlRequest = try builder.asURLRequest(route: route)
+            URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
+                queue.async { self.completeDownloadTask(data, error: error) }
+            }
+            .resume()
+        } catch {
+            completeDownloadTask(nil, error: error)
+        }
     }
 
     private func completeDownloadTask(_ data: Data?, error: Error?) {
@@ -124,4 +145,16 @@ class InAppConfigurationManager {
         configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
         delegate?.didPreparedConfiguration()
     }
+}
+
+private struct FetchInAppConfigRoute: Route {
+    var method: HTTPMethod { .get }
+
+    var path: String { "/inapps/byendpoint/someTestMobileEndpoint.json" }
+
+    var headers: HTTPHeaders? { nil }
+
+    var queryParameters: QueryParameters { .init() }
+
+    var body: Data? { nil }
 }

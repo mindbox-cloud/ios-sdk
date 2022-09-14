@@ -27,12 +27,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
         configManager: InAppConfigurationManager,
-        presentChecker: InAppSegmentationChecker,
+        segmentationChecker: InAppSegmentationChecker,
         presentationManager: InAppPresentationManager,
         imagesStorage: InAppImagesStorage
     ) {
         self.configManager = configManager
-        self.segmentationChecker = presentChecker
+        self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
         self.imagesStorage = imagesStorage
     }
