@@ -16,7 +16,6 @@ class InAppCoreManagerTests: XCTestCase {
     var configManager: InAppConfigurationManagerMock!
     var segmentationChecker: InAppSegmentationCheckerMock!
     var presentationManager: InAppPresentationManagerMock!
-    var imagesStorage: InAppImagesStorageMock!
     var serialQueue: DispatchQueue!
     var sut: InAppCoreManager!
 
@@ -24,14 +23,12 @@ class InAppCoreManagerTests: XCTestCase {
         configManager = InAppConfigurationManagerMock()
         segmentationChecker = InAppSegmentationCheckerMock()
         presentationManager = InAppPresentationManagerMock()
-        imagesStorage = InAppImagesStorageMock()
         serialQueue = DispatchQueue(label: "core-manager-tests")
 
         sut = InAppCoreManager(
             configManager: configManager,
             segmentationChecker: segmentationChecker,
             presentationManager: presentationManager,
-            imagesStorage: imagesStorage,
             serialQueue: serialQueue
         )
     }
@@ -48,7 +45,6 @@ class InAppCoreManagerTests: XCTestCase {
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
         configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!)
-        imagesStorage.imageResult = "image-data-bytes".data(using: .utf8)!
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -57,7 +53,7 @@ class InAppCoreManagerTests: XCTestCase {
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
         XCTAssertEqual(segmentationChecker.requestReceived, inAppCheckRequest)
-        XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageData, "image-data-bytes".data(using: .utf8)!)
+        XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageUrl, URL(string: "image-url")!)
     }
 
     func test_startEvent_withoutSegmentation_happyFlow() throws {
@@ -75,7 +71,6 @@ class InAppCoreManagerTests: XCTestCase {
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
         configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!)
-        imagesStorage.imageResult = "image-data-bytes".data(using: .utf8)!
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -84,6 +79,6 @@ class InAppCoreManagerTests: XCTestCase {
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
         XCTAssertNil(segmentationChecker.requestReceived)
-        XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageData, "image-data-bytes".data(using: .utf8)!)
+        XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageUrl, URL(string: "image-url")!)
     }
 }

@@ -14,15 +14,36 @@ struct InAppMessageUIModel {
 }
 
 protocol InAppPresentationManagerProtocol: AnyObject {
-    func present(inAppUIModel: InAppMessageUIModel)
+    func present(inAppFormData: InAppFormData, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void)
+}
+
+enum InAppPresentationError {
+    case failedToLoadImages
 }
 
 /// Prepares UI for in-app messages and shows them
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
+    init(imagesStorage: InAppImagesStorageProtocol) {
+        self.imagesStorage = imagesStorage
+    }
+
+    private let imagesStorage: InAppImagesStorageProtocol
     private var inAppWindow: UIWindow?
 
-    func present(inAppUIModel: InAppMessageUIModel) {
+    func present(inAppFormData: InAppFormData, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+        imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
+            guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
+                onPresentationCompleted(.failedToLoadImages)
+                return
+            }
+            self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: onPresentationCompleted)
+        }
+    }
+
+    // MARK: - Private
+
+    private func presentInAppUIModel(inAppUIModel: InAppMessageUIModel, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
@@ -33,6 +54,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             onClose: { [weak self] in
                 self?.inAppWindow?.isHidden = true
                 self?.inAppWindow?.rootViewController = nil
+                onPresentationCompleted(nil)
             })
         inAppWindow.rootViewController = inAppViewController
     }

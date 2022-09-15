@@ -10,8 +10,9 @@ import Foundation
 @testable import Mindbox
 
 class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
-    var receivedInAppUIModel: InAppMessageUIModel?
-    func present(inAppUIModel: InAppMessageUIModel) {
-        receivedInAppUIModel = inAppUIModel
+
+    var receivedInAppUIModel: InAppFormData?
+    func present(inAppFormData: InAppFormData, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+        receivedInAppUIModel = inAppFormData
     }
 }

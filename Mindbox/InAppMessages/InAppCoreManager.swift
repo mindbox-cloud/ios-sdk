@@ -29,20 +29,17 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         segmentationChecker: InAppSegmentationCheckerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
-        imagesStorage: InAppImagesStorageProtocol,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
-        self.imagesStorage = imagesStorage
         self.serialQueue = serialQueue
     }
 
     private let configManager: InAppConfigurationManagerProtocol
     private let segmentationChecker: InAppSegmentationCheckerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
-    private let imagesStorage: InAppImagesStorageProtocol
     private var isConfigurationReady = false
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
@@ -93,15 +90,10 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
         guard let inAppResponse = inAppResponse,
-              let inAppMessage = configManager.getInAppFormData(by: inAppResponse)
+              let inAppFormData = configManager.getInAppFormData(by: inAppResponse)
         else { return }
 
-        imagesStorage.getImage(url: inAppMessage.imageUrl, completionQueue: .main) { imageData in
-            guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
-                return
-            }
-            self.presentationManager.present(inAppUIModel: inAppUIModel)
-        }
+        presentationManager.present(inAppFormData: inAppFormData, onPresentationCompleted: { _ in })
     }
 
     private func handleQueuedEvents() {
