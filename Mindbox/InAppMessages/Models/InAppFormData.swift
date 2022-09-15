@@ -11,4 +11,6 @@ import Foundation
 /// Domain model that contains all data needed to show inapp on screen
 struct InAppFormData {
     let imageUrl: URL
+    let redirectUrl: String
+    let intentPayload: String
 }

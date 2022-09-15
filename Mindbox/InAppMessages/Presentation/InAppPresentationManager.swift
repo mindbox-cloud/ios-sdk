@@ -10,7 +10,13 @@ import Foundation
 import UIKit
 
 struct InAppMessageUIModel {
+    struct InAppRedirect {
+        let redirectUrl: URL
+        let payload: String
+    }
+
     let imageData: Data
+    let redirect: InAppRedirect?
 }
 
 protocol InAppPresentationManagerProtocol: AnyObject {
@@ -38,11 +44,20 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             }
         }
         imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
-            guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
+            if let imageData = imageData {
+                var redirectInfo: InAppMessageUIModel.InAppRedirect?
+                if let redirectUrl = URL(string: inAppFormData.redirectUrl) {
+                    redirectInfo = InAppMessageUIModel.InAppRedirect(redirectUrl: redirectUrl, payload: inAppFormData.intentPayload)
+                }
+                let inAppUIModel = InAppMessageUIModel(
+                    imageData: imageData,
+                    redirect: redirectInfo
+                )
+                self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: completion)
+            } else {
                 completion(.failedToLoadImages)
                 return
             }
-            self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: completion)
         }
     }
 

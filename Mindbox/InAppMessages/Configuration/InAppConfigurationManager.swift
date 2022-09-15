@@ -86,7 +86,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             guard let imageUrl = URL(string: formData.imageUrl) else {
                 return nil
             }
-            return InAppFormData(imageUrl: imageUrl)
+            return InAppFormData(imageUrl: imageUrl, redirectUrl: formData.redirectUrl, intentPayload: formData.intentPayload)
         }
     }
 
