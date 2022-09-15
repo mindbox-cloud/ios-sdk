@@ -41,6 +41,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let segmentationChecker: InAppSegmentationCheckerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
     private var isConfigurationReady = false
+    private var isPresentingInAppMessage = false
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
@@ -70,7 +71,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
+        guard !isPresentingInAppMessage,
+              let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
 //        #if DEBUG
 //        if let inAppDebug = inAppRequest.possibleInApps.first {
@@ -92,8 +94,19 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard let inAppResponse = inAppResponse,
               let inAppFormData = configManager.getInAppFormData(by: inAppResponse)
         else { return }
+        guard !isPresentingInAppMessage else { return }
+        isPresentingInAppMessage = true
 
-        presentationManager.present(inAppFormData: inAppFormData, onPresentationCompleted: { _ in })
+        presentationManager.present(inAppFormData: inAppFormData, completionQueue: serialQueue, onPresentationCompleted: { error in
+            self.isPresentingInAppMessage = false
+            switch error {
+            case .failedToLoadImages:
+                Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
+                    .category(.inAppMessages).level(.debug).make()
+            case .none:
+                break
+            }
+        })
     }
 
     private func handleQueuedEvents() {

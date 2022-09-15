@@ -81,4 +81,33 @@ class InAppCoreManagerTests: XCTestCase {
         XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageUrl, URL(string: "image-url")!)
     }
+
+    func test_startEventAndFewOtherEvents_onlyOneInAppShouldBePresented() throws {
+        let triggerEvent = InAppMessageTriggerEvent.start
+        let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
+            .init(
+                inAppId: "in-app-with-segmentation",
+                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
+            ),
+            .init(
+                inAppId: "in-app-without-segmentation",
+                targeting: nil
+            )
+        ]
+        configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
+        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
+        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!)
+
+        sut.start()
+        sut.sendEvent(.start)
+        sut.sendEvent(.start)
+
+        configManager.delegate?.didPreparedConfiguration()
+        let serialQueueFinishExpectation = self.expectation(description: "core manager queue finish")
+        serialQueue.async { serialQueueFinishExpectation.fulfill() }
+
+        self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
+        XCTAssertNil(segmentationChecker.requestReceived)
+        XCTAssertEqual(presentationManager.presentCallsCount, 1)
+    }
 }

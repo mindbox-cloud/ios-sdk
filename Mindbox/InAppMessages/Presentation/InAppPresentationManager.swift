@@ -14,7 +14,7 @@ struct InAppMessageUIModel {
 }
 
 protocol InAppPresentationManagerProtocol: AnyObject {
-    func present(inAppFormData: InAppFormData, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void)
+    func present(inAppFormData: InAppFormData, completionQueue: DispatchQueue, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void)
 }
 
 enum InAppPresentationError {
@@ -31,13 +31,18 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     private let imagesStorage: InAppImagesStorageProtocol
     private var inAppWindow: UIWindow?
 
-    func present(inAppFormData: InAppFormData, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+    func present(inAppFormData: InAppFormData, completionQueue: DispatchQueue, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+        let completion = { (error: InAppPresentationError?) in
+            completionQueue.async {
+                onPresentationCompleted(error)
+            }
+        }
         imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
             guard let inAppUIModel = imageData.map(InAppMessageUIModel.init) else {
-                onPresentationCompleted(.failedToLoadImages)
+                completion(.failedToLoadImages)
                 return
             }
-            self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: onPresentationCompleted)
+            self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: completion)
         }
     }
 
