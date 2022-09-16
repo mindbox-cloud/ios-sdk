@@ -22,12 +22,26 @@ struct InAppConfigResponse: Decodable {
     struct InAppTargeting: Decodable {
         let type: InAppTargetingType?
         let payload: SegmentationTargeting?
+
+        enum CodingKeys: String, CodingKey {
+            case type = "$type"
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.type = try? container.decodeIfPresent(InAppTargetingType.self, forKey: CodingKeys.type)
+            switch type {
+            case .simple:
+                self.payload = try? SegmentationTargeting(from: decoder)
+            case .none:
+                self.payload = nil
+            }
+        }
     }
 
     struct InAppForm: Decodable {
         enum CodingKeys: String, CodingKey {
-            case type
-            case payload
+            case type = "$type"
         }
 
         let payload: InAppFormPayload?
@@ -40,7 +54,7 @@ struct InAppConfigResponse: Decodable {
             }
             switch type {
             case .simpleImage:
-                let simpleImagePayload = try container.decode(SimpleImageInApp.self, forKey: .payload)
+                let simpleImagePayload = try SimpleImageInApp(from: decoder)
                 self.payload = .simpleImage(simpleImagePayload)
             }
         }
