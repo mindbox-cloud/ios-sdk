@@ -33,7 +33,7 @@ final class InAppMessageViewController: UIViewController {
             inAppView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             inAppView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             inAppView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            inAppView.widthAnchor.constraint(equalTo: inAppView.heightAnchor, multiplier: 9 / 16)
+            inAppView.widthAnchor.constraint(equalTo: inAppView.heightAnchor, multiplier: 3 / 4)
         ])
         inAppView.onClose = { [weak self] in self?.onClose() }
     }
