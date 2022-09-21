@@ -19,6 +19,7 @@ enum InAppMessageTriggerEvent: Hashable {
 protocol InAppCoreManagerProtocol: AnyObject {
     func start()
     func sendEvent(_ event: InAppMessageTriggerEvent)
+    var delegate: InAppMessagesDelegate? { get set }
 }
 
 /// The class is an entry point for all in-app messages logic.
@@ -36,6 +37,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         self.presentationManager = presentationManager
         self.serialQueue = serialQueue
     }
+
+    weak var delegate: InAppMessagesDelegate?
 
     private let configManager: InAppConfigurationManagerProtocol
     private let segmentationChecker: InAppSegmentationCheckerProtocol
@@ -97,16 +100,23 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard !isPresentingInAppMessage else { return }
         isPresentingInAppMessage = true
 
-        presentationManager.present(inAppFormData: inAppFormData, completionQueue: serialQueue, onPresentationCompleted: { error in
-            self.isPresentingInAppMessage = false
-            switch error {
-            case .failedToLoadImages:
-                Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
-                    .category(.inAppMessages).level(.debug).make()
-            case .none:
-                break
-            }
-        })
+        presentationManager.present(
+            inAppFormData: inAppFormData,
+            completionQueue: serialQueue,
+            onTapAction: { [delegate] url, payload in
+                delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
+            },
+            onPresentationCompleted: { [delegate] error in
+                self.isPresentingInAppMessage = false
+                delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
+                switch error {
+                case .failedToLoadImages:
+                    Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
+                        .category(.inAppMessages).level(.debug).make()
+                case .none:
+                    break
+                }
+            })
     }
 
     private func handleQueuedEvents() {

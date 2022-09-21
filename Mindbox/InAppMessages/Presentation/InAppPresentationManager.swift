@@ -14,18 +14,25 @@ struct InAppMessageUIModel {
         let redirectUrl: URL
         let payload: String
     }
-
+    
     let imageData: Data
     let redirect: InAppRedirect?
 }
 
 protocol InAppPresentationManagerProtocol: AnyObject {
-    func present(inAppFormData: InAppFormData, completionQueue: DispatchQueue, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void)
+    func present(
+        inAppFormData: InAppFormData,
+        completionQueue: DispatchQueue,
+        onTapAction: @escaping InAppMessageTapAction,
+        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+    )
 }
 
 enum InAppPresentationError {
     case failedToLoadImages
 }
+
+typealias InAppMessageTapAction = (_ tapLink: URL, _ payload: String) -> Void
 
 /// Prepares UI for in-app messages and shows them
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
@@ -37,7 +44,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     private let imagesStorage: InAppImagesStorageProtocol
     private var inAppWindow: UIWindow?
 
-    func present(inAppFormData: InAppFormData, completionQueue: DispatchQueue, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+    func present(
+        inAppFormData: InAppFormData,
+        completionQueue: DispatchQueue,
+        onTapAction: @escaping InAppMessageTapAction,
+        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+    ) {
         let completion = { (error: InAppPresentationError?) in
             completionQueue.async {
                 onPresentationCompleted(error)
@@ -53,7 +65,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                     imageData: imageData,
                     redirect: redirectInfo
                 )
-                self.presentInAppUIModel(inAppUIModel: inAppUIModel, onPresentationCompleted: completion)
+                self.presentInAppUIModel(inAppUIModel: inAppUIModel, onTapAction: onTapAction, onPresentationCompleted: completion)
             } else {
                 completion(.failedToLoadImages)
                 return
@@ -63,7 +75,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     // MARK: - Private
 
-    private func presentInAppUIModel(inAppUIModel: InAppMessageUIModel, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+    private func presentInAppUIModel(inAppUIModel: InAppMessageUIModel, onTapAction: @escaping InAppMessageTapAction, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
@@ -71,6 +83,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
         let inAppViewController = InAppMessageViewController(
             inAppUIModel: inAppUIModel,
+            onTapAction: onTapAction,
             onClose: { [weak self] in
                 self?.inAppWindow?.isHidden = true
                 self?.inAppWindow?.rootViewController = nil

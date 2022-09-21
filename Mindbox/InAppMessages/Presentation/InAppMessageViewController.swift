@@ -9,9 +9,10 @@ import UIKit
 
 final class InAppMessageViewController: UIViewController {
 
-    init(inAppUIModel: InAppMessageUIModel, onClose: @escaping (() -> Void)) {
+    init(inAppUIModel: InAppMessageUIModel, onTapAction: @escaping InAppMessageTapAction,onClose: @escaping (() -> Void)) {
         self.inAppUIModel = inAppUIModel
         self.onClose = onClose
+        self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -21,6 +22,7 @@ final class InAppMessageViewController: UIViewController {
 
     private let inAppUIModel: InAppMessageUIModel
     private let onClose: (() -> Void)
+    private let onTapAction: InAppMessageTapAction
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,6 +37,13 @@ final class InAppMessageViewController: UIViewController {
             inAppView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             inAppView.widthAnchor.constraint(equalTo: inAppView.heightAnchor, multiplier: 3 / 4)
         ])
+        let imageTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapImage))
+        inAppView.addGestureRecognizer(imageTapGestureRecognizer)
         inAppView.onClose = { [weak self] in self?.onClose() }
+    }
+
+    @objc private func onTapImage() {
+        guard let redirectInfo = inAppUIModel.redirect else { return }
+        onTapAction(redirectInfo.redirectUrl, redirectInfo.payload)
     }
 }

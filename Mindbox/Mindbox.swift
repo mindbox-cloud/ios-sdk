@@ -57,6 +57,12 @@ public class Mindbox: NSObject {
         }
     }
 
+    public weak var inAppMessagesDelegate: InAppMessagesDelegate? {
+        didSet {
+            inAppMessagesManager?.delegate = inAppMessagesDelegate
+        }
+    }
+
     /**
      Method to instruct sdk of its initialization.
 
