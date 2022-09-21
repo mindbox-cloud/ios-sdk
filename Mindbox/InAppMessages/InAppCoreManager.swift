@@ -104,10 +104,16 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inAppFormData,
             completionQueue: serialQueue,
             onTapAction: { [delegate] url, payload in
+                Log("On tap action. \nURL: \(url.absoluteString). \nPayload: \(payload)")
+                    .category(.inAppMessages).level(.debug).make()
                 delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
             },
             onPresentationCompleted: { [delegate] error in
-                self.isPresentingInAppMessage = false
+                Log("On inApp presentation completed")
+                    .category(.inAppMessages).level(.debug).make()
+                self.serialQueue.async {
+                    self.isPresentingInAppMessage = false
+                }
                 delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
                 switch error {
                 case .failedToLoadImages:
