@@ -13,7 +13,11 @@ class UNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
     
     func getStatus(result: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            let isAuthorized = settings.authorizationStatus.rawValue == UNAuthorizationStatus.authorized.rawValue
+            var grantedStatused = [UNAuthorizationStatus.authorized]
+            if #available(iOS 12.0, *) {
+                grantedStatused.append(UNAuthorizationStatus.provisional)
+            }
+            let isAuthorized = grantedStatused.contains(settings.authorizationStatus)
             result(isAuthorized)
         }
     }
