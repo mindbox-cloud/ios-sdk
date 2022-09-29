@@ -20,7 +20,9 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }()
     
     let sdkBundle: Bundle = {
+
         var bundle = Bundle(for: Mindbox.self)
+
         prepareBundle(&bundle)
         return bundle
     }()
@@ -96,5 +98,14 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             }
         }
     }
+}
 
+private final class BundleToken {
+    static let bundle: Bundle = {
+    #if SWIFT_PACKAGE
+        return Bundle.module
+    #else
+        return Bundle(for: BundleToken.self)
+    #endif
+    }()
 }
