@@ -94,44 +94,56 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private func downloadConfig() {
         guard let configuration = persistenceStorage.configuration else {
-            let error = MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "Configuration is not set"
-            ))
-            completeDownloadTask(nil, error: error)
+            Log("SDK configuration should be ready before downloading InApp config.")
+                .category(.inAppMessages).level(.error).make()
             return
         }
-
         do {
             let route = FetchInAppConfigRoute(endpoint: configuration.endpoint)
             let builder = URLRequestBuilder(domain: configuration.domain)
             let urlRequest = try builder.asURLRequest(route: route)
             URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
-                queue.async { self.completeDownloadTask(data, error: error) }
+                queue.async { self.completeDownloadTask(data, response: response, error: error) }
             }
             .resume()
         } catch {
-            completeDownloadTask(nil, error: error)
+            Log("Failed to start InApp Config downloading task. Error: \(error.localizedDescription).")
+                .category(.inAppMessages).level(.error).make()
         }
     }
 
-    private func completeDownloadTask(_ data: Data?, error: Error?) {
-        guard let data = data else {
-            Log("Failed to download config file. Error: \(error?.localizedDescription ?? "" )")
-                .category(.inAppMessages).level(.debug).make()
+    // Handles download result. Only print logs when failed: consider adding retry logic in future
+    private func completeDownloadTask(_ data: Data?, response: URLResponse?, error: Error?) {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            Log("Downloading InApp Config: invalid response.")
+                .category(.inAppMessages).level(.error).make()
             return
         }
+
+        if httpResponse.statusCode == 404 {
+            // This is regular situation when in-app configuration is not setup on server
+            Log("InApp Config is not setup on server.")
+                .category(.inAppMessages).level(.info).make()
+            return
+        }
+
+        guard let data = data else {
+            Log("Failed to download config file. Http code: \(httpResponse.statusCode). Error: \(error?.localizedDescription ?? "" )")
+                .category(.inAppMessages).level(.error).make()
+            return
+        }
+
         Log("Successfuly downloaded config file. Size: \(data.count) Bytes")
-            .category(.inAppMessages).level(.debug).make()
+            .category(.inAppMessages).level(.info).make()
         do {
             let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
             saveConfigToCache(data)
             setConfigPrepared(config)
             Log("Successfuly parsed config file\n \(config)")
-                .category(.inAppMessages).level(.debug).make()
+                .category(.inAppMessages).level(.info).make()
         } catch {
             Log("Failed to parse downloaded config file. Error: \(error)")
-                .category(.inAppMessages).level(.debug).make()
+                .category(.inAppMessages).level(.error).make()
         }
     }
 
