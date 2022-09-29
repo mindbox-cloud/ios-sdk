@@ -47,9 +47,6 @@ final class InAppImageOnlyView: UIView {
             closeButton.widthAnchor.constraint(equalToConstant: 44),
             closeButton.heightAnchor.constraint(equalToConstant: 44)
         ])
-
-        backgroundColor = .white
-        layer.cornerRadius = 16
         layer.masksToBounds = true
     }
 
