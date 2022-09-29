@@ -103,7 +103,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
 
         do {
-            let route = FetchInAppConfigRoute()
+            let route = FetchInAppConfigRoute(endpoint: configuration.endpoint)
             let builder = URLRequestBuilder(domain: configuration.domain)
             let urlRequest = try builder.asURLRequest(route: route)
             URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
@@ -160,9 +160,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 }
 
 private struct FetchInAppConfigRoute: Route {
+
+    let endpoint: String
+
+    init(endpoint: String) {
+        self.endpoint = endpoint
+    }
+
     var method: HTTPMethod { .get }
 
-    var path: String { "/inapps/byendpoint/someTestMobileEndpoint.json" }
+    var path: String { "/inapps/byendpoint/\(endpoint).json" }
 
     var headers: HTTPHeaders? { nil }
 
