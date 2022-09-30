@@ -108,8 +108,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             }
 
         case .empty:
+            let emptyConfig = InAppConfigResponse.init(inapps: [])
             inAppConfigRepository.clean()
-            setConfigPrepared(.init(inapps: []))
+            setConfigPrepared(emptyConfig)
 
         case let .error(error):
             applyConfigFromCache()
