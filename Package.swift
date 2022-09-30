@@ -15,28 +15,26 @@ let package = Package(
         .library(
             name: "MindboxNotificationsContent",
             targets: ["MindboxNotifications"])
-
     ],
     dependencies: [
     ],
     targets: [
         .target(
             name: "Mindbox",
-            dependencies: [],
+            dependencies: ["SDKVersionProvider"],
             path: "Mindbox",
-            exclude: ["Info.plist"],
-            resources: [
-                .process("../ProjectConfig.xcconfig")
-            ]
+            exclude: ["Info.plist"]
         ),
         .target(
             name: "MindboxNotifications",
-            dependencies: [],
+            dependencies: ["SDKVersionProvider"],
             path: "MindboxNotifications",
-            exclude:  ["Info.plist"],
-            resources: [
-                .process("../ProjectConfig.xcconfig")
-            ]
+            exclude:  ["Info.plist"]
+        ),
+        .target(
+            name: "SDKVersionProvider",
+            path: "SDKVersionProvider",
+            resources: [.copy("SDKVersionConfig.xcconfig")]
         )
     ]
 )
