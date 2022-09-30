@@ -41,6 +41,18 @@ class InAppConfigurationRepository {
         }
     }
 
+    func clean() {
+        guard FileManager.default.fileExists(atPath: inAppConfigFileUrl.path) else {
+            return
+        }
+        do {
+            try FileManager.default.removeItem(at: inAppConfigFileUrl)
+        } catch {
+            Log("Failed to clean inapp config cache. Error: \(error.localizedDescription)")
+                .category(.inAppMessages).level(.error).make()
+        }
+    }
+
     private var inAppConfigFileUrl: URL {
         FileManager.default
             .urls(for: .documentDirectory, in: .userDomainMask)[0]

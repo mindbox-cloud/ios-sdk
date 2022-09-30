@@ -31,27 +31,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var configuration: InAppConfig!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
-    private let persistenceStorage: PersistenceStorage
+    private let inAppConfigAPI: InAppConfigurationAPI
 
     init(
-        persistenceStorage: PersistenceStorage,
+        inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
-        self.persistenceStorage = persistenceStorage
+        self.inAppConfigAPI = inAppConfigAPI
     }
 
     weak var delegate: InAppConfigurationDelegate?
 
     func prepareConfiguration() {
         queue.async {
-            if let config = self.fetchConfigFromCache() {
-                self.setConfigPrepared(config)
-            } else {
-                self.downloadConfig()
-            }
+            self.downloadConfig()
         }
     }
 
@@ -93,58 +89,40 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     // MARK: - Private
 
     private func downloadConfig() {
-        guard let configuration = persistenceStorage.configuration else {
-            Log("SDK configuration should be ready before downloading InApp config.")
-                .category(.inAppMessages).level(.error).make()
-            return
+        inAppConfigAPI.fetchConfig(completionQueue: queue) { result in
+            self.completeDownloadTask(result)
         }
-        do {
-            let route = FetchInAppConfigRoute(endpoint: configuration.endpoint)
-            let builder = URLRequestBuilder(domain: configuration.domain)
-            let urlRequest = try builder.asURLRequest(route: route)
-            URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
-                queue.async { self.completeDownloadTask(data, response: response, error: error) }
+    }
+
+    private func completeDownloadTask(_ result: InAppConfigurationAPIResult) {
+        switch result {
+        case let .data(data):
+            do {
+                let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
+                saveConfigToCache(data)
+                setConfigPrepared(config)
+            } catch {
+                applyConfigFromCache()
+                Log("Failed to parse downloaded config file. Error: \(error)")
+                    .category(.inAppMessages).level(.error).make()
             }
-            .resume()
-        } catch {
-            Log("Failed to start InApp Config downloading task. Error: \(error.localizedDescription).")
+
+        case .empty:
+            inAppConfigRepository.clean()
+            setConfigPrepared(.init(inapps: []))
+
+        case let .error(error):
+            applyConfigFromCache()
+            Log("Failed to download InApp configuration. Error: \(error.localizedDescription)")
                 .category(.inAppMessages).level(.error).make()
         }
     }
 
-    // Handles download result. Only print logs when failed: consider adding retry logic in future
-    private func completeDownloadTask(_ data: Data?, response: URLResponse?, error: Error?) {
-        guard let httpResponse = response as? HTTPURLResponse else {
-            Log("Downloading InApp Config: invalid response.")
-                .category(.inAppMessages).level(.error).make()
+    private func applyConfigFromCache() {
+        guard let cachedConfig = self.fetchConfigFromCache() else {
             return
         }
-
-        if httpResponse.statusCode == 404 {
-            // This is regular situation when in-app configuration is not setup on server
-            Log("InApp Config is not setup on server.")
-                .category(.inAppMessages).level(.info).make()
-            return
-        }
-
-        guard let data = data else {
-            Log("Failed to download config file. Http code: \(httpResponse.statusCode). Error: \(error?.localizedDescription ?? "" )")
-                .category(.inAppMessages).level(.error).make()
-            return
-        }
-
-        Log("Successfuly downloaded config file. Size: \(data.count) Bytes")
-            .category(.inAppMessages).level(.info).make()
-        do {
-            let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
-            saveConfigToCache(data)
-            setConfigPrepared(config)
-            Log("Successfuly parsed config file\n \(config)")
-                .category(.inAppMessages).level(.info).make()
-        } catch {
-            Log("Failed to parse downloaded config file. Error: \(error)")
-                .category(.inAppMessages).level(.error).make()
-        }
+        setConfigPrepared(cachedConfig)
     }
 
     private func fetchConfigFromCache() -> InAppConfigResponse? {
@@ -152,11 +130,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             return nil
         }
         guard let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
-            Log("Failed to parse config file")
+            Log("Failed to parse config file from cache")
                 .category(.inAppMessages).level(.debug).make()
             return nil
         }
-        Log("Successfuly parsed config file")
+        Log("Successfuly parsed config file from cache")
             .category(.inAppMessages).level(.debug).make()
         return config
     }
@@ -169,23 +147,4 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
         delegate?.didPreparedConfiguration()
     }
-}
-
-private struct FetchInAppConfigRoute: Route {
-
-    let endpoint: String
-
-    init(endpoint: String) {
-        self.endpoint = endpoint
-    }
-
-    var method: HTTPMethod { .get }
-
-    var path: String { "/inapps/byendpoint/\(endpoint).json" }
-
-    var headers: HTTPHeaders? { nil }
-
-    var queryParameters: QueryParameters { .init() }
-
-    var body: Data? { nil }
 }
