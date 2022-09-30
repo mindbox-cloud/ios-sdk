@@ -449,6 +449,7 @@
 		84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
 		84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkFetcher.swift; sourceTree = "<group>"; };
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
+		9B1652DC28E6DEB000379229 /* ProjectConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = ProjectConfig.xcconfig; sourceTree = "<group>"; };
 		B33127AE2760C53700CF747E /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
 		B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RetailOrderStatisticsResponse.swift; sourceTree = "<group>"; };
 		B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalOffersResponse.swift; sourceTree = "<group>"; };
@@ -503,6 +504,7 @@
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
+				9B1652DC28E6DEB000379229 /* ProjectConfig.xcconfig */,
 				B33127AE2760C53700CF747E /* Package.swift */,
 				313B233225ADEA0F00A1CB72 /* Mindbox */,
 				313B233D25ADEA0F00A1CB72 /* MindboxTests */,
@@ -1587,6 +1589,7 @@
 /* Begin XCBuildConfiguration section */
 		313B234225ADEA0F00A1CB72 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9B1652DC28E6DEB000379229 /* ProjectConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1655,6 +1658,7 @@
 		};
 		313B234325ADEA0F00A1CB72 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9B1652DC28E6DEB000379229 /* ProjectConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1732,7 +1736,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1760,7 +1763,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1824,7 +1826,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1852,7 +1853,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

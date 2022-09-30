@@ -24,11 +24,19 @@ let package = Package(
             name: "Mindbox",
             dependencies: [],
             path: "Mindbox",
-            exclude: ["Info.plist"]),
+            exclude: ["Info.plist"],
+            resources: [
+                .process("../ProjectConfig.xcconfig")
+            ]
+        ),
         .target(
             name: "MindboxNotifications",
             dependencies: [],
             path: "MindboxNotifications",
-            exclude:  ["Info.plist"])
+            exclude:  ["Info.plist"],
+            resources: [
+                .process("../ProjectConfig.xcconfig")
+            ]
+        )
     ]
 )

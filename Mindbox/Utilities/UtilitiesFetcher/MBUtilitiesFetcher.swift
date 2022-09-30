@@ -20,9 +20,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }()
     
     let sdkBundle: Bundle = {
-
         var bundle = Bundle(for: Mindbox.self)
-
         prepareBundle(&bundle)
         return bundle
     }()
