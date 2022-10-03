@@ -10,17 +10,20 @@ import Foundation
 import AdSupport
 import AppTrackingTransparency
 import UIKit.UIDevice
+#if SWIFT_PACKAGE
+import SDKVersionProvider
+#endif
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
     
-    let appBundle: Bundle = {
+    private let appBundle: Bundle = {
         var bundle: Bundle = .main
         prepareBundle(&bundle)
         return bundle
     }()
     
-    let sdkBundle: Bundle = {
-        var bundle = Bundle(for: Mindbox.self)
+    private let sdkBundle: Bundle = {
+        var bundle = BundleToken.bundle
         prepareBundle(&bundle)
         return bundle
     }()
@@ -63,7 +66,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
     
     var sdkVersion: String? {
-        sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+        SDKVersionProvider.sdkVersion
     }
     
     var hostApplicationName: String? {
@@ -96,5 +99,14 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             }
         }
     }
+}
 
+private final class BundleToken {
+    static let bundle: Bundle = {
+    #if SWIFT_PACKAGE
+        return Bundle.module
+    #else
+        return Bundle(for: BundleToken.self)
+    #endif
+    }()
 }
