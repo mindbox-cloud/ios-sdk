@@ -209,6 +209,8 @@
 		84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */; };
 		84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */; };
 		84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */; };
+		9B25EA3128EA9127000D6131 /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */; };
+		9B25EA3228EA912C000D6131 /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */; };
 		B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */; };
 		B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */; };
 		B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254F2689F8B600B6A3B7 /* BenefitResponse.swift */; };
@@ -1363,6 +1365,7 @@
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
 				334F3AF4264C199900A6AC00 /* ProductRequest.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
+				9B25EA3228EA912C000D6131 /* SDKVersionProvider.swift in Sources */,
 				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,
@@ -1569,6 +1572,7 @@
 				3333C1D02681E83200B60D84 /* BodyDecoder.swift in Sources */,
 				3333C1C42681E64F00B60D84 /* NetworkService.swift in Sources */,
 				3333C1E32681EEA800B60D84 /* Event.swift in Sources */,
+				9B25EA3128EA9127000D6131 /* SDKVersionProvider.swift in Sources */,
 				3333C1C22681E59900B60D84 /* DeliveryOperation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

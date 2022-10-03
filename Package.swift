@@ -33,8 +33,7 @@ let package = Package(
         ),
         .target(
             name: "SDKVersionProvider",
-            path: "SDKVersionProvider",
-            resources: [.copy("SDKVersionConfig.xcconfig")]
+            path: "SDKVersionProvider"
         )
     ]
 )

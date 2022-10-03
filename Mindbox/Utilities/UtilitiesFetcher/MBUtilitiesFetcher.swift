@@ -66,11 +66,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
     
     var sdkVersion: String? {
-        #if SWIFT_PACKAGE
         SDKVersionProvider.sdkVersion
-        #else
-        sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
-        #endif
     }
     
     var hostApplicationName: String? {

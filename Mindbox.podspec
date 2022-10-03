@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
   spec.author       = { "Mindbox" => "ios-sdk@mindbox.ru" }
   spec.platform     = :ios, "10.0"
   spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => spec.version }
-  spec.source_files  = "Mindbox/**/*.{swift}"
+  spec.source_files  = "Mindbox/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.resources = ["Mindbox/**/*.xcdatamodeld"]
   spec.swift_version = "5"
