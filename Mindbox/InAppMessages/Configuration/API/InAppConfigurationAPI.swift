@@ -31,7 +31,8 @@ class InAppConfigurationAPI {
         do {
             let route = FetchInAppConfigRoute(endpoint: configuration.endpoint)
             let builder = URLRequestBuilder(domain: configuration.domain)
-            let urlRequest = try builder.asURLRequest(route: route)
+            var urlRequest = try builder.asURLRequest(route: route)
+            urlRequest.cachePolicy = .useProtocolCachePolicy
             URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
                 completionQueue.async {
                     let result = self.completeDownloadTask(data, response: response, error: error)
@@ -52,11 +53,10 @@ class InAppConfigurationAPI {
         guard let httpResponse = response as? HTTPURLResponse else {
             return .error(MindboxError.connectionError)
         }
+        Log("Config response. Code: \(httpResponse.statusCode). Has data: \(data != nil), Error: \(error?.localizedDescription ?? "").")
+            .category(.inAppMessages).level(.error).make()
         if httpResponse.statusCode == 404 {
             return .empty
-        }
-        if httpResponse.statusCode == 403 {
-            print("http cache in action")
         }
         if let data = data {
             return .data(data)
