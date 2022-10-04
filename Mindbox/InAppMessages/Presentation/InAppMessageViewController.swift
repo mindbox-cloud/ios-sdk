@@ -26,7 +26,7 @@ final class InAppMessageViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .gray.withAlphaComponent(0.4)
+        view.backgroundColor = .black.withAlphaComponent(0.2)
 
         let inAppView = InAppImageOnlyView(uiModel: inAppUIModel)
         view.addSubview(inAppView)
