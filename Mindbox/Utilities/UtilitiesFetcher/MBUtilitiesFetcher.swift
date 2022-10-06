@@ -74,27 +74,25 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
         
     func getDeviceUUID(completion: @escaping (String) -> Void) {
-        IDFAFetcher().fetch { (uuid) in
-            if let uuid = uuid {
-                Log("IDFAFetcher uuid:\(uuid.uuidString)")
-                    .category(.general).level(.default).make()
-                completion(uuid.uuidString)
-            } else {
-                Log("IDFAFetcher fail")
-                    .category(.general).level(.default).make()
-                IDFVFetcher().fetch(tryCount: 3) { (uuid) in
-                    if let uuid = uuid {
-                        Log("IDFVFetcher uuid:\(uuid.uuidString)")
-                            .category(.general).level(.default).make()
-                        completion(uuid.uuidString)
-                    } else {
-                        Log("IDFVFetcher fail")
-                            .category(.general).level(.default).make()
-                        let uuid = UUID()
-                        completion(uuid.uuidString)
-                        Log("Generated uuid:\(uuid.uuidString)")
-                            .category(.general).level(.default).make()
-                    }
+        if let uuid = IDFAFetcher().fetch() {
+            Log("IDFAFetcher uuid:\(uuid.uuidString)")
+                .category(.general).level(.default).make()
+            completion(uuid.uuidString)
+        } else {
+            Log("IDFAFetcher fail")
+                .category(.general).level(.default).make()
+            IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+                if let uuid = uuid {
+                    Log("IDFVFetcher uuid:\(uuid.uuidString)")
+                        .category(.general).level(.default).make()
+                    completion(uuid.uuidString)
+                } else {
+                    Log("IDFVFetcher fail")
+                        .category(.general).level(.default).make()
+                    let uuid = UUID()
+                    completion(uuid.uuidString)
+                    Log("Generated uuid:\(uuid.uuidString)")
+                        .category(.general).level(.default).make()
                 }
             }
         }

@@ -104,10 +104,7 @@ class CoreController {
         }
     }
 
-    private var installSemathore = DispatchSemaphore(value: 1)
-
     private func install(deviceUUID: String, configuration: MBConfiguration) {
-        installSemathore.wait(); defer { installSemathore.signal() }
         try? databaseRepository.erase()
         guaranteedDeliveryManager.cancelAllOperations()
         let newVersion = 0 // Variable from an older version of this framework
@@ -167,10 +164,7 @@ class CoreController {
         try databaseRepository.create(event: event)
     }
 
-    private var infoUpdateSemathore = DispatchSemaphore(value: 1)
-
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
-        infoUpdateSemathore.wait(); defer { infoUpdateSemathore.signal() }
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
         let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
