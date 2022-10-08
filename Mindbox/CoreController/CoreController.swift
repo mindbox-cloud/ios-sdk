@@ -76,13 +76,27 @@ class CoreController {
         return isNotificationsEnabled
     }
 
+    private func generateDeviceUUID() -> String {
+        let lock = DispatchSemaphore(value: 0)
+        var deviceUUID: String?
+        let start = CFAbsoluteTimeGetCurrent()
+        utilitiesFetcher.getDeviceUUID {
+            deviceUUID = $0
+            lock.signal()
+        }
+        lock.wait()
+        Log("It took \(CFAbsoluteTimeGetCurrent() - start) seconds to generate deviceUUID")
+            .category(.general).level(.debug).make()
+        return deviceUUID!
+    }
+
     private func primaryInitialization(with configutaion: MBConfiguration) {
-        utilitiesFetcher.getDeviceUUID(completion: { [self] deviceUUID in
-            install(
-                deviceUUID: deviceUUID,
-                configuration: configutaion
-            )
-        })
+        // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
+        let deviceUUID = generateDeviceUUID()
+        install(
+            deviceUUID: deviceUUID,
+            configuration: configutaion
+        )
     }
 
     private func repeatInitialization(with configutaion: MBConfiguration) {
