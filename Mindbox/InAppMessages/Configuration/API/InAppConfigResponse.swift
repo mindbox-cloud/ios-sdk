@@ -8,8 +8,15 @@
 import Foundation
 
 struct InAppConfigResponse: Decodable {
+
+    struct SdkVersion: Decodable {
+        let min: Int
+        let max: Int?
+    }
+
     struct InApp: Decodable {
         let id: String
+        let sdkVersion: SdkVersion
         let targeting: InAppTargeting
         let form: InAppFormVariants
     }
@@ -82,5 +89,14 @@ struct InAppConfigResponse: Decodable {
         let variants: [InAppForm]
     }
 
-    let inapps: [InApp]
+    let inapps: [FailableDecodable<InApp>]
+}
+
+struct FailableDecodable<T: Decodable>: Decodable {
+    let value: T?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.value = try? container.decode(T.self)
+    }
 }

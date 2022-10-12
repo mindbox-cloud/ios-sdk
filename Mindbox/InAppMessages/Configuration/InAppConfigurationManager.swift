@@ -146,6 +146,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
         configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
+
+        var configDump = String()
+        dump(configuration!, to: &configDump)
+        Log("InApps Configuration applied: \n\(configDump)")
+            .category(.inAppMessages).level(.debug).make()
+        
         delegate?.didPreparedConfiguration()
     }
 }

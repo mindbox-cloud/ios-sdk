@@ -12,7 +12,14 @@ class InAppConfigutationMapper {
     func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
 
-        for inApp in response.inapps {
+        let inapps = response.inapps
+            .compactMap { $0.value }
+            .filter {
+                inAppsVersion >= $0.sdkVersion.min
+                    && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
+            }
+
+        for inApp in inapps {
             var event: InAppMessageTriggerEvent?
             if inApp.targeting.type == .simple {
                 event = .start

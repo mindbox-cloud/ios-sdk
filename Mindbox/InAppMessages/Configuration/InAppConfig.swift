@@ -7,6 +7,8 @@
 
 import Foundation
 
+let inAppsVersion = 1
+
 struct InAppConfig {
     var inAppsByEvent: [InAppMessageTriggerEvent: [InAppInfo]]
 
