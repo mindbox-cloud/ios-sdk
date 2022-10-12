@@ -1,0 +1,48 @@
+{
+    "inapps": [
+        {
+            "id": "b90480f3-dc9f-40f9-8ad1-09d08ef51ab6",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": {
+                "segmentation": "74f45d0a-6f1e-4e77-bd9f-eefe9f4b43b0",
+                "segment": "42646a9f-6330-4aa7-ab36-00447b7850cf",
+                "$type": "simple"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "d6d78e93-2994-4ffe-a85e-886b1a5df0cd",
+            "sdkVersion": {
+                "min": 2,
+                "max": 4
+            },
+            "targeting": {
+                "segmentation": "6b5629d5-b1eb-497f-b03c-1c71a49f36c2",
+                "segment": "424136a9-2b33-49f3-bdf3-d363905448eb",
+                "$type": "simple"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        }
+    ]
+}

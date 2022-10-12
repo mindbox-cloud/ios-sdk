@@ -27,6 +27,11 @@ struct InAppConfigResponse: Decodable {
     }
 
     struct InAppTargeting: Decodable {
+        init(type: InAppConfigResponse.InAppTargetingType? = nil, payload: InAppConfigResponse.SegmentationTargeting? = nil) {
+            self.type = type
+            self.payload = payload
+        }
+
         let type: InAppTargetingType?
         let payload: SegmentationTargeting?
 
@@ -47,6 +52,10 @@ struct InAppConfigResponse: Decodable {
     }
 
     struct InAppForm: Decodable {
+        init(payload: InAppConfigResponse.InAppFormPayload? = nil) {
+            self.payload = payload
+        }
+
         enum CodingKeys: String, CodingKey {
             case type = "$type"
         }
@@ -93,6 +102,10 @@ struct InAppConfigResponse: Decodable {
 }
 
 struct FailableDecodable<T: Decodable>: Decodable {
+    init(value: T? = nil) {
+        self.value = value
+    }
+
     let value: T?
 
     init(from decoder: Decoder) throws {

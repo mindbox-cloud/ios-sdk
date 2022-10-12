@@ -7,19 +7,19 @@
 
 import Foundation
 
-let inAppsVersion = 1
+let inAppsSdkVersion = 1
 
-struct InAppConfig {
+struct InAppConfig: Equatable {
     var inAppsByEvent: [InAppMessageTriggerEvent: [InAppInfo]]
 
-    struct InAppInfo {
+    struct InAppInfo: Equatable {
         let id: String
         let targeting: SegmentationTargeting?
         let formDataVariants: [SimpleImageInApp]
     }
 }
 
-struct SimpleImageInApp {
+struct SimpleImageInApp: Equatable {
     let imageUrl: String
     let redirectUrl: String
     let intentPayload: String

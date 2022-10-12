@@ -8,6 +8,12 @@
 import Foundation
 
 class InAppConfigutationMapper {
+    private let inAppsVersion: Int
+
+    init(inAppsVersion: Int) {
+        self.inAppsVersion = inAppsVersion
+    }
+
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
