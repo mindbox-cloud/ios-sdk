@@ -11,7 +11,7 @@ import CoreData
 import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
-    
+
     var databaseRepository: MBDatabaseRepository {
         container.databaseRepository
     }
@@ -149,7 +149,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         try! databaseRepository.erase()
         // Lock update
         guaranteedDeliveryManager.canScheduleOperations = false
-        
+
         var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
