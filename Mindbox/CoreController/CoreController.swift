@@ -18,7 +18,7 @@ class CoreController {
     private let trackVisitManager: TrackVisitManager
     private var configValidation = ConfigValidation()
 
-    private let controllerQueue = DispatchQueue(label: "com.Mindbox.controllerQueue")
+    var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
         controllerQueue.async {
@@ -215,7 +215,8 @@ class CoreController {
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         trackVisitManager: TrackVisitManager,
-        sessionManager: SessionManager
+        sessionManager: SessionManager,
+        controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue")
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
@@ -223,7 +224,7 @@ class CoreController {
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
-
+        self.controllerQueue = controllerQueue
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive {
                 self?.checkNotificationStatus()
