@@ -17,6 +17,7 @@ class CoreController {
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
     private var configValidation = ConfigValidation()
+    private let inAppMessagesManager: InAppCoreManagerProtocol
 
     var controllerQueue: DispatchQueue
 
@@ -30,6 +31,7 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
+            self.inAppMessagesManager.start()
         }
     }
 
@@ -216,6 +218,7 @@ class CoreController {
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         trackVisitManager: TrackVisitManager,
         sessionManager: SessionManager,
+        inAppMessagesManager: InAppCoreManagerProtocol,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue")
     ) {
         self.persistenceStorage = persistenceStorage
@@ -225,6 +228,8 @@ class CoreController {
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
         self.controllerQueue = controllerQueue
+        self.inAppMessagesManager = inAppMessagesManager
+
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive {
                 self?.checkNotificationStatus()

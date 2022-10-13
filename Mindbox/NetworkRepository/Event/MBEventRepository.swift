@@ -27,7 +27,7 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        guard let deviceUUID = configuration.previousDeviceUUID else {
+        guard let deviceUUID = persistenceStorage.deviceUUID else {
             let error = MindboxError(.init(
                 errorKey: .invalidConfiguration,
                 reason: "DeviceUUID is not set"
@@ -53,7 +53,7 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        guard let deviceUUID = configuration.previousDeviceUUID else {
+        guard let deviceUUID = persistenceStorage.deviceUUID else {
             let error = MindboxError(.init(
                 errorKey: .invalidConfiguration,
                 reason: "DeviceUUID is not set"

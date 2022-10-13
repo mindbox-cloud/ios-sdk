@@ -71,7 +71,6 @@ public class Mindbox: NSObject {
      */
     public func initialization(configuration: MBConfiguration) {
         coreController?.initialization(configuration: configuration)
-        inAppMessagesManager?.start()
     }
 
     private var observeTokens: [UUID] = []
@@ -539,7 +538,8 @@ public class Mindbox: NSObject {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            inAppMessagesManager: container.inAppMessagesManager
         )
     }
 
