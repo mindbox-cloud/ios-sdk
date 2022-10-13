@@ -63,12 +63,12 @@ class InAppCoreManagerTests: XCTestCase {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
             .init(
-                inAppId: "in-app-with-segmentation",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
-            ),
-            .init(
                 inAppId: "in-app-without-segmentation",
                 targeting: nil
+            ),
+            .init(
+                inAppId: "in-app-with-segmentation",
+                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
             )
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
@@ -89,12 +89,12 @@ class InAppCoreManagerTests: XCTestCase {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
             .init(
-                inAppId: "in-app-with-segmentation",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
-            ),
-            .init(
                 inAppId: "in-app-without-segmentation",
                 targeting: nil
+            ),
+            .init(
+                inAppId: "in-app-with-segmentation",
+                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
             )
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)

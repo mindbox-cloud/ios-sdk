@@ -148,4 +148,65 @@ class InAppSegmentationCheckerTests: XCTestCase {
         self.wait(for: [expectation], timeout: 0.1)
         XCTAssertNil(actualResponse)
     }
+
+    func test_twoInApp_oneWithTargeting_secoundWithoutTargeting_andApiReturnsNil_thenReturnWithoutTargeting() throws {
+        let sut = InAppSegmentationChecker(
+            customerSegmentsAPI: CustomerSegmentsAPI(fetchSegments: { segmentationCheckRequest, completion in
+                completion(nil)
+            })
+        )
+        let request = InAppsCheckRequest(
+            triggerEvent: .start,
+            possibleInApps: [
+                .init(inAppId: "in_app_id_1", targeting: .init(segmentation: "segmentation_id", segment: "segment_id")),
+                .init(inAppId: "in_app_id_2", targeting: nil)
+            ]
+        )
+
+        var actualResponse: InAppResponse!
+        let expectation = self.expectation(description: "Response")
+        sut.getInAppToPresent(
+            request: request,
+            completionQueue: .main) { response in
+                actualResponse = response
+                expectation.fulfill()
+            }
+
+        self.wait(for: [expectation], timeout: 0.1)
+        XCTAssertEqual(actualResponse.inAppToShowId, "in_app_id_2")
+    }
+
+    func test_twoInApp_oneWithTargeting_secoundWithoutTargeting_andNoSegmentsMatch_thenReturnWithoutTargeting() throws {
+        var segmentationCheckResponse: SegmentationCheckResponse!
+        let sut = InAppSegmentationChecker(
+            customerSegmentsAPI: CustomerSegmentsAPI(fetchSegments: { segmentationCheckRequest, completion in
+                completion(segmentationCheckResponse)
+            })
+        )
+        let request = InAppsCheckRequest(
+            triggerEvent: .start,
+            possibleInApps: [
+                .init(inAppId: "in_app_id_1", targeting: .init(segmentation: "segmentation_id", segment: "segment_id")),
+                .init(inAppId: "in_app_id_2", targeting: nil)
+            ]
+        )
+        segmentationCheckResponse = SegmentationCheckResponse(status: .success, customerSegmentations: [
+            .init(
+                segmentation: .init(ids: .init(externalId: "segmentation_id_2")),
+                segment: .init(ids: .init(externalId: "segment_id_2"))
+            )
+        ])
+
+        var actualResponse: InAppResponse!
+        let expectation = self.expectation(description: "Response")
+        sut.getInAppToPresent(
+            request: request,
+            completionQueue: .main) { response in
+                actualResponse = response
+                expectation.fulfill()
+            }
+
+        self.wait(for: [expectation], timeout: 0.1)
+        XCTAssertEqual(actualResponse.inAppToShowId, "in_app_id_2")
+    }
 }

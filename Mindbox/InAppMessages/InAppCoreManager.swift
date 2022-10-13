@@ -80,6 +80,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard !isPresentingInAppMessage,
               var inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
+        // Filter already shown inapps
         let alreadyShownInApps = Set(persistenceStorage.shownInAppsIds ?? [])
         inAppRequest.possibleInApps = inAppRequest.possibleInApps.filter {
             !alreadyShownInApps.contains($0.inAppId)
@@ -93,8 +94,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         guard !inAppRequest.possibleInApps.isEmpty else { return }
 
-        if let firstInAppWithoutTargeting = inAppRequest.possibleInApps.first(where: { $0.targeting == nil }) {
-            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInAppWithoutTargeting.inAppId))
+        // No need to check targenting if first inapp has no any taggeting
+        if let firstInapp = inAppRequest.possibleInApps.first, firstInapp.targeting == nil {
+            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
         } else {
             segmentationChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
                 self.onReceivedInAppResponse(inAppResponse)
