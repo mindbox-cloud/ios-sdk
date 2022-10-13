@@ -29,6 +29,8 @@ protocol PersistenceStorage: AnyObject {
 
     var isNotificationsEnabled: Bool? { get set }
 
+    var shownInAppsIds: [String]? { get set }
+
     func setBackgroundExecution(_ value: BackgroudExecution)
 
     func reset()

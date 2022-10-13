@@ -30,11 +30,13 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         segmentationChecker: InAppSegmentationCheckerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
+        persistenceStorage: PersistenceStorage,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
+        self.persistenceStorage = persistenceStorage
         self.serialQueue = serialQueue
     }
 
@@ -43,6 +45,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let configManager: InAppConfigurationManagerProtocol
     private let segmentationChecker: InAppSegmentationCheckerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
+    private let persistenceStorage: PersistenceStorage
     private var isConfigurationReady = false
     private var isPresentingInAppMessage = false
     private let serialQueue: DispatchQueue
@@ -75,14 +78,20 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !isPresentingInAppMessage,
-              let inAppRequest = configManager.buildInAppRequest(event: event) else { return }
+              var inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
+        let alreadyShownInApps = Set(persistenceStorage.shownInAppsIds ?? [])
+        inAppRequest.possibleInApps = inAppRequest.possibleInApps.filter {
+            !alreadyShownInApps.contains($0.inAppId)
+        }
 //        #if DEBUG
 //        if let inAppDebug = inAppRequest.possibleInApps.first {
 //            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
 //        }
 //        return
 //        #endif
+
+        guard !inAppRequest.possibleInApps.isEmpty else { return }
 
         if let firstInAppWithoutTargeting = inAppRequest.possibleInApps.first(where: { $0.targeting == nil }) {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInAppWithoutTargeting.inAppId))
@@ -113,6 +122,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                     .category(.inAppMessages).level(.debug).make()
                 self.serialQueue.async {
                     self.isPresentingInAppMessage = false
+                    var newShownInAppsIds = self.persistenceStorage.shownInAppsIds ?? []
+                    newShownInAppsIds.append(inAppResponse.inAppToShowId)
+                    self.persistenceStorage.shownInAppsIds = newShownInAppsIds
                 }
                 delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
                 switch error {

@@ -22,7 +22,9 @@ class InAppConfigurationManagerMock: InAppConfigurationManagerProtocol {
     }
 
     var inAppFormDataResult: InAppFormData?
+    var receivedInAppResponse: InAppResponse?
     func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
-        inAppFormDataResult
+        receivedInAppResponse = inAppResponse
+        return inAppFormDataResult
     }
 }

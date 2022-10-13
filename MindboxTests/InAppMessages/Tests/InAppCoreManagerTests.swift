@@ -16,6 +16,7 @@ class InAppCoreManagerTests: XCTestCase {
     var configManager: InAppConfigurationManagerMock!
     var segmentationChecker: InAppSegmentationCheckerMock!
     var presentationManager: InAppPresentationManagerMock!
+    var persistenceStorage: MockPersistenceStorage!
     var serialQueue: DispatchQueue!
     var sut: InAppCoreManager!
 
@@ -23,12 +24,14 @@ class InAppCoreManagerTests: XCTestCase {
         configManager = InAppConfigurationManagerMock()
         segmentationChecker = InAppSegmentationCheckerMock()
         presentationManager = InAppPresentationManagerMock()
+        persistenceStorage = MockPersistenceStorage()
         serialQueue = DispatchQueue(label: "core-manager-tests")
 
         sut = InAppCoreManager(
             configManager: configManager,
             segmentationChecker: segmentationChecker,
             presentationManager: presentationManager,
+            persistenceStorage: persistenceStorage,
             serialQueue: serialQueue
         )
     }
@@ -109,5 +112,67 @@ class InAppCoreManagerTests: XCTestCase {
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
         XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertEqual(presentationManager.presentCallsCount, 1)
+    }
+
+    func test_startEvent_whenHaveAlreadyShownOneOfTwoInApps() throws {
+        let triggerEvent = InAppMessageTriggerEvent.start
+        let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
+            .init(
+                inAppId: "in-app-1",
+                targeting: nil
+            ),
+            .init(
+                inAppId: "in-app-2",
+                targeting: nil
+            )
+        ]
+        persistenceStorage.shownInAppsIds = ["in-app-1"]
+        configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
+        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+
+        sut.start()
+        configManager.delegate?.didPreparedConfiguration()
+
+        waitForCoreManagerQueueFinished()
+
+        XCTAssertEqual(configManager.receivedInAppResponse?.inAppToShowId, "in-app-2")
+        XCTAssertEqual(presentationManager.presentCallsCount, 1)
+        XCTAssertNotNil(presentationManager.receivedOnPresentationCompleted)
+
+        presentationManager.receivedOnPresentationCompleted!(nil)
+        waitForCoreManagerQueueFinished()
+
+        XCTAssertEqual(persistenceStorage.shownInAppsIds?.count, 2)
+        XCTAssertEqual(persistenceStorage.shownInAppsIds![1], "in-app-2")
+    }
+
+    func test_startEvent_whenHaveAlreadyShownAllInApps() throws {
+        let triggerEvent = InAppMessageTriggerEvent.start
+        let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
+            .init(
+                inAppId: "in-app-1",
+                targeting: nil
+            ),
+            .init(
+                inAppId: "in-app-2",
+                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
+            )
+        ]
+        persistenceStorage.shownInAppsIds = ["in-app-1", "in-app-2"]
+        configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
+
+        sut.start()
+        configManager.delegate?.didPreparedConfiguration()
+
+        waitForCoreManagerQueueFinished()
+
+        XCTAssertNil(segmentationChecker.requestReceived)
+        XCTAssertNil(configManager.receivedInAppResponse)
+    }
+
+    private func waitForCoreManagerQueueFinished() {
+        let serialQueueFinishExpectation = self.expectation(description: "core manager queue finish")
+        serialQueue.async { serialQueueFinishExpectation.fulfill() }
+        self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
     }
 }
