@@ -547,4 +547,8 @@ public class Mindbox: NSObject {
         guard inAppMessagesEnabled else { return }
         inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
     }
+
+    @objc private func resetShownInApps() {
+        persistenceStorage?.shownInAppsIds = nil
+    }
 }
