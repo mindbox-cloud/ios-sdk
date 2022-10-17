@@ -29,11 +29,10 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
             .map { InAppResponse(triggerEvent: request.triggerEvent, inAppToShowId: $0.inAppId) }
 
         let targetings = request.possibleInApps.compactMap { $0.targeting }
+        let segmentationsSet = Set(targetings.map { $0.segmentation })
         let segmentationRequest = SegmentationCheckRequest(
-            segmentations: targetings.map {
-                SegmentationCheckRequest.Segmentation(
-                    ids: SegmentationCheckRequest.Segmentation.Id(externalId: $0.segmentation)
-                )
+            segmentations: segmentationsSet.map {
+                SegmentationCheckRequest.Segmentation(ids: SegmentationCheckRequest.Segmentation.Id(externalId: $0))
             }
         )
 
@@ -59,10 +58,11 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
     ) {
         // [SegmentationId: SegmentId] from response
         let customerSegmentationDict: [String: String] = Dictionary(
-            uniqueKeysWithValues: response.customerSegmentations.compactMap {
+            response.customerSegmentations.compactMap {
                 guard let segment = $0.segment?.ids else { return nil }
                 return ($0.segmentation.ids.externalId, segment.externalId)
-            }
+            },
+            uniquingKeysWith: { f, _ in f }
         )
         Log("Fetched customer segments ([segmentationId: segmentId]): \(customerSegmentationDict)")
             .category(.inAppMessages).level(.debug).make()
