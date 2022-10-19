@@ -13,13 +13,16 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
 
     var receivedInAppUIModel: InAppFormData?
     var presentCallsCount = 0
+    var receivedOnPresent: (() -> Void)?
     var receivedOnPresentationCompleted: ((InAppPresentationError?) -> Void)?
     func present(inAppFormData: InAppFormData,
                  completionQueue: DispatchQueue,
+                 onPresented: @escaping () -> Void,
                  onTapAction: @escaping InAppMessageTapAction,
                  onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
         presentCallsCount += 1
         receivedInAppUIModel = inAppFormData
+        receivedOnPresent = onPresented
         receivedOnPresentationCompleted = onPresentationCompleted
     }
 }

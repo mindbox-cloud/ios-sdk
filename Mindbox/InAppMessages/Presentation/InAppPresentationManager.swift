@@ -23,6 +23,7 @@ protocol InAppPresentationManagerProtocol: AnyObject {
     func present(
         inAppFormData: InAppFormData,
         completionQueue: DispatchQueue,
+        onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
         onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
     )
@@ -47,6 +48,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     func present(
         inAppFormData: InAppFormData,
         completionQueue: DispatchQueue,
+        onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
         onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
     ) {
@@ -65,7 +67,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                     imageData: imageData,
                     redirect: redirectInfo
                 )
-                self.presentInAppUIModel(inAppUIModel: inAppUIModel, onTapAction: onTapAction, onPresentationCompleted: completion)
+                self.presentInAppUIModel(
+                    inAppUIModel: inAppUIModel,
+                    onPresented: onPresented,
+                    onTapAction: onTapAction,
+                    onPresentationCompleted: completion
+                )
             } else {
                 completion(.failedToLoadImages)
                 return
@@ -75,7 +82,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     // MARK: - Private
 
-    private func presentInAppUIModel(inAppUIModel: InAppMessageUIModel, onTapAction: @escaping InAppMessageTapAction, onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+    private func presentInAppUIModel(
+        inAppUIModel: InAppMessageUIModel,
+        onPresented: @escaping () -> Void,
+        onTapAction: @escaping InAppMessageTapAction,
+        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+    ) {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
@@ -83,6 +95,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
         let inAppViewController = InAppMessageViewController(
             inAppUIModel: inAppUIModel,
+            onPresented: onPresented,
             onTapAction: onTapAction,
             onClose: { [weak self] in
                 self?.inAppWindow?.isHidden = true

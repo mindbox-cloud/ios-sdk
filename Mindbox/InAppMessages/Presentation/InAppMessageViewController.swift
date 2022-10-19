@@ -9,8 +9,14 @@ import UIKit
 
 final class InAppMessageViewController: UIViewController {
 
-    init(inAppUIModel: InAppMessageUIModel, onTapAction: @escaping InAppMessageTapAction,onClose: @escaping (() -> Void)) {
+    init(
+        inAppUIModel: InAppMessageUIModel,
+        onPresented: @escaping () -> Void,
+        onTapAction: @escaping InAppMessageTapAction,
+        onClose: @escaping (() -> Void)
+    ) {
         self.inAppUIModel = inAppUIModel
+        self.onPresented = onPresented
         self.onClose = onClose
         self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
@@ -21,6 +27,7 @@ final class InAppMessageViewController: UIViewController {
     }
 
     private let inAppUIModel: InAppMessageUIModel
+    private let onPresented: () -> Void
     private let onClose: (() -> Void)
     private let onTapAction: InAppMessageTapAction
 
@@ -43,6 +50,15 @@ final class InAppMessageViewController: UIViewController {
 
         let closeTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
         view.addGestureRecognizer(closeTapRecognizer)
+    }
+
+
+    private var viewWillAppearWasCalled = false
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard !viewWillAppearWasCalled else { return }
+        viewWillAppearWasCalled = true
+        onPresented()
     }
 
     @objc private func onTapDimmedView() {

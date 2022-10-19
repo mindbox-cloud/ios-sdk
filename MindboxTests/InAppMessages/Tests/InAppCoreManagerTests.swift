@@ -137,9 +137,9 @@ class InAppCoreManagerTests: XCTestCase {
 
         XCTAssertEqual(configManager.receivedInAppResponse?.inAppToShowId, "in-app-2")
         XCTAssertEqual(presentationManager.presentCallsCount, 1)
-        XCTAssertNotNil(presentationManager.receivedOnPresentationCompleted)
+        XCTAssertNotNil(presentationManager.receivedOnPresent)
 
-        presentationManager.receivedOnPresentationCompleted!(nil)
+        presentationManager.receivedOnPresent!()
         waitForCoreManagerQueueFinished()
 
         XCTAssertEqual(persistenceStorage.shownInAppsIds?.count, 2)
