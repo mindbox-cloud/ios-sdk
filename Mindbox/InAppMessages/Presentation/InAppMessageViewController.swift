@@ -40,6 +40,13 @@ final class InAppMessageViewController: UIViewController {
         let imageTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapImage))
         inAppView.addGestureRecognizer(imageTapGestureRecognizer)
         inAppView.onClose = { [weak self] in self?.onClose() }
+
+        let closeTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
+        view.addGestureRecognizer(closeTapRecognizer)
+    }
+
+    @objc private func onTapDimmedView() {
+        onClose()
     }
 
     @objc private func onTapImage() {
