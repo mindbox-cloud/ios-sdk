@@ -11,12 +11,11 @@ import UIKit
 
 struct InAppMessageUIModel {
     struct InAppRedirect {
-        let redirectUrl: URL
+        let redirectUrl: URL?
         let payload: String
     }
-    
     let imageData: Data
-    let redirect: InAppRedirect?
+    let redirect: InAppRedirect
 }
 
 protocol InAppPresentationManagerProtocol: AnyObject {
@@ -33,7 +32,7 @@ enum InAppPresentationError {
     case failedToLoadImages
 }
 
-typealias InAppMessageTapAction = (_ tapLink: URL, _ payload: String) -> Void
+typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 /// Prepares UI for in-app messages and shows them
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
@@ -59,10 +58,11 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         }
         imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
             if let imageData = imageData {
-                var redirectInfo: InAppMessageUIModel.InAppRedirect?
-                if let redirectUrl = URL(string: inAppFormData.redirectUrl) {
-                    redirectInfo = InAppMessageUIModel.InAppRedirect(redirectUrl: redirectUrl, payload: inAppFormData.intentPayload)
-                }
+                let redirectInfo = InAppMessageUIModel.InAppRedirect(
+                    redirectUrl: URL(string: inAppFormData.redirectUrl),
+                    payload: inAppFormData.intentPayload
+                )
+
                 let inAppUIModel = InAppMessageUIModel(
                     imageData: imageData,
                     redirect: redirectInfo

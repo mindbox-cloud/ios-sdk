@@ -66,7 +66,10 @@ final class InAppMessageViewController: UIViewController {
     }
 
     @objc private func onTapImage() {
-        guard let redirectInfo = inAppUIModel.redirect else { return }
+        let redirectInfo = inAppUIModel.redirect
+        guard redirectInfo.redirectUrl != nil || !redirectInfo.payload.isEmpty else {
+            return
+        }
         onTapAction(redirectInfo.redirectUrl, redirectInfo.payload)
         onClose()
     }

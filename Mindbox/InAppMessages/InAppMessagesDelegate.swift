@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol InAppMessagesDelegate: AnyObject {
-    func inAppMessageTapAction(id: String, url: URL, payload: String)
+    func inAppMessageTapAction(id: String, url: URL?, payload: String)
 
     func inAppMessageDismissed(id: String)
 }

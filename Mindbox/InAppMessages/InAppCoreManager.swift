@@ -124,7 +124,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 }
             },
             onTapAction: { [delegate] url, payload in
-                Log("On tap action. \nURL: \(url.absoluteString). \nPayload: \(payload)")
+                Log("On tap action. \nURL: \(url?.absoluteString ?? ""). \nPayload: \(payload)")
                     .category(.inAppMessages).level(.debug).make()
                 delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
             },
