@@ -12,8 +12,8 @@ final class InAppMessageViewController: UIViewController {
     init(
         inAppUIModel: InAppMessageUIModel,
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping InAppMessageTapAction,
-        onClose: @escaping (() -> Void)
+        onTapAction: @escaping () -> Void,
+        onClose: @escaping () -> Void
     ) {
         self.inAppUIModel = inAppUIModel
         self.onPresented = onPresented
@@ -28,8 +28,8 @@ final class InAppMessageViewController: UIViewController {
 
     private let inAppUIModel: InAppMessageUIModel
     private let onPresented: () -> Void
-    private let onClose: (() -> Void)
-    private let onTapAction: InAppMessageTapAction
+    private let onClose: () -> Void
+    private let onTapAction: () -> Void
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,11 +66,6 @@ final class InAppMessageViewController: UIViewController {
     }
 
     @objc private func onTapImage() {
-        let redirectInfo = inAppUIModel.redirect
-        guard redirectInfo.redirectUrl != nil || !redirectInfo.payload.isEmpty else {
-            return
-        }
-        onTapAction(redirectInfo.redirectUrl, redirectInfo.payload)
-        onClose()
+        onTapAction()
     }
 }

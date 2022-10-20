@@ -14,6 +14,7 @@ struct InAppMessageUIModel {
         let redirectUrl: URL?
         let payload: String
     }
+    let inAppId: String
     let imageData: Data
     let redirect: InAppRedirect
 }
@@ -21,10 +22,10 @@ struct InAppMessageUIModel {
 protocol InAppPresentationManagerProtocol: AnyObject {
     func present(
         inAppFormData: InAppFormData,
-        completionQueue: DispatchQueue,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+        onPresentationCompleted: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
     )
 }
 
@@ -46,16 +47,11 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     func present(
         inAppFormData: InAppFormData,
-        completionQueue: DispatchQueue,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+        onPresentationCompleted: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
     ) {
-        let completion = { (error: InAppPresentationError?) in
-            completionQueue.async {
-                onPresentationCompleted(error)
-            }
-        }
         imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
             if let imageData = imageData {
                 let redirectInfo = InAppMessageUIModel.InAppRedirect(
@@ -64,6 +60,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 )
 
                 let inAppUIModel = InAppMessageUIModel(
+                    inAppId: inAppFormData.inAppId,
                     imageData: imageData,
                     redirect: redirectInfo
                 )
@@ -71,10 +68,10 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                     inAppUIModel: inAppUIModel,
                     onPresented: onPresented,
                     onTapAction: onTapAction,
-                    onPresentationCompleted: completion
+                    onPresentationCompleted: onPresentationCompleted
                 )
             } else {
-                completion(.failedToLoadImages)
+                onError(.failedToLoadImages)
                 return
             }
         }
@@ -86,23 +83,59 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         inAppUIModel: InAppMessageUIModel,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping (InAppPresentationError?) -> Void
+        onPresentationCompleted: @escaping () -> Void
     ) {
         Log("Starting to present)")
             .category(.inAppMessages).level(.debug).make()
 
         let inAppWindow = makeInAppMessageWindow()
 
+        let close: () -> Void = { [weak self] in
+            self?.onClose(inApp: inAppUIModel, onPresentationCompleted)
+        }
         let inAppViewController = InAppMessageViewController(
             inAppUIModel: inAppUIModel,
-            onPresented: onPresented,
-            onTapAction: onTapAction,
-            onClose: { [weak self] in
-                self?.inAppWindow?.isHidden = true
-                self?.inAppWindow?.rootViewController = nil
-                onPresentationCompleted(nil)
-            })
+            onPresented: { [weak self] in
+                self?.onPresented(inApp: inAppUIModel, onPresented)
+            },
+            onTapAction: { [weak self] in
+                self?.onTapAction(inApp: inAppUIModel, onTap: onTapAction, close: close)
+            },
+            onClose: close
+        )
         inAppWindow.rootViewController = inAppViewController
+    }
+
+    private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
+        Log("InApp presented. Id: \(inApp.inAppId)")
+            .category(.inAppMessages).level(.debug).make()
+        //        Mindbox.shared.executeAsyncOperation(operationSystemName: <#T##String#>, json: <#T##String#>)
+        completion()
+    }
+
+    private func onTapAction(
+        inApp: InAppMessageUIModel,
+        onTap: @escaping InAppMessageTapAction,
+        close: @escaping () -> Void
+    ) {
+        let redirect = inApp.redirect
+        Log("On tap action. \nURL: \(redirect.redirectUrl?.absoluteString ?? ""). \nPayload: \(redirect.payload)")
+            .category(.inAppMessages).level(.debug).make()
+
+        //        Mindbox.shared.executeAsyncOperation(operationSystemName: <#T##String#>, json: <#T##String#>)
+
+        if redirect.redirectUrl != nil || !redirect.payload.isEmpty {
+            onTap(redirect.redirectUrl, redirect.payload)
+            close()
+        }
+    }
+
+    private func onClose(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
+        Log("InApp presentation completed")
+            .category(.inAppMessages).level(.debug).make()
+        inAppWindow?.isHidden = true
+        inAppWindow?.rootViewController = nil
+        completion()
     }
 
     private func makeInAppMessageWindow() -> UIWindow {

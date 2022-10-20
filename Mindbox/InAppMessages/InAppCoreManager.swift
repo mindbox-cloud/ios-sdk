@@ -113,10 +113,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         presentationManager.present(
             inAppFormData: inAppFormData,
-            completionQueue: serialQueue,
             onPresented: {
-                Log("In App presented. Id: \(inAppResponse.inAppToShowId)")
-                    .category(.inAppMessages).level(.debug).make()
                 self.serialQueue.async {
                     var newShownInAppsIds = self.persistenceStorage.shownInAppsIds ?? []
                     newShownInAppsIds.append(inAppResponse.inAppToShowId)
@@ -124,25 +121,25 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 }
             },
             onTapAction: { [delegate] url, payload in
-                Log("On tap action. \nURL: \(url?.absoluteString ?? ""). \nPayload: \(payload)")
-                    .category(.inAppMessages).level(.debug).make()
                 delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
             },
-            onPresentationCompleted: { [delegate] error in
-                Log("On inApp presentation completed")
-                    .category(.inAppMessages).level(.debug).make()
-                switch error {
-                case .failedToLoadImages:
-                    Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
-                        .category(.inAppMessages).level(.debug).make()
-                case .none:
-                    break
-                }
+            onPresentationCompleted: { [delegate] in
                 self.serialQueue.async {
                     self.isPresentingInAppMessage = false
                 }
                 delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
-            })
+            },
+            onError: { error in
+                switch error {
+                case .failedToLoadImages:
+                    Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
+                        .category(.inAppMessages).level(.debug).make()
+                }
+                self.serialQueue.async {
+                    self.isPresentingInAppMessage = false
+                }
+            }
+        )
     }
 
     private func handleQueuedEvents() {
