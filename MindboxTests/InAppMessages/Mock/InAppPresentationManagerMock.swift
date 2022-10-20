@@ -10,16 +10,17 @@ import Foundation
 @testable import Mindbox
 
 class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
-
     var receivedInAppUIModel: InAppFormData?
     var presentCallsCount = 0
     var receivedOnPresent: (() -> Void)?
-    var receivedOnPresentationCompleted: ((InAppPresentationError?) -> Void)?
+    var receivedOnPresentationCompleted: (() -> Void)?
+    var receivedOnError: ((InAppPresentationError?) -> Void)?
+
     func present(inAppFormData: InAppFormData,
-                 completionQueue: DispatchQueue,
                  onPresented: @escaping () -> Void,
                  onTapAction: @escaping InAppMessageTapAction,
-                 onPresentationCompleted: @escaping (InAppPresentationError?) -> Void) {
+                 onPresentationCompleted: @escaping () -> Void,
+                 onError: @escaping (InAppPresentationError) -> Void) {
         presentCallsCount += 1
         receivedInAppUIModel = inAppFormData
         receivedOnPresent = onPresented

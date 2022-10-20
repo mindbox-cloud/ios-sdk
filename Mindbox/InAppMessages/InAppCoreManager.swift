@@ -124,9 +124,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
             },
             onPresentationCompleted: { [delegate] in
-                self.serialQueue.async {
-                    self.isPresentingInAppMessage = false
-                }
+                self.serialQueue.async { self.isPresentingInAppMessage = false }
                 delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
             },
             onError: { error in
@@ -135,9 +133,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                     Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
                         .category(.inAppMessages).level(.debug).make()
                 }
-                self.serialQueue.async {
-                    self.isPresentingInAppMessage = false
-                }
+                self.serialQueue.async { self.isPresentingInAppMessage = false }
             }
         )
     }

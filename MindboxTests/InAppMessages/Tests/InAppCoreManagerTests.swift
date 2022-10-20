@@ -47,7 +47,7 @@ class InAppCoreManagerTests: XCTestCase {
         let inAppCheckRequest = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
-        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-1", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -73,7 +73,7 @@ class InAppCoreManagerTests: XCTestCase {
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
-        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-without-segmentation", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -99,7 +99,7 @@ class InAppCoreManagerTests: XCTestCase {
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
-        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-with-segmentation", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
 
         sut.start()
         sut.sendEvent(.start)
@@ -128,7 +128,7 @@ class InAppCoreManagerTests: XCTestCase {
         ]
         persistenceStorage.shownInAppsIds = ["in-app-1"]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
-        configManager.inAppFormDataResult = InAppFormData(imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-2", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
