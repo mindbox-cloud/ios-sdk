@@ -8,6 +8,7 @@
 
 import CoreData
 import Foundation
+import UIKit
 
 final class DependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
@@ -18,6 +19,7 @@ final class DependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
+    let uuidDebugService: UUIDDebugService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -37,6 +39,11 @@ final class DependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        uuidDebugService = PasteboardUUIDDebugService(
+            notificationCenter: NotificationCenter.default,
+            currentDateProvider: { return Date() },
+            pasteboard: UIPasteboard.general
+        )
     }
 }
 
