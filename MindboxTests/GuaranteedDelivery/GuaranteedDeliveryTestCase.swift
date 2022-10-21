@@ -11,7 +11,7 @@ import CoreData
 import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
-    
+
     var databaseRepository: MBDatabaseRepository {
         container.databaseRepository
     }
@@ -90,14 +90,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             retryDeadline: retryDeadline
         )
         let simpleCase: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
-        let simpleExpectations: [XCTestExpectation] = simpleCase
-            .map {
-                keyValueObservingExpectation(
-                    for: guaranteedDeliveryManager!,
-                    keyPath: state as String,
-                    expectedValue: $0.rawValue
-                )
-            }
+        let simpleExpectations: [XCTestExpectation] = simpleCase.map { self.expectation(description: "Expect state is \($0.rawValue)") }
+
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
@@ -149,20 +143,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             .delivering,
             .idle,
         ]
-        let errorExpectations: [XCTestExpectation] = errorCase
-            .map {
-                keyValueObservingExpectation(
-                    for: guaranteedDeliveryManager!,
-                    keyPath: state as String,
-                    expectedValue: $0.rawValue
-                )
-            }
+        let errorExpectations: [XCTestExpectation] = errorCase.map { self.expectation(description: "Expect state is \($0.rawValue)") }
         var iterator: Int = 0
         // Full erase database
         try! databaseRepository.erase()
         // Lock update
         guaranteedDeliveryManager.canScheduleOperations = false
-        
+
         var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
             guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
                   errorCase.indices.contains(iterator) else {
