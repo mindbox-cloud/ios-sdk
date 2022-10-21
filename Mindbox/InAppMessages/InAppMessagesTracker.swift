@@ -33,7 +33,7 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol {
 
     func trackClick(id: String) throws {
         let encodable = InAppBody(inappId: id)
-        let event = Event(type: .trackVisit, body: BodyEncoder(encodable: encodable).body)
+        let event = Event(type: .inAppClickEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 }
