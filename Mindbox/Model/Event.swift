@@ -18,6 +18,9 @@ struct Event {
         case trackVisit = "MobilePush.TrackVisit"
         case customEvent = "MobilePush.CustomEvent"
         case syncEvent = "MobilePush.SyncEvent"
+
+        case inAppViewEvent = "Inapp.View"
+        case inAppClickEvent = "Inapp.Click"
     }
     
     let transactionId: String

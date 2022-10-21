@@ -84,7 +84,9 @@ class MBEventRepository: EventRepository {
         case .installed,
              .infoUpdated,
              .trackClick,
-             .installedWithoutCustomer:
+             .installedWithoutCustomer,
+             .inAppViewEvent,
+             .inAppClickEvent:
             return EventRoute.asyncEvent(wrapper)
         case .customEvent:
             return EventRoute.customAsyncEvent(wrapper)

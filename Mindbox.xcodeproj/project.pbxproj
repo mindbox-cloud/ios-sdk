@@ -215,6 +215,7 @@
 		9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */; };
 		9B24FAB528C751E400F10B5D /* InAppImagesStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FAB428C751E400F10B5D /* InAppImagesStorage.swift */; };
 		9B24FABD28C757A700F10B5D /* InAppResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FABC28C757A700F10B5D /* InAppResponse.swift */; };
+		9B2F5F752902975B00F28A96 /* InAppMessagesTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2F5F742902975B00F28A96 /* InAppMessagesTracker.swift */; };
 		9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */; };
 		9B4F9DEF28D08897002C9CF0 /* InAppSegmentationChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* InAppSegmentationChecker.swift */; };
 		9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */; };
@@ -483,6 +484,7 @@
 		9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationManager.swift; sourceTree = "<group>"; };
 		9B24FAB428C751E400F10B5D /* InAppImagesStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImagesStorage.swift; sourceTree = "<group>"; };
 		9B24FABC28C757A700F10B5D /* InAppResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppResponse.swift; sourceTree = "<group>"; };
+		9B2F5F742902975B00F28A96 /* InAppMessagesTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesTracker.swift; sourceTree = "<group>"; };
 		9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSegmentsAPI.swift; sourceTree = "<group>"; };
 		9B4F9DEE28D08897002C9CF0 /* InAppSegmentationChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppSegmentationChecker.swift; sourceTree = "<group>"; };
 		9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppsCheckRequest.swift; sourceTree = "<group>"; };
@@ -1200,6 +1202,7 @@
 			children = (
 				9B7F2C5228DACD4B002ABDB0 /* InAppMessagesDelegate.swift */,
 				9B24FAAD28C74BA500F10B5D /* InAppCoreManager.swift */,
+				9B2F5F742902975B00F28A96 /* InAppMessagesTracker.swift */,
 				9B24FAB928C756EB00F10B5D /* PresentChecker */,
 				9B24FAB628C7554C00F10B5D /* Models */,
 				9B24FAAF28C74BB700F10B5D /* Configuration */,
@@ -1689,6 +1692,7 @@
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
+				9B2F5F752902975B00F28A96 /* InAppMessagesTracker.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */,
 				9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */,

@@ -38,11 +38,16 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 /// Prepares UI for in-app messages and shows them
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
-    init(imagesStorage: InAppImagesStorageProtocol) {
+    init(
+        imagesStorage: InAppImagesStorageProtocol,
+        inAppTracker: InAppMessagesTrackerProtocol
+    ) {
         self.imagesStorage = imagesStorage
+        self.inAppTracker = inAppTracker
     }
 
     private let imagesStorage: InAppImagesStorageProtocol
+    private let inAppTracker: InAppMessagesTrackerProtocol
     private var inAppWindow: UIWindow?
 
     func present(
@@ -89,7 +94,6 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             .category(.inAppMessages).level(.debug).make()
 
         let inAppWindow = makeInAppMessageWindow()
-
         let close: () -> Void = { [weak self] in
             self?.onClose(inApp: inAppUIModel, onPresentationCompleted)
         }
@@ -107,9 +111,14 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     }
 
     private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
-        Log("InApp presented. Id: \(inApp.inAppId)")
-            .category(.inAppMessages).level(.debug).make()
-        //        Mindbox.shared.executeAsyncOperation(operationSystemName: <#T##String#>, json: <#T##String#>)
+        do {
+            try inAppTracker.trackView(id: inApp.inAppId)
+            Log("Track InApp.View. Id \(inApp.inAppId)")
+                .category(.notification).level(.info).make()
+        } catch {
+            Log("Track InApp.View failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
         completion()
     }
 
@@ -118,12 +127,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onTap: @escaping InAppMessageTapAction,
         close: @escaping () -> Void
     ) {
+        do {
+            try inAppTracker.trackClick(id: inApp.inAppId)
+            Log("Track InApp.Click. Id \(inApp.inAppId)")
+                .category(.notification).level(.info).make()
+        } catch {
+            Log("Track InApp.Click failed with error: \(error)")
+                .category(.notification).level(.error).make()
+        }
+
         let redirect = inApp.redirect
-        Log("On tap action. \nURL: \(redirect.redirectUrl?.absoluteString ?? ""). \nPayload: \(redirect.payload)")
-            .category(.inAppMessages).level(.debug).make()
-
-        //        Mindbox.shared.executeAsyncOperation(operationSystemName: <#T##String#>, json: <#T##String#>)
-
         if redirect.redirectUrl != nil || !redirect.payload.isEmpty {
             onTap(redirect.redirectUrl, redirect.payload)
             close()
