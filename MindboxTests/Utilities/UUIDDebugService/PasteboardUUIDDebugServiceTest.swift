@@ -9,6 +9,9 @@ import Foundation
 import XCTest
 @testable import Mindbox
 
+
+// Not working on iOS 16: https://developer.apple.com/forums/thread/714366
+
 final class PasteboardUUIDDebugServiceTest: XCTestCase {
 
     func testCopiesUUIDInPasteboardOnFiveConsecutiveBecomeActiveNotifications() {
@@ -59,7 +62,7 @@ final class PasteboardUUIDDebugServiceTest: XCTestCase {
             )
         }
         XCTAssertEqual(sut.mockPasteboard.string, testUUID)
-        sut.mockPasteboard.string = nil
+        sut.mockPasteboard.items = []
         for _ in 0..<2 {
             sut.dateProvider.date = Date()
             sut.mockCenter.post(
@@ -124,7 +127,7 @@ final class PasteboardUUIDDebugServiceTest: XCTestCase {
         let mockDate = MockDateProvider()
         mockDate.date = Date()
         let mockBoard = UIPasteboard.general
-        mockBoard.string = nil
+        mockBoard.items = []
         let mockCenter = MockNotificationCenter()
         let service = PasteboardUUIDDebugService(
             notificationCenter: mockCenter,

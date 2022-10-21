@@ -10,17 +10,20 @@ import Foundation
 import AdSupport
 import AppTrackingTransparency
 import UIKit.UIDevice
+#if SWIFT_PACKAGE
+import SDKVersionProvider
+#endif
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
     
-    let appBundle: Bundle = {
+    private let appBundle: Bundle = {
         var bundle: Bundle = .main
         prepareBundle(&bundle)
         return bundle
     }()
     
-    let sdkBundle: Bundle = {
-        var bundle = Bundle(for: Mindbox.self)
+    private let sdkBundle: Bundle = {
+        var bundle = BundleToken.bundle
         prepareBundle(&bundle)
         return bundle
     }()
@@ -63,7 +66,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
     
     var sdkVersion: String? {
-        sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+        SDKVersionProvider.sdkVersion
     }
     
     var hostApplicationName: String? {
@@ -71,30 +74,37 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
         
     func getDeviceUUID(completion: @escaping (String) -> Void) {
-        IDFAFetcher().fetch { (uuid) in
-            if let uuid = uuid {
-                Log("IDFAFetcher uuid:\(uuid.uuidString)")
-                    .category(.general).level(.default).make()
-                completion(uuid.uuidString)
-            } else {
-                Log("IDFAFetcher fail")
-                    .category(.general).level(.default).make()
-                IDFVFetcher().fetch(tryCount: 3) { (uuid) in
-                    if let uuid = uuid {
-                        Log("IDFVFetcher uuid:\(uuid.uuidString)")
-                            .category(.general).level(.default).make()
-                        completion(uuid.uuidString)
-                    } else {
-                        Log("IDFVFetcher fail")
-                            .category(.general).level(.default).make()
-                        let uuid = UUID()
-                        completion(uuid.uuidString)
-                        Log("Generated uuid:\(uuid.uuidString)")
-                            .category(.general).level(.default).make()
-                    }
+        if let uuid = IDFAFetcher().fetch() {
+            Log("IDFAFetcher uuid:\(uuid.uuidString)")
+                .category(.general).level(.default).make()
+            completion(uuid.uuidString)
+        } else {
+            Log("IDFAFetcher fail")
+                .category(.general).level(.default).make()
+            IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+                if let uuid = uuid {
+                    Log("IDFVFetcher uuid:\(uuid.uuidString)")
+                        .category(.general).level(.default).make()
+                    completion(uuid.uuidString)
+                } else {
+                    Log("IDFVFetcher fail")
+                        .category(.general).level(.default).make()
+                    let uuid = UUID()
+                    completion(uuid.uuidString)
+                    Log("Generated uuid:\(uuid.uuidString)")
+                        .category(.general).level(.default).make()
                 }
             }
         }
     }
+}
 
+private final class BundleToken {
+    static let bundle: Bundle = {
+    #if SWIFT_PACKAGE
+        return Bundle.module
+    #else
+        return Bundle(for: BundleToken.self)
+    #endif
+    }()
 }

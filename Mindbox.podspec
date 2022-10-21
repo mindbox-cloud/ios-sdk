@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "Mindbox"
-  spec.version      = "2.1.2"
+  spec.version      = "2.1.4"
   spec.summary      = "SDK for integration with Mindbox"
   spec.description  = "This library allows you to integrate data transfer to Mindbox Marketing Cloud"
   spec.homepage     = "https://github.com/mindbox-moscow/ios-sdk"
@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
   spec.author       = { "Mindbox" => "ios-sdk@mindbox.ru" }
   spec.platform     = :ios, "10.0"
   spec.source       = { :git => "https://github.com/mindbox-moscow/ios-sdk.git", :tag => spec.version }
-  spec.source_files  = "Mindbox/**/*.{swift}"
+  spec.source_files  = "Mindbox/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.resources = ["Mindbox/**/*.xcdatamodeld"]
   spec.swift_version = "5"

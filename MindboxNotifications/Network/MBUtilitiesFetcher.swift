@@ -7,6 +7,9 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+import SDKVersionProvider
+#endif
 
 class MBUtilitiesFetcher {
     
@@ -57,7 +60,7 @@ class MBUtilitiesFetcher {
     }
     
     var sdkVersion: String? {
-        sdkBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+        SDKVersionProvider.sdkVersion
     }
     
     var hostApplicationName: String? {

@@ -163,7 +163,7 @@ class AsyncOperation: Operation {
             }
         }
         set {
-            if #available(iOS 11.0, *) {
+            if #available(iOS 13.0, *) {
                 willChangeValue(for: \.isExecuting)
                 lockQueue.sync(flags: [.barrier]) {
                     _isExecuting = newValue
@@ -187,7 +187,7 @@ class AsyncOperation: Operation {
             }
         }
         set {
-            if #available(iOS 11.0, *) {
+            if #available(iOS 13.0, *) {
                 willChangeValue(for: \.isFinished)
                 lockQueue.sync(flags: [.barrier]) {
                     _isFinished = newValue

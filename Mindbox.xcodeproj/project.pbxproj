@@ -215,6 +215,8 @@
 		84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */; };
 		84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */; };
 		84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */ = {isa = PBXBuildFile; fileRef = 84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */; };
+		9B25EA3128EA9127000D6131 /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */; };
+		9B25EA3228EA912C000D6131 /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */; };
 		B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */; };
 		B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */; };
 		B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254F2689F8B600B6A3B7 /* BenefitResponse.swift */; };
@@ -461,6 +463,8 @@
 		84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
 		84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkFetcher.swift; sourceTree = "<group>"; };
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
+		9B25EA2F28E71334000D6131 /* SDKVersionConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SDKVersionConfig.xcconfig; sourceTree = "<group>"; };
+		9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionProvider.swift; sourceTree = "<group>"; };
 		B33127AE2760C53700CF747E /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
 		B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RetailOrderStatisticsResponse.swift; sourceTree = "<group>"; };
 		B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalOffersResponse.swift; sourceTree = "<group>"; };
@@ -548,6 +552,7 @@
 				313B233D25ADEA0F00A1CB72 /* MindboxTests */,
 				3333C1992681D3CF00B60D84 /* MindboxNotifications */,
 				3333C1A42681D3CF00B60D84 /* MindboxNotificationsTests */,
+				9B25EA2E28E71334000D6131 /* SDKVersionProvider */,
 				313B233125ADEA0F00A1CB72 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -1178,6 +1183,15 @@
 			path = Mock;
 			sourceTree = "<group>";
 		};
+		9B25EA2E28E71334000D6131 /* SDKVersionProvider */ = {
+			isa = PBXGroup;
+			children = (
+				9B25EA2F28E71334000D6131 /* SDKVersionConfig.xcconfig */,
+				9B25EA3028E71334000D6131 /* SDKVersionProvider.swift */,
+			);
+			path = SDKVersionProvider;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -1393,6 +1407,7 @@
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
 				334F3AF4264C199900A6AC00 /* ProductRequest.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
+				9B25EA3228EA912C000D6131 /* SDKVersionProvider.swift in Sources */,
 				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,
@@ -1605,6 +1620,7 @@
 				3333C1D02681E83200B60D84 /* BodyDecoder.swift in Sources */,
 				3333C1C42681E64F00B60D84 /* NetworkService.swift in Sources */,
 				3333C1E32681EEA800B60D84 /* Event.swift in Sources */,
+				9B25EA3128EA9127000D6131 /* SDKVersionProvider.swift in Sources */,
 				3333C1C22681E59900B60D84 /* DeliveryOperation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1635,6 +1651,7 @@
 /* Begin XCBuildConfiguration section */
 		313B234225ADEA0F00A1CB72 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9B25EA2F28E71334000D6131 /* SDKVersionConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1703,6 +1720,7 @@
 		};
 		313B234325ADEA0F00A1CB72 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9B25EA2F28E71334000D6131 /* SDKVersionConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1780,7 +1798,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1808,7 +1825,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1872,7 +1888,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1900,7 +1915,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

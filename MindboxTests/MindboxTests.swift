@@ -15,12 +15,14 @@ class MindboxTests: XCTestCase {
 
     var container: DependencyContainer!
     var coreController: CoreController!
+    var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
 
     override func setUp() {
         container = try! TestDependencyProvider()
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
         Mindbox.shared.assembly(with: container)
+        Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
@@ -37,12 +39,16 @@ class MindboxTests: XCTestCase {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
-            uuidDebugService: MockUUIDDebugService()
+            uuidDebugService: MockUUIDDebugService(),
+            controllerQueue: controllerQueue
         )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
+
+        waitForInitializationFinished()
+
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         var deviceUUID: String?
         Mindbox.shared.getDeviceUUID { value in
@@ -53,6 +59,9 @@ class MindboxTests: XCTestCase {
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+
+        waitForInitializationFinished()
+        
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
         var deviceUUID2: String?
@@ -72,7 +81,8 @@ class MindboxTests: XCTestCase {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
-            uuidDebugService: MockUUIDDebugService()
+            uuidDebugService: MockUUIDDebugService(),
+            controllerQueue: controllerQueue
         )
 
         //        //        //        //        //        //        //        //        //        //        //        //
@@ -80,6 +90,9 @@ class MindboxTests: XCTestCase {
         let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
         coreController.initialization(configuration: configuration3)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+
+        waitForInitializationFinished()
+
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
     }
@@ -97,6 +110,7 @@ class MindboxTests: XCTestCase {
             subscribeCustomerIfCreated: true
         )
         Mindbox.shared.initialization(configuration: configuration)
+        waitForInitializationFinished()
 
         var newDeviceUuid: String?
         Mindbox.shared.getDeviceUUID { value in
@@ -121,6 +135,7 @@ class MindboxTests: XCTestCase {
             subscribeCustomerIfCreated: true
         )
         Mindbox.shared.initialization(configuration: configuration)
+        waitForInitializationFinished()
 
         var secondDeviceUuidCount = 0
         Mindbox.shared.getDeviceUUID { _ in
@@ -145,12 +160,12 @@ class MindboxTests: XCTestCase {
         let tokenString = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
 
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
+        waitForInitializationFinished()
 
         var secondApnsToken: String?
         Mindbox.shared.getAPNSToken { token in
             secondApnsToken = token
         }
-
         XCTAssertNotNil(firstApnsToken)
         XCTAssertNotNil(secondApnsToken)
         XCTAssertEqual(firstApnsToken, secondApnsToken)
@@ -165,13 +180,17 @@ class MindboxTests: XCTestCase {
         }
         let tokenData = "740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".data(using: .utf8)!
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
+        waitForInitializationFinished()
+
         var secondCountApnsToken = 0
         Mindbox.shared.getAPNSToken { _ in
             secondCountApnsToken += 1
         }
+
         Mindbox.shared.getAPNSToken { _ in }
         Mindbox.shared.getAPNSToken { _ in }
         Mindbox.shared.getAPNSToken { _ in }
+
         XCTAssertEqual(firstCountApnsToken, 1)
         XCTAssertEqual(secondCountApnsToken, 1)
     }
@@ -180,5 +199,11 @@ class MindboxTests: XCTestCase {
         XCTAssertTrue("TEST.-".operationNameIsValid)
         XCTAssertFalse("тест".operationNameIsValid)
         XCTAssertFalse("TESт".operationNameIsValid)
+    }
+
+    private func waitForInitializationFinished() {
+        let expectation = self.expectation(description: "controller initialization")
+        controllerQueue.async { expectation.fulfill() }
+        self.wait(for: [expectation], timeout: 0.2)
     }
 }
