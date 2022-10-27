@@ -57,6 +57,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onPresentationCompleted: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     ) {
+        clickTracked = false
         imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
             if let imageData = imageData {
                 let redirectInfo = InAppMessageUIModel.InAppRedirect(
@@ -122,18 +123,22 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         completion()
     }
 
+    private var clickTracked = false
     private func onTapAction(
         inApp: InAppMessageUIModel,
         onTap: @escaping InAppMessageTapAction,
         close: @escaping () -> Void
     ) {
-        do {
-            try inAppTracker.trackClick(id: inApp.inAppId)
-            Log("Track InApp.Click. Id \(inApp.inAppId)")
-                .category(.notification).level(.info).make()
-        } catch {
-            Log("Track InApp.Click failed with error: \(error)")
-                .category(.notification).level(.error).make()
+        if !clickTracked {
+            do {
+                try inAppTracker.trackClick(id: inApp.inAppId)
+                clickTracked = true
+                Log("Track InApp.Click. Id \(inApp.inAppId)")
+                    .category(.notification).level(.info).make()
+            } catch {
+                Log("Track InApp.Click failed with error: \(error)")
+                    .category(.notification).level(.error).make()
+            }
         }
 
         let redirect = inApp.redirect

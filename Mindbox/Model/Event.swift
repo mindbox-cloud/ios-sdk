@@ -19,7 +19,7 @@ struct Event {
         case customEvent = "MobilePush.CustomEvent"
         case syncEvent = "MobilePush.SyncEvent"
 
-        case inAppViewEvent = "Inapp.View"
+        case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
     }
     

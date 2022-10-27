@@ -12,3 +12,9 @@ public protocol InAppMessagesDelegate: AnyObject {
 
     func inAppMessageDismissed(id: String)
 }
+
+extension InAppMessagesDelegate {
+    func inAppMessageTapAction(id: String, url: URL?, payload: String) {}
+
+    func inAppMessageDismissed(id: String) {}
+}
