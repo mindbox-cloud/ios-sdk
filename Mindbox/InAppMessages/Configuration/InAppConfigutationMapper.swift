@@ -52,8 +52,8 @@ class InAppConfigutationMapper {
             }
 
             var targeting: SegmentationTargeting?
-            if let segmentation = inApp.targeting.payload?.segmentation,
-               let segment = inApp.targeting.payload?.segment {
+            if let segmentation = inApp.targeting.payload.segmentation,
+               let segment = inApp.targeting.payload.segment {
                 targeting = SegmentationTargeting(segmentation: segmentation, segment: segment)
             }
 

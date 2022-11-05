@@ -27,13 +27,13 @@ struct InAppConfigResponse: Decodable {
     }
 
     struct InAppTargeting: Decodable {
-        init(type: InAppConfigResponse.InAppTargetingType? = nil, payload: InAppConfigResponse.SegmentationTargeting? = nil) {
+        init(type: InAppConfigResponse.InAppTargetingType, payload: InAppConfigResponse.SegmentationTargeting) {
             self.type = type
             self.payload = payload
         }
 
-        let type: InAppTargetingType?
-        let payload: SegmentationTargeting?
+        let type: InAppTargetingType
+        let payload: SegmentationTargeting
 
         enum CodingKeys: String, CodingKey {
             case type = "$type"
@@ -41,12 +41,20 @@ struct InAppConfigResponse: Decodable {
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.type = try? container.decodeIfPresent(InAppTargetingType.self, forKey: CodingKeys.type)
+            self.type = try container.decode(InAppTargetingType.self, forKey: CodingKeys.type)
             switch type {
             case .simple:
-                self.payload = try? SegmentationTargeting(from: decoder)
-            case .none:
-                self.payload = nil
+                let payload = try SegmentationTargeting(from: decoder)
+                if (payload.segment == nil && payload.segmentation == nil) || (payload.segment != nil && payload.segmentation != nil) {
+                    self.payload = payload
+                } else {
+                    throw DecodingError.dataCorrupted(
+                        .init(
+                            codingPath: decoder.codingPath,
+                            debugDescription: "Segment and segmentation in payload should be either both nil or both not nill"
+                        )
+                    )
+                }
             }
         }
     }

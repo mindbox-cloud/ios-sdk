@@ -7,7 +7,6 @@
 //
 
 import Foundation
-
 import XCTest
 @testable import Mindbox
 
@@ -77,6 +76,16 @@ class InAppConfigResponseTests: XCTestCase {
         XCTAssertEqual(expected, config)
     }
 
+    func test_invalisInApps() throws {
+        let response = try getConfigWithInvalidInapps()
+        let config = InAppConfigutationMapper(inAppsVersion: 2).mapConfigResponse(response)
+        XCTAssertEqual(1, config.inAppsByEvent.count)
+        let inappsForStartEvent = config.inAppsByEvent[.start]!
+        XCTAssertEqual(1, inappsForStartEvent.count)
+        let onlyValidInapp = inappsForStartEvent.first!
+        XCTAssertEqual(onlyValidInapp.id, "00000000-0000-0000-0000-000000000002")
+    }
+
     func test_2InApps_bothDontFitInAppsSdkVersion() throws {
         let response = try getConfigWithTwoInapps()
         let config = InAppConfigutationMapper(inAppsVersion: 0)
@@ -88,6 +97,13 @@ class InAppConfigResponseTests: XCTestCase {
     private func getConfigWithTwoInapps() throws -> InAppConfigResponse {
         let bundle = Bundle(for: InAppConfigResponseTests.self)
         let fileURL = bundle.url(forResource: "InAppConfiguration", withExtension: "json")!
+        let data = try Data(contentsOf: fileURL)
+        return try JSONDecoder().decode(InAppConfigResponse.self, from: data)
+    }
+
+    private func getConfigWithInvalidInapps() throws -> InAppConfigResponse {
+        let bundle = Bundle(for: InAppConfigResponseTests.self)
+        let fileURL = bundle.url(forResource: "InAppConfigurationInvalid", withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
         return try JSONDecoder().decode(InAppConfigResponse.self, from: data)
     }

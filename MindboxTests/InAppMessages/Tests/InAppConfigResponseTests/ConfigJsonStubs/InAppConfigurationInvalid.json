@@ -1,0 +1,88 @@
+{
+    "inapps": [
+        {
+            "id": "b90480f3-dc9f-40f9-8ad1-09d08ef51ab6",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": null,
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "d6d78e93-2994-4ffe-a85e-886b1a5df0cd",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": {
+                "segmentation": "6b5629d5-b1eb-497f-b03c-1c71a49f36c2",
+                "segment": null,
+                "$type": "simple"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": {
+                "segmentation": null,
+                "segment": "6b5629d5-b1eb-497f-b03c-1c71a49f36c2",
+                "$type": "simple"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": {
+                "segmentation": null,
+                "segment": null,
+                "$type": "simple"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://cs.pikabu.ru/post_img/big/2013/12/31/9/1388645055_1336973337.jpg",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        }
+    ]
+}
