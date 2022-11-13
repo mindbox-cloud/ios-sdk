@@ -8,6 +8,7 @@
 
 import CoreData
 import Foundation
+import UIKit
 
 final class DependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
@@ -19,6 +20,7 @@ final class DependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     let inAppMessagesManager: InAppCoreManagerProtocol
+    let uuidDebugService: UUIDDebugService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -49,6 +51,11 @@ final class DependencyProvider: DependencyContainer {
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
             ),
             persistenceStorage: persistenceStorage
+        )
+        uuidDebugService = PasteboardUUIDDebugService(
+            notificationCenter: NotificationCenter.default,
+            currentDateProvider: { return Date() },
+            pasteboard: UIPasteboard.general
         )
     }
 }

@@ -16,6 +16,7 @@ class CoreController {
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
+    private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
     private let inAppMessagesManager: InAppCoreManagerProtocol
 
@@ -95,6 +96,7 @@ class CoreController {
     private func primaryInitialization(with configutaion: MBConfiguration) {
         // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
         let deviceUUID = generateDeviceUUID()
+        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
         install(
             deviceUUID: deviceUUID,
             configuration: configutaion
@@ -117,6 +119,13 @@ class CoreController {
             checkNotificationStatus()
             persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         }
+        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
+    }
+
+    private func startUUIDDebugServiceIfNeeded(deviceUUID: String, configuration: MBConfiguration) {
+        guard configuration.uuidDebugEnabled else { return }
+
+        uuidDebugService.start(with: deviceUUID)
     }
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
@@ -219,6 +228,7 @@ class CoreController {
         trackVisitManager: TrackVisitManager,
         sessionManager: SessionManager,
         inAppMessagesManager: InAppCoreManagerProtocol,
+        uuidDebugService: UUIDDebugService,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue")
     ) {
         self.persistenceStorage = persistenceStorage
@@ -227,6 +237,7 @@ class CoreController {
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
+        self.uuidDebugService = uuidDebugService
         self.controllerQueue = controllerQueue
         self.inAppMessagesManager = inAppMessagesManager
 

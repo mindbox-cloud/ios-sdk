@@ -11,6 +11,7 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
+
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
@@ -20,6 +21,7 @@ final class TestDependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
+    let uuidDebugService: UUIDDebugService
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -40,6 +42,7 @@ final class TestDependencyProvider: DependencyContainer {
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         inAppMessagesManager = InAppCoreManagerMock()
+        uuidDebugService = MockUUIDDebugService()
     }
 
 }

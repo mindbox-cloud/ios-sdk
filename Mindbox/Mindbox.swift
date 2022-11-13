@@ -539,7 +539,8 @@ public class Mindbox: NSObject {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
-            inAppMessagesManager: container.inAppMessagesManager
+            inAppMessagesManager: container.inAppMessagesManager,
+            uuidDebugService: container.uuidDebugService
         )
     }
 
