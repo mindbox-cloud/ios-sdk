@@ -8,5 +8,5 @@
 import Foundation
 
 public class SDKVersionProvider {
-    public static let sdkVersion = "2.1.5"
+    public static let sdkVersion = "2.2.0"
 }
