@@ -39,6 +39,8 @@ class MindboxTests: XCTestCase {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
+            inAppMessagesManager: InAppCoreManagerMock(),
+            uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue
         )
         // This is an example of a functional test case.
@@ -80,6 +82,8 @@ class MindboxTests: XCTestCase {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
+            inAppMessagesManager: InAppCoreManagerMock(),
+            uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue
         )
 

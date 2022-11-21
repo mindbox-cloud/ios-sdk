@@ -24,6 +24,8 @@ class EventRepositoryTestCase: XCTestCase {
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
+            inAppMessagesManager: InAppCoreManagerMock(),
+            uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue
         )
         container.persistenceStorage.reset()

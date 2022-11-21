@@ -76,6 +76,8 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
+    var shownInAppsIds: [String]?
+
     func reset() {
         installationDate = nil
         deviceUUID = nil
