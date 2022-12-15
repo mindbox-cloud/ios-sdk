@@ -9,7 +9,7 @@ on:
 
 jobs:
   unit:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v2
     - name: Update bundler
@@ -17,7 +17,7 @@ jobs:
     - name: Install bundler dependencies
       run: bundle install
     - name: Select Xcode
-      run: sudo xcode-select --switch /Applications/Xcode_13.0.app
+      run: sudo xcode-select --switch /Applications/Xcode_14.1.app
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
       env:
@@ -25,7 +25,7 @@ jobs:
 
   publish:
     needs: [unit]
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v2
     - name: Release generation
@@ -35,7 +35,7 @@ jobs:
     - name: Install bundler dependencies
       run: bundle install
     - name: Select Xcode
-      run: sudo xcode-select --switch /Applications/Xcode_13.0.app
+      run: sudo xcode-select --switch /Applications/Xcode_14.1.app
     - name: Run build
       run: bundle exec fastlane buildLane
       env:

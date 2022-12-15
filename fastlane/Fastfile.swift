@@ -13,19 +13,21 @@ class Fastfile: LaneFile {
 
     func buildLane() {
         desc("Build for testing")
-        scan(project: .userDefined(project),
-             scheme: "Mindbox",
-             device: .userDefined("iPhone 12"),
-             derivedDataPath: "derivedData",
-             buildForTesting: .userDefined(true),
-             xcargs: "CI=true"
+        scan(
+            project: .userDefined(project),
+            scheme: "Mindbox",
+            xcodebuildFormatter: "",
+            derivedDataPath: "derivedData",
+            buildForTesting: .userDefined(true),
+            xcargs: "CI=true"
         )
-        scan(project: .userDefined(project),
-             scheme: "MindboxNotifications",
-             device: .userDefined("iPhone 12"),
-             derivedDataPath: "derivedData",
-             buildForTesting: .userDefined(true),
-             xcargs: "CI=true"
+        scan(
+            project: .userDefined(project),
+            scheme: "MindboxNotifications",
+            xcodebuildFormatter: "",
+            derivedDataPath: "derivedData",
+            buildForTesting: .userDefined(true),
+            xcargs: "CI=true"
         )
     }
 
@@ -33,20 +35,21 @@ class Fastfile: LaneFile {
         desc("Run unit tests")
         scan(project: .userDefined(project),
              scheme: "Mindbox",
-             device: .userDefined("iPhone 12"),
              onlyTesting: ["MindboxTests"],
              clean: true,
+             xcodebuildFormatter: "",
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
         )
-        scan(project: .userDefined(project),
-             scheme: "MindboxNotifications",
-             device: .userDefined("iPhone 12"),
-             onlyTesting: ["MindboxNotificationsTests"],
-             clean: true,
-             testWithoutBuilding: .userDefined(false),
-             xcargs: "CI=true"
+        scan(
+            project: .userDefined(project),
+            scheme: "MindboxNotifications",
+            onlyTesting: ["MindboxNotificationsTests"],
+            clean: true,
+            xcodebuildFormatter: "",
+            testWithoutBuilding: .userDefined(false),
+            xcargs: "CI=true"
         )
     }
 }
