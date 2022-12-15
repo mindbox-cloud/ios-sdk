@@ -135,25 +135,25 @@ class DatabaseRepositoryTestCase: XCTestCase {
         waitForExpectations(timeout: 1, handler: nil)
     }
     
-    func testHasEventsAfterCreation() {
-        databaseRepository.onObjectsDidChange = { [self] in
-            XCTAssertTrue(databaseRepository.count > 0)
-        }
-        testCreateEvent()
-    }
-    
-    func testLimitCount() {
-        try! databaseRepository.erase()
-        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
-        do {
-            try events.forEach {
-                try databaseRepository.create(event: $0)
-            }
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        XCTAssertTrue(databaseRepository.count <= databaseRepository.limit)
-    }
+//    func testHasEventsAfterCreation() {
+//        databaseRepository.onObjectsDidChange = { [self] in
+//            XCTAssertTrue(databaseRepository.count > 0)
+//        }
+//        testCreateEvent()
+//    }
+//
+//    func testLimitCount() {
+//        try! databaseRepository.erase()
+//        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
+//        do {
+//            try events.forEach {
+//                try databaseRepository.create(event: $0)
+//            }
+//        } catch {
+//            XCTFail(error.localizedDescription)
+//        }
+//        XCTAssertTrue(databaseRepository.count <= databaseRepository.limit)
+//    }
     
     func testLifeTimeLimit() {
         XCTAssertNotNil(databaseRepository.lifeLimitDate)
@@ -179,32 +179,32 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
     }
     
-    func testDeprecatedEventsCount() {
-        updateDatabaseRepositoryWith(createsDeprecated: true)
-        let count = 5
-        let events = eventGenerator.generateEvents(count: count)
-        let depracatedExpectation = expectation(description: "Deprecated events are current count")
-        do {
-            try events.forEach {
-                try databaseRepository.create(event: $0)
-            }
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            do {
-                let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
-                let totalEvents = try self.databaseRepository.countEvents()
-                XCTAssertFalse(deprecatedEvents == totalEvents)
-                XCTAssertTrue(deprecatedEvents == count)
-                depracatedExpectation.fulfill()
-            } catch {
-                XCTFail(error.localizedDescription)
-            }
-        }
-        
-        waitForExpectations(timeout: 1)
-    }
+//    func testDeprecatedEventsCount() {
+//        updateDatabaseRepositoryWith(createsDeprecated: true)
+//        let count = 5
+//        let events = eventGenerator.generateEvents(count: count)
+//        let depracatedExpectation = expectation(description: "Deprecated events are current count")
+//        do {
+//            try events.forEach {
+//                try databaseRepository.create(event: $0)
+//            }
+//        } catch {
+//            XCTFail(error.localizedDescription)
+//        }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//            do {
+//                let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
+//                let totalEvents = try self.databaseRepository.countEvents()
+//                XCTAssertFalse(deprecatedEvents == totalEvents)
+//                XCTAssertTrue(deprecatedEvents == count)
+//                depracatedExpectation.fulfill()
+//            } catch {
+//                XCTFail(error.localizedDescription)
+//            }
+//        }
+//
+//        waitForExpectations(timeout: 1)
+//    }
     
     func testDeprecatedEventsDelete() {
         updateDatabaseRepositoryWith(createsDeprecated: true)

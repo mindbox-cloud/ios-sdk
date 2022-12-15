@@ -26,6 +26,7 @@
 		B3BA65AC1F5A269100B34850 /* SocketClientDelegateProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BA65A31F5A269100B34850 /* SocketClientDelegateProtocol.swift */; };
 		B3BA65AD1F5A269100B34850 /* SocketResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BA65A41F5A269100B34850 /* SocketResponse.swift */; };
 		B3BA65AF1F5A2D5C00B34850 /* RunnerArgument.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BA65AE1F5A2D5C00B34850 /* RunnerArgument.swift */; };
+		BD87876253B404EE75BD2547 /* FastlaneRunner in FastlaneRunnerCopySigned */ = {isa = PBXBuildFile; fileRef = D556D6A91F6A08F5003108E3 /* FastlaneRunner */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D55B28C31F6C588300DC42C5 /* Deliverfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55B28BC1F6C588300DC42C5 /* Deliverfile.swift */; };
 		D55B28C41F6C588300DC42C5 /* Gymfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55B28BD1F6C588300DC42C5 /* Gymfile.swift */; };
 		D55B28C51F6C588300DC42C5 /* Matchfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55B28BE1F6C588300DC42C5 /* Matchfile.swift */; };
@@ -38,13 +39,29 @@
 		D5B8A5B31FFDC49E00536B24 /* ControlCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5B8A5B21FFDC49D00536B24 /* ControlCommand.swift */; };
 		D5BAFD121F7DAAFC0030B324 /* ArgumentProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BAFD111F7DAAFC0030B324 /* ArgumentProcessor.swift */; };
 		D5D1DE991FFEE8EA00502A00 /* RubyCommandable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D1DE981FFEE8E900502A00 /* RubyCommandable.swift */; };
+		E5F819452AE32E8BA4E29811 /* Atomic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F752C072DD1434CB0290C9A /* Atomic.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		59DC705C6F84F39290AFE2C5 /* FastlaneRunnerCopySigned */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$SRCROOT/../..";
+			dstSubfolderSpec = 0;
+			files = (
+				BD87876253B404EE75BD2547 /* FastlaneRunner in FastlaneRunnerCopySigned */,
+			);
+			name = FastlaneRunnerCopySigned;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0311E386230AC1B20060BB5C /* Plugins.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Plugins.swift; path = ../Plugins.swift; sourceTree = "<group>"; };
 		0311E38A230AC9490060BB5C /* Actions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Actions.swift; path = ../Actions.swift; sourceTree = "<group>"; };
 		1257253824B7992B00E04FA3 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = main.swift; path = ../main.swift; sourceTree = "<group>"; };
 		1D29187D0D39921A55D419B3 /* OptionalConfigValue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OptionalConfigValue.swift; path = ../OptionalConfigValue.swift; sourceTree = "<group>"; };
+		7F752C072DD1434CB0290C9A /* Atomic.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Atomic.swift; path = ../Atomic.swift; sourceTree = "<group>"; };
 		B30206741F5E3E9000DE6EBD /* SnapshotfileProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotfileProtocol.swift; path = ../SnapshotfileProtocol.swift; sourceTree = "<group>"; };
 		B30206751F5E3E9000DE6EBD /* GymfileProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GymfileProtocol.swift; path = ../GymfileProtocol.swift; sourceTree = "<group>"; };
 		B30206761F5E3E9000DE6EBD /* MatchfileProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MatchfileProtocol.swift; path = ../MatchfileProtocol.swift; sourceTree = "<group>"; };
@@ -129,6 +146,7 @@
 				B3BA65A21F5A269100B34850 /* SocketClient.swift */,
 				B3BA65A31F5A269100B34850 /* SocketClientDelegateProtocol.swift */,
 				B3BA65A41F5A269100B34850 /* SocketResponse.swift */,
+				7F752C072DD1434CB0290C9A /* Atomic.swift */,
 			);
 			name = Networking;
 			sourceTree = "<group>";
@@ -181,7 +199,7 @@
 			buildPhases = (
 				B33BAF531F51F8D90001A751 /* Sources */,
 				B33BAF541F51F8D90001A751 /* Frameworks */,
-				D529C72B1F68BB1C0036536D /* ShellScript */,
+				59DC705C6F84F39290AFE2C5 /* FastlaneRunnerCopySigned */,
 			);
 			buildRules = (
 			);
@@ -227,22 +245,6 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		D529C72B1F68BB1C0036536D /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd \"${SRCROOT}\"\ncd ../..\ncp \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\" .\n";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		B33BAF531F51F8D90001A751 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -279,6 +281,7 @@
 				B3BA65A61F5A269100B34850 /* Fastlane.swift in Sources */,
 				D55B28C81F6C588300DC42C5 /* Screengrabfile.swift in Sources */,
 				3593732A0C736B4F7477241F /* OptionalConfigValue.swift in Sources */,
+				E5F819452AE32E8BA4E29811 /* Atomic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,7 +397,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
@@ -405,7 +410,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};

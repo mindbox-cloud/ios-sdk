@@ -10,6 +10,12 @@ import Foundation
 import CoreData
 
 class MBDatabaseRepository {
+
+    enum MetadataKey: String {
+        case install = "ApplicationInstalledVersion"
+        case infoUpdate = "ApplicationInfoUpdatedVersion"
+        case instanceId = "ApplicationInstanceId"
+    }
     
     let persistentContainer: NSPersistentContainer
     private let context: NSManagedObjectContext
@@ -27,26 +33,22 @@ class MBDatabaseRepository {
         }
         return monthLimitDate
     }
-    
-    private(set) var count: Int = 0 {
-        didSet {
-            Log("Count didSet with value: \(count)")
-                .category(.database).level(.info).make()
-            if count != oldValue {
-                onObjectsDidChange?()
-            }
-            guard count > limit else {
-                return
-            }
-            do {
-                try cleanUp()
-            } catch {
-                Log("Unable to remove first element")
-                    .category(.database).level(.error).make()
-            }
-        }
+
+    var infoUpdateVersion: Int? {
+        get { getMetadata(forKey: .infoUpdate) }
+        set { setMetadata(newValue, forKey: .infoUpdate) }
     }
-    
+
+    var installVersion: Int? {
+        get { getMetadata(forKey: .install) }
+        set { setMetadata(newValue, forKey: .install) }
+    }
+
+    var instanceId: String? {
+        get { getMetadata(forKey: .instanceId) }
+        set { setMetadata(newValue, forKey: .instanceId) }
+    }
+
     init(persistentContainer: NSPersistentContainer) throws {
         self.persistentContainer = persistentContainer
         if let store = persistentContainer.persistentStoreCoordinator.persistentStores.first {
@@ -59,42 +61,7 @@ class MBDatabaseRepository {
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
         _ = try countEvents()
     }
-    
-    enum MetadataKey: String {
-        
-        case install = "ApplicationInstalledVersion"
-        case infoUpdate = "ApplicationInfoUpdatedVersion"
-        case instanceId = "ApplicationInstanceId"
-        
-    }
-    
-    var infoUpdateVersion: Int? {
-        get {
-            getMetadata(forKey: .infoUpdate)
-        }
-        set {
-            setMetadata(newValue, forKey: .infoUpdate)
-        }
-    }
-    
-    var installVersion: Int? {
-        get {
-            getMetadata(forKey: .install)
-        }
-        set {
-            setMetadata(newValue, forKey: .install)
-        }
-    }
-    
-    var instanceId: String? {
-        get {
-            getMetadata(forKey: .instanceId)
-        }
-        set {
-            setMetadata(newValue, forKey: .instanceId)
-        }
-    }
-    
+
     // MARK: - CRUD operations
     func create(event: Event) throws {
         try context.performAndWait {
@@ -105,8 +72,7 @@ class MBDatabaseRepository {
             entity.body = event.body
             Log("Creating event with transactionId: \(event.transactionId)")
                 .category(.database).level(.info).make()
-            try saveContext(context)
-            count += 1
+            try saveEvent(withContext: context)
         }
     }
     
@@ -115,7 +81,7 @@ class MBDatabaseRepository {
             Log("Reading event with transactionId: \(transactionId)")
                 .category(.database).level(.info).make()
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: transactionId)
-            guard let entity = try findOrFetch(by: request) else {
+            guard let entity = try findEvent(by: request) else {
                 Log("Unable to find event with transactionId: \(transactionId)")
                     .category(.database).level(.error).make()
                 return nil
@@ -131,13 +97,13 @@ class MBDatabaseRepository {
             Log("Updating event with transactionId: \(event.transactionId)")
                 .category(.database).level(.info).make()
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: event.transactionId)
-            guard let entity = try findOrFetch(by: request) else {
+            guard let entity = try findEvent(by: request) else {
                 Log("Unable to find event with transactionId: \(event.transactionId)")
                     .category(.database).level(.error).make()
                 return
             }
             entity.retryTimestamp = Date().timeIntervalSince1970
-            try saveContext(context)
+            try saveEvent(withContext: context)
         }
     }
     
@@ -146,14 +112,13 @@ class MBDatabaseRepository {
             Log("Deleting event with transactionId: \(event.transactionId)")
                 .category(.database).level(.info).make()
             let request = CDEvent.fetchRequest(by: event.transactionId)
-            guard let entity = try findOrFetch(by: request) else {
+            guard let entity = try findEvent(by: request) else {
                 Log("Unable to find event with transactionId: \(event.transactionId)")
                     .category(.database).level(.error).make()
                 return
             }
             context.delete(entity)
-            try saveContext(context)
-            count -= 1
+            try saveEvent(withContext: context)
         }
     }
     
@@ -171,12 +136,10 @@ class MBDatabaseRepository {
             }
             Log("Did query events count: \(events.count)")
                 .category(.database).level(.info).make()
-            events.forEach {
+            return events.compactMap {
                 Log("Event with transactionId: \(String(describing: $0.transactionId))")
                     .category(.database).level(.info).make()
-            }
-            return events.compactMap {
-                Event($0)
+                return Event($0)
             }
         }
     }
@@ -188,23 +151,7 @@ class MBDatabaseRepository {
     func removeDeprecatedEventsIfNeeded() throws {
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         let context = persistentContainer.newBackgroundContext()
-        try context.performAndWait {
-            Log("Finding deprecated elements")
-                .category(.database).level(.info).make()
-            let events = try context.fetch(request)
-            guard !events.isEmpty else {
-                Log("Deprecated elements not found")
-                    .category(.database).level(.info).make()
-                return
-            }
-            events.forEach {
-                Log("Deleting event with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
-                    .category(.database).level(.info).make()
-                context.delete($0)
-                count -= 1
-            }
-            try saveContext(context)
-        }
+        try delete(by: request, withContext: context)
     }
     
     func countDeprecatedEvents() throws -> Int {
@@ -233,14 +180,14 @@ class MBDatabaseRepository {
         installVersion = nil
         try context.performAndWait {
             try context.execute(eraseRequest)
-            try saveContext(context)
+            try saveEvent(withContext: context)
             try countEvents()
         }
     }
     
     @discardableResult
     func countEvents() throws -> Int {
-        let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest(lifeLimitDate: lifeLimitDate)
+        let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
         return try context.performAndWait {
             Log("Events count limit: \(limit)")
                 .category(.database).level(.info).make()
@@ -248,9 +195,9 @@ class MBDatabaseRepository {
                 .category(.database).level(.info).make()
             do {
                 let count = try context.count(for: request)
-                self.count = count
                 Log("Events count: \(count)")
                     .category(.database).level(.info).make()
+                cleanUp(count: count)
                 return count
             } catch {
                 Log("Counting events failed with error: \(error.localizedDescription)")
@@ -260,74 +207,98 @@ class MBDatabaseRepository {
         }
     }
     
-    private func cleanUp() throws {
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete(lifeLimitDate: lifeLimitDate)
-        request.fetchLimit = 1
-        
-        try context.performAndWait {
-            Log("Deleting first element")
-                .category(.database).level(.info).make()
-            guard let entity = try fetch(by: request) else {
-                Log("Unable to fetch first element")
-                    .category(.database).level(.error).make()
-                return
-            }
-            Log("Deleted first element with transactionId: \(String(describing: entity.transactionId))")
-                .category(.database).level(.info).make()
-            context.delete(entity)
-            try saveContext(context)
-            count -= 1
+    private func cleanUp(count: Int) {
+        let fetchLimit = count - limit
+        guard fetchLimit > .zero else { return }
+
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete()
+        request.fetchLimit = fetchLimit
+        do {
+            try delete(by: request, withContext: context)
+        } catch {
+            Log("Unable to remove elements")
+                .category(.database).level(.error).make()
         }
     }
-    /*
-     true false
-     */
-    private func saveContext(_ context: NSManagedObjectContext, forceSave: Bool = false) throws {
-        if !forceSave && !context.hasChanges {
-            return
+
+    private func delete(by request: NSFetchRequest<CDEvent>, withContext context: NSManagedObjectContext) throws {
+        try context.performAndWait {
+            Log("Finding elements to remove")
+                .category(.database).level(.info).make()
+            let events = try context.fetch(request)
+            guard !events.isEmpty else {
+                Log("Elements to remove not found")
+                    .category(.database).level(.info).make()
+                return
+            }
+            events.forEach {
+                Log("Remove element with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
+                    .category(.database).level(.info).make()
+                context.delete($0)
+            }
+            try saveEvent(withContext: context)
         }
-        
+    }
+
+    private func findEvent(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
+        try context.registeredObjects
+            .compactMap { $0 as? CDEvent }
+            .filter { !$0.isFault }
+            .filter { request.predicate?.evaluate(with: $0) ?? false }
+            .first
+        ?? context.fetch(request).first
+    }
+
+}
+
+// MARK: - ManagedObjectContext save processing
+private extension MBDatabaseRepository {
+
+    func saveEvent(withContext context: NSManagedObjectContext) throws {
+        guard context.hasChanges else { return }
+
+        try saveContext(context)
+        onObjectsDidChange?()
+    }
+
+    func saveContext(_ context: NSManagedObjectContext) throws {
         do {
             try context.save()
             Log("Context did save")
                 .category(.database).level(.info).make()
         } catch {
-            context.rollback()
-            Log("Context did save failed with error: \(error)")
-                .category(.database).level(.error).make()
+            switch error {
+            case let error as NSError where error.domain == NSSQLiteErrorDomain && error.code == 13:
+                Log("Context did save failed with SQLite Database out of space error: \(error)")
+                    .category(.database).level(.error).make()
+                fallthrough
+            default:
+                context.rollback()
+                Log("Context did save failed with error: \(error)")
+                    .category(.database).level(.error).make()
+            }
             throw error
         }
     }
-    
-    private func findOrFetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
-        try find(by: request) ?? fetch(by: request)
-    }
-    
-    private func find(by request: NSFetchRequest<CDEvent>) -> CDEvent? {
-        context.registeredObjects
-            .compactMap { $0 as? CDEvent }
-            .filter { !$0.isFault }
-            .filter { request.predicate?.evaluate(with: $0) ?? false }
-            .first
-    }
-    
-    private func fetch(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
-        try context.fetch(request).first
-    }
-    
-    private func getMetadata<T>(forKey key: MetadataKey) -> T? {
+
+}
+
+// MARK: - Metadata processing
+private extension MBDatabaseRepository {
+
+    func getMetadata<T>(forKey key: MetadataKey) -> T? {
         let value = store.metadata[key.rawValue] as? T
         Log("Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))")
             .category(.database).level(.info).make()
         return value
     }
-    
-    private func setMetadata<T>(_ value: T?, forKey key: MetadataKey) {
+
+    func setMetadata<T>(_ value: T?, forKey key: MetadataKey) {
         store.metadata[key.rawValue] = value
         persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
         do {
             try context.performAndWait {
-                try saveContext(context, forceSave: true)
+                try saveContext(context)
                 Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
                     .category(.database).level(.info).make()
             }
@@ -336,5 +307,5 @@ class MBDatabaseRepository {
                 .category(.database).level(.error).make()
         }
     }
-    
+
 }
