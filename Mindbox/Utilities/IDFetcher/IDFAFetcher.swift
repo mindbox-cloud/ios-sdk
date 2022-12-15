@@ -11,39 +11,31 @@ import AdSupport
 import AppTrackingTransparency
 
 struct IDFAFetcher {
-    
-    typealias Completion = (UUID?) -> Void
-        
-    func fetch(completion: @escaping Completion) {
+    func fetch() -> UUID? {
         if #available(iOS 14, *) {
             switch ATTrackingManager.trackingAuthorizationStatus {
             case .authorized:
-                extract(completion: completion)
+                return extract()
             default:
-                completion(nil)
+                return nil
             }
         } else {
             guard ASIdentifierManager.shared().isAdvertisingTrackingEnabled else {
-                completion(nil)
-                return
+                return nil
             }
-            extract(completion: completion)
+            return extract()
         }
     }
     
-    private func extract(completion: @escaping Completion) {
-        DispatchQueue.global().sync {
-            let udid = ASIdentifierManager.shared().advertisingIdentifier
-            if isValid(udid: udid.uuidString) {
-                completion(udid)
-            } else {
-                completion(nil)
-            }
+    private func extract() -> UUID? {
+        let udid = ASIdentifierManager.shared().advertisingIdentifier
+        guard isValid(udid: udid.uuidString) else {
+            return nil
         }
+        return udid
     }
     
     private func isValid(udid: String) -> Bool {
         return UDIDValidator(udid: udid).evaluate()
     }
-    
 }

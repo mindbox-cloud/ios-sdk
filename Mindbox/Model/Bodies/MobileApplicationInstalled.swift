@@ -27,6 +27,9 @@ struct MobileApplicationInstalled: Codable {
     let version: Int
     
     let instanceId: String
+
+    /// ID текущая таймзона устройства в формате IANA, например "Asia/Krasnoyarsk", null если недоступно
+    let ianaTimeZone: String?
     
     init(
         token: String? = nil,
@@ -36,7 +39,8 @@ struct MobileApplicationInstalled: Codable {
         externalDeviceUUID: String?,
         version: Int,
         instanceId: String,
-        notificationProvider: String = "APNS"
+        notificationProvider: String = "APNS",
+        ianaTimeZone: String?
     ) {
         self.token = token ?? ""
         self.isTokenAvailable = !self.token.isEmpty
@@ -47,6 +51,7 @@ struct MobileApplicationInstalled: Codable {
         self.version = version
         self.instanceId = instanceId
         self.notificationProvider = notificationProvider
+        self.ianaTimeZone = ianaTimeZone
     }
 
 }

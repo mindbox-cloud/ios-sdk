@@ -18,11 +18,17 @@ struct Event {
         case trackVisit = "MobilePush.TrackVisit"
         case customEvent = "MobilePush.CustomEvent"
         case syncEvent = "MobilePush.SyncEvent"
+
+        case inAppViewEvent = "Inapp.Show"
+        case inAppClickEvent = "Inapp.Click"
     }
     
     let transactionId: String
     
     var dateTimeOffset: Int64 {
+        guard isRetry else {
+            return 0
+        }
         let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
         let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
         return Int64(ms)
@@ -34,7 +40,8 @@ struct Event {
     let serialNumber: String?
     
     let type: Operation
-    
+    // True if first attempt to send was failed
+    let isRetry: Bool
     // Data according to Operation
     let body: String
     
@@ -44,6 +51,7 @@ struct Event {
         self.type = type
         self.body = body
         self.serialNumber = nil
+        self.isRetry = false
     }
     
     init?(_ event: CDEvent) {
@@ -67,6 +75,6 @@ struct Event {
         self.type = operation
         self.body = body
         self.serialNumber = event.objectID.uriRepresentation().lastPathComponent
+        self.isRetry = !event.retryTimestamp.isZero
     }
-    
 }

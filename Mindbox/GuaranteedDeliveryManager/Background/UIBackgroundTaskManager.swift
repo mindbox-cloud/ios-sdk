@@ -38,14 +38,11 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     private var removingDeprecatedEventsInProgress = false
     
     func applicationDidEnterBackground() {
-        guard backgroundTaskID == .invalid else {
-            Log("BackgroundTask already in progress. Skip call of beginBackgroundTask")
-                .category(.background).level(.info).make()
-            return
+        if #available(iOS 13.0, *) {
+            // Do nothing cause BGProcessingTask will be called
+        } else {
+            beginBackgroundTask()
         }
-        Log("Beginnig BackgroundTask")
-            .category(.background).level(.info).make()
-        beginBackgroundTask()
     }
     
     func applicationDidBecomeActive() {
@@ -53,6 +50,14 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     }
     
     private func beginBackgroundTask() {
+        guard backgroundTaskID == .invalid else {
+            Log("BackgroundTask already in progress. Skip call of beginBackgroundTask")
+                .category(.background).level(.info).make()
+            return
+        }
+        Log("Beginnig BackgroundTask")
+            .category(.background).level(.info).make()
+
         backgroundTaskID = UIApplication.shared.beginBackgroundTask(
             withName: UUID().uuidString,
             expirationHandler: { [weak self] in
@@ -66,26 +71,18 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             })
         Log("BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
             .category(.background).level(.info).make()
-        
-        if #available(iOS 13.0, *) {
-            // Do nothing cause BGProcessingTask will be called
-        } else {
-            removeDeprecatedEventsIfNeeded()
-        }
+
+        removeDeprecatedEventsIfNeeded()
     }
     
     private func removeDeprecatedEventsIfNeeded() {
-        guard !removingDeprecatedEventsInProgress else {
-            return
-        }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
-        guard Date() > deprecatedEventsRemoveDate + Constants.Background.removeDeprecatedEventsInterval else {
-            return
-        }
-        guard let count = try? databaseRepository.countDeprecatedEvents() else {
-            return
-        }
-        guard count > databaseRepository.deprecatedLimit else {
+        guard !removingDeprecatedEventsInProgress,
+              Date() > deprecatedEventsRemoveDate + Constants.Background.removeDeprecatedEventsInterval,
+              let count = try? databaseRepository.countDeprecatedEvents(),
+              count > databaseRepository.deprecatedLimit
+        else {
+            endBackgroundTask(success: true)
             return
         }
         let queue = OperationQueue()

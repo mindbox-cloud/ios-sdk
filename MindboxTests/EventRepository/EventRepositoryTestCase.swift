@@ -13,7 +13,7 @@ class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
 
     var container: DependencyContainer!
-
+    var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
     override func setUp() {
         container = try! TestDependencyProvider()
         coreController = CoreController(
@@ -23,7 +23,10 @@ class EventRepositoryTestCase: XCTestCase {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            inAppMessagesManager: InAppCoreManagerMock(),
+            uuidDebugService: MockUUIDDebugService(),
+            controllerQueue: controllerQueue
         )
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
@@ -32,6 +35,7 @@ class EventRepositoryTestCase: XCTestCase {
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
+        waitForInitializationFinished()
         let repository: EventRepository = container.instanceFactory.makeEventRepository()
         let event = Event(
             type: .installed,
@@ -52,6 +56,7 @@ class EventRepositoryTestCase: XCTestCase {
     func testSendDecodableEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
+        waitForInitializationFinished()
         let repository: EventRepository = container.instanceFactory.makeEventRepository()
         let event = Event(type: .syncEvent, body: "")
         let expectation = self.expectation(description: "send event")
@@ -72,5 +77,11 @@ class EventRepositoryTestCase: XCTestCase {
 
     private struct SuccessCase: Decodable {
         let status: String
+    }
+
+    private func waitForInitializationFinished() {
+        let expectation = self.expectation(description: "controller initialization")
+        controllerQueue.async { expectation.fulfill() }
+        self.wait(for: [expectation], timeout: 0.2)
     }
 }

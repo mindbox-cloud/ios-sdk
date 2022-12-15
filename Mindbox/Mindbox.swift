@@ -39,6 +39,8 @@ public class Mindbox: NSObject {
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
+    private var inAppMessagesManager: InAppCoreManagerProtocol?
+    private var inAppMessagesEnabled = true
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -52,6 +54,12 @@ public class Mindbox: NSObject {
         didSet {
             guard let error = initError else { return }
             delegate?.mindBox(self, failedWithError: error)
+        }
+    }
+
+    public weak var inAppMessagesDelegate: InAppMessagesDelegate? {
+        didSet {
+            inAppMessagesManager?.delegate = inAppMessagesDelegate
         }
     }
 
@@ -101,10 +109,6 @@ public class Mindbox: NSObject {
         } else {
             observe(value: self.persistenceStorage?.apnsToken, with: completion)
         }
-
-        let body = OperationBodyRequest()
-
-        body.customAction = CustomerActionRequest(customFields: ["id1": 1234, "id2": "1234"])
     }
 
     private var observeSemaphore = DispatchSemaphore(value: 1)
@@ -239,6 +243,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -270,6 +275,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -301,6 +307,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -331,6 +338,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -359,6 +367,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         Log("Track executeSyncOperation").category(.notification).level(.info).make()
     }
 
@@ -382,6 +391,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        sendEventToInAppMessagesIfNeeded(operationSystemName)
         do {
             try databaseRepository?.create(event: event)
             Log("Track executeAsyncOperation")
@@ -509,7 +519,7 @@ public class Mindbox: NSObject {
                     .category(.general).level(.fault).make()
                 self.initError = error
             }
-            self.persistenceStorage?.storeToFileBackgroundExecution()
+            self.persistenceStorage?.storeToFileBackgroundExecution()            
         }
     }
 
@@ -519,6 +529,7 @@ public class Mindbox: NSObject {
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
+        inAppMessagesManager = container.inAppMessagesManager
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
@@ -527,7 +538,18 @@ public class Mindbox: NSObject {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager
+            sessionManager: container.sessionManager,
+            inAppMessagesManager: container.inAppMessagesManager,
+            uuidDebugService: container.uuidDebugService
         )
+    }
+
+    private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
+        guard inAppMessagesEnabled else { return }
+        inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
+    }
+
+    @objc private func resetShownInApps() {
+        persistenceStorage?.shownInAppsIds = nil
     }
 }
