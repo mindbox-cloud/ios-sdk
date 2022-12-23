@@ -8,65 +8,90 @@
 import Foundation
 
 class InAppConfigutationMapper {
+    
+    private let customerSegmentsAPI: CustomerSegmentsAPI
     private let inAppsVersion: Int
-
-    init(inAppsVersion: Int) {
+    
+    init(customerSegmentsAPI: CustomerSegmentsAPI, inAppsVersion: Int) {
+        self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
     }
-
+    
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
-
+        
         let inapps = response.inapps
             .compactMap { $0.value }
             .filter {
                 inAppsVersion >= $0.sdkVersion.min
-                    && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
+                && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
             }
-
-        for inApp in inapps {
+        
+        for inapp in inapps {
             var event: InAppMessageTriggerEvent?
-            if inApp.targeting.type == .simple {
+            switch inapp.targeting.type {
+            case .and, .or, .true:
                 event = .start
             }
-            guard let inAppTriggetEvent = event else {
+            
+            guard let inAppTriggerEvent = event else {
                 continue
             }
-
-            var inAppsForEvent = inAppsByEvent[inAppTriggetEvent] ?? [InAppConfig.InAppInfo]()
-
-            let inAppFormVariants = inApp.form.variants.compactMap { $0.payload }
-            let simpleImageInApps: [SimpleImageInApp] = inAppFormVariants.map {
-                switch $0 {
-                case let .simpleImage(simpleImageInApp):
-                    return SimpleImageInApp(
-                        imageUrl: simpleImageInApp.imageUrl,
-                        redirectUrl: simpleImageInApp.redirectUrl,
-                        intentPayload: simpleImageInApp.intentPayload
-                    )
-                }
+            
+            var inAppsForEvent = inAppsByEvent[inAppTriggerEvent] ?? [InAppConfig.InAppInfo]()
+            let inAppFormVariants = inapp.form.variants
+            let inAppVariants: [InAppVariants] = inAppFormVariants.map {
+                return InAppVariants(imageUrl: $0.imageUrl,
+                                     redirectUrl: $0.redirectUrl,
+                                     intentPayload: $0.intentPayload)
             }
-            guard !simpleImageInApps.isEmpty else {
-                continue
-            }
-
-            var targeting: SegmentationTargeting?
-            if let segmentation = inApp.targeting.payload.segmentation,
-               let segment = inApp.targeting.payload.segment {
-                targeting = SegmentationTargeting(segmentation: segmentation, segment: segment)
-            }
-
-            let inAppInfo = InAppConfig.InAppInfo(
-                id: inApp.id,
-                targeting: targeting,
-                formDataVariants: simpleImageInApps
-            )
-
+            
+            guard !inAppVariants.isEmpty else { continue }
+            
+            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
             inAppsForEvent.append(inAppInfo)
-            inAppsByEvent[inAppTriggetEvent] = inAppsForEvent
+            inAppsByEvent[inAppTriggerEvent] = inAppsForEvent
+            
+            //
+            //            var targeting: SegmentationTargeting?
+            //            if let segmentation = inApp.targeting.payload.segmentation,
+            //               let segment = inApp.targeting.payload.segment {
+            //                targeting = SegmentationTargeting(segmentation: segmentation, segment: segment)
+            //            }
+            //
+            //            let inAppInfo = InAppConfig.InAppInfo(
+            //                id: inApp.id,
+            //                targeting: targeting,
+            //                formDataVariants: simpleImageInApps
+            //            )
+            //
+            //            inAppsForEvent.append(inAppInfo)
+            //            inAppsByEvent[inAppTriggetEvent] = inAppsForEvent
+            
+            
+            //            switch inapp.targeting.type {
+            //            case .and:
+            //                doAnd(with: inapp.targeting.nodes)
+            //            case .or:
+            //                break
+            //            case .true:
+            //                continue
+            //            }
         }
-
+        
         return InAppConfig(inAppsByEvent: inAppsByEvent)
+    }
+    
+    private func doAnd(with nodes: [InAppConfigResponse.TargetingNode]?) {
+        guard let nodes = nodes else { return }
+        
+        for node in nodes {
+            if node.type == .true {
+                print("TRUE")
+            } else {
+                print("OTHER NODE TYPES")
+            }
+        }
     }
 }
