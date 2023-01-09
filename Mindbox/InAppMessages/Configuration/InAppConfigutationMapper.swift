@@ -109,6 +109,7 @@ final class InAppConfigutationMapper {
         customerSegmentsAPI.fetchSegments(model) { response in
             guard let response = response,
                   response.status == .success else {
+                completion(.init(status: .unknown, customerSegmentations: []))
                 return
             }
             
