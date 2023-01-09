@@ -11,7 +11,7 @@ import Foundation
 /// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {
     /// Application start event. Fires after SDK configurated
-    case start
+    case start // All inapps by now is Start
     /// Any other event sent to SDK
     case applicationEvent(String)
 }
@@ -95,7 +95,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard !inAppRequest.possibleInApps.isEmpty else { return }
 
         // No need to check targenting if first inapp has no any taggeting
-        if let firstInapp = inAppRequest.possibleInApps.first, firstInapp.targeting == nil {
+        if let firstInapp = inAppRequest.possibleInApps.first {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
         } else {
             segmentationChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in

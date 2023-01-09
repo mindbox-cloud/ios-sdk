@@ -15,7 +15,7 @@ extension InAppConfigResponse {
     struct InApp: Decodable {
         let id: String
         let sdkVersion: SdkVersion
-        let targeting: InAppTargeting
+        let targeting: TargetingNode
         let form: InAppFormVariants
     }
 }
@@ -28,34 +28,26 @@ extension InAppConfigResponse {
     }
 }
 
+protocol DefaultNode {
+    var type: InAppConfigResponse.TargetingType { get }
+    var nodes: [InAppConfigResponse.TargetingNode]? { get }
+}
+
 // MARK: - InAppTargeting
 extension InAppConfigResponse {
-    struct InAppTargeting: Decodable {
+    struct TargetingNode: DefaultNode, Decodable {
         let type: TargetingType
+        let kind: TargetingKind?
+        let segmentationExternalId: String?
+        let segmentExternalId: String?
         let nodes: [TargetingNode]?
         
-        init(type: TargetingType, nodes: [TargetingNode]?) {
-            self.type = type
-            self.nodes = nodes
-        }
-        
         enum CodingKeys: String, CodingKey {
             case type = "$type"
+            case kind
+            case segmentationExternalId
+            case segmentExternalId
             case nodes
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.type = try container.decode(TargetingType.self, forKey: .type)
-            self.nodes = try container.decode([TargetingNode].self, forKey: .nodes)
-        }
-    }
-    
-    struct TargetingNode: Decodable {
-        let type: TargetingType
-        
-        enum CodingKeys: String, CodingKey {
-            case type = "$type"
         }
     }
     
@@ -63,6 +55,12 @@ extension InAppConfigResponse {
         case and
         case or
         case `true`
+        case segment
+    }
+    
+    enum TargetingKind: String, Decodable {
+        case positive
+        case negative
     }
 }
 

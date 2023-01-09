@@ -7,10 +7,12 @@
 
 import Foundation
 
-class InAppConfigutationMapper {
+final class InAppConfigutationMapper {
     
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private let inAppsVersion: Int
+    private var segmentations: [String: Int] = [:]
+    private var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] = []
     
     init(customerSegmentsAPI: CustomerSegmentsAPI, inAppsVersion: Int) {
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -18,9 +20,8 @@ class InAppConfigutationMapper {
     }
     
     /// Maps config response to business-logic handy InAppConfig model
-    func mapConfigResponse(_ response: InAppConfigResponse) -> InAppConfig {
-        var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
-        
+    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void {
+        // Check inapps for compatible versions
         let inapps = response.inapps
             .compactMap { $0.value }
             .filter {
@@ -28,23 +29,114 @@ class InAppConfigutationMapper {
                 && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
             }
         
+        if inapps.isEmpty {
+            completion(InAppConfig(inAppsByEvent: [:]))
+            return
+        }
+        
+        // Loop inapps for all Segment types and collect ids.
         for inapp in inapps {
+            handleRootNode(inapp.targeting.type, nodes: inapp.targeting.nodes)
+        }
+        
+        checkSegmentationRequest { response in
+            self.checkedSegmentations = response.customerSegmentations
+            let inappByEvent = self.buildInAppByEvent(inapps: inapps)
+            completion(InAppConfig(inAppsByEvent: inappByEvent))
+            return
+        }
+    }
+    
+    @discardableResult
+    private func handleRootNode(_ root: InAppConfigResponse.TargetingType, nodes: [InAppConfigResponse.TargetingNode]?) -> Bool {
+        // Result means that this inapp is eligible by any targeting params.
+        var result: Bool = false
+        
+        switch root {
+        case .and, .or:
+            guard let nestedNodes = nodes else { break }
+            result = handleAndOrActions(rootType: root, nodes: nestedNodes)
+        case .true:
+            result = true
+        case .segment:
+            break
+        }
+        
+        return result
+    }
+    
+    private func handleAndOrActions(rootType: InAppConfigResponse.TargetingType, nodes: [InAppConfigResponse.TargetingNode]) -> Bool {
+        var results: [Bool] = []
+        for node in nodes {
+            switch node.type {
+            case .and, .or:
+                guard let nestedNodes = node.nodes else { break }
+                let result = handleAndOrActions(rootType: node.type, nodes: nestedNodes)
+                results.append(result)
+            case .true:
+                results.append(true)
+            case .segment:
+                guard let id = node.segmentationExternalId else { break }
+                addToSegmentHashTable(id)
+                
+                results.append(checkedSegmentations.contains(where: {
+                    if node.kind == .positive {
+                        return $0.segment?.ids?.externalId == node.segmentExternalId
+                    } else {
+                        return $0.segment?.ids?.externalId != node.segmentExternalId
+                    }
+                }))
+            }
+        }
+        
+        if rootType == .and {
+            return !results.contains(false)
+        } else if rootType == .or {
+            return results.contains(true)
+        }
+        
+        return false
+    }
+    
+    private func checkSegmentationRequest(_ completion: @escaping (SegmentationCheckResponse) -> Void) -> Void {
+        let arrayOfSegments = Array(segmentations.keys)
+        let segments: [SegmentationCheckRequest.Segmentation] = arrayOfSegments.map {
+            return .init(ids: .init(externalId: $0))
+        }
+        
+        let model = SegmentationCheckRequest(segmentations: segments)
+        
+        customerSegmentsAPI.fetchSegments(model) { response in
+            guard let response = response,
+                  response.status == .success else {
+                return
+            }
+            
+            completion(response)
+        }
+    }
+    
+    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp]) -> [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] {
+        var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
+        for inapp in inapps {
+            // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
             var event: InAppMessageTriggerEvent?
             switch inapp.targeting.type {
-            case .and, .or, .true:
+            case .and, .or, .true, .segment:
                 event = .start
             }
             
-            guard let inAppTriggerEvent = event else {
+            guard let inAppTriggerEvent = event,
+                  handleRootNode(inapp.targeting.type, nodes: inapp.targeting.nodes) else {
                 continue
             }
             
             var inAppsForEvent = inAppsByEvent[inAppTriggerEvent] ?? [InAppConfig.InAppInfo]()
             let inAppFormVariants = inapp.form.variants
-            let inAppVariants: [InAppVariants] = inAppFormVariants.map {
-                return InAppVariants(imageUrl: $0.imageUrl,
-                                     redirectUrl: $0.redirectUrl,
-                                     intentPayload: $0.intentPayload)
+            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
+                return SimpleImageInApp(imageUrl: $0.imageUrl,
+                                        redirectUrl: $0.redirectUrl,
+                                        intentPayload: $0.intentPayload)
             }
             
             guard !inAppVariants.isEmpty else { continue }
@@ -52,46 +144,12 @@ class InAppConfigutationMapper {
             let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
             inAppsForEvent.append(inAppInfo)
             inAppsByEvent[inAppTriggerEvent] = inAppsForEvent
-            
-            //
-            //            var targeting: SegmentationTargeting?
-            //            if let segmentation = inApp.targeting.payload.segmentation,
-            //               let segment = inApp.targeting.payload.segment {
-            //                targeting = SegmentationTargeting(segmentation: segmentation, segment: segment)
-            //            }
-            //
-            //            let inAppInfo = InAppConfig.InAppInfo(
-            //                id: inApp.id,
-            //                targeting: targeting,
-            //                formDataVariants: simpleImageInApps
-            //            )
-            //
-            //            inAppsForEvent.append(inAppInfo)
-            //            inAppsByEvent[inAppTriggetEvent] = inAppsForEvent
-            
-            
-            //            switch inapp.targeting.type {
-            //            case .and:
-            //                doAnd(with: inapp.targeting.nodes)
-            //            case .or:
-            //                break
-            //            case .true:
-            //                continue
-            //            }
         }
         
-        return InAppConfig(inAppsByEvent: inAppsByEvent)
+        return inAppsByEvent
     }
-    
-    private func doAnd(with nodes: [InAppConfigResponse.TargetingNode]?) {
-        guard let nodes = nodes else { return }
-        
-        for node in nodes {
-            if node.type == .true {
-                print("TRUE")
-            } else {
-                print("OTHER NODE TYPES")
-            }
-        }
+      
+    private func addToSegmentHashTable(_ id: String) {
+        segmentations[id, default: 0] += 1
     }
 }
