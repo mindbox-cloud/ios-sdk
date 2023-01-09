@@ -7,7 +7,11 @@
 
 import Foundation
 
-final class InAppConfigutationMapper {
+protocol InAppConfigurationMapperProtocol {
+    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+}
+
+final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private let inAppsVersion: Int
@@ -79,11 +83,11 @@ final class InAppConfigutationMapper {
                 guard let id = node.segmentationExternalId else { break }
                 addToSegmentHashTable(id)
                 
-                results.append(checkedSegmentations.contains(where: {
+                results.append(checkedSegmentations.contains(where: { internalNode in
                     if node.kind == .positive {
-                        return $0.segment?.ids?.externalId == node.segmentExternalId
+                        return id == node.segmentExternalId
                     } else {
-                        return $0.segment?.ids?.externalId != node.segmentExternalId
+                        return internalNode.segment?.ids?.externalId == nil
                     }
                 }))
             }

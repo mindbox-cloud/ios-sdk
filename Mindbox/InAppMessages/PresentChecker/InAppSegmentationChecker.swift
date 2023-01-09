@@ -69,11 +69,6 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
 
         if let inAppToShow = request.possibleInApps.first(where: { inApp in
             return true
-//            if let targeting = inApp.targeting {
-//                return targeting.segment == customerSegmentationDict[targeting.segmentation]
-//            } else {
-//                return true
-//            }
         }) {
             Log("Found segment match for in-app: \(inAppToShow.inAppId)")
                 .category(.inAppMessages).level(.debug).make()
