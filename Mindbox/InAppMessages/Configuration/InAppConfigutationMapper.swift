@@ -83,13 +83,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 guard let id = node.segmentationExternalId else { break }
                 addToSegmentHashTable(id)
                 
-                results.append(checkedSegmentations.contains(where: { internalNode in
-                    if node.kind == .positive {
-                        return id == node.segmentExternalId
-                    } else {
-                        return internalNode.segment?.ids?.externalId == nil
-                    }
-                }))
+                if checkedSegmentations.isEmpty { break }
+                let variable = checkedSegmentations.first(where: { $0.segment?.ids?.externalId == node.segmentExternalId})
+                results.append(node.kind == .positive ? variable != nil : variable == nil)
             }
         }
         
@@ -153,7 +149,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         
         return inAppsByEvent
     }
-      
+    
     private func addToSegmentHashTable(_ id: String) {
         segmentations[id, default: 0] += 1
     }
