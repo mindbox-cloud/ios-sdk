@@ -47,6 +47,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     func prepareConfiguration() {
         queue.async {
+            self.downloadGeo()
             self.downloadConfig()
         }
     }
@@ -91,6 +92,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     // MARK: - Private
+    private func downloadGeo() {
+        inAppConfigAPI.fetchGeo(completionQueue: queue) { response in
+            self.inAppConfigurationMapper.setGeo(response)
+        }
+    }
 
     private func downloadConfig() {
         inAppConfigAPI.fetchConfig(completionQueue: queue) { result in

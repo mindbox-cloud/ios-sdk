@@ -9,6 +9,7 @@ import Foundation
 
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    func setGeo(_ data: InAppGeoResponse?)
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -17,6 +18,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let inAppsVersion: Int
     private var segmentations: [String: Int] = [:]
     private var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] = []
+    private var geoModel: InAppGeoResponse?
     
     init(customerSegmentsAPI: CustomerSegmentsAPI, inAppsVersion: Int) {
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -51,6 +53,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
+    func setGeo(_ data: InAppGeoResponse?) {
+        self.geoModel = data
+    }
+    
     @discardableResult
     private func handleRootNode(_ root: InAppConfigResponse.TargetingType, nodes: [InAppConfigResponse.TargetingNode]?) -> Bool {
         // Result means that this inapp is eligible by any targeting params.
@@ -63,6 +69,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         case .true:
             result = true
         case .segment:
+            break
+        case .country, .region, .city:
             break
         }
         
@@ -86,6 +94,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 if checkedSegmentations.isEmpty { break }
                 let variable = checkedSegmentations.first(where: { $0.segment?.ids?.externalId == node.segmentExternalId})
                 results.append(node.kind == .positive ? variable != nil : variable == nil)
+            case .country, .region, .city:
+                break
+            }
         }
         
         if rootType == .and {
@@ -122,7 +133,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
             var event: InAppMessageTriggerEvent?
             switch inapp.targeting.type {
-            case .and, .or, .true, .segment:
+            case .and, .or, .true, .segment, .country, .region, .city:
                 event = .start
             }
             

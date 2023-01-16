@@ -41,6 +41,7 @@ extension InAppConfigResponse {
         let segmentationExternalId: String?
         let segmentExternalId: String?
         let nodes: [TargetingNode]?
+        let ids: [Int]?
         
         enum CodingKeys: String, CodingKey {
             case type = "$type"
@@ -48,6 +49,7 @@ extension InAppConfigResponse {
             case segmentationExternalId
             case segmentExternalId
             case nodes
+            case ids
         }
     }
     
@@ -56,6 +58,9 @@ extension InAppConfigResponse {
         case or
         case `true`
         case segment
+        case country
+        case region
+        case city
     }
     
     enum TargetingKind: String, Decodable {
