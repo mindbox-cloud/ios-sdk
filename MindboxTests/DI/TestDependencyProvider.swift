@@ -11,7 +11,7 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-
+    var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
@@ -41,6 +41,7 @@ final class TestDependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        inAppTargetingChecker = InAppTargetingChecker()
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
     }
