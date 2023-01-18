@@ -57,7 +57,6 @@ enum Targeting: Decodable, Hashable {
         case .or: hasher.combine("or")
         case .segment: hasher.combine("segment")
         case .unknown: hasher.combine("unknown")
-        default: preconditionFailure("Out of range.")
         }
     }
     
