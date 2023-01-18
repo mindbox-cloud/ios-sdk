@@ -11,12 +11,15 @@ import XCTest
 @testable import Mindbox
 
 class InAppConfigResponseTests: XCTestCase {
+    
+    private let networkFetcher: NetworkFetcher = MockNetworkFetcher()
+    private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
 
     func test_2InApps_oneFitsInAppsSdkVersion_andOneDoesnt() throws {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = expectation(description: "test_2InApps_oneFitsInAppsSdkVersion_andOneDoesnt")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 1, targetingChecker: InAppTargetingChecker())
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 1, targetingChecker: targetingChecker, networkFetcher: networkFetcher)
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -40,7 +43,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = expectation(description: "test_2InApps_bothFitInAppsSdkVersion")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3, targetingChecker: InAppTargetingChecker())
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3,targetingChecker: targetingChecker, networkFetcher: networkFetcher)
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -69,7 +72,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithInvalidInapps()
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_invalidInApps")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3, targetingChecker: InAppTargetingChecker())
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3, targetingChecker: targetingChecker, networkFetcher: networkFetcher)
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -89,7 +92,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_2InApps_bothDontFitInAppsSdkVersion")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 0, targetingChecker: InAppTargetingChecker())
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 0, targetingChecker: targetingChecker, networkFetcher: networkFetcher)
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()

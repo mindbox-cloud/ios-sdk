@@ -12,6 +12,7 @@ protocol NetworkFetcher {
     func request<T>(
         type: T.Type,
         route: Route,
+        needBaseResponse: Bool,
         completion: @escaping ((Result<T, MindboxError>) -> Void)
     ) where T: Decodable
 

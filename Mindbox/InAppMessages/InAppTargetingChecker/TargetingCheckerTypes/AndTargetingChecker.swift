@@ -41,6 +41,7 @@ final class AndTargetingChecker: InternalTargetingChecker<AndTargeting> {
                 return false
             }
         }
+        
         return true
     }
 }

@@ -13,52 +13,11 @@ enum InAppConfigurationAPIResult {
     case error(Error)
 }
 
-struct InAppGeoResponse: Codable {
-    let city: Int
-    let region: Int
-    let country: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case city = "city_id"
-        case region = "region_id"
-        case country = "country_id"
-    }
-}
-
 class InAppConfigurationAPI {
     private let persistenceStorage: PersistenceStorage
 
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
-    }
-    
-    func fetchGeo(completionQueue: DispatchQueue, completion: @escaping (InAppGeoResponse?) -> Void) {
-        guard let configuration = persistenceStorage.configuration else {
-            completion(nil)
-            return
-        }
-        
-        do {
-            let route = FetchInAppGeoRoute(endpoint: configuration.endpoint)
-            let builder = URLRequestBuilder(domain: configuration.domain)
-            var urlRequest = try builder.asURLRequest(route: route)
-            urlRequest.cachePolicy = .useProtocolCachePolicy
-            URLSession.shared.dataTask(with: urlRequest) { data, response, error in
-                completionQueue.async {
-                    if let data = data,
-                        let decodedResponse = try? JSONDecoder().decode(InAppGeoResponse.self, from: data) {
-                        completion(decodedResponse)
-                    } else {
-                        completion(nil)
-                    }
-                }
-            }
-            .resume()
-        } catch {
-            Log("Failed to download InApp Geo Data. Error: \(error.localizedDescription).")
-                .category(.inAppMessages).level(.error).make()
-            completion(nil)
-        }
     }
 
     func fetchConfig(completionQueue: DispatchQueue, completion: @escaping (InAppConfigurationAPIResult) -> Void) {
@@ -130,21 +89,3 @@ private struct FetchInAppConfigRoute: Route {
 }
 
 
-private struct FetchInAppGeoRoute: Route {
-
-    let endpoint: String
-
-    init(endpoint: String) {
-        self.endpoint = endpoint
-    }
-
-    var method: HTTPMethod { .get }
-
-    var path: String { "/geo" }
-
-    var headers: HTTPHeaders? { nil }
-
-    var queryParameters: QueryParameters { .init() }
-
-    var body: Data? { nil }
-}

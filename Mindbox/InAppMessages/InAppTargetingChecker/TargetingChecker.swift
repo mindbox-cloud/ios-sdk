@@ -10,6 +10,7 @@ import Foundation
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] { get set }
+    var geoModels: InAppGeoResponse? { get set }
 }
 
 protocol TargetingCheckerMap: AnyObject {
@@ -36,6 +37,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] = []
+    var geoModels: InAppGeoResponse?
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
     
@@ -123,6 +125,22 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
                     return segmentChecker.prepare(targeting: targeting, context: &context)
                 } check: {
                     return segmentChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let geoTargeting = GeoTargeting(kind: .negative, ids: [])
+        checkerMap[.geo(geoTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let geoChecker = GeoTargetingChecker()
+            geoChecker.checker = self
+            switch T {
+            case .geo(let targeting):
+                return CheckerFunctions { context in
+                    return geoChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return geoChecker.check(targeting: targeting)
                 }
             default:
                 return checkerFunctions
