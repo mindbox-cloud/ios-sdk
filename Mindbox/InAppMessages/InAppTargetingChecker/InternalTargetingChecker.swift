@@ -99,7 +99,7 @@ final class SegmentTargetingChecker: InternalTargetingChecker<SegmentTargeting> 
 
 struct CheckerFunctions {
     var prepare: (inout PreparationContext) -> Void = {(context: inout PreparationContext) in return }
-    var check: () -> Bool = {() in return false}
+    var check: () -> Bool = {() in return false }
 }
 
 var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [
@@ -161,4 +161,8 @@ var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [
                 return CheckerFunctions()
             }
         },
+    
+    .unknown: { (T) -> CheckerFunctions in
+        return CheckerFunctions()
+    }
 ]

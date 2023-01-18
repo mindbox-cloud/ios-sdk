@@ -45,6 +45,7 @@ enum Targeting: Decodable, Hashable {
         case (.and, .and): return true
         case (.or, .or): return true
         case (.segment, .segment): return true
+        case (.unknown, .unknown): return true
         default: return false
         }
     }
@@ -55,6 +56,7 @@ enum Targeting: Decodable, Hashable {
         case .and: hasher.combine("and")
         case .or: hasher.combine("or")
         case .segment: hasher.combine("segment")
+        case .unknown: hasher.combine("unknown")
         default: preconditionFailure("Out of range.")
         }
     }
