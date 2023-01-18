@@ -44,7 +44,7 @@ final class DependencyProvider: DependencyContainer {
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: inAppsSdkVersion)),
+                inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: inAppsSdkVersion, targetingChecker: InAppTargetingChecker())),
             segmentationChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),

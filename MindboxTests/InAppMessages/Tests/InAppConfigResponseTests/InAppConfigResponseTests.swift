@@ -16,7 +16,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = expectation(description: "test_2InApps_oneFitsInAppsSdkVersion_andOneDoesnt")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 1)
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 1, targetingChecker: InAppTargetingChecker())
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -40,7 +40,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = expectation(description: "test_2InApps_bothFitInAppsSdkVersion")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3)
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3, targetingChecker: InAppTargetingChecker())
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -69,7 +69,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithInvalidInapps()
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_invalidInApps")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3)
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 3, targetingChecker: InAppTargetingChecker())
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
@@ -89,7 +89,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithTwoInapps()
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_2InApps_bothDontFitInAppsSdkVersion")
-        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 0)
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 0, targetingChecker: InAppTargetingChecker())
             .mapConfigResponse(response) { result in
                 config = result
                 expectation.fulfill()
