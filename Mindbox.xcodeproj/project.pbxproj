@@ -261,6 +261,7 @@
 		A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958912978C88B00609E91 /* AllTargetingsModelValid.json */; };
 		A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */; };
 		A17958992978E04600609E91 /* InAppStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958982978E04600609E91 /* InAppStub.swift */; };
+		A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A179589D2979708B00609E91 /* MindBoxAssets.xcassets */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
 		A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */; };
 		A1D017EC2976CC2E00CD9F99 /* TrueTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017EB2976CC2E00CD9F99 /* TrueTargeting.swift */; };
@@ -560,6 +561,7 @@
 		A17958912978C88B00609E91 /* AllTargetingsModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = AllTargetingsModelValid.json; sourceTree = "<group>"; };
 		A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingcheckerTests.swift; sourceTree = "<group>"; };
 		A17958982978E04600609E91 /* InAppStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppStub.swift; sourceTree = "<group>"; };
+		A179589D2979708B00609E91 /* MindBoxAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MindBoxAssets.xcassets; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
 		A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingChecker.swift; sourceTree = "<group>"; };
 		A1D017EB2976CC2E00CD9F99 /* TrueTargeting.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrueTargeting.swift; sourceTree = "<group>"; };
@@ -662,6 +664,7 @@
 				847F57FC25C88BA600147A9A /* Network */,
 				84B625D425C94F6F00AB6228 /* NetworkRepository */,
 				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
+				A179589C2979708B00609E91 /* Resources */,
 				33EBF0AE264E6269002A35D5 /* SessionManager */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
@@ -1468,6 +1471,14 @@
 			path = InAppTargetingCheckerTests;
 			sourceTree = "<group>";
 		};
+		A179589C2979708B00609E91 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A179589D2979708B00609E91 /* MindBoxAssets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A1D017EA2976CC2E00CD9F99 /* Targetings */ = {
 			isa = PBXGroup;
 			children = (
@@ -1636,6 +1647,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
