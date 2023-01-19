@@ -252,6 +252,15 @@
 		A17958792978AEC600609E91 /* GeoTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958742978AEC600609E91 /* GeoTargetingChecker.swift */; };
 		A179587A2978AEC600609E91 /* AndTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958752978AEC600609E91 /* AndTargetingChecker.swift */; };
 		A179587C2978AED800609E91 /* GeoTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A179587B2978AED800609E91 /* GeoTargeting.swift */; };
+		A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958802978B3FA00609E91 /* InAppResponseModelTests.swift */; };
+		A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958872978BE6F00609E91 /* OrTargetingModelValid.json */; };
+		A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958882978BE6F00609E91 /* SegmentTargetingModelValid.json */; };
+		A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958892978BE6F00609E91 /* AndTargetingModelValid.json */; };
+		A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */; };
+		A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A179588B2978BE6F00609E91 /* GeoTargetingModelValid.json */; };
+		A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958912978C88B00609E91 /* AllTargetingsModelValid.json */; };
+		A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */; };
+		A17958992978E04600609E91 /* InAppStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958982978E04600609E91 /* InAppStub.swift */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
 		A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */; };
 		A1D017EC2976CC2E00CD9F99 /* TrueTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017EB2976CC2E00CD9F99 /* TrueTargeting.swift */; };
@@ -542,6 +551,15 @@
 		A17958742978AEC600609E91 /* GeoTargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeoTargetingChecker.swift; sourceTree = "<group>"; };
 		A17958752978AEC600609E91 /* AndTargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AndTargetingChecker.swift; sourceTree = "<group>"; };
 		A179587B2978AED800609E91 /* GeoTargeting.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeoTargeting.swift; sourceTree = "<group>"; };
+		A17958802978B3FA00609E91 /* InAppResponseModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppResponseModelTests.swift; sourceTree = "<group>"; };
+		A17958872978BE6F00609E91 /* OrTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = OrTargetingModelValid.json; sourceTree = "<group>"; };
+		A17958882978BE6F00609E91 /* SegmentTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SegmentTargetingModelValid.json; sourceTree = "<group>"; };
+		A17958892978BE6F00609E91 /* AndTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = AndTargetingModelValid.json; sourceTree = "<group>"; };
+		A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = TrueTargetingModelValid.json; sourceTree = "<group>"; };
+		A179588B2978BE6F00609E91 /* GeoTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = GeoTargetingModelValid.json; sourceTree = "<group>"; };
+		A17958912978C88B00609E91 /* AllTargetingsModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = AllTargetingsModelValid.json; sourceTree = "<group>"; };
+		A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingcheckerTests.swift; sourceTree = "<group>"; };
+		A17958982978E04600609E91 /* InAppStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppStub.swift; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
 		A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingChecker.swift; sourceTree = "<group>"; };
 		A1D017EB2976CC2E00CD9F99 /* TrueTargeting.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrueTargeting.swift; sourceTree = "<group>"; };
@@ -1339,6 +1357,8 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
+				A179587F2978B3A800609E91 /* InAppResponseModelTests */,
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
 				9B5256FE28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift */,
 				9B52570028D1AA180029B1BC /* InAppCoreManagerTests.swift */,
@@ -1415,6 +1435,37 @@
 				A17958752978AEC600609E91 /* AndTargetingChecker.swift */,
 			);
 			path = TargetingCheckerTypes;
+			sourceTree = "<group>";
+		};
+		A179587F2978B3A800609E91 /* InAppResponseModelTests */ = {
+			isa = PBXGroup;
+			children = (
+				A17958802978B3FA00609E91 /* InAppResponseModelTests.swift */,
+				A17958822978B46D00609E91 /* JSONStubs */,
+			);
+			path = InAppResponseModelTests;
+			sourceTree = "<group>";
+		};
+		A17958822978B46D00609E91 /* JSONStubs */ = {
+			isa = PBXGroup;
+			children = (
+				A17958912978C88B00609E91 /* AllTargetingsModelValid.json */,
+				A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */,
+				A17958892978BE6F00609E91 /* AndTargetingModelValid.json */,
+				A17958872978BE6F00609E91 /* OrTargetingModelValid.json */,
+				A17958882978BE6F00609E91 /* SegmentTargetingModelValid.json */,
+				A179588B2978BE6F00609E91 /* GeoTargetingModelValid.json */,
+			);
+			path = JSONStubs;
+			sourceTree = "<group>";
+		};
+		A17958932978D03200609E91 /* InAppTargetingCheckerTests */ = {
+			isa = PBXGroup;
+			children = (
+				A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */,
+				A17958982978E04600609E91 /* InAppStub.swift */,
+			);
+			path = InAppTargetingCheckerTests;
 			sourceTree = "<group>";
 		};
 		A1D017EA2976CC2E00CD9F99 /* Targetings */ = {
@@ -1596,7 +1647,13 @@
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
+				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
+				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
+				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
+				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
+				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
+				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
@@ -1858,10 +1915,12 @@
 				3132DFF625C2A811007FE358 /* TestDependencyProvider.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				9B9C953A292111A700BB29DA /* MockNotificationCenter.swift in Sources */,
+				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
 				9B9C9539292111A700BB29DA /* PasteboardUUIDDebugServiceTest.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
+				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
 				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
@@ -1869,6 +1928,7 @@
 				9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
+				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
