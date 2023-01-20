@@ -42,6 +42,7 @@ final class TestDependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        inAppTargetingChecker = InAppTargetingChecker()
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
     }

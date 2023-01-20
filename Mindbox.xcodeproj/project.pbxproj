@@ -1494,6 +1494,7 @@
 		A1D017F32976FC1900CD9F99 /* InAppTargetingChecker */ = {
 			isa = PBXGroup;
 			children = (
+				A179589F297A6AE900609E91 /* TargetingCheckerTypes */,
 				A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */,
 				A1D017F42976FC2B00CD9F99 /* InternalTargetingChecker.swift */,
 				A17958702978AEC600609E91 /* TargetingCheckerTypes */,
@@ -1725,6 +1726,7 @@
 				33BEE80D2681EB7700993720 /* NotificationDecoder.swift in Sources */,
 				840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */,
 				9B24FABD28C757A700F10B5D /* InAppResponse.swift in Sources */,
+				A17958A6297A6AE900609E91 /* SegmentTargetingChecker.swift in Sources */,
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
 				334F3AF4264C199900A6AC00 /* ProductRequest.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
@@ -1751,6 +1753,7 @@
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				337A473E265528B5000DC613 /* MBDate.swift in Sources */,
 				334F3AE0264C199900A6AC00 /* ViewProductCategoryRequest.swift in Sources */,
+				A17958A7297A6AE900609E91 /* AndTargetingChecker.swift in Sources */,
 				A1D017EE2976CC4000CD9F99 /* AndTargeting.swift in Sources */,
 				B3E02417269724C6003B7CD5 /* UnknownDecodable.swift in Sources */,
 				6FDD1453266F7C8B00A50C35 /* PromotionResponse.swift in Sources */,
@@ -1818,6 +1821,7 @@
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
+				A17958A5297A6AE900609E91 /* TrueTargetingChecker.swift in Sources */,
 				6FDD1461266F7CE300A50C35 /* DiscountAmountTypeResponse.swift in Sources */,
 				6FDD144F266F7C7000A50C35 /* UsedResponse.swift in Sources */,
 				330D8CCD26579581005106D5 /* Channel.swift in Sources */,
@@ -1903,6 +1907,7 @@
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
+				A17958A4297A6AE900609E91 /* OrTargetingChecker.swift in Sources */,
 				33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				3337E69F265FA649006949EB /* ProtocolError.swift in Sources */,
