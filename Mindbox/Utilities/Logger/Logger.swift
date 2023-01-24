@@ -208,3 +208,56 @@ private extension Logger {
         return components.isEmpty ? "" : components.last!
     }
 }
+
+struct Log {
+    typealias Meta = (filename: String, line: Int, funcName: String)
+
+    var message: String = ""
+    var date: Date?
+    var level: LogLevel = .debug
+    var category: LogCategory = .general
+    var meta: Meta?
+    var borders: (start: String, end: String) = ("[", "\n]")
+    var subsystem: String = "cloud.Mindbox"
+
+    init(_ object: Any?) {
+        message = "\(String(describing: object))"
+    }
+
+    func make() {
+//        var header = subsystem + " "
+//        header += category.emoji + " "
+//        header += level.emoji + " "
+//        if let date = date {
+//            header += date.toString() + " "
+//        }
+//
+//        if let meta = meta {
+//            header += "[\(Log.sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
+//        }
+//        Mindbox.logger.log(
+//            level: level,
+//            message: borders.start + header + "\n" + message + borders.end,
+//            category: category,
+//            subsystem: subsystem
+//        )
+    }
+
+    func subsystem(_ subsystem: String) -> Log {
+        var ret = self
+        ret.subsystem = subsystem
+        return ret
+    }
+
+    func category(_ category: LogCategory) -> Log {
+        var ret = self
+        ret.category = category
+        return ret
+    }
+
+    func level(_ type: LogLevel) -> Log {
+        var ret = self
+        ret.level = type
+        return ret
+    }
+}
