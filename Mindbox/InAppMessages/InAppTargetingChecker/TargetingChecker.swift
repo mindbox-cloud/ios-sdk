@@ -43,7 +43,6 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     func prepare(targeting: Targeting) {
         guard let target = checkerMap[targeting] else {
-            assertionFailure("CheckerMap does not contain node: \(targeting)")
             return
         }
         
@@ -52,7 +51,6 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     func check(targeting: Targeting) -> Bool {
         guard let target = checkerMap[targeting] else {
-            assertionFailure("CheckerMap does not contain node: \(targeting)")
             return false
         }
         

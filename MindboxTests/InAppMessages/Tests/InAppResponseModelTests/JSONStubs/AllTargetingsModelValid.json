@@ -15,7 +15,7 @@
                 },
                 
                 {
-                    "$type": "country",
+                    "$type": "city",
                     "kind": "negative",
                     "ids": [
                         1,

@@ -30,7 +30,7 @@ final class InAppTargetingcheckerTests: XCTestCase {
     
     // MARK: - CITY
     func test_city_targetging_positive_success() {
-        let cityModel = CityTargeting(kind: .positive, ids: [789, 456])
+        let cityModel = CityTargeting(kind: .positive, ids: [123, 456])
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
     }
     
@@ -45,7 +45,7 @@ final class InAppTargetingcheckerTests: XCTestCase {
     }
     
     func test_city_targetging_negative_error() {
-        let cityModel = CityTargeting(kind: .negative, ids: [789, 456])
+        let cityModel = CityTargeting(kind: .negative, ids: [123, 456])
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
     }
     
@@ -172,6 +172,18 @@ final class InAppTargetingcheckerTests: XCTestCase {
         let city = CityTargeting(kind: .positive, ids: [123])
         let andTargeting = OrTargeting(nodes: [.country(country), .city(city)])
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getOr(model: andTargeting)))
+    }
+    
+    func test_OR_contain_unknown() {
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let orTargeting = OrTargeting(nodes: [.unknown, .city(city)])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getOr(model: orTargeting)))
+    }
+    
+    func test_AND_contain_unknown() {
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = AndTargeting(nodes: [.unknown, .city(city)])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getAnd(model: andTargeting)))
     }
     
     func test_unknown_false() {

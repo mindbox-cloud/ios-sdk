@@ -16,7 +16,6 @@ final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
     
     override func checkInternal(targeting: CityTargeting) -> Bool {
         guard let checker = checker else {
-            assertionFailure("Need to init checker")
             return false
         }
         
@@ -43,7 +42,6 @@ final class RegionTargetingChecker: InternalTargetingChecker<RegionTargeting> {
     
     override func checkInternal(targeting: RegionTargeting) -> Bool {
         guard let checker = checker else {
-            assertionFailure("Need to init checker")
             return false
         }
         
@@ -70,7 +68,6 @@ final class CountryTargetingChecker: InternalTargetingChecker<CountryTargeting> 
     
     override func checkInternal(targeting: CountryTargeting) -> Bool {
         guard let checker = checker else {
-            assertionFailure("Need to init checker")
             return false
         }
         
