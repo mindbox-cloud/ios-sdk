@@ -25,13 +25,13 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
     func getInAppToPresent(request: InAppsCheckRequest, completionQueue: DispatchQueue, _ completion: @escaping (InAppResponse?) -> Void) {
         // In case segmentation check failed, we need to show the first inapp without targeting
         let firstWithoutTargeting = request.possibleInApps
-            .first(where: { $0.targeting == nil })
+            .first
             .map { InAppResponse(triggerEvent: request.triggerEvent, inAppToShowId: $0.inAppId) }
 
-        let targetings = request.possibleInApps.compactMap { $0.targeting }
-        let segmentationsSet = Set(targetings.map { $0.segmentation })
+        let targetings = request.possibleInApps.compactMap { $0.inAppId }
+        let targetingsSet = Set(targetings)
         let segmentationRequest = SegmentationCheckRequest(
-            segmentations: segmentationsSet.map {
+            segmentations: targetingsSet.map {
                 SegmentationCheckRequest.Segmentation(ids: SegmentationCheckRequest.Segmentation.Id(externalId: $0))
             }
         )
@@ -68,11 +68,7 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
             .category(.inAppMessages).level(.debug).make()
 
         if let inAppToShow = request.possibleInApps.first(where: { inApp in
-            if let targeting = inApp.targeting {
-                return targeting.segment == customerSegmentationDict[targeting.segmentation]
-            } else {
-                return true
-            }
+            return true
         }) {
             Log("Found segment match for in-app: \(inAppToShow.inAppId)")
                 .category(.inAppMessages).level(.debug).make()

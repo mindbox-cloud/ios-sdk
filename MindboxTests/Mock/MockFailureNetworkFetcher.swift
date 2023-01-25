@@ -10,6 +10,7 @@ import Foundation
 @testable import Mindbox
 
 class MockFailureNetworkFetcher: NetworkFetcher {
+    
     init() {
         //        print("failableRouteIndex: \(failableRouteIndex)")
         //        print("RoutesCount: \(routesCount)")
@@ -46,7 +47,7 @@ class MockFailureNetworkFetcher: NetworkFetcher {
         }
     }
 
-    func request<T>(type: T.Type, route: Route, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T: Decodable {
+    func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T : Decodable {
         if let error = errorForRoute() {
             completion(.failure(error))
         } else {

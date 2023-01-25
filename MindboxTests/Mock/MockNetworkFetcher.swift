@@ -17,7 +17,7 @@ class MockNetworkFetcher: NetworkFetcher {
         completion(Result.success(()))
     }
 
-    func request<T>(type: T.Type, route: Route, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T: Decodable {
+    func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T : Decodable {
         let bundle = Bundle(for: MockNetworkFetcher.self)
         let path = bundle.path(forResource: "SuccessResponse", ofType: "json")!
         let url = URL(fileURLWithPath: path)

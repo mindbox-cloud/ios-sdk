@@ -1,0 +1,9 @@
+{
+    "$type": "country",
+    "kind": "negative",
+    "ids": [
+        1,
+        2,
+        3
+    ]
+}

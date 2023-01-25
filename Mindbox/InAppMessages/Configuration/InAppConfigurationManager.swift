@@ -62,8 +62,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 triggerEvent: event,
                 possibleInApps: inAppInfos.map {
                     InAppsCheckRequest.InAppInfo(
-                        inAppId: $0.id,
-                        targeting: $0.targeting
+                        inAppId: $0.id
                     )
                 }
             )
@@ -92,7 +91,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     // MARK: - Private
-
     private func downloadConfig() {
         inAppConfigAPI.fetchConfig(completionQueue: queue) { result in
             self.completeDownloadTask(result)
@@ -150,13 +148,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
-        configuration = inAppConfigurationMapper.mapConfigResponse(configResponse)
-
-        var configDump = String()
-        dump(configuration!, to: &configDump)
-        Log("InApps Configuration applied: \n\(configDump)")
-            .category(.inAppMessages).level(.debug).make()
-        
-        delegate?.didPreparedConfiguration()
+        inAppConfigurationMapper.mapConfigResponse(configResponse, { config in
+            self.configuration = config
+            var configDump = String()
+            dump(self.configuration!, to: &configDump)
+            Log("InApps Configuration applied: \n\(configDump)")
+                .category(.inAppMessages).level(.debug).make()
+            
+            self.delegate?.didPreparedConfiguration()
+        })
     }
 }

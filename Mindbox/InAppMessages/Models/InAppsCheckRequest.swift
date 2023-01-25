@@ -15,6 +15,5 @@ struct InAppsCheckRequest: Equatable {
 
     struct InAppInfo: Equatable {
         let inAppId: String
-        let targeting: SegmentationTargeting?
     }
 }
