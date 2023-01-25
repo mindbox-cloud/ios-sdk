@@ -27,6 +27,7 @@ final class TestDependencyProvider: DependencyContainer {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
+        inAppTargetingChecker = InAppTargetingChecker()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(

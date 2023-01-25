@@ -10,6 +10,7 @@ import Foundation
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] { get set }
+    var geoModels: InAppGeoResponse? { get set }
 }
 
 protocol TargetingCheckerMap: AnyObject {
@@ -36,12 +37,12 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] = []
+    var geoModels: InAppGeoResponse?
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
     
     func prepare(targeting: Targeting) {
         guard let target = checkerMap[targeting] else {
-            assertionFailure("CheckerMap does not contain node: \(targeting)")
             return
         }
         
@@ -50,7 +51,6 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     func check(targeting: Targeting) -> Bool {
         guard let target = checkerMap[targeting] else {
-            assertionFailure("CheckerMap does not contain node: \(targeting)")
             return false
         }
         
@@ -123,6 +123,54 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
                     return segmentChecker.prepare(targeting: targeting, context: &context)
                 } check: {
                     return segmentChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let cityTargeting = CityTargeting(kind: .negative, ids: [])
+        checkerMap[.city(cityTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let cityChecker = CityTargetingChecker()
+            cityChecker.checker = self
+            switch T {
+            case .city(let targeting):
+                return CheckerFunctions { context in
+                    return cityChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return cityChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let regionTargeting = RegionTargeting(kind: .negative, ids: [])
+        checkerMap[.region(regionTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let regionChecker = RegionTargetingChecker()
+            regionChecker.checker = self
+            switch T {
+            case .region(let targeting):
+                return CheckerFunctions { context in
+                    return regionChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return regionChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let countryTargeting = CountryTargeting(kind: .negative, ids: [])
+        checkerMap[.country(countryTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let countryChecker = CountryTargetingChecker()
+            countryChecker.checker = self
+            switch T {
+            case .country(let targeting):
+                return CheckerFunctions { context in
+                    return countryChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return countryChecker.check(targeting: targeting)
                 }
             default:
                 return checkerFunctions

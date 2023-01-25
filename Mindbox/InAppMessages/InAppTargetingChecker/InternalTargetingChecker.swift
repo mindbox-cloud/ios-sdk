@@ -10,6 +10,7 @@ import Foundation
 
 struct PreparationContext {
     var segments: [String] = []
+    var isNeedGeoRequest: Bool = false
 }
 
 protocol ITargetingChecker: AnyObject {

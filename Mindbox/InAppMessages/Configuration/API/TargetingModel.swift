@@ -19,6 +19,9 @@ enum InAppTargetingType: String, Decodable {
     case and
     case or
     case segment
+    case country
+    case region
+    case city
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -33,6 +36,9 @@ enum Targeting: Decodable, Hashable {
     case and(AndTargeting)
     case or(OrTargeting)
     case segment(SegmentTargeting)
+    case city(CityTargeting)
+    case region(RegionTargeting)
+    case country(CountryTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -45,6 +51,9 @@ enum Targeting: Decodable, Hashable {
         case (.and, .and): return true
         case (.or, .or): return true
         case (.segment, .segment): return true
+        case (.city, .city): return true
+        case (.region, .region): return true
+        case (.country, .country): return true
         case (.unknown, .unknown): return true
         default: return false
         }
@@ -56,6 +65,9 @@ enum Targeting: Decodable, Hashable {
         case .and: hasher.combine("and")
         case .or: hasher.combine("or")
         case .segment: hasher.combine("segment")
+        case .city: hasher.combine("city")
+        case .region: hasher.combine("region")
+        case .country: hasher.combine("country")
         case .unknown: hasher.combine("unknown")
         }
     }
@@ -72,17 +84,26 @@ enum Targeting: Decodable, Hashable {
         
         switch type {
         case .true:
-            let trueTargeting: TrueTargeting = try targetingContainer.decode(TrueTargeting.self)
+            let trueTargeting = try targetingContainer.decode(TrueTargeting.self)
             self = .true(trueTargeting)
         case .and:
-            let andTargeting: AndTargeting = try targetingContainer.decode(AndTargeting.self)
+            let andTargeting = try targetingContainer.decode(AndTargeting.self)
             self = .and(andTargeting)
         case .or:
-            let orTargeting: OrTargeting = try targetingContainer.decode(OrTargeting.self)
+            let orTargeting = try targetingContainer.decode(OrTargeting.self)
             self = .or(orTargeting)
         case .segment:
-            let segmentTargeting: SegmentTargeting = try targetingContainer.decode(SegmentTargeting.self)
+            let segmentTargeting = try targetingContainer.decode(SegmentTargeting.self)
             self = .segment(segmentTargeting)
+        case .city:
+            let cityTargeting = try targetingContainer.decode(CityTargeting.self)
+            self = .city(cityTargeting)
+        case .region:
+            let regionTargeting = try targetingContainer.decode(RegionTargeting.self)
+            self = .region(regionTargeting)
+        case .country:
+            let countryTargeting = try targetingContainer.decode(CountryTargeting.self)
+            self = .country(countryTargeting)
         case .unknown:
             self = .unknown
         }

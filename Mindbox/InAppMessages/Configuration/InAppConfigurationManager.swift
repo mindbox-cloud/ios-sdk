@@ -91,7 +91,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     // MARK: - Private
-
     private func downloadConfig() {
         inAppConfigAPI.fetchConfig(completionQueue: queue) { result in
             self.completeDownloadTask(result)

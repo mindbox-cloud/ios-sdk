@@ -1,0 +1,31 @@
+{
+    "nodes": [
+        {
+            "nodes": [
+                {
+                    "$type": "true",
+                },
+                
+                {
+                    "$type": "segment",
+                    "kind": "positive",
+                    "segmentationExternalId": "00000000-0000-0000-0000-000000000001",
+                    "segmentationInternalId": "00000000-0000-0000-0000-000000000002",
+                    "segmentExternalId": "00000000-0000-0000-0000-000000000003"
+                },
+                
+                {
+                    "$type": "country",
+                    "kind": "negative",
+                    "ids": [
+                        1,
+                        2,
+                        3
+                    ]
+                }
+            ],
+            "$type": "or"
+        }
+    ],
+    "$type": "newTypeOrSmth"
+}

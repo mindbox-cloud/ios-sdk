@@ -34,6 +34,7 @@ class MBNetworkFetcher: NetworkFetcher {
     func request<T>(
         type: T.Type,
         route: Route,
+        needBaseResponse: Bool = true,
         completion: @escaping (Result<T, MindboxError>) -> Void
     ) where T: Decodable {
         guard let configuration = persistenceStorage.configuration else {
@@ -52,7 +53,7 @@ class MBNetworkFetcher: NetworkFetcher {
             #endif
             // Starting data task
             session.dataTask(with: urlRequest) { data, response, error in
-                self.handleResponse(data, response, error, completion: { result in
+                self.handleResponse(data, response, error, needBaseResponse: needBaseResponse) { result in
                     switch result {
                     case let .success(response):
                         do {
@@ -65,7 +66,7 @@ class MBNetworkFetcher: NetworkFetcher {
                     case let .failure(error):
                         completion(.failure(error))
                     }
-                })
+                }
             }.resume()
         } catch let error {
             let errorModel = MindboxError.unknown(error)
@@ -115,6 +116,7 @@ class MBNetworkFetcher: NetworkFetcher {
         _ response: URLResponse?,
         _ error: Error?,
         emptyData: Bool = false,
+        needBaseResponse: Bool = false,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         // Check if we have any response at all
@@ -149,23 +151,27 @@ class MBNetworkFetcher: NetworkFetcher {
         // Trying to handle data if exist
         if let data = data {
             do {
-                // Decoding to structure with `status` field
-                let base = try decoder.decode(BaseResponse.self, from: data)
-                // Figure out what server returned
-                switch base.status {
-                case .success, .transactionAlreadyProcessed:
+                if needBaseResponse {
+                    // Decoding to structure with `status` field
+                    let base = try decoder.decode(BaseResponse.self, from: data)
+                    // Figure out what server returned
+                    switch base.status {
+                    case .success, .transactionAlreadyProcessed:
+                        completion(.success(data))
+                    case .validationError:
+                        let error = try decoder.decode(ValidationError.self, from: data)
+                        completion(.failure(.validationError(error)))
+                    case .protocolError:
+                        let error = try decoder.decode(ProtocolError.self, from: data)
+                        completion(.failure(.protocolError(error)))
+                    case .internalServerError:
+                        let error = try decoder.decode(ProtocolError.self, from: data)
+                        completion(.failure(.serverError(error)))
+                    case .unknown:
+                        completion(.failure(.invalidResponse(response)))
+                    }
+                } else {
                     completion(.success(data))
-                case .validationError:
-                    let error = try decoder.decode(ValidationError.self, from: data)
-                    completion(.failure(.validationError(error)))
-                case .protocolError:
-                    let error = try decoder.decode(ProtocolError.self, from: data)
-                    completion(.failure(.protocolError(error)))
-                case .internalServerError:
-                    let error = try decoder.decode(ProtocolError.self, from: data)
-                    completion(.failure(.serverError(error)))
-                case .unknown:
-                    completion(.failure(.invalidResponse(response)))
                 }
             } catch let decodingError {
                 switch statusCode {

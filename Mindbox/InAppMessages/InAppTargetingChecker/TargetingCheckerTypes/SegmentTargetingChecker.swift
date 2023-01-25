@@ -17,7 +17,6 @@ final class SegmentTargetingChecker: InternalTargetingChecker<SegmentTargeting> 
     
     override func checkInternal(targeting: SegmentTargeting) -> Bool {
         guard let checker = checker else {
-            assertionFailure("Need to init checker")
             return false
         }
         

@@ -16,11 +16,19 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private let inAppsVersion: Int
     private var targetingChecker: InAppTargetingCheckerProtocol
+    private var geoModel: InAppGeoResponse?
+    private let fetcher: NetworkFetcher
     
-    init(customerSegmentsAPI: CustomerSegmentsAPI, inAppsVersion: Int, targetingChecker: InAppTargetingCheckerProtocol) {
+    private let dispatchGroup = DispatchGroup()
+    
+    init(customerSegmentsAPI: CustomerSegmentsAPI,
+         inAppsVersion: Int,
+         targetingChecker: InAppTargetingCheckerProtocol,
+         networkFetcher: NetworkFetcher) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
+        self.fetcher = networkFetcher
     }
     
     /// Maps config response to business-logic handy InAppConfig model
@@ -42,11 +50,23 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             // Loop inapps for all Segment types and collect ids.
         }
         
+        dispatchGroup.enter()
         checkSegmentationRequest() { response in
             self.targetingChecker.checkedSegmentations = response.customerSegmentations
+            self.dispatchGroup.leave()
+        }
+        
+        if targetingChecker.context.isNeedGeoRequest {
+            dispatchGroup.enter()
+            geoRequest { model in
+                self.targetingChecker.geoModels = model
+                self.dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
             let inappByEvent = self.buildInAppByEvent(inapps: inapps)
             completion(InAppConfig(inAppsByEvent: inappByEvent))
-            return
         }
     }
 
@@ -54,6 +74,11 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let arrayOfSegments = Array(Set(targetingChecker.context.segments))
         let segments: [SegmentationCheckRequest.Segmentation] = arrayOfSegments.map {
             return .init(ids: .init(externalId: $0))
+        }
+        
+        if segments.isEmpty {
+            completion(.init(status: .success, customerSegmentations: []))
+            return
         }
         
         let model = SegmentationCheckRequest(segmentations: segments)
@@ -66,6 +91,20 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             completion(response)
+        }
+    }
+    
+    private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
+        let route = FetchInAppGeoRoute()
+        fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
+            switch response {
+            case .success(let result):
+                completion(result)
+            case .failure(let error):
+                Log("Failed to download InApp Geo Data. Error: \(error.localizedDescription).")
+                    .category(.inAppMessages).level(.error).make()
+                completion(nil)
+            }
         }
     }
     

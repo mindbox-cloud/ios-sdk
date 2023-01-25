@@ -48,7 +48,8 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
                                                                    inAppsVersion: inAppsSdkVersion,
-                                                                   targetingChecker: inAppTargetingChecker)),
+                                                                   targetingChecker: inAppTargetingChecker,
+                                                                   networkFetcher: instanceFactory.makeNetworkFetcher())),
             segmentationChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),
