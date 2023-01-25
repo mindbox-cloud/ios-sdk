@@ -66,13 +66,13 @@ final class InAppResponseModelTests: XCTestCase {
         XCTAssertEqual(config.segmentExternalId, "00000000-0000-0000-0000-000000000003")
     }
     
-    func test_GeoTargeting_invalid() {
-        let config: GeoTargeting? = getConfig(resourceName: "SegmentTargetingModelValid")
+    func test_CityTargeting_invalid() {
+        let config: CityTargeting? = getConfig(resourceName: "SegmentTargetingModelValid")
         XCTAssertNil(config)
     }
     
-    func test_GeoTargeting_valid() {
-        guard let config: GeoTargeting = getConfig(resourceName: "GeoTargetingModelValid") else {
+    func test_CityTargeting_valid() {
+        guard let config: CityTargeting = getConfig(resourceName: "GeoTargetingModelValid") else {
             assertionFailure("config is Nil")
             return
         }
@@ -101,15 +101,29 @@ final class InAppResponseModelTests: XCTestCase {
                 XCTAssertEqual(orTargeting.nodes.count, 3)
                 let geoJSON = orTargeting.nodes[2]
                 switch geoJSON {
-                case .geo(let geoTargeting):
-                    XCTAssertEqual(geoTargeting.kind, .negative)
-                    XCTAssertEqual(geoTargeting.ids, [1, 2, 3])
+                case .city(let cityTargeting):
+                    XCTAssertEqual(cityTargeting.kind, .negative)
+                    XCTAssertEqual(cityTargeting.ids, [1, 2, 3])
                 default:
                     assertionFailure("Wrong type")
                 }
             default:
                 assertionFailure("Wrong type")
             }
+        default:
+            assertionFailure("Wrong type")
+        }
+    }
+    
+    func test_unknown_targeting() {
+        guard let unknownConfig: Targeting = getConfig(resourceName: "UnknownTargetingsModel") else {
+            assertionFailure("config is Nil")
+            return
+        }
+        
+        switch unknownConfig {
+        case .unknown:
+            XCTAssertTrue(true)
         default:
             assertionFailure("Wrong type")
         }

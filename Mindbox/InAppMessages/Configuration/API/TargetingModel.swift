@@ -36,7 +36,9 @@ enum Targeting: Decodable, Hashable {
     case and(AndTargeting)
     case or(OrTargeting)
     case segment(SegmentTargeting)
-    case geo(GeoTargeting)
+    case city(CityTargeting)
+    case region(RegionTargeting)
+    case country(CountryTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -49,7 +51,9 @@ enum Targeting: Decodable, Hashable {
         case (.and, .and): return true
         case (.or, .or): return true
         case (.segment, .segment): return true
-        case (.geo, .geo): return true
+        case (.city, .city): return true
+        case (.region, .region): return true
+        case (.country, .country): return true
         case (.unknown, .unknown): return true
         default: return false
         }
@@ -61,7 +65,9 @@ enum Targeting: Decodable, Hashable {
         case .and: hasher.combine("and")
         case .or: hasher.combine("or")
         case .segment: hasher.combine("segment")
-        case .geo: hasher.combine("geo")
+        case .city: hasher.combine("city")
+        case .region: hasher.combine("region")
+        case .country: hasher.combine("country")
         case .unknown: hasher.combine("unknown")
         }
     }
@@ -89,9 +95,15 @@ enum Targeting: Decodable, Hashable {
         case .segment:
             let segmentTargeting = try targetingContainer.decode(SegmentTargeting.self)
             self = .segment(segmentTargeting)
-        case .country, .region, .city:
-            let geoTargeting = try targetingContainer.decode(GeoTargeting.self)
-            self = .geo(geoTargeting)
+        case .city:
+            let cityTargeting = try targetingContainer.decode(CityTargeting.self)
+            self = .city(cityTargeting)
+        case .region:
+            let regionTargeting = try targetingContainer.decode(RegionTargeting.self)
+            self = .region(regionTargeting)
+        case .country:
+            let countryTargeting = try targetingContainer.decode(CountryTargeting.self)
+            self = .country(countryTargeting)
         case .unknown:
             self = .unknown
         }

@@ -7,14 +7,14 @@
 
 import Foundation
 
-final class GeoTargetingChecker: InternalTargetingChecker<GeoTargeting> {
+final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
     
-    override func prepareInternal(targeting: GeoTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: CityTargeting, context: inout PreparationContext) -> Void {
         context.isNeedGeoRequest = true
     }
     
-    override func checkInternal(targeting: GeoTargeting) -> Bool {
+    override func checkInternal(targeting: CityTargeting) -> Bool {
         guard let checker = checker else {
             assertionFailure("Need to init checker")
             return false
@@ -22,7 +22,7 @@ final class GeoTargetingChecker: InternalTargetingChecker<GeoTargeting> {
         
         let geoModel = checker.geoModels
         let segment = targeting.ids.first(where: {
-            $0 == geoModel?.country || $0 == geoModel?.region || $0 == geoModel?.city
+            $0 == geoModel?.city
         })
         
         switch targeting.kind {
@@ -33,3 +33,58 @@ final class GeoTargetingChecker: InternalTargetingChecker<GeoTargeting> {
         }
     }
 }
+
+final class RegionTargetingChecker: InternalTargetingChecker<RegionTargeting> {
+    weak var checker: TargetingCheckerContextProtocol?
+    
+    override func prepareInternal(targeting: RegionTargeting, context: inout PreparationContext) -> Void {
+        context.isNeedGeoRequest = true
+    }
+    
+    override func checkInternal(targeting: RegionTargeting) -> Bool {
+        guard let checker = checker else {
+            assertionFailure("Need to init checker")
+            return false
+        }
+        
+        let geoModel = checker.geoModels
+        let segment = targeting.ids.first(where: {
+            $0 == geoModel?.region
+        })
+        
+        switch targeting.kind {
+        case .positive:
+            return segment != nil
+        case .negative:
+            return segment == nil
+        }
+    }
+}
+
+final class CountryTargetingChecker: InternalTargetingChecker<CountryTargeting> {
+    weak var checker: TargetingCheckerContextProtocol?
+    
+    override func prepareInternal(targeting: CountryTargeting, context: inout PreparationContext) -> Void {
+        context.isNeedGeoRequest = true
+    }
+    
+    override func checkInternal(targeting: CountryTargeting) -> Bool {
+        guard let checker = checker else {
+            assertionFailure("Need to init checker")
+            return false
+        }
+        
+        let geoModel = checker.geoModels
+        let segment = targeting.ids.first(where: {
+            $0 == geoModel?.country
+        })
+        
+        switch targeting.kind {
+        case .positive:
+            return segment != nil
+        case .negative:
+            return segment == nil
+        }
+    }
+}
+
