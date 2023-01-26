@@ -19,11 +19,13 @@ final class DependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
+    let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let uuidDebugService: UUIDDebugService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
+        inAppTargetingChecker = InAppTargetingChecker()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
@@ -44,7 +46,10 @@ final class DependencyProvider: DependencyContainer {
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(inAppsVersion: inAppsSdkVersion)),
+                inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
+                                                                   inAppsVersion: inAppsSdkVersion,
+                                                                   targetingChecker: inAppTargetingChecker,
+                                                                   networkFetcher: instanceFactory.makeNetworkFetcher())),
             segmentationChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),

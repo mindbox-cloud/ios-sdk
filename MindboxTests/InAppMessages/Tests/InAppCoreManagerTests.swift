@@ -40,14 +40,20 @@ class InAppCoreManagerTests: XCTestCase {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
             .init(
-                inAppId: "in-app-1",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
+                inAppId: "in-app-1"
             )
         ]
         let inAppCheckRequest = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
-        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
         configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-1", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        
+        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
+        
+        segmentationChecker.getInAppToPresent(request: inAppCheckRequest,
+                                              completionQueue: .main) { inappResponse in
+            
+        }
+
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -63,12 +69,10 @@ class InAppCoreManagerTests: XCTestCase {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
             .init(
-                inAppId: "in-app-without-segmentation",
-                targeting: nil
+                inAppId: "in-app-without-segmentation"
             ),
             .init(
-                inAppId: "in-app-with-segmentation",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
+                inAppId: "in-app-with-segmentation"
             )
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
@@ -88,18 +92,15 @@ class InAppCoreManagerTests: XCTestCase {
     func test_startEventAndFewOtherEvents_onlyOneInAppShouldBePresented() throws {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
-            .init(
-                inAppId: "in-app-without-segmentation",
-                targeting: nil
-            ),
-            .init(
-                inAppId: "in-app-with-segmentation",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
-            )
+            .init(inAppId: "in-app-without-segmentation"),
+            .init(inAppId: "in-app-with-segmentation")
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
-        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-with-segmentation", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
+        configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-with-segmentation",
+                                                          imageUrl: URL(string: "image-url")!,
+                                                          redirectUrl: "",
+                                                          intentPayload: "")
 
         sut.start()
         sut.sendEvent(.start)
@@ -117,14 +118,8 @@ class InAppCoreManagerTests: XCTestCase {
     func test_startEvent_whenHaveAlreadyShownOneOfTwoInApps() throws {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
-            .init(
-                inAppId: "in-app-1",
-                targeting: nil
-            ),
-            .init(
-                inAppId: "in-app-2",
-                targeting: nil
-            )
+            .init(inAppId: "in-app-1"),
+            .init(inAppId: "in-app-2")
         ]
         persistenceStorage.shownInAppsIds = ["in-app-1"]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
@@ -149,14 +144,8 @@ class InAppCoreManagerTests: XCTestCase {
     func test_startEvent_whenHaveAlreadyShownAllInApps() throws {
         let triggerEvent = InAppMessageTriggerEvent.start
         let inAppsFromRequest: [InAppsCheckRequest.InAppInfo] = [
-            .init(
-                inAppId: "in-app-1",
-                targeting: nil
-            ),
-            .init(
-                inAppId: "in-app-2",
-                targeting: SegmentationTargeting(segmentation: "segmentation-id-1", segment: "segment-id-1")
-            )
+            .init(inAppId: "in-app-1"),
+            .init(inAppId: "in-app-2")
         ]
         persistenceStorage.shownInAppsIds = ["in-app-1", "in-app-2"]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)

@@ -53,7 +53,8 @@ class InAppConfigurationAPI {
         guard let httpResponse = response as? HTTPURLResponse else {
             return .error(MindboxError.connectionError)
         }
-        Log("Config response. Code: \(httpResponse.statusCode). Has data: \(data != nil), Error: \(error?.localizedDescription ?? "").")
+        let errorMessage = error?.localizedDescription == nil ? "" : "Error: \(error?.localizedDescription ?? "")"
+        Log("Config response. Code: \(httpResponse.statusCode). Has data: \(data != nil). \(errorMessage)")
             .category(.inAppMessages).level(.error).make()
         if httpResponse.statusCode == 404 {
             return .empty
@@ -87,3 +88,5 @@ private struct FetchInAppConfigRoute: Route {
 
     var body: Data? { nil }
 }
+
+

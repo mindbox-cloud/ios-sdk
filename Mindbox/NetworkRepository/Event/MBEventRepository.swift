@@ -67,7 +67,7 @@ class MBEventRepository: EventRepository {
             deviceUUID: deviceUUID
         )
         let route = makeRoute(wrapper: wrapper)
-        fetcher.request(type: type, route: route, completion: { result in
+        fetcher.request(type: type, route: route, needBaseResponse: true, completion: { result in
             DispatchQueue.main.async {
                 switch result {
                 case let .failure(error):
