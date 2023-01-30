@@ -87,7 +87,7 @@ private struct FetchInAppConfigRoute: Route {
 
     var method: HTTPMethod { .get }
 
-    var path: String { "/inapps/byendpoint/\(endpoint).json" }
+    var path: String { "/mobile/byendpoint/\(endpoint).json" }
 
     var headers: HTTPHeaders? { nil }
 
