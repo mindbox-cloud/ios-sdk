@@ -24,15 +24,18 @@ class DataBaseLoader {
 
         #if SWIFT_PACKAGE
         guard let modelURL = Bundle.module.url(forResource: momdName, withExtension: "momd") else {
+            Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         #else
         guard let modelURL = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") else {
+            Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         #endif
 
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
+            Logger.common(message: MBDatabaseError.unableCreateManagedObjectModel(with: modelURL).errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateManagedObjectModel(with: modelURL)
         }
         self.persistentContainer = MBPersistentContainer(
@@ -75,6 +78,7 @@ class DataBaseLoader {
             self?.persistentStoreDescription = persistentStoreDescription
         }
         if let error = loadPersistentStoresError {
+            Logger.common(message: "Load persistent stores error: \(error) ", level: .error, category: .database)
             throw error
         }
         return persistentContainer
@@ -82,22 +86,21 @@ class DataBaseLoader {
     
     func destroy() throws {
         guard let persistentStoreURL = persistentStoreURL else {
+            Logger.common(message: MBDatabaseError.persistentStoreURLNotFound.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.persistentStoreURLNotFound
         }
-        Log("Removing database at url: \(persistentStoreURL.absoluteString)")
-            .category(.database).level(.info).make()
+
+        Logger.common(message: "Removing database at url: \(persistentStoreURL.absoluteString)", level: .info, category: .database)
+        
         guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
-            Log("Unable to find database at path: \(persistentStoreURL.path)")
-                .category(.database).level(.error).make()
+            Logger.common(message: MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path).errorDescription, level: .error, category: .database)
             throw MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path)
         }
         do {
             try self.persistentContainer.persistentStoreCoordinator.destroyPersistentStore(at: persistentStoreURL, ofType: "sqlite", options: nil)
-            Log("Database has been removed")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Database has been removed", level: .info, category: .database)
         } catch {
-            Log("Removed database failed with error: \(error.localizedDescription)")
-                .category(.database).level(.error).make()
+            Logger.common(message: "Removed database failed with error: \(error.localizedDescription)", level: .error, category: .database)
             throw error
         }
     }

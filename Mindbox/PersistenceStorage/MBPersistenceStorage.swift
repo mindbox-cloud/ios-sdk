@@ -123,11 +123,9 @@ class MBPersistenceStorage: PersistenceStorage {
         do {
             let data = try encoder.encode(backgroundExecutions)
             try data.write(to: path)
-            Log("Successfully storeToFileBackgroundExecution")
-                .category(.general).level(.info).make()
+            Logger.common(message: "Successfully storeToFileBackgroundExecution")
         } catch {
-            Log("StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
-                .category(.general).level(.info).make()
+            Logger.common(message: "StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
         }
     }
     

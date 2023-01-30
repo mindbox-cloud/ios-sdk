@@ -43,6 +43,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     func prepare(targeting: Targeting) {
         guard let target = checkerMap[targeting] else {
+            Logger.common(message: "target not exist in checkerMap. Targeting: \(targeting)", level: .error, category: .inAppMessages)
             return
         }
         
@@ -51,6 +52,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     
     func check(targeting: Targeting) -> Bool {
         guard let target = checkerMap[targeting] else {
+            Logger.common(message: "target not exist in checkerMap. Targeting: \(targeting)", level: .error, category: .inAppMessages)
             return false
         }
         

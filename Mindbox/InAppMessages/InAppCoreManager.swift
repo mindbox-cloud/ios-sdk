@@ -92,7 +92,10 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 //        return
 //        #endif
 
-        guard !inAppRequest.possibleInApps.isEmpty else { return }
+        guard !inAppRequest.possibleInApps.isEmpty else {
+            Logger.common(message: "Possible inapss is empty", level: .info, category: .inAppMessages)
+            return
+        }
 
         // No need to check targenting if first inapp has no any taggeting
         if let firstInapp = inAppRequest.possibleInApps.first {

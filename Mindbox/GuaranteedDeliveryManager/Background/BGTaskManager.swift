@@ -59,6 +59,7 @@ class BGTaskManager: BackgroundTaskManagerType {
     
     func endBackgroundTask(success: Bool) {
         guard appGDRefreshTask != nil, appGDProcessingTask != nil else {
+            Logger.common(message: "appGDRefreshTask and appGDProcessingTask is nil", level: .error, category: .background)
             return
         }
         Log("Did call EndBackgroundTask")
@@ -81,27 +82,26 @@ class BGTaskManager: BackgroundTaskManagerType {
     // MARK: - Shedulers
     private func scheduleAppGDRefreshTask() {
         guard let identifier = appGDRefreshIdentifier else {
+            Logger.common(message: "appGDRefreshIdentifier is nil", level: .error, category: .background)
             return
         }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: Constants.Background.refreshTaskInterval)
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app refresh task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app refresh task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app refresh task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app refresh task with error: \(error.localizedDescription)", level: .fault, category: .background)
             #endif
         }
     }
     
     private func scheduleAppGDProcessingTask() {
         guard let identifier = appGDProcessingIdentifier else {
+            Logger.common(message: "appGDProcessingIdentifier is nil", level: .error, category: .background)
             return
         }
         let request = BGProcessingTaskRequest(identifier: identifier)
@@ -109,21 +109,19 @@ class BGTaskManager: BackgroundTaskManagerType {
         request.requiresExternalPower = false
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled SendEventsBGProcessingTaskRequest")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled SendEventsBGProcessingTaskRequest", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app processing task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app processing task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app processing task with error: \(error.localizedDescription)", level: .fault, category: .background)
             #endif
         }
     }
     
     private func scheduleAppDBCleanProcessingTaskIfNeeded() {
         guard let identifier = appDBCleanProcessingIdentifire else {
+            Logger.common(message: "appDBCleanProcessingIdentifire is nil", level: .error, category: .background)
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
@@ -141,15 +139,12 @@ class BGTaskManager: BackgroundTaskManagerType {
         request.requiresExternalPower = false
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled BGProcessingTaskRequest")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled BGProcessingTaskRequest", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app processing task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app processing task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app processing task with error: \(error.localizedDescription)", level: .info, category: .background)
             #endif
             
         }

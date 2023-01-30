@@ -86,6 +86,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         customerSegmentsAPI.fetchSegments(model) { response in
             guard let response = response,
                   response.status == .success else {
+                Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
                 completion(.init(status: .unknown, customerSegmentations: []))
                 return
             }
@@ -101,8 +102,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             case .success(let result):
                 completion(result)
             case .failure(let error):
-                Log("Failed to download InApp Geo Data. Error: \(error.localizedDescription).")
-                    .category(.inAppMessages).level(.error).make()
+                Logger.error(error)
                 completion(nil)
             }
         }

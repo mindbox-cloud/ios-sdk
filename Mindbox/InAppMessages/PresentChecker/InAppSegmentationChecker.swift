@@ -36,13 +36,12 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
             }
         )
 
-        Log("InApps segments: \(targetings)")
-            .category(.inAppMessages).level(.debug).make()
-
+        Logger.common(message: "Tracker.CheckCustomerSegments request. Body: \(segmentationRequest)", level: .debug, category: .inAppMessages)
         customerSegmentsAPI.fetchSegments(segmentationRequest) { response in
             completionQueue.async {
                 guard let response = response,
                       response.status == .success else {
+                    Logger.common(message: "Tracker.CheckCustomerSegments bad response. Response: \(String(describing: response))", level: .debug, category: .inAppMessages)
                     completion(firstWithoutTargeting)
                     return
                 }

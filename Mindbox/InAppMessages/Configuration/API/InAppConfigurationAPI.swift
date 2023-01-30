@@ -44,8 +44,7 @@ class InAppConfigurationAPI {
             }
             .resume()
         } catch {
-            Log("Failed to start InApp Config downloading task. Error: \(error.localizedDescription).")
-                .category(.inAppMessages).level(.error).make()
+            Logger.common(message: "Failed to start InApp Config downloading task. Error: \(error.localizedDescription).", level: .error, category: .inAppMessages)
             completion(.error(error))
         }
     }

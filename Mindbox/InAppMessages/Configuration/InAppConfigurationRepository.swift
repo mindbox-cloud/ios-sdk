@@ -12,20 +12,16 @@ import Foundation
 class InAppConfigurationRepository {
     func fetchConfigFromCache() -> Data? {
         guard FileManager.default.fileExists(atPath: inAppConfigFileUrl.path) else {
-            Log("Config file doesn't exist on a disk")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Config file doesn't exist on a disk", level: .debug, category: .inAppMessages)
             return nil
         }
-        Log("Config file exists on a disk")
-            .category(.inAppMessages).level(.debug).make()
+        Logger.common(message: "Config file exists on a disk", level: .debug, category: .inAppMessages)
         do {
             let data = try Data(contentsOf: inAppConfigFileUrl)
-            Log("Successfuly load config file from disk")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Successfuly load config file from disk", level: .debug, category: .inAppMessages)
             return data
         } catch {
-            Log("Failed to load config file from disk")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Failed to load config file from disk", level: .debug, category: .inAppMessages)
             return nil
         }
     }
@@ -33,11 +29,9 @@ class InAppConfigurationRepository {
     func saveConfigToCache(_ data: Data) {
         do {
             try data.write(to: inAppConfigFileUrl)
-            Log("Successfuly saved config file on a disk.")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Successfuly saved config file on a disk.", level: .debug, category: .inAppMessages)
         } catch {
-            Log("Failed to save config file on a disk. Error: \(error.localizedDescription)")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Failed to save config file on a disk. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
         }
     }
 
@@ -48,8 +42,7 @@ class InAppConfigurationRepository {
         do {
             try FileManager.default.removeItem(at: inAppConfigFileUrl)
         } catch {
-            Log("Failed to clean inapp config cache. Error: \(error.localizedDescription)")
-                .category(.inAppMessages).level(.error).make()
+            Logger.common(message: "Failed to clean inapp config cache. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
         }
     }
 

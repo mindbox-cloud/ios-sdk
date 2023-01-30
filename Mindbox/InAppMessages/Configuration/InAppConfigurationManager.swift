@@ -106,8 +106,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 setConfigPrepared(config)
             } catch {
                 applyConfigFromCache()
-                Log("Failed to parse downloaded config file. Error: \(error)")
-                    .category(.inAppMessages).level(.error).make()
+                Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
             }
 
         case .empty:
@@ -117,8 +116,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
         case let .error(error):
             applyConfigFromCache()
-            Log("Failed to download InApp configuration. Error: \(error.localizedDescription)")
-                .category(.inAppMessages).level(.error).make()
+            Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
     }
 
@@ -131,15 +129,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private func fetchConfigFromCache() -> InAppConfigResponse? {
         guard let data = inAppConfigRepository.fetchConfigFromCache() else {
+            Logger.common(message: "Cached Config not exists", level: .debug, category: .inAppMessages)
             return nil
         }
         guard let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
-            Log("Failed to parse config file from cache")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Failed to parse config file from cache", level: .debug, category: .inAppMessages)
             return nil
         }
-        Log("Successfuly parsed config file from cache")
-            .category(.inAppMessages).level(.debug).make()
+        Logger.common(message: "Successfuly parsed config file from cache", level: .debug, category: .inAppMessages)
         return config
     }
 
@@ -152,8 +149,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             self.configuration = config
             var configDump = String()
             dump(self.configuration!, to: &configDump)
-            Log("InApps Configuration applied: \n\(configDump)")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "InApps Configuration applied: \n\(configDump)", level: .debug, category: .inAppMessages)
             
             self.delegate?.didPreparedConfiguration()
         })

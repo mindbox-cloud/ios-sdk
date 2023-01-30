@@ -114,11 +114,9 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
         do {
             try inAppTracker.trackView(id: inApp.inAppId)
-            Log("Track InApp.View. Id \(inApp.inAppId)")
-                .category(.notification).level(.info).make()
+            Logger.common(message: "Track InApp.View. Id \(inApp.inAppId)", level: .info, category: .notification)
         } catch {
-            Log("Track InApp.View failed with error: \(error)")
-                .category(.notification).level(.error).make()
+            Logger.common(message: "Track InApp.View failed with error: \(error)", level: .error, category: .notification)
         }
         completion()
     }
@@ -133,11 +131,9 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             do {
                 try inAppTracker.trackClick(id: inApp.inAppId)
                 clickTracked = true
-                Log("Track InApp.Click. Id \(inApp.inAppId)")
-                    .category(.notification).level(.info).make()
+                Logger.common(message: "Track InApp.Click. Id \(inApp.inAppId)", level: .info, category: .notification)
             } catch {
-                Log("Track InApp.Click failed with error: \(error)")
-                    .category(.notification).level(.error).make()
+                Logger.common(message: "Track InApp.Click failed with error: \(error)", level: .error, category: .notification)
             }
         }
 

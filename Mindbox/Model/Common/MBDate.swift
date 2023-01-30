@@ -57,7 +57,9 @@ public class MBDate: Codable {
         let string = try container.decode(String.self)
         date = Date()
         guard let decodedDate = decodeWithFormat(string) else {
-            throw MindboxError.internalError(InternalError(errorKey: "Invalid date specified in JSON."))
+            let error = MindboxError.internalError(.init(errorKey: "Invalid date specified in JSON."))
+            Logger.error(error)
+            throw error
         }
         date = decodedDate
     }

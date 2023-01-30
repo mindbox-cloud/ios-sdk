@@ -39,8 +39,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             return ""
             #else
             let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
-            Log(message)
-                .category(.general).level(.fault).make()
+            Logger.common(message: message, level: .fault, category: .general)
             fatalError(message)
             #endif
         }

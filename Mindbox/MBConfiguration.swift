@@ -44,24 +44,22 @@ public struct MBConfiguration: Codable {
         self.domain = domain
 
         guard let url = URL(string: "https://" + domain), URLValidator(url: url).evaluate() else {
-            throw MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "Invalid domain. Domain is unreachable"
-            ))
+            let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid domain. Domain is unreachable. [Domain]: \(domain)"))
+            Logger.error(error)
+            throw error
         }
 
         guard !endpoint.isEmpty else {
-            throw MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "Value endpoint can not be empty"
-            ))
+            let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Value endpoint can not be empty"))
+            Logger.error(error)
+            throw error
         }
 
         if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
             if UUID(uuidString: previousInstallationId) != nil && UDIDValidator(udid: previousInstallationId).evaluate() {
                 self.previousInstallationId = previousInstallationId
             } else {
-                Mindbox.logger.log(level: .error, message: "previousInstallationId doesn't match the UUID format")
+                Logger.common(message: "previousInstallationId doesn't match the UUID format. PreviousInstallationID: \(previousInstallationId)", level: .error)
                 self.previousInstallationId = ""
             }
         }
@@ -70,7 +68,7 @@ public struct MBConfiguration: Codable {
             if UUID(uuidString: previousDeviceUUID) != nil && UDIDValidator(udid: previousDeviceUUID).evaluate() {
                 self.previousDeviceUUID = previousDeviceUUID
             } else {
-                Mindbox.logger.log(level: .error, message: "previousDeviceUUID doesn't match the UUID format")
+                Logger.common(message: "previousDeviceUUID doesn't match the UUID format. PreviousDeviceUUID: \(previousDeviceUUID)", level: .error)
                 self.previousDeviceUUID = ""
             }
         }
@@ -113,24 +111,21 @@ public struct MBConfiguration: Codable {
         }
 
         guard let url = findeURL else {
-            throw MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "file with name \(plistName) not found"
-            ))
+            let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) not found"))
+            Logger.error(error)
+            throw error
         }
 
         guard let data = try? Data(contentsOf: url) else {
-            throw MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "file with name \(plistName) cannot be read"
-            ))
+            let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) cannot be read"))
+            Logger.error(error)
+            throw error
         }
 
         guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
-            throw MindboxError(.init(
-                errorKey: .invalidConfiguration,
-                reason: "file with name \(plistName) contains invalid properties"
-            ))
+            let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) contains invalid properties"))
+            Logger.error(error)
+            throw error
         }
         self = configuration
     }

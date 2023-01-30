@@ -88,8 +88,7 @@ class CoreController {
             lock.signal()
         }
         lock.wait()
-        Log("It took \(CFAbsoluteTimeGetCurrent() - start) seconds to generate deviceUUID")
-            .category(.general).level(.debug).make()
+        Logger.common(message: "It took \(CFAbsoluteTimeGetCurrent() - start) seconds to generate deviceUUID", level: .debug, category: .general)
         return deviceUUID!
     }
 
@@ -105,8 +104,7 @@ class CoreController {
 
     private func repeatInitialization(with configutaion: MBConfiguration) {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
-            Log("Unable to find deviceUUID in persistenceStorage")
-                .category(.general).level(.error).make()
+            Logger.common(message: "Unable to find deviceUUID in persistenceStorage", level: .error, category: .general)
             return
         }
         
@@ -153,11 +151,9 @@ class CoreController {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
-            Log("MobileApplicationInstalled")
-                .category(.general).level(.default).make()
+            Logger.common(message: "MobileApplicationInstalled", level: .default, category: .general)
         } catch {
-            Log("MobileApplicationInstalled failed with error: \(error.localizedDescription)")
-                .category(.general).level(.error).make()
+            Logger.common(message: "MobileApplicationInstalled failed with error: \(error.localizedDescription)", level: .error, category: .general)
         }
     }
 
@@ -202,11 +198,9 @@ class CoreController {
         do {
             try databaseRepository.create(event: event)
             databaseRepository.infoUpdateVersion = newVersion
-            Log("MobileApplicationInfoUpdated")
-                .category(.general).level(.default).make()
+            Logger.common(message: "MobileApplicationInfoUpdated", level: .default, category: .general)
         } catch {
-            Log("MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)")
-                .category(.general).level(.error).make()
+            Logger.common(message: "MobileApplicationInfoUpdated failed with error: \(error.localizedDescription)", level: .error, category: .general)
         }
     }
 
@@ -214,8 +208,7 @@ class CoreController {
         do {
             try trackVisitManager.trackDirect()
         } catch {
-            Log("Track Visit failed with error: \(error)")
-                .category(.visit).level(.info).make()
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
         }
     }
 

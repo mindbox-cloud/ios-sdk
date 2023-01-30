@@ -152,10 +152,10 @@ public class Mindbox: NSObject {
         let token = deviceToken
             .map { String(format: "%02.2hhx", $0) }
             .joined()
-        Log("Did register for remote notifications with token: \(token)")
-            .category(.notification).level(.info).make()
+        Logger.common(message: "Did register for remote notifications with token: \(token)", level: .info, category: .notification)
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
             guard persistenceAPNSToken != token else {
+                Logger.common(message: "persistenceAPNSToken not equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)
@@ -220,11 +220,9 @@ public class Mindbox: NSObject {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
-            Log("Track Click")
-                .category(.notification).level(.info).make()
+            Logger.common(message: "Track Click", level: .info, category: .notification)
         } catch {
-            Log("Track UNNotificationResponse failed with error: \(error)")
-                .category(.notification).level(.error).make()
+            Logger.common(message: "Track UNNotificationResponse failed with error: \(error)", level: .error, category: .notification)
         }
     }
 
@@ -400,11 +398,9 @@ public class Mindbox: NSObject {
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(response: response)
-            Log("Track Click")
-                .category(.notification).level(.info).make()
+            Logger.common(message: "Track Click", level: .info, category: .notification)
         } catch {
-            Log("Track UNNotificationResponse failed with error: \(error)")
-                .category(.notification).level(.error).make()
+            Logger.common(message: "Track UNNotificationResponse failed with error: \(error)", level: .error, category: .notification)
         }
     }
 
@@ -421,8 +417,7 @@ public class Mindbox: NSObject {
         do {
             try tracker.track(type)
         } catch {
-            Log("Track Visit failed with error: \(error)")
-                .category(.visit).level(.error).make()
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .error, category: .visit)
         }
     }
     
@@ -439,8 +434,7 @@ public class Mindbox: NSObject {
         do {
             try tracker.track(data: data)
         } catch {
-            Log("Track Visit failed with error: \(error)")
-                .category(.visit).level(.error).make()
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .error, category: .visit)
         }
     }
 
@@ -498,11 +492,9 @@ public class Mindbox: NSObject {
                 let container = try DependencyProvider()
                 self.container = container
                 self.assembly(with: container)
-                Log("Did assembly dependencies with container")
-                    .category(.general).level(.info).make()
+                Logger.common(message: "Did assembly dependencies with container", level: .info, category: .general)
             } catch {
-                Log("Did fail to assembly dependencies with container with error: \(error.localizedDescription)")
-                    .category(.general).level(.fault).make()
+                Logger.common(message: "Did fail to assembly dependencies with container with error: \(error.localizedDescription)", level: .fault, category: .general)
                 self.initError = error
             }
             self.persistenceStorage?.storeToFileBackgroundExecution()            
@@ -531,7 +523,10 @@ public class Mindbox: NSObject {
     }
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
-        guard inAppMessagesEnabled else { return }
+        guard inAppMessagesEnabled else {
+            Logger.common(message: "inAppMessages is false", level: .error, category: .inAppMessages)
+            return
+        }
         inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
     }
 
