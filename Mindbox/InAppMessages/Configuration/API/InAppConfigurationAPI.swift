@@ -22,16 +22,19 @@ class InAppConfigurationAPI {
 
     func fetchConfig(completionQueue: DispatchQueue, completion: @escaping (InAppConfigurationAPIResult) -> Void) {
         guard let configuration = persistenceStorage.configuration else {
-            completion(.error(MindboxError(.init(
+            let errorModel = MindboxError(.init(
                 errorKey: .invalidConfiguration,
                 reason: "Invalid domain. Domain is unreachable"
-            ))))
+            ))
+            Logger.error(errorModel)
+            completion(.error(errorModel))
             return
         }
         do {
             let route = FetchInAppConfigRoute(endpoint: configuration.endpoint)
             let builder = URLRequestBuilder(domain: configuration.domain)
             var urlRequest = try builder.asURLRequest(route: route)
+            Logger.network(request: urlRequest)
             urlRequest.cachePolicy = .useProtocolCachePolicy
             URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
                 completionQueue.async {
@@ -51,11 +54,13 @@ class InAppConfigurationAPI {
 
     private func completeDownloadTask(_ data: Data?, response: URLResponse?, error: Error?) -> InAppConfigurationAPIResult {
         guard let httpResponse = response as? HTTPURLResponse else {
-            return .error(MindboxError.connectionError)
+            let errorModel = MindboxError.connectionError
+            Logger.error(errorModel)
+            return .error(errorModel)
         }
-        let errorMessage = error?.localizedDescription == nil ? "" : "Error: \(error?.localizedDescription ?? "")"
-        Log("Config response. Code: \(httpResponse.statusCode). Has data: \(data != nil). \(errorMessage)")
-            .category(.inAppMessages).level(.error).make()
+        
+        Logger.response(data: data, response: response, error: error)
+
         if httpResponse.statusCode == 404 {
             return .empty
         }
@@ -64,7 +69,9 @@ class InAppConfigurationAPI {
         }  else if let error = error {
             return .error(error)
         } else {
-            return .error(MindboxError.invalidResponse(response))
+            let errorModel = MindboxError.invalidResponse(response)
+            Logger.error(errorModel)
+            return .error(errorModel)
         }
     }
 }
