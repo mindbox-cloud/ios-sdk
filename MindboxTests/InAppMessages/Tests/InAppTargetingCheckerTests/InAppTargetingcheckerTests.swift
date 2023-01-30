@@ -28,25 +28,67 @@ final class InAppTargetingcheckerTests: XCTestCase {
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingTrueNode()))
     }
     
-    // MARK: - GEO
-    func test_geo_targeting_positive_success() {
-        let geoModel = GeoTargeting(kind: .positive, ids: [789, 456])
-        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingGeo(model: geoModel)))
+    // MARK: - CITY
+    func test_city_targetging_positive_success() {
+        let cityModel = CityTargeting(kind: .positive, ids: [123, 456])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
     }
     
-    func test_geo_targeting_positive_error() {
-        let geoModel = GeoTargeting(kind: .positive, ids: [788])
-        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingGeo(model: geoModel)))
+    func test_city_targetging_positive_error() {
+        let cityModel = CityTargeting(kind: .positive, ids: [788])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
     }
     
-    func test_geo_targeting_negative_success() {
-        let geoModel = GeoTargeting(kind: .negative, ids: [788])
-        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingGeo(model: geoModel)))
+    func test_city_targetging_negative_success() {
+        let cityModel = CityTargeting(kind: .negative, ids: [788])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
     }
     
-    func test_geo_targeting_negative_error() {
-        let geoModel = GeoTargeting(kind: .negative, ids: [789, 456])
-        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingGeo(model: geoModel)))
+    func test_city_targetging_negative_error() {
+        let cityModel = CityTargeting(kind: .negative, ids: [123, 456])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingCity(model: cityModel)))
+    }
+    
+    // MARK: - REGION
+    func test_region_targetging_positive_success() {
+        let regionModel = RegionTargeting(kind: .positive, ids: [789, 456])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingRegion(model: regionModel)))
+    }
+    
+    func test_region_targetging_positive_error() {
+        let regionModel = RegionTargeting(kind: .positive, ids: [788])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingRegion(model: regionModel)))
+    }
+    
+    func test_region_targetging_negative_success() {
+        let regionModel = RegionTargeting(kind: .negative, ids: [788])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingRegion(model: regionModel)))
+    }
+    
+    func test_region_targetging_negative_error() {
+        let regionModel = RegionTargeting(kind: .negative, ids: [789, 456])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingRegion(model: regionModel)))
+    }
+    
+    // MARK: - COUNTRY
+    func test_country_targetging_positive_success() {
+        let countryModel = CountryTargeting(kind: .positive, ids: [789, 456])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingCountry(model: countryModel)))
+    }
+    
+    func test_country_targetging_positive_error() {
+        let countryModel = CountryTargeting(kind: .positive, ids: [788])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingCountry(model: countryModel)))
+    }
+    
+    func test_country_targetging_negative_success() {
+        let countryModel = CountryTargeting(kind: .negative, ids: [788])
+        XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingCountry(model: countryModel)))
+    }
+    
+    func test_country_targetging_negative_error() {
+        let countryModel = CountryTargeting(kind: .negative, ids: [789, 456])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingCountry(model: countryModel)))
     }
     
     // MARK: - SEGMENT
@@ -91,44 +133,60 @@ final class InAppTargetingcheckerTests: XCTestCase {
     }
     
     func test_AND_targeting_both_true() {
-        let country = GeoTargeting(kind: .positive, ids: [789])
-        let city = GeoTargeting(kind: .positive, ids: [123])
-        let andTargeting = AndTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [789])
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = AndTargeting(nodes: [.country(country), .city(city)])
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getAnd(model: andTargeting)))
     }
     
     func test_AND_targeting_both_false() {
-        let country = GeoTargeting(kind: .positive, ids: [234])
-        let city = GeoTargeting(kind: .positive, ids: [234])
-        let andTargeting = AndTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [234])
+        let city = CityTargeting(kind: .positive, ids: [234])
+        let andTargeting = AndTargeting(nodes: [.country(country), .city(city)])
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getAnd(model: andTargeting)))
     }
     
     func test_AND_targeting_one_true_one_false() {
-        let country = GeoTargeting(kind: .positive, ids: [234])
-        let city = GeoTargeting(kind: .positive, ids: [123])
-        let andTargeting = AndTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [234])
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = AndTargeting(nodes: [.country(country), .city(city)])
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getAnd(model: andTargeting)))
     }
     
     func test_OR_targeting_both_true() {
-        let country = GeoTargeting(kind: .positive, ids: [456])
-        let city = GeoTargeting(kind: .positive, ids: [123])
-        let andTargeting = OrTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [456])
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = OrTargeting(nodes: [.country(country), .city(city)])
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getOr(model: andTargeting)))
     }
     
     func test_OR_targeting_both_false() {
-        let country = GeoTargeting(kind: .positive, ids: [234])
-        let city = GeoTargeting(kind: .positive, ids: [234])
-        let andTargeting = OrTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [234])
+        let city = CityTargeting(kind: .positive, ids: [234])
+        let andTargeting = OrTargeting(nodes: [.country(country), .city(city)])
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getOr(model: andTargeting)))
     }
     
     func test_OR_targeting_one_true_one_false() {
-        let country = GeoTargeting(kind: .positive, ids: [234])
-        let city = GeoTargeting(kind: .positive, ids: [123])
-        let andTargeting = OrTargeting(nodes: [.geo(country), .geo(city)])
+        let country = CountryTargeting(kind: .positive, ids: [234])
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = OrTargeting(nodes: [.country(country), .city(city)])
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getOr(model: andTargeting)))
+    }
+    
+    func test_OR_contain_unknown() {
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let orTargeting = OrTargeting(nodes: [.unknown, .city(city)])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getOr(model: orTargeting)))
+    }
+    
+    func test_AND_contain_unknown() {
+        let city = CityTargeting(kind: .positive, ids: [123])
+        let andTargeting = AndTargeting(nodes: [.unknown, .city(city)])
+        XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getAnd(model: andTargeting)))
+    }
+    
+    func test_unknown_false() {
+        XCTAssertFalse(targetingChecker.check(targeting: .unknown))
     }
 }

@@ -14,8 +14,16 @@ class InAppStub {
         .true(TrueTargeting())
     }
     
-    func getTargetingGeo(model: GeoTargeting) -> Targeting {
-        .geo(model)
+    func getTargetingCity(model: CityTargeting) -> Targeting {
+        .city(model)
+    }
+    
+    func getTargetingRegion(model: RegionTargeting) -> Targeting {
+        .region(model)
+    }
+    
+    func getTargetingCountry(model: CountryTargeting) -> Targeting {
+        .country(model)
     }
     
     func getTargetingSegment(model: SegmentTargeting) -> Targeting {

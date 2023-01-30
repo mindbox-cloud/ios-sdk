@@ -7,7 +7,17 @@
 
 import Foundation
 
-struct GeoTargeting: ITargeting, Decodable {
+struct CityTargeting: ITargeting, Decodable  {
+    let kind: TargetingNegationConditionKindType
+    let ids: [Int]
+}
+
+struct RegionTargeting: ITargeting, Decodable  {
+    let kind: TargetingNegationConditionKindType
+    let ids: [Int]
+}
+
+struct CountryTargeting: ITargeting, Decodable  {
     let kind: TargetingNegationConditionKindType
     let ids: [Int]
 }

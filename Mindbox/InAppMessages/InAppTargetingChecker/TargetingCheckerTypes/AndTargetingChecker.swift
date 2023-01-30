@@ -12,28 +12,26 @@ final class AndTargetingChecker: InternalTargetingChecker<AndTargeting> {
     
     override func prepareInternal(targeting: AndTargeting, context: inout PreparationContext) -> Void {
         for node in targeting.nodes {
-            guard let checker = checker else {
-                assertionFailure("Need to init checker")
+            guard let checker = checker,
+                    let target = checker.checkerMap[node] else {
                 return
             }
-            
-            guard let target = checker.checkerMap[node] else {
-                assertionFailure("CheckerMap does not contain node: \(node)")
-                return
-            }
+
             target(node).prepare(&context)
         }
     }
     
     override func checkInternal(targeting: AndTargeting) -> Bool {
         guard let checker = checker else {
-            assertionFailure("Need to init checker")
             return false
         }
         
         for node in targeting.nodes {
+            if node == .unknown {
+                return false
+            }
+            
             guard let target = checker.checkerMap[node] else {
-                assertionFailure("CheckerMap does not contain node: \(node)")
                 return false
             }
             

@@ -15,7 +15,7 @@
                 },
                 
                 {
-                    "$type": "city",
+                    "$type": "country",
                     "kind": "negative",
                     "ids": [
                         1,
@@ -27,5 +27,5 @@
             "$type": "or"
         }
     ],
-    "$type": "and"
+    "$type": "newTypeOrSmth"
 }
