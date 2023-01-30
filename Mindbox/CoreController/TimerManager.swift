@@ -39,7 +39,7 @@ public final class TimerManager {
         timer?.invalidate()
         timer = nil
         seconds = 0
-        print("The timer is stopped")
+        Logger.common(message: "The timer is stopped")
     }
     
     internal func removeObservers() {
@@ -99,7 +99,6 @@ public final class TimerManager {
         guard let timer = TimerManager.shared.timer else { return }
         
         RunLoop.main.add(timer, forMode: .common)
-        print("The timer is running")
+        Logger.common(message: "The timer is running")
     }
-    
 }
