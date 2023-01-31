@@ -23,20 +23,17 @@ class DeliveryOperation: AsyncOperation {
     var onCompleted: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
     override func main() {
-        Log("Sending event with transactionId: \(event.transactionId), with number: \(event.serialNumber ?? "unknown")")
-            .category(.delivery).level(.info).make()
+        Logger.common(message: "Sending event with transactionId: \(event.transactionId), with number: \(event.serialNumber ?? "unknown")", level: .info, category: .delivery)
         eventRepository.send(event: event) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success:
                 self.onCompleted?(self.event, nil)
-                Log("Did send event with transactionId: \(self.event.transactionId), with number: \(self.event.serialNumber ?? "unknown")")
-                    .category(.delivery).level(.info).make()
+                Logger.common(message: "Did send event with transactionId: \(self.event.transactionId), with number: \(self.event.serialNumber ?? "unknown")", level: .info, category: .delivery)
                 try? self.databaseRepository.delete(event: self.event)
             case let .failure(error):
                 self.onCompleted?(self.event, error)
-                Log("Did send event failed with error: \(error.localizedDescription), with number: \(self.event.serialNumber ?? "unknown")")
-                    .category(.delivery).level(.error).make()
+                Logger.common(message: "Did send event failed with error: \(error.localizedDescription), with number: \(self.event.serialNumber ?? "unknown")", level: .error, category: .delivery)
                 if case let MindboxError.protocolError(response) = error, HTTPURLResponseStatusCodeValidator(statusCode: response.httpStatusCode).isClientError {
                     try? self.databaseRepository.delete(event: self.event)
                 } else {

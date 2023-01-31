@@ -71,8 +71,7 @@ class MBDatabaseRepository {
             entity.timestamp = Date().timeIntervalSince1970
             entity.type = event.type.rawValue
             entity.body = event.body
-            Log("Creating event with transactionId: \(event.transactionId)")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Creating event with transactionId: \(event.transactionId)", level: .info, category: .database)
             try saveEvent(withContext: context)
         }
     }
@@ -148,12 +147,10 @@ class MBDatabaseRepository {
         let context = persistentContainer.newBackgroundContext()
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         return try context.performAndWait {
-            Log("Counting deprecated elements")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Counting deprecated elements", level: .info, category: .database)
             do {
                 let count = try context.count(for: request)
-                Log("Deprecated Events did count: \(count)")
-                    .category(.database).level(.info).make()
+                Logger.common(message: "Deprecated Events did count: \(count)", level: .info, category: .database)
                 return count
             } catch {
                 Logger.common(message: "Counting events failed with error: \(error.localizedDescription)", level: .error, category: .database)
@@ -178,14 +175,11 @@ class MBDatabaseRepository {
     func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
         return try context.performAndWait {
-            Log("Events count limit: \(limit)")
-                .category(.database).level(.info).make()
-            Log("Counting events")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Events count limit: \(limit)", level: .info, category: .database)
+            Logger.common(message: "Counting events...", level: .info, category: .database)
             do {
                 let count = try context.count(for: request)
-                Log("Events count: \(count)")
-                    .category(.database).level(.info).make()
+                Logger.common(message: "Events count: \(count)", level: .info, category: .database)
                 cleanUp(count: count)
                 return count
             } catch {
@@ -210,17 +204,15 @@ class MBDatabaseRepository {
 
     private func delete(by request: NSFetchRequest<CDEvent>, withContext context: NSManagedObjectContext) throws {
         try context.performAndWait {
-            Log("Finding elements to remove")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Finding elements to remove", level: .info, category: .database)
+
             let events = try context.fetch(request)
             guard !events.isEmpty else {
-                Log("Elements to remove not found")
-                    .category(.database).level(.info).make()
+                Logger.common(message: "Elements to remove not found", level: .info, category: .database)
                 return
             }
             events.forEach {
-                Log("Remove element with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))")
-                    .category(.database).level(.info).make()
+                Logger.common(message: "Remove element with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))", level: .info, category: .database)
                 context.delete($0)
             }
             try saveEvent(withContext: context)
@@ -251,8 +243,7 @@ private extension MBDatabaseRepository {
     func saveContext(_ context: NSManagedObjectContext) throws {
         do {
             try context.save()
-            Log("Context did save")
-                .category(.database).level(.info).make()
+            Logger.common(message: "Context did save", level: .info, category: .database)
         } catch {
             switch error {
             case let error as NSError where error.domain == NSSQLiteErrorDomain && error.code == 13:
@@ -273,8 +264,7 @@ private extension MBDatabaseRepository {
 
     func getMetadata<T>(forKey key: MetadataKey) -> T? {
         let value = store.metadata[key.rawValue] as? T
-        Log("Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))")
-            .category(.database).level(.info).make()
+        Logger.common(message: "Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))", level: .info, category: .database)
         return value
     }
 
@@ -284,9 +274,7 @@ private extension MBDatabaseRepository {
         do {
             try context.performAndWait {
                 try saveContext(context)
-                Log("Did save metadata of \(key.rawValue) to: \(String(describing: value))")
-                    .category(.database).level(.info).make()
-            }
+                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)            }
         } catch {
             Logger.common(message: "Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }

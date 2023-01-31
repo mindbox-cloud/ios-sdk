@@ -23,7 +23,9 @@ extension UnknownDecodable where Self: RawRepresentable, Self.RawValue == String
                 self = value
             } else if let unknownCase = unknownCase {
                 self = unknownCase
-                Mindbox.logger.log(level: .error, message: InternalError(errorKey: .parsing, reason: "No match with value \(parsed). Set to .unknown", suggestion: "Add an .\(parsed) case").description)
+                
+                let error = MindboxError(InternalError(errorKey: .parsing, reason: "No match with value \(parsed). Set to .unknown", suggestion: "Add an .\(parsed) case"))
+                Logger.error(error)
             } else {
                 let error = MindboxError.internalError(.init(errorKey: .parsing, reason: "No match with value \(parsed). Enum doesn’t have .unknown case", suggestion: "Add an .unknown case"))
                 Logger.error(error)

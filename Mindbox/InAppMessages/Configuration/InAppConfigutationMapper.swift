@@ -41,6 +41,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
         
         if inapps.isEmpty {
+            Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(InAppConfig(inAppsByEvent: [:]))
             return
         }
@@ -91,6 +92,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 return
             }
             
+            Logger.common(message: "Customer Segment response: \n\(response)")
             completion(response)
         }
     }

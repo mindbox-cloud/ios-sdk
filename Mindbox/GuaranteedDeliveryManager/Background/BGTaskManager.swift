@@ -59,11 +59,10 @@ class BGTaskManager: BackgroundTaskManagerType {
     
     func endBackgroundTask(success: Bool) {
         guard appGDRefreshTask != nil, appGDProcessingTask != nil else {
-            Logger.common(message: "appGDRefreshTask and appGDProcessingTask is nil", level: .error, category: .background)
             return
         }
-        Log("Did call EndBackgroundTask")
-            .category(.background).level(.info).make()
+        
+        Logger.common(message: "Did call EndBackgroundTask", level: .info, category: .background)
         appGDRefreshTask?.setTaskCompleted(success: success)
         appGDProcessingTask?.setTaskCompleted(success: success)
     }
@@ -152,8 +151,7 @@ class BGTaskManager: BackgroundTaskManagerType {
     
     // MARK: - Handlers
     private func appGDRefreshHandler(task: BGTask) {
-        Log("Invoked appGDRefreshHandler")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked appGDRefreshHandler", level: .info, category: .background)
         guard let task = task as? BGAppRefreshTask else {
             return
         }
@@ -168,8 +166,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         scheduleAppGDRefreshTask()
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
-            Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)", level: .info, category: .background)
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDRefreshTask.debugDescription,
@@ -183,13 +180,11 @@ class BGTaskManager: BackgroundTaskManagerType {
             }
         }
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("GDAppRefresh task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "GDAppRefresh task started", level: .info, category: .background)
     }
     
     private func appGDProcessingHandler(task: BGTask) {
-        Log("Invoked appGDAppProcessingHandler")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked appGDAppProcessingHandler", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {
             return
         }
@@ -203,8 +198,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         persistenceStorage.setBackgroundExecution(backgroudExecution)
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
-            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)", level: .info, category: .background)
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDProcessingIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDProcessingIdentifier.debugDescription,
@@ -218,13 +212,11 @@ class BGTaskManager: BackgroundTaskManagerType {
             }
         }
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("GDAppProcessing task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "GDAppProcessing task started", level: .info, category: .background)
     }
     
     private func appDBCleanProcessingHandler(task: BGTask) {
-        Log("Invoked removeDeprecatedEventsProcessing")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked removeDeprecatedEventsProcessing", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {
             return
         }
@@ -239,15 +231,13 @@ class BGTaskManager: BackgroundTaskManagerType {
             task.setTaskCompleted(success: !operation.isCancelled)
         }
         task.expirationHandler = { [self] in
-            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)", level: .info, category: .background)
             persistenceStorage.deprecatedEventsRemoveDate = Date()
             queue.cancelAllOperations()
         }
         queue.addOperation(operation)
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("removeDeprecatedEventsProcessing task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "removeDeprecatedEventsProcessing task started", level: .info, category: .background)
     }
 
 }

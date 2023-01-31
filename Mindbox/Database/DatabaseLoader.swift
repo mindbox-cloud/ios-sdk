@@ -67,11 +67,9 @@ class DataBaseLoader {
     private func loadPersistentStores() throws -> NSPersistentContainer {
         persistentContainer.loadPersistentStores { [weak self] (persistentStoreDescription, error) in
             if let url = persistentStoreDescription.url {
-                Log("Persistent store url: \(url.description)")
-                    .category(.database).level(.info).make()
+                Logger.common(message: "Persistent store url: \(url.description)", level: .info, category: .database)
             } else {
-                Log("Unable to find persistentStoreURL")
-                    .category(.database).level(.error).make()
+                Logger.common(message: "Unable to find persistentStoreURL", level: .error, category: .database)
             }
             self?.persistentStoreURL = persistentStoreDescription.url
             self?.loadPersistentStoresError = error

@@ -79,6 +79,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             }
             let formData = inApp.formDataVariants[0]
             guard let imageUrl = URL(string: formData.imageUrl) else {
+                Logger.common(message: "Inapps image url is incorrect. [URL]: \(formData.imageUrl)", level: .debug, category: .inAppMessages)
                 return nil
             }
             return InAppFormData(
