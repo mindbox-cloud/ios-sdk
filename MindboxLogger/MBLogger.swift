@@ -1,16 +1,17 @@
 //
-//  Loger.swift
+//  MBLogger.swift
 //  Mindbox
 //
-//  Created by Mikhail Barilov on 13.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Created by Akylbek Utekeshev on 02.02.2023.
+//  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
 import Foundation
 import os
 
-@objcMembers
-public class MBLogger: NSObject {
+public class MBLogger {
+    
+    public static let shared = MBLogger()
     
     /**
      ### Levels:
@@ -23,7 +24,7 @@ public class MBLogger: NSObject {
      
      - Note: `.error` by default; `.none` for disable logging
      */
-    public var logLevel: LogLevel = .error
+    public var logLevel: LogLevel = .debug
         
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)
@@ -32,13 +33,12 @@ public class MBLogger: NSObject {
     
     private let executionMethod: ExecutionMethod
     
-    public override init() {
+    private init() {
         #if DEBUG
             executionMethod = .sync(lock: NSRecursiveLock())
         #else
             executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
-        super.init()
     }
 
     func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
@@ -84,7 +84,7 @@ public class MBLogger: NSObject {
         line: Int = #line,
         funcName: String = #function
     ) {
-        let subsystem = Mindbox.shared.container?.utilitiesFetcher.hostApplicationName ?? "cloud.Mindbox.UndefinedHostApplication"
+        let subsystem = Bundle.main.bundleIdentifier ?? "cloud.Mindbox.UndefinedHostApplication"
         Logger.common(message: message,
                       level: level,
                       category: .general,

@@ -30,7 +30,7 @@ public class Mindbox: NSObject {
      - Warninig:
       By default _logLevel_: __.none__
      */
-    public static let logger = MBLogger()
+    public static let logger = MBLogger.shared
 
     // MARK: - Dependencies
 

@@ -1,9 +1,9 @@
 //
-//  Mindbox.swift
-//  Mindbox
+//  MindboxLogger.swift
+//  MindboxLogger
 //
-//  Created by Mikhail Barilov on 25.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Created by Akylbek Utekeshev on 01.02.2023.
+//  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
 import Foundation
@@ -27,7 +27,7 @@ class Logger {
 
         header += "\n[\(sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         
-        Mindbox.logger.log(
+        MBLogger.shared.log(
             level: level,
             message: borders.start + message + borders.end,
             category: category,
