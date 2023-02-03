@@ -2,7 +2,7 @@
 //  MindboxLoggerTests.swift
 //  MindboxLoggerTests
 //
-//  Created by Akylbek Utekeshev on 01.02.2023.
+//  Created by Akylbek Utekeshev on 06.02.2023.
 //  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
