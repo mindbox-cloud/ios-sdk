@@ -79,10 +79,14 @@ public class MindboxNotificationService: NSObject {
     }
 
     private func downloadImage(with url: URL, completion: @escaping () -> Void) {
-        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+        Logger.common(message: "Image loading. [URL]: \(url)", level: .info, category: .notification)
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             defer { completion() }
-            guard let self = self else { return }
-            guard let data = data else { return }
+            guard let self = self,
+                  let data = data else {
+                Logger.common(message: "Image load failed with error: \(String(describing: error))", level: .error, category: .notification)
+                return
+            }
 
             if let attachment = self.saveImage(data) {
                 self.bestAttemptContent?.attachments = [attachment]

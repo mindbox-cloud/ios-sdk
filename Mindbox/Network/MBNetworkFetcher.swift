@@ -50,9 +50,7 @@ class MBNetworkFetcher: NetworkFetcher {
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            #if DEBUG
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
-            #endif
             // Starting data task
             session.dataTask(with: urlRequest) { data, response, error in
                 self.handleResponse(data, response, error, needBaseResponse: needBaseResponse) { result in
@@ -96,9 +94,7 @@ class MBNetworkFetcher: NetworkFetcher {
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            #if DEBUG
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
-            #endif
             // Starting data task
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
                 self?.handleResponse(data, response, error, emptyData: true, completion: { result in
@@ -126,10 +122,7 @@ class MBNetworkFetcher: NetworkFetcher {
         needBaseResponse: Bool = false,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
-        // Log response if needed
-        #if DEBUG
         Logger.response(data: data, response: response, error: error)
-        #endif
         
         // Check if we have any response at all
         guard let response = response else {

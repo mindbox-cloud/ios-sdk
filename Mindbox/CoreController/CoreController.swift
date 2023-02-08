@@ -23,6 +23,10 @@ class CoreController {
     var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
+        
+        Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
+        Logger.common(message: "[SDK Version]: \(utilitiesFetcher.sdkVersion ?? "")", level: .info, category: .general)
+        
         controllerQueue.async {
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
@@ -109,11 +113,13 @@ class CoreController {
         }
         
         if configValidation.changedState != .none {
+            Logger.common(message: "Mindbox Configuration changed", level: .info, category: .general)
             install(
                 deviceUUID: deviceUUID,
                 configuration: configutaion
             )
         } else {
+            Logger.common(message: "Mindbox Configuration has no changes", level: .info, category: .general)
             checkNotificationStatus()
             persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         }
