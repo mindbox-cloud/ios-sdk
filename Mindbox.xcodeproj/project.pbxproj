@@ -15,9 +15,6 @@
 		314B390025AEE96F00E947B9 /* CoreController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314B38FF25AEE96F00E947B9 /* CoreController.swift */; };
 		317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054C325AEF88E00AE624C /* DependencyProvider.swift */; };
 		317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CA25AF189800AE624C /* PersistenceStorage.swift */; };
-		317054CE25AF191F00AE624C /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054CD25AF191F00AE624C /* Logger.swift */; };
-		317054E625B01BDD00AE624C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D525B01BDD00AE624C /* LogManager.swift */; };
-		317054E825B01BDD00AE624C /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054D825B01BDD00AE624C /* MindboxError.swift */; };
 		317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317054DE25B01BDD00AE624C /* ErrorKey.swift */; };
 		317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */; };
 		317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */; };
@@ -76,9 +73,6 @@
 		3333C1E32681EEA800B60D84 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1E22681EEA800B60D84 /* Event.swift */; };
 		3333C1E52681EEEF00B60D84 /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1E42681EEEF00B60D84 /* URLRequestBuilder.swift */; };
 		3333D7BE265E56F2004279B0 /* OperationResponseType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333D7BD265E56F2004279B0 /* OperationResponseType.swift */; };
-		3337E69D265FA5BD006949EB /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E69C265FA5BD006949EB /* ValidationError.swift */; };
-		3337E69F265FA649006949EB /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E69E265FA649006949EB /* ProtocolError.swift */; };
-		3337E6A1265FA99F006949EB /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E6A0265FA99F006949EB /* Status.swift */; };
 		3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E6A2265FAB39006949EB /* BaseResponse.swift */; };
 		3337E6A52660D878006949EB /* OperationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E6A42660D878006949EB /* OperationResponse.swift */; };
 		3337E6A92664C16A006949EB /* CustomerResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E6A82664C16A006949EB /* CustomerResponse.swift */; };
@@ -120,7 +114,6 @@
 		33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33BEE8162681EC5F00993720 /* EventRoute.swift */; };
 		33BEE81D2681ED2900993720 /* PushDeliveredEventRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33BEE81C2681ED2900993720 /* PushDeliveredEventRoute.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
-		33D135CE2682240100B6628B /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33D135CD2682240100B6628B /* Logger.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
 		33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* SessionManager.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
@@ -158,7 +151,6 @@
 		840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38B725D13A7D00D50183 /* EventGenerator.swift */; };
 		8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8410681225ECDC73004701C2 /* DatabaseLoader.swift */; };
 		843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */; };
-		846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846AD39325FF7AC100A59E86 /* LogWriter.swift */; };
 		847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
 		847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F57FD25C88BB700147A9A /* HTTPMethod.swift */; };
 		847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F580625C88C7A00147A9A /* NetworkFetcher.swift */; };
@@ -198,8 +190,6 @@
 		84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */; };
 		84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFB33A25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift */; };
 		84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */; };
-		84E1D6DF261D9B19002BF03A /* LogCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6DE261D9B19002BF03A /* LogCategory.swift */; };
-		84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E1D6E2261D9B2B002BF03A /* LogLevel.swift */; };
 		84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */; };
 		84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */; };
 		84F565212628304A00269FD6 /* TrackVisit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F565202628304A00269FD6 /* TrackVisit.swift */; };
@@ -270,13 +260,49 @@
 		A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017EF2976CC8600CD9F99 /* OrTargeting.swift */; };
 		A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017F12976CC9400CD9F99 /* SegmentTargeting.swift */; };
 		A1D017F52976FC2B00CD9F99 /* InternalTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017F42976FC2B00CD9F99 /* InternalTargetingChecker.swift */; };
+		A1F3EE47298BEB78005FA828 /* MindboxLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */; };
+		A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE49298BEE4B005FA828 /* OSLogWritterMock.swift */; };
+		A1F3EE4E298BEF0B005FA828 /* OSLogWritterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */; };
+		A1F3EE7A2990C23F005FA828 /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F3EE722990C23E005FA828 /* MindboxLogger.framework */; };
+		A1F3EE7F2990C23F005FA828 /* MindboxLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE7E2990C23F005FA828 /* MindboxLoggerTests.swift */; };
+		A1F3EE802990C23F005FA828 /* MindboxLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = A1F3EE742990C23E005FA828 /* MindboxLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A1F3EE982990C254005FA828 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE892990C254005FA828 /* MindboxLogger.swift */; };
+		A1F3EE992990C254005FA828 /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8B2990C254005FA828 /* LogLevel.swift */; };
+		A1F3EE9A2990C254005FA828 /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8C2990C254005FA828 /* LogWriter.swift */; };
+		A1F3EE9B2990C254005FA828 /* LogCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8D2990C254005FA828 /* LogCategory.swift */; };
+		A1F3EE9C2990C254005FA828 /* MindboxLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = A1F3EE8E2990C254005FA828 /* MindboxLogger.h */; };
+		A1F3EE9D2990C254005FA828 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE912990C254005FA828 /* MindboxError.swift */; };
+		A1F3EE9E2990C254005FA828 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE922990C254005FA828 /* UnknownDecodable.swift */; };
+		A1F3EE9F2990C254005FA828 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE932990C254005FA828 /* Status.swift */; };
+		A1F3EEA02990C254005FA828 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE952990C254005FA828 /* ProtocolError.swift */; };
+		A1F3EEA12990C254005FA828 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE962990C254005FA828 /* ValidationError.swift */; };
+		A1F3EEA22990C254005FA828 /* MBLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE972990C254005FA828 /* MBLogger.swift */; };
+		A1F3EEA32990C2DA005FA828 /* MBLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE972990C254005FA828 /* MBLogger.swift */; };
+		A1F3EEA42990C2DA005FA828 /* MBLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE972990C254005FA828 /* MBLogger.swift */; };
+		A1F3EEA52990C2DF005FA828 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE892990C254005FA828 /* MindboxLogger.swift */; };
+		A1F3EEA62990C2E0005FA828 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE892990C254005FA828 /* MindboxLogger.swift */; };
+		A1F3EEA72990C2E3005FA828 /* LogCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8D2990C254005FA828 /* LogCategory.swift */; };
+		A1F3EEA82990C2E3005FA828 /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8C2990C254005FA828 /* LogWriter.swift */; };
+		A1F3EEA92990C2E3005FA828 /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8B2990C254005FA828 /* LogLevel.swift */; };
+		A1F3EEAA2990C2E4005FA828 /* LogCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8D2990C254005FA828 /* LogCategory.swift */; };
+		A1F3EEAB2990C2E4005FA828 /* LogWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8C2990C254005FA828 /* LogWriter.swift */; };
+		A1F3EEAC2990C2E4005FA828 /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE8B2990C254005FA828 /* LogLevel.swift */; };
+		A1F3EEAD2990C2E8005FA828 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE932990C254005FA828 /* Status.swift */; };
+		A1F3EEAE2990C2E8005FA828 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE912990C254005FA828 /* MindboxError.swift */; };
+		A1F3EEAF2990C2E8005FA828 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE922990C254005FA828 /* UnknownDecodable.swift */; };
+		A1F3EEB02990C2E9005FA828 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE932990C254005FA828 /* Status.swift */; };
+		A1F3EEB12990C2E9005FA828 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE912990C254005FA828 /* MindboxError.swift */; };
+		A1F3EEB22990C2E9005FA828 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE922990C254005FA828 /* UnknownDecodable.swift */; };
+		A1F3EEB32990C2ED005FA828 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE952990C254005FA828 /* ProtocolError.swift */; };
+		A1F3EEB42990C2ED005FA828 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE962990C254005FA828 /* ValidationError.swift */; };
+		A1F3EEB52990C2EE005FA828 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE952990C254005FA828 /* ProtocolError.swift */; };
+		A1F3EEB62990C2EE005FA828 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE962990C254005FA828 /* ValidationError.swift */; };
 		B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */; };
 		B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */; };
 		B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6254F2689F8B600B6A3B7 /* BenefitResponse.swift */; };
 		B3A625562689FDD400B6A3B7 /* BalanceResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A625552689FDD400B6A3B7 /* BalanceResponse.swift */; };
 		B3A6255C268A025600B6A3B7 /* NearestExpirationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6255B268A025600B6A3B7 /* NearestExpirationResponse.swift */; };
 		B3A62560268A052C00B6A3B7 /* PromoActionsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A6255F268A052B00B6A3B7 /* PromoActionsResponse.swift */; };
-		B3E02417269724C6003B7CD5 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E02416269724C6003B7CD5 /* UnknownDecodable.swift */; };
 		B3F4F97C268EEA950092EC3C /* StatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F97B268EEA950092EC3C /* StatusResponse.swift */; };
 		B3F4F981268EEAC90092EC3C /* AmountBenefisTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F97F268EEAC90092EC3C /* AmountBenefisTypeResponse.swift */; };
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
@@ -300,6 +326,13 @@
 			remoteGlobalIDString = 3333C1972681D3CF00B60D84;
 			remoteInfo = MindboxNotifications;
 		};
+		A1F3EE7B2990C23F005FA828 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 313B232725ADEA0F00A1CB72 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F3EE712990C23E005FA828;
+			remoteInfo = MindboxLogger;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -314,9 +347,6 @@
 		314B38FF25AEE96F00E947B9 /* CoreController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreController.swift; sourceTree = "<group>"; };
 		317054C325AEF88E00AE624C /* DependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyProvider.swift; sourceTree = "<group>"; };
 		317054CA25AF189800AE624C /* PersistenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceStorage.swift; sourceTree = "<group>"; };
-		317054CD25AF191F00AE624C /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
-		317054D525B01BDD00AE624C /* LogManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
-		317054D825B01BDD00AE624C /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		317054DE25B01BDD00AE624C /* ErrorKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorKey.swift; sourceTree = "<group>"; };
 		317AF8FB25B844DB006348FA /* UtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilitiesFetcher.swift; sourceTree = "<group>"; };
 		317F1FD425B879B200B54346 /* MBUtilitiesFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBUtilitiesFetcher.swift; sourceTree = "<group>"; };
@@ -374,9 +404,6 @@
 		3333C1E22681EEA800B60D84 /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
 		3333C1E42681EEEF00B60D84 /* URLRequestBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
 		3333D7BD265E56F2004279B0 /* OperationResponseType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationResponseType.swift; sourceTree = "<group>"; };
-		3337E69C265FA5BD006949EB /* ValidationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
-		3337E69E265FA649006949EB /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
-		3337E6A0265FA99F006949EB /* Status.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
 		3337E6A2265FAB39006949EB /* BaseResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseResponse.swift; sourceTree = "<group>"; };
 		3337E6A42660D878006949EB /* OperationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationResponse.swift; sourceTree = "<group>"; };
 		3337E6A82664C16A006949EB /* CustomerResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerResponse.swift; sourceTree = "<group>"; };
@@ -419,7 +446,6 @@
 		33BEE8162681EC5F00993720 /* EventRoute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EventRoute.swift; sourceTree = "<group>"; };
 		33BEE81C2681ED2900993720 /* PushDeliveredEventRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeliveredEventRoute.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
-		33D135CD2682240100B6628B /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
@@ -460,7 +486,6 @@
 		8410681225ECDC73004701C2 /* DatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoader.swift; sourceTree = "<group>"; };
 		842DE32B25E01B9A002BE5C6 /* PushDelivered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDelivered.swift; sourceTree = "<group>"; };
 		843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
-		846AD39325FF7AC100A59E86 /* LogWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
 		847F57FD25C88BB700147A9A /* HTTPMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPMethod.swift; sourceTree = "<group>"; };
 		847F580625C88C7A00147A9A /* NetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkFetcher.swift; sourceTree = "<group>"; };
 		847F580A25C88CAF00147A9A /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
@@ -499,8 +524,6 @@
 		84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseError.swift; sourceTree = "<group>"; };
 		84DFB33A25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GuaranteedDeliveryManager+State.swift"; sourceTree = "<group>"; };
 		84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderTest.swift; sourceTree = "<group>"; };
-		84E1D6DE261D9B19002BF03A /* LogCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCategory.swift; sourceTree = "<group>"; };
-		84E1D6E2261D9B2B002BF03A /* LogLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
 		84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelHelper.swift; sourceTree = "<group>"; };
 		84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockUNAuthorizationStatusProvider.swift; sourceTree = "<group>"; };
 		84F565202628304A00269FD6 /* TrackVisit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackVisit.swift; sourceTree = "<group>"; };
@@ -571,6 +594,24 @@
 		A1D017EF2976CC8600CD9F99 /* OrTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrTargeting.swift; sourceTree = "<group>"; };
 		A1D017F12976CC9400CD9F99 /* SegmentTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentTargeting.swift; sourceTree = "<group>"; };
 		A1D017F42976FC2B00CD9F99 /* InternalTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalTargetingChecker.swift; sourceTree = "<group>"; };
+		A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxLoggerTests.swift; sourceTree = "<group>"; };
+		A1F3EE49298BEE4B005FA828 /* OSLogWritterMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLogWritterMock.swift; sourceTree = "<group>"; };
+		A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLogWritterTests.swift; sourceTree = "<group>"; };
+		A1F3EE722990C23E005FA828 /* MindboxLogger.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MindboxLogger.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F3EE742990C23E005FA828 /* MindboxLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MindboxLogger.h; sourceTree = "<group>"; };
+		A1F3EE792990C23F005FA828 /* MindboxLoggerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MindboxLoggerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F3EE7E2990C23F005FA828 /* MindboxLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxLoggerTests.swift; sourceTree = "<group>"; };
+		A1F3EE892990C254005FA828 /* MindboxLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxLogger.swift; sourceTree = "<group>"; };
+		A1F3EE8B2990C254005FA828 /* LogLevel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
+		A1F3EE8C2990C254005FA828 /* LogWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
+		A1F3EE8D2990C254005FA828 /* LogCategory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogCategory.swift; sourceTree = "<group>"; };
+		A1F3EE8E2990C254005FA828 /* MindboxLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MindboxLogger.h; sourceTree = "<group>"; };
+		A1F3EE912990C254005FA828 /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
+		A1F3EE922990C254005FA828 /* UnknownDecodable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
+		A1F3EE932990C254005FA828 /* Status.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
+		A1F3EE952990C254005FA828 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
+		A1F3EE962990C254005FA828 /* ValidationError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
+		A1F3EE972990C254005FA828 /* MBLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBLogger.swift; sourceTree = "<group>"; };
 		B33127AE2760C53700CF747E /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
 		B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RetailOrderStatisticsResponse.swift; sourceTree = "<group>"; };
 		B3A6254B2689F83100B6A3B7 /* PersonalOffersResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalOffersResponse.swift; sourceTree = "<group>"; };
@@ -578,7 +619,6 @@
 		B3A625552689FDD400B6A3B7 /* BalanceResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceResponse.swift; sourceTree = "<group>"; };
 		B3A6255B268A025600B6A3B7 /* NearestExpirationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearestExpirationResponse.swift; sourceTree = "<group>"; };
 		B3A6255F268A052B00B6A3B7 /* PromoActionsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoActionsResponse.swift; sourceTree = "<group>"; };
-		B3E02416269724C6003B7CD5 /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
 		B3F4F97B268EEA950092EC3C /* StatusResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusResponse.swift; sourceTree = "<group>"; };
 		B3F4F97F268EEAC90092EC3C /* AmountBenefisTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AmountBenefisTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AmountBenefitsResponse.swift; sourceTree = "<group>"; };
@@ -619,6 +659,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1F3EE6F2990C23E005FA828 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE762990C23F005FA828 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F3EE7A2990C23F005FA828 /* MindboxLogger.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -631,7 +686,10 @@
 				3333C1992681D3CF00B60D84 /* MindboxNotifications */,
 				3333C1A42681D3CF00B60D84 /* MindboxNotificationsTests */,
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
+				A1F3EE732990C23E005FA828 /* MindboxLogger */,
+				A1F3EE7D2990C23F005FA828 /* MindboxLoggerTests */,
 				313B233125ADEA0F00A1CB72 /* Products */,
+				A1EDA815298A90B000BAEC92 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -642,6 +700,8 @@
 				313B233925ADEA0F00A1CB72 /* MindboxTests.xctest */,
 				3333C1982681D3CF00B60D84 /* MindboxNotifications.framework */,
 				3333C1A02681D3CF00B60D84 /* MindboxNotificationsTests.xctest */,
+				A1F3EE722990C23E005FA828 /* MindboxLogger.framework */,
+				A1F3EE792990C23F005FA828 /* MindboxLoggerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -692,6 +752,7 @@
 				313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */,
 				84DC49D525D185A600D5D758 /* Supporting Files */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
+				A1F3EE48298BEE23005FA828 /* MindboxLoggerTests */,
 			);
 			path = MindboxTests;
 			sourceTree = "<group>";
@@ -717,11 +778,6 @@
 		317054CC25AF191100AE624C /* Logger */ = {
 			isa = PBXGroup;
 			children = (
-				317054CD25AF191F00AE624C /* Logger.swift */,
-				84E1D6E2261D9B2B002BF03A /* LogLevel.swift */,
-				84E1D6DE261D9B19002BF03A /* LogCategory.swift */,
-				846AD39325FF7AC100A59E86 /* LogWriter.swift */,
-				317054D525B01BDD00AE624C /* LogManager.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -785,7 +841,6 @@
 				3333C1C92681E74A00B60D84 /* Route.swift */,
 				3333C1BE2681DE6C00B60D84 /* Model */,
 				3333C1D22681E85600B60D84 /* Types */,
-				33D135CD2682240100B6628B /* Logger.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -894,18 +949,8 @@
 			isa = PBXGroup;
 			children = (
 				33B1C975265B910F00E293F8 /* SwiftyJSON.swift */,
-				B3E02416269724C6003B7CD5 /* UnknownDecodable.swift */,
 			);
 			path = Helpers;
-			sourceTree = "<group>";
-		};
-		3337E69B265FA5B1006949EB /* Errors */ = {
-			isa = PBXGroup;
-			children = (
-				3337E69C265FA5BD006949EB /* ValidationError.swift */,
-				3337E69E265FA649006949EB /* ProtocolError.swift */,
-			);
-			path = Errors;
 			sourceTree = "<group>";
 		};
 		334F3AAD264C199900A6AC00 /* Request */ = {
@@ -1162,15 +1207,12 @@
 				3333C1DF2681EA4C00B60D84 /* NotificationPayload */,
 				3337E6A2265FAB39006949EB /* BaseResponse.swift */,
 				84CC797F25CABB0B00C062BD /* Event.swift */,
-				317054D825B01BDD00AE624C /* MindboxError.swift */,
 				337A47352654F995000DC613 /* OperationBodyRequest.swift */,
 				337C7951265646D10092B580 /* OperationBodyRequestType.swift */,
 				3337E6A42660D878006949EB /* OperationResponse.swift */,
 				3333D7BD265E56F2004279B0 /* OperationResponseType.swift */,
-				3337E6A0265FA99F006949EB /* Status.swift */,
 				84C65E5B25D4FB71008996FA /* Bodies */,
 				337A473826550EEB000DC613 /* Common */,
-				3337E69B265FA5B1006949EB /* Errors */,
 				3337E69A265FA567006949EB /* Helpers */,
 				334F3AAD264C199900A6AC00 /* Request */,
 				3337E699265FA559006949EB /* Response */,
@@ -1504,6 +1546,98 @@
 			path = InAppTargetingChecker;
 			sourceTree = "<group>";
 		};
+		A1EDA815298A90B000BAEC92 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A1F3EE48298BEE23005FA828 /* MindboxLoggerTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE4C298BEEFA005FA828 /* OSLogWritterTests */,
+				A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */,
+			);
+			path = MindboxLoggerTests;
+			sourceTree = "<group>";
+		};
+		A1F3EE4C298BEEFA005FA828 /* OSLogWritterTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE49298BEE4B005FA828 /* OSLogWritterMock.swift */,
+				A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */,
+			);
+			path = OSLogWritterTests;
+			sourceTree = "<group>";
+		};
+		A1F3EE732990C23E005FA828 /* MindboxLogger */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE972990C254005FA828 /* MBLogger.swift */,
+				A1F3EE882990C254005FA828 /* MBLoggerRepository */,
+				A1F3EE892990C254005FA828 /* MindboxLogger.swift */,
+				A1F3EE8A2990C254005FA828 /* Group */,
+				A1F3EE8E2990C254005FA828 /* MindboxLogger.h */,
+				A1F3EE8F2990C254005FA828 /* LoggerDatabaseRepository */,
+				A1F3EE902990C254005FA828 /* MindboxError */,
+				A1F3EE742990C23E005FA828 /* MindboxLogger.h */,
+			);
+			path = MindboxLogger;
+			sourceTree = "<group>";
+		};
+		A1F3EE7D2990C23F005FA828 /* MindboxLoggerTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE7E2990C23F005FA828 /* MindboxLoggerTests.swift */,
+			);
+			path = MindboxLoggerTests;
+			sourceTree = "<group>";
+		};
+		A1F3EE882990C254005FA828 /* MBLoggerRepository */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = MBLoggerRepository;
+			sourceTree = "<group>";
+		};
+		A1F3EE8A2990C254005FA828 /* Group */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE8B2990C254005FA828 /* LogLevel.swift */,
+				A1F3EE8C2990C254005FA828 /* LogWriter.swift */,
+				A1F3EE8D2990C254005FA828 /* LogCategory.swift */,
+			);
+			path = Group;
+			sourceTree = "<group>";
+		};
+		A1F3EE8F2990C254005FA828 /* LoggerDatabaseRepository */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = LoggerDatabaseRepository;
+			sourceTree = "<group>";
+		};
+		A1F3EE902990C254005FA828 /* MindboxError */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE912990C254005FA828 /* MindboxError.swift */,
+				A1F3EE922990C254005FA828 /* UnknownDecodable.swift */,
+				A1F3EE932990C254005FA828 /* Status.swift */,
+				A1F3EE942990C254005FA828 /* Errors */,
+			);
+			path = MindboxError;
+			sourceTree = "<group>";
+		};
+		A1F3EE942990C254005FA828 /* Errors */ = {
+			isa = PBXGroup;
+			children = (
+				A1F3EE952990C254005FA828 /* ProtocolError.swift */,
+				A1F3EE962990C254005FA828 /* ValidationError.swift */,
+			);
+			path = Errors;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -1520,6 +1654,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				3333C1A82681D3CF00B60D84 /* MindboxNotifications.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE6D2990C23E005FA828 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F3EE9C2990C254005FA828 /* MindboxLogger.h in Headers */,
+				A1F3EE802990C23F005FA828 /* MindboxLogger.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1599,13 +1742,49 @@
 			productReference = 3333C1A02681D3CF00B60D84 /* MindboxNotificationsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A1F3EE712990C23E005FA828 /* MindboxLogger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1F3EE812990C23F005FA828 /* Build configuration list for PBXNativeTarget "MindboxLogger" */;
+			buildPhases = (
+				A1F3EE6D2990C23E005FA828 /* Headers */,
+				A1F3EE6E2990C23E005FA828 /* Sources */,
+				A1F3EE6F2990C23E005FA828 /* Frameworks */,
+				A1F3EE702990C23E005FA828 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MindboxLogger;
+			productName = MindboxLogger;
+			productReference = A1F3EE722990C23E005FA828 /* MindboxLogger.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		A1F3EE782990C23F005FA828 /* MindboxLoggerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1F3EE842990C23F005FA828 /* Build configuration list for PBXNativeTarget "MindboxLoggerTests" */;
+			buildPhases = (
+				A1F3EE752990C23F005FA828 /* Sources */,
+				A1F3EE762990C23F005FA828 /* Frameworks */,
+				A1F3EE772990C23F005FA828 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1F3EE7C2990C23F005FA828 /* PBXTargetDependency */,
+			);
+			name = MindboxLoggerTests;
+			productName = MindboxLoggerTests;
+			productReference = A1F3EE792990C23F005FA828 /* MindboxLoggerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		313B232725ADEA0F00A1CB72 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1250;
+				LastSwiftUpdateCheck = 1410;
 				LastUpgradeCheck = 1250;
 				ORGANIZATIONNAME = "Mikhail Barilov";
 				TargetAttributes = {
@@ -1621,6 +1800,12 @@
 					};
 					3333C19F2681D3CF00B60D84 = {
 						CreatedOnToolsVersion = 12.5;
+					};
+					A1F3EE712990C23E005FA828 = {
+						CreatedOnToolsVersion = 14.1;
+					};
+					A1F3EE782990C23F005FA828 = {
+						CreatedOnToolsVersion = 14.1;
 					};
 				};
 			};
@@ -1641,6 +1826,8 @@
 				313B233825ADEA0F00A1CB72 /* MindboxTests */,
 				3333C1972681D3CF00B60D84 /* MindboxNotifications */,
 				3333C19F2681D3CF00B60D84 /* MindboxNotificationsTests */,
+				A1F3EE712990C23E005FA828 /* MindboxLogger */,
+				A1F3EE782990C23F005FA828 /* MindboxLoggerTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1687,6 +1874,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		3333C19E2681D3CF00B60D84 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE702990C23E005FA828 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE772990C23F005FA828 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1741,6 +1942,7 @@
 				B3A6255C268A025600B6A3B7 /* NearestExpirationResponse.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
 				9B7F2C5328DACD4B002ABDB0 /* InAppMessagesDelegate.swift in Sources */,
+				A1F3EEAA2990C2E4005FA828 /* LogCategory.swift in Sources */,
 				33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */,
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
 				334F3AE8264C199900A6AC00 /* ItemRequest.swift in Sources */,
@@ -1750,18 +1952,17 @@
 				9B4F9DF828D088A9002C9CF0 /* InAppConfigutationMapper.swift in Sources */,
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */,
+				A1F3EEA62990C2E0005FA828 /* MindboxLogger.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				337A473E265528B5000DC613 /* MBDate.swift in Sources */,
 				334F3AE0264C199900A6AC00 /* ViewProductCategoryRequest.swift in Sources */,
 				A1D017EE2976CC4000CD9F99 /* AndTargeting.swift in Sources */,
-				B3E02417269724C6003B7CD5 /* UnknownDecodable.swift in Sources */,
 				6FDD1453266F7C8B00A50C35 /* PromotionResponse.swift in Sources */,
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				A17958782978AEC600609E91 /* SegmentTargetingChecker.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
-				317054E825B01BDD00AE624C /* MindboxError.swift in Sources */,
 				6FDD145D266F7CCE00A50C35 /* PossibleDiscountsResponse.swift in Sources */,
 				9B9C95322921116F00BB29DA /* PasteboardUUIDDebugService.swift in Sources */,
 				6FDD1449266F7C4E00A50C35 /* LimitTypeResponse.swift in Sources */,
@@ -1770,6 +1971,7 @@
 				84B625D925C9558E00AB6228 /* MBPersistenceStorage.swift in Sources */,
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
 				A17958772978AEC600609E91 /* TrueTargetingChecker.swift in Sources */,
+				A1F3EEB02990C2E9005FA828 /* Status.swift in Sources */,
 				B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */,
 				6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */,
 				317054EC25B01BDD00AE624C /* ErrorKey.swift in Sources */,
@@ -1783,19 +1985,19 @@
 				9B4F9DFB28D088AE002C9CF0 /* InAppMessageViewController.swift in Sources */,
 				334F3AE7264C199900A6AC00 /* CatalogProductListRequest.swift in Sources */,
 				B3A625562689FDD400B6A3B7 /* BalanceResponse.swift in Sources */,
-				317054CE25AF191F00AE624C /* Logger.swift in Sources */,
 				6FDD1459266F7CB700A50C35 /* ContentResponse.swift in Sources */,
 				334F3AE2264C199900A6AC00 /* CouponRequest.swift in Sources */,
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
 				B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */,
 				840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */,
-				846AD39425FF7AC100A59E86 /* LogWriter.swift in Sources */,
 				33072F3C2664C713001F1AB2 /* CustomerSegmentationsResponse.swift in Sources */,
 				33072F3A2664C5CB001F1AB2 /* ManufacturerResponse.swift in Sources */,
-				3337E69D265FA5BD006949EB /* ValidationError.swift in Sources */,
 				A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */,
 				6FDD1455266F7C9A00A50C35 /* PromotionTypeResponse.swift in Sources */,
+				A1F3EEB12990C2E9005FA828 /* MindboxError.swift in Sources */,
 				334F3AEB264C199900A6AC00 /* DiscountCardRequest.swift in Sources */,
+				A1F3EEA42990C2DA005FA828 /* MBLogger.swift in Sources */,
+				A1F3EEAC2990C2E4005FA828 /* LogLevel.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				A179587A2978AEC600609E91 /* AndTargetingChecker.swift in Sources */,
 				3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */,
@@ -1820,6 +2022,7 @@
 				33072F462664CC9A001F1AB2 /* UsedPointOfContactResponse.swift in Sources */,
 				33072F382664C577001F1AB2 /* RecommendationResponse.swift in Sources */,
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
+				A1F3EEB22990C2E9005FA828 /* UnknownDecodable.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
 				6FDD1461266F7CE300A50C35 /* DiscountAmountTypeResponse.swift in Sources */,
@@ -1828,7 +2031,6 @@
 				84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				33072F342664C3E1001F1AB2 /* ProductResponse.swift in Sources */,
-				84E1D6DF261D9B19002BF03A /* LogCategory.swift in Sources */,
 				33072F3E2664C7B5001F1AB2 /* DiscountCardResponse.swift in Sources */,
 				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,
 				9B24FAAA28C74B6A00F10B5D /* InAppPresentationManager.swift in Sources */,
@@ -1840,7 +2042,6 @@
 				6FDD143F266F7BF900A50C35 /* AppliedPromotionResponse.swift in Sources */,
 				84D350C825C992900044E4E6 /* IDFAFetcher.swift in Sources */,
 				840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */,
-				317054E625B01BDD00AE624C /* LogManager.swift in Sources */,
 				B3A62560268A052C00B6A3B7 /* PromoActionsResponse.swift in Sources */,
 				6FDD1457266F7CAB00A50C35 /* PlaceholderResponse.swift in Sources */,
 				B3F4F97C268EEA950092EC3C /* StatusResponse.swift in Sources */,
@@ -1849,7 +2050,6 @@
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
-				84E1D6E3261D9B2B002BF03A /* LogLevel.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
@@ -1868,15 +2068,16 @@
 				337A474026553938000DC613 /* Sex.swift in Sources */,
 				9B4F9DEF28D08897002C9CF0 /* InAppSegmentationChecker.swift in Sources */,
 				84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */,
+				A1F3EEB62990C2EE005FA828 /* ValidationError.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,
 				337C7950265646230092B580 /* ProductGroupRequest.swift in Sources */,
 				334F3AEF264C199900A6AC00 /* DiscountPromoCodeRequest.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
+				A1F3EEAB2990C2E4005FA828 /* LogWriter.swift in Sources */,
 				A179586F2978AEAF00609E91 /* InAppGeoResponse.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,
-				3337E6A1265FA99F006949EB /* Status.swift in Sources */,
 				33C81EA4264145CD00863380 /* TimerManager.swift in Sources */,
 				B3F4F981268EEAC90092EC3C /* AmountBenefisTypeResponse.swift in Sources */,
 				33072F422664CB81001F1AB2 /* PromoCodeResponse.swift in Sources */,
@@ -1888,6 +2089,7 @@
 				6FDD1445266F7C2200A50C35 /* CouponResponse.swift in Sources */,
 				F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
+				A1F3EEB52990C2EE005FA828 /* ProtocolError.swift in Sources */,
 				6FDD1447266F7C2B00A50C35 /* LimitResponse.swift in Sources */,
 				9B4F9DFE28D088B5002C9CF0 /* InAppImageOnlyView.swift in Sources */,
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
@@ -1909,7 +2111,6 @@
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
-				3337E69F265FA649006949EB /* ProtocolError.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,
 				B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */,
@@ -1932,13 +2133,16 @@
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				9B9C953A292111A700BB29DA /* MockNotificationCenter.swift in Sources */,
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
+				A1F3EE47298BEB78005FA828 /* MindboxLoggerTests.swift in Sources */,
 				9B9C9539292111A700BB29DA /* PasteboardUUIDDebugServiceTest.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
+				A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
 				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
+				A1F3EE4E298BEF0B005FA828 /* OSLogWritterTests.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
 				9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */,
@@ -1964,6 +2168,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3333C1D62681E85600B60D84 /* HTTPMethod.swift in Sources */,
+				A1F3EEAF2990C2E8005FA828 /* UnknownDecodable.swift in Sources */,
 				3333C1CC2681E76000B60D84 /* EventWrapper.swift in Sources */,
 				33BEE81D2681ED2900993720 /* PushDeliveredEventRoute.swift in Sources */,
 				3333C1BF2681E46400B60D84 /* NotificationDecoder.swift in Sources */,
@@ -1972,21 +2177,29 @@
 				3333C1D82681E85600B60D84 /* HTTPTypealiases.swift in Sources */,
 				3333C1B42681D43C00B60D84 /* ImageFormat.swift in Sources */,
 				3333C1BD2681DE6600B60D84 /* PushDelivered.swift in Sources */,
-				33D135CE2682240100B6628B /* Logger.swift in Sources */,
+				A1F3EEB32990C2ED005FA828 /* ProtocolError.swift in Sources */,
 				3333C1CA2681E74A00B60D84 /* Route.swift in Sources */,
 				3333C1BA2681DC4B00B60D84 /* MBUtilitiesFetcher.swift in Sources */,
+				A1F3EEA92990C2E3005FA828 /* LogLevel.swift in Sources */,
+				A1F3EEAE2990C2E8005FA828 /* MindboxError.swift in Sources */,
+				A1F3EEA82990C2E3005FA828 /* LogWriter.swift in Sources */,
 				3333C1E52681EEEF00B60D84 /* URLRequestBuilder.swift in Sources */,
 				3333C1BC2681DE0900B60D84 /* DeviceModelHelper.swift in Sources */,
 				3333C1B22681D42000B60D84 /* Payload.swift in Sources */,
 				3333C1AF2681D3DB00B60D84 /* MindboxNotificationService.swift in Sources */,
 				3333C1B62681D69700B60D84 /* MBConfiguration.swift in Sources */,
+				A1F3EEAD2990C2E8005FA828 /* Status.swift in Sources */,
+				A1F3EEA32990C2DA005FA828 /* MBLogger.swift in Sources */,
 				3333C1C02681E4E400B60D84 /* NotificationsPayloads.swift in Sources */,
+				A1F3EEA72990C2E3005FA828 /* LogCategory.swift in Sources */,
 				3333C1D72681E85600B60D84 /* ErrorKey.swift in Sources */,
 				3333C1D02681E83200B60D84 /* BodyDecoder.swift in Sources */,
 				3333C1C42681E64F00B60D84 /* NetworkService.swift in Sources */,
 				3333C1E32681EEA800B60D84 /* Event.swift in Sources */,
+				A1F3EEB42990C2ED005FA828 /* ValidationError.swift in Sources */,
 				9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */,
 				3333C1C22681E59900B60D84 /* DeliveryOperation.swift in Sources */,
+				A1F3EEA52990C2DF005FA828 /* MindboxLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1995,6 +2208,31 @@
 			buildActionMask = 2147483647;
 			files = (
 				3333C1A62681D3CF00B60D84 /* MindboxNotificationsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE6E2990C23E005FA828 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F3EEA22990C254005FA828 /* MBLogger.swift in Sources */,
+				A1F3EE9E2990C254005FA828 /* UnknownDecodable.swift in Sources */,
+				A1F3EE9B2990C254005FA828 /* LogCategory.swift in Sources */,
+				A1F3EEA02990C254005FA828 /* ProtocolError.swift in Sources */,
+				A1F3EE9F2990C254005FA828 /* Status.swift in Sources */,
+				A1F3EE982990C254005FA828 /* MindboxLogger.swift in Sources */,
+				A1F3EEA12990C254005FA828 /* ValidationError.swift in Sources */,
+				A1F3EE9D2990C254005FA828 /* MindboxError.swift in Sources */,
+				A1F3EE992990C254005FA828 /* LogLevel.swift in Sources */,
+				A1F3EE9A2990C254005FA828 /* LogWriter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F3EE752990C23F005FA828 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F3EE7F2990C23F005FA828 /* MindboxLoggerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2010,6 +2248,11 @@
 			isa = PBXTargetDependency;
 			target = 3333C1972681D3CF00B60D84 /* MindboxNotifications */;
 			targetProxy = 3333C1A22681D3CF00B60D84 /* PBXContainerItemProxy */;
+		};
+		A1F3EE7C2990C23F005FA828 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F3EE712990C23E005FA828 /* MindboxLogger */;
+			targetProxy = A1F3EE7B2990C23F005FA828 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2333,6 +2576,104 @@
 			};
 			name = Release;
 		};
+		A1F3EE822990C23F005FA828 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = N39VVWZXXP;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2023 Mikhail Barilov. All rights reserved.";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxLogger;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1F3EE832990C23F005FA828 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = N39VVWZXXP;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2023 Mikhail Barilov. All rights reserved.";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxLogger;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A1F3EE852990C23F005FA828 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N39VVWZXXP;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxLoggerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1F3EE862990C23F005FA828 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N39VVWZXXP;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxLoggerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2377,6 +2718,24 @@
 			buildConfigurations = (
 				3333C1AB2681D3CF00B60D84 /* Debug */,
 				3333C1AC2681D3CF00B60D84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1F3EE812990C23F005FA828 /* Build configuration list for PBXNativeTarget "MindboxLogger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F3EE822990C23F005FA828 /* Debug */,
+				A1F3EE832990C23F005FA828 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1F3EE842990C23F005FA828 /* Build configuration list for PBXNativeTarget "MindboxLoggerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F3EE852990C23F005FA828 /* Debug */,
+				A1F3EE862990C23F005FA828 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

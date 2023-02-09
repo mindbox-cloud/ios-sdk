@@ -44,31 +44,34 @@ class NetworkService {
         do {
             let urlRequest = try builder.asURLRequest(route: PushDeliveredEventRoute(wrapper: wrapper))
 
-            Logger.log("Request details: \(urlRequest)", type: .debug)
-            Logger.log("Request headers: \(urlRequest.allHTTPHeaderFields ?? [:]); \(session.configuration.httpAdditionalHeaders ?? [:])", type: .debug)
+            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             
-            session.dataTask(with: urlRequest) { _, response, error in
+            session.dataTask(with: urlRequest) { data, response, error in
+                Logger.response(data: data, response: response, error: error)
                 if let error = error {
-                    Logger.log("An error occured for request \(error)", type: .error)
+                    let errorModel = MindboxError.unknown(error)
+                    Logger.error(errorModel)
                     completion(false)
                 }
 
                 if let response = response as? HTTPURLResponse {
                     if (200 ... 399).contains(response.statusCode) {
-                        Logger.log("Push delivered", type: .info)
-                        Logger.log("Response details: \(response)", type: .debug)
+                        Logger.common(message: "Push delivered", level: .info, category: .network)
                         completion(true)
                     } else {
-                        Logger.log("Invalid response. Status code \(response.statusCode)", type: .error)
+                        let errorModel = MindboxError.invalidResponse(response)
+                        Logger.error(errorModel)
                         completion(false)
                     }
                 } else {
-                    Logger.log("Invalid response", type: .error)
+                    let errorModel = MindboxError.invalidResponse(response)
+                    Logger.error(errorModel)
                     completion(false)
                 }
             }.resume()
-        } catch {
-            Logger.log("An error occured for request \(error)", type: .error)
+        } catch let error {
+            let errorModel = MindboxError.unknown(error)
+            Logger.error(errorModel)
             completion(false)
         }
     }

@@ -91,8 +91,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onTapAction: @escaping InAppMessageTapAction,
         onPresentationCompleted: @escaping () -> Void
     ) {
-        Log("Starting to present)")
-            .category(.inAppMessages).level(.debug).make()
+        Logger.common(message: "In-app with id \(inAppUIModel.inAppId) presented", level: .info, category: .inAppMessages)
 
         let inAppWindow = makeInAppMessageWindow()
         let close: () -> Void = { [weak self] in
@@ -114,11 +113,9 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
         do {
             try inAppTracker.trackView(id: inApp.inAppId)
-            Log("Track InApp.View. Id \(inApp.inAppId)")
-                .category(.notification).level(.info).make()
+            Logger.common(message: "Track InApp.View. Id \(inApp.inAppId)", level: .info, category: .notification)
         } catch {
-            Log("Track InApp.View failed with error: \(error)")
-                .category(.notification).level(.error).make()
+            Logger.common(message: "Track InApp.View failed with error: \(error)", level: .error, category: .notification)
         }
         completion()
     }
@@ -129,15 +126,14 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onTap: @escaping InAppMessageTapAction,
         close: @escaping () -> Void
     ) {
+        Logger.common(message: "InApp presentation completed", level: .debug, category: .inAppMessages)
         if !clickTracked {
             do {
                 try inAppTracker.trackClick(id: inApp.inAppId)
                 clickTracked = true
-                Log("Track InApp.Click. Id \(inApp.inAppId)")
-                    .category(.notification).level(.info).make()
+                Logger.common(message: "Track InApp.Click. Id \(inApp.inAppId)", level: .info, category: .notification)
             } catch {
-                Log("Track InApp.Click failed with error: \(error)")
-                    .category(.notification).level(.error).make()
+                Logger.common(message: "Track InApp.Click failed with error: \(error)", level: .error, category: .notification)
             }
         }
 
@@ -149,8 +145,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     }
 
     private func onClose(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
-        Log("InApp presentation completed")
-            .category(.inAppMessages).level(.debug).make()
+        Logger.common(message: "InApp presentation dismissed", level: .debug, category: .inAppMessages)
         inAppWindow?.isHidden = true
         inAppWindow?.rootViewController = nil
         completion()

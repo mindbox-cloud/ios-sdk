@@ -31,9 +31,8 @@ class BackgroundTaskManagerProxy {
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
             queue: nil) { [weak self] (_) in
-            Log("UIApplication.didEnterBackgroundNotification")
-                .category(.general).level(.info).make()
-            self?.taskManagers.forEach { $0.applicationDidEnterBackground() }
+                Logger.common(message: "UIApplication.didEnterBackgroundNotification", level: .info, category: .general)
+                self?.taskManagers.forEach { $0.applicationDidEnterBackground() }
         }
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,

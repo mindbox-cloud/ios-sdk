@@ -19,7 +19,9 @@ struct NotificationDecoder<T: Codable> {
         
     init(request: UNNotificationRequest) throws {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
-            throw MindboxError.internalError(InternalError(errorKey: "unableToFetchUserInfo"))
+            let error = MindboxError.internalError(InternalError(errorKey: "unableToFetchUserInfo"))
+            Logger.error(error)
+            throw error
         }
         try self.init(userInfo: userInfo)
     }
@@ -42,17 +44,14 @@ struct NotificationDecoder<T: Codable> {
             let decoder = JSONDecoder()
             do {
                 let payload = try decoder.decode(T.self, from: data)
-                Log("Did parse payload: \(payload)")
-                    .category(.notification).level(.info).make()
+                Logger.common(message: "Did parse payload: \(payload)", level: .info, category: .notification)
                 return payload
             } catch {
-                Log("Did fail to decode Payload with error: \(error.localizedDescription)")
-                    .category(.notification).level(.error).make()
+                Logger.common(message: "Did fail to decode Payload with error: \(error.localizedDescription)", level: .info, category: .notification)
                 throw error
             }
         } catch {
-            Log("Did fail to serialize userInfo with error: \(error.localizedDescription)")
-                .category(.notification).level(.error).make()
+            Logger.common(message: "Did fail to serialize userInfo with error: \(error.localizedDescription)", level: .info, category: .notification)
             throw error
         }
     }

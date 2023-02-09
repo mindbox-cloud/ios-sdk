@@ -36,13 +36,12 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
             }
         )
 
-        Log("InApps segments: \(targetings)")
-            .category(.inAppMessages).level(.debug).make()
-
+        Logger.common(message: "Tracker.CheckCustomerSegments request. Body: \(segmentationRequest)", level: .debug, category: .inAppMessages)
         customerSegmentsAPI.fetchSegments(segmentationRequest) { response in
             completionQueue.async {
                 guard let response = response,
                       response.status == .success else {
+                    Logger.common(message: "Tracker.CheckCustomerSegments bad response. Response: \(String(describing: response))", level: .debug, category: .inAppMessages)
                     completion(firstWithoutTargeting)
                     return
                 }
@@ -64,18 +63,14 @@ final class InAppSegmentationChecker: InAppSegmentationCheckerProtocol {
             },
             uniquingKeysWith: { f, _ in f }
         )
-        Log("Fetched customer segments ([segmentationId: segmentId]): \(customerSegmentationDict)")
-            .category(.inAppMessages).level(.debug).make()
-
+        Logger.common(message: "Fetched customer segments ([segmentationId: segmentId]): \(customerSegmentationDict)", level: .debug, category: .inAppMessages)
         if let inAppToShow = request.possibleInApps.first(where: { inApp in
             return true
         }) {
-            Log("Found segment match for in-app: \(inAppToShow.inAppId)")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Found segment match for in-app: \(inAppToShow.inAppId)", level: .debug, category: .inAppMessages)
             completion(InAppResponse(triggerEvent: request.triggerEvent, inAppToShowId: inAppToShow.inAppId))
         } else {
-            Log("Didn't find in-app that match segments")
-                .category(.inAppMessages).level(.debug).make()
+            Logger.common(message: "Didn't find in-app that match segments", level: .debug, category: .inAppMessages)
             completion(nil)
         }
     }

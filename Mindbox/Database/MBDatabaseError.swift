@@ -16,7 +16,7 @@ public enum MBDatabaseError: LocalizedError {
     case persistentStoreURLNotFound
     case persistentStoreNotExistsAtURL(path: String)
 
-    public var errorDescription: String? {
+    public var errorDescription: String {
         switch self {
         case .unableCreateDatabaseModel:
             return "Unable to create \(Constants.Database.mombName).xcdatamodel"
