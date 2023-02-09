@@ -56,7 +56,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     func start() {
         configManager.delegate = self
         configManager.prepareConfiguration()
-        sendEvent(.start)
     }
 
     /// This method handles events and decides if in-app message should be shown
@@ -153,6 +152,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
 extension InAppCoreManager: InAppConfigurationDelegate {
     func didPreparedConfiguration() {
+        sendEvent(.start)
         serialQueue.async {
             self.isConfigurationReady = true
             self.handleQueuedEvents()
