@@ -84,9 +84,10 @@ public class MindboxNotificationService: NSObject {
             defer { completion() }
             guard let self = self,
                   let data = data else {
-                Logger.common(message: "Image load failed with error: \(String(describing: error))", level: .error, category: .notification)
                 return
             }
+            
+            Logger.response(data: data, response: response, error: error)
 
             if let attachment = self.saveImage(data) {
                 self.bestAttemptContent?.attachments = [attachment]
@@ -184,7 +185,7 @@ public class MindboxNotificationService: NSObject {
     private func saveImage(_ data: Data) -> UNNotificationAttachment? {
         let name = UUID().uuidString
         guard let format = ImageFormat(data) else {
-            // not an image
+            Logger.common(message: "Image load failed", level: .error, category: .notification)
             return nil
         }
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
