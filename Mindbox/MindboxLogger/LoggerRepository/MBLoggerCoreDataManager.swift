@@ -12,15 +12,28 @@ import CoreData
 class MBLoggerCoreDataManager {
     public static let shared = MBLoggerCoreDataManager()
     
-    let model = "CDLogMessage"
-    var persistentStoreDescription: NSPersistentStoreDescription?
+    private enum Constants {
+        static let model = "CDLogMessage"
+        static let dbSizeLimitKB: Int = 10000
+        static let operationLimitBeforeNeedToDelete = 20
+    }
+    
+    private var persistentStoreDescription: NSPersistentStoreDescription?
+    private var writeCount = 0 {
+        didSet {
+            if writeCount > Constants.operationLimitBeforeNeedToDelete {
+                writeCount = 0
+            }
+        }
+    }
 
     lazy var persistentContainer: MBPersistentContainer = {
-        let container = MBPersistentContainer(name: self.model)
+        let container = MBPersistentContainer(name: Constants.model)
         let storeURL = FileManager.storeURL(for: MBUtilitiesFetcher().applicationGroupIdentifier,
-                                            databaseName: self.model)
+                                            databaseName: Constants.model)
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
-                container.persistentStoreDescriptions = [storeDescription]
+        storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
+        container.persistentStoreDescriptions = [storeDescription]
         container.loadPersistentStores {
             (storeDescription, error) in
         }
@@ -35,18 +48,25 @@ class MBLoggerCoreDataManager {
         return context
     }()
     
+    // MARK: - CRUD Operations
     public func create(message: String, timestamp: Date) throws {
-        try context.performAndWait {
-            let entity = CDLogMessage(context: context)
+        try self.context.performAndWait {
+            let entity = CDLogMessage(context: self.context)
             entity.message = message
             entity.timestamp = timestamp
-            try saveEvent(withContext: context)
+            try self.saveEvent(withContext: self.context)
+        }
+        
+        let isTimeToDelete = writeCount == 0
+        writeCount += 1
+        if isTimeToDelete && getDBFileSize() > Constants.dbSizeLimitKB {
+            try delete()
         }
     }
     
     public func fetchPeriod(_ from: Date, _ to: Date) throws {
         try context.performAndWait {
-            let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: model)
+            let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate,
                                                  to as NSDate)
@@ -57,24 +77,27 @@ class MBLoggerCoreDataManager {
         }
     }
     
-    public func fetchAll() throws {
-        try context.performAndWait {
-            let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: model)
-            let logs = try context.fetch(fetchRequest)
-            for log in logs {
-                print(log.message, "|", log.timestamp.toFullString())
-            }
-        }
-    }
-    
     public func delete() throws {
         try context.performAndWait {
-            let request = NSFetchRequest<NSFetchRequestResult>(entityName: model)
-            let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: request)
-            try context.execute(batchDeleteRequest)
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+            let count = try context.count(for: request)
+            let limit: Double = (Double(count) * 0.1).rounded() // 10% percent of all records should be removed
+            request.fetchLimit = Int(limit)
+            request.includesPropertyValues = false
+            let results = try context.fetch(request)
+
+            for item in results {
+                context.delete(item as! NSManagedObject)
+            }
+            
+            Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
+
+            try saveEvent(withContext: context)
         }
     }
-    
+}
+
+private extension MBLoggerCoreDataManager {
     private func saveEvent(withContext context: NSManagedObjectContext) throws {
         guard context.hasChanges else { return }
         try saveContext(context)
@@ -93,5 +116,12 @@ class MBLoggerCoreDataManager {
             throw error
         }
     }
+    
+    private func getDBFileSize() -> Int {
+        guard let url = context.persistentStoreCoordinator?.persistentStores.first?.url else {
+            return 0
+        }
+        let size = url.fileSize / 1024 // Bytes to Kilobytes
+        return Int(size)
+    }
 }
-
