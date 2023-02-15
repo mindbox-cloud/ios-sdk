@@ -64,16 +64,14 @@ class MBLoggerCoreDataManager {
         }
     }
     
-    public func fetchPeriod(_ from: Date, _ to: Date) throws {
+    public func fetchPeriod(_ from: Date, _ to: Date) throws -> [CDLogMessage] {
         try context.performAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate,
                                                  to as NSDate)
             let logs = try context.fetch(fetchRequest)
-            for log in logs {
-                print(log.message, "|", log.timestamp.toFullString())
-            }
+            return logs
         }
     }
     
@@ -92,6 +90,18 @@ class MBLoggerCoreDataManager {
             
             Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
 
+            try saveEvent(withContext: context)
+        }
+    }
+    
+    public func deleteAll() throws {
+        try context.performAndWait {
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+            request.includesPropertyValues = false
+            let results = try context.fetch(request)
+            for item in results {
+                context.delete(item as! NSManagedObject)
+            }
             try saveEvent(withContext: context)
         }
     }

@@ -233,6 +233,7 @@
 		9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BE941F42916822900258077 /* InAppConfigurationInvalid.json */; };
 		A154E300299C020900F8F074 /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E2FF299C020900F8F074 /* URL+Extensions.swift */; };
 		A154E301299C020900F8F074 /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E2FF299C020900F8F074 /* URL+Extensions.swift */; };
+		A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */; };
 		A179586F2978AEAF00609E91 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A179586E2978AEAF00609E91 /* InAppGeoResponse.swift */; };
 		A17958762978AEC600609E91 /* OrTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958712978AEC600609E91 /* OrTargetingChecker.swift */; };
 		A17958772978AEC600609E91 /* TrueTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958722978AEC600609E91 /* TrueTargetingChecker.swift */; };
@@ -559,6 +560,7 @@
 		9BC24E7928F6C08700C2619C /* InAppConfiguration.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppConfiguration.json; sourceTree = "<group>"; };
 		9BE941F42916822900258077 /* InAppConfigurationInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationInvalid.json; sourceTree = "<group>"; };
 		A154E2FF299C020900F8F074 /* URL+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "URL+Extensions.swift"; sourceTree = "<group>"; };
+		A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		A179586E2978AEAF00609E91 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
 		A17958712978AEC600609E91 /* OrTargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OrTargetingChecker.swift; sourceTree = "<group>"; };
 		A17958722978AEC600609E91 /* TrueTargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrueTargetingChecker.swift; sourceTree = "<group>"; };
@@ -713,6 +715,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindboxTests */ = {
 			isa = PBXGroup;
 			children = (
+				A154E302299C187D00F8F074 /* MindboxLogger */,
 				9B9C9533292111A700BB29DA /* UUIDDebugService */,
 				9B4F9DFF28D091E6002C9CF0 /* InAppMessages */,
 				848A895C2620C53900EDFB6D /* Versioning */,
@@ -1427,6 +1430,14 @@
 			path = ConfigJsonStubs;
 			sourceTree = "<group>";
 		};
+		A154E302299C187D00F8F074 /* MindboxLogger */ = {
+			isa = PBXGroup;
+			children = (
+				A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */,
+			);
+			path = MindboxLogger;
+			sourceTree = "<group>";
+		};
 		A17958702978AEC600609E91 /* TargetingCheckerTypes */ = {
 			isa = PBXGroup;
 			children = (
@@ -2039,6 +2050,7 @@
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				9B52570128D1AA180029B1BC /* InAppCoreManagerTests.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
+				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
 				9B52570328D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift in Sources */,
 				9B5256FF28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
