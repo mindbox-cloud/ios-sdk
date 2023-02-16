@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum SDKLogsStatus {
+enum SDKLogsStatus: Equatable {
     case ok
     case noData
     case elderLog(date: String)

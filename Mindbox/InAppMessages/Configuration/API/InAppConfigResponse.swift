@@ -9,7 +9,7 @@ import Foundation
 
 struct InAppConfigResponse: Decodable {
     let inapps: [InApp]
-    let monitoring: Monitoring
+    let monitoring: Monitoring?
 }
 
 extension InAppConfigResponse {

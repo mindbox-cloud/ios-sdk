@@ -31,8 +31,8 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         for log in logs {
             if !handledLogsRequestIds.contains(log.requestId) && persistenceStorage.deviceUUID == log.deviceUUID.uppercased() {
                 handledLogsRequestIds.append(log.requestId)
-                guard let from = log.from.toDate(withFormat: .api),
-                      let  to = log.to.toDate(withFormat: .api) else {
+                guard let from = log.from.toDate(withFormat: .utc),
+                      let  to = log.to.toDate(withFormat: .utc) else {
                     return
                 }
                 
@@ -60,7 +60,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         self.persistenceStorage.handledlogRequestIds = handledLogsRequestIds
     }
     
-    private func getStatus(firstLog: LogMessage?, lastLog: LogMessage?, logs: [LogMessage], from: Date, to: Date) -> SDKLogsStatus {
+    func getStatus(firstLog: LogMessage?, lastLog: LogMessage?, logs: [LogMessage], from: Date, to: Date) -> SDKLogsStatus {
         if let firstLog = firstLog, firstLog.timestamp > to {
             return .elderLog(date: firstLog.timestamp.toString(withFormat: .utc))
         } else if let lastLog = lastLog, lastLog.timestamp < from {
@@ -78,7 +78,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         return logs.reduce(0) { $0 + $1.description.utf8.count }
     }
     
-    private func actualLogs(allLogs: [LogMessage]) -> [String] {
+    func actualLogs(allLogs: [LogMessage]) -> [String] {
         var logs = allLogs
         var totalSize = getLogsSize(logs)
         

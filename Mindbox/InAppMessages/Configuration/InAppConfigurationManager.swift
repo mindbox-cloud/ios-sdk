@@ -108,7 +108,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
                 saveConfigToCache(data)
                 setConfigPrepared(config)
-                logsManager.sendLogs(logs: config.monitoring.logs)
+                guard let monitoring = config.monitoring else { return }
+                logsManager.sendLogs(logs: monitoring.logs)
             } catch {
                 applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
