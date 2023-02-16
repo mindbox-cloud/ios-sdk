@@ -19,16 +19,16 @@ extension Date {
         return dateFormatter.string(from: self as Date)
     }
     
-    func toUTCString() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        return dateFormatter.string(from: self as Date)
-    }
-    
     static var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "hh:mm:ss.SSSS"
         return formatter
+    }
+    
+    func toString(withFormat format: DateFormat) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = format.value
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
+        return dateFormatter.string(from: self)
     }
 }

@@ -159,6 +159,9 @@ class MBPersistenceStorage: PersistenceStorage {
 
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
+    
+    @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
+    var handledlogRequestIds: [String]?
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
@@ -242,6 +245,7 @@ extension MBPersistenceStorage {
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
         }
         
         private let key: Key

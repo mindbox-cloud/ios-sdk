@@ -64,14 +64,51 @@ class MBLoggerCoreDataManager {
         }
     }
     
-    public func fetchPeriod(_ from: Date, _ to: Date) throws -> [CDLogMessage] {
+    func getFirstLog() throws -> LogMessage? {
+        try context.performAndWait {
+            let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
+            fetchRequest.predicate = NSPredicate(value: true)
+            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
+            fetchRequest.fetchLimit = 1
+            let results = try context.fetch(fetchRequest)
+            var logMessage: LogMessage?
+            if let first = results.first {
+                logMessage = LogMessage(timestamp: first.timestamp, message: first.message)
+            }
+            
+            return logMessage
+        }
+    }
+
+    func getLastLog() throws -> LogMessage? {
+        try context.performAndWait {
+            let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
+            fetchRequest.predicate = NSPredicate(value: true)
+            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
+            fetchRequest.fetchLimit = 1
+            let results = try context.fetch(fetchRequest)
+            var logMessage: LogMessage?
+            if let last = results.last {
+                logMessage = LogMessage(timestamp: last.timestamp, message: last.message)
+            }
+            
+            return logMessage
+        }
+    }
+    
+    public func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
         try context.performAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate,
                                                  to as NSDate)
             let logs = try context.fetch(fetchRequest)
-            return logs
+            var fetchedLogs: [LogMessage] = []
+            logs.forEach {
+                fetchedLogs.append(LogMessage(timestamp: $0.timestamp, message: $0.message))
+            }
+
+            return fetchedLogs
         }
     }
     

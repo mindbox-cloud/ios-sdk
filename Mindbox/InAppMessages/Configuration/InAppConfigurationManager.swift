@@ -32,15 +32,18 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
+    private let logsManager: SDKLogsManagerProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inAppConfigurationMapper: InAppConfigutationMapper
+        inAppConfigurationMapper: InAppConfigutationMapper,
+        logsManager: SDKLogsManagerProtocol
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
+        self.logsManager = logsManager
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -105,6 +108,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
                 saveConfigToCache(data)
                 setConfigPrepared(config)
+                logsManager.sendLogs(logs: config.monitoring.logs)
             } catch {
                 applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)

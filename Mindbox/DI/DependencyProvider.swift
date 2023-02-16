@@ -42,6 +42,8 @@ final class DependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        let logsManager = SDKLogsManager(logsTracker: SDKLogsTracker(databaseRepository: databaseRepository),
+                                         persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -49,7 +51,7 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
                                                                    inAppsVersion: inAppsSdkVersion,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   networkFetcher: instanceFactory.makeNetworkFetcher())),
+                                                                   networkFetcher: instanceFactory.makeNetworkFetcher()), logsManager: logsManager),
             segmentationChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),
