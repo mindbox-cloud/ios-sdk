@@ -43,7 +43,16 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
-//        writeToCD(message: message, timestamp: date)
+        switch executionMethod {
+        case .sync(lock: let lock):
+            lock.lock();
+            defer { lock.unlock() }
+            self.writeToCD(message: message, timestamp: date)
+        case .async(queue: let queue):
+            queue.async {
+                self.writeToCD(message: message, timestamp: date)
+            }
+        }
         
         guard logLevel.rawValue <= level.rawValue else {
             return
