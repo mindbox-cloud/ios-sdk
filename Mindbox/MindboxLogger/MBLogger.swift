@@ -43,7 +43,7 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
-        writeToCD(message: message, timestamp: date)
+//        writeToCD(message: message, timestamp: date)
         
         guard logLevel.rawValue <= level.rawValue else {
             return

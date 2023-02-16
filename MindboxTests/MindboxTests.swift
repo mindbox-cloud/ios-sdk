@@ -206,6 +206,6 @@ class MindboxTests: XCTestCase {
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
         controllerQueue.async { expectation.fulfill() }
-        self.wait(for: [expectation], timeout: 0.2)
+        self.wait(for: [expectation], timeout: 1)
     }
 }

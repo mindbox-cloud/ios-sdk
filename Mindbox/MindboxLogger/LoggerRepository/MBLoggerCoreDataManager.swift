@@ -87,10 +87,11 @@ class MBLoggerCoreDataManager {
             for item in results {
                 context.delete(item as! NSManagedObject)
             }
-            
-            Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
 
             try saveEvent(withContext: context)
+            DispatchQueue.global(qos: .utility).async {
+                Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
+            }
         }
     }
     

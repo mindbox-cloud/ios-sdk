@@ -62,9 +62,9 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         
         let fetchResult = try manager.fetchPeriod(timestamp, timestamp)
         XCTAssertEqual(fetchResult.count, 10)
-        
         try manager.delete()
-        let fetchResultAfterDeletion = try manager.fetchPeriod(timestamp, timestamp)
+        
+        let fetchResultAfterDeletion = try manager.fetchPeriod(timestamp.addingTimeInterval(-60), Date())
         XCTAssertEqual(fetchResultAfterDeletion.count, 9)
     }
 }
