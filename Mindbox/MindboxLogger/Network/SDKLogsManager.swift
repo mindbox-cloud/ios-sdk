@@ -17,13 +17,13 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         static let logsSizeLimit = 800000 // In bytes
     }
     
-    private let logsTracker: SDKLogsTrackerProtocol
     private let persistenceStorage: PersistenceStorage
+    private let eventRepository: EventRepository
     
-    init(logsTracker: SDKLogsTrackerProtocol,
-         persistenceStorage: PersistenceStorage) {
-        self.logsTracker = logsTracker
+    init(persistenceStorage: PersistenceStorage,
+         eventRepository: EventRepository) {
         self.persistenceStorage = persistenceStorage
+        self.eventRepository = eventRepository
     }
     
     func sendLogs(logs: [InAppConfigResponse.Monitoring.Logs]) {
@@ -50,7 +50,9 @@ class SDKLogsManager: SDKLogsManagerProtocol {
                     let body = SDKLogsRequest(status: status.value,
                                               requestId: log.requestId,
                                               content: actualLogs)
-                    try logsTracker.sendLogs(body: body)
+                    
+                    let event = Event(type: .sdkLogs, body: BodyEncoder(encodable: body).body)
+                    eventRepository.send(event: event) { _ in }
                 } catch {
                     
                 }

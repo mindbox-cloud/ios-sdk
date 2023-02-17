@@ -14,9 +14,17 @@ struct SDKLogsRequest: Codable {
 }
 
 struct SDKLogsRoute: Route {
-    var method: HTTPMethod { .get }
-    var path: String { "/geo" }
+    var method: HTTPMethod { .post }
+    var path: String { "/v3/operations/async/MobileSdk.Logs" }
     var headers: HTTPHeaders? { nil }
     var queryParameters: QueryParameters { .init() }
     var body: Data?
+    
+    func makeBasicQueryParameters(with wrapper: EventWrapper) -> QueryParameters {
+        ["transactionId": wrapper.event.transactionId,
+         "deviceUUID": wrapper.deviceUUID,
+         "dateTimeOffset": wrapper.event.dateTimeOffset,
+         "operation": wrapper.event.type.rawValue,
+         "endpointId": wrapper.endpoint]
+    }
 }

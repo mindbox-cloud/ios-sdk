@@ -42,8 +42,7 @@ final class DependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
-        let logsManager = SDKLogsManager(logsTracker: SDKLogsTracker(databaseRepository: databaseRepository),
-                                         persistenceStorage: persistenceStorage)
+        let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),

@@ -43,7 +43,14 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
-        DispatchQueue.global(qos: .utility).async {
+
+        switch executionMethod {
+        case let .async(queue: queue):
+            queue.async {
+                self.writeToCD(message: message, timestamp: date)
+            }
+        case let .sync(lock: lock):
+            lock.lock(); defer { lock.unlock() }
             self.writeToCD(message: message, timestamp: date)
         }
 
