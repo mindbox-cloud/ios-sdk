@@ -211,7 +211,13 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
     }
-
+    
+    @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
+    var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
 }
 
 struct BackgroudExecution: Codable {
@@ -242,6 +248,8 @@ extension MBPersistenceStorage {
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            
+            case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
         }
         
         private let key: Key

@@ -45,6 +45,15 @@ class CoreController {
     func apnsTokenDidUpdate(token: String) {
         controllerQueue.async {
             let isNotificationsEnabled = self.notificationStatus()
+            
+            if self.persistenceStorage.needUpdateInfoOnce ?? true {
+                self.updateInfo(apnsToken: token, isNotificationsEnabled: isNotificationsEnabled)
+                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+                self.persistenceStorage.apnsToken = token
+                self.persistenceStorage.needUpdateInfoOnce = false
+                return
+            }
+            
             if self.persistenceStorage.isInstalled {
                 self.updateInfo(
                     apnsToken: token,

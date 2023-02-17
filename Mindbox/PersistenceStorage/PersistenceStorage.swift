@@ -40,4 +40,6 @@ protocol PersistenceStorage: AnyObject {
     func storeToFileBackgroundExecution()
 
     var onDidChange: (() -> Void)? { get set }
+    
+    var needUpdateInfoOnce: Bool? { get set }
 }
