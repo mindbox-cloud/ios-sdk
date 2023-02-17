@@ -43,17 +43,10 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
-        switch executionMethod {
-        case .sync(lock: let lock):
-            lock.lock();
-            defer { lock.unlock() }
+        DispatchQueue.global(qos: .utility).async {
             self.writeToCD(message: message, timestamp: date)
-        case .async(queue: let queue):
-            queue.async {
-                self.writeToCD(message: message, timestamp: date)
-            }
         }
-        
+
         guard logLevel.rawValue <= level.rawValue else {
             return
         }
@@ -119,7 +112,7 @@ private extension MBLogger {
         do {
             try MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
         } catch {
-            assertionFailure()
+            
         }
     }
 }

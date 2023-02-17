@@ -87,6 +87,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
     
     func testDelete_10_percents() throws {
+        try manager.deleteAll()
         let message = "Test message"
         let timestamp = Date()
         for _ in 0..<10 {
