@@ -234,7 +234,7 @@
 		A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */; };
 		A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */; };
 		A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */; };
-		A154E334299E110E00F8F074 /* SDKLogsTrackerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E333299E110E00F8F074 /* SDKLogsTrackerMock.swift */; };
+		A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E333299E110E00F8F074 /* EventRepositoryMock.swift */; };
 		A154E352299E5B6D00F8F074 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E338299E5B6D00F8F074 /* MindboxLogger.swift */; };
 		A154E353299E5B6D00F8F074 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E338299E5B6D00F8F074 /* MindboxLogger.swift */; };
 		A154E354299E5B6D00F8F074 /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E33A299E5B6D00F8F074 /* LogLevel.swift */; };
@@ -277,7 +277,6 @@
 		A154E379299E5B6D00F8F074 /* MBPersistentContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E350299E5B6D00F8F074 /* MBPersistentContainer.swift */; };
 		A154E37A299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E351299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift */; };
 		A154E37B299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E351299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift */; };
-		A154E383299E5B7500F8F074 /* SDKLogsTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E37D299E5B7500F8F074 /* SDKLogsTracker.swift */; };
 		A154E384299E5B7500F8F074 /* SDKLogsStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E37F299E5B7500F8F074 /* SDKLogsStatus.swift */; };
 		A154E385299E5B7500F8F074 /* SDKLogsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E381299E5B7500F8F074 /* SDKLogsRequest.swift */; };
 		A154E386299E5B7500F8F074 /* SDKLogsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E382299E5B7500F8F074 /* SDKLogsManager.swift */; };
@@ -572,7 +571,7 @@
 		A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogManagerTests.swift; sourceTree = "<group>"; };
 		A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
-		A154E333299E110E00F8F074 /* SDKLogsTrackerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogsTrackerMock.swift; sourceTree = "<group>"; };
+		A154E333299E110E00F8F074 /* EventRepositoryMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRepositoryMock.swift; sourceTree = "<group>"; };
 		A154E338299E5B6D00F8F074 /* MindboxLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxLogger.swift; sourceTree = "<group>"; };
 		A154E33A299E5B6D00F8F074 /* LogLevel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
 		A154E33B299E5B6D00F8F074 /* LogWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogWriter.swift; sourceTree = "<group>"; };
@@ -594,7 +593,6 @@
 		A154E34F299E5B6D00F8F074 /* MBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
 		A154E350299E5B6D00F8F074 /* MBPersistentContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBPersistentContainer.swift; sourceTree = "<group>"; };
 		A154E351299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CDLogMessage+CoreDataClass.swift"; sourceTree = "<group>"; };
-		A154E37D299E5B7500F8F074 /* SDKLogsTracker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKLogsTracker.swift; sourceTree = "<group>"; };
 		A154E37F299E5B7500F8F074 /* SDKLogsStatus.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKLogsStatus.swift; sourceTree = "<group>"; };
 		A154E381299E5B7500F8F074 /* SDKLogsRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKLogsRequest.swift; sourceTree = "<group>"; };
 		A154E382299E5B7500F8F074 /* SDKLogsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SDKLogsManager.swift; sourceTree = "<group>"; };
@@ -1463,7 +1461,7 @@
 		A154E332299E10F400F8F074 /* Mocks */ = {
 			isa = PBXGroup;
 			children = (
-				A154E333299E110E00F8F074 /* SDKLogsTrackerMock.swift */,
+				A154E333299E110E00F8F074 /* EventRepositoryMock.swift */,
 			);
 			path = Mocks;
 			sourceTree = "<group>";
@@ -1531,7 +1529,6 @@
 		A154E37C299E5B7500F8F074 /* Network */ = {
 			isa = PBXGroup;
 			children = (
-				A154E37D299E5B7500F8F074 /* SDKLogsTracker.swift */,
 				A154E37E299E5B7500F8F074 /* Enums */,
 				A154E380299E5B7500F8F074 /* Models */,
 				A154E382299E5B7500F8F074 /* SDKLogsManager.swift */,
@@ -1955,7 +1952,6 @@
 				A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */,
 				6FDD1455266F7C9A00A50C35 /* PromotionTypeResponse.swift in Sources */,
 				334F3AEB264C199900A6AC00 /* DiscountCardRequest.swift in Sources */,
-				A154E383299E5B7500F8F074 /* SDKLogsTracker.swift in Sources */,
 				A154E386299E5B7500F8F074 /* SDKLogsManager.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				A154E360299E5B6D00F8F074 /* String+Extensions.swift in Sources */,
@@ -2117,7 +2113,7 @@
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
 				9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */,
-				A154E334299E110E00F8F074 /* SDKLogsTrackerMock.swift in Sources */,
+				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,

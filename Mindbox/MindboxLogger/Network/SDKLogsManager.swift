@@ -37,20 +37,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
                 }
                 
                 do {
-                    let firstLog = try MBLoggerCoreDataManager.shared.getFirstLog()
-                    let lastLog = try MBLoggerCoreDataManager.shared.getLastLog()
-                    let fetchedLogs = try MBLoggerCoreDataManager.shared.fetchPeriod(from, to)
-                    let status = getStatus(firstLog: firstLog,
-                                           lastLog: lastLog,
-                                           logs: fetchedLogs,
-                                           from: from,
-                                           to: to)
-                    let actualLogs = actualLogs(allLogs: fetchedLogs)
-                    
-                    let body = SDKLogsRequest(status: status.value,
-                                              requestId: log.requestId,
-                                              content: actualLogs)
-                    
+                    let body = try getBody(from: from, to: to, requestID: log.requestId)
                     let event = Event(type: .sdkLogs, body: BodyEncoder(encodable: body).body)
                     eventRepository.send(event: event) { _ in }
                 } catch {
@@ -60,6 +47,22 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         }
         
         self.persistenceStorage.handledlogRequestIds = handledLogsRequestIds
+    }
+    
+    func getBody(from: Date, to: Date, requestID: String) throws -> SDKLogsRequest {
+        let firstLog = try MBLoggerCoreDataManager.shared.getFirstLog()
+        let lastLog = try MBLoggerCoreDataManager.shared.getLastLog()
+        let fetchedLogs = try MBLoggerCoreDataManager.shared.fetchPeriod(from, to)
+        let status = getStatus(firstLog: firstLog,
+                               lastLog: lastLog,
+                               logs: fetchedLogs,
+                               from: from,
+                               to: to)
+        let actualLogs = actualLogs(allLogs: fetchedLogs)
+        
+        return SDKLogsRequest(status: status.value,
+                                  requestId: requestID,
+                                  content: actualLogs)
     }
     
     func getStatus(firstLog: LogMessage?, lastLog: LogMessage?, logs: [LogMessage], from: Date, to: Date) -> SDKLogsStatus {
