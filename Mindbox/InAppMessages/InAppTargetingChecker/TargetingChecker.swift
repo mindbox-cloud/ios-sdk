@@ -27,9 +27,9 @@ struct CheckerFunctions {
     var check: () -> Bool = {() in return false }
 }
 
-protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol { }
+protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap { }
 
-final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheckerMap {
+final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     
     init() {
         setupCheckerMap()
