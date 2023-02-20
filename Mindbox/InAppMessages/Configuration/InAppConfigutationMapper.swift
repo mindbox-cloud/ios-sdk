@@ -78,7 +78,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
         
         if segments.isEmpty {
-            completion(.init(status: .success, customerSegmentations: []))
+            completion(.init(status: .success, customerSegmentations: nil))
             return
         }
         
@@ -88,7 +88,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             guard let response = response,
                   response.status == .success else {
                 Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
-                completion(.init(status: .unknown, customerSegmentations: []))
+                completion(.init(status: .unknown, customerSegmentations: nil))
                 return
             }
             

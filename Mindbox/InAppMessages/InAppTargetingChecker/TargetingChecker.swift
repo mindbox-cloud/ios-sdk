@@ -9,7 +9,7 @@ import Foundation
 
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
-    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] { get set }
+    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? { get set }
     var geoModels: InAppGeoResponse? { get set }
 }
 
@@ -36,7 +36,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol, TargetingCheck
     }
     
     var context = PreparationContext()
-    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation] = []
+    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? = nil
     var geoModels: InAppGeoResponse?
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]

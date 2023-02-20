@@ -28,13 +28,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
         configManager: InAppConfigurationManagerProtocol,
-        segmentationChecker: InAppSegmentationCheckerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
-        self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
         self.serialQueue = serialQueue
@@ -43,7 +41,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
 
     private let configManager: InAppConfigurationManagerProtocol
-    private let segmentationChecker: InAppSegmentationCheckerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
     private var isConfigurationReady = false
@@ -99,10 +96,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         // No need to check targenting if first inapp has no any taggeting
         if let firstInapp = inAppRequest.possibleInApps.first {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
-        } else {
-            segmentationChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
-                self.onReceivedInAppResponse(inAppResponse)
-            }
         }
     }
 

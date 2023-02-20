@@ -50,7 +50,6 @@ final class DependencyProvider: DependencyContainer {
                                                                    inAppsVersion: inAppsSdkVersion,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher())),
-            segmentationChecker: InAppSegmentationChecker(customerSegmentsAPI: .live),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
