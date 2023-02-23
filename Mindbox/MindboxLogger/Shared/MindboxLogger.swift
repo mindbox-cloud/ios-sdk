@@ -7,7 +7,7 @@
 //
 
 import Foundation
-
+ 
 class Logger {
     private typealias Meta = (filename: String, line: Int, funcName: String)
     private typealias Borders = (start: String, end: String)
@@ -23,13 +23,15 @@ class Logger {
         header += subsystem ?? self.subsystem + " "
         header += category.emoji + " "
         header += level.emoji + " "
-        header += Date().toString() + " "
+        let timestamp = Date()
+        header += timestamp.toString() + " "
 
         header += "\n[\(sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
         
         MBLogger.shared.log(
             level: level,
             message: borders.start + message + borders.end,
+            date: timestamp,
             category: category,
             subsystem: subsystem ?? "cloud.Mindbox"
         )
@@ -176,24 +178,6 @@ class Logger {
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("", "\n")
         log(message: message, level: level, category: category, meta: meta, borders: borders, subsystem: subsystem)
-    }
-}
-
-internal extension Date {
-    func toString() -> String {
-        return Date.dateFormatter.string(from: self as Date)
-    }
-
-    func toFullString() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        return dateFormatter.string(from: self as Date)
-    }
-    
-    static var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "hh:mm:ss.SSSS"
-        return formatter
     }
 }
 

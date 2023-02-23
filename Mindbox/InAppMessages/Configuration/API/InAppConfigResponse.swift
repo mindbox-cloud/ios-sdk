@@ -8,7 +8,8 @@
 import Foundation
 
 struct InAppConfigResponse: Decodable {
-  let inapps: [InApp]
+    let inapps: [InApp]
+    let monitoring: Monitoring?
 }
 
 extension InAppConfigResponse {
@@ -22,6 +23,17 @@ extension InAppConfigResponse {
     struct SdkVersion: Decodable {
         let min: Int
         let max: Int?
+    }
+    
+    struct Monitoring: Decodable {
+        let logs: [Logs]
+        
+        struct Logs: Decodable {
+            let requestId: String
+            let deviceUUID: String
+            let from: String
+            let to: String
+        }
     }
 }
 

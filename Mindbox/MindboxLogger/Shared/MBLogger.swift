@@ -8,6 +8,7 @@
 
 import Foundation
 import os
+import CoreData
 
 public class MBLogger {
     
@@ -41,7 +42,18 @@ public class MBLogger {
         #endif
     }
 
-    func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
+    func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
+
+        switch executionMethod {
+        case let .async(queue: queue):
+            queue.async {
+                self.writeToCD(message: message, timestamp: date)
+            }
+        case let .sync(lock: lock):
+            lock.lock(); defer { lock.unlock() }
+            self.writeToCD(message: message, timestamp: date)
+        }
+
         guard logLevel.rawValue <= level.rawValue else {
             return
         }
@@ -50,9 +62,12 @@ public class MBLogger {
             return
         }
         let writer = makeWriter(subsystem: subsystem, category: category)
+        
         switch executionMethod {
         case let .async(queue: queue):
-            queue.async { writer.writeMessage(message, logLevel: level) }
+            queue.async {
+                writer.writeMessage(message, logLevel: level)
+            }
         case let .sync(lock: lock):
             lock.lock(); defer { lock.unlock() }
             writer.writeMessage(message, logLevel: level)
@@ -93,8 +108,18 @@ public class MBLogger {
                       line: line,
                       funcName: funcName)
     }
-    
+}
+
+private extension MBLogger {
     private func makeWriter(subsystem: String, category: LogCategory) -> LogWriter {
         return OSLogWriter(subsystem: subsystem, category: category.rawValue.capitalized)
+    }
+    
+    private func writeToCD(message: String, timestamp: Date = Date()) {
+        do {
+            try MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
+        } catch {
+            
+        }
     }
 }
