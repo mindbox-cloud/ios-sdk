@@ -14,10 +14,11 @@ class MBLoggerCoreDataManager {
     
     private enum Constants {
         static let model = "CDLogMessage"
-        static let dbSizeLimitKB: Int = 10000
+        static let dbSizeLimitKB: Int = 10_000
         static let operationLimitBeforeNeedToDelete = 20
     }
     
+    private let queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
     private var persistentStoreDescription: NSPersistentStoreDescription?
     private var writeCount = 0 {
         didSet {
@@ -50,17 +51,17 @@ class MBLoggerCoreDataManager {
     
     // MARK: - CRUD Operations
     public func create(message: String, timestamp: Date) throws {
+        let isTimeToDelete = writeCount == 0
+        writeCount += 1
+        if isTimeToDelete && getDBFileSize() > Constants.dbSizeLimitKB {
+            try delete()
+        }
+        
         try self.context.performAndWait {
             let entity = CDLogMessage(context: self.context)
             entity.message = message
             entity.timestamp = timestamp
             try self.saveEvent(withContext: self.context)
-        }
-        
-        let isTimeToDelete = writeCount == 0
-        writeCount += 1
-        if isTimeToDelete && getDBFileSize() > Constants.dbSizeLimitKB {
-            try delete()
         }
     }
     
@@ -121,12 +122,12 @@ class MBLoggerCoreDataManager {
             request.includesPropertyValues = false
             let results = try context.fetch(request)
 
-            for item in results {
-                context.delete(item as! NSManagedObject)
+            results.compactMap { $0 as? NSManagedObject }.forEach {
+                context.delete($0)
             }
 
             try saveEvent(withContext: context)
-            DispatchQueue.global(qos: .utility).async {
+            queue.async {
                 Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
             }
         }
@@ -137,8 +138,8 @@ class MBLoggerCoreDataManager {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             request.includesPropertyValues = false
             let results = try context.fetch(request)
-            for item in results {
-                context.delete(item as! NSManagedObject)
+            results.compactMap { $0 as? NSManagedObject }.forEach {
+                context.delete($0)
             }
             try saveEvent(withContext: context)
         }
