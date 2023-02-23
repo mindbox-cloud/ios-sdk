@@ -34,6 +34,39 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         XCTAssertEqual(fetchResult[0].timestamp, timestamp)
     }
     
+    func testFetchFirstLog() throws {
+        let message1 = "Test message 1"
+        let message2 = "Test message 2"
+        let message3 = "Test message 3"
+        let timestamp1 = Date().addingTimeInterval(-60)
+        let timestamp2 = Date().addingTimeInterval(-30)
+        let timestamp3 = Date()
+        try manager.create(message: message1, timestamp: timestamp1)
+        try manager.create(message: message2, timestamp: timestamp2)
+        try manager.create(message: message3, timestamp: timestamp3)
+        
+        let fetchResult = try manager.getFirstLog()
+        XCTAssertNotNil(fetchResult)
+        XCTAssertEqual(fetchResult!.message, message1)
+        XCTAssertEqual(fetchResult!.timestamp, timestamp1)
+    }
+    
+    func testFetchLastLog() throws {
+        let message1 = "Test message 1"
+        let message2 = "Test message 2"
+        let message3 = "Test message 3"
+        let timestamp1 = Date().addingTimeInterval(-60)
+        let timestamp2 = Date().addingTimeInterval(-30)
+        let timestamp3 = Date()
+        try manager.create(message: message1, timestamp: timestamp1)
+        try manager.create(message: message2, timestamp: timestamp2)
+        try manager.create(message: message3, timestamp: timestamp3)
+        
+        let fetchResult = try manager.getLastLog()
+        XCTAssertEqual(fetchResult!.message, message3)
+        XCTAssertEqual(fetchResult!.timestamp, timestamp3)
+    }
+    
     func testFetchPeriod() throws {
         let message1 = "Test message 1"
         let message2 = "Test message 2"
@@ -54,6 +87,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
     
     func testDelete_10_percents() throws {
+        try manager.deleteAll()
         let message = "Test message"
         let timestamp = Date()
         for _ in 0..<10 {

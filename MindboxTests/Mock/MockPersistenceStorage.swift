@@ -77,6 +77,8 @@ class MockPersistenceStorage: PersistenceStorage {
     }
 
     var shownInAppsIds: [String]?
+    
+    var handledlogRequestIds: [String]?
 
     func reset() {
         installationDate = nil
