@@ -43,8 +43,17 @@ public class MBLogger {
     }
 
     func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
-        writeToCD(message: message, timestamp: date)
-        
+
+        switch executionMethod {
+        case let .async(queue: queue):
+            queue.async {
+                self.writeToCD(message: message, timestamp: date)
+            }
+        case let .sync(lock: lock):
+            lock.lock(); defer { lock.unlock() }
+            self.writeToCD(message: message, timestamp: date)
+        }
+
         guard logLevel.rawValue <= level.rawValue else {
             return
         }
@@ -99,25 +108,6 @@ public class MBLogger {
                       line: line,
                       funcName: funcName)
     }
-    
-    // MARK: - Delete it after debug
-    public func fetchPeriod(_ from: Date, _ to: Date) {
-        do {
-            try MBLoggerCoreDataManager.shared.fetchPeriod(from, to)
-        } catch { }
-    }
-    
-    public func fetch() {
-        do {
-            try MBLoggerCoreDataManager.shared.fetchAll()
-        } catch { }
-    }
-    
-    public func delete() {
-        do {
-            try MBLoggerCoreDataManager.shared.delete()
-        } catch { }
-    }
 }
 
 private extension MBLogger {
@@ -129,7 +119,7 @@ private extension MBLogger {
         do {
             try MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
         } catch {
-            assertionFailure()
+            
         }
     }
 }

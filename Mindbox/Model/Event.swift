@@ -21,6 +21,8 @@ struct Event {
 
         case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
+        
+        case sdkLogs = "MobileSdk.Logs"
     }
     
     let transactionId: String
