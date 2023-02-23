@@ -1,17 +1,15 @@
 //
-//  NSManagedObject+.swift
-//  Mindbox
+//  Extension.swift
+//  MindboxLogger
 //
-//  Created by Maksim Kazachkov on 04.02.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Created by Akylbek Utekeshev on 06.02.2023.
+//  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
 import Foundation
-
 import CoreData
 
-extension NSManagedObjectContext {
-    
+public extension NSManagedObjectContext {
     func performAndWait<T>(_ block: () throws -> T) rethrows -> T {
         return try _performAndWaitHelper(
             fn: performAndWait, execute: block, rescue: { throw $0 }
@@ -44,5 +42,4 @@ extension NSManagedObjectContext {
             return result!
         }
     }
-    
 }

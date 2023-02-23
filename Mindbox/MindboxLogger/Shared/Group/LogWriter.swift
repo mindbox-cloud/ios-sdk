@@ -24,7 +24,6 @@ class OSLogWriter: LogWriter {
     func writeMessage(_ message: String, logLevel: LogLevel) {
         os_log("%{public}@", log: log, type: logLevel.asOSLogType, message)
     }
-
 }
 
 fileprivate extension LogLevel {
