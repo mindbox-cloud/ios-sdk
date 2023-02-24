@@ -14,7 +14,6 @@ import XCTest
 class InAppCoreManagerTests: XCTestCase {
 
     var configManager: InAppConfigurationManagerMock!
-    var segmentationChecker: InAppSegmentationCheckerMock!
     var presentationManager: InAppPresentationManagerMock!
     var persistenceStorage: MockPersistenceStorage!
     var serialQueue: DispatchQueue!
@@ -22,14 +21,12 @@ class InAppCoreManagerTests: XCTestCase {
 
     override func setUpWithError() throws {
         configManager = InAppConfigurationManagerMock()
-        segmentationChecker = InAppSegmentationCheckerMock()
         presentationManager = InAppPresentationManagerMock()
         persistenceStorage = MockPersistenceStorage()
         serialQueue = DispatchQueue(label: "core-manager-tests")
 
         sut = InAppCoreManager(
             configManager: configManager,
-            segmentationChecker: segmentationChecker,
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage,
             serialQueue: serialQueue
@@ -43,17 +40,8 @@ class InAppCoreManagerTests: XCTestCase {
                 inAppId: "in-app-1"
             )
         ]
-        let inAppCheckRequest = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
         configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-1", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
-        
-        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-1")
-        
-        segmentationChecker.getInAppToPresent(request: inAppCheckRequest,
-                                              completionQueue: .main) { inappResponse in
-            
-        }
-
 
         sut.start()
         configManager.delegate?.didPreparedConfiguration()
@@ -61,7 +49,6 @@ class InAppCoreManagerTests: XCTestCase {
         serialQueue.async { serialQueueFinishExpectation.fulfill() }
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
-        XCTAssertEqual(segmentationChecker.requestReceived, inAppCheckRequest)
         XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageUrl, URL(string: "image-url")!)
     }
 
@@ -76,7 +63,6 @@ class InAppCoreManagerTests: XCTestCase {
             )
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
-        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
         configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-without-segmentation", imageUrl: URL(string: "image-url")!, redirectUrl: "", intentPayload: "")
 
         sut.start()
@@ -85,7 +71,6 @@ class InAppCoreManagerTests: XCTestCase {
         serialQueue.async { serialQueueFinishExpectation.fulfill() }
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
-        XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertEqual(presentationManager.receivedInAppUIModel?.imageUrl, URL(string: "image-url")!)
     }
 
@@ -96,7 +81,6 @@ class InAppCoreManagerTests: XCTestCase {
             .init(inAppId: "in-app-with-segmentation")
         ]
         configManager.buildInAppRequestResult = InAppsCheckRequest(triggerEvent: triggerEvent, possibleInApps: inAppsFromRequest)
-        segmentationChecker.inAppToPresentResult = InAppResponse(triggerEvent: triggerEvent, inAppToShowId: "in-app-with-segmentation")
         configManager.inAppFormDataResult = InAppFormData(inAppId: "in-app-with-segmentation",
                                                           imageUrl: URL(string: "image-url")!,
                                                           redirectUrl: "",
@@ -111,7 +95,6 @@ class InAppCoreManagerTests: XCTestCase {
         serialQueue.async { serialQueueFinishExpectation.fulfill() }
 
         self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
-        XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertEqual(presentationManager.presentCallsCount, 1)
     }
 
@@ -155,7 +138,6 @@ class InAppCoreManagerTests: XCTestCase {
 
         waitForCoreManagerQueueFinished()
 
-        XCTAssertNil(segmentationChecker.requestReceived)
         XCTAssertNil(configManager.receivedInAppResponse)
     }
 
