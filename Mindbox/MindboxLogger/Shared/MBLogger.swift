@@ -1,16 +1,18 @@
 //
-//  Loger.swift
+//  MBLogger.swift
 //  Mindbox
 //
-//  Created by Mikhail Barilov on 13.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Created by Akylbek Utekeshev on 02.02.2023.
+//  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
 import Foundation
 import os
+import CoreData
 
-@objcMembers
-public class MBLogger: NSObject {
+public class MBLogger {
+    
+    public static let shared = MBLogger()
     
     /**
      ### Levels:
@@ -23,7 +25,7 @@ public class MBLogger: NSObject {
      
      - Note: `.error` by default; `.none` for disable logging
      */
-    public var logLevel: LogLevel = .error
+    public var logLevel: LogLevel = .debug
         
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)
@@ -32,16 +34,26 @@ public class MBLogger: NSObject {
     
     private let executionMethod: ExecutionMethod
     
-    public override init() {
+    private init() {
         #if DEBUG
             executionMethod = .sync(lock: NSRecursiveLock())
         #else
             executionMethod = .async(queue: DispatchQueue(label: "Mindbox.serial.log.queue", qos: .utility))
         #endif
-        super.init()
     }
 
-    func log(level: LogLevel, message: String, category: LogCategory, subsystem: String) {
+    func log(level: LogLevel, message: String, date: Date, category: LogCategory, subsystem: String) {
+
+        switch executionMethod {
+        case let .async(queue: queue):
+            queue.async {
+                self.writeToCD(message: message, timestamp: date)
+            }
+        case let .sync(lock: lock):
+            lock.lock(); defer { lock.unlock() }
+            self.writeToCD(message: message, timestamp: date)
+        }
+
         guard logLevel.rawValue <= level.rawValue else {
             return
         }
@@ -50,9 +62,12 @@ public class MBLogger: NSObject {
             return
         }
         let writer = makeWriter(subsystem: subsystem, category: category)
+        
         switch executionMethod {
         case let .async(queue: queue):
-            queue.async { writer.writeMessage(message, logLevel: level) }
+            queue.async {
+                writer.writeMessage(message, logLevel: level)
+            }
         case let .sync(lock: lock):
             lock.lock(); defer { lock.unlock() }
             writer.writeMessage(message, logLevel: level)
@@ -84,16 +99,27 @@ public class MBLogger: NSObject {
         line: Int = #line,
         funcName: String = #function
     ) {
-        Log(message)
-            .meta(filename: fileName, line: line, funcName: funcName)
-            .subsystem(Mindbox.shared.container?.utilitiesFetcher.hostApplicationName ?? "cloud.Mindbox.UndefinedHostApplication")
-            .level(level)
-            .category(.general)
-            .make()
+        let subsystem = Bundle.main.bundleIdentifier ?? "cloud.Mindbox.UndefinedHostApplication"
+        Logger.common(message: message,
+                      level: level,
+                      category: .general,
+                      subsystem: subsystem,
+                      fileName: fileName,
+                      line: line,
+                      funcName: funcName)
     }
-    
+}
+
+private extension MBLogger {
     private func makeWriter(subsystem: String, category: LogCategory) -> LogWriter {
         return OSLogWriter(subsystem: subsystem, category: category.rawValue.capitalized)
     }
     
+    private func writeToCD(message: String, timestamp: Date = Date()) {
+        do {
+            try MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
+        } catch {
+            
+        }
+    }
 }

@@ -123,11 +123,9 @@ class MBPersistenceStorage: PersistenceStorage {
         do {
             let data = try encoder.encode(backgroundExecutions)
             try data.write(to: path)
-            Log("Successfully storeToFileBackgroundExecution")
-                .category(.general).level(.info).make()
+            Logger.common(message: "Successfully storeToFileBackgroundExecution")
         } catch {
-            Log("StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
-                .category(.general).level(.info).make()
+            Logger.common(message: "StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
         }
     }
     
@@ -161,6 +159,9 @@ class MBPersistenceStorage: PersistenceStorage {
 
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
+    
+    @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
+    var handledlogRequestIds: [String]?
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
@@ -244,6 +245,7 @@ extension MBPersistenceStorage {
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
         }
         
         private let key: Key

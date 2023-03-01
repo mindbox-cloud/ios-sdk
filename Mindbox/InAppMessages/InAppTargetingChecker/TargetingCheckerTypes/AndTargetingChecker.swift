@@ -8,7 +8,7 @@
 import Foundation
 
 final class AndTargetingChecker: InternalTargetingChecker<AndTargeting> {
-    weak var checker: TargetingCheckerMap?
+    weak var checker: InAppTargetingCheckerProtocol?
     
     override func prepareInternal(targeting: AndTargeting, context: inout PreparationContext) -> Void {
         for node in targeting.nodes {
@@ -24,6 +24,26 @@ final class AndTargetingChecker: InternalTargetingChecker<AndTargeting> {
     override func checkInternal(targeting: AndTargeting) -> Bool {
         guard let checker = checker else {
             return false
+        }
+        
+        for node in targeting.nodes {
+            if case .segment = node {
+                if checker.checkedSegmentations == nil {
+                    return false
+                }
+            } else if case .city = node {
+                if checker.geoModels == nil {
+                    return false
+                }
+            } else if case .region = node {
+                if checker.geoModels == nil {
+                    return false
+                }
+            } else if case .country = node {
+                if checker.geoModels == nil {
+                    return false
+                }
+            }
         }
         
         for node in targeting.nodes {

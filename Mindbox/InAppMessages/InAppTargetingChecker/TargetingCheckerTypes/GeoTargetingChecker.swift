@@ -19,9 +19,12 @@ final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
             return false
         }
         
-        let geoModel = checker.geoModels
+        guard let geoModel = checker.geoModels else {
+            return false
+        }
+        
         let segment = targeting.ids.first(where: {
-            $0 == geoModel?.city
+            $0 == geoModel.city
         })
         
         switch targeting.kind {
@@ -45,9 +48,12 @@ final class RegionTargetingChecker: InternalTargetingChecker<RegionTargeting> {
             return false
         }
         
-        let geoModel = checker.geoModels
+        guard let geoModel = checker.geoModels else {
+            return false
+        }
+        
         let segment = targeting.ids.first(where: {
-            $0 == geoModel?.region
+            $0 == geoModel.region
         })
         
         switch targeting.kind {
@@ -71,9 +77,12 @@ final class CountryTargetingChecker: InternalTargetingChecker<CountryTargeting> 
             return false
         }
         
-        let geoModel = checker.geoModels
+        guard let geoModel = checker.geoModels else {
+            return false
+        }
+        
         let segment = targeting.ids.first(where: {
-            $0 == geoModel?.country
+            $0 == geoModel.country
         })
         
         switch targeting.kind {

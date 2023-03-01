@@ -41,6 +41,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
         
         if inapps.isEmpty {
+            Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(InAppConfig(inAppsByEvent: [:]))
             return
         }
@@ -77,7 +78,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
         
         if segments.isEmpty {
-            completion(.init(status: .success, customerSegmentations: []))
+            completion(.init(status: .success, customerSegmentations: nil))
             return
         }
         
@@ -86,10 +87,12 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         customerSegmentsAPI.fetchSegments(model) { response in
             guard let response = response,
                   response.status == .success else {
-                completion(.init(status: .unknown, customerSegmentations: []))
+                Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
+                completion(.init(status: .unknown, customerSegmentations: nil))
                 return
             }
             
+            Logger.common(message: "Customer Segment response: \n\(response)")
             completion(response)
         }
     }
@@ -101,8 +104,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             case .success(let result):
                 completion(result)
             case .failure(let error):
-                Log("Failed to download InApp Geo Data. Error: \(error.localizedDescription).")
-                    .category(.inAppMessages).level(.error).make()
+                Logger.error(error)
                 completion(nil)
             }
         }

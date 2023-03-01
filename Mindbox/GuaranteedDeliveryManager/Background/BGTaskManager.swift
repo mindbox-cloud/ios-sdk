@@ -61,8 +61,8 @@ class BGTaskManager: BackgroundTaskManagerType {
         guard appGDRefreshTask != nil, appGDProcessingTask != nil else {
             return
         }
-        Log("Did call EndBackgroundTask")
-            .category(.background).level(.info).make()
+        
+        Logger.common(message: "Did call EndBackgroundTask", level: .info, category: .background)
         appGDRefreshTask?.setTaskCompleted(success: success)
         appGDProcessingTask?.setTaskCompleted(success: success)
     }
@@ -81,27 +81,26 @@ class BGTaskManager: BackgroundTaskManagerType {
     // MARK: - Shedulers
     private func scheduleAppGDRefreshTask() {
         guard let identifier = appGDRefreshIdentifier else {
+            Logger.common(message: "appGDRefreshIdentifier is nil", level: .error, category: .background)
             return
         }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: Constants.Background.refreshTaskInterval)
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled BGAppRefreshTaskRequest with beginDate: \(String(describing: request.earliestBeginDate))", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app refresh task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app refresh task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app refresh task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app refresh task with error: \(error.localizedDescription)", level: .fault, category: .background)
             #endif
         }
     }
     
     private func scheduleAppGDProcessingTask() {
         guard let identifier = appGDProcessingIdentifier else {
+            Logger.common(message: "appGDProcessingIdentifier is nil", level: .error, category: .background)
             return
         }
         let request = BGProcessingTaskRequest(identifier: identifier)
@@ -109,21 +108,19 @@ class BGTaskManager: BackgroundTaskManagerType {
         request.requiresExternalPower = false
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled SendEventsBGProcessingTaskRequest")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled SendEventsBGProcessingTaskRequest", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app processing task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app processing task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app processing task with error: \(error.localizedDescription)", level: .fault, category: .background)
             #endif
         }
     }
     
     private func scheduleAppDBCleanProcessingTaskIfNeeded() {
         guard let identifier = appDBCleanProcessingIdentifire else {
+            Logger.common(message: "appDBCleanProcessingIdentifire is nil", level: .error, category: .background)
             return
         }
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
@@ -141,15 +138,12 @@ class BGTaskManager: BackgroundTaskManagerType {
         request.requiresExternalPower = false
         do {
             try BGTaskScheduler.shared.submit(request)
-            Log("Scheduled BGProcessingTaskRequest")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Scheduled BGProcessingTaskRequest", level: .info, category: .background)
         } catch {
             #if targetEnvironment(simulator)
-            Log("Could not schedule app processing task for simulator")
-                .category(.background).level(.info).make()
+            Logger.common(message: "Could not schedule app processing task for simulator", level: .info, category: .background)
             #else
-            Log("Could not schedule app processing task with error: \(error.localizedDescription)")
-                .category(.background).level(.fault).make()
+            Logger.common(message: "Could not schedule app processing task with error: \(error.localizedDescription)", level: .info, category: .background)
             #endif
             
         }
@@ -157,8 +151,7 @@ class BGTaskManager: BackgroundTaskManagerType {
     
     // MARK: - Handlers
     private func appGDRefreshHandler(task: BGTask) {
-        Log("Invoked appGDRefreshHandler")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked appGDRefreshHandler", level: .info, category: .background)
         guard let task = task as? BGAppRefreshTask else {
             return
         }
@@ -173,8 +166,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         scheduleAppGDRefreshTask()
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
-            Log("System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGAppRefreshTask: \(task.debugDescription)", level: .info, category: .background)
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDRefreshIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDRefreshTask.debugDescription,
@@ -188,13 +180,11 @@ class BGTaskManager: BackgroundTaskManagerType {
             }
         }
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("GDAppRefresh task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "GDAppRefresh task started", level: .info, category: .background)
     }
     
     private func appGDProcessingHandler(task: BGTask) {
-        Log("Invoked appGDAppProcessingHandler")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked appGDAppProcessingHandler", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {
             return
         }
@@ -208,8 +198,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         persistenceStorage.setBackgroundExecution(backgroudExecution)
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
-            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)", level: .info, category: .background)
             let backgroudExecution = BackgroudExecution(
                 taskID: self.appGDProcessingIdentifier ?? "appGDRefreshIdentifier nil",
                 taskName: self.appGDProcessingIdentifier.debugDescription,
@@ -223,13 +212,11 @@ class BGTaskManager: BackgroundTaskManagerType {
             }
         }
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("GDAppProcessing task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "GDAppProcessing task started", level: .info, category: .background)
     }
     
     private func appDBCleanProcessingHandler(task: BGTask) {
-        Log("Invoked removeDeprecatedEventsProcessing")
-            .category(.background).level(.info).make()
+        Logger.common(message: "Invoked removeDeprecatedEventsProcessing", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {
             return
         }
@@ -244,15 +231,13 @@ class BGTaskManager: BackgroundTaskManagerType {
             task.setTaskCompleted(success: !operation.isCancelled)
         }
         task.expirationHandler = { [self] in
-            Log("System calls expirationHandler for BGProcessingTask: \(task.debugDescription)")
-                .category(.background).level(.info).make()
+            Logger.common(message: "System calls expirationHandler for BGProcessingTask: \(task.debugDescription)", level: .info, category: .background)
             persistenceStorage.deprecatedEventsRemoveDate = Date()
             queue.cancelAllOperations()
         }
         queue.addOperation(operation)
         Mindbox.shared.coreController?.checkNotificationStatus()
-        Log("removeDeprecatedEventsProcessing task started")
-            .category(.background).level(.info).make()
+        Logger.common(message: "removeDeprecatedEventsProcessing task started", level: .info, category: .background)
     }
 
 }

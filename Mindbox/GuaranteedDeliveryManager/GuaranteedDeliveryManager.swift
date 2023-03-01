@@ -35,15 +35,13 @@ final class GuaranteedDeliveryManager: NSObject {
     private(set) var state: State = .idle {
         didSet {
             stateObserver = NSString(string: state.rawValue)
-            Log("State didSet to value: \(state.description)")
-                .category(.delivery).level(.info).make()
+            Logger.common(message: "State didSet to value: \(state.description)", level: .info, category: .delivery)
         }
     }
     
     var canScheduleOperations = false {
         didSet {
-            Log("canScheduleOperation didSet to value: \(canScheduleOperations)")
-                .category(.delivery).level(.info).make()
+            Logger.common(message: "canScheduleOperation didSet to value: \(canScheduleOperations)", level: .info, category: .delivery)
             performScheduleIfNeeded()
         }
     }
@@ -97,30 +95,27 @@ final class GuaranteedDeliveryManager: NSObject {
     private func scheduleOperations(fetchLimit: Int) {
         semaphore.wait()
         guard !state.isDelivering else {
-            Log("Delivering. Ignore another schedule operation.")
-                .category(.delivery).level(.info).make()
+            Logger.common(message: "Delivering. Ignore another schedule operation.", level: .info, category: .delivery)
             semaphore.signal()
             return
         }
-        Log("Start enqueueing events")
-            .category(.delivery).level(.info).make()
+        Logger.common(message: "Start enqueueing events", level: .info, category: .delivery)
         state = .delivering
         semaphore.signal()
         guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline) else {
+            Logger.common(message: "Database Repository query events is nil", level: .info, category: .delivery)
             state = .idle
             return
         }
         guard !events.isEmpty else {
             state = .waitingForRetry
-            Log("Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)")
-                .category(.delivery).level(.info).make()
+            Logger.common(message: "Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)", level: .info, category: .delivery)
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
         let completion = BlockOperation()
         completion.completionBlock = { [weak self] in
-            Log("Completion of GuaranteedDelivery queue with events count \(events.count)")
-                .category(.delivery).level(.info).make()
+            Logger.common(message: "Completion of GuaranteedDelivery queue with events count \(events.count)", level: .info, category: .background)
             self?.state = .idle
             self?.performScheduleIfNeeded()
         }
@@ -131,8 +126,7 @@ final class GuaranteedDeliveryManager: NSObject {
                 event: $0
             )
         }
-        Log("Enqueued events count: \(delivery.count)")
-            .category(.delivery).level(.info).make()
+        Logger.common(message: "Enqueued events count: \(delivery.count)", level: .info, category: .delivery)
         delivery.forEach {
             completion.addDependency($0)
             $0.onCompleted = onCompletedEvent // TODO: - remove

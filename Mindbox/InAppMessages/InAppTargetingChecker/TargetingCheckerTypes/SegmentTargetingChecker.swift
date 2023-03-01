@@ -20,7 +20,11 @@ final class SegmentTargetingChecker: InternalTargetingChecker<SegmentTargeting> 
             return false
         }
         
-        let segment = checker.checkedSegmentations.first(where: {
+        guard let checkedSegmentations = checker.checkedSegmentations else {
+            return false
+        }
+        
+        let segment = checkedSegmentations.first(where: {
             $0.segment?.ids?.externalId == targeting.segmentExternalId
         })
         

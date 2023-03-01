@@ -21,6 +21,8 @@ struct Event {
 
         case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
+        
+        case sdkLogs = "MobileSdk.Logs"
     }
     
     let transactionId: String
@@ -56,18 +58,15 @@ struct Event {
     
     init?(_ event: CDEvent) {
         guard let transactionId = event.transactionId else {
-            Log("Event with transactionId: nil")
-                .category(.database).level(.error).make()
+            Logger.common(message: "Event with transactionId: nil", level: .error, category: .database)
             return nil
         }
         guard let type = event.type, let operation = Event.Operation(rawValue: type) else {
-            Log("Event with type: nil")
-                .category(.database).level(.error).make()
+            Logger.common(message: "Event with type: nil", level: .error, category: .database)
             return nil
         }
         guard let body = event.body else {
-            Log("Event with body: nil")
-                .category(.database).level(.error).make()
+            Logger.common(message: "Event with body: nil", level: .error, category: .database)
             return nil
         }
         self.transactionId = transactionId

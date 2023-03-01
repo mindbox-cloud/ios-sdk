@@ -42,7 +42,8 @@ public class MindboxNotificationService: NSObject {
         guard let bestAttemptContent = bestAttemptContent else { return }
 
         pushDelivered(request)
-        Logger.log("Push notification UniqueKey: \(request.identifier)", type: .info)
+        
+        Logger.common(message: "Push notification UniqueKey: \(request.identifier)", level: .info, category: .notification)
 
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -58,7 +59,11 @@ public class MindboxNotificationService: NSObject {
     public func pushDelivered(_ request: UNNotificationRequest) {
         let utilities = MBUtilitiesFetcher()
         guard let configuration = utilities.configuration else {
-            Logger.log("No configuration", type: .error)
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            Logger.error(error)
             return
         }
         
@@ -68,15 +73,21 @@ public class MindboxNotificationService: NSObject {
         do {
             try deliveryService.track(request: request)
         } catch {
-            Logger.log("Push delivery error: \(error)", type: .error)
+            let errorModel = MindboxError.unknown(error)
+            Logger.error(errorModel)
         }
     }
 
     private func downloadImage(with url: URL, completion: @escaping () -> Void) {
-        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+        Logger.common(message: "Image loading. [URL]: \(url)", level: .info, category: .notification)
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             defer { completion() }
-            guard let self = self else { return }
-            guard let data = data else { return }
+            guard let self = self,
+                  let data = data else {
+                return
+            }
+            
+            Logger.response(data: data, response: response, error: error)
 
             if let attachment = self.saveImage(data) {
                 self.bestAttemptContent?.attachments = [attachment]
@@ -122,7 +133,9 @@ public class MindboxNotificationService: NSObject {
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
-                Logger.log("Button title: \($0.title), id: \($0.identifier)", type: .info)
+                Logger.common(message: "Button title: \($0.title), id: \($0.identifier)",
+                              level: .info,
+                              category: .notification)
                 context.notificationActions.append($0)
             }
         }
@@ -172,7 +185,7 @@ public class MindboxNotificationService: NSObject {
     private func saveImage(_ data: Data) -> UNNotificationAttachment? {
         let name = UUID().uuidString
         guard let format = ImageFormat(data) else {
-            // not an image
+            Logger.common(message: "Image load failed", level: .error, category: .notification)
             return nil
         }
         let url = URL(fileURLWithPath: NSTemporaryDirectory())

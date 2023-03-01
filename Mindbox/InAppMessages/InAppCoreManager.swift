@@ -28,13 +28,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
         configManager: InAppConfigurationManagerProtocol,
-        segmentationChecker: InAppSegmentationCheckerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
-        self.segmentationChecker = segmentationChecker
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
         self.serialQueue = serialQueue
@@ -43,7 +41,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
 
     private let configManager: InAppConfigurationManagerProtocol
-    private let segmentationChecker: InAppSegmentationCheckerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
     private var isConfigurationReady = false
@@ -56,15 +53,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     func start() {
         configManager.delegate = self
         configManager.prepareConfiguration()
-        sendEvent(.start)
     }
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
         serialQueue.async {
-            Log("Received event: \(event)")
-                .category(.inAppMessages).level(.debug).make()
-
+            Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             guard self.isConfigurationReady else {
                 self.unhandledEvents.append(event)
                 return
@@ -85,6 +79,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         inAppRequest.possibleInApps = inAppRequest.possibleInApps.filter {
             !alreadyShownInApps.contains($0.inAppId)
         }
+        
+        Logger.common(message: "Shown in-apps ids: [\(alreadyShownInApps)]", level: .info, category: .inAppMessages)
 //        #if DEBUG
 //        if let inAppDebug = inAppRequest.possibleInApps.first {
 //            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
@@ -92,15 +88,14 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 //        return
 //        #endif
 
-        guard !inAppRequest.possibleInApps.isEmpty else { return }
+        guard !inAppRequest.possibleInApps.isEmpty else {
+            Logger.common(message: "No inapps to show", level: .info, category: .inAppMessages)
+            return
+        }
 
         // No need to check targenting if first inapp has no any taggeting
         if let firstInapp = inAppRequest.possibleInApps.first {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
-        } else {
-            segmentationChecker.getInAppToPresent(request: inAppRequest, completionQueue: serialQueue) { inAppResponse in
-                self.onReceivedInAppResponse(inAppResponse)
-            }
         }
     }
 
@@ -110,6 +105,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         else { return }
         guard !isPresentingInAppMessage else { return }
         isPresentingInAppMessage = true
+        
+        Logger.common(message: "In-app with id \(inAppResponse.inAppToShowId) is going to be shown", level: .debug, category: .inAppMessages)
 
         presentationManager.present(
             inAppFormData: inAppFormData,
@@ -130,8 +127,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onError: { error in
                 switch error {
                 case .failedToLoadImages:
-                    Log("Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)")
-                        .category(.inAppMessages).level(.debug).make()
+                    Logger.common(message: "Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)", level: .debug, category: .inAppMessages)
                 }
                 self.serialQueue.async { self.isPresentingInAppMessage = false }
             }
@@ -139,8 +135,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     }
 
     private func handleQueuedEvents() {
-        Log("Start handling waiting events. Count: \(unhandledEvents.count)")
-            .category(.inAppMessages).level(.debug).make()
+        Logger.common(message: "Start handling waiting events. Count: \(unhandledEvents.count)", level: .debug, category: .inAppMessages)
         while unhandledEvents.count > 0 {
             let event = unhandledEvents.removeFirst()
             handleEvent(event)
@@ -150,6 +145,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
 extension InAppCoreManager: InAppConfigurationDelegate {
     func didPreparedConfiguration() {
+        sendEvent(.start)
         serialQueue.async {
             self.isConfigurationReady = true
             self.handleQueuedEvents()

@@ -34,7 +34,7 @@ class VersioningTestCase: XCTestCase {
             Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             do {
                 let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
                 events.forEach({

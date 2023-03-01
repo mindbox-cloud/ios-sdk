@@ -20,6 +20,7 @@ struct URLRequestBuilder {
         let components = makeURLComponents(for: route)
 
         guard let url = components.url else {
+            Logger.common(message: "Bad url. [URL]: \(String(describing: components.url))", level: .error, category: .network)
             throw URLError(.badURL)
         }
         

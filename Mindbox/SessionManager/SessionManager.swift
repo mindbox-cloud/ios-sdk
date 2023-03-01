@@ -21,8 +21,7 @@ final class SessionManager {
         do {
             try trackVisitManager.trackDirect()
         } catch {
-            Log("Track Visit failed with error: \(error)")
-                .category(.visit).level(.info).make()
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
         }
     }
 
@@ -30,8 +29,7 @@ final class SessionManager {
         do {
             try trackVisitManager.trackForeground()
         } catch {
-            Log("Track Visit failed with error: \(error)")
-                .category(.visit).level(.info).make()
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
         }
     }
 

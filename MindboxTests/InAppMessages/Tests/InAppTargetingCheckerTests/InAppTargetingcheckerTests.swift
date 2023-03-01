@@ -97,8 +97,8 @@ final class InAppTargetingcheckerTests: XCTestCase {
                                             segmentationInternalId: "-",
                                             segmentationExternalId: "123",
                                             segmentExternalId: "234")
-        
-        targetingChecker.checkedSegmentations.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "234"))
+        targetingChecker.checkedSegmentations = []
+        targetingChecker.checkedSegmentations?.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "234"))
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingSegment(model: segmentModel)))
     }
     
@@ -108,7 +108,7 @@ final class InAppTargetingcheckerTests: XCTestCase {
                                             segmentationExternalId: "123",
                                             segmentExternalId: "234")
         
-        targetingChecker.checkedSegmentations.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "233"))
+        targetingChecker.checkedSegmentations?.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "233"))
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingSegment(model: segmentModel)))
     }
     
@@ -117,8 +117,8 @@ final class InAppTargetingcheckerTests: XCTestCase {
                                             segmentationInternalId: "-",
                                             segmentationExternalId: "123",
                                             segmentExternalId: "234")
-        
-        targetingChecker.checkedSegmentations.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: nil))
+        targetingChecker.checkedSegmentations = []
+        targetingChecker.checkedSegmentations?.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: nil))
         XCTAssertTrue(targetingChecker.check(targeting: inAppStub.getTargetingSegment(model: segmentModel)))
     }
     
@@ -128,7 +128,7 @@ final class InAppTargetingcheckerTests: XCTestCase {
                                             segmentationExternalId: "123",
                                             segmentExternalId: "234")
         
-        targetingChecker.checkedSegmentations.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "234"))
+        targetingChecker.checkedSegmentations?.append(inAppStub.getCheckedSegmentation(segmentationID: "123", segmentID: "234"))
         XCTAssertFalse(targetingChecker.check(targeting: inAppStub.getTargetingSegment(model: segmentModel)))
     }
     

@@ -42,15 +42,15 @@ class MBNetworkFetcher: NetworkFetcher {
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
+            Logger.error(error)
             completion(.failure(error))
             return
         }
+        
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            #if DEBUG
-                Log(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders).withDate().make()
-            #endif
+            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             // Starting data task
             session.dataTask(with: urlRequest) { data, response, error in
                 self.handleResponse(data, response, error, needBaseResponse: needBaseResponse) { result in
@@ -61,16 +61,19 @@ class MBNetworkFetcher: NetworkFetcher {
                             let object = try decoder.decode(type, from: response)
                             completion(.success(object))
                         } catch {
-                            completion(.failure(.internalError(.init(errorKey: .parsing, rawError: error))))
+                            let errorModel: MindboxError = .internalError(.init(errorKey: .parsing, rawError: error))
+                            Logger.error(errorModel)
+                            completion(.failure(errorModel))
                         }
                     case let .failure(error):
+                        Logger.error(error)
                         completion(.failure(error))
                     }
                 }
             }.resume()
         } catch let error {
             let errorModel = MindboxError.unknown(error)
-            Log(error: errorModel).withDate().make()
+            Logger.error(errorModel)
             completion(.failure(errorModel))
         }
     }
@@ -84,15 +87,14 @@ class MBNetworkFetcher: NetworkFetcher {
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
+            Logger.error(error)
             completion(.failure(error))
             return
         }
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            #if DEBUG
-                Log(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders).withDate().make()
-            #endif
+            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             // Starting data task
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
                 self?.handleResponse(data, response, error, emptyData: true, completion: { result in
@@ -100,13 +102,14 @@ class MBNetworkFetcher: NetworkFetcher {
                     case .success:
                         completion(.success(()))
                     case let .failure(error):
+                        Logger.error(error)
                         completion(.failure(error))
                     }
                 })
             }.resume()
         } catch let error {
             let errorModel = MindboxError.unknown(error)
-            Log(error: errorModel).withDate().make()
+            Logger.error(errorModel)
             completion(.failure(errorModel))
         }
     }
@@ -119,16 +122,13 @@ class MBNetworkFetcher: NetworkFetcher {
         needBaseResponse: Bool = false,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
+        Logger.response(data: data, response: response, error: error)
+        
         // Check if we have any response at all
         guard let response = response else {
             completion(.failure(.connectionError))
             return
         }
-
-        // Log response if needed
-        #if DEBUG
-            Log(data: data, response: response, error: error).withDate().make()
-        #endif
 
         // Make sure we got the correct response type
         guard let httpResponse = response as? HTTPURLResponse else {

@@ -54,11 +54,11 @@ public class DeliveryService {
         switch semaphore.wait(wallTimeout: .now() + timeout) {
         case .success:
             let methodEnd = Date()
-            Logger.log("Finished operation in \(methodEnd.timeIntervalSince(methodStart)) sec", type: .debug)
+            Logger.common(message: "Finished operation in \(methodEnd.timeIntervalSince(methodStart)) sec", level: .debug, category: .delivery)
             return true
         case .timedOut:
             let methodEnd = Date()
-            Logger.log("Finished operation in \(methodEnd.timeIntervalSince(methodStart)) sec", type: .debug)
+            Logger.common(message: "Finished operation in \(methodEnd.timeIntervalSince(methodStart)) sec", level: .debug, category: .delivery)
             queue.cancelAllOperations()
             return false
         }
@@ -68,7 +68,7 @@ public class DeliveryService {
         let isConfigurationSet = utilitiesFetcher.configuration != nil
         guard isConfigurationSet else {
             semaphore.signal()
-            Logger.log("Can't find configuration", type: .info)
+            Logger.common(message: "Can't find configuration", level: .info, category: .delivery)
             return
         }
         let deliverOperation = PushDeliveryOperation(
@@ -76,7 +76,7 @@ public class DeliveryService {
             service: networkService
         )
         deliverOperation.onCompleted = { [weak self] _, _ in
-            Logger.log("Operation completed", type: .info)
+            Logger.common(message: "Operation completed", level: .info, category: .delivery)
             self?.semaphore.signal()
         }
         queue.addOperations([deliverOperation], waitUntilFinished: false)

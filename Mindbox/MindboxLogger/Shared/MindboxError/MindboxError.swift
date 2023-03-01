@@ -212,7 +212,7 @@ public struct InternalError: CustomStringConvertible {
         self.statusCode = statusCode
     }
     
-    init(
+    public init(
         errorKey: ErrorKey,
         reason: String? = nil,
         suggestion: String? = nil
@@ -262,4 +262,13 @@ public struct InternalError: CustomStringConvertible {
         
         return string
     }
+}
+
+public enum ErrorKey: String {
+    case general = "Error_general"
+    case parsing = "Error_parsing"
+    case invalidConfiguration = "Invalid_Configuration"
+    case unknownStatusKey = "Error_unknown_status_key"
+    case serverError = "Server_error"
+    case invalidAccess = "Invalid_Access"
 }
