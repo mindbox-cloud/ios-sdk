@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct SegmentationCheckRequest: OperationBodyRequestType {
     let segmentations: [Segmentation]

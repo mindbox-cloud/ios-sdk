@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class MBEventRepository: EventRepository {
     private let fetcher: NetworkFetcher

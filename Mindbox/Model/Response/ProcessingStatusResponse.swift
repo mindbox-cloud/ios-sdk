@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum ProcessingStatusResponse: String, UnknownCodable {
     case success = "Success"

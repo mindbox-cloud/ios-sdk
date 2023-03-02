@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum PeriodTypeResponse: String, UnknownCodable {
     case fixedDays = "FixedDays"

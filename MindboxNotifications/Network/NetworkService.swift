@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class NetworkService {
     private let session: URLSession

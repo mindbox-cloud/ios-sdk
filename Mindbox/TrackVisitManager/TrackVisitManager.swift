@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 final class TrackVisitManager {
     private let databaseRepository: MBDatabaseRepository

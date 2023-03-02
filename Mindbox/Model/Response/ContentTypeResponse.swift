@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum ContentTypeResponse: String, UnknownDecodable {
     case possibleDiscounts, text, unknown

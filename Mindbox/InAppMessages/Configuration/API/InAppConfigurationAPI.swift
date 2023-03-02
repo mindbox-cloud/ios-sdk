@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 enum InAppConfigurationAPIResult {
     case empty

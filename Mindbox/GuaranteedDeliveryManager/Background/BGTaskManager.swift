@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import BackgroundTasks
+import MindboxLogger
 
 
 @available(iOS 13.0, *)

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void

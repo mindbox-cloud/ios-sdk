@@ -21,6 +21,7 @@
 //  THE SOFTWARE.
 
 import Foundation
+import MindboxLogger
 
 // MARK: - Error
 

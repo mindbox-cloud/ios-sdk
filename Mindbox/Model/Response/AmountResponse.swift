@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 open class AmountResponse: Codable {
     public let type: AmountTypeResponse?

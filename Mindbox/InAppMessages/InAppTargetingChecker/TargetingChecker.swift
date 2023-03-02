@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }

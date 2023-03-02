@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MindboxLogger
 
 class BackgroundTaskManagerProxy {
     
