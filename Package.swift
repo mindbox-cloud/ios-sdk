@@ -21,19 +21,23 @@ let package = Package(
     targets: [
         .target(
             name: "Mindbox",
-            dependencies: ["SDKVersionProvider, MindboxLogger"],
+            dependencies: ["SDKVersionProvider", "MindboxLogger"],
             path: "Mindbox",
             exclude: ["Info.plist"]
         ),
         .target(
             name: "MindboxNotifications",
-            dependencies: ["SDKVersionProvider, MindboxLogger"],
+            dependencies: ["SDKVersionProvider", "MindboxLogger"],
             path: "MindboxNotifications",
             exclude:  ["Info.plist"]
         ),
         .target(
             name: "SDKVersionProvider",
             path: "SDKVersionProvider"
+        ),
+        .target(
+            name: "MindboxLogger",
+            path: "MindboxLogger"
         )
     ]
 )
