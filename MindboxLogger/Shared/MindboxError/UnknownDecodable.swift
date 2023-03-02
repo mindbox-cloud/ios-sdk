@@ -8,12 +8,11 @@
 
 import Foundation
 
-
 public protocol UnknownDecodable: Decodable {}
 
-typealias UnknownCodable = Encodable & UnknownDecodable
+public typealias UnknownCodable = Encodable & UnknownDecodable
 
-extension UnknownDecodable where Self: RawRepresentable, Self.RawValue == String {
+public extension UnknownDecodable where Self: RawRepresentable, Self.RawValue == String {
     public init(from decoder: Decoder) throws {
         let unknownCase = Self(rawValue: "unknown")
         do {

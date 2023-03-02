@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Date {
+public extension Date {
     func toString() -> String {
         return Date.dateFormatter.string(from: self as Date)
     }
