@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol EventRepository {
     func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void)

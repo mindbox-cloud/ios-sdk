@@ -9,11 +9,11 @@
 import Foundation
 import CoreData
 
-class MBPersistentContainer: NSPersistentContainer {
+public class MBPersistentContainer: NSPersistentContainer {
     
-    static var applicationGroupIdentifier: String? = nil
+    public static var applicationGroupIdentifier: String? = nil
         
-    override class func defaultDirectoryURL() -> URL {
+    public override class func defaultDirectoryURL() -> URL {
         guard let applicationGroupIdentifier = applicationGroupIdentifier else {
             return super.defaultDirectoryURL()
         }

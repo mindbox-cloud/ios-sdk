@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum AmountTypeResponse: String, UnknownCodable {
     case quantity, discountAmount, unknown

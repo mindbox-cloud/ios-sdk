@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum AppliedPromotionTypeResponse: String, UnknownCodable {
     case discount

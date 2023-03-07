@@ -8,7 +8,7 @@
 
 import Foundation
  
-class Logger {
+public class Logger {
     private typealias Meta = (filename: String, line: Int, funcName: String)
     private typealias Borders = (start: String, end: String)
     
@@ -37,7 +37,7 @@ class Logger {
         )
     }
     
-    static func error(_ error: MindboxError,
+    public static func error(_ error: MindboxError,
                       level: LogLevel = .error,
                       category: LogCategory = .network,
                       fileName: String = #file,
@@ -78,7 +78,7 @@ class Logger {
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
     
-    static func network(request: URLRequest,
+    public static func network(request: URLRequest,
                         httpAdditionalHeaders: [AnyHashable: Any]? = nil,
                         fileName: String = #file,
                         line: Int = #line,
@@ -118,7 +118,7 @@ class Logger {
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
     
-    static func response(data: Data?,
+    public static func response(data: Data?,
                          response: URLResponse?,
                          error: Error?,
                          fileName: String = #file,
@@ -168,7 +168,7 @@ class Logger {
         log(message: message, level: level, category: .network, meta: meta, borders: borders)
     }
     
-    static func common(message: String,
+    public static func common(message: String,
                        level: LogLevel = .debug,
                        category: LogCategory = .general,
                        subsystem: String? = nil,

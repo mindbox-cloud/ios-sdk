@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class BaseResponse: Decodable {
     var status: Status = .unknown

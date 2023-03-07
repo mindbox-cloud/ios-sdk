@@ -8,6 +8,7 @@
 
 import Foundation
 import UserNotifications
+import MindboxLogger
 
 struct NotificationDecoder<T: Codable> {
     

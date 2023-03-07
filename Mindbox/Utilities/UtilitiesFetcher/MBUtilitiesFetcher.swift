@@ -13,6 +13,7 @@ import UIKit.UIDevice
 #if SWIFT_PACKAGE
 import SDKVersionProvider
 #endif
+import MindboxLogger
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
     

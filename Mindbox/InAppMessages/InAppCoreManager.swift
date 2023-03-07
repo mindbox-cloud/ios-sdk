@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 /// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {

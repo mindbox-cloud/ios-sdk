@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit.UIDevice
+import MindboxLogger
 
 class MBNetworkFetcher: NetworkFetcher {
     private let persistenceStorage: PersistenceStorage

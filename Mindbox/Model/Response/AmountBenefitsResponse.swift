@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 open class AmountBenefitsResponse: Codable {
     public let type: AmountBenefitsTypeResponse?

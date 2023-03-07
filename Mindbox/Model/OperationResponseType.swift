@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public protocol OperationResponseType: Codable {
     var status: Status { get }

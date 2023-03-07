@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 /// This struct contains init options and  behavior configuration options
 ///
 /// - Throws:`MindboxError.internalError` for invalid initialization parameters

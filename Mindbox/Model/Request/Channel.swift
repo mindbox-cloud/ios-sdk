@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum Channel: String, UnknownCodable {
     case email = "Email"

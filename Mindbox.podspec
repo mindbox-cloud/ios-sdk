@@ -12,5 +12,6 @@ Pod::Spec.new do |spec|
   spec.exclude_files = "Classes/Exclude"
   spec.resources = ["Mindbox/**/*.xcdatamodeld", "Mindbox/**/*.xcassets"]
   spec.swift_version = "5"
+  spec.dependency 'MindboxLogger'
 
 end

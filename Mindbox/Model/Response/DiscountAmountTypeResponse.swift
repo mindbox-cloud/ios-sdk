@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum DiscountAmountTypeResponse: String, UnknownCodable {
     case percent = "Percent"

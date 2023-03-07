@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum PromotionTypeResponse: String, UnknownCodable {
     case mindbox, external, unknown
