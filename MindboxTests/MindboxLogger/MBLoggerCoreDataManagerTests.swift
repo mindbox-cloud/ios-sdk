@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import MindboxLogger
 @testable import Mindbox
 
 final class MBLoggerCoreDataManagerTests: XCTestCase {
