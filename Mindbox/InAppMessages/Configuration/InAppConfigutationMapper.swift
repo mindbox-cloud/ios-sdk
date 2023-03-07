@@ -34,8 +34,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void {
+        guard let responseInapps = response.inapps else {
+            Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
+            completion(InAppConfig(inAppsByEvent: [:]))
+            return
+        }
+        
         // Check inapps for compatible versions
-        let inapps = response.inapps
+        let inapps = responseInapps
             .filter {
                 inAppsVersion >= $0.sdkVersion.min
                 && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
