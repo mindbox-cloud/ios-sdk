@@ -25,7 +25,12 @@ final class InAppImageOnlyView: UIView {
     }
 
     func customInit() {
+        #if SWIFT_PACKAGE
+        let bundle = Bundle.module
+        #else
         let bundle = Bundle(for: InAppImageOnlyView.self)
+        #endif
+        
         let image = UIImage(data: uiModel.imageData)
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
