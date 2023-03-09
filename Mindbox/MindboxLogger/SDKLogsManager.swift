@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol SDKLogsManagerProtocol {
     func sendLogs(logs: [InAppConfigResponse.Monitoring.Logs])

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum LimitTypeResponse: String, UnknownCodable {
     case groupLimit, personalLimit, unknown

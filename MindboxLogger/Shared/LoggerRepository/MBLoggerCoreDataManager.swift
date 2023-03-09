@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 
-class MBLoggerCoreDataManager {
+public class MBLoggerCoreDataManager {
     public static let shared = MBLoggerCoreDataManager()
     
     private enum Constants {
@@ -29,9 +29,17 @@ class MBLoggerCoreDataManager {
     }
 
     lazy var persistentContainer: MBPersistentContainer = {
+        MBPersistentContainer.applicationGroupIdentifier = MBLoggerUtilitiesFetcher().applicationGroupIdentifier
+        
+        #if SWIFT_PACKAGE
+        let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd")
+        let mom = NSManagedObjectModel(contentsOf: bundleURL!)
+        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
+        #else
         let container = MBPersistentContainer(name: Constants.model)
-        let storeURL = FileManager.storeURL(for: MBUtilitiesFetcher().applicationGroupIdentifier,
-                                            databaseName: Constants.model)
+        #endif
+        
+        let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
@@ -65,7 +73,7 @@ class MBLoggerCoreDataManager {
         }
     }
     
-    func getFirstLog() throws -> LogMessage? {
+    public func getFirstLog() throws -> LogMessage? {
         try context.performAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
@@ -81,7 +89,7 @@ class MBLoggerCoreDataManager {
         }
     }
 
-    func getLastLog() throws -> LogMessage? {
+    public func getLastLog() throws -> LogMessage? {
         try context.performAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)

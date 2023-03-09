@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum DateFormat: String {
+public enum DateFormat: String {
     case api = "yyyy-MM-dd'T'HH:mm:ss"
     case utc = "yyyy-MM-dd'T'HH:mm:ss'Z'"
     
@@ -17,7 +17,7 @@ enum DateFormat: String {
 }
 
 
-extension String {
+public extension String {
     func toDate(withFormat format: DateFormat) -> Date? {
         let dateFormatterGet = DateFormatter()
         dateFormatterGet.dateFormat = format.value

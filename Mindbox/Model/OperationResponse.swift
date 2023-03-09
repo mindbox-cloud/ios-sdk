@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 open class OperationResponse: OperationResponseType {
     public var status: Status

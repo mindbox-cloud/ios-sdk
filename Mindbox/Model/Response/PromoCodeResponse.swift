@@ -1,4 +1,5 @@
 import Foundation
+import MindboxLogger
 
 open class PromoCodeResponse: Codable {
     public let issueStatus: IssueStatusResponse?

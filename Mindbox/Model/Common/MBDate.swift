@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public final class DateOnly: MBDate {
     override var dateFormat: String {

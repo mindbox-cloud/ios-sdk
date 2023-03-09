@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 /// Stores in-app messages configuration
 class InAppConfigurationRepository {

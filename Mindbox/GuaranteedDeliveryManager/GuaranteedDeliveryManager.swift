@@ -10,6 +10,7 @@ import Foundation
 import CoreData
 import UIKit
 import BackgroundTasks
+import MindboxLogger
 
 final class GuaranteedDeliveryManager: NSObject {
     

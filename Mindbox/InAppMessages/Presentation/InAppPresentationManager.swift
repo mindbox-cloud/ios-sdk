@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MindboxLogger
 
 struct InAppMessageUIModel {
     struct InAppRedirect {

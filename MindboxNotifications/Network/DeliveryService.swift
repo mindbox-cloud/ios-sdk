@@ -9,6 +9,8 @@
 import Foundation
 import UserNotifications
 
+import MindboxLogger
+
 public class DeliveryService {
     private let networkService: NetworkService
     private let utilitiesFetcher: MBUtilitiesFetcher

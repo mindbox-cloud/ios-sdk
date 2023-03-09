@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 public final class TimerManager {
     

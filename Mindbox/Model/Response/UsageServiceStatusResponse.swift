@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum UsageServiceStatusResponse: String, UnknownCodable {
     case available, unavailable, unknown

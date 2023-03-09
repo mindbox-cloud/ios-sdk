@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public enum Sex: String, UnknownCodable {
     case male, female, unknown

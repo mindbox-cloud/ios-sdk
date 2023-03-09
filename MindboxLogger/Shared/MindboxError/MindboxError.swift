@@ -74,7 +74,7 @@ public enum MindboxError: LocalizedError {
         }
     }
     
-    init(_ error: InternalError) {
+    public init(_ error: InternalError) {
         self = .internalError(error)
     }
 }
@@ -192,7 +192,7 @@ public struct InternalError: CustomStringConvertible {
     var reason: String?
     var suggestion: String?
 
-    init(
+    public init(
         errorKey: String,
         rawError: Error? = nil,
         statusCode: Int? = nil
@@ -202,7 +202,7 @@ public struct InternalError: CustomStringConvertible {
         self.statusCode = statusCode
     }
     
-    init(
+    public init(
         errorKey: ErrorKey,
         rawError: Error? = nil,
         statusCode: Int? = nil

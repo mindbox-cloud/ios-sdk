@@ -8,7 +8,7 @@
 import Foundation
 
 struct InAppConfigResponse: Decodable {
-    let inapps: [InApp]
+    let inapps: [InApp]?
     let monitoring: Monitoring?
 }
 

@@ -7,14 +7,14 @@
 
 import Foundation
 
-enum SDKLogsStatus: Equatable {
+public enum SDKLogsStatus: Equatable {
     case ok
     case noData
     case elderLog(date: String)
     case latestLog(date: String)
     case largeSize
     
-    var value: String {
+    public var value: String {
         switch self {
         case .ok:
             return "OK"

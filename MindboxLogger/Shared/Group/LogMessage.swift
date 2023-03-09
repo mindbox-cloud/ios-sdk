@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct LogMessage {
-    let timestamp: Date
-    let message: String
+public struct LogMessage {
+    public let timestamp: Date
+    public let message: String
     
-    var description: String {
+    public var description: String {
         return timestamp.toString(withFormat: .utc) + " | " + message
     }
 }

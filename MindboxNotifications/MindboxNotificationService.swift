@@ -10,6 +10,7 @@ import UIKit
 import UserNotifications
 import UserNotificationsUI
 import os
+import MindboxLogger
 
 @objcMembers
 public class MindboxNotificationService: NSObject {
