@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -19,21 +19,24 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var targetingChecker: InAppTargetingCheckerProtocol
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
+    private let sessionTemporaryStorage: SessionTemporaryStorage
     
     private let dispatchGroup = DispatchGroup()
     
     init(customerSegmentsAPI: CustomerSegmentsAPI,
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
-         networkFetcher: NetworkFetcher) {
+         networkFetcher: NetworkFetcher,
+         sessionTemporaryStorage: SessionTemporaryStorage) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
         self.fetcher = networkFetcher
+        self.sessionTemporaryStorage = sessionTemporaryStorage
     }
     
     /// Maps config response to business-logic handy InAppConfig model
-    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void {
+    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse, _ completion: @escaping (InAppConfig) -> Void) {
         guard let responseInapps = response.inapps else {
             Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(InAppConfig(inAppsByEvent: [:]))
@@ -53,10 +56,12 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
         
+        targetingChecker.operationName = operationName
         for inapp in inapps {
             targetingChecker.prepare(targeting: inapp.targeting)
             // Loop inapps for all Segment types and collect ids.
         }
+        sessionTemporaryStorage.observedCustomOperations = targetingChecker.context.operationsName
         
         dispatchGroup.enter()
         checkSegmentationRequest() { response in
@@ -121,10 +126,15 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
         for inapp in inapps {
             // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
-            let event: InAppMessageTriggerEvent = .start
+            var event: InAppMessageTriggerEvent = .start
 
             guard targetingChecker.check(targeting: inapp.targeting) else {
                 continue
+            }
+            
+            if let operationName = self.targetingChecker.operationName {
+                event = .applicationEvent(operationName)
+                self.targetingChecker.operationName = nil
             }
 
             var inAppsForEvent = inAppsByEvent[event] ?? [InAppConfig.InAppInfo]()

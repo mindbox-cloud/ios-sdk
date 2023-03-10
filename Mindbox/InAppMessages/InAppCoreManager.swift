@@ -52,12 +52,18 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
+        sendEvent(.start)
         configManager.delegate = self
         configManager.prepareConfiguration()
     }
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
+        if case .applicationEvent(let operationName) = event {
+            isConfigurationReady = false
+            configManager.recalculateInapps(with: operationName)
+        }
+        
         serialQueue.async {
             Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             guard self.isConfigurationReady else {
@@ -146,7 +152,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
 extension InAppCoreManager: InAppConfigurationDelegate {
     func didPreparedConfiguration() {
-        sendEvent(.start)
         serialQueue.async {
             self.isConfigurationReady = true
             self.handleQueuedEvents()

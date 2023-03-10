@@ -52,7 +52,9 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
                                                                    inAppsVersion: inAppsSdkVersion,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   networkFetcher: instanceFactory.makeNetworkFetcher()), logsManager: logsManager),
+                                                                   networkFetcher: instanceFactory.makeNetworkFetcher(),
+                                                                   sessionTemporaryStorage: sessionTemporaryStorage),
+                logsManager: logsManager),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
