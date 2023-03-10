@@ -13,7 +13,7 @@ public protocol UnknownDecodable: Decodable {}
 public typealias UnknownCodable = Encodable & UnknownDecodable
 
 public extension UnknownDecodable where Self: RawRepresentable, Self.RawValue == String {
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let unknownCase = Self(rawValue: "unknown")
         do {
             let parsed = try decoder.singleValueContainer().decode(RawValue.self)

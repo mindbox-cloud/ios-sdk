@@ -232,6 +232,7 @@
 		9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BE941F42916822900258077 /* InAppConfigurationInvalid.json */; };
 		A1515DB229B228F40025E2EE /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */; };
+		A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */; };
 		A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */; };
 		A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */; };
 		A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */; };
@@ -572,6 +573,7 @@
 		9BC24E7928F6C08700C2619C /* InAppConfiguration.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppConfiguration.json; sourceTree = "<group>"; };
 		9BE941F42916822900258077 /* InAppConfigurationInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationInvalid.json; sourceTree = "<group>"; };
 		A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationTargeting.swift; sourceTree = "<group>"; };
+		A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationChecker.swift; sourceTree = "<group>"; };
 		A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogManagerTests.swift; sourceTree = "<group>"; };
 		A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
@@ -1592,6 +1594,7 @@
 				A17958732978AEC600609E91 /* SegmentTargetingChecker.swift */,
 				A17958742978AEC600609E91 /* GeoTargetingChecker.swift */,
 				A17958752978AEC600609E91 /* AndTargetingChecker.swift */,
+				A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */,
 			);
 			path = TargetingCheckerTypes;
 			sourceTree = "<group>";
@@ -2084,6 +2087,7 @@
 				9B24FAAA28C74B6A00F10B5D /* InAppPresentationManager.swift in Sources */,
 				A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */,
 				9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */,
+				A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */,
 				33072F402664CB08001F1AB2 /* ProductGroupResponse.swift in Sources */,
 				A1D017F52976FC2B00CD9F99 /* InternalTargetingChecker.swift in Sources */,
 				6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */,
