@@ -42,6 +42,7 @@ public class Mindbox: NSObject {
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var inAppMessagesEnabled = true
+    private var sessionTemporaryStorage: SessionTemporaryStorage?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -509,6 +510,7 @@ public class Mindbox: NSObject {
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
         inAppMessagesManager = container.inAppMessagesManager
+        sessionTemporaryStorage = container.sessionTemporaryStorage
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
@@ -528,7 +530,10 @@ public class Mindbox: NSObject {
             Logger.common(message: "inAppMessages is false", level: .error, category: .inAppMessages)
             return
         }
-        inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
+        
+        if let sessionStorage =  sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(operationSystemName) {
+            inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
+        }
     }
 
     @objc private func resetShownInApps() {

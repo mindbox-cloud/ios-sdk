@@ -20,6 +20,7 @@ protocol DependencyContainer {
     var inAppTargetingChecker: InAppTargetingChecker { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var uuidDebugService: UUIDDebugService { get }
+    var sessionTemporaryStorage: SessionTemporaryStorage { get }
 }
 
 protocol InstanceFactory {

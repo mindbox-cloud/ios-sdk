@@ -22,6 +22,7 @@ final class DependencyProvider: DependencyContainer {
     let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let uuidDebugService: UUIDDebugService
+    var sessionTemporaryStorage: SessionTemporaryStorage
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -43,6 +44,7 @@ final class DependencyProvider: DependencyContainer {
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
+        sessionTemporaryStorage = SessionTemporaryStorage()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
