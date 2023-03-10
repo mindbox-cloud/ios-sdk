@@ -234,6 +234,7 @@
 		A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */; };
 		A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */; };
 		A153E03F29BB002A003C34D4 /* SessionTemporaryStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */; };
+		A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */ = {isa = PBXBuildFile; fileRef = A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */; };
 		A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */; };
 		A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */; };
 		A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */; };
@@ -576,6 +577,7 @@
 		A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationTargeting.swift; sourceTree = "<group>"; };
 		A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationChecker.swift; sourceTree = "<group>"; };
 		A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTemporaryStorage.swift; sourceTree = "<group>"; };
+		A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithOperations.json; sourceTree = "<group>"; };
 		A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogManagerTests.swift; sourceTree = "<group>"; };
 		A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
@@ -1471,6 +1473,7 @@
 		9BE941F62916823300258077 /* ConfigJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
 				9BE941F42916822900258077 /* InAppConfigurationInvalid.json */,
 				9BC24E7928F6C08700C2619C /* InAppConfiguration.json */,
 			);
@@ -1909,6 +1912,7 @@
 			files = (
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
+				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,

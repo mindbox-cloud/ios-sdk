@@ -22,8 +22,10 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     let uuidDebugService: UUIDDebugService
+    let sessionTemporaryStorage: SessionTemporaryStorage
     
     init() throws {
+        sessionTemporaryStorage = SessionTemporaryStorage()
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
