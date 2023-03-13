@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Igor Kandaurov on 06.05.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation

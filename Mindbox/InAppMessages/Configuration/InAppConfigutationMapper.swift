@@ -20,6 +20,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
+    private var checkSegmentsRequestNeeded = true
+    private var geoRequestNeeded = true
     
     private let dispatchGroup = DispatchGroup()
     
@@ -65,7 +67,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         
         dispatchGroup.enter()
         checkSegmentationRequest() { response in
-            self.targetingChecker.checkedSegmentations = response.customerSegmentations
+            self.targetingChecker.checkedSegmentations = response
             self.dispatchGroup.leave()
         }
         
@@ -83,35 +85,49 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    private func checkSegmentationRequest(_ completion: @escaping (SegmentationCheckResponse) -> Void) -> Void {
+    private func checkSegmentationRequest(_ completion: @escaping ([SegmentationCheckResponse.CustomerSegmentation]?) -> Void) -> Void {
+        
+        if !checkSegmentsRequestNeeded {
+            completion(targetingChecker.checkedSegmentations)
+            return
+        }
+        
         let arrayOfSegments = Array(Set(targetingChecker.context.segments))
         let segments: [SegmentationCheckRequest.Segmentation] = arrayOfSegments.map {
             return .init(ids: .init(externalId: $0))
         }
         
         if segments.isEmpty {
-            completion(.init(status: .success, customerSegmentations: nil))
+            completion(nil)
             return
         }
         
         let model = SegmentationCheckRequest(segmentations: segments)
         
         customerSegmentsAPI.fetchSegments(model) { response in
+            self.checkSegmentsRequestNeeded = false
             guard let response = response,
                   response.status == .success else {
                 Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
-                completion(.init(status: .unknown, customerSegmentations: nil))
+
+                completion(nil)
                 return
             }
             
             Logger.common(message: "Customer Segment response: \n\(response)")
-            completion(response)
+            completion(response.customerSegmentations)
         }
     }
     
     private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
+        if !geoRequestNeeded {
+            completion(targetingChecker.geoModels)
+            return
+        }
+        
         let route = FetchInAppGeoRoute()
         fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
+            self.geoRequestNeeded = false
             switch response {
             case .success(let result):
                 completion(result)
