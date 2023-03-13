@@ -531,7 +531,7 @@ public class Mindbox: NSObject {
             return
         }
         
-        if let sessionStorage =  sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(operationSystemName) {
+        if let sessionStorage = sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(operationSystemName) {
             inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
         }
     }

@@ -22,6 +22,6 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
             return false
         }
         
-        return operationName == targeting.systemName
+        return operationName.lowercased() == targeting.systemName.lowercased()
     }
 }
