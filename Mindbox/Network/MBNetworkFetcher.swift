@@ -98,7 +98,7 @@ class MBNetworkFetcher: NetworkFetcher {
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             // Starting data task
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
-                self?.handleResponse(data, response, error, emptyData: true, completion: { result in
+                self?.handleResponse(data, response, error, emptyData: true, needBaseResponse: true, completion: { result in
                     switch result {
                     case .success:
                         completion(.success(()))
