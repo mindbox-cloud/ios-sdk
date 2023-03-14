@@ -136,7 +136,7 @@ class InAppConfigResponseTests: XCTestCase {
                 }
             
             let expected = InAppConfig(inAppsByEvent: [
-                .applicationEvent("TestPushok"): [
+                .applicationEvent("testpushok"): [
                     .init(id: "00000000-0000-0000-0000-000000000001",
                           formDataVariants: [
                             .init(imageUrl: "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",

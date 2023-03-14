@@ -59,7 +59,8 @@ final class DependencyProvider: DependencyContainer {
                 imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
             ),
-            persistenceStorage: persistenceStorage
+            persistenceStorage: persistenceStorage,
+            sessionStorage: sessionTemporaryStorage
         )
         uuidDebugService = PasteboardUUIDDebugService(
             notificationCenter: NotificationCenter.default,

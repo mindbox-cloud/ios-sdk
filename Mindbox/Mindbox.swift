@@ -531,12 +531,17 @@ public class Mindbox: NSObject {
             return
         }
         
-        if let sessionStorage = sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(operationSystemName) {
-            inAppMessagesManager?.sendEvent(.applicationEvent(operationSystemName))
+        let lowercasedName = operationSystemName.lowercased()
+        if let sessionStorage = sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(lowercasedName) {
+            inAppMessagesManager?.sendEvent(.applicationEvent(lowercasedName))
         }
     }
 
     @objc private func resetShownInApps() {
         persistenceStorage?.shownInAppsIds = nil
+    }
+    
+    @objc private func eraseSessionStorage() {
+        sessionTemporaryStorage?.erase()
     }
 }

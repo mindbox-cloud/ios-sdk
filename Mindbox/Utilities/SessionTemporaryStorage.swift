@@ -10,4 +10,14 @@ import Foundation
 
 final class SessionTemporaryStorage {
     var observedCustomOperations: [String] = []
+    var geoRequestCompleted = false
+    var checkSegmentsRequestCompleted = false
+    var isPresentingInAppMessage = false
+    
+    func erase() {
+        observedCustomOperations = []
+        geoRequestCompleted = false
+        checkSegmentsRequestCompleted = false
+        isPresentingInAppMessage = false
+    }
 }

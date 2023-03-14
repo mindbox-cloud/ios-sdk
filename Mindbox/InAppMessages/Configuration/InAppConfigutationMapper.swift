@@ -20,8 +20,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
-    private var checkSegmentsRequestNeeded = true
-    private var geoRequestNeeded = true
     
     private let dispatchGroup = DispatchGroup()
     
@@ -58,7 +56,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
         
-        targetingChecker.operationName = operationName
+        targetingChecker.operationName = operationName?.lowercased()
         for inapp in inapps {
             targetingChecker.prepare(targeting: inapp.targeting)
             // Loop inapps for all Segment types and collect ids.
@@ -87,7 +85,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private func checkSegmentationRequest(_ completion: @escaping ([SegmentationCheckResponse.CustomerSegmentation]?) -> Void) -> Void {
         
-        if !checkSegmentsRequestNeeded {
+        if sessionTemporaryStorage.checkSegmentsRequestCompleted {
             completion(targetingChecker.checkedSegmentations)
             return
         }
@@ -105,7 +103,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let model = SegmentationCheckRequest(segmentations: segments)
         
         customerSegmentsAPI.fetchSegments(model) { response in
-            self.checkSegmentsRequestNeeded = false
+            self.sessionTemporaryStorage.checkSegmentsRequestCompleted = true
             guard let response = response,
                   response.status == .success else {
                 Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
@@ -120,14 +118,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     }
     
     private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
-        if !geoRequestNeeded {
+        if sessionTemporaryStorage.geoRequestCompleted {
             completion(targetingChecker.geoModels)
             return
         }
         
         let route = FetchInAppGeoRoute()
         fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
-            self.geoRequestNeeded = false
+            self.sessionTemporaryStorage.geoRequestCompleted = true
             switch response {
             case .success(let result):
                 completion(result)
@@ -150,7 +148,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             
             if let operationName = self.targetingChecker.operationName {
                 event = .applicationEvent(operationName)
-                self.targetingChecker.operationName = nil
             }
 
             var inAppsForEvent = inAppsByEvent[event] ?? [InAppConfig.InAppInfo]()
@@ -167,6 +164,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             inAppsForEvent.append(inAppInfo)
             inAppsByEvent[event] = inAppsForEvent
         }
+        
+        self.targetingChecker.operationName = nil
 
         return inAppsByEvent
     }

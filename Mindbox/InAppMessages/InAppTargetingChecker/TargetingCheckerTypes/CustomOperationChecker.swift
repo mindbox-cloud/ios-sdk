@@ -12,7 +12,7 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
     weak var checker: TargetingCheckerContextProtocol?
     
     override func prepareInternal(targeting: CustomOperationTargeting, context: inout PreparationContext) {
-        context.operationsName.append(targeting.systemName)
+        context.operationsName.append(targeting.systemName.lowercased())
     }
     
     override func checkInternal(targeting: CustomOperationTargeting) -> Bool {
