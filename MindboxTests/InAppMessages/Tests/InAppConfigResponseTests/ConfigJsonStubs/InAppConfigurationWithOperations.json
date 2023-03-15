@@ -1,0 +1,70 @@
+{
+    "inapps": [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "targeting": {
+                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
+                "systemName": "TestPushok",
+                "$type": "apiMethodCall"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "sdkVersion": {
+                "min": 2,
+                "max": 4
+            },
+            "targeting": {
+                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
+                "systemName": "",
+                "$type": "apiMethodCall"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "sdkVersion": {
+                "min": 2,
+                "max": 4
+            },
+            "targeting": {
+                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
+                "systemName": "",
+                "$type": "apiMethodCall"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -19,21 +19,24 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var targetingChecker: InAppTargetingCheckerProtocol
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
+    private let sessionTemporaryStorage: SessionTemporaryStorage
     
     private let dispatchGroup = DispatchGroup()
     
     init(customerSegmentsAPI: CustomerSegmentsAPI,
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
-         networkFetcher: NetworkFetcher) {
+         networkFetcher: NetworkFetcher,
+         sessionTemporaryStorage: SessionTemporaryStorage) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
         self.fetcher = networkFetcher
+        self.sessionTemporaryStorage = sessionTemporaryStorage
     }
     
     /// Maps config response to business-logic handy InAppConfig model
-    func mapConfigResponse(_ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void {
+    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse, _ completion: @escaping (InAppConfig) -> Void) {
         guard let responseInapps = response.inapps else {
             Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(InAppConfig(inAppsByEvent: [:]))
@@ -53,14 +56,16 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
         
+        targetingChecker.operationName = operationName?.lowercased()
         for inapp in inapps {
             targetingChecker.prepare(targeting: inapp.targeting)
             // Loop inapps for all Segment types and collect ids.
         }
+        sessionTemporaryStorage.observedCustomOperations = targetingChecker.context.operationsName
         
         dispatchGroup.enter()
         checkSegmentationRequest() { response in
-            self.targetingChecker.checkedSegmentations = response.customerSegmentations
+            self.targetingChecker.checkedSegmentations = response
             self.dispatchGroup.leave()
         }
         
@@ -78,35 +83,49 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    private func checkSegmentationRequest(_ completion: @escaping (SegmentationCheckResponse) -> Void) -> Void {
+    private func checkSegmentationRequest(_ completion: @escaping ([SegmentationCheckResponse.CustomerSegmentation]?) -> Void) -> Void {
+        
+        if sessionTemporaryStorage.checkSegmentsRequestCompleted {
+            completion(targetingChecker.checkedSegmentations)
+            return
+        }
+        
         let arrayOfSegments = Array(Set(targetingChecker.context.segments))
         let segments: [SegmentationCheckRequest.Segmentation] = arrayOfSegments.map {
             return .init(ids: .init(externalId: $0))
         }
         
         if segments.isEmpty {
-            completion(.init(status: .success, customerSegmentations: nil))
+            completion(nil)
             return
         }
         
         let model = SegmentationCheckRequest(segmentations: segments)
         
         customerSegmentsAPI.fetchSegments(model) { response in
+            self.sessionTemporaryStorage.checkSegmentsRequestCompleted = true
             guard let response = response,
                   response.status == .success else {
                 Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
-                completion(.init(status: .unknown, customerSegmentations: nil))
+
+                completion(nil)
                 return
             }
             
             Logger.common(message: "Customer Segment response: \n\(response)")
-            completion(response)
+            completion(response.customerSegmentations)
         }
     }
     
     private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
+        if sessionTemporaryStorage.geoRequestCompleted {
+            completion(targetingChecker.geoModels)
+            return
+        }
+        
         let route = FetchInAppGeoRoute()
         fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
+            self.sessionTemporaryStorage.geoRequestCompleted = true
             switch response {
             case .success(let result):
                 completion(result)
@@ -121,10 +140,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
         for inapp in inapps {
             // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
-            let event: InAppMessageTriggerEvent = .start
+            var event: InAppMessageTriggerEvent = .start
 
             guard targetingChecker.check(targeting: inapp.targeting) else {
                 continue
+            }
+            
+            if let operationName = self.targetingChecker.operationName {
+                event = .applicationEvent(operationName)
             }
 
             var inAppsForEvent = inAppsByEvent[event] ?? [InAppConfig.InAppInfo]()
@@ -141,6 +164,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             inAppsForEvent.append(inAppInfo)
             inAppsByEvent[event] = inAppsForEvent
         }
+        
+        self.targetingChecker.operationName = nil
 
         return inAppsByEvent
     }
