@@ -10,6 +10,7 @@ import Foundation
 struct InAppConfigResponse: Decodable {
     let inapps: [InApp]?
     let monitoring: Monitoring?
+    let settings: Settings?
 }
 
 extension InAppConfigResponse {
@@ -33,6 +34,21 @@ extension InAppConfigResponse {
             let deviceUUID: String
             let from: String
             let to: String
+        }
+    }
+    
+    struct Settings: Decodable {
+        let operations: SettingsOperations?
+        
+        struct SettingsOperations: Decodable {
+            
+            let viewProduct: Operation?
+            let viewCategory: Operation?
+            let setCart: Operation?
+            
+            struct Operation: Decodable {
+                let systemName: String
+            }
         }
     }
 }
