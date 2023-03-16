@@ -23,6 +23,7 @@ enum InAppTargetingType: String, Decodable {
     case region
     case city
     case apiMethodCall
+    case viewProductCategoryId
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -41,6 +42,7 @@ enum Targeting: Decodable, Hashable {
     case region(RegionTargeting)
     case country(CountryTargeting)
     case apiMethodCall(CustomOperationTargeting)
+    case viewProductCategoryId(CategoryIDTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -57,6 +59,7 @@ enum Targeting: Decodable, Hashable {
         case (.region, .region): return true
         case (.country, .country): return true
         case (.apiMethodCall, .apiMethodCall): return true
+        case (.viewProductCategoryId, .viewProductCategoryId): return true
         case (.unknown, .unknown): return true
         default: return false
         }
@@ -72,6 +75,7 @@ enum Targeting: Decodable, Hashable {
         case .region: hasher.combine("region")
         case .country: hasher.combine("country")
         case .apiMethodCall: hasher.combine("apiMethodCall")
+        case .viewProductCategoryId: hasher.combine("viewProductCategoryId")
         case .unknown: hasher.combine("unknown")
         }
     }
@@ -111,6 +115,9 @@ enum Targeting: Decodable, Hashable {
         case .apiMethodCall:
             let customOperationTargeting = try targetingContainer.decode(CustomOperationTargeting.self)
             self = .apiMethodCall(customOperationTargeting)
+        case .viewProductCategoryId:
+            let categoryIDTargeting = try targetingContainer.decode(CategoryIDTargeting.self)
+            self = .viewProductCategoryId(categoryIDTargeting)
         case .unknown:
             self = .unknown
         }
