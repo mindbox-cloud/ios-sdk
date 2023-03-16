@@ -31,12 +31,14 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
-        serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
+        serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue"),
+        sessionStorage: SessionTemporaryStorage
     ) {
         self.configManager = configManager
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
         self.serialQueue = serialQueue
+        self.sessionStorage = sessionStorage
     }
 
     weak var delegate: InAppMessagesDelegate?
@@ -45,19 +47,25 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
     private var isConfigurationReady = false
-    private var isPresentingInAppMessage = false
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
+    private let sessionStorage: SessionTemporaryStorage
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
+        sendEvent(.start)
         configManager.delegate = self
         configManager.prepareConfiguration()
     }
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
+        if case .applicationEvent(let operationName) = event {
+            isConfigurationReady = false
+            configManager.recalculateInapps(with: operationName)
+        }
+        
         serialQueue.async {
             Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             guard self.isConfigurationReady else {
@@ -72,7 +80,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard !isPresentingInAppMessage,
+        guard !sessionStorage.isPresentingInAppMessage,
               var inAppRequest = configManager.buildInAppRequest(event: event) else { return }
 
         // Filter already shown inapps
@@ -104,8 +112,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard let inAppResponse = inAppResponse,
               let inAppFormData = configManager.getInAppFormData(by: inAppResponse)
         else { return }
-        guard !isPresentingInAppMessage else { return }
-        isPresentingInAppMessage = true
+        guard !sessionStorage.isPresentingInAppMessage else { return }
+        sessionStorage.isPresentingInAppMessage = true
         
         Logger.common(message: "In-app with id \(inAppResponse.inAppToShowId) is going to be shown", level: .debug, category: .inAppMessages)
 
@@ -122,7 +130,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
             },
             onPresentationCompleted: { [delegate] in
-                self.serialQueue.async { self.isPresentingInAppMessage = false }
                 delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
             },
             onError: { error in
@@ -130,7 +137,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 case .failedToLoadImages:
                     Logger.common(message: "Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)", level: .debug, category: .inAppMessages)
                 }
-                self.serialQueue.async { self.isPresentingInAppMessage = false }
             }
         )
     }
@@ -146,7 +152,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
 extension InAppCoreManager: InAppConfigurationDelegate {
     func didPreparedConfiguration() {
-        sendEvent(.start)
         serialQueue.async {
             self.isConfigurationReady = true
             self.handleQueuedEvents()

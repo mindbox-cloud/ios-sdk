@@ -12,6 +12,7 @@ protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? { get set }
     var geoModels: InAppGeoResponse? { get set }
+    var operationName: String? { get set }
 }
 
 protocol TargetingCheckerMap: AnyObject {
@@ -39,6 +40,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? = nil
     var geoModels: InAppGeoResponse?
+    var operationName: String?
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
     
@@ -174,6 +176,22 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                     return countryChecker.prepare(targeting: targeting, context: &context)
                 } check: {
                     return countryChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let customOperationTargeting = CustomOperationTargeting(systemName: "")
+        checkerMap[.apiMethodCall(customOperationTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let customOperationChecker = CustomOperationChecker()
+            customOperationChecker.checker = self
+            switch T {
+            case .apiMethodCall(let targeting):
+                return CheckerFunctions { context in
+                    return customOperationChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return customOperationChecker.check(targeting: targeting)
                 }
             default:
                 return checkerFunctions
