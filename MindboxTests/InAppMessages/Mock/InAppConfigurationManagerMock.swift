@@ -11,6 +11,10 @@ import Foundation
 
 class InAppConfigurationManagerMock: InAppConfigurationManagerProtocol {
     var delegate: InAppConfigurationDelegate?
+    
+    func recalculateInapps(with name: String) {
+        
+    }
 
     func prepareConfiguration() {
 

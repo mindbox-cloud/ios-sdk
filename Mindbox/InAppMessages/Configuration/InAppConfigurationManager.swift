@@ -17,10 +17,9 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
     func prepareConfiguration()
-
     func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest?
-
     func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData?
+    func recalculateInapps(with name: String)
 }
 
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
@@ -30,6 +29,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configuration: InAppConfig!
+    private var rawConfigurationResponse: InAppConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
@@ -94,6 +94,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             )
         }
     }
+    
+    func recalculateInapps(with name: String) {
+        queue.sync {
+            guard let rawConfigurationResponse = rawConfigurationResponse else {
+                return
+            }
+            
+            setConfigPrepared(rawConfigurationResponse, operationName: name)
+        }
+    }
 
     // MARK: - Private
     private func downloadConfig() {
@@ -150,9 +160,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private func saveConfigToCache(_ data: Data) {
         inAppConfigRepository.saveConfigToCache(data)
     }
-
-    private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
-        inAppConfigurationMapper.mapConfigResponse(configResponse, { config in
+    
+    private func setConfigPrepared(_ configResponse: InAppConfigResponse, operationName: String? = nil) {
+        rawConfigurationResponse = configResponse
+        inAppConfigurationMapper.mapConfigResponse(operationName, configResponse, { config in
             self.configuration = config
             var configDump = String()
             dump(self.configuration!, to: &configDump)

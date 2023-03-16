@@ -17,6 +17,7 @@ class InAppCoreManagerTests: XCTestCase {
     var presentationManager: InAppPresentationManagerMock!
     var persistenceStorage: MockPersistenceStorage!
     var serialQueue: DispatchQueue!
+    var sessionStorage: SessionTemporaryStorage!
     var sut: InAppCoreManager!
 
     override func setUpWithError() throws {
@@ -24,12 +25,14 @@ class InAppCoreManagerTests: XCTestCase {
         presentationManager = InAppPresentationManagerMock()
         persistenceStorage = MockPersistenceStorage()
         serialQueue = DispatchQueue(label: "core-manager-tests")
-
+        sessionStorage = SessionTemporaryStorage()
+        
         sut = InAppCoreManager(
             configManager: configManager,
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage,
-            serialQueue: serialQueue
+            serialQueue: serialQueue,
+            sessionStorage: sessionStorage
         )
     }
 

@@ -3,7 +3,7 @@
 //  MindboxTests
 //
 //  Created by Maksim Kazachkov on 09.04.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 @testable import Mindbox
@@ -15,6 +15,7 @@ class VersioningTestCase: XCTestCase {
     var container: DependencyContainer!
 
     override func setUp() {
+        super.setUp()
         container = try! TestDependencyProvider()
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
@@ -62,10 +63,14 @@ class VersioningTestCase: XCTestCase {
 //        initConfiguration()
 //        container.guaranteedDeliveryManager.canScheduleOperations = false
 //        let infoUpdateLimit = 50
-//        makeMockAsyncCall(limit: infoUpdateLimit) { index in
-//            Mindbox.shared.notificationsRequestAuthorization(granted: index % 2 == 0)
+//
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//            self.makeMockAsyncCall(limit: infoUpdateLimit) { index in
+//                Mindbox.shared.notificationsRequestAuthorization(granted: index % 2 == 0)
+//            }
 //        }
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
 //            do {
 //                let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
 //                events.forEach({

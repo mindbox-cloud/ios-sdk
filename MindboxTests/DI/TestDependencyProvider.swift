@@ -3,7 +3,7 @@
 //  MindboxTests
 //
 //  Created by Mikhail Barilov on 28.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 
@@ -22,8 +22,10 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     let uuidDebugService: UUIDDebugService
+    let sessionTemporaryStorage: SessionTemporaryStorage
     
     init() throws {
+        sessionTemporaryStorage = SessionTemporaryStorage()
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()

@@ -22,6 +22,7 @@ enum InAppTargetingType: String, Decodable {
     case country
     case region
     case city
+    case apiMethodCall
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -39,6 +40,7 @@ enum Targeting: Decodable, Hashable {
     case city(CityTargeting)
     case region(RegionTargeting)
     case country(CountryTargeting)
+    case apiMethodCall(CustomOperationTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -54,6 +56,7 @@ enum Targeting: Decodable, Hashable {
         case (.city, .city): return true
         case (.region, .region): return true
         case (.country, .country): return true
+        case (.apiMethodCall, .apiMethodCall): return true
         case (.unknown, .unknown): return true
         default: return false
         }
@@ -68,6 +71,7 @@ enum Targeting: Decodable, Hashable {
         case .city: hasher.combine("city")
         case .region: hasher.combine("region")
         case .country: hasher.combine("country")
+        case .apiMethodCall: hasher.combine("apiMethodCall")
         case .unknown: hasher.combine("unknown")
         }
     }
@@ -104,6 +108,9 @@ enum Targeting: Decodable, Hashable {
         case .country:
             let countryTargeting = try targetingContainer.decode(CountryTargeting.self)
             self = .country(countryTargeting)
+        case .apiMethodCall:
+            let customOperationTargeting = try targetingContainer.decode(CustomOperationTargeting.self)
+            self = .apiMethodCall(customOperationTargeting)
         case .unknown:
             self = .unknown
         }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-let inAppsSdkVersion = 3
+let inAppsSdkVersion = 4
 
 struct InAppConfig: Equatable {
     var inAppsByEvent: [InAppMessageTriggerEvent: [InAppInfo]]
