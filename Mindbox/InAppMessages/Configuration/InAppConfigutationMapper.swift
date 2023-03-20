@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -36,7 +36,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     }
     
     /// Maps config response to business-logic handy InAppConfig model
-    func mapConfigResponse(_ operationName: String?, _ response: InAppConfigResponse, _ completion: @escaping (InAppConfig) -> Void) {
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse, _ completion: @escaping (InAppConfig) -> Void) {
         guard let responseInapps = response.inapps else {
             Logger.common(message: "Inapps from conifig is Empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(InAppConfig(inAppsByEvent: [:]))
@@ -56,7 +56,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
         
-        targetingChecker.operationName = operationName?.lowercased()
+        targetingChecker.event = event
         for inapp in inapps {
             targetingChecker.prepare(targeting: inapp.targeting)
             // Loop inapps for all Segment types and collect ids.
@@ -140,17 +140,17 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
         for inapp in inapps {
             // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
-            var event: InAppMessageTriggerEvent = .start
+            var triggerEvent: InAppMessageTriggerEvent = .start
 
             guard targetingChecker.check(targeting: inapp.targeting) else {
                 continue
             }
             
-            if let operationName = self.targetingChecker.operationName {
-                event = .applicationEvent(operationName)
+            if let event = self.targetingChecker.event {
+                triggerEvent = .applicationEvent(event)
             }
 
-            var inAppsForEvent = inAppsByEvent[event] ?? [InAppConfig.InAppInfo]()
+            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
             let inAppFormVariants = inapp.form.variants
             let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
                 return SimpleImageInApp(imageUrl: $0.imageUrl,
@@ -162,10 +162,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
             let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
             inAppsForEvent.append(inAppInfo)
-            inAppsByEvent[event] = inAppsForEvent
+            inAppsByEvent[triggerEvent] = inAppsForEvent
         }
         
-        self.targetingChecker.operationName = nil
+        self.targetingChecker.event = nil
 
         return inAppsByEvent
     }
