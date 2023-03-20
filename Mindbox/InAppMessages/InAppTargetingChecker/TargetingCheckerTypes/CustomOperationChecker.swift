@@ -17,7 +17,7 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
     
     override func checkInternal(targeting: CustomOperationTargeting) -> Bool {
         guard let checker = checker,
-              let operationName = checker.operationName,
+              let operationName = checker.event?.name,
               !targeting.systemName.isEmpty else {
             return false
         }
