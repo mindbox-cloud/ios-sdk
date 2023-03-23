@@ -10,7 +10,9 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/mindbox-cloud/ios-sdk.git", :tag => spec.version }
   spec.source_files  = "Mindbox/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
-  spec.resources = ["Mindbox/**/*.xcdatamodeld", "Mindbox/**/*.xcassets"]
+  spec.resource_bundles = { 
+    'Mindbox' => ["Mindbox/**/*.xcdatamodeld", "Mindbox/**/*.xcassets"] 
+  } 
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger'
 
