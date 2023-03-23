@@ -12,7 +12,7 @@ import Foundation
 class InAppConfigurationManagerMock: InAppConfigurationManagerProtocol {
     var delegate: InAppConfigurationDelegate?
     
-    func recalculateInapps(with name: String) {
+    func recalculateInapps(with event: ApplicationEvent) {
         
     }
 
