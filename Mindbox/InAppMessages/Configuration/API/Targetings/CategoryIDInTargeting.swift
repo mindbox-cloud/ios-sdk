@@ -10,7 +10,7 @@ import Foundation
 
 struct CategoryIDInTargeting: ITargeting, Decodable  {
     let kind: CategoryKind
-    let values: String
+    let values: [CategoryIDInValue]
     
     enum CategoryKind: String, Codable {
         case any

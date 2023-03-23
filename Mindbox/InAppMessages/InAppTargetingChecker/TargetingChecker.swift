@@ -213,5 +213,21 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                 return checkerFunctions
             }
         }
+        
+        let categoryIDInTargeting = CategoryIDInTargeting(kind: .any, values: [])
+        checkerMap[.viewProductCategoryIdIn(categoryIDInTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let categoryIDInChecker = CategoryIDInChecker()
+            categoryIDInChecker.checker = self
+            switch T {
+            case .viewProductCategoryIdIn(let targeting):
+                return CheckerFunctions { context in
+                    return categoryIDInChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return categoryIDInChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
     }
 }
