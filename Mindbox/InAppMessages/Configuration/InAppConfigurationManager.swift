@@ -34,17 +34,20 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
     private let logsManager: SDKLogsManagerProtocol
+    private let sessionStorage: SessionTemporaryStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
-        logsManager: SDKLogsManagerProtocol
+        logsManager: SDKLogsManagerProtocol,
+        sessionStorage: SessionTemporaryStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.logsManager = logsManager
+        self.sessionStorage = sessionStorage
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -119,12 +122,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
                 saveConfigToCache(data)
                 setConfigPrepared(config)
+                setupSettingsFromConfig(config.settings)
                 if let monitoring = config.monitoring {
                     logsManager.sendLogs(logs: monitoring.logs)
-                }
-                
-                if let settings = config.settings {
-                    setupSettingsFromConfig(settings)
                 }
             } catch {
                 applyConfigFromCache()
@@ -178,10 +178,13 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         })
     }
     
-    private func setupSettingsFromConfig(_ settings: InAppConfigResponse.Settings) {
+    private func setupSettingsFromConfig(_ settings: InAppConfigResponse.Settings?) {
+        guard let settings = settings else {
+            return
+        }
+        
         if let viewCategory = settings.operations?.viewCategory {
-            let storage = SessionTemporaryStorage()
-            storage.observedCustomOperations.append(viewCategory.systemName)
+            sessionStorage.operationsFromSettings.insert(viewCategory.systemName.lowercased())
         }
     }
 }

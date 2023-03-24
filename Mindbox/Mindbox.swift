@@ -537,10 +537,10 @@ public class Mindbox: NSObject {
         }
         
         var model: InappOperationJSONModel?
+        let jsonString = jsonString ?? ""
         
         do {
-            guard let jsonString = jsonString,
-                  let jsonData = jsonString.data(using: .utf8) else {
+            guard let jsonData = jsonString.data(using: .utf8) else {
                 return
             }
 
@@ -550,7 +550,7 @@ public class Mindbox: NSObject {
         }
 
         let lowercasedName = operationSystemName.lowercased()
-        if let sessionStorage = sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(lowercasedName) {
+        if let sessionStorage = sessionTemporaryStorage, sessionStorage.customOperations.contains(lowercasedName) {
             inAppMessagesManager?.sendEvent(.applicationEvent(.init(name: lowercasedName, model: model)))
         }
     }
