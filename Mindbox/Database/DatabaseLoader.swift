@@ -29,7 +29,9 @@ class DataBaseLoader {
             throw MBDatabaseError.unableCreateDatabaseModel
         }
         #else
-        guard let modelURL = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") else {
+        
+        guard let podBundle = Bundle(for: DataBaseLoader.self).url(forResource: "Mindbox", withExtension: "bundle"),
+              let modelURL = Bundle(url: podBundle)?.url(forResource: momdName, withExtension: "momd") else {
             Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
