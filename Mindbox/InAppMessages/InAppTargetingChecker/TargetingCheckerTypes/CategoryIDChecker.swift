@@ -26,9 +26,9 @@ final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
         for i in ids {
             switch targeting.kind {
             case .substring:
-                if i.value == targeting.name { return true }
+                if i.value.contains(targeting.name) { return true }
             case .notSubstring:
-                if i.value != targeting.name { return true }
+                if !i.value.contains(targeting.name) { return true }
             case .startsWith:
                 if i.value.hasPrefix(targeting.name) { return true }
             case .endsWith:

@@ -61,7 +61,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             targetingChecker.prepare(targeting: inapp.targeting)
             // Loop inapps for all Segment types and collect ids.
         }
-        sessionTemporaryStorage.observedCustomOperations = targetingChecker.context.operationsName
+        
+        sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         
         dispatchGroup.enter()
         checkSegmentationRequest() { response in

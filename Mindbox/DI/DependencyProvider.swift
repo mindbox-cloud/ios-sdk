@@ -54,7 +54,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher(),
                                                                    sessionTemporaryStorage: sessionTemporaryStorage),
-                logsManager: logsManager),
+                logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

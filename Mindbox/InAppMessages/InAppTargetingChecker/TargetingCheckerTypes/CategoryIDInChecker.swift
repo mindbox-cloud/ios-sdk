@@ -24,7 +24,7 @@ final class CategoryIDInChecker: InternalTargetingChecker<CategoryIDInTargeting>
         }
         
         for i in targeting.values {
-            if ids.contains(where: { $0.key == i.name && $0.value == i.id }) {
+            if ids.contains(where: { $0.key.lowercased() == i.name.lowercased() && $0.value.lowercased() == i.id.lowercased() }) {
                 switch targeting.kind {
                 case .any:
                     return true
