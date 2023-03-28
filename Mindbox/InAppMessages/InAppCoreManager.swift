@@ -31,6 +31,11 @@ enum InAppMessageTriggerEvent: Hashable {
 struct ApplicationEvent: Hashable, Equatable {
     let name: String
     let model: InappOperationJSONModel?
+    
+    init(name: String, model: InappOperationJSONModel?) {
+        self.name = name.lowercased()
+        self.model = model
+    }
 }
 
 protocol InAppCoreManagerProtocol: AnyObject {
