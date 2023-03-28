@@ -240,9 +240,11 @@ public class Mindbox: NSObject {
             Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
             return
         }
-        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
+
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -270,7 +272,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -296,10 +298,11 @@ public class Mindbox: NSObject {
             Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
             return
         }
-        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -328,7 +331,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -353,10 +356,11 @@ public class Mindbox: NSObject {
             Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
             return
         }
-        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -377,9 +381,10 @@ public class Mindbox: NSObject {
             Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
             return
         }
-        let customEvent = CustomEvent(name: operationSystemName, payload: BodyEncoder(encodable: operationBody).body)
+        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
+        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -525,15 +530,25 @@ public class Mindbox: NSObject {
         )
     }
 
-    private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String) {
+    private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
         guard inAppMessagesEnabled else {
             Logger.common(message: "inAppMessages is false", level: .error, category: .inAppMessages)
             return
         }
         
+        var model: InappOperationJSONModel?
+        let jsonString = jsonString ?? ""
+
         let lowercasedName = operationSystemName.lowercased()
-        if let sessionStorage = sessionTemporaryStorage, sessionStorage.observedCustomOperations.contains(lowercasedName) {
-            inAppMessagesManager?.sendEvent(.applicationEvent(lowercasedName))
+        if let sessionStorage = sessionTemporaryStorage, sessionStorage.customOperations.contains(lowercasedName) {
+            do {
+                if let jsonData = jsonString.data(using: .utf8),
+                        sessionStorage.operationsFromSettings.contains(lowercasedName) {
+                    model = try JSONDecoder().decode(InappOperationJSONModel.self, from: jsonData)
+                }
+            } catch { }
+            
+            inAppMessagesManager?.sendEvent(.applicationEvent(.init(name: lowercasedName, model: model)))
         }
     }
 

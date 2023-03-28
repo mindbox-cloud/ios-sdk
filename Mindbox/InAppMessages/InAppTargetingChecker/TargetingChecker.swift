@@ -12,7 +12,7 @@ protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? { get set }
     var geoModels: InAppGeoResponse? { get set }
-    var operationName: String? { get set }
+    var event: ApplicationEvent? { get set }
 }
 
 protocol TargetingCheckerMap: AnyObject {
@@ -40,7 +40,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? = nil
     var geoModels: InAppGeoResponse?
-    var operationName: String?
+    var event: ApplicationEvent?
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
     
@@ -192,6 +192,38 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                     return customOperationChecker.prepare(targeting: targeting, context: &context)
                 } check: {
                     return customOperationChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let categoryIDTargeting = CategoryIDTargeting(kind: .substring, value: "")
+        checkerMap[.viewProductCategoryId(categoryIDTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let categoryIDChecker = CategoryIDChecker()
+            categoryIDChecker.checker = self
+            switch T {
+            case .viewProductCategoryId(let targeting):
+                return CheckerFunctions { context in
+                    return categoryIDChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return categoryIDChecker.check(targeting: targeting)
+                }
+            default:
+                return checkerFunctions
+            }
+        }
+        
+        let categoryIDInTargeting = CategoryIDInTargeting(kind: .any, values: [])
+        checkerMap[.viewProductCategoryIdIn(categoryIDInTargeting)] = { [weak self] (T) -> CheckerFunctions in
+            let categoryIDInChecker = CategoryIDInChecker()
+            categoryIDInChecker.checker = self
+            switch T {
+            case .viewProductCategoryIdIn(let targeting):
+                return CheckerFunctions { context in
+                    return categoryIDInChecker.prepare(targeting: targeting, context: &context)
+                } check: {
+                    return categoryIDInChecker.check(targeting: targeting)
                 }
             default:
                 return checkerFunctions

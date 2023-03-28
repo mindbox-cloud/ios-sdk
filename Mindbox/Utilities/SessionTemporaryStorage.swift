@@ -9,13 +9,19 @@
 import Foundation
 
 final class SessionTemporaryStorage {
-    var observedCustomOperations: [String] = []
+    var observedCustomOperations: Set<String> = []
+    var operationsFromSettings: Set<String> = []
     var geoRequestCompleted = false
     var checkSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     
+    var customOperations: Set<String> {
+        return observedCustomOperations.union(operationsFromSettings)
+    }
+    
     func erase() {
         observedCustomOperations = []
+        operationsFromSettings = []
         geoRequestCompleted = false
         checkSegmentsRequestCompleted = false
         isPresentingInAppMessage = false

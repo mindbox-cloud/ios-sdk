@@ -282,6 +282,13 @@
 		A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */; };
 		A17958992978E04600609E91 /* InAppStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958982978E04600609E91 /* InAppStub.swift */; };
 		A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A179589D2979708B00609E91 /* MindBoxAssets.xcassets */; };
+		A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A184654229C3102A00E64780 /* CategoryIDTargeting.swift */; };
+		A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A184654429C310F100E64780 /* InAppOperationJSONModel.swift */; };
+		A184654729C32FEF00E64780 /* CategoryIDChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A184654629C32FEF00E64780 /* CategoryIDChecker.swift */; };
+		A1A916DF29C9032700D59D9E /* CategoryIDInTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */; };
+		A1A916E129C9053200D59D9E /* CategoryIDInChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */; };
+		A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */ = {isa = PBXBuildFile; fileRef = A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */; };
+		A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E429C9191900D59D9E /* InAppConfigStub.swift */; };
 		A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
 		A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */; };
@@ -625,6 +632,13 @@
 		A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingcheckerTests.swift; sourceTree = "<group>"; };
 		A17958982978E04600609E91 /* InAppStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppStub.swift; sourceTree = "<group>"; };
 		A179589D2979708B00609E91 /* MindBoxAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MindBoxAssets.xcassets; sourceTree = "<group>"; };
+		A184654229C3102A00E64780 /* CategoryIDTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDTargeting.swift; sourceTree = "<group>"; };
+		A184654429C310F100E64780 /* InAppOperationJSONModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppOperationJSONModel.swift; sourceTree = "<group>"; };
+		A184654629C32FEF00E64780 /* CategoryIDChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDChecker.swift; sourceTree = "<group>"; };
+		A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInTargeting.swift; sourceTree = "<group>"; };
+		A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInChecker.swift; sourceTree = "<group>"; };
+		A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithCategoryIDIn.json; sourceTree = "<group>"; };
+		A1A916E429C9191900D59D9E /* InAppConfigStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigStub.swift; sourceTree = "<group>"; };
 		A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = UnknownTargetingsModel.json; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
 		A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingChecker.swift; sourceTree = "<group>"; };
@@ -1367,6 +1381,7 @@
 				9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */,
 				9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */,
 				9B24FABC28C757A700F10B5D /* InAppResponse.swift */,
+				A184654429C310F100E64780 /* InAppOperationJSONModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1466,6 +1481,7 @@
 			children = (
 				9BE941F62916823300258077 /* ConfigJsonStubs */,
 				9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */,
+				A1A916E429C9191900D59D9E /* InAppConfigStub.swift */,
 			);
 			path = InAppConfigResponseTests;
 			sourceTree = "<group>";
@@ -1473,6 +1489,7 @@
 		9BE941F62916823300258077 /* ConfigJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
 				9BE941F42916822900258077 /* InAppConfigurationInvalid.json */,
 				9BC24E7928F6C08700C2619C /* InAppConfiguration.json */,
@@ -1601,6 +1618,8 @@
 				A17958742978AEC600609E91 /* GeoTargetingChecker.swift */,
 				A17958752978AEC600609E91 /* AndTargetingChecker.swift */,
 				A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */,
+				A184654629C32FEF00E64780 /* CategoryIDChecker.swift */,
+				A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */,
 			);
 			path = TargetingCheckerTypes;
 			sourceTree = "<group>";
@@ -1663,6 +1682,8 @@
 				A1D017F12976CC9400CD9F99 /* SegmentTargeting.swift */,
 				A179587B2978AED800609E91 /* GeoTargeting.swift */,
 				A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */,
+				A184654229C3102A00E64780 /* CategoryIDTargeting.swift */,
+				A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */,
 			);
 			path = Targetings;
 			sourceTree = "<group>";
@@ -1919,6 +1940,7 @@
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
+				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
@@ -2028,6 +2050,7 @@
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
 				6FDD145D266F7CCE00A50C35 /* PossibleDiscountsResponse.swift in Sources */,
 				9B9C95322921116F00BB29DA /* PasteboardUUIDDebugService.swift in Sources */,
+				A1A916DF29C9032700D59D9E /* CategoryIDInTargeting.swift in Sources */,
 				6FDD1449266F7C4E00A50C35 /* LimitTypeResponse.swift in Sources */,
 				6FDD144B266F7C5A00A50C35 /* AmountResponse.swift in Sources */,
 				334F3A66264AA18500A6AC00 /* MindboxSceneDelegate.swift in Sources */,
@@ -2144,7 +2167,9 @@
 				314B390025AEE96F00E947B9 /* CoreController.swift in Sources */,
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
 				843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */,
+				A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */,
 				330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */,
+				A184654729C32FEF00E64780 /* CategoryIDChecker.swift in Sources */,
 				6FDD1445266F7C2200A50C35 /* CouponResponse.swift in Sources */,
 				F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */,
 				314B38FD25AEE8B200E947B9 /* MBConfiguration.swift in Sources */,
@@ -2156,6 +2181,7 @@
 				9B2F5F752902975B00F28A96 /* InAppMessagesTracker.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */,
+				A1A916E129C9053200D59D9E /* CategoryIDInChecker.swift in Sources */,
 				9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */,
 				6FDD1441266F7C0600A50C35 /* AppliedPromotionTypeResponse.swift in Sources */,
 				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
@@ -2165,6 +2191,7 @@
 				337C7954265652A80092B580 /* ProductCategoryRequest.swift in Sources */,
 				334F3AF1264C199900A6AC00 /* PoolRequest.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
+				A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */,
 				A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
@@ -2202,6 +2229,7 @@
 				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				A1F3EE4E298BEF0B005FA828 /* OSLogWritterTests.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
+				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
 				9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
