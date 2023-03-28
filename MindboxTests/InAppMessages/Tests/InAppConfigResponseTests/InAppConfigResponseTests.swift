@@ -126,7 +126,7 @@ class InAppConfigResponseTests: XCTestCase {
         let response = try getConfigWithOperations()
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_operations_happyFlow")
-        let event = ApplicationEvent(name: "testpushok", model: nil)
+        let event = ApplicationEvent(name: "TESTPushOK", model: nil)
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live,
                                          inAppsVersion: 4,
                                          targetingChecker: targetingChecker,
@@ -187,10 +187,30 @@ class InAppConfigResponseTests: XCTestCase {
         XCTAssertEqual(expected, config)
     }
     
+    func test_categoryID_emptyModel() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_categoryID_emptyModel")
+        let event = ApplicationEvent(name: "Hello", model: nil)
+        
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getCategoryID_Substring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+        
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+    
     func test_categoryID_substring_true() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_substring_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "auto".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: [
+                                        "System1C": "Boots".uppercased(),
+                                        "TestSite": "81".uppercased()
+                                     ]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_Substring()) { result in
                 config = result
@@ -212,7 +232,11 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryID_substring_false() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_substring_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "asd".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: [
+                                        "System1C": "Bovts".uppercased(),
+                                        "TestSite": "81".uppercased()
+                                     ]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_Substring()) { result in
                 config = result
@@ -226,8 +250,12 @@ class InAppConfigResponseTests: XCTestCase {
     
     func test_categoryID_notSubstring_true() {
         var config: InAppConfig?
-        let expectation = self.expectation(description: "test_categoryID_substring_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "123".uppercased()]))))
+        let expectation = self.expectation(description: "test_categoryID_notSubstring_true")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: [
+                                        "System1C": "Boots".uppercased(),
+                                        "TestSite": "Button".uppercased()
+                                     ]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_notSubstring()) { result in
                 config = result
@@ -248,8 +276,12 @@ class InAppConfigResponseTests: XCTestCase {
     
     func test_categoryID_notSubstring_false() {
         var config: InAppConfig?
-        let expectation = self.expectation(description: "test_categoryID_substring_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "auto".uppercased()]))))
+        let expectation = self.expectation(description: "test_categoryID_notSubstring_false")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: [
+                                        "System1C": "Boots".uppercased(),
+                                        "TestSite": "Buttootn".uppercased()
+                                     ]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_notSubstring()) { result in
                 config = result
@@ -264,7 +296,9 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryID_startWith_true() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_startWith_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "autoHello".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "oots".uppercased(),
+                                                                                                          "TestSite": "Button".uppercased()]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_startWith()) { result in
                 config = result
@@ -286,7 +320,9 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryID_startWith_false() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_startWith_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "Helloauto".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "Boots".uppercased(),
+                                                                                                          "TestSite": "Button".uppercased()]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_startWith()) { result in
                 config = result
@@ -301,7 +337,9 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryID_endWith_true() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_endWith_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "Helloauto".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "Boots".uppercased(),
+                                                                                                          "TestSite": "Button".uppercased()]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_endWith()) { result in
                 config = result
@@ -323,7 +361,9 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryID_endWith_false() {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryID_endWith_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "autoHello".uppercased()]))))
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "Boats".uppercased(),
+                                                                                                          "TestSite": "Button".uppercased()]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryID_endWith()) { result in
                 config = result
@@ -338,7 +378,7 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryIDIn_any_true() throws {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryIDIn_any_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "1"]))))
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "testik2"]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryIDIn_Any()) { result in
                 config = result
@@ -360,7 +400,7 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryIDIn_any_false() throws {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryIDIn_any_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "asdasdasd"]))))
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "potato"]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryIDIn_Any()) { result in
                 config = result
@@ -375,7 +415,7 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryIDIn_none_true() throws {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryIDIn_none_true")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["aloha": "dance"]))))
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "potato"]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryIDIn_None()) { result in
                 config = result
@@ -397,7 +437,7 @@ class InAppConfigResponseTests: XCTestCase {
     func test_categoryIDIn_none_false() throws {
         var config: InAppConfig?
         let expectation = self.expectation(description: "test_categoryIDIn_none_false")
-        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["Test": "1"]))))
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "testik2"]))))
         let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
             .mapConfigResponse(event, configStub.getCategoryIDIn_None()) { result in
                 config = result

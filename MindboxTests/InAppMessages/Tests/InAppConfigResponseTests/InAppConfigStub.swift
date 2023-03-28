@@ -11,7 +11,7 @@ import Foundation
 
 final class InAppConfigStub {
     func getCategoryID_Substring() -> InAppConfigResponse {
-        let categoryIdTargeting = CategoryIDTargeting(kind: .substring, value: "auto")
+        let categoryIdTargeting = CategoryIDTargeting(kind: .substring, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
@@ -20,7 +20,7 @@ final class InAppConfigStub {
     }
     
     func getCategoryID_notSubstring() -> InAppConfigResponse {
-        let categoryIdTargeting = CategoryIDTargeting(kind: .notSubstring, value: "auto")
+        let categoryIdTargeting = CategoryIDTargeting(kind: .notSubstring, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
@@ -29,7 +29,7 @@ final class InAppConfigStub {
     }
     
     func getCategoryID_startWith() -> InAppConfigResponse {
-        let categoryIdTargeting = CategoryIDTargeting(kind: .startsWith, value: "auto")
+        let categoryIdTargeting = CategoryIDTargeting(kind: .startsWith, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
@@ -38,7 +38,7 @@ final class InAppConfigStub {
     }
     
     func getCategoryID_endWith() -> InAppConfigResponse {
-        let categoryIdTargeting = CategoryIDTargeting(kind: .endsWith, value: "auto")
+        let categoryIdTargeting = CategoryIDTargeting(kind: .endsWith, value: "ots")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
@@ -48,7 +48,8 @@ final class InAppConfigStub {
     
     func getCategoryIDIn_Any() -> InAppConfigResponse {
         let categoryIdInTargeting = CategoryIDInTargeting(kind: .any,
-                                                          values: [.init(id: "1", name: "Test")])
+                                                          values: [.init(id: "testik2", name: "System1C"),
+                                                                   .init(id: "81", name: "TestSite")])
         let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
@@ -58,7 +59,8 @@ final class InAppConfigStub {
     
     func getCategoryIDIn_None() -> InAppConfigResponse {
         let categoryIdInTargeting = CategoryIDInTargeting(kind: .none,
-                                                          values: [.init(id: "1", name: "Test")])
+                                                          values: [.init(id: "testik2", name: "System1C"),
+                                                                   .init(id: "81", name: "TestSite")])
         let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),

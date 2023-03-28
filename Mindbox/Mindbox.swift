@@ -538,19 +538,16 @@ public class Mindbox: NSObject {
         
         var model: InappOperationJSONModel?
         let jsonString = jsonString ?? ""
-        
-        do {
-            guard let jsonData = jsonString.data(using: .utf8) else {
-                return
-            }
-
-            model = try JSONDecoder().decode(InappOperationJSONModel.self, from: jsonData)
-        } catch {
-             
-        }
 
         let lowercasedName = operationSystemName.lowercased()
         if let sessionStorage = sessionTemporaryStorage, sessionStorage.customOperations.contains(lowercasedName) {
+            do {
+                if let jsonData = jsonString.data(using: .utf8),
+                        sessionStorage.operationsFromSettings.contains(lowercasedName) {
+                    model = try JSONDecoder().decode(InappOperationJSONModel.self, from: jsonData)
+                }
+            } catch { }
+            
             inAppMessagesManager?.sendEvent(.applicationEvent(.init(name: lowercasedName, model: model)))
         }
     }
