@@ -64,170 +64,51 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     
     private func setupCheckerMap() {
         let checkerFunctions = CheckerFunctions()
-        checkerMap[.unknown] = { (T) -> CheckerFunctions in
+        checkerMap[.unknown] = { _ in
             return checkerFunctions
         }
-        
+
         let trueTargeting = TrueTargeting()
-        checkerMap[.true(trueTargeting)] = { (T) -> CheckerFunctions in
-            let trueChecker = TrueTargetingChecker()
-            switch T {
-            case .true(let targeting):
-                return CheckerFunctions { context in
-                    return trueChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return trueChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let trueTargetingFactory = TrueTargetingFactory()
+        checkerMap[.true(trueTargeting)] = trueTargetingFactory.makeChecker(for:)
+
         let andTargeting = AndTargeting(nodes: [])
-        checkerMap[.and(andTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let andChecker = AndTargetingChecker()
-            andChecker.checker = self
-            switch T {
-            case .and(let targeting):
-                return CheckerFunctions { context in
-                    return andChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return andChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let andFactory = AndTargetingFactory(checker: self)
+        checkerMap[.and(andTargeting)] = andFactory.makeChecker(for:)
+
         let orTargeting = OrTargeting(nodes: [])
-        checkerMap[.or(orTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let orChecker = OrTargetingChecker()
-            orChecker.checker = self
-            switch T {
-            case .or(let targeting):
-                return CheckerFunctions { context in
-                    return orChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return orChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let orFactory = OrTargetingFactory(checker: self)
+        checkerMap[.or(orTargeting)] = orFactory.makeChecker(for:)
+
         let segmentTargeting = SegmentTargeting(kind: .negative,
                                                 segmentationInternalId: "",
                                                 segmentationExternalId: "",
                                                 segmentExternalId: "")
-        checkerMap[.segment(segmentTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let segmentChecker = SegmentTargetingChecker()
-            segmentChecker.checker = self
-            switch T {
-            case .segment(let targeting):
-                return CheckerFunctions { context in
-                    return segmentChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return segmentChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let segmentTargetingFactory = SegmentTargetingFactory(checker: self)
+        checkerMap[.segment(segmentTargeting)] = segmentTargetingFactory.makeChecker(for:)
+
         let cityTargeting = CityTargeting(kind: .negative, ids: [])
-        checkerMap[.city(cityTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let cityChecker = CityTargetingChecker()
-            cityChecker.checker = self
-            switch T {
-            case .city(let targeting):
-                return CheckerFunctions { context in
-                    return cityChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return cityChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let cityTargetingFactory = CityTargetingFactory(checker: self)
+        checkerMap[.city(cityTargeting)] = cityTargetingFactory.makeChecker(for:)
+
         let regionTargeting = RegionTargeting(kind: .negative, ids: [])
-        checkerMap[.region(regionTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let regionChecker = RegionTargetingChecker()
-            regionChecker.checker = self
-            switch T {
-            case .region(let targeting):
-                return CheckerFunctions { context in
-                    return regionChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return regionChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let regionTargetingFactory = RegionTargetingFactory(checker: self)
+        checkerMap[.region(regionTargeting)] = regionTargetingFactory.makeChecker(for:)
+
         let countryTargeting = CountryTargeting(kind: .negative, ids: [])
-        checkerMap[.country(countryTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let countryChecker = CountryTargetingChecker()
-            countryChecker.checker = self
-            switch T {
-            case .country(let targeting):
-                return CheckerFunctions { context in
-                    return countryChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return countryChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let countryTargetingFactory = CountryTargetingFactory(checker: self)
+        checkerMap[.country(countryTargeting)] = countryTargetingFactory.makeChecker(for:)
+
         let customOperationTargeting = CustomOperationTargeting(systemName: "")
-        checkerMap[.apiMethodCall(customOperationTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let customOperationChecker = CustomOperationChecker()
-            customOperationChecker.checker = self
-            switch T {
-            case .apiMethodCall(let targeting):
-                return CheckerFunctions { context in
-                    return customOperationChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return customOperationChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let customOperationTargetingFactory = CustomOperationTargetingFactory(checker: self)
+        checkerMap[.apiMethodCall(customOperationTargeting)] = customOperationTargetingFactory.makeChecker(for:)
+
         let categoryIDTargeting = CategoryIDTargeting(kind: .substring, value: "")
-        checkerMap[.viewProductCategoryId(categoryIDTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let categoryIDChecker = CategoryIDChecker()
-            categoryIDChecker.checker = self
-            switch T {
-            case .viewProductCategoryId(let targeting):
-                return CheckerFunctions { context in
-                    return categoryIDChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return categoryIDChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
-        
+        let categoryIDTargetingFactory = CategoryIDTargetingFactory(checker: self)
+        checkerMap[.viewProductCategoryId(categoryIDTargeting)] = categoryIDTargetingFactory.makeChecker(for:)
+
         let categoryIDInTargeting = CategoryIDInTargeting(kind: .any, values: [])
-        checkerMap[.viewProductCategoryIdIn(categoryIDInTargeting)] = { [weak self] (T) -> CheckerFunctions in
-            let categoryIDInChecker = CategoryIDInChecker()
-            categoryIDInChecker.checker = self
-            switch T {
-            case .viewProductCategoryIdIn(let targeting):
-                return CheckerFunctions { context in
-                    return categoryIDInChecker.prepare(targeting: targeting, context: &context)
-                } check: {
-                    return categoryIDInChecker.check(targeting: targeting)
-                }
-            default:
-                return checkerFunctions
-            }
-        }
+        let categoryIDInTargetingFactory = CategoryIDInTargetingFactory(checker: self)
+        checkerMap[.viewProductCategoryIdIn(categoryIDInTargeting)] = categoryIDInTargetingFactory.makeChecker(for:)
     }
 }
