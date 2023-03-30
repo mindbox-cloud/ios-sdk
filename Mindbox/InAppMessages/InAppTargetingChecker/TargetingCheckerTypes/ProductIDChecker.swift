@@ -1,24 +1,24 @@
 //
-//  CategoryIDChecker.swift
+//  ProductIDChecker.swift
 //  Mindbox
 //
-//  Created by Akylbek Utekeshev on 16.03.2023.
+//  Created by Akylbek Utekeshev on 29.03.2023.
 //  Copyright © 2023 Mindbox. All rights reserved.
 //
 
 import Foundation
 
-final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
+final class ProductIDChecker: InternalTargetingChecker<ProductIDTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
-    
-    override func prepareInternal(targeting: CategoryIDTargeting, context: inout PreparationContext) {
-        
+
+    override func prepareInternal(targeting: ProductIDTargeting, context: inout PreparationContext) {
+
     }
-    
-    override func checkInternal(targeting: CategoryIDTargeting) -> Bool {
+
+    override func checkInternal(targeting: ProductIDTargeting) -> Bool {
         guard let checker = checker,
               let event = checker.event,
-              let ids = event.model?.viewProductCategory?.productCategory.ids,
+              let ids = event.model?.viewProduct?.product.ids,
               !ids.isEmpty else {
             return false
         }
@@ -35,7 +35,7 @@ final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
                 if i.value.hasSuffix(targeting.name) { return true }
             }
         }
-        
+
         return false
     }
 }
