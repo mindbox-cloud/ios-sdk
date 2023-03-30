@@ -25,6 +25,8 @@ enum InAppTargetingType: String, Decodable {
     case apiMethodCall
     case viewProductCategoryId
     case viewProductCategoryIdIn
+    case viewProductId
+    case viewProductSegment
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -45,6 +47,8 @@ enum Targeting: Decodable, Hashable {
     case apiMethodCall(CustomOperationTargeting)
     case viewProductCategoryId(CategoryIDTargeting)
     case viewProductCategoryIdIn(CategoryIDInTargeting)
+    case viewProductId(ProductIDTargeting)
+    case viewProductSegment(ProductSegmentTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -53,34 +57,38 @@ enum Targeting: Decodable, Hashable {
     
     static func == (lhs: Targeting, rhs: Targeting) -> Bool {
         switch (lhs, rhs) {
-        case (.true, .true): return true
-        case (.and, .and): return true
-        case (.or, .or): return true
-        case (.segment, .segment): return true
-        case (.city, .city): return true
-        case (.region, .region): return true
-        case (.country, .country): return true
-        case (.apiMethodCall, .apiMethodCall): return true
-        case (.viewProductCategoryId, .viewProductCategoryId): return true
-        case (.viewProductCategoryIdIn, .viewProductCategoryIdIn): return true
-        case (.unknown, .unknown): return true
-        default: return false
+            case (.true, .true): return true
+            case (.and, .and): return true
+            case (.or, .or): return true
+            case (.segment, .segment): return true
+            case (.city, .city): return true
+            case (.region, .region): return true
+            case (.country, .country): return true
+            case (.apiMethodCall, .apiMethodCall): return true
+            case (.viewProductCategoryId, .viewProductCategoryId): return true
+            case (.viewProductCategoryIdIn, .viewProductCategoryIdIn): return true
+            case (.viewProductId, .viewProductId): return true
+            case (.viewProductSegment, .viewProductSegment): return true
+            case (.unknown, .unknown): return true
+            default: return false
         }
     }
     
     func hash(into hasher: inout Hasher) {
         switch self {
-        case .true: hasher.combine("true")
-        case .and: hasher.combine("and")
-        case .or: hasher.combine("or")
-        case .segment: hasher.combine("segment")
-        case .city: hasher.combine("city")
-        case .region: hasher.combine("region")
-        case .country: hasher.combine("country")
-        case .apiMethodCall: hasher.combine("apiMethodCall")
-        case .viewProductCategoryId: hasher.combine("viewProductCategoryId")
-        case .viewProductCategoryIdIn: hasher.combine("viewProductCategoryIdIn")
-        case .unknown: hasher.combine("unknown")
+            case .true: hasher.combine("true")
+            case .and: hasher.combine("and")
+            case .or: hasher.combine("or")
+            case .segment: hasher.combine("segment")
+            case .city: hasher.combine("city")
+            case .region: hasher.combine("region")
+            case .country: hasher.combine("country")
+            case .apiMethodCall: hasher.combine("apiMethodCall")
+            case .viewProductCategoryId: hasher.combine("viewProductCategoryId")
+            case .viewProductCategoryIdIn: hasher.combine("viewProductCategoryIdIn")
+            case .viewProductId: hasher.combine("viewProductId")
+            case .viewProductSegment: hasher.combine("viewProductSegment")
+            case .unknown: hasher.combine("unknown")
         }
     }
     
@@ -95,38 +103,44 @@ enum Targeting: Decodable, Hashable {
         let targetingContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
         
         switch type {
-        case .true:
-            let trueTargeting = try targetingContainer.decode(TrueTargeting.self)
-            self = .true(trueTargeting)
-        case .and:
-            let andTargeting = try targetingContainer.decode(AndTargeting.self)
-            self = .and(andTargeting)
-        case .or:
-            let orTargeting = try targetingContainer.decode(OrTargeting.self)
-            self = .or(orTargeting)
-        case .segment:
-            let segmentTargeting = try targetingContainer.decode(SegmentTargeting.self)
-            self = .segment(segmentTargeting)
-        case .city:
-            let cityTargeting = try targetingContainer.decode(CityTargeting.self)
-            self = .city(cityTargeting)
-        case .region:
-            let regionTargeting = try targetingContainer.decode(RegionTargeting.self)
-            self = .region(regionTargeting)
-        case .country:
-            let countryTargeting = try targetingContainer.decode(CountryTargeting.self)
-            self = .country(countryTargeting)
-        case .apiMethodCall:
-            let customOperationTargeting = try targetingContainer.decode(CustomOperationTargeting.self)
-            self = .apiMethodCall(customOperationTargeting)
-        case .viewProductCategoryId:
-            let categoryIDTargeting = try targetingContainer.decode(CategoryIDTargeting.self)
-            self = .viewProductCategoryId(categoryIDTargeting)
-        case .viewProductCategoryIdIn:
-            let categoryIDInTargeting = try targetingContainer.decode(CategoryIDInTargeting.self)
-            self = .viewProductCategoryIdIn(categoryIDInTargeting)
-        case .unknown:
-            self = .unknown
+            case .true:
+                let trueTargeting = try targetingContainer.decode(TrueTargeting.self)
+                self = .true(trueTargeting)
+            case .and:
+                let andTargeting = try targetingContainer.decode(AndTargeting.self)
+                self = .and(andTargeting)
+            case .or:
+                let orTargeting = try targetingContainer.decode(OrTargeting.self)
+                self = .or(orTargeting)
+            case .segment:
+                let segmentTargeting = try targetingContainer.decode(SegmentTargeting.self)
+                self = .segment(segmentTargeting)
+            case .city:
+                let cityTargeting = try targetingContainer.decode(CityTargeting.self)
+                self = .city(cityTargeting)
+            case .region:
+                let regionTargeting = try targetingContainer.decode(RegionTargeting.self)
+                self = .region(regionTargeting)
+            case .country:
+                let countryTargeting = try targetingContainer.decode(CountryTargeting.self)
+                self = .country(countryTargeting)
+            case .apiMethodCall:
+                let customOperationTargeting = try targetingContainer.decode(CustomOperationTargeting.self)
+                self = .apiMethodCall(customOperationTargeting)
+            case .viewProductCategoryId:
+                let categoryIDTargeting = try targetingContainer.decode(CategoryIDTargeting.self)
+                self = .viewProductCategoryId(categoryIDTargeting)
+            case .viewProductCategoryIdIn:
+                let categoryIDInTargeting = try targetingContainer.decode(CategoryIDInTargeting.self)
+                self = .viewProductCategoryIdIn(categoryIDInTargeting)
+            case .viewProductId:
+                let productIDTargeting = try targetingContainer.decode(ProductIDTargeting.self)
+                self = .viewProductId(productIDTargeting)
+            case .viewProductSegment:
+                let productSegmentTargeting = try targetingContainer.decode(ProductSegmentTargeting.self)
+                self = .viewProductSegment(productSegmentTargeting)
+            case .unknown:
+                self = .unknown
         }
     }
 }

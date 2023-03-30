@@ -18,7 +18,7 @@ final class CategoryIDInChecker: InternalTargetingChecker<CategoryIDInTargeting>
     override func checkInternal(targeting: CategoryIDInTargeting) -> Bool {
         guard let checker = checker,
               let event = checker.event,
-              let ids = event.model?.viewProductCategory.productCategory.ids,
+              let ids = event.model?.viewProductCategory?.productCategory.ids,
               !ids.isEmpty else {
             return false
         }
