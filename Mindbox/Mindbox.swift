@@ -41,8 +41,8 @@ public class Mindbox: NSObject {
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
-    private var inAppMessagesEnabled = true
     private var sessionTemporaryStorage: SessionTemporaryStorage?
+    private var inappMessageEventSender: InappMessageEventSender?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -516,6 +516,7 @@ public class Mindbox: NSObject {
         databaseRepository = container.databaseRepository
         inAppMessagesManager = container.inAppMessagesManager
         sessionTemporaryStorage = container.sessionTemporaryStorage
+        inappMessageEventSender = container.inappMessageEventSender
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
@@ -531,25 +532,7 @@ public class Mindbox: NSObject {
     }
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
-        guard inAppMessagesEnabled else {
-            Logger.common(message: "inAppMessages is false", level: .error, category: .inAppMessages)
-            return
-        }
-        
-        var model: InappOperationJSONModel?
-        let jsonString = jsonString ?? ""
-
-        let lowercasedName = operationSystemName.lowercased()
-        if let sessionStorage = sessionTemporaryStorage, sessionStorage.customOperations.contains(lowercasedName) {
-            do {
-                if let jsonData = jsonString.data(using: .utf8),
-                        sessionStorage.operationsFromSettings.contains(lowercasedName) {
-                    model = try JSONDecoder().decode(InappOperationJSONModel.self, from: jsonData)
-                }
-            } catch { }
-            
-            inAppMessagesManager?.sendEvent(.applicationEvent(.init(name: lowercasedName, model: model)))
-        }
+        inappMessageEventSender?.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
     @objc private func resetShownInApps() {

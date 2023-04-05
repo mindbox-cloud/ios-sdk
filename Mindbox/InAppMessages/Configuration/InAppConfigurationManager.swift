@@ -186,5 +186,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewCategory = settings.operations?.viewCategory {
             sessionStorage.operationsFromSettings.insert(viewCategory.systemName.lowercased())
         }
+
+        if let viewProduct = settings.operations?.viewProduct {
+            sessionStorage.operationsFromSettings.insert(viewProduct.systemName.lowercased())
+        }
     }
 }

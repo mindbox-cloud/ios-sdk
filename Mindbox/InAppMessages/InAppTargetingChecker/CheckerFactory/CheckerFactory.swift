@@ -194,3 +194,22 @@ final class CategoryIDInTargetingFactory: CheckerFactory {
         )
     }
 }
+
+final class ProductCategoryIDTargetingFactory: CheckerFactory {
+    private let checker: InAppTargetingCheckerProtocol
+
+    init(checker: InAppTargetingCheckerProtocol) {
+        self.checker = checker
+    }
+
+    func makeChecker(for targetType: Targeting) -> CheckerFunctions {
+        let checkerFunctions = CheckerFunctions()
+        guard case let .viewProductId(targeting) = targetType else { return checkerFunctions }
+        let productIDChecker = ProductIDChecker()
+        productIDChecker.checker = checker
+        return CheckerFunctions(
+            prepare: { context in productIDChecker.prepare(targeting: targeting, context: &context) },
+            check: { productIDChecker.check(targeting: targeting) }
+        )
+    }
+}
