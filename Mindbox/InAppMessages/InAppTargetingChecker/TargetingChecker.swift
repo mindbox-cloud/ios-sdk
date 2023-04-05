@@ -24,9 +24,16 @@ protocol TargetingCheckerActionProtocol: AnyObject {
     func check(targeting: Targeting) -> Bool
 }
 
-struct CheckerFunctions {
-    var prepare: (inout PreparationContext) -> Void = {(context: inout PreparationContext) in return }
-    var check: () -> Bool = {() in return false }
+class CheckerFunctions {
+    var prepare: (inout PreparationContext) -> Void = { _ in }
+    var check: () -> Bool = { false }
+
+    init(prepare: @escaping (inout PreparationContext) -> Void, check: @escaping () -> Bool) {
+        self.prepare = prepare
+        self.check = check
+    }
+
+    init() {}
 }
 
 protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap { }
@@ -61,7 +68,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         
         return target(targeting).check()
     }
-    
+
     private func setupCheckerMap() {
         let checkerFunctions = CheckerFunctions()
         checkerMap[.unknown] = { _ in
@@ -110,5 +117,9 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         let categoryIDInTargeting = CategoryIDInTargeting(kind: .any, values: [])
         let categoryIDInTargetingFactory = CategoryIDInTargetingFactory(checker: self)
         checkerMap[.viewProductCategoryIdIn(categoryIDInTargeting)] = categoryIDInTargetingFactory.makeChecker(for:)
+
+        let productIDTargeting = ProductIDTargeting(kind: .substring, value: "")
+        let productIDTargetingFactory = ProductCategoryIDTargetingFactory(checker: self)
+        checkerMap[.viewProductId(productIDTargeting)] = productIDTargetingFactory.makeChecker(for:)
     }
 }

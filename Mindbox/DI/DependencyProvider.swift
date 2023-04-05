@@ -23,6 +23,7 @@ final class DependencyProvider: DependencyContainer {
     let inAppMessagesManager: InAppCoreManagerProtocol
     let uuidDebugService: UUIDDebugService
     var sessionTemporaryStorage: SessionTemporaryStorage
+    var inappMessageEventSender: InappMessageEventSender
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -62,6 +63,9 @@ final class DependencyProvider: DependencyContainer {
             persistenceStorage: persistenceStorage,
             sessionStorage: sessionTemporaryStorage
         )
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
+                                                          sessionStorage: sessionTemporaryStorage)
+
         uuidDebugService = PasteboardUUIDDebugService(
             notificationCenter: NotificationCenter.default,
             currentDateProvider: { return Date() },
