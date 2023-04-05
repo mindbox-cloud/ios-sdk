@@ -121,5 +121,12 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         let productIDTargeting = ProductIDTargeting(kind: .substring, value: "")
         let productIDTargetingFactory = ProductCategoryIDTargetingFactory(checker: self)
         checkerMap[.viewProductId(productIDTargeting)] = productIDTargetingFactory.makeChecker(for:)
+
+        let productSegmentTargeting = ProductSegmentTargeting(kind: .negative,
+                                                              segmentationInternalId: "",
+                                                              segmentationExternalId: "",
+                                                              segmentExternalId: "")
+        let productSegmentTargetingFactory = ProductSegmentTargetingFactory(checker: self)
+        checkerMap[.viewProductSegment(productSegmentTargeting)] = productSegmentTargetingFactory.makeChecker(for:)
     }
 }
