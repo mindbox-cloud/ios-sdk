@@ -10,6 +10,7 @@ import Foundation
 
 struct CustomerSegmentsAPI {
     var fetchSegments: (_ segmentationCheckRequest: SegmentationCheckRequest, _ completion: @escaping (SegmentationCheckResponse?) -> Void) -> Void
+    var fetchProductSegments: (_ segmentationCheckRequest: InAppProductSegmentRequest, _ completion: @escaping (InAppProductSegmentResponse?) -> Void) -> Void
 }
 
 extension CustomerSegmentsAPI {
@@ -19,6 +20,20 @@ extension CustomerSegmentsAPI {
                 operationSystemName: "Tracker.CheckCustomerSegments",
                 operationBody: segmentationCheckRequest,
                 customResponseType: SegmentationCheckResponse.self,
+                completion: { result in
+                    switch result {
+                    case .success(let response):
+                        completion(response)
+                    case .failure:
+                        completion(nil)
+                    }
+                }
+            )
+        }, fetchProductSegments: { segmentationCheckRequest, completion in
+            Mindbox.shared.executeSyncOperation(
+                operationSystemName: "Tracker.CheckProductSegments",
+                operationBody: segmentationCheckRequest,
+                customResponseType: InAppProductSegmentResponse.self,
                 completion: { result in
                     switch result {
                     case .success(let response):

@@ -21,12 +21,11 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
             return false
         }
 
-        // TODO
-        guard let checkedSegmentations = checker.checkedSegmentations else {
+        guard let checkedProductSegmentations = checker.checkedProductSegmentations else {
             return false
         }
 
-        let segment = checkedSegmentations.first(where: {
+        let segment = checkedProductSegmentations.first(where: {
             $0.segment?.ids?.externalId == targeting.segmentExternalId
         })
 
