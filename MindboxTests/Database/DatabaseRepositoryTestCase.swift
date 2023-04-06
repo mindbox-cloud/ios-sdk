@@ -11,13 +11,13 @@ import CoreData
 @testable import Mindbox
 
 class DatabaseRepositoryTestCase: XCTestCase {
-    
+
     var databaseRepository: MBDatabaseRepository {
         container.databaseRepository
     }
-    
+
     let eventGenerator = EventGenerator()
-        
+
     let container = try! TestDependencyProvider()
 
     override func setUp() {
@@ -25,17 +25,17 @@ class DatabaseRepositoryTestCase: XCTestCase {
         updateDatabaseRepositoryWith(createsDeprecated: false)
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     private func updateDatabaseRepositoryWith(createsDeprecated: Bool) {
         (databaseRepository as! MockDatabaseRepository).createsDeprecated = createsDeprecated
     }
-    
+
     func testCreateDatabaseRepository() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         XCTAssertNotNil(databaseRepository)
     }
-    
+
     func testCreateEvent() {
         let event = eventGenerator.generateEvent()
         let expectation = self.expectation(description: "create event")
@@ -47,7 +47,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         waitForExpectations(timeout: 1, handler: nil)
     }
-    
+
     // MARK: - Not valid with ci/cd
 //    func testCreateEvents() {
 //        let count = 1000
@@ -67,7 +67,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
 //        }
 //        waitForExpectations(timeout: 1, handler: nil)
 //    }
-    
+
     func testReadEvent() {
         let event = eventGenerator.generateEvent()
         let expectation = self.expectation(description: "read event")
@@ -83,10 +83,10 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        
+
         waitForExpectations(timeout: 4, handler: nil)
     }
-    
+
     func testUpdateEvent() {
         let event = eventGenerator.generateEvent()
         var initailRetryTimeStamp: Double?
@@ -117,7 +117,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         XCTAssertNotEqual(initailRetryTimeStamp, updatedRetryTimeStamp)
     }
-    
+
     func testDeleteEvent() {
         let event = eventGenerator.generateEvent()
         do {
@@ -134,7 +134,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         waitForExpectations(timeout: 1, handler: nil)
     }
-    
+
 //    func testHasEventsAfterCreation() {
 //        databaseRepository.onObjectsDidChange = { [self] in
 //            XCTAssertTrue(databaseRepository.count > 0)
@@ -154,7 +154,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
 //        }
 //        XCTAssertTrue(databaseRepository.count <= databaseRepository.limit)
 //    }
-    
+
     func testLifeTimeLimit() {
         XCTAssertNotNil(databaseRepository.lifeLimitDate)
         let event = eventGenerator.generateEvent()
@@ -164,7 +164,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         XCTAssertTrue(event.enqueueTimeStamp > monthLimitDate.timeIntervalSince1970)
     }
-    
+
     func testRemoveDeprecatedEvents() {
         let event = eventGenerator.generateEvent()
         do {
@@ -178,7 +178,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
-    
+
 //    func testDeprecatedEventsCount() {
 //        updateDatabaseRepositoryWith(createsDeprecated: true)
 //        let count = 5
@@ -205,7 +205,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
 //
 //        waitForExpectations(timeout: 1)
 //    }
-    
+
     func testDeprecatedEventsDelete() {
         updateDatabaseRepositoryWith(createsDeprecated: true)
         let count = 5
@@ -228,10 +228,10 @@ class DatabaseRepositoryTestCase: XCTestCase {
                 XCTFail(error.localizedDescription)
             }
         }
-        
+
         waitForExpectations(timeout: 1)
     }
-    
+
     func testFetchUnretryEvents() {
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
@@ -250,7 +250,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail(error.localizedDescription)
         }
     }
-    
+
     func testFetchRetryEvents() {
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
