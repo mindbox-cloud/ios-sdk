@@ -25,12 +25,18 @@ final class InAppImagesStorage: InAppImagesStorageProtocol {
     private func downloadImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void) {
         var request = URLRequest(url: url)
         request.timeoutInterval = 30
-        URLSession.shared.dataTask(with: request) { (data, _, _) in
-            guard let data = data else {
-                completionQueue.async { completion(nil) }
-                return
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            completionQueue.async {
+                if let error = error {
+                    completion(nil)
+                } else if let response = response as? HTTPURLResponse, response.statusCode != 200 {
+                    completion(nil)
+                } else if let data = data {
+                    completion(data)
+                } else {
+                    completion(nil)
+                }
             }
-            completionQueue.async { completion(data) }
         }
         .resume()
     }
