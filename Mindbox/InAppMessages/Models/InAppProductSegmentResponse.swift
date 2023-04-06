@@ -11,6 +11,7 @@ import MindboxLogger
 
 struct InAppProductSegmentRequest: OperationBodyRequestType {
     let segmentations: [Segmentation]
+    let products: [ProductCategory]
 
     struct Segmentation: Encodable {
         let ids: Id
@@ -23,15 +24,16 @@ struct InAppProductSegmentRequest: OperationBodyRequestType {
 
 struct InAppProductSegmentResponse: OperationResponseType {
     let status: Status
-    let customerSegmentations: [CustomerSegmentation]?
+    let products: [Product]?
 
-    struct CustomerSegmentation: Codable {
-        let segmentation: Segmentation
-        let segment: Segment?
+    struct Product: Codable {
+        let ids: [String: String]
+        let segmentations: [CustomerSegmentation]
     }
 
-    struct Segmentation: Codable {
+    struct CustomerSegmentation: Codable {
         let ids: Id
+        let segment: Segment?
     }
 
     struct Segment: Codable {

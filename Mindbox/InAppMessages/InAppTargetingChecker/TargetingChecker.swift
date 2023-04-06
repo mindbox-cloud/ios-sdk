@@ -11,6 +11,7 @@ import MindboxLogger
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? { get set }
+    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]? { get set }
     var geoModels: InAppGeoResponse? { get set }
     var event: ApplicationEvent? { get set }
 }
@@ -46,6 +47,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? = nil
+    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]? = nil
     var geoModels: InAppGeoResponse?
     var event: ApplicationEvent?
     

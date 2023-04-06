@@ -13,6 +13,7 @@ final class SessionTemporaryStorage {
     var operationsFromSettings: Set<String> = []
     var geoRequestCompleted = false
     var checkSegmentsRequestCompleted = false
+    var checkProductSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     
     var customOperations: Set<String> {
@@ -24,6 +25,7 @@ final class SessionTemporaryStorage {
         operationsFromSettings = []
         geoRequestCompleted = false
         checkSegmentsRequestCompleted = false
+        checkProductSegmentsRequestCompleted = false
         isPresentingInAppMessage = false
     }
 }
