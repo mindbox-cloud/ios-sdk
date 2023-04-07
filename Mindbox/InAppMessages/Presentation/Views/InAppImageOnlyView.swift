@@ -28,7 +28,8 @@ final class InAppImageOnlyView: UIView {
         #if SWIFT_PACKAGE
         let bundle = Bundle.module
         #else
-        let bundle = Bundle(for: InAppImageOnlyView.self)
+        let podBundle: URL = Bundle(for: InAppImageOnlyView.self).url(forResource: "Mindbox", withExtension: "bundle") ?? URL(string: "")!
+        let bundle = Bundle(url: podBundle)
         #endif
         
         let image = UIImage(data: uiModel.imageData)

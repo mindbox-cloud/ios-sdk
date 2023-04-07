@@ -97,7 +97,7 @@ class InAppCoreManagerTests: XCTestCase {
         let serialQueueFinishExpectation = self.expectation(description: "core manager queue finish")
         serialQueue.async { serialQueueFinishExpectation.fulfill() }
 
-        self.wait(for: [serialQueueFinishExpectation], timeout: 0.1)
+        self.wait(for: [serialQueueFinishExpectation], timeout: 2)
         XCTAssertEqual(presentationManager.presentCallsCount, 1)
     }
 

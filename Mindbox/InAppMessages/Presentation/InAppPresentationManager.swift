@@ -32,6 +32,7 @@ protocol InAppPresentationManagerProtocol: AnyObject {
 
 enum InAppPresentationError {
     case failedToLoadImages
+    case failedToLoadWindow
 }
 
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
@@ -75,7 +76,8 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                     inAppUIModel: inAppUIModel,
                     onPresented: onPresented,
                     onTapAction: onTapAction,
-                    onPresentationCompleted: onPresentationCompleted
+                    onPresentationCompleted: onPresentationCompleted,
+                    onError: onError
                 )
             } else {
                 onError(.failedToLoadImages)
@@ -90,11 +92,14 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         inAppUIModel: InAppMessageUIModel,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void
+        onPresentationCompleted: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
     ) {
-        Logger.common(message: "In-app with id \(inAppUIModel.inAppId) presented", level: .info, category: .inAppMessages)
+        guard let inAppWindow = makeInAppMessageWindow() else {
+            onError(.failedToLoadWindow)
+            return
+        }
 
-        let inAppWindow = makeInAppMessageWindow()
         let close: () -> Void = { [weak self] in
             self?.onClose(inApp: inAppUIModel, onPresentationCompleted)
         }
@@ -109,6 +114,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             onClose: close
         )
         inAppWindow.rootViewController = inAppViewController
+        Logger.common(message: "In-app with id \(inAppUIModel.inAppId) presented", level: .info, category: .inAppMessages)
     }
 
     private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
@@ -152,16 +158,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         completion()
     }
 
-    private func makeInAppMessageWindow() -> UIWindow {
-        let window: UIWindow
+    private func makeInAppMessageWindow() -> UIWindow? {
+        let window: UIWindow?
         if #available(iOS 13.0, *) {
             window = iOS13PlusWindow
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
         self.inAppWindow = window
-        window.windowLevel = UIWindow.Level.normal
-        window.isHidden = false
+        window?.windowLevel = UIWindow.Level.normal
+        window?.isHidden = false
         return window
     }
 
@@ -176,11 +182,11 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     }
 
     @available(iOS 13.0, *)
-    private var iOS13PlusWindow: UIWindow {
+    private var iOS13PlusWindow: UIWindow? {
         if let foregroundedScene = foregroundedScene, foregroundedScene.delegate != nil {
             return UIWindow(windowScene: foregroundedScene)
         } else {
-            return UIWindow(frame: UIScreen.main.bounds)
+            return nil
         }
     }
 }
