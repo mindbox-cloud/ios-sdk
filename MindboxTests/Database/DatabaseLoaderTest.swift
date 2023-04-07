@@ -11,7 +11,7 @@ import CoreData
 @testable import Mindbox
 
 class DatabaseLoaderTest: XCTestCase {
-    
+
     var persistentContainer: NSPersistentContainer {
         container.databaseRepository.persistentContainer
     }
