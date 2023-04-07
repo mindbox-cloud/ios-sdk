@@ -44,7 +44,7 @@ jobs:
       run: |
         set -eo pipefail
         pod lib lint --allow-warnings
-        pod trunk push Mindbox.podspec --allow-warnings
+        
         pod trunk push MindboxNotifications.podspec --allow-warnings
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
