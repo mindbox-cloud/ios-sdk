@@ -15,6 +15,11 @@ struct InappOperationJSONModel: Codable, Equatable, Hashable {
     static func == (lhs: InappOperationJSONModel, rhs: InappOperationJSONModel) -> Bool {
         lhs.viewProductCategory == rhs.viewProductCategory && lhs.viewProduct == rhs.viewProduct
     }
+
+    init(viewProduct: ViewProduct? = nil, viewProductCategory: ViewProductCategory? = nil) {
+        self.viewProduct = viewProduct
+        self.viewProductCategory = viewProductCategory
+    }
 }
 
 struct ViewProduct: Codable, Equatable, Hashable {
@@ -38,6 +43,10 @@ struct ProductCategory: Codable, Equatable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case ids
+    }
+
+    init(ids: [String: String]) {
+        self.ids = ids
     }
 
     func encode(to encoder: Encoder) throws {

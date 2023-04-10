@@ -10,13 +10,14 @@ import MindboxLogger
 
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    var targetingChecker: InAppTargetingCheckerProtocol { get set }
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private let inAppsVersion: Int
-    private var targetingChecker: InAppTargetingCheckerProtocol
+    var targetingChecker: InAppTargetingCheckerProtocol
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
