@@ -150,6 +150,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private func checkProductSegmentationRequest(products: ProductCategory,
                                                  _ completion: @escaping ([InAppProductSegmentResponse.CustomerSegmentation]?) -> Void) -> Void {
+        if sessionTemporaryStorage.isPresentingInAppMessage {
+            return
+        }
+
         let arrayOfSegments = Array(Set(targetingChecker.context.productSegments))
         let segments: [InAppProductSegmentRequest.Segmentation] = arrayOfSegments.map {
             return .init(ids: .init(externalId: $0))

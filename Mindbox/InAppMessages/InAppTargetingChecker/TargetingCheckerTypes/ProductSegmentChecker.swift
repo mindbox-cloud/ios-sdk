@@ -21,7 +21,7 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
             return false
         }
 
-        guard let checkedProductSegmentations = checker.checkedProductSegmentations else {
+        guard let checkedProductSegmentations = checker.checkedProductSegmentations, !checkedProductSegmentations.isEmpty else {
             return false
         }
 
