@@ -164,7 +164,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
 
-        let model = InAppProductSegmentRequest(segmentations: segments, products: [products])
+        let firstId = products.ids.first
+        let singleIdDict = firstId.map { [$0.key: $0.value] } ?? [:]
+
+        let model = InAppProductSegmentRequest(segmentations: segments, products: [ProductCategory(ids: singleIdDict)])
 
         customerSegmentsAPI.fetchProductSegments(model) { response in
             guard let response = response,

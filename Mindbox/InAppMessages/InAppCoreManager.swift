@@ -101,12 +101,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard !sessionStorage.isPresentingInAppMessage else {
-            Logger.common(message: "In-app was already shown presented in this session", category: .inAppMessages)
-            return
-        }
-
-        guard var inAppRequest = configManager.buildInAppRequest(event: event) else {
+        guard !sessionStorage.isPresentingInAppMessage,
+              var inAppRequest = configManager.buildInAppRequest(event: event) else {
             return
         }
 

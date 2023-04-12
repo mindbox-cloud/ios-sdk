@@ -24,15 +24,17 @@ final class ProductIDChecker: InternalTargetingChecker<ProductIDTargeting> {
         }
 
         for i in ids {
+            let lowercaseValue = i.value.lowercased()
+            let lowercaseName = targeting.name.lowercased()
             switch targeting.kind {
             case .substring:
-                if i.value.contains(targeting.name) { return true }
+                if lowercaseValue.contains(lowercaseName) { return true }
             case .notSubstring:
-                if !i.value.contains(targeting.name) { return true }
+                if !lowercaseValue.contains(lowercaseName) { return true }
             case .startsWith:
-                if i.value.hasPrefix(targeting.name) { return true }
+                if lowercaseValue.hasPrefix(lowercaseName) { return true }
             case .endsWith:
-                if i.value.hasSuffix(targeting.name) { return true }
+                if lowercaseValue.hasSuffix(lowercaseName) { return true }
             }
         }
 
