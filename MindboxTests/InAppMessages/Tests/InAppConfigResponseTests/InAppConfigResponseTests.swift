@@ -448,6 +448,288 @@ class InAppConfigResponseTests: XCTestCase {
         waitForExpectations(timeout: 3)
         XCTAssertEqual(expected, config)
     }
+
+    func test_productID_emptyModel() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_emptyModel")
+        let event = ApplicationEvent(name: "Hello", model: nil)
+
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_Substring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_substring_true() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_substring_true")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boots".uppercased(),
+                                                                                         "system1c": "81".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_Substring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_substring_false() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_substring_false")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Bovts".uppercased(),
+                                                                                         "system1c": "81".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_Substring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_notSubstring_true() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_notSubstring_true")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boots".uppercased(),
+                                                                                         "system1c": "81".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_notSubstring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_notSubstring_false() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_notSubstring_false")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boots".uppercased(),
+                                                                                         "system1c": "Buttootn".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_notSubstring()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_startWith_true() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_startWith_true")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "oots".uppercased(),
+                                                                                         "system1c": "Button".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_startsWith()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_startWith_false() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_startWith_false")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boots".uppercased(),
+                                                                                         "system1c": "Button".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_startsWith()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_endWith_true() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_endWith_true")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boots".uppercased(),
+                                                                                         "system1c": "Button".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_endsWith()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productID_endWith_false() {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productID_endWith_false")
+        let event = ApplicationEvent(name: "Hello",
+                                     model: .init(viewProduct: .init(product: .init(ids:
+                                                                                        ["website": "Boats".uppercased(),
+                                                                                         "system1c": "Button".uppercased()
+                                                                                        ]))))
+        let _ = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+            .mapConfigResponse(event, configStub.getProductID_endsWith()) { result in
+                config = result
+                expectation.fulfill()
+            }
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productSegment_positive_true() throws {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productSegment_positive_true")
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+        let mapper: InAppConfigurationMapperProtocol = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+
+        mapper.mapConfigResponse(event, configStub.getProductSegment_Any()) { result in
+            config = result
+            expectation.fulfill()
+        }
+
+        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "3")))]
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productSegment_positive_false() throws {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productSegment_positive_false")
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+        let mapper: InAppConfigurationMapperProtocol = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+
+        mapper.mapConfigResponse(event, configStub.getProductSegment_Any()) { result in
+            config = result
+            expectation.fulfill()
+        }
+
+        mapper.targetingChecker.checkedProductSegmentations = []
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productSegment_negative_true() throws {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productSegment_negative_true")
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+        let mapper: InAppConfigurationMapperProtocol = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+
+        mapper.mapConfigResponse(event, configStub.getProductSegment_None()) { result in
+            config = result
+            expectation.fulfill()
+        }
+
+        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "4")))]
+
+        let expected = InAppConfig(inAppsByEvent: [
+            .applicationEvent(event): [
+                .init(id: "0",
+                      formDataVariants: [
+                        .init(imageUrl: "1",
+                              redirectUrl: "2",
+                              intentPayload: "3")])]
+        ])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
+
+    func test_productSegment_negative_false() throws {
+        var config: InAppConfig?
+        let expectation = self.expectation(description: "test_productSegment_none_false")
+        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+        let mapper: InAppConfigurationMapperProtocol = InAppConfigutationMapper(customerSegmentsAPI: .live, inAppsVersion: 5, targetingChecker: targetingChecker, networkFetcher: networkFetcher, sessionTemporaryStorage: sessionTemporaryStorage)
+
+        mapper.mapConfigResponse(event, configStub.getProductSegment_None()) { result in
+            config = result
+            expectation.fulfill()
+        }
+
+        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "3")))]
+
+        let expected = InAppConfig(inAppsByEvent: [:])
+        waitForExpectations(timeout: 3)
+        XCTAssertEqual(expected, config)
+    }
 }
 
 private extension InAppConfigResponseTests {

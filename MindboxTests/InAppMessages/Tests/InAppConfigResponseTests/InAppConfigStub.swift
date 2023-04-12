@@ -78,4 +78,57 @@ final class InAppConfigStub {
     func getForm() -> InAppConfigResponse.InAppFormVariants {
         .init(variants: [.init(imageUrl: "1", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
     }
+    func getProductID_Substring() -> InAppConfigResponse {
+        let productIdTargeting = ProductIDTargeting(kind: .substring, value: "oot")
+        let targeting = Targeting.viewProductId(productIdTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
+                                                                      viewCategory: .init(systemName: "Hello"),
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
+
+    func getProductID_notSubstring() -> InAppConfigResponse {
+        let productIdTargeting = ProductIDTargeting(kind: .notSubstring, value: "oot")
+        let targeting = Targeting.viewProductId(productIdTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
+                                                                      viewCategory: .init(systemName: "Hello"),
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
+
+    func getProductID_startsWith() -> InAppConfigResponse {
+        let productIdTargeting = ProductIDTargeting(kind: .startsWith, value: "oot")
+        let targeting = Targeting.viewProductId(productIdTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
+                                                                      viewCategory: .init(systemName: "Hello"),
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
+
+    func getProductID_endsWith() -> InAppConfigResponse {
+        let productIdTargeting = ProductIDTargeting(kind: .endsWith, value: "ots")
+        let targeting = Targeting.viewProductId(productIdTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
+                                                                      viewCategory: .init(systemName: "Hello"),
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
+
+    func getProductSegment_Any() -> InAppConfigResponse {
+        let productSegmentTargeting = ProductSegmentTargeting(kind: .positive, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
+        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
+                                                                      viewCategory: nil,
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
+
+    func getProductSegment_None() -> InAppConfigResponse {
+        let productSegmentTargeting = ProductSegmentTargeting(kind: .negative, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
+        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
+        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
+                                                                      viewCategory: nil,
+                                                                      setCart: nil))
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+    }
 }

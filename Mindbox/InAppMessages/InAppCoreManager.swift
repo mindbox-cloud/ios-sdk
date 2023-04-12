@@ -102,7 +102,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !sessionStorage.isPresentingInAppMessage,
-              var inAppRequest = configManager.buildInAppRequest(event: event) else { return }
+              var inAppRequest = configManager.buildInAppRequest(event: event) else {
+            return
+        }
 
         // Filter already shown inapps
         let alreadyShownInApps = Set(persistenceStorage.shownInAppsIds ?? [])
@@ -111,12 +113,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
         
         Logger.common(message: "Shown in-apps ids: [\(alreadyShownInApps)]", level: .info, category: .inAppMessages)
-//        #if DEBUG
-//        if let inAppDebug = inAppRequest.possibleInApps.first {
-//            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: inAppDebug.inAppId))
-//        }
-//        return
-//        #endif
 
         guard !inAppRequest.possibleInApps.isEmpty else {
             Logger.common(message: "No inapps to show", level: .info, category: .inAppMessages)
@@ -134,8 +130,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
               let inAppFormData = configManager.getInAppFormData(by: inAppResponse)
         else { return }
         guard !sessionStorage.isPresentingInAppMessage else { return }
-        sessionStorage.isPresentingInAppMessage = true
-        
+        self.sessionStorage.isPresentingInAppMessage = true
+
         Logger.common(message: "In-app with id \(inAppResponse.inAppToShowId) is going to be shown", level: .debug, category: .inAppMessages)
 
         presentationManager.present(
@@ -145,6 +141,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                     var newShownInAppsIds = self.persistenceStorage.shownInAppsIds ?? []
                     newShownInAppsIds.append(inAppResponse.inAppToShowId)
                     self.persistenceStorage.shownInAppsIds = newShownInAppsIds
+
                 }
             },
             onTapAction: { [delegate] url, payload in
@@ -157,6 +154,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 switch error {
                 case .failedToLoadImages:
                     Logger.common(message: "Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)", level: .debug, category: .inAppMessages)
+                case .failedToLoadWindow:
+                        self.sessionStorage.isPresentingInAppMessage = false
+                        Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
                 }
             }
         )
