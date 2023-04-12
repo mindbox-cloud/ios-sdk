@@ -20,6 +20,11 @@ class InappMessageEventSender {
     }
 
     func sendEventIfEnabled(_ operatingSystemName: String, jsonString: String?) {
+        guard let isPresenting = sessionStorage?.isPresentingInAppMessage, !isPresenting else {
+            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
+            return
+        }
+
         let lowercasedName = operatingSystemName.lowercased()
         let jsonString = jsonString ?? ""
 
