@@ -29,6 +29,10 @@ class InAppStub {
     func getTargetingSegment(model: SegmentTargeting) -> Targeting {
         .segment(model)
     }
+
+    func getTargetingProductSegment(model: ProductSegmentTargeting) -> Targeting {
+        .viewProductSegment(model)
+    }
     
     func getCheckedSegmentation(segmentationID: String, segmentID: String?) -> SegmentationCheckResponse.CustomerSegmentation {
         var segment: SegmentationCheckResponse.Segment?
@@ -37,6 +41,16 @@ class InAppStub {
         }
         
         return .init(segmentation: SegmentationCheckResponse.Segmentation(ids: SegmentationCheckResponse.Id(externalId: segmentationID)),
+                     segment: segment)
+    }
+
+    func getCheckedProductSegmentation(segmentationID: String, segmentID: String?) -> InAppProductSegmentResponse.CustomerSegmentation {
+        var segment: InAppProductSegmentResponse.Segment?
+        if let segmentID = segmentID {
+            segment = InAppProductSegmentResponse.Segment(ids: InAppProductSegmentResponse.Id(externalId: segmentID))
+        }
+
+        return .init(ids: .init(externalId: segmentationID),
                      segment: segment)
     }
     
