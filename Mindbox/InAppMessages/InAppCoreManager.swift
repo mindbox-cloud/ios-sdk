@@ -11,10 +11,31 @@ import MindboxLogger
 
 /// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {
+    static func == (lhs: InAppMessageTriggerEvent, rhs: InAppMessageTriggerEvent) -> Bool {
+        switch (lhs, rhs) {
+        case (.start, .start):
+            return true
+        case let (.applicationEvent(lhs), .applicationEvent(rhs)):
+            return lhs == rhs
+        default:
+            return false
+        }
+    }
+    
     /// Application start event. Fires after SDK configurated
     case start // All inapps by now is Start
     /// Any other event sent to SDK
-    case applicationEvent(String)
+    case applicationEvent(ApplicationEvent)
+}
+
+struct ApplicationEvent: Hashable, Equatable {
+    let name: String
+    let model: InappOperationJSONModel?
+    
+    init(name: String, model: InappOperationJSONModel?) {
+        self.name = name.lowercased()
+        self.model = model
+    }
 }
 
 protocol InAppCoreManagerProtocol: AnyObject {
@@ -61,9 +82,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
-        if case .applicationEvent(let operationName) = event {
+        if case .applicationEvent(let event) = event {
             isConfigurationReady = false
-            configManager.recalculateInapps(with: operationName)
+            configManager.recalculateInapps(with: event)
         }
         
         serialQueue.async {
@@ -81,7 +102,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !sessionStorage.isPresentingInAppMessage,
-              var inAppRequest = configManager.buildInAppRequest(event: event) else { return }
+              var inAppRequest = configManager.buildInAppRequest(event: event) else {
+            return
+        }
 
         // Filter already shown inapps
         let alreadyShownInApps = Set(persistenceStorage.shownInAppsIds ?? [])

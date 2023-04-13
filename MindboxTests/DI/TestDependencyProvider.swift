@@ -23,6 +23,7 @@ final class TestDependencyProvider: DependencyContainer {
     let instanceFactory: InstanceFactory
     let uuidDebugService: UUIDDebugService
     let sessionTemporaryStorage: SessionTemporaryStorage
+    var inappMessageEventSender: InappMessageEventSender
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -47,6 +48,8 @@ final class TestDependencyProvider: DependencyContainer {
         inAppTargetingChecker = InAppTargetingChecker()
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
+                                                          sessionStorage: sessionTemporaryStorage)
     }
 
 }
