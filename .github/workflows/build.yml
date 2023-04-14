@@ -13,9 +13,9 @@ on:
 
 jobs:
   unit:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Update bundler
       run: gem install bundler
     - name: Install bundler dependencies
