@@ -20,7 +20,8 @@ final class SegmentTargetingChecker: InternalTargetingChecker<SegmentTargeting> 
             return false
         }
         
-        guard let checkedSegmentations = checker.checkedSegmentations else {
+        guard let checkedSegmentations = checker.checkedSegmentations,
+                !checkedSegmentations.isEmpty else {
             return false
         }
         
