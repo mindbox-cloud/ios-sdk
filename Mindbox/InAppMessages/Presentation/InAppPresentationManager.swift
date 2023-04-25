@@ -198,7 +198,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
         Logger.common(message: "ForegroundDelegate - \(foregroundedScene?.delegate)")
-        if let foregroundedScene = foregroundedScene, foregroundedScene.delegate != nil {
+        if let foregroundedScene = foregroundedScene {
             return UIWindow(windowScene: foregroundedScene)
         } else {
             Logger.common(message: "iOS13PlusWindow return nil")
