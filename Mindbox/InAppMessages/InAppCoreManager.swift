@@ -102,24 +102,16 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !sessionStorage.isPresentingInAppMessage,
-              var inAppRequest = configManager.buildInAppRequest(event: event) else {
+              let inAppRequest = configManager.buildInAppRequest(event: event) else {
             return
         }
-
-        // Filter already shown inapps
-        let alreadyShownInApps = Set(persistenceStorage.shownInAppsIds ?? [])
-        inAppRequest.possibleInApps = inAppRequest.possibleInApps.filter {
-            !alreadyShownInApps.contains($0.inAppId)
-        }
-        
-        Logger.common(message: "Shown in-apps ids: [\(alreadyShownInApps)]", level: .info, category: .inAppMessages)
 
         guard !inAppRequest.possibleInApps.isEmpty else {
-            Logger.common(message: "No inapps to show", level: .info, category: .inAppMessages)
+            Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
             return
         }
 
-        // No need to check targenting if first inapp has no any taggeting
+        // No need to check targeting if the first in-app message has no targeting
         if let firstInapp = inAppRequest.possibleInApps.first {
             onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
         }

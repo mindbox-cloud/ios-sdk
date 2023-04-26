@@ -21,6 +21,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
+    private let persistenceStorage: PersistenceStorage
 
     private let dispatchGroup = DispatchGroup()
 
@@ -28,21 +29,25 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
          networkFetcher: NetworkFetcher,
-         sessionTemporaryStorage: SessionTemporaryStorage) {
+         sessionTemporaryStorage: SessionTemporaryStorage,
+         persistenceStorage: PersistenceStorage) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
         self.fetcher = networkFetcher
         self.sessionTemporaryStorage = sessionTemporaryStorage
+        self.persistenceStorage = persistenceStorage
     }
 
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ event: ApplicationEvent?,
                            _ response: InAppConfigResponse,
                            _ completion: @escaping (InAppConfig) -> Void) {
+        let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         let responseInapps = response.inapps?.filter {
             inAppsVersion >= $0.sdkVersion.min
             && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
+            && !shownInAppsIds.contains($0.id)
         } ?? []
 
         if responseInapps.isEmpty {
@@ -53,7 +58,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         targetingChecker.event = event
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
-
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         fetchDependencies(model: event?.model) {
             let inappByEvent = self.buildInAppByEvent(inapps: responseInapps)
             completion(InAppConfig(inAppsByEvent: inappByEvent))
