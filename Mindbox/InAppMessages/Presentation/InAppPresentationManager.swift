@@ -95,8 +95,6 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onPresentationCompleted: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     ) {
-        Logger.common(message: "PresentInAppUIModel Started")
-        Logger.common(message: "Trying to create InappWindow")
         guard let inAppWindow = makeInAppMessageWindow() else {
             Logger.common(message: "InappWindow creating failed")
             onError(.failedToLoadWindow)
@@ -166,43 +164,33 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     private func makeInAppMessageWindow() -> UIWindow? {
         let window: UIWindow?
         if #available(iOS 13.0, *) {
-            Logger.common(message: "Window available iOS 13")
             window = iOS13PlusWindow
         } else {
-            Logger.common(message: "Window NOT available iOS 13")
-            Logger.common(message: "Bounds: \(UIScreen.main.bounds)")
             window = UIWindow(frame: UIScreen.main.bounds)
         }
         self.inAppWindow = window
         window?.windowLevel = UIWindow.Level.normal
         window?.isHidden = false
-        
-        Logger.common(message: "makeInAppMessageWindow window is nil: \(window == nil)")
         return window
     }
 
     @available(iOS 13.0, *)
     private var foregroundedScene: UIWindowScene? {
         for connectedScene in UIApplication.shared.connectedScenes {
-            Logger.common(message: "ConnectedScene - \(connectedScene)")
             if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
-                Logger.common(message: "ForegroundedScene is ready to use")
                 return windowScene
             }
         }
-        
-        Logger.common(message: "foregroundedScene is NIL")
+    
         return nil
     }
 
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
-        Logger.common(message: "ForegroundDelegate - \(foregroundedScene?.delegate)")
         if let foregroundedScene = foregroundedScene {
             return UIWindow(windowScene: foregroundedScene)
         } else {
-            Logger.common(message: "iOS13PlusWindow return nil")
-            return nil
+            return UIWindow(frame: UIScreen.main.bounds)
         }
     }
 }
