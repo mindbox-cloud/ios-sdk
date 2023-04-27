@@ -60,8 +60,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         fetchDependencies(model: event?.model) {
-            let inappByEvent = self.buildInAppByEvent(inapps: responseInapps)
-            completion(InAppConfig(inAppsByEvent: inappByEvent))
+            self.buildInAppByEvent(inapps: responseInapps) { asd in
+                completion(InAppConfig(inAppsByEvent: asd))
+            }
         }
     }
 
@@ -209,37 +210,137 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp]) -> [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] {
+//    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp]) -> [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] {
+//        var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
+//        for inapp in inapps {
+//            // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
+//            var triggerEvent: InAppMessageTriggerEvent = .start
+//
+//            guard targetingChecker.check(targeting: inapp.targeting) else {
+//                continue
+//            }
+//
+//            if let event = self.targetingChecker.event {
+//                triggerEvent = .applicationEvent(event)
+//            }
+//
+//            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
+//            let inAppFormVariants = inapp.form.variants
+//            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
+//                return SimpleImageInApp(imageUrl: $0.imageUrl,
+//                                        redirectUrl: $0.redirectUrl,
+//                                        intentPayload: $0.intentPayload)
+//            }
+//
+//            guard !inAppVariants.isEmpty else { continue }
+//
+//            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
+//            inAppsForEvent.append(inAppInfo)
+//            inAppsByEvent[triggerEvent] = inAppsForEvent
+//        }
+//
+//        self.targetingChecker.event = nil
+//
+//        return inAppsByEvent
+//    }
+//
+    
+    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp], completion: @escaping ([InAppMessageTriggerEvent: [InAppConfig.InAppInfo]]) -> Void) {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
+        let dispatchGroup = DispatchGroup()
+        var shouldDownloadImage = true
+        let downloadQueue = DispatchQueue(label: "com.downloadQueue")
+        let semaphore = DispatchSemaphore(value: 0)
+
         for inapp in inapps {
-            // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
+            print("DATEEEE", Date())
             var triggerEvent: InAppMessageTriggerEvent = .start
-
-            guard targetingChecker.check(targeting: inapp.targeting) else {
-                continue
+            var firstTime = true
+            // Parallel Task 1: Check targeting
+            dispatchGroup.enter()
+            var isTargetingPassed: Bool = false
+            DispatchQueue.global(qos: .userInitiated).async {
+                isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
+                dispatchGroup.leave()
             }
 
-            if let event = self.targetingChecker.event {
-                triggerEvent = .applicationEvent(event)
+            // Parallel Task 2: Download image of inapp if shouldDownloadImage is true
+            if shouldDownloadImage {
+                dispatchGroup.enter()
+                let imageUrl = inapp.form.variants.first?.imageUrl
+
+                if let url = URL(string: imageUrl!) {
+                    let configuration = URLSessionConfiguration.default
+                    configuration.timeoutIntervalForResource = 3 // Set the timeout interval to 3 seconds
+                    let session = URLSession(configuration: configuration)
+
+                    let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
+                        if let error = error {
+                            if (error as NSError?)?.code == NSURLErrorTimedOut {
+                                dispatchGroup.leave()
+                                semaphore.signal()
+                                print("🟥", inapp.id)
+                                return
+                            }
+                        } else if let response = response as? HTTPURLResponse, response.statusCode != 200 {
+                            print("🟡")
+                        } else if let data = localURL {
+                            print("🟢")
+                        } else {
+                            print("🟣")
+                        }
+                        
+                        print(inapp.id, "🟧")
+                        
+                        // If targeting is false or download has errors, skip this inapp
+                        if !isTargetingPassed || error != nil {
+                            semaphore.signal()
+                            return
+                        }
+
+                        if let event = self.targetingChecker.event {
+                            triggerEvent = .applicationEvent(event)
+                        }
+
+                        var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
+                        let inAppFormVariants = inapp.form.variants
+                        let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
+                            return SimpleImageInApp(imageUrl: $0.imageUrl,
+                                                    redirectUrl: $0.redirectUrl,
+                                                    intentPayload: $0.intentPayload)
+                        }
+
+                        guard !inAppVariants.isEmpty else {
+                            semaphore.signal()
+                            return
+                        }
+
+                        let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
+                        inAppsForEvent.append(inAppInfo)
+                        inAppsByEvent[triggerEvent] = inAppsForEvent
+
+                        // Set shouldDownloadImage to false, so that we don't download more images
+                        shouldDownloadImage = false
+
+                        dispatchGroup.leave()
+                        semaphore.signal()
+                    }
+
+                    downloadQueue.async {
+                        downloadTask.resume()
+                    }
+                    
+                    semaphore.wait()
+                }
+            } else {
+                print("Image already loaded")
             }
-
-            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
-            let inAppFormVariants = inapp.form.variants
-            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-                return SimpleImageInApp(imageUrl: $0.imageUrl,
-                                        redirectUrl: $0.redirectUrl,
-                                        intentPayload: $0.intentPayload)
-            }
-
-            guard !inAppVariants.isEmpty else { continue }
-
-            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
-            inAppsForEvent.append(inAppInfo)
-            inAppsByEvent[triggerEvent] = inAppsForEvent
         }
 
-        self.targetingChecker.event = nil
-
-        return inAppsByEvent
+        // Wait for all parallel tasks to complete
+        dispatchGroup.notify(queue: .main) {
+            self.targetingChecker.event = nil
+            completion(inAppsByEvent)
+        }
     }
 }
