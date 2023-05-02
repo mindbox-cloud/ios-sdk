@@ -59,8 +59,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        let imageDownloader = URLSessionImageDownloader()
         fetchDependencies(model: event?.model) {
-            self.buildInAppByEvent(inapps: responseInapps) { asd in
+            self.buildInAppByEvent(inapps: responseInapps, imageDownloader: imageDownloader) { asd in
                 completion(InAppConfig(inAppsByEvent: asd))
             }
         }
@@ -209,53 +210,16 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
         }
     }
-
-//    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp]) -> [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] {
-//        var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
-//        for inapp in inapps {
-//            // Может быть стоит убирать инаппы которые были показаны. Не уточнили еще.
-//            var triggerEvent: InAppMessageTriggerEvent = .start
-//
-//            guard targetingChecker.check(targeting: inapp.targeting) else {
-//                continue
-//            }
-//
-//            if let event = self.targetingChecker.event {
-//                triggerEvent = .applicationEvent(event)
-//            }
-//
-//            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
-//            let inAppFormVariants = inapp.form.variants
-//            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-//                return SimpleImageInApp(imageUrl: $0.imageUrl,
-//                                        redirectUrl: $0.redirectUrl,
-//                                        intentPayload: $0.intentPayload)
-//            }
-//
-//            guard !inAppVariants.isEmpty else { continue }
-//
-//            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
-//            inAppsForEvent.append(inAppInfo)
-//            inAppsByEvent[triggerEvent] = inAppsForEvent
-//        }
-//
-//        self.targetingChecker.event = nil
-//
-//        return inAppsByEvent
-//    }
-//
     
-    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp], completion: @escaping ([InAppMessageTriggerEvent: [InAppConfig.InAppInfo]]) -> Void) {
+    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp],
+                                   imageDownloader: ImageDownloader,
+                                   completion: @escaping ([InAppMessageTriggerEvent: [InAppConfig.InAppInfo]]) -> Void) {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
         let dispatchGroup = DispatchGroup()
         var shouldDownloadImage = true
-        let downloadQueue = DispatchQueue(label: "com.downloadQueue")
-        let semaphore = DispatchSemaphore(value: 0)
 
         for inapp in inapps {
-            print("DATEEEE", Date())
             var triggerEvent: InAppMessageTriggerEvent = .start
-            var firstTime = true
             // Parallel Task 1: Check targeting
             dispatchGroup.enter()
             var isTargetingPassed: Bool = false
@@ -266,74 +230,50 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
             // Parallel Task 2: Download image of inapp if shouldDownloadImage is true
             if shouldDownloadImage {
-                dispatchGroup.enter()
                 let imageUrl = inapp.form.variants.first?.imageUrl
 
-                if let url = URL(string: imageUrl!) {
-                    let configuration = URLSessionConfiguration.default
-                    configuration.timeoutIntervalForResource = 3 // Set the timeout interval to 3 seconds
-                    let session = URLSession(configuration: configuration)
-
-                    let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
+                if let imageUrl = imageUrl {
+                    dispatchGroup.enter()
+                    imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+                        defer {
+                            dispatchGroup.leave()
+                        }
+                        
                         if let error = error {
                             if (error as NSError?)?.code == NSURLErrorTimedOut {
-                                dispatchGroup.leave()
-                                semaphore.signal()
-                                print("🟥", inapp.id)
                                 return
                             }
                         } else if let response = response as? HTTPURLResponse, response.statusCode != 200 {
-                            print("🟡")
-                        } else if let data = localURL {
-                            print("🟢")
-                        } else {
-                            print("🟣")
-                        }
-                        
-                        print(inapp.id, "🟧")
-                        
-                        // If targeting is false or download has errors, skip this inapp
-                        if !isTargetingPassed || error != nil {
-                            semaphore.signal()
                             return
+                        } else if let localURL = localURL, isTargetingPassed {
+                            if let event = self.targetingChecker.event {
+                                triggerEvent = .applicationEvent(event)
+                            }
+
+                            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
+                            let inAppFormVariants = inapp.form.variants
+                            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
+                                return SimpleImageInApp(imageUrl: $0.imageUrl,
+                                                        redirectUrl: $0.redirectUrl,
+                                                        intentPayload: $0.intentPayload)
+                            }
+
+                            guard !inAppVariants.isEmpty else {
+                                return
+                            }
+
+                            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
+                            inAppsForEvent.append(inAppInfo)
+                            inAppsByEvent[triggerEvent] = inAppsForEvent
+
+                            // Set shouldDownloadImage to false, so that we don't download more images
+                            shouldDownloadImage = false
                         }
-
-                        if let event = self.targetingChecker.event {
-                            triggerEvent = .applicationEvent(event)
-                        }
-
-                        var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
-                        let inAppFormVariants = inapp.form.variants
-                        let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-                            return SimpleImageInApp(imageUrl: $0.imageUrl,
-                                                    redirectUrl: $0.redirectUrl,
-                                                    intentPayload: $0.intentPayload)
-                        }
-
-                        guard !inAppVariants.isEmpty else {
-                            semaphore.signal()
-                            return
-                        }
-
-                        let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
-                        inAppsForEvent.append(inAppInfo)
-                        inAppsByEvent[triggerEvent] = inAppsForEvent
-
-                        // Set shouldDownloadImage to false, so that we don't download more images
-                        shouldDownloadImage = false
-
-                        dispatchGroup.leave()
-                        semaphore.signal()
                     }
 
-                    downloadQueue.async {
-                        downloadTask.resume()
-                    }
-                    
-                    semaphore.wait()
+                    // Wait for the download task to complete before processing the next inapp
+                    dispatchGroup.wait()
                 }
-            } else {
-                print("Image already loaded")
             }
         }
 
@@ -342,5 +282,29 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             self.targetingChecker.event = nil
             completion(inAppsByEvent)
         }
+    }
+}
+
+
+protocol ImageDownloader {
+    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void)
+}
+
+class URLSessionImageDownloader: ImageDownloader {
+    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
+        guard let url = URL(string: imageUrl) else {
+            completion(nil, nil, NSError(domain: "Invalid URL", code: -1, userInfo: nil))
+            return
+        }
+        
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForResource = 3 // Set the timeout interval to 3 seconds
+        let session = URLSession(configuration: configuration)
+
+        let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
+            completion(localURL, response as? HTTPURLResponse, error)
+        }
+
+        downloadTask.resume()
     }
 }
