@@ -37,12 +37,12 @@ class DataBaseLoader {
             modelURL = modelURLAdditional
         }
 
-        #endif
-        
         guard let modelURL = modelURL else {
             Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
+
+        #endif
 
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
             Logger.common(message: MBDatabaseError.unableCreateManagedObjectModel(with: modelURL).errorDescription, level: .error, category: .database)
