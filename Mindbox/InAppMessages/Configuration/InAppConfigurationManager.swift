@@ -77,24 +77,21 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
-        queue.sync {
-            guard let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
-                  let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
-                  inApp.formDataVariants.count > 0
-            else {
+        return queue.sync {
+            if let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
+               let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
+               inApp.formDataVariants.count > 0
+            {
+                let formData = inApp.formDataVariants[0]
+                return InAppFormData(
+                    inAppId: inApp.id,
+                    image: formData.image,
+                    redirectUrl: formData.redirectUrl,
+                    intentPayload: formData.intentPayload
+                )
+            } else {
                 return nil
             }
-            let formData = inApp.formDataVariants[0]
-            guard let imageUrl = URL(string: formData.imageUrl) else {
-                Logger.common(message: "Inapps image url is incorrect. [URL]: \(formData.imageUrl)", level: .debug, category: .inAppMessages)
-                return nil
-            }
-            return InAppFormData(
-                inAppId: inApp.id,
-                imageUrl: imageUrl,
-                redirectUrl: formData.redirectUrl,
-                intentPayload: formData.intentPayload
-            )
         }
     }
     

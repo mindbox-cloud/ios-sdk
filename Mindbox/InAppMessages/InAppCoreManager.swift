@@ -117,11 +117,14 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
 
-    private func onReceivedInAppResponse(_ inAppResponse: InAppResponse?) {
-        guard let inAppResponse = inAppResponse,
-              let inAppFormData = configManager.getInAppFormData(by: inAppResponse)
-        else { return }
-        guard !sessionStorage.isPresentingInAppMessage else { return }
+    private func onReceivedInAppResponse(_ inAppResponse: InAppResponse) {
+        guard let inAppFormData = configManager.getInAppFormData(by: inAppResponse) else {
+            return
+        }
+        
+        guard !sessionStorage.isPresentingInAppMessage else {
+            return
+        }
         self.sessionStorage.isPresentingInAppMessage = true
 
         Logger.common(message: "In-app with id \(inAppResponse.inAppToShowId) is going to be shown", level: .debug, category: .inAppMessages)
@@ -144,11 +147,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             },
             onError: { error in
                 switch error {
-                case .failedToLoadImages:
-                    Logger.common(message: "Failed to download image for url: \(inAppFormData.imageUrl.absoluteString)", level: .debug, category: .inAppMessages)
                 case .failedToLoadWindow:
                         self.sessionStorage.isPresentingInAppMessage = false
                         Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
+                default:
+                    break
                 }
             }
         )

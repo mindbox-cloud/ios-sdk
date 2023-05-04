@@ -16,7 +16,7 @@ struct InAppMessageUIModel {
         let payload: String
     }
     let inAppId: String
-    let imageData: Data
+    let image: UIImage
     let redirect: InAppRedirect
 }
 
@@ -60,29 +60,25 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         clickTracked = false
-        imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
-            if let imageData = imageData {
-                let redirectInfo = InAppMessageUIModel.InAppRedirect(
-                    redirectUrl: URL(string: inAppFormData.redirectUrl),
-                    payload: inAppFormData.intentPayload
-                )
+        DispatchQueue.main.async {
+            let redirectInfo = InAppMessageUIModel.InAppRedirect(
+                redirectUrl: URL(string: inAppFormData.redirectUrl),
+                payload: inAppFormData.intentPayload
+            )
 
-                let inAppUIModel = InAppMessageUIModel(
-                    inAppId: inAppFormData.inAppId,
-                    imageData: imageData,
-                    redirect: redirectInfo
-                )
-                self.presentInAppUIModel(
-                    inAppUIModel: inAppUIModel,
-                    onPresented: onPresented,
-                    onTapAction: onTapAction,
-                    onPresentationCompleted: onPresentationCompleted,
-                    onError: onError
-                )
-            } else {
-                onError(.failedToLoadImages)
-                return
-            }
+            let inAppUIModel = InAppMessageUIModel(
+                inAppId: inAppFormData.inAppId,
+                image: inAppFormData.image,
+                redirect: redirectInfo
+            )
+            
+            self.presentInAppUIModel(
+                inAppUIModel: inAppUIModel,
+                onPresented: onPresented,
+                onTapAction: onTapAction,
+                onPresentationCompleted: onPresentationCompleted,
+                onError: onError
+            )
         }
     }
 

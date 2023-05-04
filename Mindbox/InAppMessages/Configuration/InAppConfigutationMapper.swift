@@ -59,9 +59,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
-        let imageDownloader = URLSessionImageDownloader()
         fetchDependencies(model: event?.model) {
-            self.buildInAppByEvent(inapps: responseInapps, imageDownloader: imageDownloader) { asd in
+            self.buildInAppByEvent(inapps: responseInapps) { asd in
                 completion(InAppConfig(inAppsByEvent: asd))
             }
         }
@@ -210,87 +209,88 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
         }
     }
-    
+ 
     private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp],
-                                   imageDownloader: ImageDownloader,
                                    completion: @escaping ([InAppMessageTriggerEvent: [InAppConfig.InAppInfo]]) -> Void) {
         var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
-        let dispatchGroup = DispatchGroup()
         var shouldDownloadImage = true
-
+        let imageDownloader = URLSessionImageDownloader()
+        let group = DispatchGroup()
+        
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
-            // Parallel Task 1: Check targeting
-            dispatchGroup.enter()
-            var isTargetingPassed: Bool = false
-            DispatchQueue.global(qos: .userInitiated).async {
-                isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
-                dispatchGroup.leave()
+            
+            if !shouldDownloadImage {
+                return
             }
-
-            // Parallel Task 2: Download image of inapp if shouldDownloadImage is true
-            if shouldDownloadImage {
-                let imageUrl = inapp.form.variants.first?.imageUrl
-
-                if let imageUrl = imageUrl {
-                    dispatchGroup.enter()
-                    imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
-                        defer {
-                            dispatchGroup.leave()
+            
+            let isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
+            if let imageUrl = inapp.form.variants.first?.imageUrl, isTargetingPassed {
+                group.enter()
+                imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+                    defer { group.leave() }
+                    
+                    if let error = error as? NSError {
+                        Logger.common(message: "Failed to download image for url: \(imageUrl)", level: .debug, category: .inAppMessages)
+                        if error.code == NSURLErrorTimedOut {
+                            return
                         }
-                        
-                        if let error = error {
-                            if (error as NSError?)?.code == NSURLErrorTimedOut {
+                    } else if let response = response, response.statusCode != 200 {
+                        return
+                    } else if let localURL = localURL, isTargetingPassed {
+                        do {
+                            let imageData = try Data(contentsOf: localURL)
+                            guard let image = UIImage(data: imageData) else {
+                                Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
                                 return
                             }
-                        } else if let response = response as? HTTPURLResponse, response.statusCode != 200 {
-                            return
-                        } else if let localURL = localURL, isTargetingPassed {
+                            
                             if let event = self.targetingChecker.event {
                                 triggerEvent = .applicationEvent(event)
                             }
-
+                            
                             var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
                             let inAppFormVariants = inapp.form.variants
                             let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-                                return SimpleImageInApp(imageUrl: $0.imageUrl,
+                                return SimpleImageInApp(image: image,
                                                         redirectUrl: $0.redirectUrl,
                                                         intentPayload: $0.intentPayload)
                             }
-
+                            
                             guard !inAppVariants.isEmpty else {
                                 return
                             }
-
+                            
                             let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
                             inAppsForEvent.append(inAppInfo)
                             inAppsByEvent[triggerEvent] = inAppsForEvent
-
-                            // Set shouldDownloadImage to false, so that we don't download more images
+                            
                             shouldDownloadImage = false
+                        } catch {
+                            return
                         }
                     }
-
-                    // Wait for the download task to complete before processing the next inapp
-                    dispatchGroup.wait()
                 }
+                group.wait()
             }
         }
-
-        // Wait for all parallel tasks to complete
-        dispatchGroup.notify(queue: .main) {
+        
+        group.notify(queue: .main) {
             self.targetingChecker.event = nil
             completion(inAppsByEvent)
         }
     }
 }
 
-
 protocol ImageDownloader {
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void)
+    func cancel()
 }
 
 class URLSessionImageDownloader: ImageDownloader {
+    
+    private var task: URLSessionDownloadTask?
+    
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
         guard let url = URL(string: imageUrl) else {
             completion(nil, nil, NSError(domain: "Invalid URL", code: -1, userInfo: nil))
@@ -304,7 +304,12 @@ class URLSessionImageDownloader: ImageDownloader {
         let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
             completion(localURL, response as? HTTPURLResponse, error)
         }
-
+        
+        task = downloadTask
         downloadTask.resume()
+    }
+    
+    func cancel() {
+        task?.cancel()
     }
 }
