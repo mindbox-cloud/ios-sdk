@@ -13,6 +13,7 @@ Pod::Spec.new do |spec|
   spec.resource_bundles = { 
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld'] 
   } 
+  spec.resources = ["Mindbox/**/*.xcassets"]
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger'
 

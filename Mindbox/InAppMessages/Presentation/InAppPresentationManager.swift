@@ -96,9 +96,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         guard let inAppWindow = makeInAppMessageWindow() else {
+            Logger.common(message: "InappWindow creating failed")
             onError(.failedToLoadWindow)
             return
         }
+        
+        Logger.common(message: "InappWindow created Successfully")
 
         let close: () -> Void = { [weak self] in
             self?.onClose(inApp: inAppUIModel, onPresentationCompleted)
@@ -178,15 +181,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 return windowScene
             }
         }
+    
         return nil
     }
 
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
-        if let foregroundedScene = foregroundedScene, foregroundedScene.delegate != nil {
+        if let foregroundedScene = foregroundedScene {
             return UIWindow(windowScene: foregroundedScene)
         } else {
-            return nil
+            return UIWindow(frame: UIScreen.main.bounds)
         }
     }
 }
