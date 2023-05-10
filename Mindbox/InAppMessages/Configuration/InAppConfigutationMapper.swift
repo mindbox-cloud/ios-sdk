@@ -216,68 +216,71 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         var shouldDownloadImage = true
         let imageDownloader = URLSessionImageDownloader()
         let group = DispatchGroup()
-        
-        for inapp in inapps {
-            var triggerEvent: InAppMessageTriggerEvent = .start
-            
-            if !shouldDownloadImage {
-                return
-            }
-            
-            let isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
-            if let imageUrl = inapp.form.variants.first?.imageUrl, isTargetingPassed {
-                group.enter()
-                imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
-                    defer { group.leave() }
-                    
-                    if let error = error as? NSError {
-                        Logger.common(message: "Failed to download image for url: \(imageUrl)", level: .debug, category: .inAppMessages)
-                        if error.code == NSURLErrorTimedOut {
-                            return
-                        }
-                    } else if let response = response, response.statusCode != 200 {
-                        return
-                    } else if let localURL = localURL, isTargetingPassed {
-                        do {
-                            let imageData = try Data(contentsOf: localURL)
-                            guard let image = UIImage(data: imageData) else {
-                                Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
+        DispatchQueue.global().async {
+            for inapp in inapps {
+                var triggerEvent: InAppMessageTriggerEvent = .start
+                
+                if !shouldDownloadImage {
+                    break
+                }
+                
+                let isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
+                if let imageUrl = inapp.form.variants.first?.imageUrl, isTargetingPassed {
+                    group.enter()
+                    imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+                        defer { group.leave() }
+                        
+                        if let error = error as? NSError {
+                            Logger.common(message: "Failed to download image for url: \(imageUrl)", level: .debug, category: .inAppMessages)
+                            if error.code == NSURLErrorTimedOut {
                                 return
                             }
-                            
-                            if let event = self.targetingChecker.event {
-                                triggerEvent = .applicationEvent(event)
-                            }
-                            
-                            var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
-                            let inAppFormVariants = inapp.form.variants
-                            let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-                                return SimpleImageInApp(image: image,
-                                                        redirectUrl: $0.redirectUrl,
-                                                        intentPayload: $0.intentPayload)
-                            }
-                            
-                            guard !inAppVariants.isEmpty else {
+                        } else if let response = response, response.statusCode != 200 {
+                            return
+                        } else if let localURL = localURL, isTargetingPassed {
+                            do {
+                                let imageData = try Data(contentsOf: localURL)
+                                guard let image = UIImage(data: imageData) else {
+                                    Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
+                                    return
+                                }
+                                
+                                if let event = self.targetingChecker.event {
+                                    triggerEvent = .applicationEvent(event)
+                                }
+                                
+                                var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
+                                let inAppFormVariants = inapp.form.variants
+                                let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
+                                    return SimpleImageInApp(image: image,
+                                                            redirectUrl: $0.redirectUrl,
+                                                            intentPayload: $0.intentPayload)
+                                }
+                                
+                                guard !inAppVariants.isEmpty else {
+                                    return
+                                }
+                                
+                                let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
+                                inAppsForEvent.append(inAppInfo)
+                                inAppsByEvent[triggerEvent] = inAppsForEvent
+                                
+                                shouldDownloadImage = false
+                            } catch {
                                 return
                             }
-                            
-                            let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
-                            inAppsForEvent.append(inAppInfo)
-                            inAppsByEvent[triggerEvent] = inAppsForEvent
-                            
-                            shouldDownloadImage = false
-                        } catch {
-                            return
                         }
                     }
+                    group.wait()
                 }
-                group.wait()
             }
-        }
-        
-        group.notify(queue: .main) {
-            self.targetingChecker.event = nil
-            completion(inAppsByEvent)
+            
+            group.notify(queue: .main) {
+                self.targetingChecker.event = nil
+                DispatchQueue.main.async {
+                    completion(inAppsByEvent)
+                }
+            }
         }
     }
 }
