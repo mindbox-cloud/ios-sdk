@@ -7,9 +7,10 @@
 
 import Foundation
 import MindboxLogger
+import UIKit
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppConfig) -> Void) -> Void
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
 }
 
@@ -22,6 +23,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
+    private var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
 
     private let dispatchGroup = DispatchGroup()
 
@@ -42,7 +44,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ event: ApplicationEvent?,
                            _ response: InAppConfigResponse,
-                           _ completion: @escaping (InAppConfig) -> Void) {
+                           _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         let responseInapps = response.inapps?.filter {
             inAppsVersion >= $0.sdkVersion.min
@@ -51,7 +53,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         } ?? []
 
         if responseInapps.isEmpty {
-            completeWithEmptyConfig(completion)
+            Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
+            completion(nil)
             return
         }
 
@@ -59,22 +62,29 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        
         fetchDependencies(model: event?.model) {
-            self.buildInAppByEvent(inapps: responseInapps) { asd in
-                completion(InAppConfig(inAppsByEvent: asd))
+            self.filterByInappsEvents(inapps: responseInapps)
+            if let event = event {
+                if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
+                    self.buildInAppByEvent(inapps: inappsByEvent) { formData in
+                        completion(formData)
+                    }
+                } else {
+                    Logger.common(message: "filteredInAppsByEvent is empty")
+                }
+            } else if let inappsByEvent = self.filteredInAppsByEvent[.start] {
+                self.buildInAppByEvent(inapps: inappsByEvent) { formData in
+                    completion(formData)
+                }
             }
         }
     }
 
-    private func completeWithEmptyConfig(_ completion: @escaping (InAppConfig) -> Void) {
-        Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
-        completion(InAppConfig(inAppsByEvent: [:]))
-    }
-
     private func prepareTargetingChecker(for inapps: [InAppConfigResponse.InApp]) {
-        for inapp in inapps {
-            targetingChecker.prepare(targeting: inapp.targeting)
-        }
+        inapps.forEach({
+            targetingChecker.prepare(targeting: $0.targeting)
+        })
     }
 
     private func fetchDependencies(model: InappOperationJSONModel?,
@@ -209,76 +219,99 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
         }
     }
- 
-    private func buildInAppByEvent(inapps: [InAppConfigResponse.InApp],
-                                   completion: @escaping ([InAppMessageTriggerEvent: [InAppConfig.InAppInfo]]) -> Void) {
-        var inAppsByEvent: [InAppMessageTriggerEvent: [InAppConfig.InAppInfo]] = [:]
+
+    private func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
+        for inapp in inapps {
+            var triggerEvent: InAppMessageTriggerEvent = .start
+            
+            let inAppAlreadyAddedForEvent = filteredInAppsByEvent.values.flatMap { $0 }
+                .filter { $0.inAppId == inapp.id }
+            
+            // If the in-app message has already been added, continue to the next message
+            guard inAppAlreadyAddedForEvent.isEmpty else {
+                continue
+            }
+            
+            guard targetingChecker.check(targeting: inapp.targeting) else {
+                continue
+            }
+            
+            if let event = targetingChecker.event {
+                triggerEvent = .applicationEvent(event)
+            }
+            
+            var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
+            if let inAppFormVariants = inapp.form.variants.first {
+                let formData = InAppTransitionData(inAppId: inapp.id,
+                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
+                                                   redirectUrl: inAppFormVariants.redirectUrl,
+                                                   intentPayload: inAppFormVariants.intentPayload)
+                inAppsForEvent.append(formData)
+                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
+            }
+        }
+        
+        self.targetingChecker.event = nil
+    }
+    
+    private func buildInAppByEvent(inapps: [InAppTransitionData],
+                                   completion: @escaping (InAppFormData?) -> Void) {
         var shouldDownloadImage = true
+        var formData: InAppFormData?
         let imageDownloader = URLSessionImageDownloader()
         let group = DispatchGroup()
+
         DispatchQueue.global().async {
             for inapp in inapps {
-                var triggerEvent: InAppMessageTriggerEvent = .start
-                
                 if !shouldDownloadImage {
                     break
                 }
                 
-                let isTargetingPassed = self.targetingChecker.check(targeting: inapp.targeting)
-                if let imageUrl = inapp.form.variants.first?.imageUrl, isTargetingPassed {
-                    group.enter()
-                    imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
-                        defer { group.leave() }
-                        
-                        if let error = error as? NSError {
-                            Logger.common(message: "Failed to download image for url: \(imageUrl)", level: .debug, category: .inAppMessages)
-                            if error.code == NSURLErrorTimedOut {
-                                return
-                            }
-                        } else if let response = response, response.statusCode != 200 {
+                if let shownInapps = self.persistenceStorage.shownInAppsIds, shownInapps.contains(inapp.inAppId) {
+                    continue
+                }
+                
+                group.enter()
+                Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                
+                imageDownloader.downloadImage(withUrl: inapp.imageUrl) { localURL, response, error in
+                    defer {
+                        group.leave()
+                    }
+                    
+                    if let error = error as? NSError {
+                        Logger.common(message: "Failed to download image for url: \(inapp.imageUrl). \nError: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
+                        if error.code == NSURLErrorTimedOut {
                             return
-                        } else if let localURL = localURL, isTargetingPassed {
-                            do {
-                                let imageData = try Data(contentsOf: localURL)
-                                guard let image = UIImage(data: imageData) else {
-                                    Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
-                                    return
-                                }
-                                
-                                if let event = self.targetingChecker.event {
-                                    triggerEvent = .applicationEvent(event)
-                                }
-                                
-                                var inAppsForEvent = inAppsByEvent[triggerEvent] ?? [InAppConfig.InAppInfo]()
-                                let inAppFormVariants = inapp.form.variants
-                                let inAppVariants: [SimpleImageInApp] = inAppFormVariants.map {
-                                    return SimpleImageInApp(image: image,
-                                                            redirectUrl: $0.redirectUrl,
-                                                            intentPayload: $0.intentPayload)
-                                }
-                                
-                                guard !inAppVariants.isEmpty else {
-                                    return
-                                }
-                                
-                                let inAppInfo = InAppConfig.InAppInfo(id: inapp.id, formDataVariants: inAppVariants)
-                                inAppsForEvent.append(inAppInfo)
-                                inAppsByEvent[triggerEvent] = inAppsForEvent
-                                
-                                shouldDownloadImage = false
-                            } catch {
+                        }
+                    } else if let response = response, response.statusCode != 200 {
+                        Logger.common(message: "Image download failed with status code \(response.statusCode). [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+
+                        return
+                    } else if let localURL = localURL {
+                        do {
+                            let imageData = try Data(contentsOf: localURL)
+                            guard let image = UIImage(data: imageData) else {
+                                Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
                                 return
                             }
+                            
+                            Logger.common(message: "Image is loaded successfully. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                            formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)
+                            shouldDownloadImage = false
+                        } catch {
+                            Logger.common(message: "Failed to read image data. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
+                            return
                         }
                     }
-                    group.wait()
                 }
+                
+                group.wait()
             }
             
             group.notify(queue: .main) {
-                self.targetingChecker.event = nil
                 DispatchQueue.main.async {
-                    completion(inAppsByEvent)
+                    completion(formData)
                 }
             }
         }

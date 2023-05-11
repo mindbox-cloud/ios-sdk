@@ -101,49 +101,38 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard !sessionStorage.isPresentingInAppMessage,
-              let inAppRequest = configManager.buildInAppRequest(event: event) else {
+        guard !sessionStorage.isPresentingInAppMessage else {
             return
         }
+        
+        onReceivedInAppResponse()
+    }
 
-        guard !inAppRequest.possibleInApps.isEmpty else {
+    private func onReceivedInAppResponse() {
+        guard let inapp = configManager.getInapp() else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
             return
         }
 
-        // No need to check targeting if the first in-app message has no targeting
-        if let firstInapp = inAppRequest.possibleInApps.first {
-            onReceivedInAppResponse(InAppResponse(triggerEvent: event, inAppToShowId: firstInapp.inAppId))
-        }
-    }
-
-    private func onReceivedInAppResponse(_ inAppResponse: InAppResponse) {
-        guard let inAppFormData = configManager.getInAppFormData(by: inAppResponse) else {
-            return
-        }
-        
-        guard !sessionStorage.isPresentingInAppMessage else {
-            return
-        }
         self.sessionStorage.isPresentingInAppMessage = true
 
-        Logger.common(message: "In-app with id \(inAppResponse.inAppToShowId) is going to be shown", level: .debug, category: .inAppMessages)
+        Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
 
         presentationManager.present(
-            inAppFormData: inAppFormData,
+            inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
                     var newShownInAppsIds = self.persistenceStorage.shownInAppsIds ?? []
-                    newShownInAppsIds.append(inAppResponse.inAppToShowId)
+                    newShownInAppsIds.append(inapp.inAppId)
                     self.persistenceStorage.shownInAppsIds = newShownInAppsIds
 
                 }
             },
             onTapAction: { [delegate] url, payload in
-                delegate?.inAppMessageTapAction(id: inAppResponse.inAppToShowId, url: url, payload: payload)
+                delegate?.inAppMessageTapAction(id: inapp.inAppId, url: url, payload: payload)
             },
             onPresentationCompleted: { [delegate] in
-                delegate?.inAppMessageDismissed(id: inAppResponse.inAppToShowId)
+                delegate?.inAppMessageDismissed(id: inapp.inAppId)
             },
             onError: { error in
                 switch error {
