@@ -47,7 +47,7 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
-        imageDownloader = URLSessionImageDownloader()
+        imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),

@@ -16,6 +16,12 @@ protocol ImageDownloader {
 
 class URLSessionImageDownloader: ImageDownloader {
     
+    private let persistenceStorage: PersistenceStorage
+    
+    init(persistenceStorage: PersistenceStorage) {
+        self.persistenceStorage = persistenceStorage
+    }
+    
     private var task: URLSessionDownloadTask?
     
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
@@ -25,7 +31,7 @@ class URLSessionImageDownloader: ImageDownloader {
         }
         
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForResource = 3 // Set the timeout interval to 3 seconds
+        configuration.timeoutIntervalForResource = persistenceStorage.imageLoadingMaxTimeInSeconds ?? 3
         let session = URLSession(configuration: configuration)
 
         let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
