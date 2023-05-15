@@ -22,6 +22,7 @@ protocol DependencyContainer {
     var uuidDebugService: UUIDDebugService { get }
     var sessionTemporaryStorage: SessionTemporaryStorage { get }
     var inappMessageEventSender: InappMessageEventSender { get }
+    var imageDownloader: ImageDownloader { get }
 }
 
 protocol InstanceFactory {

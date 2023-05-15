@@ -24,6 +24,7 @@ final class DependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     var sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
+    let imageDownloader: ImageDownloader
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -46,6 +47,7 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
+        imageDownloader = URLSessionImageDownloader()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -55,10 +57,10 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher(),
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
-                                                                   persistenceStorage: persistenceStorage),
+                                                                   persistenceStorage: persistenceStorage,
+                                                                   imageDownloader: imageDownloader),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
-                imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
             ),
             persistenceStorage: persistenceStorage,

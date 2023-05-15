@@ -41,14 +41,11 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     init(
-        imagesStorage: InAppImagesStorageProtocol,
         inAppTracker: InAppMessagesTrackerProtocol
     ) {
-        self.imagesStorage = imagesStorage
         self.inAppTracker = inAppTracker
     }
 
-    private let imagesStorage: InAppImagesStorageProtocol
     private let inAppTracker: InAppMessagesTrackerProtocol
     private var inAppWindow: UIWindow?
 

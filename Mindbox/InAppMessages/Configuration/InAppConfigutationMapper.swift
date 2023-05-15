@@ -17,13 +17,14 @@ protocol InAppConfigurationMapperProtocol {
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let customerSegmentsAPI: CustomerSegmentsAPI
-    private let inAppsVersion: Int
+    private var inAppsVersion: Int
     var targetingChecker: InAppTargetingCheckerProtocol
     private var geoModel: InAppGeoResponse?
     private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
-    private var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    private let imageDownloader: ImageDownloader
 
     private let dispatchGroup = DispatchGroup()
 
@@ -32,13 +33,19 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          targetingChecker: InAppTargetingCheckerProtocol,
          networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
-         persistenceStorage: PersistenceStorage) {
+         persistenceStorage: PersistenceStorage,
+         imageDownloader: ImageDownloader) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
         self.fetcher = networkFetcher
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
+        self.imageDownloader = imageDownloader
+    }
+    
+    func setInAppsVersion(_ version: Int) {
+        inAppsVersion = version
     }
 
     /// Maps config response to business-logic handy InAppConfig model
@@ -46,11 +53,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: InAppConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = response.inapps?.filter {
-            inAppsVersion >= $0.sdkVersion.min
-            && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
-            && !shownInAppsIds.contains($0.id)
-        } ?? []
+        let responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
 
         if responseInapps.isEmpty {
             Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
@@ -62,7 +65,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
-        
+
         fetchDependencies(model: event?.model) {
             self.filterByInappsEvents(inapps: responseInapps)
             if let event = event {
@@ -79,6 +82,20 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 }
             }
         }
+    }
+    
+    func filterByInappVersion(_ inapps: [InAppConfigResponse.InApp]?, shownInAppsIds: Set<String>) -> [InAppConfigResponse.InApp] {
+        guard let inapps = inapps else {
+            return []
+        }
+        
+        let filteredInapps = inapps.filter {
+            inAppsVersion >= $0.sdkVersion.min
+                && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
+                && !shownInAppsIds.contains($0.id)
+        }
+        
+        return filteredInapps
     }
 
     private func prepareTargetingChecker(for inapps: [InAppConfigResponse.InApp]) {
@@ -220,7 +237,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    private func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
+    func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
@@ -258,7 +275,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                                    completion: @escaping (InAppFormData?) -> Void) {
         var shouldDownloadImage = true
         var formData: InAppFormData?
-        let imageDownloader = URLSessionImageDownloader()
         let group = DispatchGroup()
 
         DispatchQueue.global().async {
@@ -274,7 +290,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 group.enter()
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 
-                imageDownloader.downloadImage(withUrl: inapp.imageUrl) { localURL, response, error in
+                self.imageDownloader.downloadImage(withUrl: inapp.imageUrl) { localURL, response, error in
                     defer {
                         group.leave()
                     }
@@ -315,37 +331,5 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 }
             }
         }
-    }
-}
-
-protocol ImageDownloader {
-    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void)
-    func cancel()
-}
-
-class URLSessionImageDownloader: ImageDownloader {
-    
-    private var task: URLSessionDownloadTask?
-    
-    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
-        guard let url = URL(string: imageUrl) else {
-            completion(nil, nil, NSError(domain: "Invalid URL", code: -1, userInfo: nil))
-            return
-        }
-        
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForResource = 3 // Set the timeout interval to 3 seconds
-        let session = URLSession(configuration: configuration)
-
-        let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
-            completion(localURL, response as? HTTPURLResponse, error)
-        }
-        
-        task = downloadTask
-        downloadTask.resume()
-    }
-    
-    func cancel() {
-        task?.cancel()
     }
 }

@@ -17,7 +17,7 @@ struct InAppFormData {
     let intentPayload: String
 }
 
-struct InAppTransitionData {
+struct InAppTransitionData: Equatable {
     let inAppId: String
     let imageUrl: String
     let redirectUrl: String
