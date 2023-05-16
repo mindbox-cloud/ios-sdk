@@ -24,6 +24,7 @@ final class TestDependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     let sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
+    var imageDownloader: ImageDownloader
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -50,6 +51,7 @@ final class TestDependencyProvider: DependencyContainer {
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
                                                           sessionStorage: sessionTemporaryStorage)
+        imageDownloader = MockImageDownloader()
     }
 
 }

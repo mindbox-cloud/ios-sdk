@@ -1,5 +1,5 @@
 //
-//  InAppImagesStorage.swift
+//  ImageDownloader.swift
 //  Mindbox
 //
 //  Created by Максим Казаков on 06.09.2022.
@@ -9,35 +9,40 @@
 import Foundation
 import UIKit
 
-protocol InAppImagesStorageProtocol: AnyObject {
-    func getImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void)
+protocol ImageDownloader {
+    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void)
+    func cancel()
 }
 
-/// This class manages images from in-app messages
-final class InAppImagesStorage: InAppImagesStorageProtocol {
-
-    func getImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void) {
-        downloadImage(url: url, completionQueue: completionQueue, completion: completion)
+class URLSessionImageDownloader: ImageDownloader {
+    
+    private let persistenceStorage: PersistenceStorage
+    
+    init(persistenceStorage: PersistenceStorage) {
+        self.persistenceStorage = persistenceStorage
     }
-
-    // MARK: - Private
-
-    private func downloadImage(url: URL, completionQueue: DispatchQueue, completion: @escaping (Data?) -> Void) {
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 30
-        URLSession.shared.dataTask(with: request) { (data, response, error) in
-            completionQueue.async {
-                if let error = error {
-                    completion(nil)
-                } else if let response = response as? HTTPURLResponse, response.statusCode != 200 {
-                    completion(nil)
-                } else if let data = data {
-                    completion(data)
-                } else {
-                    completion(nil)
-                }
-            }
+    
+    private var task: URLSessionDownloadTask?
+    
+    func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
+        guard let url = URL(string: imageUrl) else {
+            completion(nil, nil, NSError(domain: "Invalid URL", code: -1, userInfo: nil))
+            return
         }
-        .resume()
+        
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForResource = persistenceStorage.imageLoadingMaxTimeInSeconds ?? 3
+        let session = URLSession(configuration: configuration)
+
+        let downloadTask = session.downloadTask(with: url) { (localURL, response, error) in
+            completion(localURL, response as? HTTPURLResponse, error)
+        }
+        
+        task = downloadTask
+        downloadTask.resume()
+    }
+    
+    func cancel() {
+        task?.cancel()
     }
 }

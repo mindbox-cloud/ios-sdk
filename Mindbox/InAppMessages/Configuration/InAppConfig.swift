@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 let inAppsSdkVersion = 6
 
@@ -19,7 +20,7 @@ struct InAppConfig: Equatable {
 }
 
 struct SimpleImageInApp: Equatable {
-    let imageUrl: String
+    let image: UIImage
     let redirectUrl: String
     let intentPayload: String
 }

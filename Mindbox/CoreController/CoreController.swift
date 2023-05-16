@@ -141,6 +141,7 @@ class CoreController {
         let newVersion = 0 // Variable from an older version of this framework
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
+        persistenceStorage.imageLoadingMaxTimeInSeconds = configuration.imageLoadingMaxTimeInSeconds
         let apnsToken = persistenceStorage.apnsToken
         let isNotificationsEnabled = notificationStatus()
         let instanceId = UUID().uuidString
