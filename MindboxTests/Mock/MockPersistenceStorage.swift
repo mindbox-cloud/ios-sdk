@@ -107,6 +107,10 @@ class MockPersistenceStorage: PersistenceStorage {
         
     }
     
-    
+    var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
 }

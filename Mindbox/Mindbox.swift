@@ -156,6 +156,13 @@ public class Mindbox: NSObject {
             .joined()
         Logger.common(message: "Did register for remote notifications with token: \(token)", level: .info, category: .notification)
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
+            
+            if persistenceStorage?.needUpdateInfoOnce ?? true {
+                Logger.common(message: "APNS Token forced to update")
+                coreController?.apnsTokenDidUpdate(token: token)
+                return
+            }
+            
             guard persistenceAPNSToken != token else {
                 Logger.common(message: "persistenceAPNSToken not equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
                 return

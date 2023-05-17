@@ -202,6 +202,13 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
+    var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     func reset() {
         installationDate = nil
@@ -252,6 +259,7 @@ extension MBPersistenceStorage {
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
+            case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
         }
         
         private let key: Key
