@@ -17,8 +17,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
     func prepareConfiguration()
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest?
-    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData?
+    func getInapp() -> InAppFormData?
     func recalculateInapps(with event: ApplicationEvent)
 }
 
@@ -28,7 +27,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
-    private var configuration: InAppConfig!
+    private var inapp: InAppFormData?
     private var rawConfigurationResponse: InAppConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
@@ -58,43 +57,13 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest? {
-        queue.sync {
-            guard let configuration = configuration,
-                  let inAppInfos = configuration.inAppsByEvent[event],
-                  !inAppInfos.isEmpty
-            else { return nil }
-
-            return InAppsCheckRequest(
-                triggerEvent: event,
-                possibleInApps: inAppInfos.map {
-                    InAppsCheckRequest.InAppInfo(
-                        inAppId: $0.id
-                    )
-                }
-            )
-        }
-    }
-
-    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
-        queue.sync {
-            guard let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
-                  let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
-                  inApp.formDataVariants.count > 0
-            else {
-                return nil
+    func getInapp() -> InAppFormData? {
+        return queue.sync {
+            defer {
+                inapp = nil
             }
-            let formData = inApp.formDataVariants[0]
-            guard let imageUrl = URL(string: formData.imageUrl) else {
-                Logger.common(message: "Inapps image url is incorrect. [URL]: \(formData.imageUrl)", level: .debug, category: .inAppMessages)
-                return nil
-            }
-            return InAppFormData(
-                inAppId: inApp.id,
-                imageUrl: imageUrl,
-                redirectUrl: formData.redirectUrl,
-                intentPayload: formData.intentPayload
-            )
+            
+            return inapp
         }
     }
     
@@ -168,12 +137,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private func setConfigPrepared(_ configResponse: InAppConfigResponse, event: ApplicationEvent? = nil) {
         rawConfigurationResponse = configResponse
-        inAppConfigurationMapper.mapConfigResponse(event, configResponse, { config in
-            self.configuration = config
-            var configDump = String()
-            dump(self.configuration!, to: &configDump)
-            Logger.common(message: "InApps Configuration applied: \n\(configDump)", level: .debug, category: .inAppMessages)
-            
+        inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
+            self.inapp = inapp
+            Logger.common(message: "In-app сonfiguration applied: \n\(String(describing: inapp))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()
         })
     }

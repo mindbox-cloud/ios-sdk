@@ -32,6 +32,8 @@ protocol PersistenceStorage: AnyObject {
     var shownInAppsIds: [String]? { get set }
     
     var handledlogRequestIds: [String]? { get set }
+    
+    var imageLoadingMaxTimeInSeconds: Double? { get set }
 
     func setBackgroundExecution(_ value: BackgroudExecution)
 
@@ -42,4 +44,6 @@ protocol PersistenceStorage: AnyObject {
     func storeToFileBackgroundExecution()
 
     var onDidChange: (() -> Void)? { get set }
+    
+    var needUpdateInfoOnce: Bool? { get set }
 }

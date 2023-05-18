@@ -79,6 +79,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var shownInAppsIds: [String]?
     
     var handledlogRequestIds: [String]?
+    
+    var imageLoadingMaxTimeInSeconds: Double?
 
     func reset() {
         installationDate = nil
@@ -105,6 +107,10 @@ class MockPersistenceStorage: PersistenceStorage {
         
     }
     
-    
+    var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
 }
