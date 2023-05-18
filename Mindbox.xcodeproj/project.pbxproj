@@ -211,11 +211,7 @@
 		9B4F9DFB28D088AE002C9CF0 /* InAppMessageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DFA28D088AE002C9CF0 /* InAppMessageViewController.swift */; };
 		9B4F9DFE28D088B5002C9CF0 /* InAppImageOnlyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DFD28D088B4002C9CF0 /* InAppImageOnlyView.swift */; };
 		9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */; };
-		9B5256FF28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5256FE28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift */; };
-		9B52570128D1AA180029B1BC /* InAppCoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B52570028D1AA180029B1BC /* InAppCoreManagerTests.swift */; };
-		9B52570328D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B52570228D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift */; };
 		9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */; };
-		9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B52570828D1B1280029B1BC /* InAppImagesStorageMock.swift */; };
 		9B7F2C5328DACD4B002ABDB0 /* InAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7F2C5228DACD4B002ABDB0 /* InAppMessagesDelegate.swift */; };
 		9B9C95312921116F00BB29DA /* UUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C952F2921116F00BB29DA /* UUIDDebugService.swift */; };
 		9B9C95322921116F00BB29DA /* PasteboardUUIDDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C95302921116F00BB29DA /* PasteboardUUIDDebugService.swift */; };
@@ -318,6 +314,8 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
+		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
 /* End PBXBuildFile section */
 
@@ -569,11 +567,7 @@
 		9B4F9DFA28D088AE002C9CF0 /* InAppMessageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppMessageViewController.swift; sourceTree = "<group>"; };
 		9B4F9DFD28D088B4002C9CF0 /* InAppImageOnlyView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppImageOnlyView.swift; sourceTree = "<group>"; };
 		9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppCoreManagerMock.swift; sourceTree = "<group>"; };
-		9B5256FE28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppSegmentationCheckerTests.swift; sourceTree = "<group>"; };
-		9B52570028D1AA180029B1BC /* InAppCoreManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppCoreManagerTests.swift; sourceTree = "<group>"; };
-		9B52570228D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationManagerMock.swift; sourceTree = "<group>"; };
 		9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppPresentationManagerMock.swift; sourceTree = "<group>"; };
-		9B52570828D1B1280029B1BC /* InAppImagesStorageMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImagesStorageMock.swift; sourceTree = "<group>"; };
 		9B7F2C5228DACD4B002ABDB0 /* InAppMessagesDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppMessagesDelegate.swift; sourceTree = "<group>"; };
 		9B9C952F2921116F00BB29DA /* UUIDDebugService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UUIDDebugService.swift; sourceTree = "<group>"; };
 		9B9C95302921116F00BB29DA /* PasteboardUUIDDebugService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PasteboardUUIDDebugService.swift; sourceTree = "<group>"; };
@@ -677,6 +671,8 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
+		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1432,9 +1428,8 @@
 			isa = PBXGroup;
 			children = (
 				9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */,
-				9B52570228D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift */,
 				9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */,
-				9B52570828D1B1280029B1BC /* InAppImagesStorageMock.swift */,
+				F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
@@ -1445,8 +1440,7 @@
 				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
 				A179587F2978B3A800609E91 /* InAppResponseModelTests */,
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
-				9B5256FE28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift */,
-				9B52570028D1AA180029B1BC /* InAppCoreManagerTests.swift */,
+				F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -2254,6 +2248,7 @@
 				9B9C953A292111A700BB29DA /* MockNotificationCenter.swift in Sources */,
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
 				A1F3EE47298BEB78005FA828 /* MindboxLoggerTests.swift in Sources */,
+				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
 				9B9C9539292111A700BB29DA /* PasteboardUUIDDebugServiceTest.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
@@ -2267,19 +2262,16 @@
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
-				9B52570928D1B1280029B1BC /* InAppImagesStorageMock.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
+				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
-				9B52570128D1AA180029B1BC /* InAppCoreManagerTests.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
-				9B52570328D1ADEB0029B1BC /* InAppConfigurationManagerMock.swift in Sources */,
-				9B5256FF28D1A86F0029B1BC /* InAppSegmentationCheckerTests.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,

@@ -7,11 +7,19 @@
 //
 
 import Foundation
+import UIKit
 
 /// Domain model that contains all data needed to show inapp on screen
 struct InAppFormData {
     let inAppId: String
-    let imageUrl: URL
+    let image: UIImage
+    let redirectUrl: String
+    let intentPayload: String
+}
+
+struct InAppTransitionData: Equatable {
+    let inAppId: String
+    let imageUrl: String
     let redirectUrl: String
     let intentPayload: String
 }

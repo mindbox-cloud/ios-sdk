@@ -32,7 +32,7 @@ final class InAppImageOnlyView: UIView {
         let bundle = Bundle(url: podBundle)
         #endif
         
-        let image = UIImage(data: uiModel.imageData)
+        let image = uiModel.image
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
 

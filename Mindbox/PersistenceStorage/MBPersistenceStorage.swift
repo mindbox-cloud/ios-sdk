@@ -163,6 +163,10 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
+    
+    @UserDefaultsWrapper(key: .imageLoadingMaxTimeInSeconds, defaultValue: nil)
+    var imageLoadingMaxTimeInSeconds: Double?
+    
 
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
@@ -194,6 +198,13 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .installationData, defaultValue: nil)
     private var installationDateString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
+    
+    @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
+    var needUpdateInfoOnce: Bool? {
         didSet {
             onDidChange?()
         }
@@ -247,6 +258,8 @@ extension MBPersistenceStorage {
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
+            case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
+            case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
         }
         
         private let key: Key
