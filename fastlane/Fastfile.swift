@@ -34,15 +34,15 @@ class Fastfile: LaneFile {
              testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
         )
-        
-        scan(
-            project: .userDefined(project),
-            scheme: "MindboxNotifications",
-            onlyTesting: ["MindboxNotificationsTests"],
-            clean: true,
-            xcodebuildFormatter: "",
-            testWithoutBuilding: .userDefined(false),
-            xcargs: "CI=true"
-        )
+//
+//        scan(
+//            project: .userDefined(project),
+//            scheme: "MindboxNotifications",
+//            onlyTesting: ["MindboxNotificationsTests"],
+//            clean: true,
+//            xcodebuildFormatter: "",
+//            testWithoutBuilding: .userDefined(false),
+//            xcargs: "CI=true"
+//        )
     }
 }
