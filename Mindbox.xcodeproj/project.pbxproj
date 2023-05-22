@@ -300,7 +300,6 @@
 		A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017F12976CC9400CD9F99 /* SegmentTargeting.swift */; };
 		A1D017F52976FC2B00CD9F99 /* InternalTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017F42976FC2B00CD9F99 /* InternalTargetingChecker.swift */; };
 		A1D23AF029DE082E00A75179 /* InAppProductSegmentResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D23AEF29DE082E00A75179 /* InAppProductSegmentResponse.swift */; };
-		A1F3EE47298BEB78005FA828 /* MindboxLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */; };
 		A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE49298BEE4B005FA828 /* OSLogWritterMock.swift */; };
 		A1F3EE4E298BEF0B005FA828 /* OSLogWritterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */; };
 		B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36D57842696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift */; };
@@ -655,7 +654,6 @@
 		A1D017F12976CC9400CD9F99 /* SegmentTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentTargeting.swift; sourceTree = "<group>"; };
 		A1D017F42976FC2B00CD9F99 /* InternalTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalTargetingChecker.swift; sourceTree = "<group>"; };
 		A1D23AEF29DE082E00A75179 /* InAppProductSegmentResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppProductSegmentResponse.swift; sourceTree = "<group>"; };
-		A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxLoggerTests.swift; sourceTree = "<group>"; };
 		A1F3EE49298BEE4B005FA828 /* OSLogWritterMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLogWritterMock.swift; sourceTree = "<group>"; };
 		A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLogWritterTests.swift; sourceTree = "<group>"; };
 		B33127AE2760C53700CF747E /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
@@ -1732,7 +1730,6 @@
 			isa = PBXGroup;
 			children = (
 				A1F3EE4C298BEEFA005FA828 /* OSLogWritterTests */,
-				A1F3EE46298BEB78005FA828 /* MindboxLoggerTests.swift */,
 			);
 			path = MindboxLoggerTests;
 			sourceTree = "<group>";
@@ -2247,7 +2244,6 @@
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				9B9C953A292111A700BB29DA /* MockNotificationCenter.swift in Sources */,
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
-				A1F3EE47298BEB78005FA828 /* MindboxLoggerTests.swift in Sources */,
 				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
 				9B9C9539292111A700BB29DA /* PasteboardUUIDDebugServiceTest.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
