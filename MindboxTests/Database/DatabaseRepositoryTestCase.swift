@@ -23,6 +23,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     override func setUp() {
         try! databaseRepository.erase()
         updateDatabaseRepositoryWith(createsDeprecated: false)
+        (databaseRepository as! MockDatabaseRepository).tempLimit = nil
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -129,6 +130,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     
     func testLimitCount() {
         try! databaseRepository.erase()
+        (databaseRepository as! MockDatabaseRepository).tempLimit = 3
         let events = eventGenerator.generateEvents(count: databaseRepository.limit)
         do {
             try events.forEach {

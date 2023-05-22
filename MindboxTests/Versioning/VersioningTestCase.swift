@@ -25,7 +25,7 @@ class VersioningTestCase: XCTestCase {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
-//    func testInfoUpdateVersioningByAPNSToken() {
+    func testInfoUpdateVersioningByAPNSToken() {
 //        let inspectVersionsExpectation = expectation(description: "InspectVersion")
 //        initConfiguration()
 //        container.guaranteedDeliveryManager.canScheduleOperations = false
@@ -56,7 +56,7 @@ class VersioningTestCase: XCTestCase {
 //        }
 //
 //        waitForExpectations(timeout: 30, handler: nil)
-//    }
+    }
 
     func testInfoUpdateVersioningByRequestAuthorization() {
 //        let inspectVersionsExpectation = expectation(description: "InspectVersion")
