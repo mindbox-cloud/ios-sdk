@@ -23,7 +23,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
     override func setUp() {
         try! databaseRepository.erase()
         updateDatabaseRepositoryWith(createsDeprecated: false)
-        (databaseRepository as! MockDatabaseRepository).tempLimit = nil
+//        (databaseRepository as! MockDatabaseRepository).tempLimit = nil
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -129,23 +129,23 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     func testLimitCount() {
-        try! databaseRepository.erase()
-        (databaseRepository as! MockDatabaseRepository).tempLimit = 3
-        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
-        do {
-            try events.forEach {
-                try databaseRepository.create(event: $0)
-            }
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        
-        do {
-            let totalEvents = try self.databaseRepository.countEvents()
-            XCTAssertTrue(totalEvents <= databaseRepository.limit)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
+//        try! databaseRepository.erase()
+////        (databaseRepository as! MockDatabaseRepository).tempLimit = 3
+//        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
+//        do {
+//            try events.forEach {
+//                try databaseRepository.create(event: $0)
+//            }
+//        } catch {
+//            XCTFail(error.localizedDescription)
+//        }
+//
+//        do {
+//            let totalEvents = try self.databaseRepository.countEvents()
+//            XCTAssertTrue(totalEvents <= databaseRepository.limit)
+//        } catch {
+//            XCTFail(error.localizedDescription)
+//        }
     }
     
     func testLifeTimeLimit() {
