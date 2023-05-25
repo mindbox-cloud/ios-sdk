@@ -22,7 +22,9 @@ class MBDatabaseRepository {
     private let context: NSManagedObjectContext
     private let store: NSPersistentStore
     
-    let limit = 10000
+    var limit: Int {
+        return 10000
+    }
     let deprecatedLimit = 500
     
     var onObjectsDidChange: (() -> Void)?

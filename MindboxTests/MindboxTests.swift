@@ -62,7 +62,7 @@ class MindboxTests: XCTestCase {
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
 
         waitForInitializationFinished()
-        
+
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
         var deviceUUID2: String?
@@ -98,7 +98,7 @@ class MindboxTests: XCTestCase {
         XCTAssertTrue(container.persistenceStorage.isInstalled)
         XCTAssertNotNil(container.persistenceStorage.apnsToken)
     }
-    
+
     func testGetDeviceUUID() {
         var deviceUuid: String?
         Mindbox.shared.getDeviceUUID { value in
@@ -196,7 +196,7 @@ class MindboxTests: XCTestCase {
         XCTAssertEqual(firstCountApnsToken, 1)
         XCTAssertEqual(secondCountApnsToken, 1)
     }
-    
+
     func testOperationNameValidity() {
         XCTAssertTrue("TEST.-".operationNameIsValid)
         XCTAssertFalse("тест".operationNameIsValid)
