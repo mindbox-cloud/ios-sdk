@@ -8,8 +8,6 @@
 import Foundation
 import UIKit
 
-let inAppsSdkVersion = 6
-
 struct InAppConfig: Equatable {
     var inAppsByEvent: [InAppMessageTriggerEvent: [InAppInfo]]
 
