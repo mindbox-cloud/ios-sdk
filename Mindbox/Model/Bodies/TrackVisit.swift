@@ -16,11 +16,14 @@ struct TrackVisit: Codable {
     let requestUrl: URL?
 
     let source: TrackVisitSource?
+    
+    let sdkVersionNumeric: Int
 
     init(url: URL? = nil, source: TrackVisitSource? = nil) {
         requestUrl = url
         self.source = source
         ianaTimeZone = TimeZone.current.identifier
+        self.sdkVersionNumeric = Constants.Versions.sdkVersionNumeric
     }
 }
 
