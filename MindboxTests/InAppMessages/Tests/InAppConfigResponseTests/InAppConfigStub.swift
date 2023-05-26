@@ -16,7 +16,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getCategoryID_notSubstring() -> InAppConfigResponse {
@@ -25,7 +25,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getCategoryID_startWith() -> InAppConfigResponse {
@@ -34,7 +34,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getCategoryID_endWith() -> InAppConfigResponse {
@@ -43,7 +43,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getCategoryIDIn_Any() -> InAppConfigResponse {
@@ -54,7 +54,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getCategoryIDIn_None() -> InAppConfigResponse {
@@ -65,7 +65,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
     
     func getInapps(with targeting: Targeting) -> [InAppConfigResponse.InApp] {
@@ -84,7 +84,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 
     func getProductID_notSubstring() -> InAppConfigResponse {
@@ -93,7 +93,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 
     func getProductID_startsWith() -> InAppConfigResponse {
@@ -102,7 +102,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 
     func getProductID_endsWith() -> InAppConfigResponse {
@@ -111,7 +111,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: nil,
                                                                       viewCategory: .init(systemName: "Hello"),
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 
     func getProductSegment_Any() -> InAppConfigResponse {
@@ -120,7 +120,7 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
                                                                       viewCategory: nil,
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 
     func getProductSegment_None() -> InAppConfigResponse {
@@ -129,6 +129,6 @@ final class InAppConfigStub {
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
                                                                       viewCategory: nil,
                                                                       setCart: nil))
-        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
+        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings, abtests: nil)
     }
 }

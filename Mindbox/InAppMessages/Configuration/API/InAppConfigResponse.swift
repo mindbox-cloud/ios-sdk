@@ -11,6 +11,7 @@ struct InAppConfigResponse: Decodable {
     let inapps: [InApp]?
     let monitoring: Monitoring?
     let settings: Settings?
+    let abtests: [ABTest]?
 }
 
 extension InAppConfigResponse {
@@ -48,6 +49,35 @@ extension InAppConfigResponse {
             
             struct Operation: Decodable {
                 let systemName: String
+            }
+        }
+    }
+    
+    struct ABTest: Decodable {
+        let id: String
+        let sdkVersion: SdkVersion
+        let salt: String
+        let variants: [ABTestVariant]?
+        
+        struct ABTestVariant: Decodable {
+            let modulus: Modulus
+            let objects: [ABTestObject]
+            
+            struct Modulus: Decodable {
+                let lower: Int
+                let upper: Int
+            }
+            
+            struct ABTestObject: Decodable {
+                let type: String
+                let kind: String
+                let inapps: [String]?
+                
+                enum CodingKeys: String, CodingKey {
+                    case type = "$type"
+                    case kind
+                    case inapps
+                }
             }
         }
     }
