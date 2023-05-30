@@ -30,14 +30,14 @@ class InAppConfigResponseTests: XCTestCase {
         container.imageDownloader
     }
 
-    private var mapper: InAppConfigutationMapper!
+    private var mapper: InAppMapper!
     private let configStub = InAppConfigStub()
     private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
     private var shownInAppsIds: Set<String>!
 
     override func setUp() {
         super.setUp()
-        mapper = InAppConfigutationMapper(customerSegmentsAPI: .live,
+        mapper = InAppMapper(customerSegmentsAPI: .live,
                                           inAppsVersion: 1,
                                           targetingChecker: targetingChecker,
                                           networkFetcher: networkFetcher,

@@ -30,7 +30,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var inapp: InAppFormData?
     private var rawConfigurationResponse: InAppConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
-    private let inAppConfigurationMapper: InAppConfigutationMapper
+    private let inAppMapper: InAppMapper
     private let inAppConfigAPI: InAppConfigurationAPI
     private let logsManager: SDKLogsManagerProtocol
     private let sessionStorage: SessionTemporaryStorage
@@ -38,12 +38,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inAppConfigurationMapper: InAppConfigutationMapper,
+        inAppMapper: InAppMapper,
         logsManager: SDKLogsManagerProtocol,
         sessionStorage: SessionTemporaryStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
-        self.inAppConfigurationMapper = inAppConfigurationMapper
+        self.inAppMapper = inAppMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.logsManager = logsManager
         self.sessionStorage = sessionStorage
@@ -137,7 +137,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private func setConfigPrepared(_ configResponse: InAppConfigResponse, event: ApplicationEvent? = nil) {
         rawConfigurationResponse = configResponse
-        inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
+        inAppMapper.mapConfigResponse(event, configResponse, { inapp in
             self.inapp = inapp
             Logger.common(message: "In-app сonfiguration applied: \n\(String(describing: inapp))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()

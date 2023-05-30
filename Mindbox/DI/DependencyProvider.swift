@@ -53,7 +53,7 @@ final class DependencyProvider: DependencyContainer {
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
+                inAppConfigurationMapper: InAppMapper(customerSegmentsAPI: .live,
                                                                    inAppsVersion: inAppsSdkVersion,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher(),
