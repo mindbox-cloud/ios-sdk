@@ -48,6 +48,7 @@ final class DependencyProvider: DependencyContainer {
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
         imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
+        let customerAbMixer = CustomerAbMixer()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -58,7 +59,8 @@ final class DependencyProvider: DependencyContainer {
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher(),
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
-                                                                   imageDownloader: imageDownloader),
+                                                                   imageDownloader: imageDownloader,
+                                                                   customerAbMixer: customerAbMixer),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

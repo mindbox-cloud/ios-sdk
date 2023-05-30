@@ -59,7 +59,7 @@ extension InAppConfigResponse {
         let salt: String
         let variants: [ABTestVariant]?
         
-        struct ABTestVariant: Decodable {
+        struct ABTestVariant: Decodable, Sequence {
             let modulus: Modulus
             let objects: [ABTestObject]
             
@@ -70,7 +70,7 @@ extension InAppConfigResponse {
             
             struct ABTestObject: Decodable {
                 let type: String
-                let kind: String
+                let kind: ABTestKind
                 let inapps: [String]?
                 
                 enum CodingKeys: String, CodingKey {
@@ -78,6 +78,15 @@ extension InAppConfigResponse {
                     case kind
                     case inapps
                 }
+                
+                enum ABTestKind: String, Decodable {
+                    case all
+                    case concrete
+                }
+            }
+            
+            func makeIterator() -> IndexingIterator<[ABTestObject]> {
+                return objects.makeIterator()
             }
         }
     }

@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let imageDownloader: ImageDownloader
+    private let customerAbMixer: CustomerAbMixer
 
     private let dispatchGroup = DispatchGroup()
 
@@ -34,7 +35,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
-         imageDownloader: ImageDownloader) {
+         imageDownloader: ImageDownloader,
+         customerAbMixer: CustomerAbMixer) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
@@ -42,6 +44,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.imageDownloader = imageDownloader
+        self.customerAbMixer = customerAbMixer
     }
     
     func setInAppsVersion(_ version: Int) {
@@ -53,14 +56,50 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: InAppConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
+        var responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
 
         if responseInapps.isEmpty {
             Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
-
+        
+        let filteredABTests = filterABTests(response.abtests)
+        
+        for abTest in filteredABTests {
+            guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
+                      let variants = abTest.variants
+                else { continue }
+            
+            let hashValue = self.customerAbMixer.modulusGuidHash(identifier: uuid, salt: abTest.salt)
+            var setInapps: Set<String> = []
+            
+            for variant in variants {
+                for object in variant {
+                    if object.kind == .all {
+                        setInapps.formUnion(responseInapps.map { $0.id })
+                    } else if let inapps = object.inapps {
+                        setInapps.formUnion(inapps)
+                    }
+                }
+            }
+            
+            for variant in variants {
+                let range = variant.modulus.lower...variant.modulus.upper
+                if range.contains(hashValue) {
+                    for object in variant {
+                        if object.kind == .all {
+                            setInapps.removeAll()
+                        } else if let inapps = object.inapps {
+                            setInapps.subtract(inapps)
+                        }
+                    }
+                }
+            }
+            
+            responseInapps = responseInapps.filter { !setInapps.contains($0.id) }
+        }
+        
         targetingChecker.event = event
         prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
@@ -82,6 +121,33 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 }
             }
         }
+    }
+    
+    func filterABTests(_ abtests: [InAppConfigResponse.ABTest]?) -> [InAppConfigResponse.ABTest] {
+        guard let abtests = abtests, !abtests.isEmpty else {
+            Logger.common(message: "No AB Tests to filter. Exiting.")
+            return []
+        }
+        
+        let filteredABTests = abtests.filter {
+            inAppsVersion >= $0.sdkVersion.min
+            && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
+        }
+        
+        for tests in filteredABTests {
+            guard let variants = tests.variants, variants.count >= 2 else {
+                Logger.common(message: "ABTest \(tests.id) does not have enough variants. Exiting.")
+                return []
+            }
+            
+            let modulusSum = variants.reduce(0) { $0 + $1.modulus.upper - $1.modulus.lower }
+            if modulusSum != 100 {
+                Logger.common(message: "ABTest \(tests.id) variants modulus sum is not equal to 100. Exiting.")
+                return []
+            }
+        }
+        
+        return filteredABTests
     }
     
     func filterByInappVersion(_ inapps: [InAppConfigResponse.InApp]?, shownInAppsIds: Set<String>) -> [InAppConfigResponse.InApp] {
