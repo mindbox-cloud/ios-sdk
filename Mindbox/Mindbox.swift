@@ -541,12 +541,19 @@ public class Mindbox: NSObject {
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
         inappMessageEventSender?.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
-
     @objc private func resetShownInApps() {
         persistenceStorage?.shownInAppsIds = nil
     }
     
     @objc private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()
+    }
+    
+    public func mockHashNumber(_ number: Int?) {
+        #if COCOAPODS
+        sessionTemporaryStorage?.mockHashNumber = number
+        #else
+        print("mockHashNumber not available in your environment")
+        #endif
     }
 }

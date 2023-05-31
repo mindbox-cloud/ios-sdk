@@ -22,7 +22,10 @@ protocol DependencyContainer {
     var uuidDebugService: UUIDDebugService { get }
     var sessionTemporaryStorage: SessionTemporaryStorage { get }
     var inappMessageEventSender: InappMessageEventSender { get }
-    var imageDownloader: ImageDownloader { get }
+    var geoService: GeoService { get }
+    var customerAbMixer: CustomerAbMixer { get }
+    var imageDownloaderService: ImageDownloadServiceProtocol { get }
+    var segmentationService: SegmentationService { get }
 }
 
 protocol InstanceFactory {

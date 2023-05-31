@@ -15,6 +15,7 @@ final class SessionTemporaryStorage {
     var checkSegmentsRequestCompleted = false
     var checkProductSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
+    var mockHashNumber: Int?
     
     var customOperations: Set<String> {
         return observedCustomOperations.union(operationsFromSettings)

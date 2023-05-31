@@ -96,8 +96,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                     logsManager.sendLogs(logs: monitoring.logs)
                 }
             } catch {
-                applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
+                applyConfigFromCache()
             }
 
         case .empty:

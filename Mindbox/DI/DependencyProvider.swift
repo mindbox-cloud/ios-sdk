@@ -24,7 +24,10 @@ final class DependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     var sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
-    let imageDownloader: ImageDownloader
+    var geoService: GeoService
+    var customerAbMixer: CustomerAbMixer
+    var imageDownloaderService: ImageDownloadServiceProtocol
+    var segmentationService: SegmentationService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -47,20 +50,28 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
-        imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
-        let customerAbMixer = CustomerAbMixer()
+        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
+                                    sessionTemporaryStorage: sessionTemporaryStorage,
+                                    targetingChecker: inAppTargetingChecker)
+        customerAbMixer = CustomerAbMixer()
+        imageDownloaderService = ImageDownloadService(imageDownloader:
+                                                            URLSessionImageDownloader(persistenceStorage: persistenceStorage))
+        segmentationService = SegmentationService(customerSegmentsAPI: .live,
+                                                      sessionTemporaryStorage: sessionTemporaryStorage,
+                                                      targetingChecker: inAppTargetingChecker)
+
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppMapper(customerSegmentsAPI: .live,
-                                                                   inAppsVersion: inAppsSdkVersion,
-                                                                   targetingChecker: inAppTargetingChecker,
-                                                                   networkFetcher: instanceFactory.makeNetworkFetcher(),
-                                                                   sessionTemporaryStorage: sessionTemporaryStorage,
-                                                                   persistenceStorage: persistenceStorage,
-                                                                   imageDownloader: imageDownloader,
-                                                                   customerAbMixer: customerAbMixer),
+                inAppMapper: InAppMapper(segmentationService: segmentationService,
+                                         geoService: geoService,
+                                         imageDownloadService: imageDownloaderService,
+                                         targetingChecker: inAppTargetingChecker,
+                                         persistenceStorage: persistenceStorage,
+                                         sessionTemporaryStorage: sessionTemporaryStorage,
+                                         customerAbMixer: customerAbMixer,
+                                         inAppsVersion: inAppsSdkVersion),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

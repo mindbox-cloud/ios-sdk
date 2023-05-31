@@ -17,20 +17,21 @@ protocol InAppMapperProtocol {
 class InAppMapper: InAppMapperProtocol {
     
     var targetingChecker: InAppTargetingCheckerProtocol
+    var filteredInAppsByEvent = [InAppMessageTriggerEvent: [InAppTransitionData]]()
     
     private var segmentationService: SegmentationService
     private var geoService: GeoService
-    private var imageDownloadService: ImageDownloadService
+    private var imageDownloadService: ImageDownloadServiceProtocol
     private var persistenceStorage: PersistenceStorage
     private var dispatchGroup: DispatchGroup = DispatchGroup()
-    private var filteredInAppsByEvent = [InAppMessageTriggerEvent: [InAppTransitionData]]()
+
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let customerAbMixer: CustomerAbMixer
     private var inAppsVersion: Int
 
     init(segmentationService: SegmentationService,
          geoService: GeoService,
-         imageDownloadService: ImageDownloadService,
+         imageDownloadService: ImageDownloadServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          persistenceStorage: PersistenceStorage,
          sessionTemporaryStorage: SessionTemporaryStorage,
@@ -59,11 +60,15 @@ class InAppMapper: InAppMapperProtocol {
             return
         }
         
-        let filteredABTests = filterABTests(response.abtests)
+        prepareTargetingChecker(for: responseInapps)
+        
+        let filteredABTests = validationABTests(response.abtests)
         responseInapps = filterInappsByABTests(filteredABTests, responseInapps: responseInapps)
+        let ids = responseInapps.map { $0.id }
+        Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
         
         targetingChecker.event = event
-        prepareTargetingChecker(for: responseInapps)
+
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
 
@@ -76,6 +81,7 @@ class InAppMapper: InAppMapperProtocol {
                     }
                 } else {
                     Logger.common(message: "filteredInAppsByEvent is empty")
+                    completion(nil)
                 }
             } else if let inappsByEvent = self.filteredInAppsByEvent[.start] {
                 self.buildInAppByEvent(inapps: inappsByEvent) { formData in
@@ -154,7 +160,7 @@ extension InAppMapper {
         inAppsVersion = version
     }
     
-    func filterABTests(_ abtests: [InAppConfigResponse.ABTest]?) -> [InAppConfigResponse.ABTest] {
+    func validationABTests(_ abtests: [InAppConfigResponse.ABTest]?) -> [InAppConfigResponse.ABTest] {
         guard let abtests = abtests, !abtests.isEmpty else {
             Logger.common(message: "No AB Tests to filter. Exiting.")
             return []
@@ -173,7 +179,7 @@ extension InAppMapper {
             
             let modulusSum = variants.reduce(0) { $0 + $1.modulus.upper - $1.modulus.lower }
             if modulusSum != 100 {
-                Logger.common(message: "ABTest \(tests.id) variants modulus sum is not equal to 100. Exiting.")
+                Logger.common(message: "ABTest [\(tests.id)] variants modulus sum is not equal to 100. Exiting.")
                 return []
             }
         }
@@ -182,6 +188,10 @@ extension InAppMapper {
     }
     
     func filterInappsByABTests(_ abTests: [InAppConfigResponse.ABTest], responseInapps: [InAppConfigResponse.InApp]) -> [InAppConfigResponse.InApp] {
+        guard !abTests.isEmpty else {
+            return responseInapps
+        }
+        
         var result: [InAppConfigResponse.InApp] = []
         
         for abTest in abTests {
@@ -189,22 +199,28 @@ extension InAppMapper {
                       let variants = abTest.variants
                 else { continue }
             
-            let hashValue = self.customerAbMixer.modulusGuidHash(identifier: uuid, salt: abTest.salt)
+            let hashValue = sessionTemporaryStorage.mockHashNumber ?? self.customerAbMixer.modulusGuidHash(identifier: uuid, salt: abTest.salt)
+            
             Logger.common(message: "[Hash Value]: \(hashValue) for [UUID]: \(persistenceStorage.deviceUUID ?? "nil")")
-            var setInapps: Set<String> = []
+            
+            var allInappsInVariantsExceptCurrentBranch: [String] = []
             
             for variant in variants {
                 for object in variant {
                     if object.kind == .all {
-                        setInapps.formUnion(responseInapps.map { $0.id })
-                    } else if let inapps = object.inapps {
-                        setInapps.formUnion(inapps)
+                        responseInapps.forEach( {
+                            allInappsInVariantsExceptCurrentBranch.append($0.id)
+                        })
+                    } else {
+                        allInappsInVariantsExceptCurrentBranch += object.inapps ?? []
                     }
                 }
             }
             
+            var setInapps = Set(allInappsInVariantsExceptCurrentBranch)
+            
             for variant in variants {
-                let range = variant.modulus.lower...variant.modulus.upper
+                let range = variant.modulus.lower..<variant.modulus.upper
                 if range.contains(hashValue) {
                     for object in variant {
                         if object.kind == .all {
@@ -217,9 +233,11 @@ extension InAppMapper {
             }
             
             result = responseInapps.filter { !setInapps.contains($0.id) }
+            print(result)
+            if result.isEmpty {
+                return []
+            }
         }
-        
-        Logger.common(message: "Filtered in-apps after AB branch. \n\(result)")
         return result
     }
     

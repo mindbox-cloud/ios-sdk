@@ -24,7 +24,10 @@ final class TestDependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     let sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
-    var imageDownloader: ImageDownloader
+    var geoService: GeoService
+    var customerAbMixer: CustomerAbMixer
+    var imageDownloaderService: ImageDownloadServiceProtocol
+    var segmentationService: SegmentationService
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -51,9 +54,18 @@ final class TestDependencyProvider: DependencyContainer {
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
                                                           sessionStorage: sessionTemporaryStorage)
-        imageDownloader = MockImageDownloader()
+        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
+                                sessionTemporaryStorage: sessionTemporaryStorage,
+                                targetingChecker: inAppTargetingChecker)
+        customerAbMixer = CustomerAbMixer()
+        let mockDownloader = MockImageDownloader()
+        mockDownloader.expectedLocalURL = URL(fileURLWithPath: "/path/to/image.jpg")
+        mockDownloader.expectedResponse = HTTPURLResponse(url: URL(string: "https://example.com/image.jpg")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        imageDownloaderService = MockImageDownloadService(imageDownloader: mockDownloader)
+        segmentationService = SegmentationService(customerSegmentsAPI: .live,
+                                                  sessionTemporaryStorage: sessionTemporaryStorage,
+                                                  targetingChecker: inAppTargetingChecker)
     }
-
 }
 
 class MockInstanceFactory: InstanceFactory {
