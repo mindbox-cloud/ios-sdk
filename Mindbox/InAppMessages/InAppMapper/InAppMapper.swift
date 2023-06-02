@@ -52,23 +52,20 @@ class InAppMapper: InAppMapperProtocol {
                            _ response: InAppConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        var responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
+        var filteredABTests = validationABTests(response.abtests)
+        var responseInapps = filterInappsByABTests(filteredABTests, responseInapps: response.inapps)
+        let ids = responseInapps.map { $0.id }
+        Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
 
+        responseInapps = filterByInappVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         if responseInapps.isEmpty {
             Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
         
-        prepareTargetingChecker(for: responseInapps)
-        
-        let filteredABTests = validationABTests(response.abtests)
-        responseInapps = filterInappsByABTests(filteredABTests, responseInapps: responseInapps)
-        let ids = responseInapps.map { $0.id }
-        Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
-        
         targetingChecker.event = event
-
+        prepareTargetingChecker(for: responseInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
 
@@ -187,7 +184,8 @@ extension InAppMapper {
         return filteredABTests
     }
     
-    func filterInappsByABTests(_ abTests: [InAppConfigResponse.ABTest], responseInapps: [InAppConfigResponse.InApp]) -> [InAppConfigResponse.InApp] {
+    func filterInappsByABTests(_ abTests: [InAppConfigResponse.ABTest], responseInapps: [InAppConfigResponse.InApp]?) -> [InAppConfigResponse.InApp] {
+        let responseInapps = responseInapps ?? []
         guard !abTests.isEmpty else {
             return responseInapps
         }
@@ -202,6 +200,7 @@ extension InAppMapper {
             let hashValue = sessionTemporaryStorage.mockHashNumber ?? self.customerAbMixer.modulusGuidHash(identifier: uuid, salt: abTest.salt)
             
             Logger.common(message: "[Hash Value]: \(hashValue) for [UUID]: \(persistenceStorage.deviceUUID ?? "nil")")
+            Logger.common(message: "[AB-test ID]: \(abTest.id)")
             
             var allInappsInVariantsExceptCurrentBranch: [String] = []
             

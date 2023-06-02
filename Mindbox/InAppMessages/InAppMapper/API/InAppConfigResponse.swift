@@ -12,6 +12,32 @@ struct InAppConfigResponse: Decodable {
     let monitoring: Monitoring?
     let settings: Settings?
     let abtests: [ABTest]?
+    
+    enum CodingKeys: String, CodingKey {
+        case inapps, monitoring, settings, abtests
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        inapps = try container.decodeIfPresent([InApp].self, forKey: .inapps)
+        monitoring = try container.decodeIfPresent(Monitoring.self, forKey: .monitoring)
+        settings = try container.decodeIfPresent(Settings.self, forKey: .settings)
+        
+        // Try decoding abtests, if it fails, assign it to nil or an empty array
+        do {
+            abtests = try container.decodeIfPresent([ABTest].self, forKey: .abtests)
+        } catch {
+            abtests = nil
+        }
+    }
+    
+    init(inapps: [InAppConfigResponse.InApp]? = nil, monitoring: InAppConfigResponse.Monitoring? = nil, settings: InAppConfigResponse.Settings? = nil, abtests: [InAppConfigResponse.ABTest]? = nil) {
+        self.inapps = inapps
+        self.monitoring = monitoring
+        self.settings = settings
+        self.abtests = abtests
+    }
 }
 
 extension InAppConfigResponse {
