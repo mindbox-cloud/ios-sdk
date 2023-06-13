@@ -101,7 +101,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             }
 
         case .empty:
-            let emptyConfig = InAppConfigResponse.init(inapps: [], monitoring: nil, settings: nil)
+            let emptyConfig = InAppConfigResponse()
             inAppConfigRepository.clean()
             setConfigPrepared(emptyConfig)
 
