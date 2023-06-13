@@ -26,6 +26,7 @@ final class DependencyProvider: DependencyContainer {
     var inappMessageEventSender: InappMessageEventSender
     let imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
+    let geoService: GeoServiceProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -50,14 +51,16 @@ final class DependencyProvider: DependencyContainer {
         sessionTemporaryStorage = SessionTemporaryStorage()
         imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
+        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
+                                sessionTemporaryStorage: sessionTemporaryStorage,
+                                targetingChecker: inAppTargetingChecker)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
+                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService, customerSegmentsAPI: .live,
                                                                    inAppsVersion: Constants.Versions.sdkVersionNumeric,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   networkFetcher: instanceFactory.makeNetworkFetcher(),
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
                                                                    imageDownloader: imageDownloader,

@@ -16,11 +16,10 @@ protocol InAppConfigurationMapperProtocol {
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
+    private let geoService: GeoServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private var inAppsVersion: Int
     var targetingChecker: InAppTargetingCheckerProtocol
-    private var geoModel: InAppGeoResponse?
-    private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
@@ -29,18 +28,22 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let dispatchGroup = DispatchGroup()
 
-    init(customerSegmentsAPI: CustomerSegmentsAPI,
+    init(geoService: GeoServiceProtocol,
+         customerSegmentsAPI: CustomerSegmentsAPI,
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
-         networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
+<<<<<<< 6dc6a56a3bd7ca302f31018481fa5c6c69877b59:Mindbox/InAppMessages/Configuration/InAppConfigutationMapper.swift
          imageDownloader: ImageDownloader,
          sdkVersionValidator: SDKVersionValidator) {
+=======
+         imageDownloader: ImageDownloader) {
+        self.geoService = geoService
+>>>>>>> MBX-2530 GeoServiceRefactor:Mindbox/InAppMessages/InAppConfigurationMapper/InAppConfigutationMapper.swift
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
-        self.fetcher = networkFetcher
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.imageDownloader = imageDownloader
@@ -131,7 +134,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         if targetingChecker.context.isNeedGeoRequest
             && !sessionTemporaryStorage.geoRequestCompleted {
             dispatchGroup.enter()
-            geoRequest { model in
+            geoService.geoRequest { model in
                 self.targetingChecker.geoModels = model
                 self.dispatchGroup.leave()
             }
@@ -219,6 +222,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             completion(checkedProductSegmentations)
         }
     }
+<<<<<<< 6dc6a56a3bd7ca302f31018481fa5c6c69877b59:Mindbox/InAppMessages/Configuration/InAppConfigutationMapper.swift
 
     private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
         if sessionTemporaryStorage.geoRequestCompleted {
@@ -240,6 +244,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     }
 
     func filterByInappsEvents(inapps: [InApp]) {
+=======
+    
+    func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
+>>>>>>> MBX-2530 GeoServiceRefactor:Mindbox/InAppMessages/InAppConfigurationMapper/InAppConfigutationMapper.swift
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
