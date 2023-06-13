@@ -28,5 +28,8 @@ enum Constants {
         static let mindBoxIdentifireKey = "uniqueKey"
         
     }
-        
+    
+    enum Versions {
+        static let sdkVersionNumeric = 6
+    }
 }
