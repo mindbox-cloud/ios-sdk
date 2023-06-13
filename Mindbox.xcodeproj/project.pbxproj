@@ -312,6 +312,10 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801F72A38649D0021774C /* InappConfigResponseValid.json */; };
+		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
+		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
+		F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -667,6 +671,10 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		F31801F72A38649D0021774C /* InappConfigResponseValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseValid.json; sourceTree = "<group>"; };
+		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
+		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
+		F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseMonitoringInvalid.json; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
@@ -1494,6 +1502,7 @@
 		9BE941F62916823300258077 /* ConfigJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F31801F92A386A350021774C /* ConfigResponse */,
 				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
 				9BE941F42916822900258077 /* InAppConfigurationInvalid.json */,
@@ -1740,6 +1749,17 @@
 			path = OSLogWritterTests;
 			sourceTree = "<group>";
 		};
+		F31801F92A386A350021774C /* ConfigResponse */ = {
+			isa = PBXGroup;
+			children = (
+				F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */,
+				F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */,
+				F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */,
+				F31801F72A38649D0021774C /* InappConfigResponseValid.json */,
+			);
+			path = ConfigResponse;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -1951,18 +1971,22 @@
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
+				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
+				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
+				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
 				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
 				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
+				F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
 				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,

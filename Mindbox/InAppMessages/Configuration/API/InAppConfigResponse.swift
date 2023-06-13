@@ -46,22 +46,22 @@ struct InAppConfigResponse: Decodable {
 }
 
 extension InAppConfigResponse {
-    struct InApp: Decodable {
+    struct InApp: Decodable, Equatable {
         let id: String
         let sdkVersion: SdkVersion
         let targeting: Targeting
         let form: InAppFormVariants
     }
     
-    struct SdkVersion: Decodable {
+    struct SdkVersion: Decodable, Equatable {
         let min: Int
         let max: Int?
     }
     
-    struct Monitoring: Decodable {
+    struct Monitoring: Decodable, Equatable {
         let logs: [Logs]
         
-        struct Logs: Decodable {
+        struct Logs: Decodable, Equatable {
             let requestId: String
             let deviceUUID: String
             let from: String
@@ -69,50 +69,69 @@ extension InAppConfigResponse {
         }
     }
     
-    struct Settings: Decodable {
+    struct Settings: Decodable, Equatable {
         let operations: SettingsOperations?
         
-        struct SettingsOperations: Decodable {
+        struct SettingsOperations: Decodable, Equatable {
             
             let viewProduct: Operation?
             let viewCategory: Operation?
             let setCart: Operation?
             
-            struct Operation: Decodable {
+            struct Operation: Decodable, Equatable {
                 let systemName: String
             }
         }
     }
     
-    struct ABTest: Decodable {
+    struct ABTest: Decodable, Equatable {
         let id: String
         let sdkVersion: SdkVersion
         let salt: String
         let variants: [ABTestVariant]?
         
-        struct ABTestVariant: Decodable, Sequence {
+        struct ABTestVariant: Decodable, Sequence, Equatable {
             let modulus: Modulus
             let objects: [ABTestObject]
             
-            struct Modulus: Decodable {
+            struct Modulus: Decodable, Equatable {
                 let lower: Int
                 let upper: Int
             }
             
-            struct ABTestObject: Decodable {
-                let type: String
+            struct ABTestObject: Decodable, Equatable {
+                let type: ABTestType
                 let kind: ABTestKind
                 let inapps: [String]?
-                
+
                 enum CodingKeys: String, CodingKey {
                     case type = "$type"
                     case kind
                     case inapps
                 }
-                
+
+                enum ABTestType: String, Decodable {
+                    case inapps
+                    case unknown
+                }
+
                 enum ABTestKind: String, Decodable {
                     case all
                     case concrete
+                }
+
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+                    if let typeValue = try container.decodeIfPresent(String.self, forKey: .type),
+                       let type = ABTestType(rawValue: typeValue) {
+                        self.type = type
+                    } else {
+                        self.type = .unknown
+                    }
+
+                    kind = try container.decode(ABTestKind.self, forKey: .kind)
+                    inapps = try container.decodeIfPresent([String].self, forKey: .inapps)
                 }
             }
             
@@ -125,11 +144,11 @@ extension InAppConfigResponse {
 
 // MARK: - InAppFormVariants
 extension InAppConfigResponse {
-    struct InAppFormVariants: Decodable {
+    struct InAppFormVariants: Decodable, Equatable {
         let variants: [InAppForm]
     }
     
-    struct InAppForm: Decodable {
+    struct InAppForm: Decodable, Equatable {
         let imageUrl: String
         let redirectUrl: String
         let intentPayload: String
