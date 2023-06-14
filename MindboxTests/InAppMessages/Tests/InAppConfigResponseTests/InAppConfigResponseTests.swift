@@ -51,13 +51,13 @@ class InAppConfigResponseTests: XCTestCase {
     func test_config_valid_to_parse() throws {
         let response = try getConfig(name: "InappConfigResponseValid")
         
-        let inapps: [InAppConfigResponse.InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-                                                         sdkVersion: SdkVersion(min: 4, max: nil),
-                                                         targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-                                                         form: InAppConfigResponse.InAppFormVariants(variants: [.init(imageUrl: "1",
-                                                                                                                      redirectUrl: "2",
-                                                                                                                      intentPayload: "3",
-                                                                                                                      type: "simpleImage")]))]
+        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+                                      sdkVersion: SdkVersion(min: 4, max: nil),
+                                      targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
+                                      form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
+                                                                                     redirectUrl: "2",
+                                                                                     intentPayload: "3",
+                                                                                     type: "simpleImage")]))]
         
         let abTestObject1 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(
             type: .inapps,
@@ -103,10 +103,10 @@ class InAppConfigResponseTests: XCTestCase {
     
     func test_config_settings_invalid_to_parse() throws {
         let response = try getConfig(name: "InappConfigResponseSettingsInvalid")
-        let inapps: [InAppConfigResponse.InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
                                                          sdkVersion: SdkVersion(min: 4, max: nil),
                                                          targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-                                                         form: InAppConfigResponse.InAppFormVariants(variants: [.init(imageUrl: "1",
+                                                         form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
                                                                                                                       redirectUrl: "2",
                                                                                                                       intentPayload: "3",
                                                                                                                       type: "simpleImage")]))]
@@ -118,10 +118,10 @@ class InAppConfigResponseTests: XCTestCase {
     
     func test_config_monitoring_invalid_to_parse() throws {
         let response = try getConfig(name: "InappConfigResponseMonitoringInvalid")
-        let inapps: [InAppConfigResponse.InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
                                                          sdkVersion: SdkVersion(min: 4, max: nil),
                                                          targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-                                                         form: InAppConfigResponse.InAppFormVariants(variants: [.init(imageUrl: "1",
+                                                         form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
                                                                                                                       redirectUrl: "2",
                                                                                                                       intentPayload: "3",
                                                                                                                       type: "simpleImage")]))]
@@ -133,10 +133,10 @@ class InAppConfigResponseTests: XCTestCase {
     
     func test_config_abtests_invalid_to_parse() throws {
         let response = try getConfig(name: "InappConfigResponseAbtestsInvalid")
-        let inapps: [InAppConfigResponse.InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
                                                          sdkVersion: SdkVersion(min: 4, max: nil),
                                                          targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-                                                         form: InAppConfigResponse.InAppFormVariants(variants: [.init(imageUrl: "1",
+                                                         form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
                                                                                                                       redirectUrl: "2",
                                                                                                                       intentPayload: "3",
                                                                                                                       type: "simpleImage")]))]

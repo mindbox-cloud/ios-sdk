@@ -68,14 +68,14 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getInapps(with targeting: Targeting) -> [InAppConfigResponse.InApp] {
+    func getInapps(with targeting: Targeting) -> [InApp] {
         return  [.init(id: "0",
                        sdkVersion: .init(min: 5, max: nil),
                        targeting: targeting,
                        form: getForm())]
     }
     
-    func getForm() -> InAppConfigResponse.InAppFormVariants {
+    func getForm() -> InApp.InAppFormVariants {
         .init(variants: [.init(imageUrl: "1", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
     }
     func getProductID_Substring() -> InAppConfigResponse {

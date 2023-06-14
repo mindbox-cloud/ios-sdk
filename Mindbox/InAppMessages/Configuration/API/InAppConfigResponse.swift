@@ -54,13 +54,6 @@ struct InAppConfigResponse: Decodable {
 }
 
 extension InAppConfigResponse {
-    struct InApp: Decodable, Equatable {
-        let id: String
-        let sdkVersion: SdkVersion
-        let targeting: Targeting
-        let form: InAppFormVariants
-    }
-    
     struct Settings: Decodable, Equatable {
         let operations: SettingsOperations?
         
@@ -133,27 +126,6 @@ extension InAppConfigResponse {
                      self.inapps = inapps
                  }
             }
-        }
-    }
-}
-
-// MARK: - InAppFormVariants
-extension InAppConfigResponse {
-    struct InAppFormVariants: Decodable, Equatable {
-        let variants: [InAppForm]
-    }
-    
-    struct InAppForm: Decodable, Equatable {
-        let imageUrl: String
-        let redirectUrl: String
-        let intentPayload: String
-        let type: String
-        
-        enum CodingKeys: String, CodingKey {
-            case imageUrl
-            case redirectUrl
-            case intentPayload
-            case type = "$type"
         }
     }
 }

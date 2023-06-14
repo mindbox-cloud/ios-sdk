@@ -87,7 +87,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
-    func filterByInappVersion(_ inapps: [InAppConfigResponse.InApp]?, shownInAppsIds: Set<String>) -> [InAppConfigResponse.InApp] {
+    func filterByInappVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
         guard let inapps = inapps else {
             return []
         }
@@ -100,7 +100,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         return filteredInapps
     }
 
-    private func prepareTargetingChecker(for inapps: [InAppConfigResponse.InApp]) {
+    private func prepareTargetingChecker(for inapps: [InApp]) {
         inapps.forEach({
             targetingChecker.prepare(targeting: $0.targeting)
         })
@@ -239,7 +239,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
+    func filterByInappsEvents(inapps: [InApp]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
