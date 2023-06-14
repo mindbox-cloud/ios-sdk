@@ -9,7 +9,7 @@
 import Foundation
 
 class SDKVersionValidator: Validator {
-    typealias T = InAppConfigResponse.SdkVersion?
+    typealias T = SdkVersion?
     
     var sdkVersionNumeric: Int
     
@@ -17,7 +17,7 @@ class SDKVersionValidator: Validator {
         self.sdkVersionNumeric = sdkVersionNumeric
     }
 
-    func isValid(item: InAppConfigResponse.SdkVersion?) -> Bool {
+    func isValid(item: SdkVersion?) -> Bool {
         guard let sdkVersion = item else { return false }
         
         let minVersionValid = sdkVersion.min.map { $0 <= sdkVersionNumeric } ?? false

@@ -61,11 +61,6 @@ extension InAppConfigResponse {
         let form: InAppFormVariants
     }
     
-    struct SdkVersion: Decodable, Equatable {
-        let min: Int?
-        let max: Int?
-    }
-    
     struct Monitoring: Decodable, Equatable {
         let logs: [Logs]
         

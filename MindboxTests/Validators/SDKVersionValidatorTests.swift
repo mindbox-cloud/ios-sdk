@@ -23,25 +23,25 @@ class SDKVersionValidatorTests: XCTestCase {
     }
         
     func test_whenMinVersionIsTooHigh_returnsFalse() {
-        let sdkVersion = InAppConfigResponse.SdkVersion(min: 10, max: nil)
+        let sdkVersion = SdkVersion(min: 10, max: nil)
         validator = SDKVersionValidator(sdkVersionNumeric: 6)
         XCTAssertFalse(validator.isValid(item: sdkVersion))
     }
     
     func testValidator_whenMaxVersionIsTooLow_returnsFalse() {
-        let sdkVersion = InAppConfigResponse.SdkVersion(min: nil, max: 5)
+        let sdkVersion = SdkVersion(min: nil, max: 5)
         validator = SDKVersionValidator(sdkVersionNumeric: 6)
         XCTAssertFalse(validator.isValid(item: sdkVersion))
     }
     
     func testValidator_whenVersionIsWithinBounds_returnsTrue() {
-        let sdkVersion = InAppConfigResponse.SdkVersion(min: 5, max: 7)
+        let sdkVersion = SdkVersion(min: 5, max: 7)
         validator = SDKVersionValidator(sdkVersionNumeric: 6)
         XCTAssertTrue(validator.isValid(item: sdkVersion))
     }
     
     func testValidator_whenMinAndMaxAreNil_returnsTrue() {
-        let sdkVersion = InAppConfigResponse.SdkVersion(min: nil, max: nil)
+        let sdkVersion = SdkVersion(min: nil, max: nil)
         validator = SDKVersionValidator(sdkVersionNumeric: 6)
         XCTAssertFalse(validator.isValid(item: sdkVersion))
     }
