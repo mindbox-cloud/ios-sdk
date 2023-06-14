@@ -65,21 +65,15 @@ class InAppConfigResponseTests: XCTestCase {
             inapps: ["inapp1", "inapp2"]
         )
 
-        let abTestObject2 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(
-            type: .inapps,
-            kind: .concrete,
-            inapps: ["inapp3"]
-        )
-
         // Создаем структуры ABTestVariant
         let abTestVariant1 = InAppConfigResponse.ABTest.ABTestVariant(
             id: "1", modulus: InAppConfigResponse.ABTest.ABTestVariant.Modulus(lower: 0, upper: 50),
-            objects: [abTestObject1, abTestObject2]
+            objects: [abTestObject1]
         )
 
         let abTestVariant2 = InAppConfigResponse.ABTest.ABTestVariant(
             id: "2", modulus: InAppConfigResponse.ABTest.ABTestVariant.Modulus(lower: 50, upper: 100),
-            objects: [abTestObject1, abTestObject2]
+            objects: [abTestObject1]
         )
         let abtests: [InAppConfigResponse.ABTest]? = [.init(id: "id123",
                                                             sdkVersion: .init(min: 1, max: nil),

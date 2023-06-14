@@ -319,6 +319,10 @@
 		F3A8B9922A3A408C00E9C055 /* SDKVersionValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9912A3A408C00E9C055 /* SDKVersionValidator.swift */; };
 		F3A8B9942A3A409C00E9C055 /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9932A3A409C00E9C055 /* Validator.swift */; };
 		F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9972A3A421C00E9C055 /* SDKVersionValidatorTests.swift */; };
+		F3A8B99A2A3A471800E9C055 /* ABTestVariantsValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9992A3A471800E9C055 /* ABTestVariantsValidator.swift */; };
+		F3A8B99C2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B99B2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift */; };
+		F3A8B99E2A3A4FD600E9C055 /* ABTestValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B99D2A3A4FD600E9C055 /* ABTestValidator.swift */; };
+		F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B99F2A3A52F400E9C055 /* ABTestValidatorTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -681,6 +685,10 @@
 		F3A8B9912A3A408C00E9C055 /* SDKVersionValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionValidator.swift; sourceTree = "<group>"; };
 		F3A8B9932A3A409C00E9C055 /* Validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validator.swift; sourceTree = "<group>"; };
 		F3A8B9972A3A421C00E9C055 /* SDKVersionValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionValidatorTests.swift; sourceTree = "<group>"; };
+		F3A8B9992A3A471800E9C055 /* ABTestVariantsValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestVariantsValidator.swift; sourceTree = "<group>"; };
+		F3A8B99B2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestVariantsValidatorTests.swift; sourceTree = "<group>"; };
+		F3A8B99D2A3A4FD600E9C055 /* ABTestValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestValidator.swift; sourceTree = "<group>"; };
+		F3A8B99F2A3A52F400E9C055 /* ABTestValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestValidatorTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
@@ -1197,6 +1205,8 @@
 				84B625E825C989C100AB6228 /* UDIDValidator.swift */,
 				F3A8B9932A3A409C00E9C055 /* Validator.swift */,
 				F3A8B9912A3A408C00E9C055 /* SDKVersionValidator.swift */,
+				F3A8B9992A3A471800E9C055 /* ABTestVariantsValidator.swift */,
+				F3A8B99D2A3A4FD600E9C055 /* ABTestValidator.swift */,
 			);
 			path = Validators;
 			sourceTree = "<group>";
@@ -1206,6 +1216,8 @@
 			children = (
 				84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */,
 				F3A8B9972A3A421C00E9C055 /* SDKVersionValidatorTests.swift */,
+				F3A8B99B2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift */,
+				F3A8B99F2A3A52F400E9C055 /* ABTestValidatorTests.swift */,
 			);
 			path = Validators;
 			sourceTree = "<group>";
@@ -2081,6 +2093,7 @@
 				B3A6255C268A025600B6A3B7 /* NearestExpirationResponse.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
 				9B7F2C5328DACD4B002ABDB0 /* InAppMessagesDelegate.swift in Sources */,
+				F3A8B99A2A3A471800E9C055 /* ABTestVariantsValidator.swift in Sources */,
 				33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */,
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
 				334F3AE8264C199900A6AC00 /* ItemRequest.swift in Sources */,
@@ -2093,6 +2106,7 @@
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				337A473E265528B5000DC613 /* MBDate.swift in Sources */,
+				F3A8B99E2A3A4FD600E9C055 /* ABTestValidator.swift in Sources */,
 				334F3AE0264C199900A6AC00 /* ViewProductCategoryRequest.swift in Sources */,
 				A1D23AF029DE082E00A75179 /* InAppProductSegmentResponse.swift in Sources */,
 				A1D017EE2976CC4000CD9F99 /* AndTargeting.swift in Sources */,
@@ -2293,6 +2307,7 @@
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
+				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
@@ -2302,6 +2317,7 @@
 				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
+				F3A8B99C2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift in Sources */,
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
 			);

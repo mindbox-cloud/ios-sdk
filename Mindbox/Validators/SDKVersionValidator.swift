@@ -21,9 +21,8 @@ class SDKVersionValidator: Validator {
         guard let sdkVersion = item else { return false }
         
         let minVersionValid = sdkVersion.min.map { $0 <= sdkVersionNumeric } ?? false
-        let maxVersionValid = sdkVersion.max.map { $0 >= sdkVersionNumeric } ?? false
+        let maxVersionValid = sdkVersion.max.map { $0 >= sdkVersionNumeric } ?? true
         
         return minVersionValid && maxVersionValid
     }
 }
-

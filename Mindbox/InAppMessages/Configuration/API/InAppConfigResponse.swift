@@ -24,13 +24,11 @@ struct InAppConfigResponse: Decodable {
         monitoring = InAppConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
         settings = InAppConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
         
-        if let decodedAbtests: [ABTest] = InAppConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests") {
-            if decodedAbtests.contains(where: { $0.variants?.count ?? 0 < 2
-                || $0.variants?.contains(where: { $0.objects.isEmpty }) == true }) {
-                abtests = nil
-            } else {
-                abtests = decodedAbtests
-            }
+        if let decodedAbtests: [ABTest] = InAppConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
+           decodedAbtests.allSatisfy({
+               ABTestValidator(sdkVersionValidator: SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)).isValid(item: $0)
+           }) {
+            abtests = decodedAbtests
         } else {
             abtests = nil
         }
@@ -96,14 +94,14 @@ extension InAppConfigResponse {
     
     struct ABTest: Decodable, Equatable {
         let id: String
-        let sdkVersion: SdkVersion
-        let salt: String
+        let sdkVersion: SdkVersion?
+        let salt: String?
         let variants: [ABTestVariant]?
         
-        struct ABTestVariant: Decodable, Sequence, Equatable {
+        struct ABTestVariant: Decodable, Equatable {
             let id: String
-            let modulus: Modulus
-            let objects: [ABTestObject]
+            let modulus: Modulus?
+            let objects: [ABTestObject]?
             
             struct Modulus: Decodable, Equatable {
                 let lower: Int
@@ -150,10 +148,6 @@ extension InAppConfigResponse {
                      self.kind = kind
                      self.inapps = inapps
                  }
-            }
-            
-            func makeIterator() -> IndexingIterator<[ABTestObject]> {
-                return objects.makeIterator()
             }
         }
     }
