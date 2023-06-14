@@ -11,7 +11,7 @@ import MindboxLogger
 
 class ABTestValidator: Validator {
     
-    typealias T = InAppConfigResponse.ABTest?
+    typealias T = ABTest?
     
     private let sdkVersionValidator: SDKVersionValidator
     private lazy var variantsValidator = ABTestVariantsValidator()
@@ -20,7 +20,7 @@ class ABTestValidator: Validator {
         self.sdkVersionValidator = sdkVersionValidator
     }
 
-    func isValid(item: InAppConfigResponse.ABTest?) -> Bool {
+    func isValid(item: ABTest?) -> Bool {
         guard let item = item else {
             Logger.error(.internalError(.init(errorKey: .validation, reason: "The element in abtests block cannot be null. All abtests will not be used.")))
             return false

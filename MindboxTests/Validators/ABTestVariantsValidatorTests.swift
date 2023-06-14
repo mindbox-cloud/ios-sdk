@@ -13,7 +13,7 @@ class ABTestVariantsValidatorTests: XCTestCase {
     var variantValidator: ABTestVariantsValidator!
     
     struct TestCase {
-        let variant: InAppConfigResponse.ABTest.ABTestVariant?
+        let variant: ABTest.ABTestVariant?
         let isValid: Bool
     }
     
@@ -22,8 +22,8 @@ class ABTestVariantsValidatorTests: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        let object1 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
-        let object2 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp2"])
+        let object1 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
+        let object2 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp2"])
         testCases = [
             TestCase(variant: createVariant(objects: [object1]), isValid: true), // valid case
             TestCase(variant: createVariant(id: "", objects: [object1]), isValid: false), // invalid id
@@ -55,7 +55,7 @@ class ABTestVariantsValidatorTests: XCTestCase {
     private func createVariant(id: String = "Test",
                                lower: Int = 0,
                                upper: Int = 100,
-                               objects: [InAppConfigResponse.ABTest.ABTestVariant.ABTestObject]? = nil) -> InAppConfigResponse.ABTest.ABTestVariant {
+                               objects: [ABTest.ABTestVariant.ABTestObject]? = nil) -> ABTest.ABTestVariant {
         return .init(id: id,
                      modulus: .init(lower: lower, upper: upper),
                      objects: objects)

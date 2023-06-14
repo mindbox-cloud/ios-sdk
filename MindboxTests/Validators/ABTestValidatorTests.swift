@@ -15,7 +15,7 @@ class ABTestValidatorTests: XCTestCase {
     var validator: ABTestValidator!
     
     struct TestCase {
-        let abTest: InAppConfigResponse.ABTest
+        let abTest: ABTest
         let isValid: Bool
     }
     
@@ -25,11 +25,11 @@ class ABTestValidatorTests: XCTestCase {
         super.setUp()
         validator = ABTestValidator(sdkVersionValidator: sdkVersionValidator)
         
-        let modulus = InAppConfigResponse.ABTest.ABTestVariant.Modulus(lower: 0, upper: 100)
-        let abObject = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
-        let variant1 = InAppConfigResponse.ABTest.ABTestVariant(id: "1", modulus: modulus, objects: [abObject])
+        let modulus = ABTest.ABTestVariant.Modulus(lower: 0, upper: 100)
+        let abObject = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
+        let variant1 = ABTest.ABTestVariant(id: "1", modulus: modulus, objects: [abObject])
         
-        let abtest = InAppConfigResponse.ABTest(id: "123", sdkVersion: SdkVersion(min: 4, max: nil), salt: "salt", variants: [
+        let abtest = ABTest(id: "123", sdkVersion: SdkVersion(min: 4, max: nil), salt: "salt", variants: [
             createVariant(lower: 0, upper: 50, objects: [abObject]),
             createVariant(lower: 50, upper: 100, objects: [abObject])
         ])
@@ -125,7 +125,7 @@ class ABTestValidatorTests: XCTestCase {
     private func createVariant(id: String = "Test",
                                lower: Int = 0,
                                upper: Int = 100,
-                               objects: [InAppConfigResponse.ABTest.ABTestVariant.ABTestObject]? = nil) -> InAppConfigResponse.ABTest.ABTestVariant {
+                               objects: [ABTest.ABTestVariant.ABTestObject]? = nil) -> ABTest.ABTestVariant {
         return .init(id: id,
                      modulus: .init(lower: lower, upper: upper),
                      objects: objects)
@@ -134,7 +134,7 @@ class ABTestValidatorTests: XCTestCase {
     private func createAbTest(id: String,
                               sdkVersion: SdkVersion?,
                               salt: String?,
-                              variants: [InAppConfigResponse.ABTest.ABTestVariant]?) -> InAppConfigResponse.ABTest {
+                              variants: [ABTest.ABTestVariant]?) -> ABTest {
         return .init(id: id, sdkVersion: sdkVersion, salt: salt, variants: variants)
     }
 }

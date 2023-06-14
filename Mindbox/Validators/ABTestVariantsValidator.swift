@@ -10,13 +10,13 @@ import Foundation
 import MindboxLogger
 
 class ABTestVariantsValidator: Validator {
-    typealias T = InAppConfigResponse.ABTest.ABTestVariant?
+    typealias T = ABTest.ABTestVariant?
 
     private let typeInApps = "inapps"
     private let all = "all"
     private let concrete = "concrete"
     
-    func isValid(item: InAppConfigResponse.ABTest.ABTestVariant?) -> Bool {
+    func isValid(item: ABTest.ABTestVariant?) -> Bool {
         guard let item = item else {
             Logger.error(.internalError(.init(errorKey: .validation, reason: "Variant item can not be null.")))
             return false
