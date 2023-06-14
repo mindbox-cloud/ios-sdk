@@ -67,9 +67,38 @@
                 {
                     "modulus": {
                         "lower": 0,
+                        "upper": 50
+                    },
+                    "objects": [
+                        {
+                            "$type": "inapps",
+                            "kind": "all",
+                            "inapps": ["inapp1", "inapp2"]
+                        },
+                        {
+                            "$type": "inapps",
+                            "kind": "concrete",
+                            "inapps": ["inapp3"]
+                        }
+                    ]
+                },
+                {
+                    "modulus": {
+                        "lower": 50,
                         "upper": 100
                     },
-                    "objects": []
+                    "objects": [
+                        {
+                            "$type": "inapps",
+                            "kind": "all",
+                            "inapps": ["inapp1", "inapp2"]
+                        },
+                        {
+                            "$type": "inapps",
+                            "kind": "concrete",
+                            "inapps": ["inapp3"]
+                        }
+                    ]
                 }
             ]
         }

@@ -58,11 +58,34 @@ class InAppConfigResponseTests: XCTestCase {
                                                                                                                       intentPayload: "3",
                                                                                                                       type: "simpleImage")]))]
         
+        let abTestObject1 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(
+            type: .inapps,
+            kind: .all,
+            inapps: ["inapp1", "inapp2"]
+        )
+
+        let abTestObject2 = InAppConfigResponse.ABTest.ABTestVariant.ABTestObject(
+            type: .inapps,
+            kind: .concrete,
+            inapps: ["inapp3"]
+        )
+
+        // Создаем структуры ABTestVariant
+        let abTestVariant1 = InAppConfigResponse.ABTest.ABTestVariant(
+            modulus: InAppConfigResponse.ABTest.ABTestVariant.Modulus(lower: 0, upper: 50),
+            objects: [abTestObject1, abTestObject2]
+        )
+
+        let abTestVariant2 = InAppConfigResponse.ABTest.ABTestVariant(
+            modulus: InAppConfigResponse.ABTest.ABTestVariant.Modulus(lower: 50, upper: 100),
+            objects: [abTestObject1, abTestObject2]
+        )
         let abtests: [InAppConfigResponse.ABTest]? = [.init(id: "id123",
                                                             sdkVersion: .init(min: 1, max: nil),
                                                             salt: "salt123",
-                                                            variants: [.init(modulus: .init(lower: 0, upper: 100),
-                                                                             objects: [])])]
+                                                            variants: [abTestVariant1,
+                                                                       abTestVariant2]),
+        ]
         
         let monitoring = InAppConfigResponse.Monitoring(logs: [.init(requestId: "request1",
                                                                      deviceUUID: "device1",
@@ -77,7 +100,6 @@ class InAppConfigResponseTests: XCTestCase {
                                                                       viewCategory: .init(systemName: "category"),
                                                                       setCart: .init(systemName: "cart")))
         
-
         XCTAssertEqual(response.inapps, inapps)
         XCTAssertEqual(response.abtests, abtests)
         XCTAssertEqual(response.monitoring, monitoring)

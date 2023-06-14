@@ -43,12 +43,12 @@
                     },
                     "objects": [
                         {
-                            "type": "type1",
+                            "$type": "type1",
                             "kind": "all",
                             "inapps": ["inapp1", "inapp2"]
                         },
                         {
-                            "type": "type2",
+                            "$type": "type2",
                             "kind": "concrete",
                             "inapps": ["inapp3"]
                         }

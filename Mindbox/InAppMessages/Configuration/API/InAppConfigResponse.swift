@@ -23,7 +23,17 @@ struct InAppConfigResponse: Decodable {
         inapps = InAppConfigResponse.decodeIfPresent(container, forKey: .inapps, errorDesc: "Cannot decode InApps")
         monitoring = InAppConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
         settings = InAppConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
-        abtests = InAppConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests")
+        
+        if let decodedAbtests: [ABTest] = InAppConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests") {
+            if decodedAbtests.contains(where: { $0.variants?.count ?? 0 < 2
+                || $0.variants?.contains(where: { $0.objects.isEmpty }) == true }) {
+                abtests = nil
+            } else {
+                abtests = decodedAbtests
+            }
+        } else {
+            abtests = nil
+        }
     }
     
     private static func decodeIfPresent<T>(_ container: KeyedDecodingContainer<CodingKeys>,
@@ -133,6 +143,12 @@ extension InAppConfigResponse {
                     kind = try container.decode(ABTestKind.self, forKey: .kind)
                     inapps = try container.decodeIfPresent([String].self, forKey: .inapps)
                 }
+                
+                init(type: ABTestType, kind: ABTestKind, inapps: [String]? = nil) {
+                     self.type = type
+                     self.kind = kind
+                     self.inapps = inapps
+                 }
             }
             
             func makeIterator() -> IndexingIterator<[ABTestObject]> {
