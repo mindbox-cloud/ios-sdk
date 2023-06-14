@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 protocol SDKLogsManagerProtocol {
-    func sendLogs(logs: [InAppConfigResponse.Monitoring.Logs])
+    func sendLogs(logs: [Monitoring.Logs])
 }
 
 class SDKLogsManager: SDKLogsManagerProtocol {
@@ -27,7 +27,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
         self.eventRepository = eventRepository
     }
     
-    func sendLogs(logs: [InAppConfigResponse.Monitoring.Logs]) {
+    func sendLogs(logs: [Monitoring.Logs]) {
         var handledLogsRequestIds = persistenceStorage.handledlogRequestIds ?? []
         for log in logs {
             if !handledLogsRequestIds.contains(log.requestId) && persistenceStorage.deviceUUID == log.deviceUUID.uppercased() {

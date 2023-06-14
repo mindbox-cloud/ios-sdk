@@ -82,14 +82,14 @@ class InAppConfigResponseTests: XCTestCase {
                                                                        abTestVariant2]),
         ]
         
-        let monitoring = InAppConfigResponse.Monitoring(logs: [.init(requestId: "request1",
-                                                                     deviceUUID: "device1",
-                                                                     from: "source1",
-                                                                     to: "destination1"),
-                                                               .init(requestId: "request2",
-                                                                     deviceUUID: "device2",
-                                                                     from: "source2",
-                                                                     to: "destination2")])
+        let monitoring = Monitoring(logs: [.init(requestId: "request1",
+                                                 deviceUUID: "device1",
+                                                 from: "source1",
+                                                 to: "destination1"),
+                                           .init(requestId: "request2",
+                                                 deviceUUID: "device2",
+                                                 from: "source2",
+                                                 to: "destination2")])
         
         let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "product"),
                                                                       viewCategory: .init(systemName: "category"),

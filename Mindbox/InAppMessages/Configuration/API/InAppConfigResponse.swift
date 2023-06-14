@@ -45,7 +45,7 @@ struct InAppConfigResponse: Decodable {
         }
     }
     
-    init(inapps: [InAppConfigResponse.InApp]? = nil, monitoring: InAppConfigResponse.Monitoring? = nil, settings: InAppConfigResponse.Settings? = nil, abtests: [InAppConfigResponse.ABTest]? = nil) {
+    init(inapps: [InApp]? = nil, monitoring: Monitoring? = nil, settings: Settings? = nil, abtests: [ABTest]? = nil) {
         self.inapps = inapps
         self.monitoring = monitoring
         self.settings = settings
@@ -59,17 +59,6 @@ extension InAppConfigResponse {
         let sdkVersion: SdkVersion
         let targeting: Targeting
         let form: InAppFormVariants
-    }
-    
-    struct Monitoring: Decodable, Equatable {
-        let logs: [Logs]
-        
-        struct Logs: Decodable, Equatable {
-            let requestId: String
-            let deviceUUID: String
-            let from: String
-            let to: String
-        }
     }
     
     struct Settings: Decodable, Equatable {
