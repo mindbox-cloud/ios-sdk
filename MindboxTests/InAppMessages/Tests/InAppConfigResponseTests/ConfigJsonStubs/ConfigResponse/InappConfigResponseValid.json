@@ -65,6 +65,7 @@
             "salt": "salt123",
             "variants": [
                 {
+                    "id": "1",
                     "modulus": {
                         "lower": 0,
                         "upper": 50
@@ -83,6 +84,7 @@
                     ]
                 },
                 {
+                    "id": "2",
                     "modulus": {
                         "lower": 50,
                         "upper": 100

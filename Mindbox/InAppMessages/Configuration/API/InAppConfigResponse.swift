@@ -101,6 +101,7 @@ extension InAppConfigResponse {
         let variants: [ABTestVariant]?
         
         struct ABTestVariant: Decodable, Sequence, Equatable {
+            let id: String
             let modulus: Modulus
             let objects: [ABTestObject]
             
