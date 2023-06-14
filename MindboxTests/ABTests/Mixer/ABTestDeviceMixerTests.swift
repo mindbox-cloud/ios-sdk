@@ -27,9 +27,6 @@ final class ABTestDeviceMixerTests: XCTestCase {
         let salt = "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F1"
         let array = getArray(resourceName: "MixerUUIDS")
             
-        var results: [Int] = []
-        var modulusResults: [Int] = []
-
         for item in array {
             let components = item.components(separatedBy: " | ")
             guard components.count == 2,
@@ -39,12 +36,12 @@ final class ABTestDeviceMixerTests: XCTestCase {
                 continue
             }
                 
-            results.append(result)
-            let modulusResult = sut.modulusGuidHash(identifier: uuid, salt: salt)
-            modulusResults.append(modulusResult)
+            if let modulusResult = sut.modulusGuidHash(identifier: uuid, salt: salt) {
+                XCTAssertEqual(result, modulusResult)
+            } else {
+                XCTFail("Modulus result is nil")
+            }
         }
-            
-        XCTAssertEqual(results, modulusResults, "Results are not equal.")
     }
 
     private func getArray(resourceName: String) -> [String] {

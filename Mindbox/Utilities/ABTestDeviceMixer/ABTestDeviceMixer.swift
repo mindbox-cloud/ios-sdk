@@ -11,17 +11,17 @@ import CommonCrypto
 class ABTestDeviceMixer {
     private let sha256 = SHA256()
 
-    func modulusGuidHash(identifier: UUID, salt: String) -> Int {
-        let saltUpper = salt.uppercased()
-        return stringModulusHash(identifier: identifier.uuidString.uppercased(), saltUpper: saltUpper)
+    func modulusGuidHash(identifier: UUID, salt: String) -> Int? {
+        return stringModulusHash(identifier: identifier.uuidString.uppercased(),
+                                 saltUpper: salt.uppercased())
     }
     
-    private func stringModulusHash(identifier: String, saltUpper: String) -> Int {
+    private func stringModulusHash(identifier: String, saltUpper: String) -> Int? {
         let saltedId = identifier + saltUpper
-        guard let saltedData = saltedId.data(using: .utf8) else { return 0 }
+        guard let saltedData = saltedId.data(using: .utf8) else { return nil }
         
         let hash = sha256.hash(data: saltedData)
-        guard hash.count >= 32 else { return 0 }
+        guard hash.count >= 32 else { return nil }
 
         let bigEndianLastBytesAsInt =
             (Int(hash[28]) << 24)
