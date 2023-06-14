@@ -10,7 +10,7 @@ import MindboxLogger
 import UIKit
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
 }
 
@@ -53,7 +53,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ event: ApplicationEvent?,
-                           _ response: InAppConfigResponse,
+                           _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         let responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)

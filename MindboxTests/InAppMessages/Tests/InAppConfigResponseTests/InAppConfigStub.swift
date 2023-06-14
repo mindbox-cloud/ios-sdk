@@ -10,7 +10,7 @@ import Foundation
 @testable import Mindbox
 
 final class InAppConfigStub {
-    func getCategoryID_Substring() -> InAppConfigResponse {
+    func getCategoryID_Substring() -> ConfigResponse {
         let categoryIdTargeting = CategoryIDTargeting(kind: .substring, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -19,7 +19,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getCategoryID_notSubstring() -> InAppConfigResponse {
+    func getCategoryID_notSubstring() -> ConfigResponse {
         let categoryIdTargeting = CategoryIDTargeting(kind: .notSubstring, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -28,7 +28,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getCategoryID_startWith() -> InAppConfigResponse {
+    func getCategoryID_startWith() -> ConfigResponse {
         let categoryIdTargeting = CategoryIDTargeting(kind: .startsWith, value: "oot")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -37,7 +37,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getCategoryID_endWith() -> InAppConfigResponse {
+    func getCategoryID_endWith() -> ConfigResponse {
         let categoryIdTargeting = CategoryIDTargeting(kind: .endsWith, value: "ots")
         let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -46,7 +46,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getCategoryIDIn_Any() -> InAppConfigResponse {
+    func getCategoryIDIn_Any() -> ConfigResponse {
         let categoryIdInTargeting = CategoryIDInTargeting(kind: .any,
                                                           values: [.init(id: "testik2", name: "System1C"),
                                                                    .init(id: "81", name: "TestSite")])
@@ -57,7 +57,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
     
-    func getCategoryIDIn_None() -> InAppConfigResponse {
+    func getCategoryIDIn_None() -> ConfigResponse {
         let categoryIdInTargeting = CategoryIDInTargeting(kind: .none,
                                                           values: [.init(id: "testik2", name: "System1C"),
                                                                    .init(id: "81", name: "TestSite")])
@@ -78,7 +78,7 @@ final class InAppConfigStub {
     func getForm() -> InApp.InAppFormVariants {
         .init(variants: [.init(imageUrl: "1", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
     }
-    func getProductID_Substring() -> InAppConfigResponse {
+    func getProductID_Substring() -> ConfigResponse {
         let productIdTargeting = ProductIDTargeting(kind: .substring, value: "oot")
         let targeting = Targeting.viewProductId(productIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -87,7 +87,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
 
-    func getProductID_notSubstring() -> InAppConfigResponse {
+    func getProductID_notSubstring() -> ConfigResponse {
         let productIdTargeting = ProductIDTargeting(kind: .notSubstring, value: "oot")
         let targeting = Targeting.viewProductId(productIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -96,7 +96,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
 
-    func getProductID_startsWith() -> InAppConfigResponse {
+    func getProductID_startsWith() -> ConfigResponse {
         let productIdTargeting = ProductIDTargeting(kind: .startsWith, value: "oot")
         let targeting = Targeting.viewProductId(productIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -105,7 +105,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
 
-    func getProductID_endsWith() -> InAppConfigResponse {
+    func getProductID_endsWith() -> ConfigResponse {
         let productIdTargeting = ProductIDTargeting(kind: .endsWith, value: "ots")
         let targeting = Targeting.viewProductId(productIdTargeting)
         let settings = Settings(operations: .init(viewProduct: nil,
@@ -114,7 +114,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
 
-    func getProductSegment_Any() -> InAppConfigResponse {
+    func getProductSegment_Any() -> ConfigResponse {
         let productSegmentTargeting = ProductSegmentTargeting(kind: .positive, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
         let targeting = Targeting.viewProductSegment(productSegmentTargeting)
         let settings = Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
@@ -123,7 +123,7 @@ final class InAppConfigStub {
         return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
     }
 
-    func getProductSegment_None() -> InAppConfigResponse {
+    func getProductSegment_None() -> ConfigResponse {
         let productSegmentTargeting = ProductSegmentTargeting(kind: .negative, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
         let targeting = Targeting.viewProductSegment(productSegmentTargeting)
         let settings = Settings(operations: .init(viewProduct: .init(systemName: "Hello"),

@@ -221,7 +221,7 @@
 		9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */; };
-		9BC24E7528F6953D00C2619C /* InAppConfigResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7328F6953D00C2619C /* InAppConfigResponse.swift */; };
+		9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7328F6953D00C2619C /* ConfigResponse.swift */; };
 		9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */; };
 		9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BC24E7928F6C08700C2619C /* InAppConfiguration.json */; };
 		9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BE941F42916822900258077 /* InAppConfigurationInvalid.json */; };
@@ -591,7 +591,7 @@
 		9BC24E6D28F694CA00C2619C /* SDKVersionConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SDKVersionConfig.xcconfig; sourceTree = "<group>"; };
 		9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionProvider.swift; sourceTree = "<group>"; };
 		9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfigurationAPI.swift; sourceTree = "<group>"; };
-		9BC24E7328F6953D00C2619C /* InAppConfigResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfigResponse.swift; sourceTree = "<group>"; };
+		9BC24E7328F6953D00C2619C /* ConfigResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfigResponse.swift; sourceTree = "<group>"; };
 		9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigResponseTests.swift; sourceTree = "<group>"; };
 		9BC24E7928F6C08700C2619C /* InAppConfiguration.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppConfiguration.json; sourceTree = "<group>"; };
 		9BE941F42916822900258077 /* InAppConfigurationInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationInvalid.json; sourceTree = "<group>"; };
@@ -1516,7 +1516,6 @@
 				A1D017E62976CBE100CD9F99 /* TargetingModel.swift */,
 				A1D017EA2976CC2E00CD9F99 /* Targetings */,
 				9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */,
-				9BC24E7328F6953D00C2619C /* InAppConfigResponse.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -1795,6 +1794,7 @@
 		F3A8B9A12A3A6DBF00E9C055 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				9BC24E7328F6953D00C2619C /* ConfigResponse.swift */,
 				F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */,
 				F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */,
 				F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */,
@@ -2193,7 +2193,7 @@
 				A1D017EC2976CC2E00CD9F99 /* TrueTargeting.swift in Sources */,
 				33072F302664C2E4001F1AB2 /* SubscriptionResponse.swift in Sources */,
 				A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */,
-				9BC24E7528F6953D00C2619C /* InAppConfigResponse.swift in Sources */,
+				9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */,
 				33072F482664CCBA001F1AB2 /* PoolResponse.swift in Sources */,
 				337C79562656533F0092B580 /* ViewProductRequest.swift in Sources */,
 				6FDD145F266F7CD900A50C35 /* DiscountResponse.swift in Sources */,

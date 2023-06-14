@@ -1,5 +1,5 @@
 //
-//  InAppConfig.swift
+//  ConfigResponse.swift
 //  Mindbox
 //
 //  Created by Максим Казаков on 08.09.2022.
@@ -8,7 +8,7 @@
 import Foundation
 import MindboxLogger
 
-struct InAppConfigResponse: Decodable {
+struct ConfigResponse: Decodable {
     let inapps: [InApp]?
     let monitoring: Monitoring?
     let settings: Settings?
@@ -20,11 +20,11 @@ struct InAppConfigResponse: Decodable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        inapps = InAppConfigResponse.decodeIfPresent(container, forKey: .inapps, errorDesc: "Cannot decode InApps")
-        monitoring = InAppConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
-        settings = InAppConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
+        inapps = ConfigResponse.decodeIfPresent(container, forKey: .inapps, errorDesc: "Cannot decode InApps")
+        monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
+        settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
         
-        if let decodedAbtests: [ABTest] = InAppConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
+        if let decodedAbtests: [ABTest] = ConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
            decodedAbtests.allSatisfy({
                ABTestValidator(sdkVersionValidator: SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)).isValid(item: $0)
            }) {

@@ -148,11 +148,11 @@ class InAppConfigResponseTests: XCTestCase {
 }
 
 private extension InAppConfigResponseTests {
-    private func getConfig(name: String) throws -> InAppConfigResponse {
+    private func getConfig(name: String) throws -> ConfigResponse {
         let bundle = Bundle(for: InAppConfigResponseTests.self)
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
-        return try JSONDecoder().decode(InAppConfigResponse.self, from: data)
+        return try JSONDecoder().decode(ConfigResponse.self, from: data)
     }
 }
 

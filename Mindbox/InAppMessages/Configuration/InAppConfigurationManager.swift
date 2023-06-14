@@ -28,7 +28,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var inapp: InAppFormData?
-    private var rawConfigurationResponse: InAppConfigResponse!
+    private var rawConfigurationResponse: ConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
@@ -88,7 +88,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         switch result {
         case let .data(data):
             do {
-                let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
+                let config = try jsonDecoder.decode(ConfigResponse.self, from: data)
                 saveConfigToCache(data)
                 setConfigPrepared(config)
                 setupSettingsFromConfig(config.settings)
@@ -101,7 +101,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             }
 
         case .empty:
-            let emptyConfig = InAppConfigResponse()
+            let emptyConfig = ConfigResponse()
             inAppConfigRepository.clean()
             setConfigPrepared(emptyConfig)
 
@@ -118,12 +118,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         setConfigPrepared(cachedConfig)
     }
 
-    private func fetchConfigFromCache() -> InAppConfigResponse? {
+    private func fetchConfigFromCache() -> ConfigResponse? {
         guard let data = inAppConfigRepository.fetchConfigFromCache() else {
             Logger.common(message: "Cached Config not exists", level: .debug, category: .inAppMessages)
             return nil
         }
-        guard let config = try? jsonDecoder.decode(InAppConfigResponse.self, from: data) else {
+        guard let config = try? jsonDecoder.decode(ConfigResponse.self, from: data) else {
             Logger.common(message: "Failed to parse config file from cache", level: .debug, category: .inAppMessages)
             return nil
         }
@@ -135,7 +135,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         inAppConfigRepository.saveConfigToCache(data)
     }
     
-    private func setConfigPrepared(_ configResponse: InAppConfigResponse, event: ApplicationEvent? = nil) {
+    private func setConfigPrepared(_ configResponse: ConfigResponse, event: ApplicationEvent? = nil) {
         rawConfigurationResponse = configResponse
         inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
             self.inapp = inapp
