@@ -8,6 +8,7 @@
 
 import XCTest
 @testable import Mindbox
+import MindboxLogger
 
 final class ABTestDeviceMixerTests: XCTestCase {
     
@@ -23,9 +24,9 @@ final class ABTestDeviceMixerTests: XCTestCase {
         super.tearDown()
     }
     
-    func testModulusGuidHash() {
+    func testModulusGuidHash() throws {
         let salt = "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F1"
-        let array = getArray(resourceName: "MixerUUIDS")
+        let array = try getArray(resourceName: "MixerUUIDS")
             
         for item in array {
             let components = item.components(separatedBy: " | ")
@@ -33,18 +34,15 @@ final class ABTestDeviceMixerTests: XCTestCase {
                   let uuid = UUID(uuidString: components[0].trimmingCharacters(in: .whitespacesAndNewlines)),
                   let result = Int(components[1].trimmingCharacters(in: .whitespacesAndNewlines))
             else {
-                continue
+                throw MindboxError.internalError(.init(errorKey: .general, reason: "MixerUUIDS damaged. Check data."))
             }
-                
-            if let modulusResult = sut.modulusGuidHash(identifier: uuid, salt: salt) {
-                XCTAssertEqual(result, modulusResult)
-            } else {
-                XCTFail("Modulus result is nil")
-            }
+
+            let modulusResult = try sut.modulusGuidHash(identifier: uuid, salt: salt)
+            XCTAssertEqual(result, modulusResult)
         }
     }
 
-    private func getArray(resourceName: String) -> [String] {
+    private func getArray(resourceName: String) throws -> [String] {
         do {
             let bundle = Bundle(for: ABTestDeviceMixerTests.self)
             let fileURL = bundle.url(forResource: resourceName, withExtension: "json")!
@@ -52,9 +50,11 @@ final class ABTestDeviceMixerTests: XCTestCase {
             if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [String] {
                 return jsonArray
             }
-            return []
+            
+            throw MindboxError.internalError(.init(errorKey: .parsing, reason: "Failed to convert data to JSON array."))
         } catch {
-            return []
+            let errorReason: String = "Error loading resource \(resourceName): \(error.localizedDescription)."
+            throw MindboxError.internalError(.init(errorKey: .invalidConfiguration, reason: errorReason))
         }
     }
 }

@@ -7,21 +7,26 @@
 //
 
 import CommonCrypto
+import MindboxLogger
 
 class ABTestDeviceMixer {
     private let sha256 = SHA256()
 
-    func modulusGuidHash(identifier: UUID, salt: String) -> Int? {
-        return stringModulusHash(identifier: identifier.uuidString.uppercased(),
+    func modulusGuidHash(identifier: UUID, salt: String) throws -> Int {
+        return try stringModulusHash(identifier: identifier.uuidString.uppercased(),
                                  saltUpper: salt.uppercased())
     }
     
-    private func stringModulusHash(identifier: String, saltUpper: String) -> Int? {
+    private func stringModulusHash(identifier: String, saltUpper: String) throws -> Int {
         let saltedId = identifier + saltUpper
-        guard let saltedData = saltedId.data(using: .utf8) else { return nil }
+        guard let saltedData = saltedId.data(using: .utf8) else {
+            throw MindboxError.internalError(.init(errorKey: .general, reason: "SaltedData failed."))
+        }
         
         let hash = sha256.hash(data: saltedData)
-        guard hash.count >= 32 else { return nil }
+        guard hash.count >= 32 else {
+            throw MindboxError.internalError(.init(errorKey: .general, reason: "Hash count failed."))
+        }
 
         let bigEndianLastBytesAsInt =
             (Int(hash[28]) << 24)
