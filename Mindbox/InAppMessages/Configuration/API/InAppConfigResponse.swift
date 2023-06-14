@@ -64,7 +64,7 @@ extension InAppConfigResponse {
     }
     
     struct SdkVersion: Decodable, Equatable {
-        let min: Int
+        let min: Int?
         let max: Int?
     }
     

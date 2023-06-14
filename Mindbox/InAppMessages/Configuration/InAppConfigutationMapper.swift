@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let imageDownloader: ImageDownloader
+    private let sdkVersionValidator: SDKVersionValidator
 
     private let dispatchGroup = DispatchGroup()
 
@@ -34,7 +35,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
-         imageDownloader: ImageDownloader) {
+         imageDownloader: ImageDownloader,
+         sdkVersionValidator: SDKVersionValidator) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
@@ -42,6 +44,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.imageDownloader = imageDownloader
+        self.sdkVersionValidator = sdkVersionValidator
     }
     
     func setInAppsVersion(_ version: Int) {
@@ -90,9 +93,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
         
         let filteredInapps = inapps.filter {
-            inAppsVersion >= $0.sdkVersion.min
-                && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
-                && !shownInAppsIds.contains($0.id)
+            sdkVersionValidator.isValid(item: $0.sdkVersion)
+            && !shownInAppsIds.contains($0.id)
         }
         
         return filteredInapps

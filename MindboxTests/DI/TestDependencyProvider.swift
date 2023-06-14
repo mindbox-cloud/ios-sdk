@@ -25,6 +25,7 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
     var imageDownloader: ImageDownloader
+    let sdkVersionValidator: SDKVersionValidator
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -52,6 +53,7 @@ final class TestDependencyProvider: DependencyContainer {
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
                                                           sessionStorage: sessionTemporaryStorage)
         imageDownloader = MockImageDownloader()
+        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 1)
     }
 
 }
