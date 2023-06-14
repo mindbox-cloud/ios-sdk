@@ -91,7 +91,7 @@ class InAppConfigResponseTests: XCTestCase {
                                                  from: "source2",
                                                  to: "destination2")])
         
-        let settings = InAppConfigResponse.Settings(operations: .init(viewProduct: .init(systemName: "product"),
+        let settings = Settings(operations: .init(viewProduct: .init(systemName: "product"),
                                                                       viewCategory: .init(systemName: "category"),
                                                                       setCart: .init(systemName: "cart")))
         

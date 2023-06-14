@@ -53,22 +53,7 @@ struct InAppConfigResponse: Decodable {
     }
 }
 
-extension InAppConfigResponse {
-    struct Settings: Decodable, Equatable {
-        let operations: SettingsOperations?
-        
-        struct SettingsOperations: Decodable, Equatable {
-            
-            let viewProduct: Operation?
-            let viewCategory: Operation?
-            let setCart: Operation?
-            
-            struct Operation: Decodable, Equatable {
-                let systemName: String
-            }
-        }
-    }
-    
+extension InAppConfigResponse {    
     struct ABTest: Decodable, Equatable {
         let id: String
         let sdkVersion: SdkVersion?

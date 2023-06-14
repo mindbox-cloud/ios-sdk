@@ -326,6 +326,7 @@
 		F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */; };
 		F3A8B9A52A3A6F2800E9C055 /* MonitoringModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */; };
 		F3A8B9A72A3A705B00E9C055 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */; };
+		F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -695,6 +696,7 @@
 		F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SdkVersionModel.swift; sourceTree = "<group>"; };
 		F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringModel.swift; sourceTree = "<group>"; };
 		F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
+		F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
@@ -1794,6 +1796,7 @@
 				F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */,
 				F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */,
 				F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */,
+				F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -2170,6 +2173,7 @@
 				A179587A2978AEC600609E91 /* AndTargetingChecker.swift in Sources */,
 				3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */,
 				6FDD1451266F7C8000A50C35 /* UsageServiceStatusResponse.swift in Sources */,
+				F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */,
 				9B24FAB528C751E400F10B5D /* InAppImagesStorage.swift in Sources */,
 				F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */,
 				3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */,

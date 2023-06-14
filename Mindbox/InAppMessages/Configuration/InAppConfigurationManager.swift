@@ -144,7 +144,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         })
     }
     
-    private func setupSettingsFromConfig(_ settings: InAppConfigResponse.Settings?) {
+    private func setupSettingsFromConfig(_ settings: Settings?) {
         guard let settings = settings else {
             return
         }
