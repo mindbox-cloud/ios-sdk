@@ -25,6 +25,7 @@ final class DependencyProvider: DependencyContainer {
     var sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
     let imageDownloader: ImageDownloader
+    let sdkVersionValidator: SDKVersionValidator
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -48,6 +49,7 @@ final class DependencyProvider: DependencyContainer {
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
         imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
+        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -58,7 +60,8 @@ final class DependencyProvider: DependencyContainer {
                                                                    networkFetcher: instanceFactory.makeNetworkFetcher(),
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
-                                                                   imageDownloader: imageDownloader),
+                                                                   imageDownloader: imageDownloader,
+                                                                   sdkVersionValidator: sdkVersionValidator),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

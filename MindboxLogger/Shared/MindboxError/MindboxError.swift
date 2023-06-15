@@ -271,4 +271,5 @@ public enum ErrorKey: String {
     case unknownStatusKey = "Error_unknown_status_key"
     case serverError = "Server_error"
     case invalidAccess = "Invalid_Access"
+    case validation = "Error_validation"
 }

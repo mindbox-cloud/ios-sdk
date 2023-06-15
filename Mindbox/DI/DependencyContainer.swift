@@ -23,6 +23,7 @@ protocol DependencyContainer {
     var sessionTemporaryStorage: SessionTemporaryStorage { get }
     var inappMessageEventSender: InappMessageEventSender { get }
     var imageDownloader: ImageDownloader { get }
+    var sdkVersionValidator: SDKVersionValidator { get }
 }
 
 protocol InstanceFactory {

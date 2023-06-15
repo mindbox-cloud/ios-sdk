@@ -10,7 +10,7 @@ import MindboxLogger
 import UIKit
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ event: ApplicationEvent?, _ response: InAppConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
 }
 
@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let imageDownloader: ImageDownloader
+    private let sdkVersionValidator: SDKVersionValidator
 
     private let dispatchGroup = DispatchGroup()
 
@@ -34,7 +35,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
-         imageDownloader: ImageDownloader) {
+         imageDownloader: ImageDownloader,
+         sdkVersionValidator: SDKVersionValidator) {
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
@@ -42,6 +44,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.imageDownloader = imageDownloader
+        self.sdkVersionValidator = sdkVersionValidator
     }
     
     func setInAppsVersion(_ version: Int) {
@@ -50,7 +53,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     /// Maps config response to business-logic handy InAppConfig model
     func mapConfigResponse(_ event: ApplicationEvent?,
-                           _ response: InAppConfigResponse,
+                           _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         let responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
@@ -84,21 +87,20 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
-    func filterByInappVersion(_ inapps: [InAppConfigResponse.InApp]?, shownInAppsIds: Set<String>) -> [InAppConfigResponse.InApp] {
+    func filterByInappVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
         guard let inapps = inapps else {
             return []
         }
         
         let filteredInapps = inapps.filter {
-            inAppsVersion >= $0.sdkVersion.min
-                && inAppsVersion <= ($0.sdkVersion.max ?? Int.max)
-                && !shownInAppsIds.contains($0.id)
+            sdkVersionValidator.isValid(item: $0.sdkVersion)
+            && !shownInAppsIds.contains($0.id)
         }
         
         return filteredInapps
     }
 
-    private func prepareTargetingChecker(for inapps: [InAppConfigResponse.InApp]) {
+    private func prepareTargetingChecker(for inapps: [InApp]) {
         inapps.forEach({
             targetingChecker.prepare(targeting: $0.targeting)
         })
@@ -237,7 +239,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
 
-    func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
+    func filterByInappsEvents(inapps: [InApp]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
