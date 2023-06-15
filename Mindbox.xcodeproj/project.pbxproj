@@ -328,6 +328,9 @@
 		F3A8B9A72A3A705B00E9C055 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */; };
 		F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */; };
 		F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */; };
+		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
+		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
+		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -699,6 +702,9 @@
 		F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
 		F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestModel.swift; sourceTree = "<group>"; };
+		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
+		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
+		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
@@ -816,6 +822,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindboxTests */ = {
 			isa = PBXGroup;
 			children = (
+				F3D818B12A3885E00002957C /* ABTests */,
 				A154E302299C187D00F8F074 /* MindboxLogger */,
 				9B9C9533292111A700BB29DA /* UUIDDebugService */,
 				9B4F9DFF28D091E6002C9CF0 /* InAppMessages */,
@@ -866,6 +873,7 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				F3D818AE2A3885A40002957C /* ABTestDeviceMixer */,
 				9B9C952E2921116F00BB29DA /* UUIDDebugService */,
 				33BEE80C2681EB7700993720 /* NotificationDecoder.swift */,
 				84BAB89B260231E800D694D0 /* IDFetcher */,
@@ -1804,6 +1812,31 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
+		F3A8B9432A3886D300E9C055 /* Mixer */ = {
+			isa = PBXGroup;
+			children = (
+				F3A8B9442A38870100E9C055 /* MixerUUIDS.json */,
+				F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */,
+			);
+			path = Mixer;
+			sourceTree = "<group>";
+		};
+		F3D818AE2A3885A40002957C /* ABTestDeviceMixer */ = {
+			isa = PBXGroup;
+			children = (
+				F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */,
+			);
+			path = ABTestDeviceMixer;
+			sourceTree = "<group>";
+		};
+		F3D818B12A3885E00002957C /* ABTests */ = {
+			isa = PBXGroup;
+			children = (
+				F3A8B9432A3886D300E9C055 /* Mixer */,
+			);
+			path = ABTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2021,6 +2054,7 @@
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
 				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
+				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
 				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
@@ -2240,6 +2274,7 @@
 				3337E6A92664C16A006949EB /* CustomerResponse.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
+				F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
@@ -2347,6 +2382,7 @@
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 				F3A8B99C2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift in Sources */,
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
+				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
 				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
