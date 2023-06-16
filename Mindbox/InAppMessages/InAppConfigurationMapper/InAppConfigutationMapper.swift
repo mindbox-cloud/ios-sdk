@@ -17,6 +17,7 @@ protocol InAppConfigurationMapperProtocol {
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let geoService: GeoServiceProtocol
+    private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private var inAppsVersion: Int
     var targetingChecker: InAppTargetingCheckerProtocol
@@ -29,6 +30,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let dispatchGroup = DispatchGroup()
 
     init(geoService: GeoServiceProtocol,
+         segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -37,6 +39,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          imageDownloader: ImageDownloader,
          sdkVersionValidator: SDKVersionValidator) {
         self.geoService = geoService
+        self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
@@ -119,7 +122,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private func fetchSegmentationIfNeeded() {
         if !sessionTemporaryStorage.checkSegmentsRequestCompleted {
             dispatchGroup.enter()
-            checkSegmentationRequest { response in
+            segmentationService.checkSegmentationRequest { response in
                 self.targetingChecker.checkedSegmentations = response
                 self.dispatchGroup.leave()
             }
@@ -141,84 +144,13 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         if !sessionTemporaryStorage.checkProductSegmentsRequestCompleted,
             let products = products {
             dispatchGroup.enter()
-            checkProductSegmentationRequest(products: products) { response in
+            segmentationService.checkProductSegmentationRequest(products: products) { response in
                 self.targetingChecker.checkedProductSegmentations = response
                 self.dispatchGroup.leave()
             }
         }
     }
-
-    private func checkSegmentationRequest(_ completion: @escaping ([SegmentationCheckResponse.CustomerSegmentation]?) -> Void) -> Void {
-
-        if sessionTemporaryStorage.checkSegmentsRequestCompleted {
-            completion(targetingChecker.checkedSegmentations)
-            return
-        }
-
-        let arrayOfSegments = Array(Set(targetingChecker.context.segments))
-        let segments: [SegmentationCheckRequest.Segmentation] = arrayOfSegments.map {
-            return .init(ids: .init(externalId: $0))
-        }
-
-        if segments.isEmpty {
-            completion(nil)
-            return
-        }
-
-        let model = SegmentationCheckRequest(segmentations: segments)
-
-        customerSegmentsAPI.fetchSegments(model) { response in
-            self.sessionTemporaryStorage.checkSegmentsRequestCompleted = true
-            guard let response = response,
-                  response.status == .success else {
-                Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
-
-                completion(nil)
-                return
-            }
-
-            Logger.common(message: "Customer Segment response: \n\(response)")
-            completion(response.customerSegmentations)
-        }
-    }
-
-    private func checkProductSegmentationRequest(products: ProductCategory,
-                                                 _ completion: @escaping ([InAppProductSegmentResponse.CustomerSegmentation]?) -> Void) -> Void {
-        if sessionTemporaryStorage.isPresentingInAppMessage {
-            return
-        }
-
-        let arrayOfSegments = Array(Set(targetingChecker.context.productSegments))
-        let segments: [InAppProductSegmentRequest.Segmentation] = arrayOfSegments.map {
-            return .init(ids: .init(externalId: $0))
-        }
-
-        if segments.isEmpty {
-            completion(nil)
-            return
-        }
-
-        let model = InAppProductSegmentRequest(segmentations: segments, products: [products])
-
-        customerSegmentsAPI.fetchProductSegments(model) { response in
-            guard let response = response,
-                  response.status == .success else {
-                Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(String(describing: response?.status))", level: .debug, category: .inAppMessages)
-
-                completion(nil)
-                return
-            }
-
-            Logger.common(message: "Customer Segment response: \n\(response)")
-            var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation] = []
-            response.products?.forEach {
-                checkedProductSegmentations.append(contentsOf: $0.segmentations)
-            }
-
-            completion(checkedProductSegmentations)
-        }
-    }
-
+    
     func filterByInappsEvents(inapps: [InApp]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start

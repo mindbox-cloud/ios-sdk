@@ -27,6 +27,7 @@ final class DependencyProvider: DependencyContainer {
     let imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
     let geoService: GeoServiceProtocol
+    let segmentationSevice: SegmentationServiceProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -54,11 +55,16 @@ final class DependencyProvider: DependencyContainer {
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
+        segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
+                                                 sessionTemporaryStorage: sessionTemporaryStorage,
+                                                 targetingChecker: inAppTargetingChecker)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService, customerSegmentsAPI: .live,
+                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService,
+                                                                   segmentationService: segmentationSevice,
+                                                                   customerSegmentsAPI: .live,
                                                                    inAppsVersion: Constants.Versions.sdkVersionNumeric,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
