@@ -26,6 +26,7 @@ protocol DependencyContainer {
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }
+    var abTestDeviceMixer: ABTestDeviceMixer { get }
 }
 
 protocol InstanceFactory {

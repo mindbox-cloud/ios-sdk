@@ -45,7 +45,8 @@ class InAppConfigResponseTests: XCTestCase {
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
                                           sdkVersionValidator: container.sdkVersionValidator,
-                                          imageDownloadService: container.imageDownloadService)
+                                          imageDownloadService: container.imageDownloadService,
+                                          abTestDeviceMixer: container.abTestDeviceMixer)
         shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
     }
     
@@ -146,6 +147,8 @@ class InAppConfigResponseTests: XCTestCase {
         // No id in Abtest JSON
         XCTAssertNil(response.abtests)
     }
+    
+    
 }
 
 private extension InAppConfigResponseTests {
