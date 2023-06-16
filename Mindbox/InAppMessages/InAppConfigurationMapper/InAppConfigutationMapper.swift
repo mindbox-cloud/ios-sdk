@@ -34,13 +34,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          targetingChecker: InAppTargetingCheckerProtocol,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
-<<<<<<< 6dc6a56a3bd7ca302f31018481fa5c6c69877b59:Mindbox/InAppMessages/Configuration/InAppConfigutationMapper.swift
          imageDownloader: ImageDownloader,
          sdkVersionValidator: SDKVersionValidator) {
-=======
-         imageDownloader: ImageDownloader) {
         self.geoService = geoService
->>>>>>> MBX-2530 GeoServiceRefactor:Mindbox/InAppMessages/InAppConfigurationMapper/InAppConfigutationMapper.swift
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
@@ -222,32 +218,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             completion(checkedProductSegmentations)
         }
     }
-<<<<<<< 6dc6a56a3bd7ca302f31018481fa5c6c69877b59:Mindbox/InAppMessages/Configuration/InAppConfigutationMapper.swift
-
-    private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
-        if sessionTemporaryStorage.geoRequestCompleted {
-            completion(targetingChecker.geoModels)
-            return
-        }
-
-        let route = FetchInAppGeoRoute()
-        fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
-            self.sessionTemporaryStorage.geoRequestCompleted = true
-            switch response {
-            case .success(let result):
-                completion(result)
-            case .failure(let error):
-                Logger.error(error)
-                completion(nil)
-            }
-        }
-    }
 
     func filterByInappsEvents(inapps: [InApp]) {
-=======
-    
-    func filterByInappsEvents(inapps: [InAppConfigResponse.InApp]) {
->>>>>>> MBX-2530 GeoServiceRefactor:Mindbox/InAppMessages/InAppConfigurationMapper/InAppConfigutationMapper.swift
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
