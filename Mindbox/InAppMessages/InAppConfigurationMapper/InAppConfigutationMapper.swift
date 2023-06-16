@@ -24,8 +24,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
-    private let imageDownloader: ImageDownloader
     private let sdkVersionValidator: SDKVersionValidator
+    private let imageDownloadService: ImageDownloadServiceProtocol
 
     private let dispatchGroup = DispatchGroup()
 
@@ -36,8 +36,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          targetingChecker: InAppTargetingCheckerProtocol,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
-         imageDownloader: ImageDownloader,
-         sdkVersionValidator: SDKVersionValidator) {
+         sdkVersionValidator: SDKVersionValidator,
+         imageDownloadService: ImageDownloadServiceProtocol) {
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -45,8 +45,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.targetingChecker = targetingChecker
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
-        self.imageDownloader = imageDownloader
         self.sdkVersionValidator = sdkVersionValidator
+        self.imageDownloadService = imageDownloadService
     }
     
     func setInAppsVersion(_ version: Int) {
@@ -203,36 +203,15 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 
                 group.enter()
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-                
-                self.imageDownloader.downloadImage(withUrl: inapp.imageUrl) { localURL, response, error in
-                    defer {
-                        group.leave()
-                    }
+                self.imageDownloadService.downloadImage(withUrl: inapp.imageUrl) { result in
+                    defer { group.leave() }
                     
-                    if let error = error as? NSError {
-                        Logger.common(message: "Failed to download image for url: \(inapp.imageUrl). \nError: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
-                        if error.code == NSURLErrorTimedOut {
-                            return
-                        }
-                    } else if let response = response, response.statusCode != 200 {
-                        Logger.common(message: "Image download failed with status code \(response.statusCode). [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-
-                        return
-                    } else if let localURL = localURL {
-                        do {
-                            let imageData = try Data(contentsOf: localURL)
-                            guard let image = UIImage(data: imageData) else {
-                                Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
-                                return
-                            }
-                            
-                            Logger.common(message: "Image is loaded successfully. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-                            formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)
-                            shouldDownloadImage = false
-                        } catch {
-                            Logger.common(message: "Failed to read image data. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
-                            return
-                        }
+                    switch result {
+                    case .success(let image):
+                        formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)
+                        shouldDownloadImage = false
+                    case .failure:
+                        break
                     }
                 }
                 

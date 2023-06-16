@@ -44,8 +44,8 @@ class InAppConfigResponseTests: XCTestCase {
                                           targetingChecker: targetingChecker,
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
-                                          imageDownloader: imageDownloader,
-                                          sdkVersionValidator: container.sdkVersionValidator)
+                                          sdkVersionValidator: container.sdkVersionValidator,
+                                          imageDownloadService: container.imageDownloadService)
         shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
     }
     

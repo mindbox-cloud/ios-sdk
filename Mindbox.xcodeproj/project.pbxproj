@@ -319,6 +319,9 @@
 		F39B67A22A3C6AF4005C0CCA /* SegmentationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */; };
 		F39B67A52A3C6BE3005C0CCA /* SegmentationCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A42A3C6BE3005C0CCA /* SegmentationCheckRequest.swift */; };
 		F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */; };
+		F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */; };
+		F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */; };
+		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
 		F3A8B95C2A389EAD00E9C055 /* GeoServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */; };
@@ -698,6 +701,9 @@
 		F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationService.swift; sourceTree = "<group>"; };
 		F39B67A42A3C6BE3005C0CCA /* SegmentationCheckRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationCheckRequest.swift; sourceTree = "<group>"; };
 		F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationServiceTests.swift; sourceTree = "<group>"; };
+		F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadService.swift; sourceTree = "<group>"; };
+		F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockImageDownloadService.swift; sourceTree = "<group>"; };
+		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
 		F3A8B9572A389D9D00E9C055 /* GeoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoService.swift; sourceTree = "<group>"; };
 		F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoServiceTests.swift; sourceTree = "<group>"; };
@@ -1819,6 +1825,15 @@
 			path = CustomerSegment;
 			sourceTree = "<group>";
 		};
+		F39B67AA2A3C7304005C0CCA /* ImageDownloadService */ = {
+			isa = PBXGroup;
+			children = (
+				F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */,
+				F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */,
+			);
+			path = ImageDownloadService;
+			sourceTree = "<group>";
+		};
 		F3A8B9432A3886D300E9C055 /* Mixer */ = {
 			isa = PBXGroup;
 			children = (
@@ -1842,6 +1857,7 @@
 			children = (
 				F3A8B9572A389D9D00E9C055 /* GeoService.swift */,
 				F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */,
+				F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1849,6 +1865,7 @@
 		F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */ = {
 			isa = PBXGroup;
 			children = (
+				F39B67AA2A3C7304005C0CCA /* ImageDownloadService */,
 				F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */,
 				F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */,
 			);
@@ -2378,6 +2395,7 @@
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
 				A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */,
 				A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */,
+				F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */,
 				F3A8B9A72A3A705B00E9C055 /* InAppModel.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
@@ -2425,6 +2443,7 @@
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,
+				F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
@@ -2436,6 +2455,7 @@
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
 				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
+				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

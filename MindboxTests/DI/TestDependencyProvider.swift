@@ -28,6 +28,7 @@ final class TestDependencyProvider: DependencyContainer {
     let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
+    var imageDownloadService: ImageDownloadServiceProtocol
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -62,6 +63,7 @@ final class TestDependencyProvider: DependencyContainer {
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  sessionTemporaryStorage: sessionTemporaryStorage,
                                                  targetingChecker: inAppTargetingChecker)
+        imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
     }
 }
 
