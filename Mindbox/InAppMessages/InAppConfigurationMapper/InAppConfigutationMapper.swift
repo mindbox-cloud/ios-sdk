@@ -16,11 +16,10 @@ protocol InAppConfigurationMapperProtocol {
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
+    private let geoService: GeoServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
     private var inAppsVersion: Int
     var targetingChecker: InAppTargetingCheckerProtocol
-    private var geoModel: InAppGeoResponse?
-    private let fetcher: NetworkFetcher
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
@@ -29,18 +28,18 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let dispatchGroup = DispatchGroup()
 
-    init(customerSegmentsAPI: CustomerSegmentsAPI,
+    init(geoService: GeoServiceProtocol,
+         customerSegmentsAPI: CustomerSegmentsAPI,
          inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
-         networkFetcher: NetworkFetcher,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
          imageDownloader: ImageDownloader,
          sdkVersionValidator: SDKVersionValidator) {
+        self.geoService = geoService
         self.customerSegmentsAPI = customerSegmentsAPI
         self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
-        self.fetcher = networkFetcher
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.imageDownloader = imageDownloader
@@ -131,7 +130,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         if targetingChecker.context.isNeedGeoRequest
             && !sessionTemporaryStorage.geoRequestCompleted {
             dispatchGroup.enter()
-            geoRequest { model in
+            geoService.geoRequest { model in
                 self.targetingChecker.geoModels = model
                 self.dispatchGroup.leave()
             }
@@ -217,25 +216,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
 
             completion(checkedProductSegmentations)
-        }
-    }
-
-    private func geoRequest(_ completion: @escaping (InAppGeoResponse?) -> Void) -> Void {
-        if sessionTemporaryStorage.geoRequestCompleted {
-            completion(targetingChecker.geoModels)
-            return
-        }
-
-        let route = FetchInAppGeoRoute()
-        fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
-            self.sessionTemporaryStorage.geoRequestCompleted = true
-            switch response {
-            case .success(let result):
-                completion(result)
-            case .failure(let error):
-                Logger.error(error)
-                completion(nil)
-            }
         }
     }
 

@@ -37,10 +37,10 @@ class InAppConfigResponseTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        mapper = InAppConfigutationMapper(customerSegmentsAPI: .live,
+        mapper = InAppConfigutationMapper(geoService: container.geoService,
+                                          customerSegmentsAPI: .live,
                                           inAppsVersion: 1,
                                           targetingChecker: targetingChecker,
-                                          networkFetcher: networkFetcher,
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
                                           imageDownloader: imageDownloader,

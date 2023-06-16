@@ -26,6 +26,7 @@ final class TestDependencyProvider: DependencyContainer {
     var inappMessageEventSender: InappMessageEventSender
     var imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
+    var geoService: GeoServiceProtocol
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -54,6 +55,9 @@ final class TestDependencyProvider: DependencyContainer {
                                                           sessionStorage: sessionTemporaryStorage)
         imageDownloader = MockImageDownloader()
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 1)
+        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
+                                sessionTemporaryStorage: sessionTemporaryStorage,
+                                targetingChecker: inAppTargetingChecker)
     }
 
 }

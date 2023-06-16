@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct InAppGeoResponse: Codable {
+struct InAppGeoResponse: Codable, Equatable {
     let city: Int
     let region: Int
     let country: Int

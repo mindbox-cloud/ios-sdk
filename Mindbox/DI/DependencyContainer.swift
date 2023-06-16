@@ -24,6 +24,7 @@ protocol DependencyContainer {
     var inappMessageEventSender: InappMessageEventSender { get }
     var imageDownloader: ImageDownloader { get }
     var sdkVersionValidator: SDKVersionValidator { get }
+    var geoService: GeoServiceProtocol { get }
 }
 
 protocol InstanceFactory {
