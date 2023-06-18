@@ -734,6 +734,94 @@ class ABTests: XCTestCase {
                             "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"]
         runInAppTestForUUID("d35df6c2-9e20-4f7e-9e20-51894e2c4810", abTests: abtests, responseInapps: response.inapps!, expectedCount: expectedIds3.count, expectedIds: expectedIds3) // 61 and 94
     }
+    
+    func test_2_different_ab_tests_two() throws {
+//        XCTAssertTrue(false)
+    }
+    
+    func test_concrete_inapps_and_all() throws {
+        let response = try getConfig(name: "ConfigWithAB_1")
+        let abtests: [ABTest]? = [
+            ABTest(
+                id: "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
+                sdkVersion: SdkVersion(min: 6, max: nil),
+                salt: "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F1",
+                variants: [
+                    ABTest.ABTestVariant(
+                        id: "155f5ffa-de86-4224-a0bf-229fe208ed0d",
+                        modulus: ABTest.ABTestVariant.Modulus(lower: 0, upper: 35),
+                        objects: [
+                            ABTest.ABTestVariant.ABTestObject(
+                                type: .inapps,
+                                kind: .concrete,
+                                inapps: [
+                                    "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+                                    "b33ca779-3c99-481f-ad46-91282b0caf04"
+                                ]
+                            )
+                        ]
+                    ),
+                    ABTest.ABTestVariant(
+                        id: "211f1c16-fa72-4456-bf87-af448eb84a32",
+                        modulus: ABTest.ABTestVariant.Modulus(lower: 35, upper: 100),
+                        objects: [
+                            ABTest.ABTestVariant.ABTestObject(
+                                type: .inapps,
+                                kind: .all,
+                                inapps: nil
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+        
+        // Test case for UUID "F3AB8877-CB55-CE3D-1AB3-230D2EA8A220" with expected inapp count of 2
+        let expectedIds1 = [
+            "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+            "b33ca779-3c99-481f-ad46-91282b0caf04"
+        ]
+        
+        runInAppTestForUUID("4078E211-7C3F-C607-D35C-DC6B591EF355", abTests: abtests, responseInapps: response.inapps!, expectedCount: expectedIds1.count, expectedIds: expectedIds1) // 25
+        
+        let expectedIds2 = [
+            "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+            "b33ca779-3c99-481f-ad46-91282b0caf04",
+            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"
+        ]
+
+        runInAppTestForUUID("4D27710A-3F3A-FF6E-7764-375B1E06E05D", abTests: abtests, responseInapps: response.inapps!, expectedCount: expectedIds2.count, expectedIds: expectedIds2) // 75
+    }
+    
+    func test_section_ab_broken_return_nil() throws {
+        let response = try getConfig(name: "ConfigWithABBrokenRange") // Отсутствует диапазон 33-66
+        XCTAssertNil(response.abtests)
+
+        let response2 = try getConfig(name: "ConfigWithABNoSalt") // Отсутствует соль
+        XCTAssertNil(response2.abtests)
+
+        let response3 = try getConfig(name: "ConfigWithABUnexpectedValue") // Неожиданное ключ-значение
+        XCTAssertNil(response3.abtests)
+       
+        let response4 = try getConfig(name: "ConfigWithABCrossRange") // Неожиданное ключ-значение
+        XCTAssertNil(response4.abtests)
+        
+        let response5 = try getConfig(name: "ConfigWithABNoUpper") // Отсутствует ключ upper в одном из вариантов
+        XCTAssertNil(response5.abtests)
+
+        let response6 = try getConfig(name: "ConfigWithABLowerBiggerThanUpper") // Lower больше, чем Upper
+        XCTAssertNil(response6.abtests)
+    }
+    
+    func test_sdkversion_lower_than_ab_tests_version() throws {
+        let response = try getConfig(name: "ConfigWithABNormal")
+        XCTAssertNil(response.abtests)
+    }
+    
+    func test_ab_test_type_not_inapps_return_nil() throws {
+        let response = try getConfig(name: "ConfigWithABTypeNotInapps")
+        XCTAssertNil(response.abtests)
+    }
 }
 
 private extension ABTests {
