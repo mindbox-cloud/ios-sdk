@@ -30,7 +30,7 @@ class InAppConfigResponseTests: XCTestCase {
         container.imageDownloader
     }
     
-    private var mapper: InAppConfigurationMapperProtocol!
+    private var mapper: InAppConfigutationMapper!
     private let configStub = InAppConfigStub()
     private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
     private var shownInAppsIds: Set<String>!
@@ -147,8 +147,6 @@ class InAppConfigResponseTests: XCTestCase {
         // No id in Abtest JSON
         XCTAssertNil(response.abtests)
     }
-    
-    
 }
 
 private extension InAppConfigResponseTests {
@@ -160,7 +158,7 @@ private extension InAppConfigResponseTests {
     }
 }
 
-//
+
 //class InAppConfigResponseTests: XCTestCase {
 //
 //    var container = try! TestDependencyProvider()
@@ -177,123 +175,143 @@ private extension InAppConfigResponseTests {
 //        container.instanceFactory.makeNetworkFetcher()
 //    }
 //
-//    var imageDownloader: ImageDownloader {
-//        container.imageDownloader
-//    }
-//
-//    private var mapper: InAppConfigutationMapper!
+//    private var mapper: InAppMapper!
 //    private let configStub = InAppConfigStub()
 //    private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
 //    private var shownInAppsIds: Set<String>!
 //
 //    override func setUp() {
 //        super.setUp()
-//        mapper = InAppConfigutationMapper(customerSegmentsAPI: .live,
-//                                          inAppsVersion: 1,
-//                                          targetingChecker: targetingChecker,
-//                                          networkFetcher: networkFetcher,
-//                                          sessionTemporaryStorage: sessionTemporaryStorage,
-//                                          persistenceStorage: persistenceStorage,
-//                                          imageDownloader: imageDownloader)
+//        mapper = InAppMapper(segmentationService: container.segmentationService,
+//                             geoService: container.geoService,
+//                             imageDownloadService: container.imageDownloaderService,
+//                             targetingChecker: targetingChecker,
+//                             persistenceStorage: persistenceStorage,
+//                             sessionTemporaryStorage: sessionTemporaryStorage,
+//                             abTestDeviceMixer: container.customerAbMixer,
+//                             inAppsVersion: 1)
 //        shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
 //    }
 //
 //    func test_2InApps_oneFitsInAppsSdkVersion_andOneDoesnt() throws {
 //        let response = try getConfigWithTwoInapps()
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.start]?.first
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_test")
+//        mapper.mapConfigResponse(nil, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
+//
+//        waitForExpectations(timeout: 1)
 //
 //        let expected = InAppTransitionData(inAppId: "00000000-0000-0000-0000-000000000001",
 //                                           imageUrl: "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
 //                                           redirectUrl: "", intentPayload: "")
-//
-//        XCTAssertEqual(expected, inapp)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_2InApps_bothFitInAppsSdkVersion() throws {
 //        let response = try getConfigWithTwoInapps()
 //        mapper.setInAppsVersion(3)
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_2InApps_bothFitInAppsSdkVersion")
+//        mapper.mapConfigResponse(nil, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.start]?.first
-//
+//        waitForExpectations(timeout: 1)
 //        let expected = InAppTransitionData(inAppId: "00000000-0000-0000-0000-000000000001",
 //                                           imageUrl: "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
 //                                           redirectUrl: "", intentPayload: "")
 //
-//        XCTAssertEqual(expected, inapp)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_2InApps_bothDontFitInAppsSdkVersion() throws {
 //        let response = try getConfigWithTwoInapps()
 //        mapper.setInAppsVersion(0)
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.start]?.first
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_2InApps_bothDontFitInAppsSdkVersion")
+//        mapper.mapConfigResponse(nil, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let expected: InAppTransitionData? = nil
-//        XCTAssertEqual(expected, inapp)
+//        waitForExpectations(timeout: 1)
+//
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_operation_happyFlow() throws {
 //        let response = try getConfigWithOperations()
 //        let event = ApplicationEvent(name: "TESTPushOK", model: nil)
 //        mapper.setInAppsVersion(4)
-//        mapper.targetingChecker.event = event
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_operation_happyFlow")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
+//        waitForExpectations(timeout: 1)
 //        let expected = InAppTransitionData(inAppId: "00000000-0000-0000-0000-000000000001",
 //                                           imageUrl: "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
 //                                           redirectUrl: "", intentPayload: "")
 //
-//        XCTAssertEqual(expected, inapp)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_operation_empty_operatonName() throws {
 //        let response = try getConfigWithOperations()
-//        let event = ApplicationEvent(name: "TESTPushOK", model: nil)
+//        let event = ApplicationEvent(name: "", model: nil)
 //        mapper.setInAppsVersion(4)
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_operation_empty_operatonName")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, inapp)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_operation_wrong_operatonName() throws {
 //        let response = try getConfigWithOperations()
 //        mapper.setInAppsVersion(4)
 //        let event = ApplicationEvent(name: "WrongOperationName", model: nil)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_operation_wrong_operatonName")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, inapp)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_categoryID_emptyModel() {
 //        mapper.setInAppsVersion(5)
 //        let event = ApplicationEvent(name: "Hello", model: nil)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, configStub.getCategoryIDIn_Any()) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion([], shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//        XCTAssertEqual(expected, inapp)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_categoryID_substring_true() {
@@ -304,17 +322,21 @@ private extension InAppConfigResponseTests {
 //                                        "System1C": "Boots".uppercased(),
 //                                        "TestSite": "81".uppercased()
 //                                     ]))))
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_substring_true")
+//        mapper.mapConfigResponse(event, configStub.getCategoryIDIn_Any()) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//        let inapp = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
+//        waitForExpectations(timeout: 1)
 //        let expected = InAppTransitionData(inAppId: "0",
 //                                           imageUrl: "1",
 //                                           redirectUrl: "2", intentPayload: "3")
 //
-//        XCTAssertEqual(expected, inapp)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_categoryID_substring_false() {
@@ -323,17 +345,16 @@ private extension InAppConfigResponseTests {
 //                                        "System1C": "Bovts".uppercased(),
 //                                        "TestSite": "81".uppercased()
 //                                     ]))))
-//        let response = configStub.getCategoryID_Substring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, configStub.getCategoryID_Substring()) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_categoryID_notSubstring_true() {
@@ -342,21 +363,23 @@ private extension InAppConfigResponseTests {
 //                                        "System1C": "Boots".uppercased(),
 //                                        "TestSite": "Button".uppercased()
 //                                     ]))))
-//        let response = configStub.getCategoryID_notSubstring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, configStub.getCategoryID_notSubstring()) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
+//        waitForExpectations(timeout: 1)
+//        let expected =  InAppTransitionData(inAppId: "0",
+//                                            imageUrl: "1",
+//                                            redirectUrl: "2",
+//                                            intentPayload: "3")
 //
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_categoryID_notSubstring_false() {
@@ -367,16 +390,15 @@ private extension InAppConfigResponseTests {
 //                                     ]))))
 //        let response = configStub.getCategoryID_notSubstring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_categoryID_startWith_true() {
@@ -387,19 +409,22 @@ private extension InAppConfigResponseTests {
 //                                     ]))))
 //        let response = configStub.getCategoryID_startWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
+//        waitForExpectations(timeout: 1)
+//        let expected =  InAppTransitionData(inAppId: "0",
+//                                            imageUrl: "1",
+//                                            redirectUrl: "2",
+//                                            intentPayload: "3")
 //
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_categoryID_startWith_false() {
@@ -410,16 +435,15 @@ private extension InAppConfigResponseTests {
 //                                     ]))))
 //        let response = configStub.getCategoryID_startWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
 //    }
 //
 //    func test_categoryID_endWith_true() {
@@ -430,19 +454,22 @@ private extension InAppConfigResponseTests {
 //                                     ]))))
 //        let response = configStub.getCategoryID_endWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
+//        waitForExpectations(timeout: 1)
+//        let expected =  InAppTransitionData(inAppId: "0",
+//                                            imageUrl: "1",
+//                                            redirectUrl: "2",
+//                                            intentPayload: "3")
 //
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //
 //    func test_categoryID_endWith_false() {
@@ -453,102 +480,42 @@ private extension InAppConfigResponseTests {
 //                                     ]))))
 //        let response = configStub.getCategoryID_endWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_categoryIDIn_any_true() {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "testik2"]))))
 //        let response = configStub.getCategoryIDIn_Any()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_categoryIDIn_any_false() {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "potato"]))))
 //        let response = configStub.getCategoryIDIn_Any()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_categoryIDIn_none_true() {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "potato"]))))
 //        let response = configStub.getCategoryIDIn_None()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_categoryIDIn_none_false() {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProductCategory: .init(productCategory: .init(ids: ["System1C": "testik2"]))))
 //        let response = configStub.getCategoryIDIn_None()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productID_emptyModel() {
 //        let event = ApplicationEvent(name: "Hello", model: nil)
 //        let response = configStub.getProductID_Substring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productID_substring_true() {
@@ -558,19 +525,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_Substring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_productID_substring_false() {
@@ -580,16 +535,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_Substring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productID_notSubstring_true() {
@@ -599,19 +545,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_notSubstring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_productID_notSubstring_false() {
@@ -621,16 +555,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_notSubstring()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productID_startWith_true() {
@@ -640,19 +565,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_startsWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_productID_startWith_false() {
@@ -662,16 +575,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_startsWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productID_endWith_true() {
@@ -681,19 +585,7 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_endsWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+//        testResponse(event: event, response: response)
 //    }
 //
 //    func test_productID_endWith_false() {
@@ -703,91 +595,74 @@ private extension InAppConfigResponseTests {
 //                                                                                                    ]))))
 //        let response = configStub.getProductID_endsWith()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productSegment_positive_true() throws {
-//        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
-//        let response = configStub.getProductSegment_Any()
-//        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"),
-//                                                                     segment: .init(ids: .init(externalId: "3")))]
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+////        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+////        let response = configStub.getProductSegment_Any()
+////        mapper.setInAppsVersion(5)
+////        mapper.targetingChecker.event = event
+////        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"),
+////                                                                     segment: .init(ids: .init(externalId: "3")))]
+////        testResponse(event: event, response: response)
+//        // Change SegmentationService(customerSegmentsAPI: .live
 //    }
 //
 //    func test_productSegment_positive_false() throws {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
 //        let response = configStub.getProductSegment_Any()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//        mapper.targetingChecker.checkedProductSegmentations = []
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = nil
-//
-//        XCTAssertEqual(expected, config)
+//        testNil(event: event, response: response)
 //    }
 //
 //    func test_productSegment_negative_true() throws {
-//        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
-//        let response = configStub.getProductSegment_None()
-//        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "4")))]
-//
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
-//
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
-//
-//        let expected: InAppTransitionData? = InAppTransitionData(inAppId: "0",
-//                                                                 imageUrl: "1",
-//                                                                 redirectUrl: "2",
-//                                                                 intentPayload: "3")
-//
-//        XCTAssertEqual(expected, config)
+////        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
+////        let response = configStub.getProductSegment_None()
+////        mapper.setInAppsVersion(5)
+////        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "4")))]
+////        testResponse(event: event, response: response)
+//        // Change SegmentationService(customerSegmentsAPI: .live
 //    }
 //
 //    func test_productSegment_negative_false() throws {
 //        let event = ApplicationEvent(name: "Hello", model: .init(viewProduct: .init(product: .init(ids: ["website": "49"]))))
 //        let response = configStub.getProductSegment_None()
 //        mapper.setInAppsVersion(5)
-//        mapper.targetingChecker.event = event
-//        mapper.targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: .init(ids: .init(externalId: "3")))]
+//        testNil(event: event, response: response)
+//    }
 //
-//        let responseInapps = mapper.filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-//        mapper.filterByInappsEvents(inapps: responseInapps)
+//    func test_AB_config1_case1() throws {
+//        let response = try getConfig(name: "ABCase1")
 //
-//        let config: InAppTransitionData? = mapper.filteredInAppsByEvent[.applicationEvent(event)]?.first
+//        let abTests: [InAppConfigResponse.ABTest] = [.init(id: "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
+//                                                           sdkVersion: .init(min: 6, max: nil),
+//                                                           salt: "c0e2682c-3d0f-4291-9308-9e48a16eb3c8",
+//                                                           variants: [.init(modulus: .init(lower: 0, upper: 50),
+//                                                                            objects: [.init(type: "inapps",
+//                                                                                            kind: .concrete,
+//                                                                                            inapps: [])]),
+//                                                                      .init(modulus: .init(lower: 50, upper: 100),
+//                                                                            objects: [.init(type: "inapps",
+//                                                                                            kind: .all,
+//                                                                                            inapps: nil)])])]
+//        mapper.setInAppsVersion(6)
+//        persistenceStorage.deviceUUID = "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F1"
 //
-//        let expected: InAppTransitionData? = nil
+//        sessionTemporaryStorage.mockHashNumber = 25
+//        let inapps1 = mapper.filterInappsByABTests(abTests, responseInapps: response.inapps!)
+//        let inappIDs1 = inapps1.map { $0.id }
+//        XCTAssertTrue(inappIDs1.isEmpty)
 //
-//        XCTAssertEqual(expected, config)
+//        sessionTemporaryStorage.mockHashNumber = 75
+//        let inapps = mapper.filterInappsByABTests(abTests, responseInapps: response.inapps!)
+//        let expectedIDs = ["655f5ffa-de86-4224-a0bf-229fe208ed0d", "6f93e2ef-0615-4e63-9c80-24bcb9e83b83", "b33ca779-3c99-481f-ad46-91282b0caf04"]
+//        let inappIDs = inapps.map { $0.id }
+//        XCTAssertEqual(inappIDs, expectedIDs)
+//    }
+//
+//    func test_AB_config2_case2() throws {
+//
 //    }
 //}
 //
@@ -811,5 +686,43 @@ private extension InAppConfigResponseTests {
 //        let fileURL = bundle.url(forResource: "InAppConfigurationWithOperations", withExtension: "json")!
 //        let data = try Data(contentsOf: fileURL)
 //        return try JSONDecoder().decode(InAppConfigResponse.self, from: data)
+//    }
+//
+//    private func getConfig(name: String) throws -> InAppConfigResponse {
+//        let bundle = Bundle(for: InAppConfigResponseTests.self)
+//        let fileURL = bundle.url(forResource: name, withExtension: "json")!
+//        let data = try Data(contentsOf: fileURL)
+//        return try JSONDecoder().decode(InAppConfigResponse.self, from: data)
+//    }
+//
+//    private func testNil(event: ApplicationEvent?, response: InAppConfigResponse) {
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "testNil")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
+//
+//        waitForExpectations(timeout: 1)
+//        XCTAssertNil(output)
+//    }
+//
+//    private func testResponse(event: ApplicationEvent?, response: InAppConfigResponse) {
+//        var output: InAppFormData?
+//        let expectations = expectation(description: "test_categoryID_emptyModel")
+//        mapper.mapConfigResponse(event, response) { result in
+//            output = result
+//            expectations.fulfill()
+//        }
+//
+//        waitForExpectations(timeout: 1)
+//        let expected =  InAppTransitionData(inAppId: "0",
+//                                            imageUrl: "1",
+//                                            redirectUrl: "2",
+//                                            intentPayload: "3")
+//
+//        XCTAssertEqual(expected.inAppId, output?.inAppId)
+//        XCTAssertEqual(expected.intentPayload, output?.intentPayload)
+//        XCTAssertEqual(expected.redirectUrl, output?.redirectUrl)
 //    }
 //}
