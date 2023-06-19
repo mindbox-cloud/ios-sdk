@@ -22,9 +22,10 @@ protocol DependencyContainer {
     var uuidDebugService: UUIDDebugService { get }
     var sessionTemporaryStorage: SessionTemporaryStorage { get }
     var inappMessageEventSender: InappMessageEventSender { get }
-    var imageDownloader: ImageDownloader { get }
     var sdkVersionValidator: SDKVersionValidator { get }
     var geoService: GeoServiceProtocol { get }
+    var segmentationSevice: SegmentationServiceProtocol { get }
+    var imageDownloadService: ImageDownloadServiceProtocol { get }
 }
 
 protocol InstanceFactory {

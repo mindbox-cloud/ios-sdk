@@ -24,9 +24,10 @@ final class DependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     var sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
-    let imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
     let geoService: GeoServiceProtocol
+    let segmentationSevice: SegmentationServiceProtocol
+    var imageDownloadService: ImageDownloadServiceProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -49,22 +50,28 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         sessionTemporaryStorage = SessionTemporaryStorage()
-        imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
+        segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
+                                                 sessionTemporaryStorage: sessionTemporaryStorage,
+                                                 targetingChecker: inAppTargetingChecker)
+        let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
+        imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService, customerSegmentsAPI: .live,
+                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService,
+                                                                   segmentationService: segmentationSevice,
+                                                                   customerSegmentsAPI: .live,
                                                                    inAppsVersion: Constants.Versions.sdkVersionNumeric,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
-                                                                   imageDownloader: imageDownloader,
-                                                                   sdkVersionValidator: sdkVersionValidator),
+                                                                   sdkVersionValidator: sdkVersionValidator,
+                                                                   imageDownloadService: imageDownloadService),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

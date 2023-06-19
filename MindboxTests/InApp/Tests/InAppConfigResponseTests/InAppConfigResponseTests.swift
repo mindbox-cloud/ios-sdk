@@ -38,13 +38,14 @@ class InAppConfigResponseTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mapper = InAppConfigutationMapper(geoService: container.geoService,
+                                          segmentationService: container.segmentationSevice,
                                           customerSegmentsAPI: .live,
                                           inAppsVersion: 1,
                                           targetingChecker: targetingChecker,
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
-                                          imageDownloader: imageDownloader,
-                                          sdkVersionValidator: container.sdkVersionValidator)
+                                          sdkVersionValidator: container.sdkVersionValidator,
+                                          imageDownloadService: container.imageDownloadService)
         shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
     }
     

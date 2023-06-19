@@ -27,6 +27,8 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
+    var segmentationSevice: SegmentationServiceProtocol
+    var imageDownloadService: ImageDownloadServiceProtocol
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -58,8 +60,11 @@ final class TestDependencyProvider: DependencyContainer {
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
+        segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
+                                                 sessionTemporaryStorage: sessionTemporaryStorage,
+                                                 targetingChecker: inAppTargetingChecker)
+        imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
     }
-
 }
 
 class MockInstanceFactory: InstanceFactory {
