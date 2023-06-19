@@ -549,14 +549,4 @@ public class Mindbox: NSObject {
     @objc private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()
     }
-    
-    public func exclusiveMethodForPushOK(value: String) {
-        let bundleIdentifier = Bundle.main.bundleIdentifier
-        guard bundleIdentifier == "PushOk" else {
-            print("This method is exclusive for the PushOK.")
-            return
-        }
-        
-        persistenceStorage?.deviceUUID = value
-    }
 }
