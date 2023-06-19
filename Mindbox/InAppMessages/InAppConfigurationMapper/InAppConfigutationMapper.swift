@@ -61,21 +61,22 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        var responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
-
-        if responseInapps.isEmpty {
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
+        let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
+        
+        if filteredInapps.isEmpty {
             Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
 
         targetingChecker.event = event
-        prepareTargetingChecker(for: responseInapps)
+        prepareTargetingChecker(for: filteredInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
 
         fetchDependencies(model: event?.model) {
-            self.filterByInappsEvents(inapps: responseInapps)
+            self.filterByInappsEvents(inapps: filteredInapps)
             if let event = event {
                 if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
                     self.buildInAppByEvent(inapps: inappsByEvent) { formData in
