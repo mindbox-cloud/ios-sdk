@@ -40,7 +40,7 @@ struct ConfigResponse: Decodable {
         do {
             return try container.decodeIfPresent(T.self, forKey: key)
         } catch {
-            Logger.error(.internalError(.init(errorKey: .parsing, reason: errorDesc)))
+            Logger.common(message: errorDesc)
             return nil
         }
     }

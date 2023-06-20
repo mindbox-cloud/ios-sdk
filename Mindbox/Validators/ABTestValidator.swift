@@ -22,32 +22,32 @@ class ABTestValidator: Validator {
 
     func isValid(item: ABTest?) -> Bool {
         guard let item = item else {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "The element in abtests block cannot be null. All abtests will not be used.")))
+            Logger.common(message: "The element in abtests block cannot be null. All abtests will not be used.")
             return false
         }
         
         if item.id.isEmpty {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "The field 'id' in abtests block cannot be null. All abtests will not be used.")))
+            Logger.common(message: "The field 'id' in abtests block cannot be null. All abtests will not be used.")
             return false
         }
 
         if item.sdkVersion == nil || !sdkVersionValidator.isValid(item: item.sdkVersion) {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'sdkVersion' field is invalid. All abtests will not be used.")))
+            Logger.common(message: "In abtest \(item.id) 'sdkVersion' field is invalid. All abtests will not be used.")
             return false
         }
 
         if item.salt?.isEmpty ?? true {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'salt' field is invalid. All abtests will not be used.")))
+            Logger.common(message: "In abtest \(item.id) 'salt' field is invalid. All abtests will not be used.")
             return false
         }
 
         guard let variants = item.variants, variants.count >= 2 else {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'variants' field must have at least two items. All abtests will not be used.")))
+            Logger.common(message: "In abtest \(item.id) 'variants' field must have at least two items. All abtests will not be used.")
             return false
         }
 
         if variants.contains(where: { !variantsValidator.isValid(item: $0) }) {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'variants' field is invalid. All abtests will not be used.")))
+            Logger.common(message: "In abtest \(item.id) 'variants' field is invalid. All abtests will not be used.")
             return false
         }
 
@@ -58,20 +58,20 @@ class ABTestValidator: Validator {
         
         for variant in sortedVariants {
             guard let modulus = variant.modulus else {
-                Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'variants' field contains a variant with a nil modulus. All abtests will not be used.")))
+                Logger.common(message: "In abtest \(item.id) 'variants' field contains a variant with a nil modulus. All abtests will not be used.")
                 return false
             }
             
             if modulus.lower == start {
                 start = modulus.upper
             } else {
-                Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")))
+                Logger.common(message: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")
                 return false
             }
         }
         
         if !(99...100).contains(start) {
-            Logger.error(.internalError(.init(errorKey: .general, reason: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")))
+            Logger.common(message: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")
             return false
         }
         

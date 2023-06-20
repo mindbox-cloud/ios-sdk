@@ -58,7 +58,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         
         if filteredInapps.isEmpty {
-            Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
+            Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
@@ -106,7 +106,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return responseInapps
         }
         
-        var result: [InApp] = []
+        var result: [InApp] = responseInapps
         
         for abTest in abTests {
             guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
@@ -159,10 +159,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 }
             }
             
-            result = responseInapps.filter { !setInapps.contains($0.id) }
-            if result.isEmpty {
-                return []
-            }
+            let currentResult = responseInapps.filter { !setInapps.contains($0.id) }
+            result = result.filter { currentResult.contains($0) }
         }
         
         let ids = result.map { $0.id }
