@@ -19,7 +19,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private let geoService: GeoServiceProtocol
     private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
-    private var inAppsVersion: Int
     var targetingChecker: InAppTargetingCheckerProtocol
     private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
@@ -32,7 +31,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     init(geoService: GeoServiceProtocol,
          segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
-         inAppsVersion: Int,
          targetingChecker: InAppTargetingCheckerProtocol,
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
@@ -41,16 +39,11 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
-        self.inAppsVersion = inAppsVersion
         self.targetingChecker = targetingChecker
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
         self.imageDownloadService = imageDownloadService
-    }
-    
-    func setInAppsVersion(_ version: Int) {
-        inAppsVersion = version
     }
 
     /// Maps config response to business-logic handy InAppConfig model
@@ -80,6 +73,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     }
                 } else {
                     Logger.common(message: "filteredInAppsByEvent is empty")
+                    completion(nil)
                 }
             } else if let inappsByEvent = self.filteredInAppsByEvent[.start] {
                 self.buildInAppByEvent(inapps: inappsByEvent) { formData in
