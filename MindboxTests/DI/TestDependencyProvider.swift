@@ -24,7 +24,6 @@ final class TestDependencyProvider: DependencyContainer {
     let uuidDebugService: UUIDDebugService
     let sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
-    var imageDownloader: ImageDownloader
     let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
@@ -56,7 +55,6 @@ final class TestDependencyProvider: DependencyContainer {
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
                                                           sessionStorage: sessionTemporaryStorage)
-        imageDownloader = MockImageDownloader()
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 1)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 sessionTemporaryStorage: sessionTemporaryStorage,
@@ -64,7 +62,7 @@ final class TestDependencyProvider: DependencyContainer {
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  sessionTemporaryStorage: sessionTemporaryStorage,
                                                  targetingChecker: inAppTargetingChecker)
-        imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
+        imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
     }
 }

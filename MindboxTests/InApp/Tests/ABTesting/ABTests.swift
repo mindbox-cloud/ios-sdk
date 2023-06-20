@@ -26,9 +26,7 @@ class ABTests: XCTestCase {
         container.instanceFactory.makeNetworkFetcher()
     }
     
-    var imageDownloader: ImageDownloader {
-        container.imageDownloader
-    }
+    var sdkVersionValidator: SDKVersionValidator!
     
     private var mapper: InAppConfigutationMapper!
     private let configStub = InAppConfigStub()
@@ -37,14 +35,14 @@ class ABTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
+        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 6)
         mapper = InAppConfigutationMapper(geoService: container.geoService,
                                           segmentationService: container.segmentationSevice,
                                           customerSegmentsAPI: .live,
-                                          inAppsVersion: 1,
                                           targetingChecker: targetingChecker,
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
-                                          sdkVersionValidator: container.sdkVersionValidator,
+                                          sdkVersionValidator: sdkVersionValidator,
                                           imageDownloadService: container.imageDownloadService,
                                           abTestDeviceMixer: container.abTestDeviceMixer)
         shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
@@ -833,7 +831,6 @@ private extension ABTests {
     }
     
     private func runInAppTestForUUID(_ uuid: String, abTests: [ABTest]?, responseInapps: [InApp]?, expectedCount: Int, expectedIds: [String]) {
-        mapper.setInAppsVersion(6)
         persistenceStorage.deviceUUID = uuid
         let inapps = mapper.filterInappsByABTests(abTests, responseInapps: responseInapps)
         XCTAssertEqual(inapps.count, expectedCount)

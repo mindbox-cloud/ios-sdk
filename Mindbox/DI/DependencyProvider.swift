@@ -68,7 +68,6 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService,
                                                                    segmentationService: segmentationSevice,
                                                                    customerSegmentsAPI: .live,
-                                                                   inAppsVersion: Constants.Versions.sdkVersionNumeric,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,

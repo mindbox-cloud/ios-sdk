@@ -76,7 +76,7 @@ final class InAppConfigStub {
     }
     
     func getForm() -> InApp.InAppFormVariants {
-        .init(variants: [.init(imageUrl: "1", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
+        .init(variants: [.init(imageUrl: "https://example.com/image.jpg", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
     }
     func getProductID_Substring() -> ConfigResponse {
         let productIdTargeting = ProductIDTargeting(kind: .substring, value: "oot")
