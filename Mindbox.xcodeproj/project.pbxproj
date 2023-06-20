@@ -322,6 +322,18 @@
 		F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */; };
 		F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */; };
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
+		F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */; };
+		F39B67B32A3C8B1D005C0CCA /* ConfigWithAB_2.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */; };
+		F39B67B42A3C8B1D005C0CCA /* ConfigWithAB_3.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */; };
+		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
+		F39B67BA2A3FB943005C0CCA /* ConfigWithABBrokenRange.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B92A3FB943005C0CCA /* ConfigWithABBrokenRange.json */; };
+		F39B67BC2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67BB2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json */; };
+		F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67BD2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json */; };
+		F39B67C02A3FBA77005C0CCA /* ConfigWithABCrossRange.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67BF2A3FBA77005C0CCA /* ConfigWithABCrossRange.json */; };
+		F39B67C22A3FBB19005C0CCA /* ConfigWithABNoUpper.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67C12A3FBB19005C0CCA /* ConfigWithABNoUpper.json */; };
+		F39B67C42A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67C32A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json */; };
+		F39B67C62A3FBC47005C0CCA /* ConfigWithABNormal.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67C52A3FBC47005C0CCA /* ConfigWithABNormal.json */; };
+		F39B67C82A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67C72A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
 		F3A8B95C2A389EAD00E9C055 /* GeoServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */; };
@@ -704,6 +716,18 @@
 		F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadService.swift; sourceTree = "<group>"; };
 		F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockImageDownloadService.swift; sourceTree = "<group>"; };
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
+		F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_1.json; sourceTree = "<group>"; };
+		F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_2.json; sourceTree = "<group>"; };
+		F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_3.json; sourceTree = "<group>"; };
+		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
+		F39B67B92A3FB943005C0CCA /* ConfigWithABBrokenRange.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABBrokenRange.json; sourceTree = "<group>"; };
+		F39B67BB2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABNoSalt.json; sourceTree = "<group>"; };
+		F39B67BD2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABUnexpectedValue.json; sourceTree = "<group>"; };
+		F39B67BF2A3FBA77005C0CCA /* ConfigWithABCrossRange.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABCrossRange.json; sourceTree = "<group>"; };
+		F39B67C12A3FBB19005C0CCA /* ConfigWithABNoUpper.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABNoUpper.json; sourceTree = "<group>"; };
+		F39B67C32A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABLowerBiggerThanUpper.json; sourceTree = "<group>"; };
+		F39B67C52A3FBC47005C0CCA /* ConfigWithABNormal.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABNormal.json; sourceTree = "<group>"; };
+		F39B67C72A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABTypeNotInapps.json; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
 		F3A8B9572A389D9D00E9C055 /* GeoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoService.swift; sourceTree = "<group>"; };
 		F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoServiceTests.swift; sourceTree = "<group>"; };
@@ -1497,6 +1521,7 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F39B67B62A3FAA62005C0CCA /* ABTesting */,
 				F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */,
 				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
 				A179587F2978B3A800609E91 /* InAppResponseModelTests */,
@@ -1834,6 +1859,25 @@
 			path = ImageDownloadService;
 			sourceTree = "<group>";
 		};
+		F39B67B62A3FAA62005C0CCA /* ABTesting */ = {
+			isa = PBXGroup;
+			children = (
+				F39B67C72A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json */,
+				F39B67C32A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json */,
+				F39B67C52A3FBC47005C0CCA /* ConfigWithABNormal.json */,
+				F39B67C12A3FBB19005C0CCA /* ConfigWithABNoUpper.json */,
+				F39B67BF2A3FBA77005C0CCA /* ConfigWithABCrossRange.json */,
+				F39B67BD2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json */,
+				F39B67BB2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json */,
+				F39B67B92A3FB943005C0CCA /* ConfigWithABBrokenRange.json */,
+				F39B67B72A3FAA75005C0CCA /* ABTests.swift */,
+				F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */,
+				F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */,
+				F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */,
+			);
+			path = ABTesting;
+			sourceTree = "<group>";
+		};
 		F3A8B9432A3886D300E9C055 /* Mixer */ = {
 			isa = PBXGroup;
 			children = (
@@ -2110,28 +2154,39 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
+				F39B67C82A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json in Resources */,
+				F39B67BC2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
+				F39B67B42A3C8B1D005C0CCA /* ConfigWithAB_3.json in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
 				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
 				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
+				F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
+				F39B67C22A3FBB19005C0CCA /* ConfigWithABNoUpper.json in Resources */,
+				F39B67C02A3FBA77005C0CCA /* ConfigWithABCrossRange.json in Resources */,
 				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
 				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
+				F39B67B32A3C8B1D005C0CCA /* ConfigWithAB_2.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
 				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
+				F39B67C62A3FBC47005C0CCA /* ConfigWithABNormal.json in Resources */,
 				F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */,
+				F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
+				F39B67C42A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
 				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,
+				F39B67BA2A3FB943005C0CCA /* ConfigWithABBrokenRange.json in Resources */,
 				31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */,
 				9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */,
 			);
@@ -2427,6 +2482,7 @@
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
+				F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */,
 				A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,

@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let imageDownloadService: ImageDownloadServiceProtocol
+    private let abTestDeviceMixer: ABTestDeviceMixer
 
     private let dispatchGroup = DispatchGroup()
 
@@ -35,7 +36,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
-         imageDownloadService: ImageDownloadServiceProtocol) {
+         imageDownloadService: ImageDownloadServiceProtocol,
+         abTestDeviceMixer: ABTestDeviceMixer) {
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -44,6 +46,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
         self.imageDownloadService = imageDownloadService
+        self.abTestDeviceMixer = abTestDeviceMixer
     }
 
     /// Maps config response to business-logic handy InAppConfig model
@@ -51,21 +54,22 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterByInappVersion(response.inapps, shownInAppsIds: shownInAppsIds)
-
-        if responseInapps.isEmpty {
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
+        let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
+        
+        if filteredInapps.isEmpty {
             Logger.common(message: "Inapps from config is empty. No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
 
         targetingChecker.event = event
-        prepareTargetingChecker(for: responseInapps)
+        prepareTargetingChecker(for: filteredInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
 
         fetchDependencies(model: event?.model) {
-            self.filterByInappsEvents(inapps: responseInapps)
+            self.filterByInappsEvents(inapps: filteredInapps)
             if let event = event {
                 if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
                     self.buildInAppByEvent(inapps: inappsByEvent) { formData in
@@ -83,7 +87,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
-    func filterByInappVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
+    func filterInappsBySDKVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
         guard let inapps = inapps else {
             return []
         }
@@ -94,6 +98,77 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
         
         return filteredInapps
+    }
+    
+    func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
+        let responseInapps = responseInapps ?? []
+        guard let abTests = abTests, !abTests.isEmpty else {
+            return responseInapps
+        }
+        
+        var result: [InApp] = []
+        
+        for abTest in abTests {
+            guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
+                  let salt = abTest.salt,
+                  let variants = abTest.variants else {
+                continue
+            }
+            
+            let hashValue = try? abTestDeviceMixer.modulusGuidHash(identifier: uuid, salt: salt)
+            
+            guard let hashValue = hashValue else {
+                continue
+            }
+            
+            Logger.common(message: "[Hash Value]: \(hashValue) for [UUID]: \(persistenceStorage.deviceUUID ?? "nil")")
+            Logger.common(message: "[AB-test ID]: \(abTest.id)")
+            
+            var allInappsInVariantsExceptCurrentBranch: [String] = []
+            
+            for variant in variants {
+                if let objects = variant.objects {
+                    for object in objects {
+                        if object.kind == .all {
+                            responseInapps.forEach( {
+                                allInappsInVariantsExceptCurrentBranch.append($0.id)
+                            })
+                        } else {
+                            allInappsInVariantsExceptCurrentBranch += object.inapps ?? []
+                        }
+                    }
+                }
+            }
+            
+            var setInapps = Set(allInappsInVariantsExceptCurrentBranch)
+            
+            for variant in variants {
+                
+                if let modulus = variant.modulus, let objects = variant.objects {
+                    let range = modulus.lower..<modulus.upper
+                    if range.contains(hashValue) {
+                        Logger.common(message: "[AB-test branch ID]: \(variant.id)")
+                        for object in objects {
+                            if object.kind == .all {
+                                setInapps.removeAll()
+                            } else if let inapps = object.inapps {
+                                setInapps.subtract(inapps)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            result = responseInapps.filter { !setInapps.contains($0.id) }
+            if result.isEmpty {
+                return []
+            }
+        }
+        
+        let ids = result.map { $0.id }
+        Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
+        
+        return result
     }
 
     private func prepareTargetingChecker(for inapps: [InApp]) {

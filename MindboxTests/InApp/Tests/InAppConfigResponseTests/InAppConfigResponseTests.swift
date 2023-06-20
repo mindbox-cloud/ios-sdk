@@ -40,7 +40,8 @@ class InAppConfigResponseTests: XCTestCase {
                                           sessionTemporaryStorage: sessionTemporaryStorage,
                                           persistenceStorage: persistenceStorage,
                                           sdkVersionValidator: container.sdkVersionValidator,
-                                          imageDownloadService: container.imageDownloadService)
+                                          imageDownloadService: container.imageDownloadService,
+                                          abTestDeviceMixer: container.abTestDeviceMixer)
         shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
     }
     
@@ -609,7 +610,8 @@ private extension InAppConfigResponseTests {
                                         sessionTemporaryStorage: sessionTemporaryStorage,
                                         persistenceStorage: persistenceStorage,
                                         sdkVersionValidator: sdkVersionValidator,
-                                        imageDownloadService: container.imageDownloadService)
+                                        imageDownloadService: container.imageDownloadService,
+                                        abTestDeviceMixer: container.abTestDeviceMixer)
     }
     
     private func testNil(event: ApplicationEvent?, response: ConfigResponse) {

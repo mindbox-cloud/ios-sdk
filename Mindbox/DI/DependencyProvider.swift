@@ -28,6 +28,7 @@ final class DependencyProvider: DependencyContainer {
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
+    var abTestDeviceMixer: ABTestDeviceMixer
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -59,6 +60,7 @@ final class DependencyProvider: DependencyContainer {
                                                  targetingChecker: inAppTargetingChecker)
         let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
+        abTestDeviceMixer = ABTestDeviceMixer()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -70,7 +72,8 @@ final class DependencyProvider: DependencyContainer {
                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
-                                                                   imageDownloadService: imageDownloadService),
+                                                                   imageDownloadService: imageDownloadService,
+                                                                   abTestDeviceMixer: abTestDeviceMixer),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)

@@ -28,6 +28,7 @@ final class TestDependencyProvider: DependencyContainer {
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
+    var abTestDeviceMixer: ABTestDeviceMixer
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -62,6 +63,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                  sessionTemporaryStorage: sessionTemporaryStorage,
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
+        abTestDeviceMixer = ABTestDeviceMixer()
     }
 }
 
