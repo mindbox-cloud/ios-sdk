@@ -56,7 +56,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
-        
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {
             Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
@@ -66,7 +66,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         targetingChecker.event = event
         prepareTargetingChecker(for: filteredInapps)
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
 
         fetchDependencies(model: event?.model) {
             self.filterByInappsEvents(inapps: filteredInapps)
@@ -143,9 +142,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             var setInapps = Set(allInappsInVariantsExceptCurrentBranch)
             
             for variant in variants {
-                
-                if let modulus = variant.modulus, let objects = variant.objects {
-                    let range = modulus.lower..<modulus.upper
+                if let modulus = variant.modulus, let objects = variant.objects, let upper = modulus.upper {
+                    let range = modulus.lower..<upper
                     if range.contains(hashValue) {
                         Logger.common(message: "[AB-test branch ID]: \(variant.id)")
                         for object in objects {

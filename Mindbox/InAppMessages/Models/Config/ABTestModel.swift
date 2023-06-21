@@ -21,7 +21,7 @@ struct ABTest: Decodable, Equatable {
         
         struct Modulus: Decodable, Equatable {
             let lower: Int
-            let upper: Int
+            let upper: Int?
         }
         
         struct ABTestObject: Decodable, Equatable {

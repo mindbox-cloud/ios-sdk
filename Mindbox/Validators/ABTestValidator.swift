@@ -57,13 +57,13 @@ class ABTestValidator: Validator {
         }
         
         for variant in sortedVariants {
-            guard let modulus = variant.modulus else {
+            guard let modulus = variant.modulus, let upper = modulus.upper else {
                 Logger.common(message: "In abtest \(item.id) 'variants' field contains a variant with a nil modulus. All abtests will not be used.")
                 return false
             }
             
             if modulus.lower == start {
-                start = modulus.upper
+                start = upper
             } else {
                 Logger.common(message: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")
                 return false
