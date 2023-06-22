@@ -43,7 +43,7 @@ class MBNetworkFetcher: NetworkFetcher {
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
-            Logger.error(error)
+            Logger.error(error.asLoggerError())
             completion(.failure(error))
             return
         }
@@ -63,19 +63,19 @@ class MBNetworkFetcher: NetworkFetcher {
                             completion(.success(object))
                         } catch {
                             let errorModel: MindboxError = .internalError(.init(errorKey: .parsing, rawError: error))
-                            Logger.error(errorModel)
+                            Logger.error(errorModel.asLoggerError())
                             completion(.failure(errorModel))
                         }
                     case let .failure(error):
-                        Logger.error(error)
+                        Logger.error(error.asLoggerError())
                         completion(.failure(error))
                     }
                 }
             }.resume()
         } catch let error {
-            let errorModel = MindboxError.unknown(error)
-            Logger.error(errorModel)
-            completion(.failure(errorModel))
+            let error = MindboxError.unknown(error)
+            Logger.error(error.asLoggerError())
+            completion(.failure(error))
         }
     }
 
@@ -88,7 +88,7 @@ class MBNetworkFetcher: NetworkFetcher {
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
-            Logger.error(error)
+            Logger.error(error.asLoggerError())
             completion(.failure(error))
             return
         }
@@ -103,14 +103,14 @@ class MBNetworkFetcher: NetworkFetcher {
                     case .success:
                         completion(.success(()))
                     case let .failure(error):
-                        Logger.error(error)
+                        Logger.error(error.asLoggerError())
                         completion(.failure(error))
                     }
                 })
             }.resume()
         } catch let error {
             let errorModel = MindboxError.unknown(error)
-            Logger.error(errorModel)
+            Logger.error(errorModel.asLoggerError())
             completion(.failure(errorModel))
         }
     }

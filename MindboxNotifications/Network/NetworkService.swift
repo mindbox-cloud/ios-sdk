@@ -51,7 +51,7 @@ class NetworkService {
                 Logger.response(data: data, response: response, error: error)
                 if let error = error {
                     let errorModel = MindboxError.unknown(error)
-                    Logger.error(errorModel)
+                    Logger.error(errorModel.asLoggerError())
                     completion(false)
                 }
 
@@ -61,18 +61,18 @@ class NetworkService {
                         completion(true)
                     } else {
                         let errorModel = MindboxError.invalidResponse(response)
-                        Logger.error(errorModel)
+                        Logger.error(errorModel.asLoggerError())
                         completion(false)
                     }
                 } else {
                     let errorModel = MindboxError.invalidResponse(response)
-                    Logger.error(errorModel)
+                    Logger.error(errorModel.asLoggerError())
                     completion(false)
                 }
             }.resume()
         } catch let error {
             let errorModel = MindboxError.unknown(error)
-            Logger.error(errorModel)
+            Logger.error(errorModel.asLoggerError())
             completion(false)
         }
     }

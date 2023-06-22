@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public struct ValidationError: Codable, CustomStringConvertible {
     public let status: Status

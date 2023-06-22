@@ -64,7 +64,7 @@ public class MindboxNotificationService: NSObject {
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
-            Logger.error(error)
+            Logger.error(error.asLoggerError())
             return
         }
         
@@ -75,7 +75,7 @@ public class MindboxNotificationService: NSObject {
             try deliveryService.track(request: request)
         } catch {
             let errorModel = MindboxError.unknown(error)
-            Logger.error(errorModel)
+            Logger.error(errorModel.asLoggerError())
         }
     }
 
