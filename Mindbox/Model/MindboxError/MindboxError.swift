@@ -282,6 +282,7 @@ extension MindboxError {
                                     description: validationError.description)
         case .protocolError(let protocolError):
             return LoggerErrorModel(errorType: .protocol,
+                                    description: "\n[ErrorMessage:] \(protocolError.errorMessage) \n[ErrorId:] \(protocolError.errorId)",
                                     status: protocolError.status.rawValue,
                                     statusCode: protocolError.httpStatusCode)
         case .serverError(let serverError):
@@ -289,7 +290,7 @@ extension MindboxError {
                                     description: serverError.description)
         case .internalError(let internalError):
             return LoggerErrorModel(errorType: .internal,
-                                    description: internalError.description,
+                                    description: internalError.rawError?.localizedDescription,
                                     errorKey: internalError.errorKey)
         case .invalidResponse(let invalidResponse):
             return LoggerErrorModel(errorType: .invalid,
