@@ -50,8 +50,7 @@ class NetworkService {
             session.dataTask(with: urlRequest) { data, response, error in
                 Logger.response(data: data, response: response, error: error)
                 if let error = error {
-                    let errorModel = MindboxError.unknown(error)
-                    Logger.error(errorModel.asLoggerError())
+                    Logger.error(.init(errorType: .server, description: error.localizedDescription))
                     completion(false)
                 }
 
@@ -60,19 +59,16 @@ class NetworkService {
                         Logger.common(message: "Push delivered", level: .info, category: .network)
                         completion(true)
                     } else {
-                        let errorModel = MindboxError.invalidResponse(response)
-                        Logger.error(errorModel.asLoggerError())
+                        Logger.error(.init(errorType: .invalid, description: response.debugDescription))
                         completion(false)
                     }
                 } else {
-                    let errorModel = MindboxError.invalidResponse(response)
-                    Logger.error(errorModel.asLoggerError())
+                    Logger.error(.init(errorType: .invalid, description: response.debugDescription))
                     completion(false)
                 }
             }.resume()
         } catch let error {
-            let errorModel = MindboxError.unknown(error)
-            Logger.error(errorModel.asLoggerError())
+            Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
             completion(false)
         }
     }

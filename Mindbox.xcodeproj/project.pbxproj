@@ -313,11 +313,6 @@
 		F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB22A44572400D48CEC /* ValidationError.swift */; };
 		F397EEB52A44573600D48CEC /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB42A44573600D48CEC /* Status.swift */; };
 		F397EEBE2A4489CE00D48CEC /* LoggerErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */; };
-		F397EEBF2A448C8E00D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
-		F397EEC02A448C9200D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
-		F397EEC12A448C9500D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
-		F397EEC22A448C9700D48CEC /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB22A44572400D48CEC /* ValidationError.swift */; };
-		F397EEC32A448C9900D48CEC /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB42A44573600D48CEC /* Status.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -2296,10 +2291,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F397EEC02A448C9200D48CEC /* MindboxError.swift in Sources */,
 				3333C1D62681E85600B60D84 /* HTTPMethod.swift in Sources */,
-				F397EEC12A448C9500D48CEC /* UnknownDecodable.swift in Sources */,
-				F397EEC22A448C9700D48CEC /* ValidationError.swift in Sources */,
 				3333C1CC2681E76000B60D84 /* EventWrapper.swift in Sources */,
 				33BEE81D2681ED2900993720 /* PushDeliveredEventRoute.swift in Sources */,
 				3333C1BF2681E46400B60D84 /* NotificationDecoder.swift in Sources */,
@@ -2310,14 +2302,12 @@
 				3333C1BD2681DE6600B60D84 /* PushDelivered.swift in Sources */,
 				3333C1CA2681E74A00B60D84 /* Route.swift in Sources */,
 				3333C1BA2681DC4B00B60D84 /* MBUtilitiesFetcher.swift in Sources */,
-				F397EEC32A448C9900D48CEC /* Status.swift in Sources */,
 				3333C1E52681EEEF00B60D84 /* URLRequestBuilder.swift in Sources */,
 				3333C1BC2681DE0900B60D84 /* DeviceModelHelper.swift in Sources */,
 				3333C1B22681D42000B60D84 /* Payload.swift in Sources */,
 				3333C1AF2681D3DB00B60D84 /* MindboxNotificationService.swift in Sources */,
 				3333C1B62681D69700B60D84 /* MBConfiguration.swift in Sources */,
 				3333C1C02681E4E400B60D84 /* NotificationsPayloads.swift in Sources */,
-				F397EEBF2A448C8E00D48CEC /* ProtocolError.swift in Sources */,
 				3333C1D02681E83200B60D84 /* BodyDecoder.swift in Sources */,
 				3333C1C42681E64F00B60D84 /* NetworkService.swift in Sources */,
 				3333C1E32681EEA800B60D84 /* Event.swift in Sources */,
