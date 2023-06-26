@@ -23,12 +23,12 @@ class InAppConfigurationAPI {
 
     func fetchConfig(completionQueue: DispatchQueue, completion: @escaping (InAppConfigurationAPIResult) -> Void) {
         guard let configuration = persistenceStorage.configuration else {
-            let errorModel = MindboxError(.init(
+            let error = MindboxError(.init(
                 errorKey: .invalidConfiguration,
                 reason: "Invalid domain. Domain is unreachable"
             ))
-            Logger.error(errorModel)
-            completion(.error(errorModel))
+            Logger.error(error.asLoggerError())
+            completion(.error(error))
             return
         }
         do {
@@ -54,9 +54,9 @@ class InAppConfigurationAPI {
 
     private func completeDownloadTask(_ data: Data?, response: URLResponse?, error: Error?) -> InAppConfigurationAPIResult {
         guard let httpResponse = response as? HTTPURLResponse else {
-            let errorModel = MindboxError.connectionError
-            Logger.error(errorModel)
-            return .error(errorModel)
+            let error = MindboxError.connectionError
+            Logger.error(error.asLoggerError())
+            return .error(error)
         }
         
         Logger.response(data: data, response: response, error: error)
@@ -69,9 +69,9 @@ class InAppConfigurationAPI {
         }  else if let error = error {
             return .error(error)
         } else {
-            let errorModel = MindboxError.invalidResponse(response)
-            Logger.error(errorModel)
-            return .error(errorModel)
+            let error = MindboxError.invalidResponse(response)
+            Logger.error(error.asLoggerError())
+            return .error(error)
         }
     }
 }

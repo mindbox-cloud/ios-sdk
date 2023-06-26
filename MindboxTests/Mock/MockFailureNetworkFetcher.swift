@@ -55,7 +55,7 @@ class MockFailureNetworkFetcher: NetworkFetcher {
                 completion(Result.success(decoded))
             } catch let decodeError {
                 let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
-                Logger.error(error)
+                Logger.error(error.asLoggerError())
                 completion(Result.failure(error))
             }
         }
