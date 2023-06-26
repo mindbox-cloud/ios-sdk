@@ -42,15 +42,15 @@ final class InAppImageOnlyView: UIView {
         closeButton.setImage(closeImage, for: .normal)
         closeButton.contentVerticalAlignment = .fill
         closeButton.contentHorizontalAlignment = .fill
-        closeButton.imageView?.contentMode = .scaleAspectFill
+        closeButton.imageView?.contentMode = .scaleAspectFit
         closeButton.addTarget(self, action: #selector(onTapCloseButton), for: .touchUpInside)
         addSubview(closeButton)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             closeButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 8),
             closeButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -8),
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44)
+            closeButton.widthAnchor.constraint(equalToConstant: 24),
+            closeButton.heightAnchor.constraint(equalToConstant: 24)
         ])
         layer.masksToBounds = true
     }
