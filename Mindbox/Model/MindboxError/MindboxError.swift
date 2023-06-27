@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 /// Data types that thrown the possible errors from Mindbox.
 public enum MindboxError: LocalizedError {
@@ -271,4 +272,34 @@ public enum ErrorKey: String {
     case unknownStatusKey = "Error_unknown_status_key"
     case serverError = "Server_error"
     case invalidAccess = "Invalid_Access"
+}
+
+extension MindboxError {
+    func asLoggerError() -> LoggerErrorModel {
+        switch self {
+        case .validationError(let validationError):
+            return LoggerErrorModel(errorType: .validation,
+                                    description: validationError.description)
+        case .protocolError(let protocolError):
+            return LoggerErrorModel(errorType: .protocol,
+                                    description: "\n[ErrorMessage:] \(protocolError.errorMessage) \n[ErrorId:] \(protocolError.errorId)",
+                                    status: protocolError.status.rawValue,
+                                    statusCode: protocolError.httpStatusCode)
+        case .serverError(let serverError):
+            return LoggerErrorModel(errorType: .server,
+                                    description: serverError.description)
+        case .internalError(let internalError):
+            return LoggerErrorModel(errorType: .internal,
+                                    description: internalError.rawError?.localizedDescription,
+                                    errorKey: internalError.errorKey)
+        case .invalidResponse(let invalidResponse):
+            return LoggerErrorModel(errorType: .invalid,
+                                    description: invalidResponse?.description)
+        case .connectionError:
+            return LoggerErrorModel(errorType: .connection)
+        case .unknown(let unknownError):
+            return LoggerErrorModel(errorType: .unknown,
+                                    description: unknownError.localizedDescription)
+        }
+    }
 }
