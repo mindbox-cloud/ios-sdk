@@ -312,7 +312,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                                 return
                             }
                             
-                            Logger.common(message: "Image is loaded successfully. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                            Logger.common(message: "Image is loaded successfully. [URL]: \(inapp.imageUrl)", level: .debug, category: .inAppMessages)
                             formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)
                             shouldDownloadImage = false
                         } catch {
