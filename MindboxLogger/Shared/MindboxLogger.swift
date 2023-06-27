@@ -37,6 +37,10 @@ public class Logger {
         )
     }
     
+    public static func asd() {
+        
+    }
+    
     public static func error(_ error: MindboxError,
                       level: LogLevel = .error,
                       category: LogCategory = .network,
