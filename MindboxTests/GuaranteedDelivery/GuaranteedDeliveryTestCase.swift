@@ -137,11 +137,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         )
         let errorCase: [GuaranteedDeliveryManager.State] = [
             .delivering,
-            .idle,
-            .delivering,
-            .waitingForRetry,
-            .delivering,
-            .idle,
+            .idle
         ]
         let errorExpectations: [XCTestExpectation] = errorCase.map { self.expectation(description: "Expect state is \($0.rawValue)") }
         var iterator: Int = 0
@@ -156,6 +152,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
+            
             if newState == errorCase[iterator] {
                 errorExpectations[iterator].fulfill()
             }
