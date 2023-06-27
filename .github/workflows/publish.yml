@@ -8,37 +8,13 @@ on:
       - '**'
 
 jobs:
-  build:
-    runs-on: macos-13
-    steps:
-    - uses: actions/checkout@v3
-    - name: Update bundler
-      run: gem install bundler
-    - name: Install bundler dependencies
-      run: bundle install
-    - name: Run unit tests
-      run: bundle exec fastlane unitTestLane
-      
   publish:
-    needs: [build]
     runs-on: macos-13
     steps:
-    - uses: actions/checkout@v3
-    - name: Release generation
-      run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
-    - name: Update bundler
-      run: gem install bundler
-    - name: Install bundler dependencies
-      run: bundle install
-    - name: Run build
-      run: bundle exec fastlane buildLane
-      env:
-        CI: true
-    - name: Deploy to Cocoapods
+    - name: Remove from Cocoapods
       run: |
         set -eo pipefail
-        pod lib lint --allow-warnings
-        pod trunk push Mindbox.podspec --allow-warnings
-        pod trunk push MindboxNotifications.podspec --allow-warnings
+        pod trunk delete Mindbox 2.6.2
+        pod trunk delete MindboxNotifications 2.6.2
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
