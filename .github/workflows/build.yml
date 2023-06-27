@@ -10,14 +10,30 @@ on:
       - '**.md'
     tags-ignore:
       - '**'
+
 jobs:
-  build:
-    runs-on: macos-13
+  unit:
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v3
+
     - name: Update bundler
       run: gem install bundler
+
     - name: Install bundler dependencies
       run: bundle install
+
+    - name: Generate unique device name
+      run: echo "DEVICE_NAME=TestDevice_$(date +%Y%m%d%H%M%S)_$(uuidgen)" >> $GITHUB_ENV
+
+    - name: Create new iOS simulator
+      run: xcrun simctl create $DEVICE_NAME com.apple.CoreSimulator.SimDeviceType.iPhone-12 com.apple.CoreSimulator.SimRuntime.iOS-16-2
+
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
+      env:
+        CI: true
+        DEVICE_NAME: ${{ env.DEVICE_NAME }}
+
+    - name: Delete iOS simulator
+      run: xcrun simctl delete $DEVICE_NAME
