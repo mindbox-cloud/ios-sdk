@@ -8,15 +8,15 @@
 
 import Foundation
 @testable import Mindbox
-@testable import MindboxLogger
+import MindboxLogger
 
-class OSLogWritterMock: LogWriter {
-
-    public var message: String?
-    public var logLevel: LogLevel?
-
-    func writeMessage(_ message: String, logLevel: LogLevel) {
-        self.message = message
-        self.logLevel = logLevel
-    }
-}
+//class OSLogWritterMock: LogWriter {
+//
+//    public var message: String?
+//    public var logLevel: LogLevel?
+//
+//    func writeMessage(_ message: String, logLevel: LogLevel) {
+//        self.message = message
+//        self.logLevel = logLevel
+//    }
+//}

@@ -59,7 +59,7 @@ public class MBDate: Codable {
         date = Date()
         guard let decodedDate = decodeWithFormat(string) else {
             let error = MindboxError.internalError(.init(errorKey: "Invalid date specified in JSON."))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
         date = decodedDate

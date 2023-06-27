@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 
 public protocol UnknownDecodable: Decodable {}
 
@@ -25,10 +24,10 @@ public extension UnknownDecodable where Self: RawRepresentable, Self.RawValue ==
                 self = unknownCase
                 
                 let error = MindboxError(InternalError(errorKey: .parsing, reason: "No match with value \(parsed). Set to .unknown", suggestion: "Add an .\(parsed) case"))
-                Logger.error(error.asLoggerError())
+                Logger.error(error)
             } else {
                 let error = MindboxError.internalError(.init(errorKey: .parsing, reason: "No match with value \(parsed). Enum doesn’t have .unknown case", suggestion: "Add an .unknown case"))
-                Logger.error(error.asLoggerError())
+                Logger.error(error)
                 throw error
             }
         } catch {

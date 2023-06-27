@@ -35,7 +35,7 @@ class VersioningTestCase: XCTestCase {
 //            Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
 //        }
 //
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
 //            do {
 //                let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
 //                events.forEach({
@@ -55,7 +55,7 @@ class VersioningTestCase: XCTestCase {
 //            }
 //        }
 //
-//        waitForExpectations(timeout: 30, handler: nil)
+//        waitForExpectations(timeout: 60, handler: nil)
     }
 
     func testInfoUpdateVersioningByRequestAuthorization() {

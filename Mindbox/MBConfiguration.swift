@@ -48,13 +48,13 @@ public struct MBConfiguration: Codable {
 
         guard let url = URL(string: "https://" + domain), URLValidator(url: url).evaluate() else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid domain. Domain is unreachable. [Domain]: \(domain)"))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
 
         guard !endpoint.isEmpty else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Value endpoint can not be empty"))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
 
@@ -116,19 +116,19 @@ public struct MBConfiguration: Codable {
 
         guard let url = findeURL else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) not found"))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
 
         guard let data = try? Data(contentsOf: url) else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) cannot be read"))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
 
         guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "file with name \(plistName) contains invalid properties"))
-            Logger.error(error.asLoggerError())
+            Logger.error(error)
             throw error
         }
         self = configuration

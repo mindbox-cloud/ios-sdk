@@ -18,9 +18,13 @@ class MBConfigurationTestCase: XCTestCase {
     let emptyIDDomainFile = "TestConfig_Invalid_4"
 
     override func setUpWithError() throws {
+
+
+        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
     override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     func test_MBConfiguration_should_not_throw() throws {
@@ -45,9 +49,15 @@ class MBConfigurationTestCase: XCTestCase {
             }
         }
 
+
         XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig1"))
         XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig2"))
         XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig3"))
         XCTAssertNil(try? MBConfiguration(plistName: "file_that_|never_exist№%:,.;()(;.,:%№"))
+
+
+
     }
+
+
 }
