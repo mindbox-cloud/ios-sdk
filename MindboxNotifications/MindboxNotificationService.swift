@@ -60,7 +60,11 @@ public class MindboxNotificationService: NSObject {
     public func pushDelivered(_ request: UNNotificationRequest) {
         let utilities = MBUtilitiesFetcher()
         guard let configuration = utilities.configuration else {
-            Logger.error(.init(errorType: .internal, description: "Configuration is not set"))
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            Logger.error(error)
             return
         }
         
@@ -70,7 +74,8 @@ public class MindboxNotificationService: NSObject {
         do {
             try deliveryService.track(request: request)
         } catch {
-            Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
+            let errorModel = MindboxError.unknown(error)
+            Logger.error(errorModel)
         }
     }
 

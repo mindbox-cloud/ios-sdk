@@ -25,6 +25,9 @@ class Fastfile: LaneFile {
 
     func unitTestLane() {
         desc("Run unit tests")
+        let deviceName = ProcessInfo.processInfo.environment["DEVICE_NAME"] ?? "iPhone 12"
+        let destination = "platform=iOS Simulator,name=\(deviceName)"
+
         scan(project: .userDefined(project),
              scheme: "Mindbox",
              onlyTesting: ["MindboxTests"],
@@ -32,9 +35,8 @@ class Fastfile: LaneFile {
              xcodebuildFormatter: "",
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
-             xcargs: "CI=true"
+             xcargs: "CI=true -destination '\(destination)'"
         )
-
         scan(
             project: .userDefined(project),
             scheme: "MindboxNotifications",
@@ -42,7 +44,7 @@ class Fastfile: LaneFile {
             clean: true,
             xcodebuildFormatter: "",
             testWithoutBuilding: .userDefined(false),
-            xcargs: "CI=true"
+            xcargs: "CI=true -destination '\(destination)'"
         )
     }
 }

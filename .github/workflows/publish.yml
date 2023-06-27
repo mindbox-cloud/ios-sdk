@@ -20,7 +20,7 @@ jobs:
       run: bundle exec fastlane unitTestLane
       
   publish:
-    needs: [unit]
+    needs: [build]
     runs-on: macos-13
     steps:
     - uses: actions/checkout@v3

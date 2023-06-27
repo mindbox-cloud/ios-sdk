@@ -12,12 +12,7 @@ import Foundation
 class MockDatabaseRepository: MBDatabaseRepository {
     
     var createsDeprecated: Bool = false
-//    var tempLimit: Int?
-//
-//    override var limit: Int {
-//        tempLimit ?? 10000
-//    }
-//
+    
     override var lifeLimitDate: Date? {
         createsDeprecated ? Date() : super.lifeLimitDate
     }
