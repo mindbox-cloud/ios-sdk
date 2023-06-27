@@ -33,7 +33,7 @@ public class Logger {
             message: borders.start + message + borders.end,
             date: timestamp,
             category: category,
-            subsystem: subsystem ?? "cloud.Mindbox"
+            subsystem: subsystem ?? "cloud.Mindbox"  
         )
     }
     
