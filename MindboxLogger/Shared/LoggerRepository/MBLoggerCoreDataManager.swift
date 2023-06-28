@@ -28,32 +28,33 @@ public class MBLoggerCoreDataManager {
         }
     }
 
-    lazy var persistentContainer: NSPersistentContainer = {
-        let fetcher = MBLoggerUtilitiesFetcher()
-        MBPersistentContainer.applicationGroupIdentifier = fetcher.applicationGroupIdentifier
-
-        let bundle: Bundle
+    lazy var persistentContainer: MBPersistentContainer = {
+        MBPersistentContainer.applicationGroupIdentifier = MBLoggerUtilitiesFetcher().applicationGroupIdentifier
+        
         #if SWIFT_PACKAGE
-        bundle = Bundle.module
+        let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd")
+        let mom = NSManagedObjectModel(contentsOf: bundleURL!)
+        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
         #else
         let podBundle = Bundle(for: MBLoggerCoreDataManager.self)
-        bundle = Bundle(url: podBundle.url(forResource: "MindboxLogger", withExtension: "bundle")!)!
+        let container: MBPersistentContainer
+        if let url = podBundle.url(forResource: "MindboxLogger", withExtension: "bundle") {
+            let bundle = Bundle(url: url)
+            let modelURL = bundle?.url(forResource: Constants.model, withExtension: "momd")
+            let mom = NSManagedObjectModel(contentsOf: modelURL!)
+            container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
+        } else {
+            container = MBPersistentContainer(name: Constants.model)
+        }
         #endif
-
-        guard let modelURL = bundle.url(forResource: Constants.model, withExtension: "momd") else {
-            fatalError("")
-        }
-        guard let mom = NSManagedObjectModel(contentsOf: modelURL) else {
-            fatalError("")
-        }
         
-        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom)
-        
-        let storeURL = FileManager.storeURL(for: fetcher.applicationGroupIdentifier, databaseName: Constants.model)
+        let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
-        container.loadPersistentStores { (storeDescription, error) in }
+        container.loadPersistentStores {
+            (storeDescription, error) in
+        }
 
         return container
     }()
