@@ -14,7 +14,5 @@ jobs:
     - name: Remove from Cocoapods
       run: |
         set -eo pipefail
-        pod trunk delete Mindbox 2.6.2
-        pod trunk delete MindboxNotifications 2.6.2
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
