@@ -307,6 +307,11 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		F36C01C02A4C7160001011C7 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36C01BB2A4C715F001011C7 /* UnknownDecodable.swift */; };
+		F36C01C12A4C7160001011C7 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36C01BC2A4C715F001011C7 /* Status.swift */; };
+		F36C01C22A4C7160001011C7 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36C01BD2A4C715F001011C7 /* ValidationError.swift */; };
+		F36C01C32A4C7160001011C7 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36C01BE2A4C7160001011C7 /* ProtocolError.swift */; };
+		F36C01C42A4C7160001011C7 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36C01BF2A4C7160001011C7 /* MindboxError.swift */; };
 		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
 		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
 		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
@@ -663,6 +668,11 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		F36C01BB2A4C715F001011C7 /* UnknownDecodable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
+		F36C01BC2A4C715F001011C7 /* Status.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
+		F36C01BD2A4C715F001011C7 /* ValidationError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
+		F36C01BE2A4C7160001011C7 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
+		F36C01BF2A4C7160001011C7 /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
@@ -1526,10 +1536,15 @@
 		A154E337299E5B6D00F8F074 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				F36C01BF2A4C7160001011C7 /* MindboxError.swift */,
+				F36C01BE2A4C7160001011C7 /* ProtocolError.swift */,
+				F36C01BC2A4C715F001011C7 /* Status.swift */,
+				F36C01BB2A4C715F001011C7 /* UnknownDecodable.swift */,
+				F36C01BD2A4C715F001011C7 /* ValidationError.swift */,
+				F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */,
 				A154E338299E5B6D00F8F074 /* MindboxLogger.swift */,
 				A154E339299E5B6D00F8F074 /* Group */,
 				A154E33E299E5B6D00F8F074 /* Extensions */,
-				A154E345299E5B6D00F8F074 /* MindboxError */,
 				A154E34B299E5B6D00F8F074 /* MBLogger.swift */,
 				A154E34C299E5B6D00F8F074 /* LoggerRepository */,
 			);
@@ -1558,14 +1573,6 @@
 				A154E344299E5B6D00F8F074 /* MBLoggerUtilitiesFetcher.swift */,
 			);
 			path = Extensions;
-			sourceTree = "<group>";
-		};
-		A154E345299E5B6D00F8F074 /* MindboxError */ = {
-			isa = PBXGroup;
-			children = (
-				F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */,
-			);
-			path = MindboxError;
 			sourceTree = "<group>";
 		};
 		A154E34C299E5B6D00F8F074 /* LoggerRepository */ = {
@@ -2330,6 +2337,7 @@
 			files = (
 				A17853E629AF7EE90072578F /* MBLogger.swift in Sources */,
 				A17853DC29AF7EDE0072578F /* String+Extensions.swift in Sources */,
+				F36C01C22A4C7160001011C7 /* ValidationError.swift in Sources */,
 				A17853E029AF7EDE0072578F /* URL+Extensions.swift in Sources */,
 				A17853DD29AF7EDE0072578F /* Date+Extension.swift in Sources */,
 				A17853D729AF7ED90072578F /* LogCategory.swift in Sources */,
@@ -2339,13 +2347,17 @@
 				A17853DF29AF7EDE0072578F /* MBLoggerUtilitiesFetcher.swift in Sources */,
 				A17853DE29AF7EDE0072578F /* FileManager+Extensions.swift in Sources */,
 				A17853DA29AF7ED90072578F /* LogLevel.swift in Sources */,
+				F36C01C32A4C7160001011C7 /* ProtocolError.swift in Sources */,
+				F36C01C12A4C7160001011C7 /* Status.swift in Sources */,
 				A17853D629AF7ED20072578F /* MindboxLogger.swift in Sources */,
 				A17853EB29AF7EF30072578F /* MBPersistentContainer.swift in Sources */,
 				A17853D829AF7ED90072578F /* LogWriter.swift in Sources */,
+				F36C01C42A4C7160001011C7 /* MindboxError.swift in Sources */,
 				A17853DB29AF7EDE0072578F /* NSManagedObjectContext+Extension.swift in Sources */,
 				A15D704729AF81DC007131E7 /* MBLoggerCoreDataManager.swift in Sources */,
 				A17853D929AF7ED90072578F /* LogMessage.swift in Sources */,
 				A17853E829AF7EEF0072578F /* CDLogMessage.xcdatamodeld in Sources */,
+				F36C01C02A4C7160001011C7 /* UnknownDecodable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
