@@ -36,7 +36,16 @@ public class MBLoggerCoreDataManager {
         let mom = NSManagedObjectModel(contentsOf: bundleURL!)
         let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
         #else
-        let container = MBPersistentContainer(name: Constants.model)
+        let podBundle = Bundle(for: MBLoggerCoreDataManager.self)
+        let container: MBPersistentContainer
+        if let url = podBundle.url(forResource: "MindboxLogger", withExtension: "bundle") {
+            let bundle = Bundle(url: url)
+            let modelURL = bundle?.url(forResource: Constants.model, withExtension: "momd")
+            let mom = NSManagedObjectModel(contentsOf: modelURL!)
+            container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
+        } else {
+            container = MBPersistentContainer(name: Constants.model)
+        }
         #endif
         
         let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
@@ -49,6 +58,7 @@ public class MBLoggerCoreDataManager {
 
         return container
     }()
+
     
     private lazy var context: NSManagedObjectContext = {
         let context = persistentContainer.newBackgroundContext()

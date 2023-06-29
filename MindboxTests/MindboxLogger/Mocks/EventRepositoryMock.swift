@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 @testable import Mindbox
 
 class EventRepositoryMock: EventRepository {

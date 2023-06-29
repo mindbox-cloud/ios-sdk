@@ -1,8 +1,8 @@
 //
 //  ProtocolError.swift
-//  MindboxLogger
+//  Mindbox
 //
-//  Created by vailence on 28.06.2023.
+//  Created by vailence on 22.06.2023.
 //  Copyright © 2023 Mindbox. All rights reserved.
 //
 

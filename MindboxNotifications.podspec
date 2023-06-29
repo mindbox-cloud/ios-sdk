@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "MindboxNotifications"
-  spec.version      = "2.6.1"
+  spec.version      = "2.6.2"
   spec.summary      = "SDK for integration notifications with Mindbox"
   spec.description  = "This library allows you to integrate notifications and transfer them to Mindbox Marketing Cloud"
   spec.homepage     = "https://github.com/mindbox-cloud/ios-sdk"
@@ -11,6 +11,6 @@ Pod::Spec.new do |spec|
   spec.source_files  = "MindboxNotifications/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.swift_version = "5"
-  spec.dependency 'MindboxLogger'
+  spec.dependency 'MindboxLogger', '0.0.4'
 
 end

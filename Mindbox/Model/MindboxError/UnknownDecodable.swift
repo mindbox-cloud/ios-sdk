@@ -1,16 +1,13 @@
 //
 //  UnknownDecodable.swift
-//  MindboxLogger
+//  Mindbox
 //
-//  Created by vailence on 28.06.2023.
-//  Copyright © 2023 Mindbox. All rights reserved.
+//  Created by Mikhail Plotnikov on 08.07.2021.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
-
-public enum UnknownDecodableError: Error {
-    case unknownValue
-}
+import MindboxLogger
 
 public protocol UnknownDecodable: Decodable {}
 
@@ -26,8 +23,13 @@ public extension UnknownDecodable where Self: RawRepresentable, Self.RawValue ==
                 self = value
             } else if let unknownCase = unknownCase {
                 self = unknownCase
+                
+                let error = MindboxError(InternalError(errorKey: .parsing, reason: "No match with value \(parsed). Set to .unknown", suggestion: "Add an .\(parsed) case"))
+                Logger.error(error.asLoggerError())
             } else {
-                throw UnknownDecodableError.unknownValue
+                let error = MindboxError.internalError(.init(errorKey: .parsing, reason: "No match with value \(parsed). Enum doesn’t have .unknown case", suggestion: "Add an .unknown case"))
+                Logger.error(error.asLoggerError())
+                throw error
             }
         } catch {
             if let unknownCase = unknownCase {
