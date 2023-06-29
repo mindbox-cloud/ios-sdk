@@ -11,6 +11,6 @@ Pod::Spec.new do |spec|
   spec.source_files  = "MindboxNotifications/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.swift_version = "5"
-  spec.dependency 'MindboxLogger', '0.0.2'
+  spec.dependency 'MindboxLogger', '0.0.4'
 
 end

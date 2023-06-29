@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 @testable import Mindbox
 
 class MockNetworkFetcher: NetworkFetcher {
@@ -28,7 +27,6 @@ class MockNetworkFetcher: NetworkFetcher {
             completion(Result.success(decoded))
         } catch let decodeError {
             let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError, statusCode: nil))
-            Logger.error(error.asLoggerError())
             completion(Result.failure(error))
         }
     }
