@@ -1,9 +1,9 @@
 //
 //  Status.swift
-//  MindboxLogger
+//  Mindbox
 //
-//  Created by vailence on 28.06.2023.
-//  Copyright © 2023 Mindbox. All rights reserved.
+//  Created by Ihor Kandaurov on 27.05.2021.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation

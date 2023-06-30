@@ -270,7 +270,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 self.imageDownloadService.downloadImage(withUrl: inapp.imageUrl) { result in
                     defer { group.leave() }
-                    
                     switch result {
                     case .success(let image):
                         formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)

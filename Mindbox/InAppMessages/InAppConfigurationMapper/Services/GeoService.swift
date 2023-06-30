@@ -39,7 +39,7 @@ class GeoService: GeoServiceProtocol {
             case .success(let result):
                 completion(result)
             case .failure(let error):
-                Logger.error(error)
+                Logger.error(error.asLoggerError())
                 completion(nil)
             }
         }
