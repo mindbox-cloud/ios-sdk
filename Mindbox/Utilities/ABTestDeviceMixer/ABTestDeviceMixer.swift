@@ -8,6 +8,7 @@
 
 import CommonCrypto
 import MindboxLogger
+import Foundation
 
 class ABTestDeviceMixer {
     private let sha256 = SHA256()

@@ -310,6 +310,12 @@
 		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
 		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
 		F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */; };
+		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
+		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
+		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
+		F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB22A44572400D48CEC /* ValidationError.swift */; };
+		F397EEB52A44573600D48CEC /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB42A44573600D48CEC /* Status.swift */; };
+		F397EEBE2A4489CE00D48CEC /* LoggerErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */; };
 		F39B67A22A3C6AF4005C0CCA /* SegmentationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */; };
 		F39B67A52A3C6BE3005C0CCA /* SegmentationCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A42A3C6BE3005C0CCA /* SegmentationCheckRequest.swift */; };
 		F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */; };
@@ -343,20 +349,14 @@
 		F3A8B9A72A3A705B00E9C055 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */; };
 		F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */; };
 		F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */; };
-		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
-		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
-		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
-		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
-		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
-		F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB22A44572400D48CEC /* ValidationError.swift */; };
-		F397EEB52A44573600D48CEC /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB42A44573600D48CEC /* Status.swift */; };
-		F397EEBE2A4489CE00D48CEC /* LoggerErrorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */; };
 		F3B2A3982A4C79D900E2CA25 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */; };
 		F3B2A39E2A4C79E200E2CA25 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3992A4C79E200E2CA25 /* Status.swift */; };
 		F3B2A39F2A4C79E200E2CA25 /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39A2A4C79E200E2CA25 /* UnknownDecodable.swift */; };
 		F3B2A3A02A4C79E200E2CA25 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39B2A4C79E200E2CA25 /* ValidationError.swift */; };
 		F3B2A3A12A4C79E200E2CA25 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */; };
 		F3B2A3A22A4C79E200E2CA25 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */; };
+		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
+		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
@@ -710,6 +710,12 @@
 		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
 		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
 		F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseMonitoringInvalid.json; sourceTree = "<group>"; };
+		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
+		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
+		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
+		F397EEB22A44572400D48CEC /* ValidationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
+		F397EEB42A44573600D48CEC /* Status.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
+		F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerErrorModel.swift; sourceTree = "<group>"; };
 		F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationService.swift; sourceTree = "<group>"; };
 		F39B67A42A3C6BE3005C0CCA /* SegmentationCheckRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationCheckRequest.swift; sourceTree = "<group>"; };
 		F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationServiceTests.swift; sourceTree = "<group>"; };
@@ -743,20 +749,14 @@
 		F3A8B9A62A3A705B00E9C055 /* InAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
 		F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestModel.swift; sourceTree = "<group>"; };
-		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
-		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
-		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
-		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
-		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
-		F397EEB22A44572400D48CEC /* ValidationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
-		F397EEB42A44573600D48CEC /* Status.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
-		F397EEBD2A4489CE00D48CEC /* LoggerErrorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerErrorModel.swift; sourceTree = "<group>"; };
 		F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxLogger.swift; sourceTree = "<group>"; };
 		F3B2A3992A4C79E200E2CA25 /* Status.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
 		F3B2A39A2A4C79E200E2CA25 /* UnknownDecodable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
 		F3B2A39B2A4C79E200E2CA25 /* ValidationError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
 		F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
+		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
+		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
@@ -1847,6 +1847,18 @@
 			path = ConfigResponse;
 			sourceTree = "<group>";
 		};
+		F397EEAB2A4456A900D48CEC /* MindboxError */ = {
+			isa = PBXGroup;
+			children = (
+				F397EEAC2A4456C300D48CEC /* ProtocolError.swift */,
+				F397EEAE2A4456FD00D48CEC /* MindboxError.swift */,
+				F397EEB02A44571300D48CEC /* UnknownDecodable.swift */,
+				F397EEB22A44572400D48CEC /* ValidationError.swift */,
+				F397EEB42A44573600D48CEC /* Status.swift */,
+			);
+			path = MindboxError;
+			sourceTree = "<group>";
+		};
 		F39B67A32A3C6BCE005C0CCA /* CustomerSegment */ = {
 			isa = PBXGroup;
 			children = (
@@ -1949,18 +1961,6 @@
 				F3A8B9432A3886D300E9C055 /* Mixer */,
 			);
 			path = ABTests;
-			sourceTree = "<group>";
-		};
-		F397EEAB2A4456A900D48CEC /* MindboxError */ = {
-			isa = PBXGroup;
-			children = (
-				F397EEAC2A4456C300D48CEC /* ProtocolError.swift */,
-				F397EEAE2A4456FD00D48CEC /* MindboxError.swift */,
-				F397EEB02A44571300D48CEC /* UnknownDecodable.swift */,
-				F397EEB22A44572400D48CEC /* ValidationError.swift */,
-				F397EEB42A44573600D48CEC /* Status.swift */,
-			);
-			path = MindboxError;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -2792,7 +2792,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.3;
+				MARKETING_VERSION = 2.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -2820,7 +2820,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.3;
+				MARKETING_VERSION = 2.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -2884,7 +2884,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.3;
+				MARKETING_VERSION = 2.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -2912,7 +2912,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.3;
+				MARKETING_VERSION = 2.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.MindboxNotifications;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
