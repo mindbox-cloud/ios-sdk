@@ -1,0 +1,41 @@
+{
+    "monitoring": null,
+    "inapps": [
+        {
+            "id": "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+            "sdkVersion": {
+                "min": 4,
+                "max": null
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "$type": "true"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "1",
+                        "redirectUrl": "2",
+                        "intentPayload": "3",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        }
+    ],
+    "settings": {
+        "operations": {
+            "viewProduct": {
+                
+            },
+            "viewCategory": {
+                "systemName": "viewCategory"
+            }
+        }
+    },
+    "abtests": null
+}

@@ -1,0 +1,166 @@
+{
+  "inapps": [
+    {
+      "id": "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+      "sdkVersion": {
+        "min": 3,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/545000dde32c7396ae07c625ca1c57d332d0176b74186f04c661e952268ea3d1.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+      "sdkVersion": {
+        "min": 4,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "93",
+            "systemName": "addAction",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/c7a94e0c225fa8e3bcc8b6979abaab79fe8127cbecf9d96d9b20dc5c47dc0866.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "95b3a85e-376b-4a3b-9885-96b296d81b3b",
+      "sdkVersion": {
+        "min": 3,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "negative",
+            "ids": [
+              783754
+            ],
+            "$type": "country"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://i.natgeofe.com/k/093c14b4-978e-41f7-b1aa-3aff5d1c608a/gray-wolf-closeup_3x4.jpg",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    }
+  ],
+  "abtests": [
+    {
+      "id": "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
+      "sdkVersion": {
+        "min": 6,
+        "max": null
+      },
+      "salt": "c0e2682c-3d0f-4291-9308-9e48a16eb3c8",
+      "variants": [
+        {
+          "modulus": {
+            "lower": 0,
+            "upper": 10
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": [
+                "655f5ffa-de86-4224-a0bf-229fe208ed0d"
+              ]
+            }
+          ]
+        },
+        {
+          "modulus": {
+            "lower": 0,
+            "upper": 10
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": [
+                "95b3a85e-376b-4a3b-9885-96b296d81b3b",
+                "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1ec6be6b-421f-464b-9ee4-348a5292a5fd",
+      "sdkVersion": {
+        "min": 6,
+        "max": null
+      },
+      "salt": "b142ff09-68c4-41f9-985d-d220edfad4f",
+      "variants": [
+        {
+          "modulus": {
+            "lower": 0,
+            "upper": 10
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": [
+                "95b3a85e-376b-4a3b-9885-96b296d81b3b"
+              ]
+            }
+          ]
+        },
+        {
+          "modulus": {
+            "lower": 10,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

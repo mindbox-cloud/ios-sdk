@@ -36,7 +36,7 @@ enum InAppTargetingType: String, Decodable {
     }
 }
 
-enum Targeting: Decodable, Hashable {
+enum Targeting: Decodable, Hashable, Equatable {
     case `true`(TrueTargeting)
     case and(AndTargeting)
     case or(OrTargeting)
