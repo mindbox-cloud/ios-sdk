@@ -8,7 +8,6 @@
 
 import XCTest
 @testable import Mindbox
-import MindboxLogger
 
 final class ABTestDeviceMixerTests: XCTestCase {
     
