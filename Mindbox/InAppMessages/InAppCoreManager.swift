@@ -88,11 +88,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
         
         serialQueue.async {
-            Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             guard self.isConfigurationReady else {
                 self.unhandledEvents.append(event)
                 return
             }
+            
+            Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             self.handleEvent(event)
         }
     }

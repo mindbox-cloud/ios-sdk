@@ -82,6 +82,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 self.buildInAppByEvent(inapps: inappsByEvent) { formData in
                     completion(formData)
                 }
+            } else {
+                completion(nil)
             }
         }
     }
