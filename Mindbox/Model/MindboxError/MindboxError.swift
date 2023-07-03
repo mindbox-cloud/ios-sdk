@@ -282,7 +282,7 @@ extension MindboxError {
                                     description: validationError.description)
         case .protocolError(let protocolError):
             return LoggerErrorModel(errorType: .protocol,
-                                    description: "\n[ErrorMessage:] \(protocolError.errorMessage) \n[ErrorId:] \(protocolError.errorId)",
+                                    description: "\n[ErrorMessage:] \(protocolError.errorMessage) \n[ErrorId:] \(String(describing: protocolError.errorId))",
                                     status: protocolError.status.rawValue,
                                     statusCode: protocolError.httpStatusCode)
         case .serverError(let serverError):

@@ -1,0 +1,128 @@
+{
+  "inapps": [
+    {
+      "id": "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+      "sdkVersion": {
+        "min": 3,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/545000dde32c7396ae07c625ca1c57d332d0176b74186f04c661e952268ea3d1.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+      "sdkVersion": {
+        "min": 4,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "93",
+            "systemName": "addAction",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/c7a94e0c225fa8e3bcc8b6979abaab79fe8127cbecf9d96d9b20dc5c47dc0866.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "b33ca779-3c99-481f-ad46-91282b0caf04",
+      "sdkVersion": {
+        "min": 3,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "positive",
+            "segmentationInternalId": "42",
+            "segmentationExternalId": "79ff415d-5bcf-45c8-ba78-bbf559083b5b",
+            "segmentExternalId": "79ff415d-5bcf-45c8-ba78-bbf559083b5b",
+            "$type": "segment"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://pibig.info/uploads/posts/2022-07/1657189902_1-pibig-info-p-kartinki-vertikalnie-na-telefon-1.jpg",
+            "redirectUrl": "",
+            "intentPayload": "44",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    }
+  ],
+  "abtests": [
+      {
+        "id":"c0e2682c-3d0f-4291-9308-9e48a16eb3c8",
+        "sdkVersion": {
+          "min": 6,
+          "max": null
+        },
+        "salt": "b142ff09-68c4-41f9-985d-d220edfad4f",
+        "variants": [
+          {
+            "id": "155f5ffa-de86-4224-a0bf-229fe208ed0d",
+            "modulus": {
+              "lower": 0,
+              "upper": 33
+            },
+            "objects": [
+              {
+                "$type": "inapps",
+                "kind": "concrete",
+                "inapps": []
+              }
+            ]
+          },
+          {
+            "id": "211f1c16-fa72-4456-bf87-af448eb84a32",
+            "modulus": {
+              "lower": 66,
+              "upper": 100
+            },
+            "objects": [
+              {
+                "$type": "inapps",
+                "kind": "concrete",
+                "inapps": [
+                  "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+                  "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+}
