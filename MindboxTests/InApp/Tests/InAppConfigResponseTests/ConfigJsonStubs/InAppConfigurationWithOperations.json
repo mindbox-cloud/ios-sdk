@@ -14,7 +14,7 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "imageUrl": "https://example.com/image.jpg",
                         "redirectUrl": "",
                         "intentPayload": "",
                         "$type": "simpleImage"
@@ -36,7 +36,7 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "imageUrl": "https://example.com/image.jpg",
                         "redirectUrl": "",
                         "intentPayload": "",
                         "$type": "simpleImage"
@@ -58,7 +58,7 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+                        "imageUrl": "https://example.com/image.jpg",
                         "redirectUrl": "",
                         "intentPayload": "",
                         "$type": "simpleImage"

@@ -34,7 +34,7 @@ final class SDKLogManagerTests: XCTestCase {
     func testBody_withWrongUUID_shouldReturnNil() {
         let dateFrom = Date().addingTimeInterval(-60)
         let dateTo = Date()
-        let logs: [InAppConfigResponse.Monitoring.Logs] = [
+        let logs: [Monitoring.Logs] = [
             .init(requestId: "1",
                   deviceUUID: "2",
                   from: dateFrom.toString(withFormat: .utc),
@@ -50,7 +50,7 @@ final class SDKLogManagerTests: XCTestCase {
     func testBody_withRepeatedRequestID_shouldReturnOneRequest() {
         let dateFrom = Date().addingTimeInterval(-60).toString(withFormat: .utc)
         let dateTo = Date().toString(withFormat: .utc)
-        let logs: [InAppConfigResponse.Monitoring.Logs] = [
+        let logs: [Monitoring.Logs] = [
             .init(requestId: "1", deviceUUID: "2", from: dateFrom, to: dateTo),
             .init(requestId: "1", deviceUUID: "2", from: dateFrom, to: dateTo)
         ]
