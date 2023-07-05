@@ -9,33 +9,69 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-/// A protocol that defines the methods a delegate of an In-App messaging service needs to implement.
+/// `InAppMessagesDelegate` is a protocol that provides methods related to the behavior of in-app messages.
+///
+/// This protocol can be used to respond to events related to in-app messages, such as a message being tapped or dismissed.
+/// In most cases, you would implement this protocol in your UIViewController or any other component responsible for handling in-app messages.
+///
+/// ## Protocol Conforming
+///
+/// To use the default implementations provided by the protocol extension, you can simply declare that your type conforms to the `InAppMessagesDelegate` protocol without needing to provide your own implementations of the `inAppMessageTapAction(id: URL?, payload: String)` and `inAppMessageDismissed(id: String)` methods:
+///
+///     class ViewController: UIViewController, InAppMessagesDelegate {
+///         // No need to provide implementations for inAppMessageTapAction and inAppMessageDismissed
+///     }
+///
+/// If you want to provide your own implementation for these methods, you can do so like this:
+///
+///     class ViewController: UIViewController, InAppMessagesDelegate {
+///         func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+///             // Handle in-app message tap action
+///         }
+///
+///         func inAppMessageDismissed(id: String) {
+///             // Handle in-app message dismissed
+///         }
+///     }
 public protocol InAppMessagesDelegate: AnyObject {
-    /// This method is invoked when an In-App message is tapped.
+    /// Called when an in-app message is tapped by the user.
+    ///
+    /// Implement this method to handle the action that should be taken when an in-app message is tapped. This method provides the id of the message, an optional URL, and the payload as a string.
     ///
     /// - Parameters:
-    ///     - id: The unique identifier of the In-App message.
-    ///     - url: An optional `URL` to be opened if the user taps on the message. If `nil`, no URL will be opened.
-    ///     - payload: A `String` that contains additional data related to the In-App message.
-    func inAppMessageTapAction(id: String, url: URL?, payload: String)
-    
-    /// This method is called when an In-App message is dismissed by the user.
+    ///   - id: The identifier of the in-app message.
+    ///   - url: An optional URL to be handled when the in-app message is tapped.
+    ///   - payload: The payload delivered with the in-app message.
     ///
-    /// - Parameter id: The unique identifier of the dismissed In-App message.
+    /// # Usage
+    ///
+    ///     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+    ///         // Handle URL or payload data
+    ///     }
+    func inAppMessageTapAction(id: String, url: URL?, payload: String)
+
+    /// Called when an in-app message is dismissed by the user.
+    ///
+    /// Implement this method to handle any action that should be taken when an in-app message is dismissed. This method provides the id of the message.
+    ///
+    /// - Parameter id: The identifier of the in-app message.
+    ///
+    /// # Usage
+    ///
+    ///     func inAppMessageDismissed(id: String) {
+    ///         // Handle message dismissal
+    ///     }
     func inAppMessageDismissed(id: String)
 }
+
+/// Provides a default implementation for the methods in the `InAppMessagesDelegate` protocol.
+///
+/// This extension is optional and provides default behavior for the methods in the protocol. You can override these methods in your own class or struct that conforms to `InAppMessagesDelegate` to provide custom behavior.
 
 public extension InAppMessagesDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
         Logger.common(message: "InAppMessagesDelegate inAppMessageTapAction called.")
-        if let url = url, UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        }
-
-        UIPasteboard.general.string = payload
     }
     
-    func inAppMessageDismissed(id: String) {
-
-    }
+    func inAppMessageDismissed(id: String) { }
 }

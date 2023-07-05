@@ -10,23 +10,20 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-/// A `DeeplinkInappMessageHandler` class that conforms to the `InAppMessagesDelegate` protocol.
-/// It provides specific implementations for handling In-App message tap actions and dismissals,
-/// specifically for messages that contain a deep link URL.
-public class DeeplinkInappMessageHandler: InAppMessagesDelegate {
-    public init() {
-        
-    }
-    
-    /// Handles the action when an In-App message containing a deep link is tapped.
-    public func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        Logger.common(message: "DeeplinkInappMessageHandler inAppMessageTapAction called.")
-        guard let url = url, UIApplication.shared.canOpenURL(url) else { return }
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
-    }
-    
-    /// Handles the action when an In-App message is dismissed.
-    public func inAppMessageDismissed(id: String) {
+/// `DeeplinkInappMessageDelegate` is a protocol that extends the `InAppMessagesDelegate` and `MindboxURLHandlerDelegate` protocols.
+///
+/// It provides a default implementation for handling in-app messages with a URL, by opening the URL when an in-app message is tapped.
+///
+/// ## Protocol Conforming
+///
+/// Refer to `InAppMessagesDelegate` protocol documentation for information on conforming to `DeeplinkInappMessageDelegate` protocol.
+public protocol DeeplinkInappMessageDelegate: InAppMessagesDelegate, MindboxURLHandlerDelegate { }
 
+public extension DeeplinkInappMessageDelegate {
+    func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+        Logger.common(message: "DeeplinkInappMessageDelegate inAppMessageTapAction called.")
+        openURL(url)
     }
+
+    func inAppMessageDismissed(id: String) { }
 }

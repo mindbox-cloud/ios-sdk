@@ -10,22 +10,20 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-/// A `URLInappMessageHandler` class that conforms to the `InAppMessagesDelegate` protocol.
-/// It provides specific implementations for handling In-App message tap actions and dismissals.
-public class URLInappMessageHandler: InAppMessagesDelegate {
-    public init() {
-        
-    }
-    
-    /// Handles the action when an In-App message is tapped.
-    public func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        Logger.common(message: "URLInappMessageHandler inAppMessageTapAction called.")
-        guard let url = url, UIApplication.shared.canOpenURL(url) else { return }
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
-    }
-    
-    /// Handles the action when an In-App message is dismissed.
-    public func inAppMessageDismissed(id: String) {
+/// `URLInappMessageDelegate` is a protocol that extends the `InAppMessagesDelegate` and `MindboxURLHandlerDelegate` protocols.
+///
+/// It provides a default implementation for handling in-app messages by opening an associated URL when an in-app message is tapped.
+///
+/// ## Protocol Conforming
+///
+/// Refer to `InAppMessagesDelegate` protocol documentation for information on conforming to `URLInappMessageDelegate` protocol.
+public protocol URLInappMessageDelegate: InAppMessagesDelegate, MindboxURLHandlerDelegate { }
 
+public extension URLInappMessageDelegate {
+    func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+        Logger.common(message: "URLInappMessageDelegate inAppMessageTapAction called.")
+        openURL(url)
     }
+    
+    func inAppMessageDismissed(id: String) { }
 }
