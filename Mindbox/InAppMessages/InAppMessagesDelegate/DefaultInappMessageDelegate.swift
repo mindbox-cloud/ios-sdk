@@ -23,7 +23,7 @@ public protocol DefaultInappMessageDelegate: InAppMessagesDelegate, MindboxURLHa
 
 public extension DefaultInappMessageDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        Logger.common(message: "InAppMessagesDelegate inAppMessageTapAction called.")
+        Logger.common(message: "DefaultInappMessageDelegate inAppMessageTapAction called.")
         openURL(url)
         copyPayload(payload)
     }

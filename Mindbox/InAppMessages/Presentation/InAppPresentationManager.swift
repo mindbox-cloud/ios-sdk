@@ -12,7 +12,7 @@ import MindboxLogger
 
 struct InAppMessageUIModel {
     struct InAppRedirect {
-        let redirectUrl: URL?
+        let redirectUrl: String?
         let payload: String
     }
     let inAppId: String
@@ -59,7 +59,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         clickTracked = false
         DispatchQueue.main.async {
             let redirectInfo = InAppMessageUIModel.InAppRedirect(
-                redirectUrl: URL(string: inAppFormData.redirectUrl),
+                redirectUrl: inAppFormData.redirectUrl,
                 payload: inAppFormData.intentPayload
             )
 
@@ -141,8 +141,13 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         }
 
         let redirect = inApp.redirect
+        
         if redirect.redirectUrl != nil || !redirect.payload.isEmpty {
-            onTap(redirect.redirectUrl, redirect.payload)
+            if let urlString = redirect.redirectUrl, let url = URL(string: urlString) {
+                onTap(url, redirect.payload)
+            } else {
+                Logger.common(message: "In-app redirectURL is invalid.", category: .inAppMessages)
+            }
             close()
         }
     }
