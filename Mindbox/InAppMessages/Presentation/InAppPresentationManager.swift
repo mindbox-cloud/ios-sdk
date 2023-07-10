@@ -12,7 +12,7 @@ import MindboxLogger
 
 struct InAppMessageUIModel {
     struct InAppRedirect {
-        let redirectUrl: String?
+        let redirectUrl: String
         let payload: String
     }
     let inAppId: String
@@ -142,12 +142,11 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
         let redirect = inApp.redirect
         
-        if redirect.redirectUrl != nil || !redirect.payload.isEmpty {
-            if let urlString = redirect.redirectUrl, let url = URL(string: urlString) {
-                onTap(url, redirect.payload)
-            } else {
-                Logger.common(message: "In-app redirectURL is invalid.", category: .inAppMessages)
-            }
+        if redirect.redirectUrl.isEmpty && redirect.payload.isEmpty {
+            Logger.common(message: "Redirect URL and Payload are empty.", category: .inAppMessages)
+        } else {
+            let url = URL(string: redirect.redirectUrl)
+            onTap(url, redirect.payload)
             close()
         }
     }
