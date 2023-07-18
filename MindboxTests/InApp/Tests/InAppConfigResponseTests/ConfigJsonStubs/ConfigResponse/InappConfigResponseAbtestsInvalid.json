@@ -1,0 +1,60 @@
+{
+    "monitoring": null,
+    "inapps": [
+        {
+            "id": "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+            "sdkVersion": {
+                "min": 4,
+                "max": null
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "$type": "true"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "imageUrl": "1",
+                        "redirectUrl": "2",
+                        "intentPayload": "3",
+                        "$type": "simpleImage"
+                    }
+                ]
+            }
+        }
+    ],
+    "settings": null,
+    "abtests": [
+        {
+            "sdkVersion": {
+                "min": 1,
+                "max": null
+            },
+            "salt": "salt123",
+            "variants": [
+                {
+                    "modulus": {
+                        "lower": 0,
+                        "upper": 100
+                    },
+                    "objects": [
+                        {
+                            "$type": "type1",
+                            "kind": "all",
+                            "inapps": ["inapp1", "inapp2"]
+                        },
+                        {
+                            "$type": "type2",
+                            "kind": "concrete",
+                            "inapps": ["inapp3"]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

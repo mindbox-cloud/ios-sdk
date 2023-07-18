@@ -31,16 +31,16 @@ struct InAppProductSegmentResponse: OperationResponseType {
         let segmentations: [CustomerSegmentation]
     }
 
-    struct CustomerSegmentation: Codable {
+    struct CustomerSegmentation: Codable, Equatable {
         let ids: Id
         let segment: Segment?
     }
 
-    struct Segment: Codable {
+    struct Segment: Codable, Equatable {
         let ids: Id?
     }
 
-    struct Id: Codable {
+    struct Id: Codable, Equatable {
         let externalId: String
     }
 }

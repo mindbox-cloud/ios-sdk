@@ -1,5 +1,5 @@
 //
-//  InAppPresentChecker.swift
+//  SegmentationCheckResponse.swift
 //  Mindbox
 //
 //  Created by Максим Казаков on 06.09.2022.
@@ -9,36 +9,24 @@
 import Foundation
 import MindboxLogger
 
-struct SegmentationCheckRequest: OperationBodyRequestType {
-    let segmentations: [Segmentation]
-
-    struct Segmentation: Encodable {
-        let ids: Id
-
-        struct Id: Encodable {
-            let externalId: String
-        }
-    }
-}
-
 struct SegmentationCheckResponse: OperationResponseType {
     let status: Status
     let customerSegmentations: [CustomerSegmentation]?
 
-    struct CustomerSegmentation: Codable {
+    struct CustomerSegmentation: Codable, Equatable {
         let segmentation: Segmentation
         let segment: Segment?
     }
 
-    struct Segmentation: Codable {
+    struct Segmentation: Codable, Equatable {
         let ids: Id
     }
 
-    struct Segment: Codable {
+    struct Segment: Codable, Equatable {
         let ids: Id?
     }
 
-    struct Id: Codable {
+    struct Id: Codable, Equatable {
         let externalId: String
     }
 }
