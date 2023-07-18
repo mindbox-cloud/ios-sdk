@@ -523,6 +523,7 @@ public class Mindbox: NSObject {
         databaseRepository = container.databaseRepository
         inAppMessagesManager = container.inAppMessagesManager
         sessionTemporaryStorage = container.sessionTemporaryStorage
+        inAppMessagesDelegate = self
         inappMessageEventSender = container.inappMessageEventSender
 
         coreController = CoreController(
@@ -549,4 +550,8 @@ public class Mindbox: NSObject {
     @objc private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()
     }
+}
+
+extension Mindbox: DefaultInappMessageDelegate {
+    
 }
