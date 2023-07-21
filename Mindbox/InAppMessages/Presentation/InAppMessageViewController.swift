@@ -8,6 +8,10 @@
 import UIKit
 
 final class InAppMessageViewController: UIViewController {
+    
+    var crossView: CrossView?
+    var inAppView: InAppImageOnlyView?
+    var crossSize: CGFloat = 24
 
     init(
         inAppUIModel: InAppMessageUIModel,
@@ -34,9 +38,19 @@ final class InAppMessageViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black.withAlphaComponent(0.2)
-
-        let inAppView = InAppImageOnlyView(uiModel: inAppUIModel)
+        
+        inAppView = InAppImageOnlyView(uiModel: inAppUIModel)
+        crossView = CrossView(lineColorHex: "000000", lineWidth: 1)
+        
+        guard let inAppView = inAppView,
+              let crossView = crossView else {
+            return
+        }
+        let onTapDimmedViewGesture = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
+        view.addGestureRecognizer(onTapDimmedViewGesture)
+        view.isUserInteractionEnabled = true
         view.addSubview(inAppView)
+        
         inAppView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             inAppView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -46,12 +60,35 @@ final class InAppMessageViewController: UIViewController {
         ])
         let imageTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapImage))
         inAppView.addGestureRecognizer(imageTapGestureRecognizer)
-        inAppView.onClose = { [weak self] in self?.onClose() }
 
-        let closeTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
-        view.addGestureRecognizer(closeTapRecognizer)
+        inAppView.addSubview(crossView)
+        crossView.isUserInteractionEnabled = true
+
+        let closeTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(onCloseButton))
+        crossView.addGestureRecognizer(closeTapRecognizer)
     }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        guard let inAppView = inAppView,
+              let crossView = crossView else {
+            return
+        }
+        
+        let trailingOffsetPercent: CGFloat = 3
+        let topOffsetPercent: CGFloat = 3
 
+        let horizontalOffset = (inAppView.frame.width - crossSize) * trailingOffsetPercent / 100
+        let verticalOffset = (inAppView.frame.height - crossSize) * topOffsetPercent / 100
+        crossView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            crossView.trailingAnchor.constraint(equalTo: inAppView.trailingAnchor, constant: -horizontalOffset),
+            crossView.topAnchor.constraint(equalTo: inAppView.topAnchor, constant: verticalOffset),
+            crossView.widthAnchor.constraint(equalToConstant: crossSize),
+            crossView.heightAnchor.constraint(equalToConstant: crossSize)
+        ])
+    }
 
     private var viewWillAppearWasCalled = false
     override func viewWillAppear(_ animated: Bool) {
@@ -61,6 +98,10 @@ final class InAppMessageViewController: UIViewController {
         onPresented()
     }
 
+    @objc private func onCloseButton() {
+        onClose()
+    }
+    
     @objc private func onTapDimmedView() {
         onClose()
     }
