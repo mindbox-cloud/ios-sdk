@@ -76,11 +76,11 @@ final class InAppMessageViewController: UIViewController {
             return
         }
         
-        let trailingOffsetPercent: CGFloat = 3
-        let topOffsetPercent: CGFloat = 3
+        let trailingOffsetPercent: CGFloat = 0.03
+        let topOffsetPercent: CGFloat = 0.03
 
-        let horizontalOffset = (inAppView.frame.width - crossSize) * trailingOffsetPercent / 100
-        let verticalOffset = (inAppView.frame.height - crossSize) * topOffsetPercent / 100
+        let horizontalOffset = (inAppView.frame.width - crossSize) * trailingOffsetPercent
+        let verticalOffset = (inAppView.frame.height - crossSize) * topOffsetPercent
         crossView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             crossView.trailingAnchor.constraint(equalTo: inAppView.trailingAnchor, constant: -horizontalOffset),
