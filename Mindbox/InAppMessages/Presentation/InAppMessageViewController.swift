@@ -64,8 +64,9 @@ final class InAppMessageViewController: UIViewController {
         inAppView.addSubview(crossView)
         crossView.isUserInteractionEnabled = true
 
-        let closeTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(onCloseButton))
-        crossView.addGestureRecognizer(closeTapRecognizer)
+        let closeRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(onCloseButton))
+        closeRecognizer.minimumPressDuration = 0
+        crossView.addGestureRecognizer(closeRecognizer)
     }
     
     override func viewDidLayoutSubviews() {
@@ -98,8 +99,16 @@ final class InAppMessageViewController: UIViewController {
         onPresented()
     }
 
-    @objc private func onCloseButton() {
-        onClose()
+    @objc private func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
+        guard let crossView = crossView else {
+            return
+        }
+        
+        let location = gesture.location(in: crossView)
+        let isInsideCrossView = crossView.bounds.contains(location)
+        if gesture.state == .ended && isInsideCrossView {
+            onClose()
+        }
     }
     
     @objc private func onTapDimmedView() {
