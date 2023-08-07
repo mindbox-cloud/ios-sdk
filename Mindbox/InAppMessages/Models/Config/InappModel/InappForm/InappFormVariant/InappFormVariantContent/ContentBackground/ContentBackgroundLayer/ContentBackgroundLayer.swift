@@ -33,4 +33,10 @@ struct ContentBackgroundLayer: Decodable, Equatable {
             )
         }
     }
+    
+    init(type: ContentBackgroundLayerType, action: ContentBackgroundLayerAction? = nil, source: ContentBackgroundLayerSource? = nil) {
+        self.type = type
+        self.action = action
+        self.source = source
+    }
 }

@@ -8,7 +8,13 @@
 
 import Foundation
 
-enum ContentElementType: String, Decodable, Equatable, DecodableWithUnknown {
+enum ContentElementType: String, Decodable, Equatable {
     case closeButton
     case unknown
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(RawValue.self)
+        self = ContentElementType(rawValue: rawValue) ?? .unknown
+    }
 }

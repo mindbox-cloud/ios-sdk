@@ -8,7 +8,13 @@
 
 import Foundation
 
-enum LayerActionType: String, Decodable, Equatable, DecodableWithUnknown {
+enum LayerActionType: String, Decodable, Equatable {
     case redirectUrl
     case unknown
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(RawValue.self)
+        self = LayerActionType(rawValue: rawValue) ?? .unknown
+    }
 }

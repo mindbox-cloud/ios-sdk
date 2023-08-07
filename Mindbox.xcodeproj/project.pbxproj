@@ -337,7 +337,12 @@
 		F331DCD32A80993600222120 /* InappForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB82A80993600222120 /* InappForm.swift */; };
 		F331DCD42A80993600222120 /* InappValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB92A80993600222120 /* InappValidator.swift */; };
 		F331DCD52A80993600222120 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCBA2A80993600222120 /* InAppModel.swift */; };
-		F331DCD72A809A9700222120 /* DecodableWithUnknown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */; };
+		F331DCDC2A80AC4D00222120 /* ContentBackgroundLayerSourceValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCDB2A80AC4D00222120 /* ContentBackgroundLayerSourceValidatorTests.swift */; };
+		F331DCDE2A80B26C00222120 /* ContentBackgroundLayerActionValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCDD2A80B26C00222120 /* ContentBackgroundLayerActionValidatorTests.swift */; };
+		F331DCE02A80B37000222120 /* ContentBackgroundLayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCDF2A80B37000222120 /* ContentBackgroundLayerTests.swift */; };
+		F331DCE22A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */; };
+		F331DCE42A80B54A00222120 /* ContentElementValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCE32A80B54A00222120 /* ContentElementValidatorTests.swift */; };
+		F331DCE62A80B5AB00222120 /* InappFormVariantValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCE52A80B5AB00222120 /* InappFormVariantValidatorTests.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -774,7 +779,12 @@
 		F331DCB82A80993600222120 /* InappForm.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappForm.swift; sourceTree = "<group>"; };
 		F331DCB92A80993600222120 /* InappValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappValidator.swift; sourceTree = "<group>"; };
 		F331DCBA2A80993600222120 /* InAppModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
-		F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecodableWithUnknown.swift; sourceTree = "<group>"; };
+		F331DCDB2A80AC4D00222120 /* ContentBackgroundLayerSourceValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerSourceValidatorTests.swift; sourceTree = "<group>"; };
+		F331DCDD2A80B26C00222120 /* ContentBackgroundLayerActionValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerActionValidatorTests.swift; sourceTree = "<group>"; };
+		F331DCDF2A80B37000222120 /* ContentBackgroundLayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerTests.swift; sourceTree = "<group>"; };
+		F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMarginValidatorTests.swift; sourceTree = "<group>"; };
+		F331DCE32A80B54A00222120 /* ContentElementValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentElementValidatorTests.swift; sourceTree = "<group>"; };
+		F331DCE52A80B5AB00222120 /* InappFormVariantValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFormVariantValidatorTests.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1202,7 +1212,6 @@
 				337A473B265510AA000DC613 /* IDS.swift */,
 				337A473D265528B5000DC613 /* MBDate.swift */,
 				337A473F26553938000DC613 /* Sex.swift */,
-				F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -1613,6 +1622,7 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F331DCDA2A80AC3300222120 /* ModelValidatorTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
 				F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */,
 				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
@@ -2110,6 +2120,19 @@
 				F331DCB42A80993600222120 /* ContentBackgroundLayerType.swift */,
 			);
 			path = ContentBackgroundLayerType;
+			sourceTree = "<group>";
+		};
+		F331DCDA2A80AC3300222120 /* ModelValidatorTests */ = {
+			isa = PBXGroup;
+			children = (
+				F331DCDB2A80AC4D00222120 /* ContentBackgroundLayerSourceValidatorTests.swift */,
+				F331DCDD2A80B26C00222120 /* ContentBackgroundLayerActionValidatorTests.swift */,
+				F331DCDF2A80B37000222120 /* ContentBackgroundLayerTests.swift */,
+				F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */,
+				F331DCE32A80B54A00222120 /* ContentElementValidatorTests.swift */,
+				F331DCE52A80B5AB00222120 /* InappFormVariantValidatorTests.swift */,
+			);
+			path = ModelValidatorTests;
 			sourceTree = "<group>";
 		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {
@@ -2677,7 +2700,6 @@
 				F331DCBD2A80993600222120 /* InappFormVariantType.swift in Sources */,
 				33072F2E2664C24F001F1AB2 /* AreaResponse.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
-				F331DCD72A809A9700222120 /* DecodableWithUnknown.swift in Sources */,
 				A192786A29D38D2000CDB53D /* CheckerFactory.swift in Sources */,
 				F331DCC72A80993600222120 /* ContentElementValidator.swift in Sources */,
 				F331DCBE2A80993600222120 /* ContentElementType.swift in Sources */,
@@ -2826,6 +2848,7 @@
 			files = (
 				840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
+				F331DCE42A80B54A00222120 /* ContentElementValidatorTests.swift in Sources */,
 				9B9C9538292111A700BB29DA /* MockUUIDDebugService.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
 				3132DFF625C2A811007FE358 /* TestDependencyProvider.swift in Sources */,
@@ -2834,7 +2857,9 @@
 				F3A8B95C2A389EAD00E9C055 /* GeoServiceTests.swift in Sources */,
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
 				F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */,
+				F331DCE02A80B37000222120 /* ContentBackgroundLayerTests.swift in Sources */,
 				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
+				F331DCE22A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
@@ -2843,6 +2868,7 @@
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
+				F331DCDC2A80AC4D00222120 /* ContentBackgroundLayerSourceValidatorTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
 				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				A1F3EE4E298BEF0B005FA828 /* OSLogWritterTests.swift in Sources */,
@@ -2851,6 +2877,7 @@
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
+				F331DCDE2A80B26C00222120 /* ContentBackgroundLayerActionValidatorTests.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
@@ -2860,6 +2887,7 @@
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
+				F331DCE62A80B5AB00222120 /* InappFormVariantValidatorTests.swift in Sources */,
 				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,

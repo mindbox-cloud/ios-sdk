@@ -8,7 +8,13 @@
 
 import Foundation
 
-enum ContentBackgroundLayerType: String, Decodable, Equatable, DecodableWithUnknown {
+enum ContentBackgroundLayerType: String, Decodable, Equatable {
     case image
     case unknown
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(RawValue.self)
+        self = ContentBackgroundLayerType(rawValue: rawValue) ?? .unknown
+    }
 }

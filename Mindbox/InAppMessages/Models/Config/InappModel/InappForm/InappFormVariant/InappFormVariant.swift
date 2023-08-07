@@ -30,4 +30,9 @@ struct InappFormVariant: Decodable, Equatable {
             )
         }
     }
+    
+    internal init(type: InappFormVariantType, content: InappFormVariantContent? = nil) {
+        self.type = type
+        self.content = content
+    }
 }

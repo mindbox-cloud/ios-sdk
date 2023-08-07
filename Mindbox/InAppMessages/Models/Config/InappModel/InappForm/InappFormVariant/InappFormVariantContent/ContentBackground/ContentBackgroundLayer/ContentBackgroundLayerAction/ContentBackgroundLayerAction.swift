@@ -33,4 +33,10 @@ struct ContentBackgroundLayerAction: Decodable, Equatable {
             )
         }
     }
+    
+    init(type: LayerActionType, intentPayload: String? = nil, value: String? = nil) {
+        self.type = type
+        self.intentPayload = intentPayload
+        self.value = value
+    }
 }

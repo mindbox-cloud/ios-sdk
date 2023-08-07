@@ -43,4 +43,13 @@ struct ContentElement: Decodable, Equatable {
             )
         }
     }
+    
+    internal init(type: ContentElementType, color: String? = nil, lineWidth: Int? = nil, size: ContentElementSize? = nil, position: ContentElementPosition? = nil, gravity: ContentElementGravity? = nil) {
+        self.type = type
+        self.color = color
+        self.lineWidth = lineWidth
+        self.size = size
+        self.position = position
+        self.gravity = gravity
+    }
 }

@@ -30,4 +30,9 @@ struct ContentBackgroundLayerSource: Decodable, Equatable {
             )
         }
     }
+    
+    init(type: LayerSourceType, value: String? = nil) {
+        self.type = type
+        self.value = value
+    }
 }
