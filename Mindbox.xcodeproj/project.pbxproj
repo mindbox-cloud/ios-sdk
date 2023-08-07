@@ -367,7 +367,6 @@
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */; };
 		F39B67B32A3C8B1D005C0CCA /* ConfigWithAB_2.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */; };
-		F39B67B42A3C8B1D005C0CCA /* ConfigWithAB_3.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */; };
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
 		F39B67BA2A3FB943005C0CCA /* ConfigWithABBrokenRange.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67B92A3FB943005C0CCA /* ConfigWithABBrokenRange.json */; };
 		F39B67BC2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json in Resources */ = {isa = PBXBuildFile; fileRef = F39B67BB2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json */; };
@@ -809,7 +808,6 @@
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_1.json; sourceTree = "<group>"; };
 		F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_2.json; sourceTree = "<group>"; };
-		F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithAB_3.json; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
 		F39B67B92A3FB943005C0CCA /* ConfigWithABBrokenRange.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABBrokenRange.json; sourceTree = "<group>"; };
 		F39B67BB2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithABNoSalt.json; sourceTree = "<group>"; };
@@ -2209,7 +2207,6 @@
 				F39B67B72A3FAA75005C0CCA /* ABTests.swift */,
 				F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */,
 				F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */,
-				F39B67B12A3C8B1D005C0CCA /* ConfigWithAB_3.json */,
 			);
 			path = ABTesting;
 			sourceTree = "<group>";
@@ -2493,7 +2490,6 @@
 				F39B67C82A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json in Resources */,
 				F39B67BC2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
-				F39B67B42A3C8B1D005C0CCA /* ConfigWithAB_3.json in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
 				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
