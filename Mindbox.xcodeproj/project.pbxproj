@@ -337,6 +337,7 @@
 		F331DCD32A80993600222120 /* InappForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB82A80993600222120 /* InappForm.swift */; };
 		F331DCD42A80993600222120 /* InappValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB92A80993600222120 /* InappValidator.swift */; };
 		F331DCD52A80993600222120 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCBA2A80993600222120 /* InAppModel.swift */; };
+		F331DCD72A809A9700222120 /* DecodableWithUnknown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -773,6 +774,7 @@
 		F331DCB82A80993600222120 /* InappForm.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappForm.swift; sourceTree = "<group>"; };
 		F331DCB92A80993600222120 /* InappValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappValidator.swift; sourceTree = "<group>"; };
 		F331DCBA2A80993600222120 /* InAppModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
+		F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecodableWithUnknown.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1200,6 +1202,7 @@
 				337A473B265510AA000DC613 /* IDS.swift */,
 				337A473D265528B5000DC613 /* MBDate.swift */,
 				337A473F26553938000DC613 /* Sex.swift */,
+				F331DCD62A809A9700222120 /* DecodableWithUnknown.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -2674,6 +2677,7 @@
 				F331DCBD2A80993600222120 /* InappFormVariantType.swift in Sources */,
 				33072F2E2664C24F001F1AB2 /* AreaResponse.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
+				F331DCD72A809A9700222120 /* DecodableWithUnknown.swift in Sources */,
 				A192786A29D38D2000CDB53D /* CheckerFactory.swift in Sources */,
 				F331DCC72A80993600222120 /* ContentElementValidator.swift in Sources */,
 				F331DCBE2A80993600222120 /* ContentElementType.swift in Sources */,

@@ -239,14 +239,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
-            if let inAppFormVariants = inapp.form.variants.first {
-                let formData = InAppTransitionData(inAppId: inapp.id,
-                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
-                                                   redirectUrl: inAppFormVariants.redirectUrl,
-                                                   intentPayload: inAppFormVariants.intentPayload)
-                inAppsForEvent.append(formData)
-                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
-            }
+//            if let inAppFormVariants = inapp.form.variants.first {
+//                let formData = InAppTransitionData(inAppId: inapp.id,
+//                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
+//                                                   redirectUrl: inAppFormVariants.redirectUrl,
+//                                                   intentPayload: inAppFormVariants.intentPayload)
+//                inAppsForEvent.append(formData)
+//                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
+//            }
         }
         
         self.targetingChecker.event = nil

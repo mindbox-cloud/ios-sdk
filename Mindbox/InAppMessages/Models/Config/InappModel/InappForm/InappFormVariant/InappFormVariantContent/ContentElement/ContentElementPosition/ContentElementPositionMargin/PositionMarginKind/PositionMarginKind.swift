@@ -8,13 +8,7 @@
 
 import Foundation
 
-enum PositionMarginKind: String, Decodable, Equatable {
+enum PositionMarginKind: String, Decodable, Equatable, DecodableWithUnknown {
     case proportion
     case unknown
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = PositionMarginKind(rawValue: type) ?? .unknown
-    }
 }

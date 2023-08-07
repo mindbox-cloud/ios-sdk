@@ -8,14 +8,8 @@
 
 import Foundation
 
-enum InappFormVariantType: String, Decodable, Equatable {
+enum InappFormVariantType: String, Decodable, Equatable, DecodableWithUnknown {
     case modal
     case snackbar
     case unknown
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = InappFormVariantType(rawValue: type) ?? .unknown
-    }
 }

@@ -8,13 +8,7 @@
 
 import Foundation
 
-enum ContentElementSizeKind: String, Decodable, Equatable {
+enum ContentElementSizeKind: String, Decodable, Equatable, DecodableWithUnknown {
     case dp
     case unknown
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = ContentElementSizeKind(rawValue: type) ?? .unknown
-    }
 }

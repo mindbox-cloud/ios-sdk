@@ -7,13 +7,7 @@
 
 import Foundation
 
-enum LayerSourceType: String, Decodable, Equatable {
+enum LayerSourceType: String, Decodable, Equatable, DecodableWithUnknown {
     case url
     case unknown
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = LayerSourceType(rawValue: type) ?? .unknown
-    }
 }
