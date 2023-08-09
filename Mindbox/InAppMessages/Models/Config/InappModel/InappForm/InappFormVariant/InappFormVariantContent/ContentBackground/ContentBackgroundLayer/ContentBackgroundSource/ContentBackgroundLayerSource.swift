@@ -20,7 +20,7 @@ struct ContentBackgroundLayerSource: Decodable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decode(LayerSourceType.self, forKey: .type)
-        self.value = try container.decodeIfPresent(String.self, forKey: .value)
+        self.value = try container.decodeIfPresentSafely(String.self, forKey: .value)
 
         if !ContentBackgroundLayerSourceValidator().isValid(item: self) {
             throw DecodingError.dataCorruptedError(

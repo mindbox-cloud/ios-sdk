@@ -29,8 +29,8 @@ struct ContentElement: Decodable, Equatable {
         let container: KeyedDecodingContainer<ContentElement.CodingKeys> = try decoder.container(keyedBy: ContentElement.CodingKeys.self)
         
         self.type = try container.decode(ContentElementType.self, forKey: ContentElement.CodingKeys.type)
-        self.color = try container.decodeIfPresent(String.self, forKey: ContentElement.CodingKeys.color)
-        self.lineWidth = try container.decodeIfPresent(Int.self, forKey: ContentElement.CodingKeys.lineWidth)
+        self.color = try container.decodeIfPresentSafely(String.self, forKey: .color)
+        self.lineWidth = try container.decodeIfPresentSafely(Int.self, forKey: .lineWidth)
         self.size = try container.decodeIfPresent(ContentElementSize.self, forKey: .size)
         self.position = try container.decodeIfPresent(ContentElementPosition.self, forKey: .position)
         self.gravity = try container.decodeIfPresent(ContentElementGravity.self, forKey: .gravity)

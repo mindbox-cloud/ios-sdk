@@ -22,8 +22,8 @@ struct ContentBackgroundLayerAction: Decodable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decode(LayerActionType.self, forKey: .type)
-        self.intentPayload = try container.decodeIfPresent(String.self, forKey: .intentPayload)
-        self.value = try container.decodeIfPresent(String.self, forKey: .value)
+        self.intentPayload = try container.decodeIfPresentSafely(String.self, forKey: .intentPayload)
+        self.value = try container.decodeIfPresentSafely(String.self, forKey: .value)
         
         if !ContentBackgroundLayerActionValidator().isValid(item: self) {
             throw DecodingError.dataCorruptedError(
