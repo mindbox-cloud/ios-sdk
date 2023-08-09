@@ -353,6 +353,7 @@
 		F331DD0B2A83A56500222120 /* CrossView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCFD2A83A56500222120 /* CrossView.swift */; };
 		F331DD0C2A83A56500222120 /* ViewFactoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCFF2A83A56500222120 /* ViewFactoryProtocol.swift */; };
 		F331DD0D2A83A56500222120 /* ModalViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD002A83A56500222120 /* ModalViewFactory.swift */; };
+		F331DD112A83CA7500222120 /* KeyedDecodingContainer+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD102A83CA7400222120 /* KeyedDecodingContainer+Extensions.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -803,6 +804,7 @@
 		F331DCFD2A83A56500222120 /* CrossView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CrossView.swift; sourceTree = "<group>"; };
 		F331DCFF2A83A56500222120 /* ViewFactoryProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewFactoryProtocol.swift; sourceTree = "<group>"; };
 		F331DD002A83A56500222120 /* ModalViewFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModalViewFactory.swift; sourceTree = "<group>"; };
+		F331DD102A83CA7400222120 /* KeyedDecodingContainer+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "KeyedDecodingContainer+Extensions.swift"; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -2257,6 +2259,7 @@
 		F37613DF2A6A8CFF009F2EE4 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				F331DD102A83CA7400222120 /* KeyedDecodingContainer+Extensions.swift */,
 				F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */,
 			);
 			path = Extensions;
@@ -2773,6 +2776,7 @@
 				F3482F1D2A65DC11002A41EC /* CompositeInappMessageDelegate.swift in Sources */,
 				33072F3C2664C713001F1AB2 /* CustomerSegmentationsResponse.swift in Sources */,
 				33072F3A2664C5CB001F1AB2 /* ManufacturerResponse.swift in Sources */,
+				F331DD112A83CA7500222120 /* KeyedDecodingContainer+Extensions.swift in Sources */,
 				A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */,
 				F397EEB52A44573600D48CEC /* Status.swift in Sources */,
 				6FDD1455266F7C9A00A50C35 /* PromotionTypeResponse.swift in Sources */,

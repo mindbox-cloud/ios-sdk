@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class InappValidator: Validator {
     typealias T = InApp
@@ -19,10 +20,12 @@ class InappValidator: Validator {
 
     func isValid(item: InApp) -> Bool {
         if item.id.isEmpty {
+            Logger.common(message: "In-app id cannot be empty. In-app will be ignored.", level: .error, category: .inAppMessages)
             return false
         }
         
         if !sdkVersionValidator.isValid(item: item.sdkVersion) {
+            Logger.common(message: "Invalid SDK version for In-app. In-app with id \(item.id) will be ignored.", level: .error, category: .inAppMessages)
             return false
         }
         

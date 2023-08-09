@@ -69,33 +69,32 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             }
             
             self?.displayUseCase.changeType(type: type)
-            self?.displayUseCase.presentInAppUIModel(
-                inAppUIModel: inAppFormData,
-                onPresented: onPresented,
-                onTapAction: { [weak self] action in
-                    guard let action = action else {
-                        return
-                    }
-                    
-                    switch action.type {
-                    case .redirectUrl:
-                        if let value = action.value, let payload = action.intentPayload {
-                            self?.actionUseCase.onTapAction(id: inAppFormData.inAppId,
-                                                            value: value,
-                                                            payload: payload,
-                                                            onTap: onTapAction,
-                                                            close: {
-                                self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
-                            })
-                        }
-                    case .unknown:
-                        break
-                    }
-                },
-                onClose: {
-                    self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
+            
+            self?.displayUseCase.presentInAppUIModel(inAppUIModel: inAppFormData,
+                                                     onPresented: {
+                self?.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
+            }, onTapAction: { [weak self] action in
+                guard let action = action else {
+                    return
                 }
-            )
+                
+                switch action.type {
+                case .redirectUrl:
+                    if let value = action.value, let payload = action.intentPayload {
+                        self?.actionUseCase.onTapAction(id: inAppFormData.inAppId,
+                                                        value: value,
+                                                        payload: payload,
+                                                        onTap: onTapAction,
+                                                        close: {
+                            self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
+                        })
+                    }
+                case .unknown:
+                    break
+                }
+            }, onClose: {
+                self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
+            })
         }
     }
     

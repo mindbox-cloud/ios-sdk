@@ -62,7 +62,7 @@ final class DependencyProvider: DependencyContainer {
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
         abTestDeviceMixer = ABTestDeviceMixer()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        let displayUseCase = PresentationDisplayUseCase()
+        let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
         let actionUseCase = PresentationActionUseCase(tracker: tracker)
         let presentationManager = InAppPresentationManager(displayUseCase: displayUseCase,
                                                            actionUseCase: actionUseCase)
