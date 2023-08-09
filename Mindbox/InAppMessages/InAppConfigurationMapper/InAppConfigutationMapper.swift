@@ -54,7 +54,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps?.elements)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {
@@ -239,14 +239,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
-            if let inAppFormVariants = inapp.form.variants.first {
-                let formData = InAppTransitionData(inAppId: inapp.id,
-                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
-                                                   redirectUrl: inAppFormVariants.redirectUrl,
-                                                   intentPayload: inAppFormVariants.intentPayload)
-                inAppsForEvent.append(formData)
-                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
-            }
+//            if let inAppFormVariants = inapp.form.variants.first {
+//                let formData = InAppTransitionData(inAppId: inapp.id,
+//                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
+//                                                   redirectUrl: inAppFormVariants.redirectUrl,
+//                                                   intentPayload: inAppFormVariants.intentPayload)
+//                inAppsForEvent.append(formData)
+//                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
+//            }
         }
         
         self.targetingChecker.event = nil
