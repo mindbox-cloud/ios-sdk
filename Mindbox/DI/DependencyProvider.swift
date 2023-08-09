@@ -61,6 +61,11 @@ final class DependencyProvider: DependencyContainer {
         let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
         abTestDeviceMixer = ABTestDeviceMixer()
+        let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
+        let displayUseCase = PresentationDisplayUseCase()
+        let actionUseCase = PresentationActionUseCase(tracker: tracker)
+        let presentationManager = InAppPresentationManager(displayUseCase: displayUseCase,
+                                                           actionUseCase: actionUseCase)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -75,9 +80,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    imageDownloadService: imageDownloadService,
                                                                    abTestDeviceMixer: abTestDeviceMixer),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
-            presentationManager: InAppPresentationManager(
-                inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
-            ),
+            presentationManager: presentationManager,
             persistenceStorage: persistenceStorage,
             sessionStorage: sessionTemporaryStorage
         )

@@ -13,13 +13,10 @@ import UIKit
 struct InAppFormData {
     let inAppId: String
     let image: UIImage
-    let redirectUrl: String
-    let intentPayload: String
+    let content: InappFormVariant
 }
 
 struct InAppTransitionData: Equatable {
     let inAppId: String
-    let imageUrl: String
-    let redirectUrl: String
-    let intentPayload: String
+    let content: InappFormVariant
 }

@@ -8,21 +8,30 @@
 import UIKit
 
 final class InAppImageOnlyView: UIView {
+    var onClose: (() -> Void)?
     let imageView = UIImageView()
-    let uiModel: InAppMessageUIModel
+    let image: UIImage?
+    let action: ContentBackgroundLayerAction?
 
-    init(uiModel: InAppMessageUIModel) {
-        self.uiModel = uiModel
+    init(image: UIImage, action: ContentBackgroundLayerAction?) {
+        self.image = image
+        self.action = action
         super.init(frame: .zero)
         customInit()
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        self.image = nil
+        self.action = nil
+        super.init(coder: coder)
+        customInit()
     }
 
     func customInit() {
-        let image = uiModel.image
+        guard let image = image else {
+            return
+        }
+        
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
 
