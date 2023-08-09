@@ -30,6 +30,6 @@ enum Constants {
     }
     
     enum Versions {
-        static let sdkVersionNumeric = 7
+        static let sdkVersionNumeric = 8
     }
 }
