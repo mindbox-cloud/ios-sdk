@@ -269,11 +269,16 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 var imageValue: String?
                 switch inapp.content {
                     case .modal(let modalModel):
-                        guard let image = modalModel.content.background.layers.elements.first(where: { $0.type == .image }),
-                              let modalImageValue = image.source?.value else {
+                        guard modalModel.content.background.layers.elements.first(where: {
+                            switch $0 {
+                                case .image(let imageModel):
+                                    imageValue = imageModel.source.value
+                                    return true
+                                case .unknown: return false
+                            }
+                        }) != nil else {
                             continue
                         }
-                        imageValue = modalImageValue
                     case .unknown:
                         continue
                 }

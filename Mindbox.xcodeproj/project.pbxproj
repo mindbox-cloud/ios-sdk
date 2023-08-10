@@ -318,14 +318,10 @@
 		F331DCC62A80993600222120 /* ContentElementPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */; };
 		F331DCC72A80993600222120 /* ContentElementValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA52A80993600222120 /* ContentElementValidator.swift */; };
 		F331DCC82A80993600222120 /* ContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */; };
-		F331DCC92A80993600222120 /* ContentBackgroundLayerActionValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAA2A80993600222120 /* ContentBackgroundLayerActionValidator.swift */; };
-		F331DCCA2A80993600222120 /* LayerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAC2A80993600222120 /* LayerActionType.swift */; };
 		F331DCCB2A80993600222120 /* ContentBackgroundLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */; };
 		F331DCCC2A80993600222120 /* ContentBackgroundLayerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAF2A80993600222120 /* ContentBackgroundLayerSource.swift */; };
 		F331DCCD2A80993600222120 /* LayerSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB12A80993600222120 /* LayerSourceType.swift */; };
 		F331DCCE2A80993600222120 /* ContentBackgroundLayerSourceValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB22A80993600222120 /* ContentBackgroundLayerSourceValidator.swift */; };
-		F331DCCF2A80993600222120 /* ContentBackgroundLayerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB42A80993600222120 /* ContentBackgroundLayerType.swift */; };
-		F331DCD02A80993600222120 /* ContentBackgroundLayerValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB52A80993600222120 /* ContentBackgroundLayerValidator.swift */; };
 		F331DCD12A80993600222120 /* ContentBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB62A80993600222120 /* ContentBackground.swift */; };
 		F331DCD22A80993600222120 /* InappFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB72A80993600222120 /* InappFormVariantContent.swift */; };
 		F331DCD32A80993600222120 /* InappForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB82A80993600222120 /* InappForm.swift */; };
@@ -353,6 +349,7 @@
 		F331DD112A83CA7500222120 /* KeyedDecodingContainer+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD102A83CA7400222120 /* KeyedDecodingContainer+Extensions.swift */; };
 		F331DD162A840D1700222120 /* iFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD152A840D1700222120 /* iFormVariant.swift */; };
 		F331DD192A840D2100222120 /* ModalFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD182A840D2100222120 /* ModalFormVariant.swift */; };
+		F331DD1C2A84B5EF00222120 /* ImageContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD1B2A84B5EF00222120 /* ImageContentBackgroundLayer.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -768,14 +765,10 @@
 		F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F331DCA52A80993600222120 /* ContentElementValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementValidator.swift; sourceTree = "<group>"; };
 		F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayer.swift; sourceTree = "<group>"; };
-		F331DCAA2A80993600222120 /* ContentBackgroundLayerActionValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerActionValidator.swift; sourceTree = "<group>"; };
-		F331DCAC2A80993600222120 /* LayerActionType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LayerActionType.swift; sourceTree = "<group>"; };
 		F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerAction.swift; sourceTree = "<group>"; };
 		F331DCAF2A80993600222120 /* ContentBackgroundLayerSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerSource.swift; sourceTree = "<group>"; };
 		F331DCB12A80993600222120 /* LayerSourceType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LayerSourceType.swift; sourceTree = "<group>"; };
 		F331DCB22A80993600222120 /* ContentBackgroundLayerSourceValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerSourceValidator.swift; sourceTree = "<group>"; };
-		F331DCB42A80993600222120 /* ContentBackgroundLayerType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerType.swift; sourceTree = "<group>"; };
-		F331DCB52A80993600222120 /* ContentBackgroundLayerValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerValidator.swift; sourceTree = "<group>"; };
 		F331DCB62A80993600222120 /* ContentBackground.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackground.swift; sourceTree = "<group>"; };
 		F331DCB72A80993600222120 /* InappFormVariantContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappFormVariantContent.swift; sourceTree = "<group>"; };
 		F331DCB82A80993600222120 /* InappForm.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappForm.swift; sourceTree = "<group>"; };
@@ -803,6 +796,7 @@
 		F331DD102A83CA7400222120 /* KeyedDecodingContainer+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "KeyedDecodingContainer+Extensions.swift"; sourceTree = "<group>"; };
 		F331DD152A840D1700222120 /* iFormVariant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = iFormVariant.swift; sourceTree = "<group>"; };
 		F331DD182A840D2100222120 /* ModalFormVariant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModalFormVariant.swift; sourceTree = "<group>"; };
+		F331DD1B2A84B5EF00222120 /* ImageContentBackgroundLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -2058,10 +2052,9 @@
 			isa = PBXGroup;
 			children = (
 				F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */,
+				F331DD1A2A84B5D200222120 /* Layers */,
 				F331DCA92A80993600222120 /* ContentBackgroundLayerAction */,
 				F331DCAE2A80993600222120 /* ContentBackgroundSource */,
-				F331DCB32A80993600222120 /* ContentBackgroundLayerType */,
-				F331DCB52A80993600222120 /* ContentBackgroundLayerValidator.swift */,
 			);
 			path = ContentBackgroundLayer;
 			sourceTree = "<group>";
@@ -2069,19 +2062,9 @@
 		F331DCA92A80993600222120 /* ContentBackgroundLayerAction */ = {
 			isa = PBXGroup;
 			children = (
-				F331DCAA2A80993600222120 /* ContentBackgroundLayerActionValidator.swift */,
-				F331DCAB2A80993600222120 /* LayerActionType */,
 				F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */,
 			);
 			path = ContentBackgroundLayerAction;
-			sourceTree = "<group>";
-		};
-		F331DCAB2A80993600222120 /* LayerActionType */ = {
-			isa = PBXGroup;
-			children = (
-				F331DCAC2A80993600222120 /* LayerActionType.swift */,
-			);
-			path = LayerActionType;
 			sourceTree = "<group>";
 		};
 		F331DCAE2A80993600222120 /* ContentBackgroundSource */ = {
@@ -2100,14 +2083,6 @@
 				F331DCB12A80993600222120 /* LayerSourceType.swift */,
 			);
 			path = LayerSourceType;
-			sourceTree = "<group>";
-		};
-		F331DCB32A80993600222120 /* ContentBackgroundLayerType */ = {
-			isa = PBXGroup;
-			children = (
-				F331DCB42A80993600222120 /* ContentBackgroundLayerType.swift */,
-			);
-			path = ContentBackgroundLayerType;
 			sourceTree = "<group>";
 		};
 		F331DCDA2A80AC3300222120 /* ModelValidatorTests */ = {
@@ -2229,6 +2204,14 @@
 				F331DD182A840D2100222120 /* ModalFormVariant.swift */,
 			);
 			path = Variants;
+			sourceTree = "<group>";
+		};
+		F331DD1A2A84B5D200222120 /* Layers */ = {
+			isa = PBXGroup;
+			children = (
+				F331DD1B2A84B5EF00222120 /* ImageContentBackgroundLayer.swift */,
+			);
+			path = Layers;
 			sourceTree = "<group>";
 		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {
@@ -2680,7 +2663,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F331DD062A83A56500222120 /* ModalViewController.swift in Sources */,
-				F331DCC92A80993600222120 /* ContentBackgroundLayerActionValidator.swift in Sources */,
 				F331DCC12A80993600222120 /* ContentElement.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				33072F442664CC6C001F1AB2 /* IssuedPointOfContactResponse.swift in Sources */,
@@ -2709,6 +2691,7 @@
 				F3A8B99A2A3A471800E9C055 /* ABTestVariantsValidator.swift in Sources */,
 				33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */,
 				84A312B725DA64C60096A017 /* BGTaskManager.swift in Sources */,
+				F331DD1C2A84B5EF00222120 /* ImageContentBackgroundLayer.swift in Sources */,
 				F3A8B9A52A3A6F2800E9C055 /* MonitoringModel.swift in Sources */,
 				334F3AE8264C199900A6AC00 /* ItemRequest.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
@@ -2820,7 +2803,6 @@
 				F331DCD22A80993600222120 /* InappFormVariantContent.swift in Sources */,
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
-				F331DCCF2A80993600222120 /* ContentBackgroundLayerType.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
 				6FDD1461266F7CE300A50C35 /* DiscountAmountTypeResponse.swift in Sources */,
 				6FDD144F266F7C7000A50C35 /* UsedResponse.swift in Sources */,
@@ -2839,7 +2821,6 @@
 				A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */,
 				A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */,
 				33072F402664CB08001F1AB2 /* ProductGroupResponse.swift in Sources */,
-				F331DCCA2A80993600222120 /* LayerActionType.swift in Sources */,
 				A1D017F52976FC2B00CD9F99 /* InternalTargetingChecker.swift in Sources */,
 				6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */,
 				6FDD143F266F7BF900A50C35 /* AppliedPromotionResponse.swift in Sources */,
@@ -2856,7 +2837,6 @@
 				A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
 				A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */,
-				F331DCD02A80993600222120 /* ContentBackgroundLayerValidator.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,

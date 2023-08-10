@@ -9,16 +9,20 @@
 import UIKit
 
 protocol LayerFactory {
-    func create(from image: UIImage, action: ContentBackgroundLayerAction?, in view: UIView, with controller: ModalViewController) -> UIView?
+    func create(from image: UIImage, layer: ContentBackgroundLayer, in view: UIView, with controller: ModalViewController) -> UIView?
     func setupConstraints(for view: UIView, in parentView: UIView)
 }
 
 class ImageLayerFactory: LayerFactory {
-    func create(from image: UIImage, action: ContentBackgroundLayerAction?, in view: UIView, with controller: ModalViewController) -> UIView? {
-        let inAppView = InAppImageOnlyView(image: image, action: action)
-        let imageTapGestureRecognizer = UITapGestureRecognizer(target: controller, action: #selector(controller.imageTapped(_:)))
-        inAppView.addGestureRecognizer(imageTapGestureRecognizer)
-        return inAppView
+    func create(from image: UIImage, layer: ContentBackgroundLayer, in view: UIView, with controller: ModalViewController) -> UIView? {
+        if case .image(let imageContentBackgroundLayer) = layer {
+            let inAppView = InAppImageOnlyView(image: image, action: imageContentBackgroundLayer.action)
+            let imageTapGestureRecognizer = UITapGestureRecognizer(target: controller, action: #selector(controller.imageTapped(_:)))
+            inAppView.addGestureRecognizer(imageTapGestureRecognizer)
+            return inAppView
+        }
+        
+        return nil
     }
     
     func setupConstraints(for view: UIView, in parentView: UIView) {
