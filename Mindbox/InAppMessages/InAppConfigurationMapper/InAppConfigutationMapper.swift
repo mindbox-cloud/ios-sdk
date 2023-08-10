@@ -272,9 +272,16 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                         guard modalModel.content.background.layers.elements.first(where: {
                             switch $0 {
                                 case .image(let imageModel):
-                                    imageValue = imageModel.source.value
+                                    switch imageModel.source {
+                                        case .url(let urlModel):
+                                            imageValue = urlModel.value
+                                        case .unknown:
+                                            return false
+                                    }
+                                    
                                     return true
-                                case .unknown: return false
+                                case .unknown:
+                                    return false
                             }
                         }) != nil else {
                             continue

@@ -62,3 +62,14 @@ enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
         }
     }
 }
+
+extension ContentBackgroundLayerAction {
+    var actionType: ContentBackgroundLayerActionType {
+        switch self {
+            case .redirectUrl:
+                return .redirectUrl
+            case .unknown:
+                return .unknown
+        }
+    }
+}
