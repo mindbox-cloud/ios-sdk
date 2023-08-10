@@ -48,11 +48,7 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
         let container: KeyedDecodingContainer<ContentBackgroundLayer.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerType.self, forKey: .type) else {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Form variant is unknown. Ignored."
-            )
+            throw CustomDecodingError.decodingError("The layer type could not be decoded. The layer will be ignored.")
         }
         
         let layerContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
@@ -62,11 +58,18 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayer.self)
                 self = .image(imageLayer)
             case .unknown:
-                throw DecodingError.dataCorruptedError(
-                    forKey: .type,
-                    in: container,
-                    debugDescription: "Form variant is unknown. Ignored."
-                )
+                throw CustomDecodingError.unknownType("The layer type is unrecognized. The action will be ignored.")
+        }
+    }
+}
+
+extension ContentBackgroundLayer {
+    var layerType: ContentBackgroundLayerType {
+        switch self {
+            case .image:
+                return .image
+            case .unknown:
+                return .unknown
         }
     }
 }

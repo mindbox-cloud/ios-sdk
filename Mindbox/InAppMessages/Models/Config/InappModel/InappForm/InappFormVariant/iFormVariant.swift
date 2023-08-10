@@ -48,11 +48,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
         let container: KeyedDecodingContainer<MindboxFormVariant.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(MindboxFormVariantType.self, forKey: .type) else {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Form variant is unknown. Ignored."
-            )
+            throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
         }
         
         let variantContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
@@ -62,11 +58,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
                 let modalVariant = try variantContainer.decode(ModalFormVariant.self)
                 self = .modal(modalVariant)
             case .unknown:
-                throw DecodingError.dataCorruptedError(
-                    forKey: .type,
-                    in: container,
-                    debugDescription: "Form variant is unknown. Ignored."
-                )
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
         }
     }
 }

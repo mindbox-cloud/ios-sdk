@@ -36,11 +36,7 @@ struct ContentElement: Decodable, Equatable {
         self.gravity = try container.decodeIfPresent(ContentElementGravity.self, forKey: .gravity)
         
         if !ContentElementValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Layers cannot be empty."
-            )
+            throw CustomDecodingError.decodingError("The element not passed validation. The element will be ignored.")
         }
     }
     

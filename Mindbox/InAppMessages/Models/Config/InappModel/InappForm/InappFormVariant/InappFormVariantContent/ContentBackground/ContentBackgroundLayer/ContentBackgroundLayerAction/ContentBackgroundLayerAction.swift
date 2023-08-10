@@ -8,35 +8,57 @@
 
 import Foundation
 
-struct ContentBackgroundLayerAction: Decodable, Equatable {
-    let type: LayerActionType
-    let intentPayload: String?
-    let value: String?
+protocol ContentBackgroundLayerActionProtocol: Decodable, Equatable { }
 
-    enum CodingKeys: String, CodingKey {
-        case type = "$type"
-        case intentPayload
-        case value
-    }
+enum ContentBackgroundLayerActionType: String, Decodable {
+    case redirectUrl
+    case unknown
     
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.type = try container.decode(LayerActionType.self, forKey: .type)
-        self.intentPayload = try container.decodeIfPresentSafely(String.self, forKey: .intentPayload)
-        self.value = try container.decodeIfPresentSafely(String.self, forKey: .value)
-        
-        if !ContentBackgroundLayerActionValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Invalid layer action."
-            )
+        let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        let type: String = try container.decode(String.self)
+        self = ContentBackgroundLayerActionType(rawValue: type) ?? .unknown
+    }
+}
+
+enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
+    case redirectUrl(RedirectUrlLayerAction)
+    case unknown
+    
+    enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+    
+    static func == (lhs: ContentBackgroundLayerAction, rhs: ContentBackgroundLayerAction) -> Bool {
+        switch (lhs, rhs) {
+            case (.redirectUrl, .redirectUrl): return true
+            case (.unknown, .unknown): return true
+            default: return false
         }
     }
     
-    init(type: LayerActionType, intentPayload: String? = nil, value: String? = nil) {
-        self.type = type
-        self.intentPayload = intentPayload
-        self.value = value
+    func hash(into hasher: inout Hasher) {
+        switch self {
+            case .redirectUrl: hasher.combine("redirectUrl")
+            case .unknown: hasher.combine("unknown")
+        }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container: KeyedDecodingContainer<ContentBackgroundLayerAction.CodingKeys> = try decoder.container(
+            keyedBy: CodingKeys.self)
+        guard let type = try? container.decode(ContentBackgroundLayerActionType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("The action type could not be decoded. The action will be ignored.")
+        }
+        
+        let actionContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        
+        switch type {
+            case .redirectUrl:
+                let redirectUrlAction = try actionContainer.decode(RedirectUrlLayerAction.self)
+                self = .redirectUrl(redirectUrlAction)
+            case .unknown:
+                throw CustomDecodingError.unknownType("The action type could not be decoded. The action will be ignored.")
+        }
     }
 }

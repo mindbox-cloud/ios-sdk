@@ -39,18 +39,16 @@ enum InAppPresentationError {
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
-
-    init(
-        displayUseCase: PresentationDisplayUseCase,
-        actionUseCase: PresentationActionUseCase
-    ) {
-        self.displayUseCase = displayUseCase
-        self.actionUseCase = actionUseCase
-    }
-
+    
+    private let actionHandler: InAppActionHandlerProtocol
     private let displayUseCase: PresentationDisplayUseCase
-    private let actionUseCase: PresentationActionUseCase
-
+    
+    init(actionHandler: InAppActionHandlerProtocol,
+         displayUseCase: PresentationDisplayUseCase) {
+        self.actionHandler = actionHandler
+        self.displayUseCase = displayUseCase
+    }
+    
     func present(
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
@@ -66,27 +64,17 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             
             self.displayUseCase.changeType(model: inAppFormData.content)
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
-                                                     onPresented: {
+                                                    onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
             }, onTapAction: { [weak self] action in
-                guard let action = action else {
+                guard let self = self,
+                      let action = action else {
                     return
                 }
-
-                switch action.type {
-                case .redirectUrl:
-                    if let value = action.value, let payload = action.intentPayload {
-                        self?.actionUseCase.onTapAction(id: inAppFormData.inAppId,
-                                                        value: value,
-                                                        payload: payload,
-                                                        onTap: onTapAction,
-                                                        close: {
-                            self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
-                        })
-                    }
-                case .unknown:
-                    break
-                }
+                
+                self.actionHandler.handleAction(action, for: inAppFormData.inAppId, onTap: onTapAction, close: {
+                    self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
+                })
             }, onClose: {
                 self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
             })

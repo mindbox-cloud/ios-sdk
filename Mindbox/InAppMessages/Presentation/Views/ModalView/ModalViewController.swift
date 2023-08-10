@@ -98,15 +98,7 @@ final class ModalViewController: UIViewController {
     private func setupLayers() {
         let layers = model.content.background.layers.elements         
         for layer in layers {
-            let type: ContentBackgroundLayerType
-            switch layer {
-                case .image:
-                    type = .image
-                case .unknown:
-                    type = .unknown
-            }
-            
-            if let factory = layersFactories[type] {
+            if let factory = layersFactories[layer.layerType] {
                 let layerView = factory.create(from: self.image, layer: layer, in: view, with: self)
                 if let layerView = layerView {
                     self.layers.append(layerView)
