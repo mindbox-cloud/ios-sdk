@@ -67,6 +67,7 @@ final class DependencyProvider: DependencyContainer {
         let actionHandler = InAppActionHandler(actionUseCase: actionUseCase)
         let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
                                                            displayUseCase: displayUseCase)
+        let urlExtractorService = VariantImageUrlExtractorService()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -79,6 +80,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
                                                                    imageDownloadService: imageDownloadService,
+                                                                   urlExtractorService: urlExtractorService,
                                                                    abTestDeviceMixer: abTestDeviceMixer),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: presentationManager,

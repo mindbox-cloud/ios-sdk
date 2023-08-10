@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let imageDownloadService: ImageDownloadServiceProtocol
+    private let urlExtractorService: VariantImageUrlExtractorService
     private let abTestDeviceMixer: ABTestDeviceMixer
 
     private let dispatchGroup = DispatchGroup()
@@ -37,6 +38,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
          imageDownloadService: ImageDownloadServiceProtocol,
+         urlExtractorService: VariantImageUrlExtractorService,
          abTestDeviceMixer: ABTestDeviceMixer) {
         self.geoService = geoService
         self.segmentationService = segmentationService
@@ -46,6 +48,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
         self.imageDownloadService = imageDownloadService
+        self.urlExtractorService = urlExtractorService
         self.abTestDeviceMixer = abTestDeviceMixer
     }
 
@@ -266,31 +269,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     continue
                 }
                 
-                var imageValue: String?
-                switch inapp.content {
-                    case .modal(let modalModel):
-                        guard modalModel.content.background.layers.elements.first(where: {
-                            switch $0 {
-                                case .image(let imageModel):
-                                    switch imageModel.source {
-                                        case .url(let urlModel):
-                                            imageValue = urlModel.value
-                                        case .unknown:
-                                            return false
-                                    }
-                                    
-                                    return true
-                                case .unknown:
-                                    return false
-                            }
-                        }) != nil else {
-                            continue
-                        }
-                    case .unknown:
-                        continue
-                }
-                
-                guard let imageValue = imageValue else { continue }
+                guard let imageValue = self.urlExtractorService.extractImageURL(from: inapp.content) else { continue }
                 
                 group.enter()
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)

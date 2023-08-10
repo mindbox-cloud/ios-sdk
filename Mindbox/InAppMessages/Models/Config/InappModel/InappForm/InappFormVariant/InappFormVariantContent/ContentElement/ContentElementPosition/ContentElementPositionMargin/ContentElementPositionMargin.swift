@@ -33,11 +33,7 @@ struct ContentElementPositionMargin: Decodable, Equatable {
         self.bottom = try container.decodeIfPresentSafely(Double.self, forKey: ContentElementPositionMargin.CodingKeys.bottom)
         
         if !ContentElementPositionMarginValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .kind,
-                in: container,
-                debugDescription: "Position margin corrupted."
-            )
+            throw CustomDecodingError.decodingError("ContentElementPositionMargin not passed validation. It will be ignored.")
         }
     }
     

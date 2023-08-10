@@ -20,11 +20,7 @@ struct InAppForm: Decodable, Equatable {
         let variants = try container.decode(FailableDecodableArray<MindboxFormVariant>.self, forKey: .variants)
         
         if variants.elements.isEmpty {
-            throw DecodingError.dataCorruptedError(
-                forKey: .variants,
-                in: container,
-                debugDescription: "Variants cannot be empty"
-            )
+            throw CustomDecodingError.decodingError("Variants array cannot be empty.")
         }
         
         self.variants = variants
