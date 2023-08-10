@@ -116,7 +116,7 @@ final class ModalViewController: UIViewController {
         }
         
         for element in elements {
-            if let factory = elementFactories[element.type] {
+            if let factory = elementFactories[element.elementType] {
                 let elementView = factory.create(from: element, in: inappView, with: self)
                 if let elementView = elementView {
                     self.elements.append(elementView)
