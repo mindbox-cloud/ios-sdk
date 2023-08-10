@@ -266,10 +266,19 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     continue
                 }
                 
-                guard let image = inapp.content.content?.background.layers.elements.first(where: { $0.type == .image }),
-                      let imageValue = image.source?.value else {
-                    continue
+                var imageValue: String?
+                switch inapp.content {
+                    case .modal(let modalModel):
+                        guard let image = modalModel.content.background.layers.elements.first(where: { $0.type == .image }),
+                              let modalImageValue = image.source?.value else {
+                            continue
+                        }
+                        imageValue = modalImageValue
+                    case .unknown:
+                        continue
                 }
+                
+                guard let imageValue = imageValue else { continue }
                 
                 group.enter()
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)

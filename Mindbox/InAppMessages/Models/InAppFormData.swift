@@ -13,10 +13,10 @@ import UIKit
 struct InAppFormData {
     let inAppId: String
     let image: UIImage
-    let content: InappFormVariant
+    let content: MindboxFormVariant
 }
 
 struct InAppTransitionData: Equatable {
     let inAppId: String
-    let content: InappFormVariant
+    let content: MindboxFormVariant
 }

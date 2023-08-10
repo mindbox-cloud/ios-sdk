@@ -20,12 +20,16 @@ final class ModalViewController: UIViewController {
     ]
 
     init(
-        inAppUIModel: InAppFormData,
+        model: ModalFormVariant,
+        id: String,
+        image: UIImage,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
         onClose: @escaping () -> Void
     ) {
-        self.inAppUIModel = inAppUIModel
+        self.model = model
+        self.id = id
+        self.image = image
         self.onPresented = onPresented
         self.onClose = onClose
         self.onTapAction = onTapAction
@@ -36,7 +40,9 @@ final class ModalViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private let inAppUIModel: InAppFormData
+    private let model: ModalFormVariant
+    private let id: String
+    private let image: UIImage
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
@@ -90,17 +96,10 @@ final class ModalViewController: UIViewController {
     }
     
     private func setupLayers() {
-        guard inAppUIModel.content.type == .modal else  {
-            return
-        }
-        
-        guard let layers = inAppUIModel.content.content?.background.layers.elements else {
-            return
-        }
-        
+        let layers = model.content.background.layers.elements         
         for layer in layers {
             if let factory = layersFactories[layer.type] {
-                let layerView = factory.create(from: inAppUIModel.image, action: layer.action, in: view, with: self)
+                let layerView = factory.create(from: self.image, action: layer.action, in: view, with: self)
                 if let layerView = layerView {
                     self.layers.append(layerView)
                     view.addSubview(layerView)
@@ -111,11 +110,7 @@ final class ModalViewController: UIViewController {
     }
     
     private func setupElements() {
-        guard inAppUIModel.content.type == .modal else  {
-            return
-        }
-        
-        guard let elements = inAppUIModel.content.content?.elements?.elements,
+        guard let elements = model.content.elements?.elements,
               let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
             return
         }

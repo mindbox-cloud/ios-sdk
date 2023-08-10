@@ -33,12 +33,7 @@ protocol InAppPresentationManagerProtocol: AnyObject {
 enum InAppPresentationError {
     case failedToLoadImages
     case failedToLoadWindow
-}
-
-enum ViewPresentationType {
-    case modal
-    case topSnackbar
-    case bottomSnackbar
+    case failed(String)
 }
 
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
@@ -64,20 +59,20 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         DispatchQueue.main.async { [weak self] in
-            guard let type = self?.getType(inappType: inAppFormData.content.type) else {
+            guard let self = self else {
+                onError(.failed("Self guard not passed."))
                 return
             }
             
-            self?.displayUseCase.changeType(type: type)
-            
-            self?.displayUseCase.presentInAppUIModel(inAppUIModel: inAppFormData,
+            self.displayUseCase.changeType(model: inAppFormData.content)
+            self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                      onPresented: {
-                self?.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
+                self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
             }, onTapAction: { [weak self] action in
                 guard let action = action else {
                     return
                 }
-                
+
                 switch action.type {
                 case .redirectUrl:
                     if let value = action.value, let payload = action.intentPayload {
@@ -93,19 +88,8 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                     break
                 }
             }, onClose: {
-                self?.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
+                self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
             })
-        }
-    }
-    
-    func getType(inappType: InappFormVariantType) -> ViewPresentationType? {
-        switch inappType {
-        case .modal:
-            return .modal
-        case .snackbar:
-            return .topSnackbar
-        case .unknown:
-            return nil
         }
     }
 }

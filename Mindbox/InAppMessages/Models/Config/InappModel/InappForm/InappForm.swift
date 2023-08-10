@@ -9,7 +9,7 @@
 import Foundation
 
 struct InAppForm: Decodable, Equatable {
-    let variants: FailableDecodableArray<InappFormVariant>
+    let variants: FailableDecodableArray<MindboxFormVariant>
     
     enum CodingKeys: String, CodingKey {
         case variants
@@ -17,7 +17,7 @@ struct InAppForm: Decodable, Equatable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let variants = try container.decode(FailableDecodableArray<InappFormVariant>.self, forKey: .variants)
+        let variants = try container.decode(FailableDecodableArray<MindboxFormVariant>.self, forKey: .variants)
         
         if variants.elements.isEmpty {
             throw DecodingError.dataCorruptedError(
