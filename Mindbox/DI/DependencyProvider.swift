@@ -29,6 +29,7 @@ final class DependencyProvider: DependencyContainer {
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
     var abTestDeviceMixer: ABTestDeviceMixer
+    var urlExtractorService: VariantImageUrlExtractorService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -67,7 +68,7 @@ final class DependencyProvider: DependencyContainer {
         let actionHandler = InAppActionHandler(actionUseCase: actionUseCase)
         let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
                                                            displayUseCase: displayUseCase)
-        let urlExtractorService = VariantImageUrlExtractorService()
+        urlExtractorService = VariantImageUrlExtractorService()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),

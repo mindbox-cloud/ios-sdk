@@ -27,6 +27,7 @@ protocol DependencyContainer {
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }
     var abTestDeviceMixer: ABTestDeviceMixer { get }
+    var urlExtractorService: VariantImageUrlExtractorService { get }
 }
 
 protocol InstanceFactory {
