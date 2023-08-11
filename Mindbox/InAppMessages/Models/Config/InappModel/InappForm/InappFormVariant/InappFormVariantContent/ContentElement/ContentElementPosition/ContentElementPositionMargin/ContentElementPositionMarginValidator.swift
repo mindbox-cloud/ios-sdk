@@ -16,6 +16,14 @@ class ContentElementPositionMarginValidator: Validator {
             return false
         }
         
-        return true
+        return isValidRange(value: item.top) && isValidRange(value: item.right)
+    }
+    
+    func isValidRange(value: Double?) -> Bool {
+        guard let value = value else {
+            return false
+        }
+        
+        return value >= 0 && value <= 1
     }
 }
