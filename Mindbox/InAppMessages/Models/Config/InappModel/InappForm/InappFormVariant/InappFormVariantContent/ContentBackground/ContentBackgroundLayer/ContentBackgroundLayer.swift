@@ -8,35 +8,68 @@
 
 import Foundation
 
-struct ContentBackgroundLayer: Decodable, Equatable {
-    let type: ContentBackgroundLayerType
-    let action: ContentBackgroundLayerAction?
-    let source: ContentBackgroundLayerSource?
+protocol ContentBackgroundLayerProtocol: Decodable, Equatable { }
 
-    enum CodingKeys: String, CodingKey {
-        case type = "$type"
-        case action
-        case source
-    }
+enum ContentBackgroundLayerType: String, Decodable {
+    case image
+    case unknown
     
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        type = try container.decode(ContentBackgroundLayerType.self, forKey: .type)
-        action = try container.decodeIfPresent(ContentBackgroundLayerAction.self, forKey: .action)
-        source = try container.decodeIfPresent(ContentBackgroundLayerSource.self, forKey: .source)
-        
-        if !ContentBackgroundLayerValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Invalid Layer."
-            )
+        let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        let type: String = try container.decode(String.self)
+        self = ContentBackgroundLayerType(rawValue: type) ?? .unknown
+    }
+}
+
+enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
+    case image(ImageContentBackgroundLayer)
+    case unknown
+    
+    enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+    
+    static func == (lhs: ContentBackgroundLayer, rhs: ContentBackgroundLayer) -> Bool {
+        switch (lhs, rhs) {
+            case (.image, .image): return true
+            case (.unknown, .unknown): return true
+            default: return false
         }
     }
     
-    init(type: ContentBackgroundLayerType, action: ContentBackgroundLayerAction? = nil, source: ContentBackgroundLayerSource? = nil) {
-        self.type = type
-        self.action = action
-        self.source = source
+    func hash(into hasher: inout Hasher) {
+        switch self {
+            case .image: hasher.combine("image")
+            case .unknown: hasher.combine("unknown")
+        }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container: KeyedDecodingContainer<ContentBackgroundLayer.CodingKeys> = try decoder.container(
+            keyedBy: CodingKeys.self)
+        guard let type = try? container.decode(ContentBackgroundLayerType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("The layer type could not be decoded. The layer will be ignored.")
+        }
+        
+        let layerContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        
+        switch type {
+            case .image:
+                let imageLayer = try layerContainer.decode(ImageContentBackgroundLayer.self)
+                self = .image(imageLayer)
+            case .unknown:
+                throw CustomDecodingError.unknownType("The layer type is unrecognized. The action will be ignored.")
+        }
+    }
+}
+
+extension ContentBackgroundLayer {
+    var layerType: ContentBackgroundLayerType {
+        switch self {
+            case .image:
+                return .image
+            case .unknown:
+                return .unknown
+        }
     }
 }

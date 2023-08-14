@@ -27,17 +27,13 @@ struct ContentElementPositionMargin: Decodable, Equatable {
         let container: KeyedDecodingContainer<ContentElementPositionMargin.CodingKeys> = try decoder.container(keyedBy: ContentElementPositionMargin.CodingKeys.self)
         
         self.kind = try container.decode(PositionMarginKind.self, forKey: ContentElementPositionMargin.CodingKeys.kind)
-        self.top = try container.decodeIfPresent(Double.self, forKey: ContentElementPositionMargin.CodingKeys.top)
-        self.right = try container.decodeIfPresent(Double.self, forKey: ContentElementPositionMargin.CodingKeys.right)
-        self.left = try container.decodeIfPresent(Double.self, forKey: ContentElementPositionMargin.CodingKeys.left)
-        self.bottom = try container.decodeIfPresent(Double.self, forKey: ContentElementPositionMargin.CodingKeys.bottom)
+        self.top = try container.decodeIfPresentSafely(Double.self, forKey: ContentElementPositionMargin.CodingKeys.top)
+        self.right = try container.decodeIfPresentSafely(Double.self, forKey: ContentElementPositionMargin.CodingKeys.right)
+        self.left = try container.decodeIfPresentSafely(Double.self, forKey: ContentElementPositionMargin.CodingKeys.left)
+        self.bottom = try container.decodeIfPresentSafely(Double.self, forKey: ContentElementPositionMargin.CodingKeys.bottom)
         
         if !ContentElementPositionMarginValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .kind,
-                in: container,
-                debugDescription: "Position margin corrupted."
-            )
+            throw CustomDecodingError.decodingError("ContentElementPositionMargin not passed validation. It will be ignored.")
         }
     }
     

@@ -24,7 +24,7 @@ class CrossView: UIView {
         setupDefaults()
     }
     
-    convenience init(lineColorHex: String, lineWidth: CGFloat) {
+    convenience init(lineColorHex: String?, lineWidth: Int?) {
         self.init()
         setupView(lineColorHex: lineColorHex, lineWidth: lineWidth)
     }
@@ -33,9 +33,11 @@ class CrossView: UIView {
         backgroundColor = .clear
     }
     
-    private func setupView(lineColorHex: String, lineWidth: CGFloat) {
-        self.lineColor = UIColor(hex: lineColorHex)
-        self.lineWidth = lineWidth
+    private func setupView(lineColorHex: String?, lineWidth: Int?) {
+        let color = lineColorHex ?? "#000000"
+        let width = lineWidth ?? 1
+        self.lineColor = UIColor(hex: color)
+        self.lineWidth = CGFloat(width)
     }
 
     override func draw(_ rect: CGRect) {

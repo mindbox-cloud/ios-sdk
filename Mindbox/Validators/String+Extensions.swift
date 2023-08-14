@@ -32,4 +32,19 @@ extension String {
 
         return true
     }
+    
+    func isHexValid() -> Bool {
+        if !self.hasPrefix("#") {
+            return false
+        }
+        
+        let hexValue = String(self.dropFirst())
+        
+        if hexValue.count != 6 {
+            return false
+        }
+            
+        let hexCharacterSet = CharacterSet(charactersIn: "0123456789ABCDEFabcdef")
+        return hexValue.unicodeScalars.allSatisfy { hexCharacterSet.contains($0) }
+    }
 }

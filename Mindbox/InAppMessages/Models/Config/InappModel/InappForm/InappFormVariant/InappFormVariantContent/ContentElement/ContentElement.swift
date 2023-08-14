@@ -8,48 +8,68 @@
 
 import Foundation
 
-struct ContentElement: Decodable, Equatable {
-    let type: ContentElementType
-    let color: String?
-    let lineWidth: Int?
-    let size: ContentElementSize?
-    let position: ContentElementPosition?
-    let gravity: ContentElementGravity?
+protocol ContentElementProtocol: Decodable, Equatable { }
+
+enum ContentElementType: String, Decodable {
+    case closeButton
+    case unknown
+    
+    init(from decoder: Decoder) throws {
+        let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        let type: String = try container.decode(String.self)
+        self = ContentElementType(rawValue: type) ?? .unknown
+    }
+}
+
+enum ContentElement: Decodable, Hashable, Equatable {
+    case closeButton(CloseButtonElement)
+    case unknown
     
     enum CodingKeys: String, CodingKey {
         case type = "$type"
-        case color
-        case lineWidth
-        case size
-        case position
-        case gravity
     }
     
-    init(from decoder: Decoder) throws {
-        let container: KeyedDecodingContainer<ContentElement.CodingKeys> = try decoder.container(keyedBy: ContentElement.CodingKeys.self)
-        
-        self.type = try container.decode(ContentElementType.self, forKey: ContentElement.CodingKeys.type)
-        self.color = try container.decodeIfPresent(String.self, forKey: ContentElement.CodingKeys.color)
-        self.lineWidth = try container.decodeIfPresent(Int.self, forKey: ContentElement.CodingKeys.lineWidth)
-        self.size = try container.decodeIfPresent(ContentElementSize.self, forKey: .size)
-        self.position = try container.decodeIfPresent(ContentElementPosition.self, forKey: .position)
-        self.gravity = try container.decodeIfPresent(ContentElementGravity.self, forKey: .gravity)
-        
-        if !ContentElementValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Layers cannot be empty."
-            )
+    static func == (lhs: ContentElement, rhs: ContentElement) -> Bool {
+        switch (lhs, rhs) {
+            case (.closeButton, .closeButton): return true
+            case (.unknown, .unknown): return true
+            default: return false
         }
     }
     
-    internal init(type: ContentElementType, color: String? = nil, lineWidth: Int? = nil, size: ContentElementSize? = nil, position: ContentElementPosition? = nil, gravity: ContentElementGravity? = nil) {
-        self.type = type
-        self.color = color
-        self.lineWidth = lineWidth
-        self.size = size
-        self.position = position
-        self.gravity = gravity
+    func hash(into hasher: inout Hasher) {
+        switch self {
+            case .closeButton: hasher.combine("closeButton")
+            case .unknown: hasher.combine("unknown")
+        }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container: KeyedDecodingContainer<ContentElement.CodingKeys> = try decoder.container(
+            keyedBy: CodingKeys.self)
+        guard let type = try? container.decode(ContentElementType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
+        }
+        
+        let elementContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        
+        switch type {
+            case .closeButton:
+                let closeButtonElement = try elementContainer.decode(CloseButtonElement.self)
+                self = .closeButton(closeButtonElement)
+            case .unknown:
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+        }
+    }
+}
+
+extension ContentElement {
+    var elementType: ContentElementType {
+        switch self {
+            case .closeButton:
+                return .closeButton
+            case .unknown:
+                return .unknown
+        }
     }
 }

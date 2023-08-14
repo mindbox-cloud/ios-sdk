@@ -29,11 +29,7 @@ struct InApp: Decodable, Equatable {
         form = try container.decode(InAppForm.self, forKey: .form)
         
         if !InappValidator().isValid(item: self) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .id,
-                in: container,
-                debugDescription: "Invalid InApp"
-            )
+            throw CustomDecodingError.decodingError("The inapp not passed validation. The inapp will be ignored.")
         }
     }
 }
