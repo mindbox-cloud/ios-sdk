@@ -11,6 +11,6 @@ import Foundation
 struct CloseButtonElement: ContentElementProtocol {
     let color: String?
     let lineWidth: Int?
-    let size: ContentElementSize?
+    let size: FailableDecodable<ContentElementSize>?
     let position: ContentElementPosition?
 }

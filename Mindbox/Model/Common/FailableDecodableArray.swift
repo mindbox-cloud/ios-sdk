@@ -33,3 +33,12 @@ struct FailableDecodableArray<Element: Decodable & Equatable>: Decodable, Equata
 
     private struct DummyCodable: Decodable { }
 }
+
+struct FailableDecodable<Element: Decodable & Equatable>: Decodable, Equatable {
+    let element: Element?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        element = try? container.decode(Element.self)
+    }
+}

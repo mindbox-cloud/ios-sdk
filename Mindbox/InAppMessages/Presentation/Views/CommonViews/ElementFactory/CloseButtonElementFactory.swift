@@ -29,9 +29,9 @@ class CloseButtonElementFactory: ElementFactory {
     
     func setupConstraints(for view: UIView, from element: ContentElement, in parentView: UIView) {
         if case .closeButton(let closeButtonElement) = element {
-            let size = closeButtonElement.size ?? ContentElementSize(kind: .dp, width: 24, height: 24)
-            let top = closeButtonElement.position?.margin?.top ?? 0.02
-            let right = closeButtonElement.position?.margin?.right ?? 0.02
+            let size = closeButtonElement.size?.element ?? ContentElementSize(kind: .dp, width: 24, height: 24)
+            let top = closeButtonElement.position?.margin?.element?.top ?? 0.02
+            let right = closeButtonElement.position?.margin?.element?.right ?? 0.02
             
             let horizontalOffset = (parentView.frame.width - CGFloat(size.width)) * right
             let verticalOffset = (parentView.frame.height - CGFloat(size.height)) * top
