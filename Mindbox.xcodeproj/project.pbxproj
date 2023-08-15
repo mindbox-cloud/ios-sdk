@@ -347,6 +347,12 @@
 		F331DD312A84CCA800222120 /* CloseButtonElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD302A84CCA800222120 /* CloseButtonElement.swift */; };
 		F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */; };
 		F331DD582A8648DB00222120 /* ContentElementSizeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD572A8648DB00222120 /* ContentElementSizeValidator.swift */; };
+		F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336080C2A8A142800C7C9B7 /* SnackbarFormVariant.swift */; };
+		F336080F2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336080E2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift */; };
+		F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608112A8A151C00C7C9B7 /* ContentPosition.swift */; };
+		F33608152A8A156900C7C9B7 /* ContentPositionGravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */; };
+		F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */; };
+		F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -791,6 +797,12 @@
 		F331DD302A84CCA800222120 /* CloseButtonElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseButtonElement.swift; sourceTree = "<group>"; };
 		F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorService.swift; sourceTree = "<group>"; };
 		F331DD572A8648DB00222120 /* ContentElementSizeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentElementSizeValidator.swift; sourceTree = "<group>"; };
+		F336080C2A8A142800C7C9B7 /* SnackbarFormVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarFormVariant.swift; sourceTree = "<group>"; };
+		F336080E2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarFormVariantContent.swift; sourceTree = "<group>"; };
+		F33608112A8A151C00C7C9B7 /* ContentPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPosition.swift; sourceTree = "<group>"; };
+		F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionGravity.swift; sourceTree = "<group>"; };
+		F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMargin.swift; sourceTree = "<group>"; };
+		F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1955,6 +1967,8 @@
 			isa = PBXGroup;
 			children = (
 				F331DCB72A80993600222120 /* InappFormVariantContent.swift */,
+				F336080E2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift */,
+				F33608102A8A150E00C7C9B7 /* ContentPosition */,
 				F331DC942A80993600222120 /* ContentElement */,
 				F331DCA62A80993600222120 /* ContentBackground */,
 			);
@@ -2168,6 +2182,7 @@
 			isa = PBXGroup;
 			children = (
 				F331DD182A840D2100222120 /* ModalFormVariant.swift */,
+				F336080C2A8A142800C7C9B7 /* SnackbarFormVariant.swift */,
 			);
 			path = Variants;
 			sourceTree = "<group>";
@@ -2210,6 +2225,33 @@
 				F331DD302A84CCA800222120 /* CloseButtonElement.swift */,
 			);
 			path = Elements;
+			sourceTree = "<group>";
+		};
+		F33608102A8A150E00C7C9B7 /* ContentPosition */ = {
+			isa = PBXGroup;
+			children = (
+				F33608112A8A151C00C7C9B7 /* ContentPosition.swift */,
+				F33608132A8A155A00C7C9B7 /* ContentPositionGravity */,
+				F33608162A8A160100C7C9B7 /* ContentPositionMargin */,
+			);
+			path = ContentPosition;
+			sourceTree = "<group>";
+		};
+		F33608132A8A155A00C7C9B7 /* ContentPositionGravity */ = {
+			isa = PBXGroup;
+			children = (
+				F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */,
+			);
+			path = ContentPositionGravity;
+			sourceTree = "<group>";
+		};
+		F33608162A8A160100C7C9B7 /* ContentPositionMargin */ = {
+			isa = PBXGroup;
+			children = (
+				F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */,
+				F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */,
+			);
+			path = ContentPositionMargin;
 			sourceTree = "<group>";
 		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {
@@ -2821,6 +2863,7 @@
 				A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */,
 				A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */,
 				33072F402664CB08001F1AB2 /* ProductGroupResponse.swift in Sources */,
+				F33608152A8A156900C7C9B7 /* ContentPositionGravity.swift in Sources */,
 				A1D017F52976FC2B00CD9F99 /* InternalTargetingChecker.swift in Sources */,
 				6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */,
 				6FDD143F266F7BF900A50C35 /* AppliedPromotionResponse.swift in Sources */,
@@ -2855,6 +2898,7 @@
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
 				334F3AE9264C199900A6AC00 /* OrderRequest.swift in Sources */,
 				9B24FAAC28C74B8300F10B5D /* InAppConfigurationRepository.swift in Sources */,
+				F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */,
 				337A474026553938000DC613 /* Sex.swift in Sources */,
 				F3A8B9922A3A408C00E9C055 /* SDKVersionValidator.swift in Sources */,
 				9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */,
@@ -2891,6 +2935,7 @@
 				847F580725C88C7A00147A9A /* NetworkFetcher.swift in Sources */,
 				84D350D225C99F320044E4E6 /* IDFVFetcher.swift in Sources */,
 				84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */,
+				F336080F2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift in Sources */,
 				9B2F5F752902975B00F28A96 /* InAppMessagesTracker.swift in Sources */,
 				84DFB33B25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift in Sources */,
 				6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */,
@@ -2901,6 +2946,7 @@
 				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
 				F331DD192A840D2100222120 /* ModalFormVariant.swift in Sources */,
 				F331DD2E2A84CA8900222120 /* UrlLayerSource.swift in Sources */,
+				F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */,
 				337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */,
 				9B9C95312921116F00BB29DA /* UUIDDebugService.swift in Sources */,
 				6FDD1443266F7C1600A50C35 /* BalanceTypeReponse.swift in Sources */,
@@ -2914,11 +2960,13 @@
 				F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */,
+				F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */,
 				F331DCD42A80993600222120 /* InappValidator.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				F331DD092A83A56500222120 /* LayerFactory.swift in Sources */,
+				F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,
 				B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */,

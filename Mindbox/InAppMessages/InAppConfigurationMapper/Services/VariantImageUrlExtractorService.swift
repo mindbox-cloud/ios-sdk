@@ -12,23 +12,38 @@ class VariantImageUrlExtractorService {
     func extractImageURL(from variant: MindboxFormVariant) -> String? {
         var urlString: String?
         switch variant {
-        case .modal(let modalModel):
-            let modalModel = modalModel.content.background.layers.elements.first(where: {
-                switch $0 {
-                case .image(let imageModel):
-                    switch imageModel.source {
-                    case .url(let urlModel):
-                            urlString = urlModel.value
-                        return true
-                    case .unknown:
-                        return false
+            case .modal(let modalModel):
+                let modalModel = modalModel.content.background.layers.elements.first(where: {
+                    switch $0 {
+                        case .image(let imageModel):
+                            switch imageModel.source {
+                                case .url(let urlModel):
+                                    urlString = urlModel.value
+                                    return true
+                                case .unknown:
+                                    return false
+                            }
+                        case .unknown:
+                            return false
                     }
-                case .unknown:
-                    return false
+                })
+            case .snackbar(let snackbarModel):
+                let snackbarModel = snackbarModel.content.background.layers.elements.first {
+                    switch $0 {
+                        case .image(let imageModel):
+                            switch imageModel.source {
+                                case .url(let urlModel):
+                                    urlString = urlModel.value
+                                    return true
+                                case .unknown:
+                                    return false
+                            }
+                        case .unknown:
+                            return false
+                    }
                 }
-            })
-        case .unknown:
-            return nil
+            case .unknown:
+                return nil
         }
         
         return urlString
