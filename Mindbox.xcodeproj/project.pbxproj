@@ -353,6 +353,7 @@
 		F33608152A8A156900C7C9B7 /* ContentPositionGravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */; };
 		F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */; };
 		F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */; };
+		F336081C2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -803,6 +804,7 @@
 		F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionGravity.swift; sourceTree = "<group>"; };
 		F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMargin.swift; sourceTree = "<group>"; };
 		F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMarginValidator.swift; sourceTree = "<group>"; };
+		F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarViewFactory.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -2174,6 +2176,7 @@
 			children = (
 				F331DCFF2A83A56500222120 /* ViewFactoryProtocol.swift */,
 				F331DD002A83A56500222120 /* ModalViewFactory.swift */,
+				F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */,
 			);
 			path = ViewFactory;
 			sourceTree = "<group>";
@@ -2749,6 +2752,7 @@
 				334F3AE0264C199900A6AC00 /* ViewProductCategoryRequest.swift in Sources */,
 				F331DD022A83A56500222120 /* PresentationDisplayUseCase.swift in Sources */,
 				A1D23AF029DE082E00A75179 /* InAppProductSegmentResponse.swift in Sources */,
+				F336081C2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift in Sources */,
 				F331DCD52A80993600222120 /* InAppModel.swift in Sources */,
 				A1D017EE2976CC4000CD9F99 /* AndTargeting.swift in Sources */,
 				F331DCC32A80993600222120 /* ContentElementPosition.swift in Sources */,
