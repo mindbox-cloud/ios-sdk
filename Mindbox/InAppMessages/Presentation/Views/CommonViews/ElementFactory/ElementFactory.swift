@@ -9,6 +9,6 @@
 import UIKit
 
 protocol ElementFactory {
-    func create(from element: ContentElement, in view: UIView, with controller: UIViewController) -> UIView?
+    func create(from element: ContentElement, in view: UIView, with controller: GestureHandler) -> UIView?
     func setupConstraints(for view: UIView, from element: ContentElement, in parentView: UIView)
 }

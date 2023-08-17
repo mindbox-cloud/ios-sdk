@@ -354,7 +354,10 @@
 		F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */; };
 		F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */; };
 		F336081C2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */; };
+		F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608252A8CC94A00C7C9B7 /* SnackbarViewController.swift */; };
 		F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */; };
+		F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */; };
+		F33608302A8E167100C7C9B7 /* SnackbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082F2A8E167100C7C9B7 /* SnackbarView.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -806,7 +809,10 @@
 		F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMargin.swift; sourceTree = "<group>"; };
 		F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarViewFactory.swift; sourceTree = "<group>"; };
+		F33608252A8CC94A00C7C9B7 /* SnackbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarViewController.swift; sourceTree = "<group>"; };
 		F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarPresentationStrategy.swift; sourceTree = "<group>"; };
+		F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLayerFactory.swift; sourceTree = "<group>"; };
+		F336082F2A8E167100C7C9B7 /* SnackbarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SnackbarView.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1551,8 +1557,8 @@
 				9B24FAAD28C74BA500F10B5D /* InAppCoreManager.swift */,
 				9B2F5F742902975B00F28A96 /* InAppMessagesTracker.swift */,
 				A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */,
-				A1D017F32976FC1900CD9F99 /* InAppTargetingChecker */,
 				9B24FAB928C756EB00F10B5D /* PresentChecker */,
+				A1D017F32976FC1900CD9F99 /* InAppTargetingChecker */,
 				9B24FAB628C7554C00F10B5D /* Models */,
 				9B24FAAF28C74BB700F10B5D /* Configuration */,
 				9B24FAB328C751CB00F10B5D /* Images */,
@@ -2131,6 +2137,7 @@
 		F331DCF32A83A56500222120 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F336081D2A8BA02C00C7C9B7 /* SnackbarView */,
 				F331DCF42A83A56500222120 /* ModalView */,
 				F331DCF62A83A56500222120 /* CommonViews */,
 				F331DCFE2A83A56500222120 /* ViewFactory */,
@@ -2160,8 +2167,8 @@
 		F331DCF72A83A56500222120 /* ElementFactory */ = {
 			isa = PBXGroup;
 			children = (
-				F331DCF82A83A56500222120 /* CloseButtonElementFactory.swift */,
 				F331DCF92A83A56500222120 /* ElementFactory.swift */,
+				F336082E2A8E160900C7C9B7 /* CloseButtonFactory */,
 			);
 			path = ElementFactory;
 			sourceTree = "<group>";
@@ -2170,6 +2177,7 @@
 			isa = PBXGroup;
 			children = (
 				F331DCFB2A83A56500222120 /* LayerFactory.swift */,
+				F336082B2A8E15CA00C7C9B7 /* ImageLayer */,
 			);
 			path = LayersFactory;
 			sourceTree = "<group>";
@@ -2258,6 +2266,31 @@
 				F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */,
 			);
 			path = ContentPositionMargin;
+			sourceTree = "<group>";
+		};
+		F336081D2A8BA02C00C7C9B7 /* SnackbarView */ = {
+			isa = PBXGroup;
+			children = (
+				F336082F2A8E167100C7C9B7 /* SnackbarView.swift */,
+				F33608252A8CC94A00C7C9B7 /* SnackbarViewController.swift */,
+			);
+			path = SnackbarView;
+			sourceTree = "<group>";
+		};
+		F336082B2A8E15CA00C7C9B7 /* ImageLayer */ = {
+			isa = PBXGroup;
+			children = (
+				F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */,
+			);
+			path = ImageLayer;
+			sourceTree = "<group>";
+		};
+		F336082E2A8E160900C7C9B7 /* CloseButtonFactory */ = {
+			isa = PBXGroup;
+			children = (
+				F331DCF82A83A56500222120 /* CloseButtonElementFactory.swift */,
+			);
+			path = CloseButtonFactory;
 			sourceTree = "<group>";
 		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {
@@ -2734,6 +2767,7 @@
 				A192786C29D3A24000CDB53D /* ProductIDChecker.swift in Sources */,
 				337A473A26550FDA000DC613 /* CustomFields.swift in Sources */,
 				B3A6255C268A025600B6A3B7 /* NearestExpirationResponse.swift in Sources */,
+				F33608302A8E167100C7C9B7 /* SnackbarView.swift in Sources */,
 				84A312BD25DA651C0096A017 /* UIBackgroundTaskManager.swift in Sources */,
 				F3A8B99A2A3A471800E9C055 /* ABTestVariantsValidator.swift in Sources */,
 				33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */,
@@ -2860,6 +2894,7 @@
 				F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */,
 				33072F342664C3E1001F1AB2 /* ProductResponse.swift in Sources */,
 				33072F3E2664C7B5001F1AB2 /* DiscountCardResponse.swift in Sources */,
+				F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */,
 				F331DD292A84C4BC00222120 /* InappActionHandler.swift in Sources */,
 				F331DD0A2A83A56500222120 /* InAppImageOnlyView.swift in Sources */,
 				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,
@@ -2897,6 +2932,7 @@
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				F331DCC82A80993600222120 /* ContentBackgroundLayer.swift in Sources */,
 				F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */,
+				F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,

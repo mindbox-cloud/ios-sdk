@@ -70,6 +70,9 @@ final class PresentationDisplayUseCase {
             case .modal:
                 self.presentationStrategy = ModalPresentationStrategy()
                 self.factory = ModalViewFactory()
+            case .snackbar:
+                self.presentationStrategy = SnackbarPresentationStrategy()
+                self.factory = SnackbarViewFactory()
             default:
                 break
         }
