@@ -62,7 +62,6 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 return
             }
             
-            self.displayUseCase.changeType(model: inAppFormData.content)
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)

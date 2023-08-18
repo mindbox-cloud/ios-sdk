@@ -83,8 +83,11 @@ class SnackbarViewController: UIViewController {
                 hasSetupElements = true
             }
         } else if !hasSetupElements && snackbarView?.bounds.size != .zero {
-            setupElements()
-            hasSetupElements = true
+            UIView.performWithoutAnimation {
+                setupElements()
+                hasSetupElements = true
+                view.layoutIfNeeded()
+            }
         }
     }
     
@@ -234,6 +237,7 @@ class BottomSnackbarViewController: SnackbarViewController {
         guard let snackbarView = snackbarView else {
             return
         }
+        
         snackbarView.swipeDirection = .down
         
         if #available(iOS 11.0, *) {

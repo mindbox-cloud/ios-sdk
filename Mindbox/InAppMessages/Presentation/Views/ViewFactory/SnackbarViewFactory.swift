@@ -10,8 +10,8 @@ import Foundation
 import UIKit
 
 class SnackbarViewFactory: ViewFactoryProtocol {
-    
-    var viewController: UIViewController?
+
+    weak var viewController: UIViewController?
     
     func create(model: MindboxFormVariant, id: String, image: UIImage, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) -> UIViewController? {
         if case .snackbar(let snackbarFormVariant) = model {

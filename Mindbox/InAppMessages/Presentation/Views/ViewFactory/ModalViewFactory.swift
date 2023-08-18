@@ -9,7 +9,7 @@
 import UIKit
 
 class ModalViewFactory: ViewFactoryProtocol {
-    var myViewController: UIViewController?
+    weak var myViewController: UIViewController?
     
     func create(model: MindboxFormVariant,
                 id: String,
