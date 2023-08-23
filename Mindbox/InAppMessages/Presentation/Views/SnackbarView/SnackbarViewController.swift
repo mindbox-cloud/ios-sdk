@@ -7,23 +7,25 @@
 //
 
 import UIKit
+import MindboxLogger
 
-class SnackbarViewController: UIViewController {
+class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     
     var snackbarView: SnackbarView?
     var edgeConstraint: NSLayoutConstraint?
+    let model: SnackbarFormVariant
     
     var layers = [UIView]()
     var elements = [UIView]()
-    private let elementFactories: [ContentElementType: ElementFactory] = [
+    
+    let elementFactories: [ContentElementType: ElementFactory] = [
         .closeButton: CloseButtonElementFactory()
     ]
     
-    private let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
+    let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
 
-    private let model: SnackbarFormVariant
     private let id: String
     public let image: UIImage
     private let onPresented: () -> Void
@@ -91,6 +93,12 @@ class SnackbarViewController: UIViewController {
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        animateConstraints(withDuration: Constants.animationDuration)
+        onPresented()
+    }
+    
     private func setupLayers() {
         let layers = model.content.background.layers.elements
         guard let snackbarView = snackbarView else {
@@ -128,11 +136,7 @@ class SnackbarViewController: UIViewController {
     }
 
     var swipeDirection: UISwipeGestureRecognizer.Direction {
-        fatalError("This method must be overridden")
-    }
-    
-    func setupConstraints() {
-        fatalError("This method must be overridden")
+        return .down
     }
     
     private func animateConstraints(withDuration duration: TimeInterval) {
@@ -143,11 +147,49 @@ class SnackbarViewController: UIViewController {
             self.view.layoutIfNeeded()
         }
     }
+    
+    func setupConstraints() {
+        let imageHeight = self.image.size.height
+        let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
+        
+        setViewFrame(with: finalHeight)
+        guard let snackbarView = snackbarView else {
+            return
+        }
+        
+        snackbarView.swipeDirection = swipeDirection
+        snackbarView.translatesAutoresizingMaskIntoConstraints = false
+        
+        setupLayoutConstraints(with: finalHeight)
+        setupEdgeConstraint(with: finalHeight)
+    }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        animateConstraints(withDuration: Constants.animationDuration)
-        onPresented()
+    func setViewFrame(with height: CGFloat) {
+        
+    }
+
+    func setupLayoutConstraints(with height: CGFloat) {
+        guard let snackbarView = snackbarView else {
+            return
+        }
+        
+        if #available(iOS 11.0, *) {
+            NSLayoutConstraint.activate([
+                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+                snackbarView.heightAnchor.constraint(equalToConstant: height),
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                snackbarView.heightAnchor.constraint(equalToConstant: height),
+            ])
+        }
+    }
+    
+    func setupEdgeConstraint(with height: CGFloat) {
+        Logger.common(message: "Method setupEdgeConstraint must be overriden in subclass.")
     }
 }
 
@@ -169,7 +211,7 @@ extension SnackbarViewController: GestureHandler {
         let location = gesture.location(in: crossView)
         let isInsideCrossView = crossView.bounds.contains(location)
         if gesture.state == .ended && isInsideCrossView {
-            onClose()
+            snackbarView?.hide()
         }
     }
 }
@@ -178,41 +220,28 @@ class TopSnackbarViewController: SnackbarViewController {
     override var swipeDirection: UISwipeGestureRecognizer.Direction {
         return .up
     }
-    
-    override func setupConstraints() {
-        let imageHeight = self.image.size.height
-        var safeAreaBottomOffset: CGFloat = 0
+
+    override func setViewFrame(with height: CGFloat) {
+        var safeAreaTopOffset: CGFloat = 0
         if #available(iOS 11.0, *) {
-            safeAreaBottomOffset = view.safeAreaInsets.top
+            safeAreaTopOffset = view.safeAreaInsets.top
         }
 
-        let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
+        let finalHeight = height + safeAreaTopOffset
 
         self.view.frame = CGRect(x: 0, y: 0,
                                  width: UIScreen.main.bounds.width,
-                                 height: finalHeight + safeAreaBottomOffset)
-        
-        guard let snackbarView = snackbarView else {
-            return
-        }
-        
-        snackbarView.swipeDirection = .up
-        if #available(iOS 11.0, *) {
-            NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-                snackbarView.heightAnchor.constraint(equalToConstant: finalHeight),
-            ])
-        }
-       
-        setupBottomConstraint(with: finalHeight)
+                                 height: finalHeight)
     }
 
-    private func setupBottomConstraint(with height: CGFloat) {
+    override func setupEdgeConstraint(with height: CGFloat) {
         if #available(iOS 11.0, *) {
             edgeConstraint = snackbarView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -height)
-            edgeConstraint?.isActive = true
+        } else {
+            edgeConstraint = snackbarView?.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
         }
+        
+        edgeConstraint?.isActive = true
     }
 }
 
@@ -222,39 +251,27 @@ class BottomSnackbarViewController: SnackbarViewController {
         return .down
     }
     
-    override func setupConstraints() {
-        let imageHeight = self.image.size.height
+    override func setViewFrame(with height: CGFloat) {
         let screenHeight = UIScreen.main.bounds.height
         var safeAreaBottomOffset: CGFloat = 0
         if #available(iOS 11.0, *) {
             safeAreaBottomOffset = view.safeAreaInsets.bottom
         }
-        let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
+        
+        let finalHeight = height + safeAreaBottomOffset
 
-        self.view.frame = CGRect(x: 0, y: screenHeight - finalHeight - safeAreaBottomOffset,
+        self.view.frame = CGRect(x: 0, y: screenHeight - finalHeight,
                                  width: UIScreen.main.bounds.width,
-                                 height: finalHeight + safeAreaBottomOffset)
-        guard let snackbarView = snackbarView else {
-            return
-        }
-        
-        snackbarView.swipeDirection = .down
-        
-        if #available(iOS 11.0, *) {
-            NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-                snackbarView.heightAnchor.constraint(equalToConstant: finalHeight),
-            ])
-        }
-       
-        setupBottomConstraint(with: finalHeight)
+                                 height: finalHeight)
     }
 
-    private func setupBottomConstraint(with height: CGFloat) {
+    override func setupEdgeConstraint(with height: CGFloat) {
         if #available(iOS 11.0, *) {
             edgeConstraint = snackbarView?.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
-            edgeConstraint?.isActive = true
+        } else {
+            edgeConstraint = snackbarView?.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: height)
         }
+        
+        edgeConstraint?.isActive = true
     }
 }
