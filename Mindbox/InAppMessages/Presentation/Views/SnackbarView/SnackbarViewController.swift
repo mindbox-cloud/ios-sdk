@@ -149,7 +149,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     func setupConstraints() {
-        let imageHeight = self.image.size.height
+        let left = model.content.position?.margin?.element?.left ?? 0
+        let right = model.content.position?.margin?.element?.right ?? 0
+        let width = view.layer.frame.width - left - right
+        let heightMultiplier = width / image.size.width
+        let imageHeight = image.size.height * heightMultiplier
         let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
         
         setViewFrame(with: finalHeight)
@@ -169,20 +173,23 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     func setupLayoutConstraints(with height: CGFloat) {
+        let left = model.content.position?.margin?.element?.left ?? 0
+        let right = model.content.position?.margin?.element?.right ?? 0
+        
         guard let snackbarView = snackbarView else {
             return
         }
         
         if #available(iOS 11.0, *) {
             NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: left),
+                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -right),
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         } else {
             NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: left),
+                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -right),
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         }
