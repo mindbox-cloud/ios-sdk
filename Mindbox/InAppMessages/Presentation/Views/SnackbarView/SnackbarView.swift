@@ -13,6 +13,21 @@ class SnackbarView: UIView {
 
     private let onClose: () -> Void
     private let animationTime: TimeInterval
+    
+    private var safeAreaBottomInset: CGFloat {
+        if #available(iOS 11.0, *) {
+            return window?.safeAreaInsets.bottom ?? 0
+        } else {
+            return 0
+        }
+    }
+    private var safeAreaTopInset: CGFloat {
+        if #available(iOS 11.0, *) {
+            return window?.safeAreaInsets.top ?? 0
+        } else {
+            return 0
+        }
+    }
 
     enum Constants {
         static let defaultAnimationTime: TimeInterval = 0.3
@@ -52,8 +67,10 @@ class SnackbarView: UIView {
     }
 
     private func finalizeGesture(translation: CGPoint) {
+        let threshold = frame.height * Constants.swipeThresholdFraction +
+        (swipeDirection == .up ? safeAreaTopInset : safeAreaBottomInset)
         if ((swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0)) &&
-            abs(translation.y) > frame.height * Constants.swipeThresholdFraction {
+            abs(translation.y) > threshold {
             animateHide(completion: onClose, animated: true)
         } else {
             UIView.animate(withDuration: animationTime) {
@@ -76,7 +93,16 @@ class SnackbarView: UIView {
     }
 
     private func setHiddenTransform() {
-        self.transform = CGAffineTransform(translationX: 0, y: swipeDirection == .up ? -frame.height : frame.height)
+        let yOffset: CGFloat
+        switch swipeDirection {
+            case .up:
+                yOffset = -(frame.height + safeAreaTopInset)
+            case .down:
+                yOffset = frame.height + safeAreaBottomInset
+            default:
+                yOffset = 0
+        }
+        self.transform = CGAffineTransform(translationX: 0, y: yOffset)
     }
 
     public func hide(animated: Bool = true, completion: (() -> Void)? = nil) {
