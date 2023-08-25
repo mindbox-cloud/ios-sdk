@@ -25,6 +25,14 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
+    
+    var leftOffset: CGFloat {
+        return model.content.position?.margin?.element?.left ?? 0
+    }
+    
+    var rightOffset: CGFloat {
+        return model.content.position?.margin?.element?.right ?? 0
+    }
 
     private let id: String
     public let image: UIImage
@@ -149,9 +157,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     func setupConstraints() {
-        let left = model.content.position?.margin?.element?.left ?? 0
-        let right = model.content.position?.margin?.element?.right ?? 0
-        let width = view.layer.frame.width - left - right
+        let width = view.layer.frame.width - leftOffset - rightOffset
         let heightMultiplier = width / image.size.width
         let imageHeight = image.size.height * heightMultiplier
         let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
@@ -169,27 +175,24 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     func setViewFrame(with height: CGFloat) {
-        
+        // Need override in sub-class.
     }
 
     func setupLayoutConstraints(with height: CGFloat) {
-        let left = model.content.position?.margin?.element?.left ?? 0
-        let right = model.content.position?.margin?.element?.right ?? 0
-        
         guard let snackbarView = snackbarView else {
             return
         }
         
         if #available(iOS 11.0, *) {
             NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: left),
-                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -right),
+                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         } else {
             NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: left),
-                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -right),
+                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         }
@@ -236,8 +239,8 @@ class TopSnackbarViewController: SnackbarViewController {
 
         let finalHeight = height + safeAreaTopOffset
 
-        self.view.frame = CGRect(x: 0, y: 0,
-                                 width: UIScreen.main.bounds.width,
+        self.view.frame = CGRect(x: leftOffset, y: 0,
+                                 width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
     }
 
@@ -267,8 +270,8 @@ class BottomSnackbarViewController: SnackbarViewController {
         
         let finalHeight = height + safeAreaBottomOffset
 
-        self.view.frame = CGRect(x: 0, y: screenHeight - finalHeight,
-                                 width: UIScreen.main.bounds.width,
+        self.view.frame = CGRect(x: leftOffset, y: screenHeight - finalHeight,
+                                 width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
     }
 
