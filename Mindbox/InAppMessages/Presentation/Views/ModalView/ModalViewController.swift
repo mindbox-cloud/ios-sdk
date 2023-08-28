@@ -7,15 +7,27 @@
 
 import UIKit
 
-final class ModalViewController: UIViewController {
+protocol InappViewControllerProtocol {
+    var layers: [UIView] { get set }
+    var elements: [UIView] { get set }
+    var elementFactories: [ContentElementType: ElementFactory] { get }
+    var layersFactories: [ContentBackgroundLayerType: LayerFactory] { get }
+}
+
+@objc protocol GestureHandler {
+    @objc func imageTapped(_ sender: UITapGestureRecognizer)
+    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer)
+}
+
+final class ModalViewController: UIViewController, InappViewControllerProtocol, GestureHandler {
     
     var layers = [UIView]()
     var elements = [UIView]()
-    private let elementFactories: [ContentElementType: ElementFactory] = [
+    let elementFactories: [ContentElementType: ElementFactory] = [
         .closeButton: CloseButtonElementFactory()
     ]
     
-    private let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
+    let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
 

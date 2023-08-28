@@ -12,6 +12,7 @@ protocol iFormVariant: Decodable, Equatable { }
 
 enum MindboxFormVariantType: String, Decodable {
     case modal
+    case snackbar
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -23,6 +24,7 @@ enum MindboxFormVariantType: String, Decodable {
 
 enum MindboxFormVariant: Decodable, Hashable, Equatable {
     case modal(ModalFormVariant)
+    case snackbar(SnackbarFormVariant)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -32,6 +34,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
     static func == (lhs: MindboxFormVariant, rhs: MindboxFormVariant) -> Bool {
         switch (lhs, rhs) {
             case (.modal, .modal): return true
+            case (.snackbar, .snackbar): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -40,6 +43,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
     func hash(into hasher: inout Hasher) {
         switch self {
             case .modal: hasher.combine("modal")
+            case .snackbar: hasher.combine("snackbar")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -57,6 +61,9 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
             case .modal:
                 let modalVariant = try variantContainer.decode(ModalFormVariant.self)
                 self = .modal(modalVariant)
+            case .snackbar:
+                let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
+                self = .snackbar(snackbarVariant)
             case .unknown:
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
         }

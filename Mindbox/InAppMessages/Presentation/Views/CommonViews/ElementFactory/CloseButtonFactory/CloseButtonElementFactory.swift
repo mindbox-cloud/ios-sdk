@@ -9,11 +9,7 @@
 import UIKit
 
 class CloseButtonElementFactory: ElementFactory {
-    func create(from element: ContentElement, in view: UIView, with controller: UIViewController) -> UIView? {
-        guard let controller = controller as? ModalViewController else {
-            return nil
-        }
-        
+    func create(from element: ContentElement, in view: UIView, with controller: GestureHandler) -> UIView? {
         if case .closeButton(let closeButtonElement) = element {
             let color = closeButtonElement.color?.isHexValid() ?? false ? closeButtonElement.color : nil
             let closeButton = CrossView(lineColorHex: color, lineWidth: closeButtonElement.lineWidth)
@@ -21,6 +17,7 @@ class CloseButtonElementFactory: ElementFactory {
             let closeRecognizer = UILongPressGestureRecognizer(target: controller, action: #selector(controller.onCloseButton))
             closeRecognizer.minimumPressDuration = 0
             closeButton.addGestureRecognizer(closeRecognizer)
+            
             return closeButton
         }
         

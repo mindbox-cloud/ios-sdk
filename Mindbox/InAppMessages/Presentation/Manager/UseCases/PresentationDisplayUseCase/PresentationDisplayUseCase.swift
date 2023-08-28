@@ -22,6 +22,9 @@ final class PresentationDisplayUseCase {
     }
 
     func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) {
+        
+        changeType(model: model.content)
+        
         guard let window = presentationStrategy?.getWindow() else {
             Logger.common(message: "In-app modal window creating failed")
             return
@@ -53,6 +56,8 @@ final class PresentationDisplayUseCase {
         onClose()
         self.presentedVC = nil
         self.model = nil
+        self.presentationStrategy = nil
+        self.factory = nil
     }
     
     func onPresented(id: String, _ completion: @escaping () -> Void) {
@@ -65,11 +70,14 @@ final class PresentationDisplayUseCase {
         completion()
     }
     
-    func changeType(model: MindboxFormVariant) {
+    private func changeType(model: MindboxFormVariant) {
         switch model {
             case .modal:
                 self.presentationStrategy = ModalPresentationStrategy()
                 self.factory = ModalViewFactory()
+            case .snackbar:
+                self.presentationStrategy = SnackbarPresentationStrategy()
+                self.factory = SnackbarViewFactory()
             default:
                 break
         }
