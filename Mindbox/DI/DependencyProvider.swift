@@ -29,6 +29,7 @@ final class DependencyProvider: DependencyContainer {
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
     var abTestDeviceMixer: ABTestDeviceMixer
+    var urlExtractorService: VariantImageUrlExtractorService
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -61,6 +62,13 @@ final class DependencyProvider: DependencyContainer {
         let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
         abTestDeviceMixer = ABTestDeviceMixer()
+        let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
+        let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
+        let actionUseCase = PresentationActionUseCase(tracker: tracker)
+        let actionHandler = InAppActionHandler(actionUseCase: actionUseCase)
+        let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
+                                                           displayUseCase: displayUseCase)
+        urlExtractorService = VariantImageUrlExtractorService()
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -73,11 +81,10 @@ final class DependencyProvider: DependencyContainer {
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
                                                                    imageDownloadService: imageDownloadService,
+                                                                   urlExtractorService: urlExtractorService,
                                                                    abTestDeviceMixer: abTestDeviceMixer),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
-            presentationManager: InAppPresentationManager(
-                inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
-            ),
+            presentationManager: presentationManager,
             persistenceStorage: persistenceStorage,
             sessionStorage: sessionTemporaryStorage
         )
