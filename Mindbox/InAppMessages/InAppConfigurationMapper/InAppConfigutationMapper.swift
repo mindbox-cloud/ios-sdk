@@ -255,16 +255,18 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
     private func buildInAppByEvent(inapps: [InAppTransitionData],
                                    completion: @escaping (InAppFormData?) -> Void) {
-        var shouldDownloadImage = true
         var formData: InAppFormData?
-        var imageDict: [String: UIImage] = [:]
         let group = DispatchGroup()
+        let imageDictQueue = DispatchQueue(label: "com.mindbox.imagedict.queue", attributes: .concurrent)
 
         DispatchQueue.global().async {
             for inapp in inapps {
-                if !shouldDownloadImage {
+                guard formData == nil else {
                     break
                 }
+                
+                var imageDict: [String: UIImage] = [:]
+                var gotError = false
                 
                 if let shownInapps = self.persistenceStorage.shownInAppsIds, shownInapps.contains(inapp.inAppId) {
                     continue
@@ -272,38 +274,32 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 
                 let imageValues = self.urlExtractorService.extractImageURL(from: inapp.content)
                 
-                var gotError = false
-                
-                Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-                
+                Logger.common(message: "Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
                     self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
+                        defer {
+                            group.leave()
+                        }
+                        
                         switch result {
                             case .success(let image):
-                                imageDict[imageValue] = image
-                                group.leave()
+                                imageDictQueue.async(flags: .barrier) {
+                                    imageDict[imageValue] = image
+                                }
                             case .failure:
                                 gotError = true
-                                group.leave()
                         }
                     }
-                    
-                    if gotError {
-                        break
+                }
+                
+                group.wait()
+                
+                imageDictQueue.sync {
+                    if !imageDict.isEmpty && !gotError {
+                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, content: inapp.content)
                     }
-                    
-                    group.wait()
-                }
-                
-                if gotError {
-                    continue
-                }
-                
-                if !imageDict.isEmpty {
-                    formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, content: inapp.content)
-                    shouldDownloadImage = false
                 }
             }
             
