@@ -25,6 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let imageDownloadService: ImageDownloadServiceProtocol
+    private let urlExtractorService: VariantImageUrlExtractorService
     private let abTestDeviceMixer: ABTestDeviceMixer
 
     private let dispatchGroup = DispatchGroup()
@@ -37,6 +38,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
          imageDownloadService: ImageDownloadServiceProtocol,
+         urlExtractorService: VariantImageUrlExtractorService,
          abTestDeviceMixer: ABTestDeviceMixer) {
         self.geoService = geoService
         self.segmentationService = segmentationService
@@ -46,6 +48,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
         self.imageDownloadService = imageDownloadService
+        self.urlExtractorService = urlExtractorService
         self.abTestDeviceMixer = abTestDeviceMixer
     }
 
@@ -54,7 +57,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps?.elements)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {
@@ -239,11 +242,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
-            if let inAppFormVariants = inapp.form.variants.first {
+            if let inAppFormVariants = inapp.form.variants.elements.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
-                                                   imageUrl: inAppFormVariants.imageUrl, // Change this later
-                                                   redirectUrl: inAppFormVariants.redirectUrl,
-                                                   intentPayload: inAppFormVariants.intentPayload)
+                                                   content: inAppFormVariants)
                 inAppsForEvent.append(formData)
                 filteredInAppsByEvent[triggerEvent] = inAppsForEvent
             }
@@ -268,13 +269,18 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     continue
                 }
                 
+                guard let imageValue = self.urlExtractorService.extractImageURL(from: inapp.content) else { continue }
+                
                 group.enter()
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-                self.imageDownloadService.downloadImage(withUrl: inapp.imageUrl) { result in
+
+                self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
                     defer { group.leave() }
                     switch result {
                     case .success(let image):
-                        formData = InAppFormData(inAppId: inapp.inAppId, image: image, redirectUrl: inapp.redirectUrl, intentPayload: inapp.intentPayload)
+                        formData = InAppFormData(inAppId: inapp.inAppId,
+                                                 image: image,
+                                                 content: inapp.content)
                         shouldDownloadImage = false
                     case .failure:
                         break

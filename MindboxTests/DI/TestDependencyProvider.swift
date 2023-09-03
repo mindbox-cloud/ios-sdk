@@ -29,6 +29,7 @@ final class TestDependencyProvider: DependencyContainer {
     var segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
     var abTestDeviceMixer: ABTestDeviceMixer
+    var urlExtractorService: VariantImageUrlExtractorService
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -64,6 +65,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
+        urlExtractorService = VariantImageUrlExtractorService()
     }
 }
 

@@ -27,6 +27,8 @@ class ImageDownloadService: ImageDownloadServiceProtocol {
                 Logger.common(message: "Failed to download image for url: \(url). \nError: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
                 if error.code == NSURLErrorTimedOut {
                     completion(.failure(error))
+                } else {
+                    completion(.failure(error))
                 }
             } else if let response = response, response.statusCode != 200 {
                 Logger.common(message: "Image download failed with status code \(response.statusCode). [URL]: \(url)", level: .debug, category: .inAppMessages)

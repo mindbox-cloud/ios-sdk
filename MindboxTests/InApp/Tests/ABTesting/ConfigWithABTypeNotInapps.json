@@ -17,10 +17,26 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/545000dde32c7396ae07c625ca1c57d332d0176b74186f04c661e952268ea3d1.png",
-                        "redirectUrl": "",
-                        "intentPayload": "",
-                        "$type": "simpleImage"
+                        "$type": "modal",
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "$type": "image",
+                                        "action": {
+                                            "$type": "redirectUrl",
+                                            "intentPayload": "",
+                                            "value": ""
+                                        },
+                                        "source": {
+                                            "$type": "url",
+                                            "value": "https://personalization-web-stable.mindbox.ru/user-media/29836/545000dde32c7396ae07c625ca1c57d332d0176b74186f04c661e952268ea3d1.png"
+                                        }
+                                    }
+                                ]
+                            },
+                            "elements": []
+                        }
                     }
                 ]
             }
@@ -44,10 +60,26 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://personalization-web-stable.mindbox.ru/user-media/29836/c7a94e0c225fa8e3bcc8b6979abaab79fe8127cbecf9d96d9b20dc5c47dc0866.png",
-                        "redirectUrl": "",
-                        "intentPayload": "",
-                        "$type": "simpleImage"
+                        "$type": "modal",
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "$type": "image",
+                                        "action": {
+                                            "$type": "redirectUrl",
+                                            "intentPayload": "",
+                                            "value": ""
+                                        },
+                                        "source": {
+                                            "$type": "url",
+                                            "value": "https://personalization-web-stable.mindbox.ru/user-media/29836/c7a94e0c225fa8e3bcc8b6979abaab79fe8127cbecf9d96d9b20dc5c47dc0866.png"
+                                        }
+                                    }
+                                ]
+                            },
+                            "elements": []
+                        }
                     }
                 ]
             }
@@ -73,10 +105,26 @@
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://pibig.info/uploads/posts/2022-07/1657189902_1-pibig-info-p-kartinki-vertikalnie-na-telefon-1.jpg",
-                        "redirectUrl": "",
-                        "intentPayload": "44",
-                        "$type": "simpleImage"
+                        "$type": "modal",
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "$type": "image",
+                                        "action": {
+                                            "$type": "redirectUrl",
+                                            "intentPayload": "44",
+                                            "value": ""
+                                        },
+                                        "source": {
+                                            "$type": "url",
+                                            "value": "https://pibig.info/uploads/posts/2022-07/1657189902_1-pibig-info-p-kartinki-vertikalnie-na-telefon-1.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            "elements": []
+                        }
                     }
                 ]
             }
