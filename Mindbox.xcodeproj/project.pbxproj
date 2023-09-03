@@ -367,6 +367,7 @@
 		F3482F232A65DC37002A41EC /* InAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */; };
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
+		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
 		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
 		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
 		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
@@ -822,6 +823,7 @@
 		F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesDelegate.swift; sourceTree = "<group>"; };
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
 		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
@@ -2407,6 +2409,7 @@
 				F39B67AA2A3C7304005C0CCA /* ImageDownloadService */,
 				F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */,
 				F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */,
+				F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */,
 			);
 			path = InAppConfigurationMapperTests;
 			sourceTree = "<group>";
@@ -3049,6 +3052,7 @@
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
+				F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,

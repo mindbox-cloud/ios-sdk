@@ -8,7 +8,11 @@
 
 import Foundation
 
-class VariantImageUrlExtractorService {
+protocol VariantImageUrlExtractorServiceProtocol {
+    func extractImageURL(from variant: MindboxFormVariant) -> [String]
+}
+
+class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
     func extractImageURL(from variant: MindboxFormVariant) -> [String] {
         var urlString: [String] = []
         

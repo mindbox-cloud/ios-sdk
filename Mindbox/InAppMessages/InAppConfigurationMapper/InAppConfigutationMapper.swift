@@ -25,7 +25,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let imageDownloadService: ImageDownloadServiceProtocol
-    private let urlExtractorService: VariantImageUrlExtractorService
+    private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
     private let abTestDeviceMixer: ABTestDeviceMixer
 
     private let dispatchGroup = DispatchGroup()
@@ -38,7 +38,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
          imageDownloadService: ImageDownloadServiceProtocol,
-         urlExtractorService: VariantImageUrlExtractorService,
+         urlExtractorService: VariantImageUrlExtractorServiceProtocol,
          abTestDeviceMixer: ABTestDeviceMixer) {
         self.geoService = geoService
         self.segmentationService = segmentationService
