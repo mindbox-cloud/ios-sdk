@@ -139,7 +139,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         rawConfigurationResponse = configResponse
         inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
             self.inapp = inapp
-            Logger.common(message: "In-app сonfiguration applied: \n\(String(describing: inapp))", level: .debug, category: .inAppMessages)
+            Logger.common(message: "In-app applied: \(String(describing: inapp?.inAppId)))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()
         })
     }

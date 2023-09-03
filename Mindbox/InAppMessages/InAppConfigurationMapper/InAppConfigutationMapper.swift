@@ -257,6 +257,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                                    completion: @escaping (InAppFormData?) -> Void) {
         var shouldDownloadImage = true
         var formData: InAppFormData?
+        var imageDict: [String: UIImage] = [:]
         let group = DispatchGroup()
 
         DispatchQueue.global().async {
@@ -269,25 +270,41 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     continue
                 }
                 
-                guard let imageValue = self.urlExtractorService.extractImageURL(from: inapp.content) else { continue }
+                let imageValues = self.urlExtractorService.extractImageURL(from: inapp.content)
                 
-                group.enter()
+                var gotError = false
+                
                 Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-
-                self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
-                    defer { group.leave() }
-                    switch result {
-                    case .success(let image):
-                        formData = InAppFormData(inAppId: inapp.inAppId,
-                                                 image: image,
-                                                 content: inapp.content)
-                        shouldDownloadImage = false
-                    case .failure:
+                
+                for imageValue in imageValues {
+                    group.enter()
+                    Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
+                    self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
+                        switch result {
+                            case .success(let image):
+                                imageDict[imageValue] = image
+                                group.leave()
+                            case .failure:
+                                gotError = true
+                                group.leave()
+                        }
+                    }
+                    
+                    if gotError {
                         break
                     }
+                    
+                    group.wait()
                 }
                 
-                group.wait()
+                if gotError {
+                    continue
+                }
+                
+                if !imageDict.isEmpty {
+                    formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, content: inapp.content)
+                    shouldDownloadImage = false
+                }
             }
             
             group.notify(queue: .main) {

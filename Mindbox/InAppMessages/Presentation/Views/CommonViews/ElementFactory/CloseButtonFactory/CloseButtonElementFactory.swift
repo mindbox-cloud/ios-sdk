@@ -9,7 +9,7 @@
 import UIKit
 
 class CloseButtonElementFactory: ElementFactory {
-    func create(from element: ContentElement, in view: UIView, with controller: GestureHandler) -> UIView? {
+    func create(from element: ContentElement, with controller: GestureHandler) -> UIView? {
         if case .closeButton(let closeButtonElement) = element {
             let color = closeButtonElement.color?.isHexValid() ?? false ? closeButtonElement.color : nil
             let closeButton = CrossView(lineColorHex: color, lineWidth: closeButtonElement.lineWidth)

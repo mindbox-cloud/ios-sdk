@@ -13,14 +13,14 @@ class ModalViewFactory: ViewFactoryProtocol {
     
     func create(model: MindboxFormVariant,
                 id: String,
-                image: UIImage,
+                imagesDict: [String: UIImage],
                 onPresented: @escaping () -> Void,
                 onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
                 onClose: @escaping () -> Void) -> UIViewController? {
         if case .modal(let modalFormVariant) = model {
             let viewController = ModalViewController(model: modalFormVariant,
                                                      id: id,
-                                                     image: image,
+                                                     imagesDict: imagesDict,
                                                      onPresented: onPresented,
                                                      onTapAction: onTapAction,
                                                      onClose: onClose)

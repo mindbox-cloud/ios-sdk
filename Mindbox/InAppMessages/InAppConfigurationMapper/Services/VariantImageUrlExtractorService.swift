@@ -9,43 +9,38 @@
 import Foundation
 
 class VariantImageUrlExtractorService {
-    func extractImageURL(from variant: MindboxFormVariant) -> String? {
-        var urlString: String?
+    func extractImageURL(from variant: MindboxFormVariant) -> [String] {
+        var urlString: [String] = []
+        
+        let elements: [ContentBackgroundLayer]
+        
         switch variant {
-            case .modal(let modalModel):
-                let modalModel = modalModel.content.background.layers.elements.first(where: {
-                    switch $0 {
-                        case .image(let imageModel):
-                            switch imageModel.source {
-                                case .url(let urlModel):
-                                    urlString = urlModel.value
-                                    return true
-                                case .unknown:
-                                    return false
-                            }
-                        case .unknown:
-                            return false
-                    }
-                })
-            case .snackbar(let snackbarModel):
-                let snackbarModel = snackbarModel.content.background.layers.elements.first {
-                    switch $0 {
-                        case .image(let imageModel):
-                            switch imageModel.source {
-                                case .url(let urlModel):
-                                    urlString = urlModel.value
-                                    return true
-                                case .unknown:
-                                    return false
-                            }
-                        case .unknown:
-                            return false
-                    }
-                }
-            case .unknown:
-                return nil
+        case .modal(let modalModel):
+            elements = modalModel.content.background.layers.elements
+        case .snackbar(let snackbarModel):
+            elements = snackbarModel.content.background.layers.elements
+        case .unknown:
+            return []
         }
         
+        extractImageURLs(from: elements, into: &urlString)
+        
         return urlString
+    }
+    
+    private func extractImageURLs(from elements: [ContentBackgroundLayer], into urlString: inout [String]) {
+        for element in elements {
+            switch element {
+            case .image(let imageModel):
+                switch imageModel.source {
+                case .url(let urlModel):
+                    urlString.append(urlModel.value)
+                case .unknown:
+                    break
+                }
+            case .unknown:
+                break
+            }
+        }
     }
 }
