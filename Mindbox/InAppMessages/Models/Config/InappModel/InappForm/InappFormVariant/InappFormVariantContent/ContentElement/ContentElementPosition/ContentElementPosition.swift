@@ -8,6 +8,11 @@
 
 import Foundation
 
+struct ContentElementPositionDTO: Decodable, Equatable {
+    let margin: FailableDecodable<ContentElementPositionMarginDTO>?
+}
+
+
 struct ContentElementPosition: Decodable, Equatable {
-    let margin: FailableDecodable<ContentElementPositionMargin>?
+    let margin: ContentElementPositionMargin
 }

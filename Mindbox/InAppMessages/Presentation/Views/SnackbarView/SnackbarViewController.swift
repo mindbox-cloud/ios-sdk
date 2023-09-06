@@ -108,11 +108,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func setupLayers() {
-        let layers = model.content.background.layers.elements
+        let layers = model.content.background.layers
         guard let snackbarView = snackbarView else {
             return
         }
-        
+
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
                 if case .image(let imageContentBackgroundLayer) = layer {

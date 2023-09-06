@@ -57,7 +57,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps?.elements)
+        let filteredInappsModel = InappsFilterService().filter(inapps: response.inapps?.elements)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: filteredInappsModel)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {
@@ -242,7 +243,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
-            if let inAppFormVariants = inapp.form.variants.elements.first {
+            if let inAppFormVariants = inapp.form.variants.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    content: inAppFormVariants)
                 inAppsForEvent.append(formData)

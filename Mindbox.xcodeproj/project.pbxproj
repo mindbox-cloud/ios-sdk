@@ -368,6 +368,7 @@
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
+		F39116F22AA9AF0E00852298 /* InappsFilterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F12AA9AF0E00852298 /* InappsFilterService.swift */; };
 		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
 		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
 		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
@@ -824,6 +825,7 @@
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
+		F39116F12AA9AF0E00852298 /* InappsFilterService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappsFilterService.swift; sourceTree = "<group>"; };
 		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
@@ -2326,6 +2328,14 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		F39116F32AA9AF3C00852298 /* InappFilterService */ = {
+			isa = PBXGroup;
+			children = (
+				F39116F12AA9AF0E00852298 /* InappsFilterService.swift */,
+			);
+			path = InappFilterService;
+			sourceTree = "<group>";
+		};
 		F397EEAB2A4456A900D48CEC /* MindboxError */ = {
 			isa = PBXGroup;
 			children = (
@@ -2395,6 +2405,7 @@
 		F3A8B9562A389D9300E9C055 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F39116F32AA9AF3C00852298 /* InappFilterService */,
 				F3A8B9572A389D9D00E9C055 /* GeoService.swift */,
 				F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */,
 				F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */,
@@ -2823,6 +2834,7 @@
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
 				A179587C2978AED800609E91 /* GeoTargeting.swift in Sources */,
 				3333C1E12681EA4D00B60D84 /* NotificationsPayloads.swift in Sources */,
+				F39116F22AA9AF0E00852298 /* InappsFilterService.swift in Sources */,
 				334F3AE7264C199900A6AC00 /* CatalogProductListRequest.swift in Sources */,
 				F331DCC02A80993600222120 /* ContentElementSizeType.swift in Sources */,
 				F331DCC52A80993600222120 /* PositionMarginKind.swift in Sources */,

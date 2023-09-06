@@ -108,7 +108,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     }
     
     private func setupLayers() {
-        let layers = model.content.background.layers.elements         
+        let layers = model.content.background.layers
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
                 if case .image(let imageContentBackgroundLayer) = layer {
@@ -126,11 +126,11 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     }
     
     private func setupElements() {
-        guard let elements = model.content.elements?.elements,
+        guard let elements = model.content.elements,
               let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
             return
         }
-        
+
         for element in elements {
             if let factory = elementFactories[element.elementType] {
                 let elementView = factory.create(from: element, with: self)

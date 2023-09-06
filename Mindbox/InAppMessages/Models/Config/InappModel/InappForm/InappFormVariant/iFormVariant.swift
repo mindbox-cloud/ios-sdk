@@ -22,6 +22,54 @@ enum MindboxFormVariantType: String, Decodable {
     }
 }
 
+enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
+    case modal(ModalFormVariantDTO)
+    case snackbar(SnackbarFormVariant)
+    case unknown
+    
+    enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+    
+    static func == (lhs: MindboxFormVariantDTO, rhs: MindboxFormVariantDTO) -> Bool {
+        switch (lhs, rhs) {
+            case (.modal, .modal): return true
+            case (.snackbar, .snackbar): return true
+            case (.unknown, .unknown): return true
+            default: return false
+        }
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        switch self {
+            case .modal: hasher.combine("modal")
+            case .snackbar: hasher.combine("snackbar")
+            case .unknown: hasher.combine("unknown")
+        }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container: KeyedDecodingContainer<MindboxFormVariantDTO.CodingKeys> = try decoder.container(
+            keyedBy: CodingKeys.self)
+        guard let type = try? container.decode(MindboxFormVariantType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
+        }
+        
+        let variantContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        
+        switch type {
+            case .modal:
+                let modalVariant = try variantContainer.decode(ModalFormVariantDTO.self)
+                self = .modal(modalVariant)
+            case .snackbar:
+                let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
+                self = .snackbar(snackbarVariant)
+            case .unknown:
+                self = .unknown
+        }
+    }
+}
+
 enum MindboxFormVariant: Decodable, Hashable, Equatable {
     case modal(ModalFormVariant)
     case snackbar(SnackbarFormVariant)
@@ -65,7 +113,29 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
                 let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
                 self = .snackbar(snackbarVariant)
             case .unknown:
+                self = .unknown
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+        }
+    }
+}
+
+extension MindboxFormVariant {
+    init(type: MindboxFormVariantType, modalVariant: ModalFormVariant? = nil, snackbarVariant: SnackbarFormVariant? = nil) throws {
+        switch type {
+        case .modal:
+            guard let modalVariant = modalVariant else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+            self = .modal(modalVariant)
+            
+        case .snackbar:
+            guard let snackbarVariant = snackbarVariant else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+            self = .snackbar(snackbarVariant)
+            
+        case .unknown:
+            self = .unknown
         }
     }
 }

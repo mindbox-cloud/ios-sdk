@@ -8,6 +8,12 @@
 
 import Foundation
 
+struct ImageContentBackgroundLayerDTO: ContentBackgroundLayerProtocol {
+    let action: ContentBackgroundLayerActionDTO?
+    let source: ContentBackgroundLayerSourceDTO?
+}
+
+
 struct ImageContentBackgroundLayer: ContentBackgroundLayerProtocol {
     let action: ContentBackgroundLayerAction
     let source: ContentBackgroundLayerSource
