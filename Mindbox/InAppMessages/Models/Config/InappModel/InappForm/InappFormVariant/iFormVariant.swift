@@ -24,7 +24,7 @@ enum MindboxFormVariantType: String, Decodable {
 
 enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
     case modal(ModalFormVariantDTO)
-    case snackbar(SnackbarFormVariant)
+    case snackbar(SnackbarFormVariantDTO)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -62,7 +62,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
                 let modalVariant = try variantContainer.decode(ModalFormVariantDTO.self)
                 self = .modal(modalVariant)
             case .snackbar:
-                let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
+                let snackbarVariant = try variantContainer.decode(SnackbarFormVariantDTO.self)
                 self = .snackbar(snackbarVariant)
             case .unknown:
                 self = .unknown

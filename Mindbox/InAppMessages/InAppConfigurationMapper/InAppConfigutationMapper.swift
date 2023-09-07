@@ -16,6 +16,7 @@ protocol InAppConfigurationMapperProtocol {
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
+    private let inappFilterService: InappFilterProtocol
     private let geoService: GeoServiceProtocol
     private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
@@ -30,7 +31,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     private let dispatchGroup = DispatchGroup()
 
-    init(geoService: GeoServiceProtocol,
+    init(inappFilterService: InappFilterProtocol,
+         geoService: GeoServiceProtocol,
          segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -40,6 +42,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          imageDownloadService: ImageDownloadServiceProtocol,
          urlExtractorService: VariantImageUrlExtractorServiceProtocol,
          abTestDeviceMixer: ABTestDeviceMixer) {
+        self.inappFilterService = inappFilterService
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -57,8 +60,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let filteredInappsModel = InappsFilterService().filter(inapps: response.inapps?.elements)
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: filteredInappsModel)
+        let inapps = inappFilterService.filter(inapps: response.inapps?.elements)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: inapps)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {

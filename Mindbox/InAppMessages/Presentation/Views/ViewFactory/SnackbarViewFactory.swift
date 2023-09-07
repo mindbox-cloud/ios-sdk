@@ -15,7 +15,7 @@ class SnackbarViewFactory: ViewFactoryProtocol {
     
     func create(model: MindboxFormVariant, id: String, imagesDict: [String: UIImage], onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) -> UIViewController? {
         if case .snackbar(let snackbarFormVariant) = model {
-            if let gravity = snackbarFormVariant.content.position?.gravity?.element?.vertical {
+            if let gravity = snackbarFormVariant.content.position.gravity?.vertical {
                 var snackbarViewController: UIViewController?
                 switch gravity {
                     case .top:

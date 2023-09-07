@@ -28,6 +28,7 @@ protocol DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol { get }
     var abTestDeviceMixer: ABTestDeviceMixer { get }
     var urlExtractorService: VariantImageUrlExtractorService { get }
+    var inappFilterService: InappFilterProtocol { get }
 }
 
 protocol InstanceFactory {

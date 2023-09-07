@@ -8,8 +8,14 @@
 
 import Foundation
 
+struct SnackbarFormVariantContentDTO: Decodable, Equatable {
+    let background: ContentBackgroundDTO?
+    let position: ContentPositionDTO?
+    let elements: [ContentElementDTO]?
+}
+
 struct SnackbarFormVariantContent: Decodable, Equatable {
     let background: ContentBackground
-    let position: ContentPosition?
-    let elements: FailableDecodableArray<ContentElement>?
+    let position: ContentPosition
+    let elements: [ContentElement]
 }

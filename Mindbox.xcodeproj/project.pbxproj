@@ -312,7 +312,6 @@
 		F331DCC12A80993600222120 /* ContentElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC9B2A80993600222120 /* ContentElement.swift */; };
 		F331DCC32A80993600222120 /* ContentElementPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC9F2A80993600222120 /* ContentElementPosition.swift */; };
 		F331DCC42A80993600222120 /* ContentElementPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */; };
-		F331DCC52A80993600222120 /* PositionMarginKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA32A80993600222120 /* PositionMarginKind.swift */; };
 		F331DCC62A80993600222120 /* ContentElementPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */; };
 		F331DCC82A80993600222120 /* ContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */; };
 		F331DCCB2A80993600222120 /* ContentBackgroundLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */; };
@@ -368,7 +367,15 @@
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
-		F39116F22AA9AF0E00852298 /* InappsFilterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F12AA9AF0E00852298 /* InappsFilterService.swift */; };
+		F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F42AA9AF7A00852298 /* InappFilter.swift */; };
+		F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F72AA9B04E00852298 /* VariantsFilter.swift */; };
+		F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F92AA9B32E00852298 /* LayersFilter.swift */; };
+		F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */; };
+		F39116FE2AA9B54B00852298 /* LayersSourceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */; };
+		F39117012AA9B68B00852298 /* ElementsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117002AA9B68B00852298 /* ElementsFilter.swift */; };
+		F39117032AA9B79100852298 /* ElementsSizeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117022AA9B79100852298 /* ElementsSizeFilter.swift */; };
+		F39117052AA9B92500852298 /* ElementsPositionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117042AA9B92500852298 /* ElementsPositionFilter.swift */; };
+		F39117072AA9C69A00852298 /* ContentPositionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117062AA9C69A00852298 /* ContentPositionFilter.swift */; };
 		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
 		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
 		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
@@ -769,7 +776,6 @@
 		F331DC9B2A80993600222120 /* ContentElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElement.swift; sourceTree = "<group>"; };
 		F331DC9F2A80993600222120 /* ContentElementPosition.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPosition.swift; sourceTree = "<group>"; };
 		F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMargin.swift; sourceTree = "<group>"; };
-		F331DCA32A80993600222120 /* PositionMarginKind.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PositionMarginKind.swift; sourceTree = "<group>"; };
 		F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerAction.swift; sourceTree = "<group>"; };
@@ -825,7 +831,15 @@
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
-		F39116F12AA9AF0E00852298 /* InappsFilterService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappsFilterService.swift; sourceTree = "<group>"; };
+		F39116F42AA9AF7A00852298 /* InappFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilter.swift; sourceTree = "<group>"; };
+		F39116F72AA9B04E00852298 /* VariantsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantsFilter.swift; sourceTree = "<group>"; };
+		F39116F92AA9B32E00852298 /* LayersFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayersFilter.swift; sourceTree = "<group>"; };
+		F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayerActionFilter.swift; sourceTree = "<group>"; };
+		F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayersSourceFilter.swift; sourceTree = "<group>"; };
+		F39117002AA9B68B00852298 /* ElementsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsFilter.swift; sourceTree = "<group>"; };
+		F39117022AA9B79100852298 /* ElementsSizeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsSizeFilter.swift; sourceTree = "<group>"; };
+		F39117042AA9B92500852298 /* ElementsPositionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsPositionFilter.swift; sourceTree = "<group>"; };
+		F39117062AA9C69A00852298 /* ContentPositionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionFilter.swift; sourceTree = "<group>"; };
 		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
@@ -2031,18 +2045,9 @@
 			isa = PBXGroup;
 			children = (
 				F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */,
-				F331DCA22A80993600222120 /* PositionMarginKind */,
 				F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */,
 			);
 			path = ContentElementPositionMargin;
-			sourceTree = "<group>";
-		};
-		F331DCA22A80993600222120 /* PositionMarginKind */ = {
-			isa = PBXGroup;
-			children = (
-				F331DCA32A80993600222120 /* PositionMarginKind.swift */,
-			);
-			path = PositionMarginKind;
 			sourceTree = "<group>";
 		};
 		F331DCA62A80993600222120 /* ContentBackground */ = {
@@ -2331,9 +2336,33 @@
 		F39116F32AA9AF3C00852298 /* InappFilterService */ = {
 			isa = PBXGroup;
 			children = (
-				F39116F12AA9AF0E00852298 /* InappsFilterService.swift */,
+				F39116F42AA9AF7A00852298 /* InappFilter.swift */,
+				F39116F72AA9B04E00852298 /* VariantsFilter.swift */,
+				F39116FF2AA9B67E00852298 /* LayersFilter */,
+				F39117082AAA48CF00852298 /* ElementsFiter */,
+				F39117062AA9C69A00852298 /* ContentPositionFilter.swift */,
 			);
 			path = InappFilterService;
+			sourceTree = "<group>";
+		};
+		F39116FF2AA9B67E00852298 /* LayersFilter */ = {
+			isa = PBXGroup;
+			children = (
+				F39116F92AA9B32E00852298 /* LayersFilter.swift */,
+				F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */,
+				F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */,
+			);
+			path = LayersFilter;
+			sourceTree = "<group>";
+		};
+		F39117082AAA48CF00852298 /* ElementsFiter */ = {
+			isa = PBXGroup;
+			children = (
+				F39117002AA9B68B00852298 /* ElementsFilter.swift */,
+				F39117022AA9B79100852298 /* ElementsSizeFilter.swift */,
+				F39117042AA9B92500852298 /* ElementsPositionFilter.swift */,
+			);
+			path = ElementsFiter;
 			sourceTree = "<group>";
 		};
 		F397EEAB2A4456A900D48CEC /* MindboxError */ = {
@@ -2762,6 +2791,7 @@
 				33072F442664CC6C001F1AB2 /* IssuedPointOfContactResponse.swift in Sources */,
 				A17958762978AEC600609E91 /* OrTargetingChecker.swift in Sources */,
 				334F3AE1264C199900A6AC00 /* PromoCodeRequest.swift in Sources */,
+				F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */,
 				F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */,
 				A17958792978AEC600609E91 /* GeoTargetingChecker.swift in Sources */,
 				33BEE80D2681EB7700993720 /* NotificationDecoder.swift in Sources */,
@@ -2832,16 +2862,16 @@
 				F39B67A22A3C6AF4005C0CCA /* SegmentationService.swift in Sources */,
 				334F3AEC264C199900A6AC00 /* RequestedPromotionRequest.swift in Sources */,
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
+				F39117072AA9C69A00852298 /* ContentPositionFilter.swift in Sources */,
 				A179587C2978AED800609E91 /* GeoTargeting.swift in Sources */,
 				3333C1E12681EA4D00B60D84 /* NotificationsPayloads.swift in Sources */,
-				F39116F22AA9AF0E00852298 /* InappsFilterService.swift in Sources */,
 				334F3AE7264C199900A6AC00 /* CatalogProductListRequest.swift in Sources */,
 				F331DCC02A80993600222120 /* ContentElementSizeType.swift in Sources */,
-				F331DCC52A80993600222120 /* PositionMarginKind.swift in Sources */,
 				F331DD0B2A83A56500222120 /* CrossView.swift in Sources */,
 				B3A625562689FDD400B6A3B7 /* BalanceResponse.swift in Sources */,
 				6FDD1459266F7CB700A50C35 /* ContentResponse.swift in Sources */,
 				F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */,
+				F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */,
 				F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */,
 				334F3AE2264C199900A6AC00 /* CouponRequest.swift in Sources */,
 				F3A8B9942A3A409C00E9C055 /* Validator.swift in Sources */,
@@ -2901,6 +2931,7 @@
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
+				F39117012AA9B68B00852298 /* ElementsFilter.swift in Sources */,
 				6FDD1461266F7CE300A50C35 /* DiscountAmountTypeResponse.swift in Sources */,
 				6FDD144F266F7C7000A50C35 /* UsedResponse.swift in Sources */,
 				330D8CCD26579581005106D5 /* Channel.swift in Sources */,
@@ -2916,6 +2947,7 @@
 				A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */,
 				F331DD072A83A56500222120 /* CloseButtonElementFactory.swift in Sources */,
 				9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */,
+				F39117032AA9B79100852298 /* ElementsSizeFilter.swift in Sources */,
 				F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */,
 				A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */,
 				A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */,
@@ -2939,6 +2971,7 @@
 				A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
+				F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */,
@@ -2954,6 +2987,7 @@
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
 				F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
+				F39117052AA9B92500852298 /* ElementsPositionFilter.swift in Sources */,
 				334F3AE9264C199900A6AC00 /* OrderRequest.swift in Sources */,
 				9B24FAAC28C74B8300F10B5D /* InAppConfigurationRepository.swift in Sources */,
 				F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */,
@@ -2968,6 +3002,7 @@
 				334F3AEF264C199900A6AC00 /* DiscountPromoCodeRequest.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */,
+				F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,
@@ -3026,6 +3061,7 @@
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				F331DD092A83A56500222120 /* LayerFactory.swift in Sources */,
 				F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */,
+				F39116FE2AA9B54B00852298 /* LayersSourceFilter.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,
 				B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */,

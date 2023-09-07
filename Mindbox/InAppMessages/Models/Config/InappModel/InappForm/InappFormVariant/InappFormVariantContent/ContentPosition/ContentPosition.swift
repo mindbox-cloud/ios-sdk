@@ -8,17 +8,12 @@
 
 import Foundation
 
+struct ContentPositionDTO: Decodable, Equatable {
+    let gravity: ContentPositionGravityDTO?
+    let margin: ContentPositionMarginDTO?
+}
+
 struct ContentPosition: Decodable, Equatable {
-    let gravity: FailableDecodable<ContentPositionGravity>?
-    let margin: FailableDecodable<ContentPositionMargin>?
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        gravity = try container.decodeIfPresent(FailableDecodable<ContentPositionGravity>.self, forKey: .gravity)
-        margin = try container.decodeIfPresent(FailableDecodable<ContentPositionMargin>.self, forKey: .margin)
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case gravity, margin
-    }
+    let gravity: ContentPositionGravity?
+    let margin: ContentPositionMargin
 }

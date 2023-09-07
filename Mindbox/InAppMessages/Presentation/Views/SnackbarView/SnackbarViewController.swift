@@ -27,11 +27,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     ]
     
     var leftOffset: CGFloat {
-        return model.content.position?.margin?.element?.left ?? 0
+        return model.content.position.margin.left
     }
     
     var rightOffset: CGFloat {
-        return model.content.position?.margin?.element?.right ?? 0
+        return model.content.position.margin.right
     }
 
     private let id: String
@@ -130,12 +130,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func setupElements() {
-        guard let elements = model.content.elements?.elements,
-              let snackbarView = snackbarView else {
+        guard let snackbarView = snackbarView else {
             return
         }
         
-        for element in elements {
+        for element in model.content.elements {
             if let factory = elementFactories[element.elementType] {
                 let elementView = factory.create(from: element, with: self)
                 if let elementView = elementView {

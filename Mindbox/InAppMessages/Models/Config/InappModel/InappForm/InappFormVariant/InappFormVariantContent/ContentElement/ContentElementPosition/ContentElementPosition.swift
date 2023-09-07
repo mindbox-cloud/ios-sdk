@@ -9,7 +9,7 @@
 import Foundation
 
 struct ContentElementPositionDTO: Decodable, Equatable {
-    let margin: FailableDecodable<ContentElementPositionMarginDTO>?
+    let margin: ContentElementPositionMarginDTO?
 }
 
 

@@ -11,8 +11,8 @@ import Foundation
 struct CloseButtonElementDTO: ContentElementProtocol {
     let color: FailableDecodable<String>?
     let lineWidth: FailableDecodable<Int>?
-    let size: FailableDecodable<ContentElementSizeDTO>?
-    let position: FailableDecodable<ContentElementPositionDTO>?
+    let size: ContentElementSizeDTO?
+    let position: ContentElementPositionDTO?
 }
 
 struct CloseButtonElement: ContentElementProtocol {
