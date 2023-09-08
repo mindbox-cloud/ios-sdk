@@ -298,7 +298,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 
                 imageDictQueue.sync {
                     if !imageDict.isEmpty && !gotError {
-                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, content: inapp.content)
+                        let firstImageValue = imageValues.first ?? ""
+                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, firstImageValue: firstImageValue, content: inapp.content)
                     }
                 }
             }

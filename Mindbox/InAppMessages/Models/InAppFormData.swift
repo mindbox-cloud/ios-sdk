@@ -13,6 +13,7 @@ import UIKit
 struct InAppFormData {
     let inAppId: String
     let imagesDict: [String: UIImage]
+    let firstImageValue: String
     let content: MindboxFormVariant
 }
 
