@@ -34,8 +34,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         return model.content.position?.margin?.element?.right ?? 0
     }
 
-    private let id: String
-    public let image: UIImage
+    private let imagesDict: [String: UIImage]
+    private let firstImageValue: String
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
@@ -51,15 +51,15 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
 
     init(
         model: SnackbarFormVariant,
-        id: String,
-        image: UIImage,
+        imagesDict: [String: UIImage],
+        firstImageValue: String,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
         onClose: @escaping () -> Void
     ) {
         self.model = model
-        self.id = id
-        self.image = image
+        self.imagesDict = imagesDict
+        self.firstImageValue = firstImageValue
         self.onPresented = onPresented
         self.onClose = onClose
         self.onTapAction = onTapAction
@@ -115,11 +115,15 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
-                let layerView = factory.create(from: self.image, layer: layer, in: snackbarView, with: self)
-                if let layerView = layerView {
-                    self.layers.append(layerView)
-                    snackbarView.addSubview(layerView)
-                    factory.setupConstraintsSnackbar(for: layerView, in: snackbarView)
+                if case .image(let imageContentBackgroundLayer) = layer {
+                    if case .url(let urlModel) = imageContentBackgroundLayer.source, let image = imagesDict[urlModel.value] {
+                        let layerView = factory.create(from: image, layer: layer, in: view, with: self)
+                        if let layerView = layerView {
+                            self.layers.append(layerView)
+                            snackbarView.addSubview(layerView)
+                            factory.setupConstraintsSnackbar(for: layerView, in: snackbarView)
+                        }
+                    }
                 }
             }
         }
@@ -133,7 +137,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         
         for element in elements {
             if let factory = elementFactories[element.elementType] {
-                let elementView = factory.create(from: element, in: snackbarView, with: self)
+                let elementView = factory.create(from: element, with: self)
                 if let elementView = elementView {
                     self.elements.append(elementView)
                     snackbarView.addSubview(elementView)
@@ -157,6 +161,10 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     func setupConstraints() {
+        guard let image = imagesDict[firstImageValue] else {
+            return
+        }
+        
         let width = view.layer.frame.width - leftOffset - rightOffset
         let heightMultiplier = width / image.size.width
         let imageHeight = image.size.height * heightMultiplier
