@@ -34,8 +34,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         return model.content.position.margin.right
     }
 
-    private let id: String
     private let imagesDict: [String: UIImage]
+    private let firstImageValue: String
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
@@ -51,15 +51,15 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
 
     init(
         model: SnackbarFormVariant,
-        id: String,
         imagesDict: [String: UIImage],
+        firstImageValue: String,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
         onClose: @escaping () -> Void
     ) {
         self.model = model
-        self.id = id
         self.imagesDict = imagesDict
+        self.firstImageValue = firstImageValue
         self.onPresented = onPresented
         self.onClose = onClose
         self.onTapAction = onTapAction
@@ -160,7 +160,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     func setupConstraints() {
-        guard let firstImageKey = imagesDict.keys.first, let image = imagesDict[firstImageKey] else {
+        guard let image = imagesDict[firstImageValue] else {
             return
         }
         

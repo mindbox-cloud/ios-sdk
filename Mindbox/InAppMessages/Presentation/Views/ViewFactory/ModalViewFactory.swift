@@ -14,6 +14,7 @@ class ModalViewFactory: ViewFactoryProtocol {
     func create(model: MindboxFormVariant,
                 id: String,
                 imagesDict: [String: UIImage],
+                firstImageValue: String,
                 onPresented: @escaping () -> Void,
                 onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
                 onClose: @escaping () -> Void) -> UIViewController? {
