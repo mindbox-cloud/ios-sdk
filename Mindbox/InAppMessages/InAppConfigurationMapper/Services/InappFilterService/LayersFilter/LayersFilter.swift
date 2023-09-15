@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol LayersFilterProtocol {
-    func filter(_ layers: [ContentBackgroundLayerDTO]?) throws -> [ContentBackgroundLayer]?
+    func filter(_ layers: [ContentBackgroundLayerDTO]?) throws -> [ContentBackgroundLayer]
 }
 
 final class LayersFilterService: LayersFilterProtocol {
@@ -22,24 +22,21 @@ final class LayersFilterService: LayersFilterProtocol {
         self.sourceFilter = sourceFilter
     }
     
-    func filter(_ layers: [ContentBackgroundLayerDTO]?) throws -> [ContentBackgroundLayer]? {
+    func filter(_ layers: [ContentBackgroundLayerDTO]?) throws -> [ContentBackgroundLayer] {
         var filteredLayers: [ContentBackgroundLayer] = []
         
         guard let layers = layers else {
-            return nil
+            throw CustomDecodingError.unknownType("LayersFilterService validation not passed.")
         }
         
         for layer in layers {
             switch layer {
                 case .image(let imageContentBackgroundLayerDTO):
-                    if let action = try actionFilter.filter(imageContentBackgroundLayerDTO.action),
-                       let source = try sourceFilter.filter(imageContentBackgroundLayerDTO.source) {
-                        let imageLayer = ImageContentBackgroundLayer(action: action, source: source)
-                        let newLayer = try ContentBackgroundLayer(type: layer.layerType, imageLayer: imageLayer)
-                        filteredLayers.append(newLayer)
-                    } else {
-                        return []
-                    }
+                    let action = try actionFilter.filter(imageContentBackgroundLayerDTO.action)
+                    let source = try sourceFilter.filter(imageContentBackgroundLayerDTO.source)
+                    let imageLayer = ImageContentBackgroundLayer(action: action, source: source)
+                    let newLayer = try ContentBackgroundLayer(type: layer.layerType, imageLayer: imageLayer)
+                    filteredLayers.append(newLayer)
                 case .unknown:
                     break
             }

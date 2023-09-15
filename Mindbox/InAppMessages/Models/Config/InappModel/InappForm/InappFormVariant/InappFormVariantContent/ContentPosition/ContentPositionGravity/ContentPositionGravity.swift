@@ -22,24 +22,10 @@ enum GravityHorizontalType: String, Decodable {
     case left
     case right
     case center
-    case unknown
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(RawValue.self)
-        self = GravityHorizontalType(rawValue: rawValue) ?? .unknown
-    }
 }
 
 enum GravityVerticalType: String, Decodable {
     case top
     case bottom
     case center
-    case unknown
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(RawValue.self)
-        self = GravityVerticalType(rawValue: rawValue) ?? .unknown
-    }
 }

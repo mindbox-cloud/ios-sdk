@@ -9,19 +9,19 @@
 import Foundation
 
 protocol LayersSourceFilterProtocol {
-    func filter(_ source: ContentBackgroundLayerSourceDTO?) throws -> ContentBackgroundLayerSource?
+    func filter(_ source: ContentBackgroundLayerSourceDTO?) throws -> ContentBackgroundLayerSource
 }
 
 final class LayersSourceFilterService: LayersSourceFilterProtocol {
-    func filter(_ source: ContentBackgroundLayerSourceDTO?) throws -> ContentBackgroundLayerSource? {
+    func filter(_ source: ContentBackgroundLayerSourceDTO?) throws -> ContentBackgroundLayerSource {
         guard let source = source,
               source.sourceType != .unknown else {
-            return nil
+            throw CustomDecodingError.unknownType("LayersSourceFilterService validation not passed.")
         }
         
         switch source {
             case .url(let urlLayerSource):
-                if let value = urlLayerSource.value {
+                if let value = urlLayerSource.value, !value.isEmpty {
                     let urlLayerSourceModel = UrlLayerSource(value: value)
                     return try ContentBackgroundLayerSource(type: .url, urlModel: urlLayerSourceModel)
                 }
@@ -29,6 +29,6 @@ final class LayersSourceFilterService: LayersSourceFilterProtocol {
                 break
         }
         
-        return nil
+        throw CustomDecodingError.unknownType("LayersSourceFilterService validation not passed.")
     }
 }

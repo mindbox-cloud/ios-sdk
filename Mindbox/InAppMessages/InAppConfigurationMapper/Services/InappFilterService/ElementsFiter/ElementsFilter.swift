@@ -7,9 +7,10 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ElementsFilterProtocol {
-    func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement]?
+    func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement]
 }
 
 final class ElementsFilterService: ElementsFilterProtocol {
@@ -21,13 +22,15 @@ final class ElementsFilterService: ElementsFilterProtocol {
     
     private let sizeFilter: ElementsSizeFilterProtocol
     private let positionFilter: ElementsPositionFilterProtocol
+    private let colorFilter: ElementsColorFilterProtocol
     
-    init(sizeFilter: ElementsSizeFilterProtocol, positionFilter: ElementsPositionFilterProtocol) {
+    init(sizeFilter: ElementsSizeFilterProtocol, positionFilter: ElementsPositionFilterProtocol, colorFilter: ElementsColorFilterProtocol) {
         self.sizeFilter = sizeFilter
         self.positionFilter = positionFilter
+        self.colorFilter = colorFilter
     }
     
-    func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement]? {
+    func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement] {
         guard let elements = elements, !elements.isEmpty else {
             return []
         }
@@ -41,12 +44,10 @@ final class ElementsFilterService: ElementsFilterProtocol {
             
             switch element {
                 case .closeButton(let closeButtonElementDTO):
-                    guard let size = try sizeFilter.filter(closeButtonElementDTO.size),
-                          let position = try positionFilter.filter(closeButtonElementDTO.position) else {
-                        return nil
-                    }
-                    
-                    let customCloseButtonElement = CloseButtonElement(color: closeButtonElementDTO.color?.element ?? Constants.defaultColor,
+                    let size = try sizeFilter.filter(closeButtonElementDTO.size)
+                    let position = try positionFilter.filter(closeButtonElementDTO.position)
+                    let color = try colorFilter.filter(closeButtonElementDTO.color?.element)
+                    let customCloseButtonElement = CloseButtonElement(color: color,
                                                                       lineWidth: closeButtonElementDTO.lineWidth?.element ?? Constants.lineWidth,
                                                                       size: size,
                                                                       position: position)
@@ -56,7 +57,7 @@ final class ElementsFilterService: ElementsFilterProtocol {
                     continue elementsLoop
             }
         }
-        
+
         return filteredElements
     }
 }

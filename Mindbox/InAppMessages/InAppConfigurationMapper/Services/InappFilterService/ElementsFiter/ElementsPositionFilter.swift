@@ -9,7 +9,7 @@
 import Foundation
 
 protocol ElementsPositionFilterProtocol {
-    func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition?
+    func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition
 }
 
 final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
@@ -19,7 +19,7 @@ final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
         
     }
     
-    func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition? {
+    func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition {
         guard let position = position,
               let margin = position.margin else {
             return ContentElementPosition(margin: Constants.defaultMargin)
@@ -48,6 +48,6 @@ final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
                 return ContentElementPosition(margin: Constants.defaultMargin)
         }
         
-        return nil
+        throw CustomDecodingError.unknownType("ElementsPositionFilterService validation not passed. In-app will be ignored.")
     }
 }

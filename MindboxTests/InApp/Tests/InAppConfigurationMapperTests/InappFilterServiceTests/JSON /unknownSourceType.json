@@ -1,0 +1,206 @@
+{
+  "monitoring": {
+    "logs": [
+      {
+        "requestId": "4d37535e-f1c5-4c84-8622-58070601856e",
+        "deviceUUID": "d2170bcf-b83e-49dc-954c-67f909fbeb99",
+        "from": "2023-07-19T08:27:00",
+        "to": "2023-07-30T11:30:00"
+      }
+    ]
+  },
+  "settings": {
+    "operations": {
+      "viewProduct": {
+        "systemName": "viewProduct"
+      },
+      "viewCategory": {
+        "systemName": "viewCategory"
+      }
+    }
+  },
+  "inapps": [
+    {
+      "id": "094c077d-d1b1-4030-8920-5fe56b4e4e27",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "test payload 1",
+                      "value": "https://w7.pngwing.com/pngs/715/287/png-transparent-number-1-number-1-creative-cartoon.png"
+                    },
+                    "source": {
+                      "$type": "link",
+                      "value": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg"
+                    }
+                  }
+                ]
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#000000",
+                  "lineWidth": 4,
+                  "size": {
+                    "kind": "dp",
+                    "width": 32,
+                    "height": 32
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.03,
+                      "right": 0.03,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "094c077d-d1b1-4030-8920-5fe56b4e4e27",
+      "sdkVersion": {
+        "min": 3,
+        "max": 7
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg",
+            "redirectUrl": "https://w7.pngwing.com/pngs/715/287/png-transparent-number-1-number-1-creative-cartoon.png",
+            "intentPayload": "test payload 1",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "5696ac18-70cb-496f-80c5-a47eb7573df7",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "93",
+            "systemName": "addAction",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "test payload 2",
+                      "value": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg"
+                    },
+                    "source": {
+                      "$type": "url",
+                      "value": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png"
+                    }
+                  }
+                ]
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#000000",
+                  "lineWidth": 4,
+                  "size": {
+                    "kind": "dp",
+                    "width": 32,
+                    "height": 32
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.03,
+                      "right": 0.03,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "5696ac18-70cb-496f-80c5-a47eb7573df7",
+      "sdkVersion": {
+        "min": 4,
+        "max": 7
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "93",
+            "systemName": "addAction",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png",
+            "redirectUrl": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg",
+            "intentPayload": "test payload 2",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    }
+  ]
+}

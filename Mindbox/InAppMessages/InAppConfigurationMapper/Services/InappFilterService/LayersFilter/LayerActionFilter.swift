@@ -9,14 +9,14 @@
 import Foundation
 
 protocol LayerActionFilterProtocol {
-    func filter(_ action: ContentBackgroundLayerActionDTO?) throws -> ContentBackgroundLayerAction?
+    func filter(_ action: ContentBackgroundLayerActionDTO?) throws -> ContentBackgroundLayerAction
 }
 
 final class LayerActionFilterService: LayerActionFilterProtocol {
-    func filter(_ action: ContentBackgroundLayerActionDTO?) throws -> ContentBackgroundLayerAction? {
+    func filter(_ action: ContentBackgroundLayerActionDTO?) throws -> ContentBackgroundLayerAction {
         guard let action = action,
               action.actionType != .unknown else {
-            return nil
+            throw CustomDecodingError.unknownType("LayerActionFilterService validation not passed.")
         }
         
         switch action {
@@ -29,6 +29,6 @@ final class LayerActionFilterService: LayerActionFilterProtocol {
                 break
         }
         
-        return nil
+        throw CustomDecodingError.unknownType("LayerActionFilterService validation not passed.")
     }
 }

@@ -74,8 +74,9 @@ final class DependencyProvider: DependencyContainer {
         let sourceFilter = LayersSourceFilterService()
         let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
         let sizeFilter = ElementSizeFilterService()
+        let colorFilter = ElementsColorFilterService()
         let positionFilter = ElementsPositionFilterService()
-        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter)
+        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         let contentPositionFilterService = ContentPositionFilterService()
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,

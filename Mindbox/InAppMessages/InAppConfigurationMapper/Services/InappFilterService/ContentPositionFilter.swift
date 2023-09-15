@@ -9,7 +9,7 @@
 import Foundation
 
 protocol ContentPositionFilterProtocol {
-    func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition?
+    func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition
 }
 
 final class ContentPositionFilterService: ContentPositionFilterProtocol {
@@ -20,7 +20,7 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
         static let defaultContentPosition = ContentPosition(gravity: defaultGravity, margin: defaultMargin)
     }
     
-    func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition? {
+    func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition {
         guard let contentPosition = contentPosition else {
             return Constants.defaultContentPosition
         }
@@ -54,7 +54,7 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
         }
         
         guard let customMargin = customMargin else {
-            return nil
+            throw CustomDecodingError.unknownType("ContentPositionFilterService validation not passed. Inapp will be skipped.")
         }
         
         return ContentPosition(gravity: customGravity, margin: customMargin)

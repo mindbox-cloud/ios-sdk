@@ -9,7 +9,7 @@
 import Foundation
 
 protocol ElementsSizeFilterProtocol {
-    func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize?
+    func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize
 }
 
 final class ElementSizeFilterService: ElementsSizeFilterProtocol {
@@ -17,7 +17,7 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
         static let defaultSize = ContentElementSize(kind: .dp, width: 24, height: 24)
     }
     
-    func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize? {
+    func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize {
         guard let size = size else {
             return Constants.defaultSize
         }
@@ -34,6 +34,6 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
                 return Constants.defaultSize
         }
         
-        return nil
+        throw CustomDecodingError.unknownType("ElementSizeFilterService validation not passed. In-app will be ignored.")
     }
 }

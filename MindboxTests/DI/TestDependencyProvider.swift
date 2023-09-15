@@ -11,6 +11,7 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
+
     var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
@@ -30,6 +31,7 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
+    var inappFilterService: InappFilterProtocol
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -66,6 +68,18 @@ final class TestDependencyProvider: DependencyContainer {
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
+        let actionFilter = LayerActionFilterService()
+        let sourceFilter = LayersSourceFilterService()
+        let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
+        let sizeFilter = ElementSizeFilterService()
+        let colorFilter = ElementsColorFilterService()
+        let positionFilter = ElementsPositionFilterService()
+        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
+        let contentPositionFilterService = ContentPositionFilterService()
+        let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
+                                                         elementsFilter: elementsFilterService,
+                                                         contentPositionFilter: contentPositionFilterService)
+        inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
     }
 }
 
