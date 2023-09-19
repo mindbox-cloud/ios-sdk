@@ -53,7 +53,7 @@
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg"
+                      "value": "1"
                     }
                   },
                   {
@@ -61,11 +61,11 @@
                     "action": {
                       "$type": "openUrl",
                       "intentPayload": "modal payload_layer2",
-                      "value": "https://otkrit-ka.ru/uploads/posts/2021-07/foto-kartinki-cifra-1-1.jpg"
+                      "value": "1"
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://nklk.ru/dll_image/4748.png"
+                      "value": "1"
                     }
                   }
                 ]
@@ -113,8 +113,8 @@
       "form": {
         "variants": [
           {
-            "imageUrl": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg",
-            "redirectUrl": "https://w7.pngwing.com/pngs/715/287/png-transparent-number-1-number-1-creative-cartoon.png",
+            "imageUrl": "1",
+            "redirectUrl": "1",
             "intentPayload": "test payload 1",
             "$type": "simpleImage"
           }
@@ -154,7 +154,7 @@
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/76/957c8dc6-c30a-4104-be17-839efa56ca3c.png"
+                      "value": "1"
                     }
                   },
                   {
@@ -162,11 +162,11 @@
                     "action": {
                       "$type": "openUrl",
                       "intentPayload": "snackbar payload_layer2",
-                      "value": "https://otkrit-ka.ru/uploads/posts/2021-07/foto-kartinki-cifra-2-1.jpg"
+                      "value": "1"
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://nklk.ru/dll_image/4748.png"
+                      "value": "1"
                     }
                   }
                 ]
@@ -227,8 +227,8 @@
       "form": {
         "variants": [
           {
-            "imageUrl": "https://cmt-shop.ru/upload/iblock/8bf/gderzvgs0nfly3flbn42ot4mxk1ozh7q/lineika_metall_kinex_1022.jpg",
-            "redirectUrl": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg",
+            "imageUrl": "1",
+            "redirectUrl": "1",
             "intentPayload": "test payload 2",
             "$type": "simpleImage"
           }
@@ -266,11 +266,11 @@
                     "action": {
                       "$type": "redirectUrl",
                       "intentPayload": "test payload 2",
-                      "value": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg"
+                      "value": "1"
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png"
+                      "value": "1"
                     }
                   }
                 ]
@@ -320,8 +320,8 @@
       "form": {
         "variants": [
           {
-            "imageUrl": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png",
-            "redirectUrl": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg",
+            "imageUrl": "1",
+            "redirectUrl": "1",
             "intentPayload": "test payload 2",
             "$type": "simpleImage"
           }

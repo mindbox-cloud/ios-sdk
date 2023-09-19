@@ -49,11 +49,11 @@
                     "action": {
                       "$type": "redirectUrl",
                       "intentPayload": "test payload 1",
-                      "value": "https://w7.pngwing.com/pngs/715/287/png-transparent-number-1-number-1-creative-cartoon.png"
+                      "value": "1"
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg"
+                      "value": "1"
                     }
                   }
                 ]
@@ -101,8 +101,8 @@
       "form": {
         "variants": [
           {
-            "imageUrl": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg",
-            "redirectUrl": "https://w7.pngwing.com/pngs/715/287/png-transparent-number-1-number-1-creative-cartoon.png",
+            "imageUrl": "1",
+            "redirectUrl": "1",
             "intentPayload": "test payload 1",
             "$type": "simpleImage"
           }
@@ -140,11 +140,11 @@
                     "action": {
                       "$type": "redirectUrl",
                       "intentPayload": "test payload 2",
-                      "value": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg"
+                      "value": "1"
                     },
                     "source": {
                       "$type": "url",
-                      "value": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png"
+                      "value": "1"
                     }
                   }
                 ]
@@ -194,8 +194,8 @@
       "form": {
         "variants": [
           {
-            "imageUrl": "https://fikiwiki.com/uploads/posts/2022-02/1645022241_1-fikiwiki-com-p-kartinki-tsifra-2-1.png",
-            "redirectUrl": "https://img.freepik.com/free-psd/a-3d-letter-2-with-a-yellow-background_220664-4522.jpg",
+            "imageUrl": "1",
+            "redirectUrl": "1",
             "intentPayload": "test payload 2",
             "$type": "simpleImage"
           }
