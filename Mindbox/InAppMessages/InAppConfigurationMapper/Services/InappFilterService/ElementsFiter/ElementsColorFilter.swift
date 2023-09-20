@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ElementsColorFilterProtocol {
     func filter(_ color: String?) throws -> String
@@ -14,13 +15,15 @@ protocol ElementsColorFilterProtocol {
 
 final class ElementsColorFilterService: ElementsColorFilterProtocol {
     enum Constants {
-        static let defaultColor = "#000000"
+        static let defaultColor = "#FFFFFF"
     }
     
     func filter(_ color: String?) throws -> String {
-        guard let color = color else {
+        guard let color = color, color.isHexValid() else {
+            Logger.common(message: "Color is invalid or missing. Default value set: [\(Constants.defaultColor)]", level: .debug, category: .inAppMessages)
             return Constants.defaultColor
         }
-        return color.isHexValid() ? color : Constants.defaultColor
+        
+        return color
     }
 }

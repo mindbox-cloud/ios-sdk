@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ElementsSizeFilterProtocol {
     func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize
@@ -19,6 +20,7 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
     
     func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize {
         guard let size = size else {
+            Logger.common(message: "Size is invalid or missing. Default value set: [\(Constants.defaultSize)].", level: .debug, category: .inAppMessages)
             return Constants.defaultSize
         }
         
@@ -31,6 +33,7 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
                     return ContentElementSize(kind: size.kind, width: width, height: height)
                 }
             case .unknown:
+                Logger.common(message: "Unknown type of ContentElementSize. Default value set: [\(Constants.defaultSize)].", level: .debug, category: .inAppMessages)
                 return Constants.defaultSize
         }
         

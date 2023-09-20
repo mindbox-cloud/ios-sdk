@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ElementsPositionFilterProtocol {
     func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition
@@ -22,6 +23,7 @@ final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
     func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition {
         guard let position = position,
               let margin = position.margin else {
+            Logger.common(message: "Position or margin is invalid or missing. Default value set: [\(Constants.defaultMargin)].", level: .debug, category: .inAppMessages)
             return ContentElementPosition(margin: Constants.defaultMargin)
         }
         
@@ -45,6 +47,7 @@ final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
                     return ContentElementPosition(margin: customMargin)
                 }
             case .unknown:
+                Logger.common(message: "Unknown type of ContentElementPosition. Default value set: [\(Constants.defaultMargin)].", level: .debug, category: .inAppMessages)
                 return ContentElementPosition(margin: Constants.defaultMargin)
         }
         

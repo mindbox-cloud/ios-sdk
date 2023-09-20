@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ContentPositionFilterProtocol {
     func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition
@@ -22,6 +23,7 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
     
     func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition {
         guard let contentPosition = contentPosition else {
+            Logger.common(message: "Content position is invalid or missing. Default value set: [\(Constants.defaultContentPosition)].", level: .debug, category: .inAppMessages)
             return Constants.defaultContentPosition
         }
         
@@ -31,6 +33,7 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
             let horizontal = gravity.horizontal ?? .center
             customGravity = ContentPositionGravity(vertical: vertical, horizontal: horizontal)
         } else {
+            Logger.common(message: "Gravity is invalid or missing. Default value set: [\(Constants.defaultGravity)].", level: .debug, category: .inAppMessages)
             customGravity = Constants.defaultGravity
         }
         
@@ -49,8 +52,12 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
                         customMargin = ContentPositionMargin(kind: margin.kind, top: top, right: right, left: left, bottom: bottom)
                     }
                 case .unknown:
+                    Logger.common(message: "Content position margin kind is unknown. Default value set: [\(Constants.defaultMargin)].", level: .debug, category: .inAppMessages)
                     customMargin = Constants.defaultMargin
             }
+        } else {
+            Logger.common(message: "Content position margin is invalid or missing. Default value set: [\(Constants.defaultMargin)].", level: .debug, category: .inAppMessages)
+            customMargin = Constants.defaultMargin
         }
         
         guard let customMargin = customMargin else {

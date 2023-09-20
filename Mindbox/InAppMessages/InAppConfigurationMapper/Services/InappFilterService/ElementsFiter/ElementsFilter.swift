@@ -16,7 +16,6 @@ protocol ElementsFilterProtocol {
 final class ElementsFilterService: ElementsFilterProtocol {
     
     enum Constants {
-        static let defaultColor = "#FFFFFF"
         static let lineWidth = 2
     }
     
@@ -47,8 +46,15 @@ final class ElementsFilterService: ElementsFilterProtocol {
                     let size = try sizeFilter.filter(closeButtonElementDTO.size)
                     let position = try positionFilter.filter(closeButtonElementDTO.position)
                     let color = try colorFilter.filter(closeButtonElementDTO.color?.element)
+                    var lineWidth: Int
+                    if let lineWidthDTO = closeButtonElementDTO.lineWidth?.element {
+                        lineWidth = lineWidthDTO
+                    } else {
+                        lineWidth = Constants.lineWidth
+                        Logger.common(message: "Line width is invalid or missing. Default value set: [\(Constants.lineWidth)].", level: .debug, category: .inAppMessages)
+                    }
                     let customCloseButtonElement = CloseButtonElement(color: color,
-                                                                      lineWidth: closeButtonElementDTO.lineWidth?.element ?? Constants.lineWidth,
+                                                                      lineWidth: lineWidth,
                                                                       size: size,
                                                                       position: position)
                     let element = try ContentElement(type: .closeButton, closeButton: customCloseButtonElement)

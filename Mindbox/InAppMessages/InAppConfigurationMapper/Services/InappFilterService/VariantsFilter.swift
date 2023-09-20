@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol VariantFilterProtocol {
     func filter(_ variants: [MindboxFormVariantDTO]?) throws -> [MindboxFormVariant]
