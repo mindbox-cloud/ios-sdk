@@ -11,13 +11,28 @@ import MindboxLogger
 
 final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
     func getWindow() -> UIWindow? {
-        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+        if #available(iOS 13, *) {
+            return UIApplication.shared.connectedScenes
+                .filter { $0.activationState == .foregroundActive }
+                .compactMap { $0 as? UIWindowScene }
+                .first?.windows
+                .first(where: { $0.isKeyWindow })
+        } else {
+            return UIApplication.shared.keyWindow
+        }
     }
-    
+
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
-        window.rootViewController?.addChild(viewController)
-        window.rootViewController?.view.addSubview(viewController.view)
-        Logger.common(message: "In-app with id \(id) presented", level: .info, category: .inAppMessages)
+        if var topController = window.rootViewController {
+            while let presentedViewController = topController.presentedViewController {
+                topController = presentedViewController
+            }
+
+            topController.view.addSubview(viewController.view)
+            Logger.common(message: "In-app with id \(id) presented", level: .info, category: .inAppMessages)
+        } else {
+            Logger.common(message: "Unable to get top controller. Abort.", level: .error, category: .inAppMessages)
+        }
     }
 
     func dismiss(viewController: UIViewController) {
