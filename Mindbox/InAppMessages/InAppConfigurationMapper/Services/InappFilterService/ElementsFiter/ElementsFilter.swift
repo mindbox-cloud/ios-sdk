@@ -16,8 +16,8 @@ protocol ElementsFilterProtocol {
 final class ElementsFilterService: ElementsFilterProtocol {
     
     enum Constants {
-        static let defaultColor = "#000000"
-        static let lineWidth = 1
+        static let defaultColor = "#FFFFFF"
+        static let lineWidth = 2
     }
     
     private let sizeFilter: ElementsSizeFilterProtocol
