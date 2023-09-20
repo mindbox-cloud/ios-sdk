@@ -40,9 +40,6 @@ final class VariantFilterService: VariantFilterProtocol {
                     }
                     
                     let filteredLayers = try layersFilter.filter(background.layers)
-                    if filteredLayers.isEmpty {
-                        continue variantsLoop
-                    }
                     let fileterdElements = try elementsFilter.filter(content.elements)
                     
                     let backgroundModel = ContentBackground(layers: filteredLayers)
@@ -69,6 +66,7 @@ final class VariantFilterService: VariantFilterProtocol {
                     let mindboxFormVariant = try MindboxFormVariant(type: .snackbar, snackbarVariant: snackbarFormVariant)
                     resultVariants.append(mindboxFormVariant)
                 case .unknown:
+                    Logger.common(message: "Unknown type of variant. Variant will be skipped.", level: .debug, category: .inAppMessages)
                     continue
             }
         }

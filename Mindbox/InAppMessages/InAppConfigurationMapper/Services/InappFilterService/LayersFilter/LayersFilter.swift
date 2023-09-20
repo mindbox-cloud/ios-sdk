@@ -38,8 +38,13 @@ final class LayersFilterService: LayersFilterProtocol {
                     let newLayer = try ContentBackgroundLayer(type: layer.layerType, imageLayer: imageLayer)
                     filteredLayers.append(newLayer)
                 case .unknown:
+                    Logger.common(message: "Unknown type of layer. Layer will be skipped.", level: .debug, category: .inAppMessages)
                     break
             }
+        }
+        
+        if filteredLayers.isEmpty {
+            throw CustomDecodingError.unknownType("Layers cannot be empty. In-app will be skipped.")
         }
         
         return filteredLayers.filter { $0.layerType != .unknown }
