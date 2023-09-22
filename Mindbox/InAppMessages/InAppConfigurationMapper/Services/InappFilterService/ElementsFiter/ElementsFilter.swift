@@ -31,7 +31,7 @@ final class ElementsFilterService: ElementsFilterProtocol {
     
     func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement] {
         guard let elements = elements, !elements.isEmpty else {
-            Logger.common(message: "Elements are missing or empty. The variant will be skipped.", level: .debug, category: .inAppMessages)
+            Logger.common(message: "Elements are missing or empty.", level: .debug, category: .inAppMessages)
             return []
         }
         
