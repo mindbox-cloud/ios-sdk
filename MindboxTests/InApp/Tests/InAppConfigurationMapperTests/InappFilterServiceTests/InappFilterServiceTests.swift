@@ -10,6 +10,13 @@ import XCTest
 @testable import Mindbox
 
 final class InappFilterServiceTests: XCTestCase {
+    
+    enum Constants {
+        static let defaultID = "5696ac18-70cb-496f-80c5-a47eb7573df7"
+        static let defaultColor = "#FFFFFF"
+        static let defaultLineWidth = 2
+        static let defaultSize: Double = 24
+    }
 
     var sut: InappFilterProtocol!
     var container = try! TestDependencyProvider()
@@ -28,28 +35,28 @@ final class InappFilterServiceTests: XCTestCase {
         let config = try getConfig(name: "unknownVariantType")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingBackgroundSection() throws {
         let config = try getConfig(name: "missingBackgroundSection")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_emptyLayersSection() throws {
         let config = try getConfig(name: "emptyLayersSection")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_unknownLayerType() throws {
         let config = try getConfig(name: "unknownLayerType")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_knownImageUnknownPictureLayerType() throws {
@@ -72,56 +79,56 @@ final class InappFilterServiceTests: XCTestCase {
         let config = try getConfig(name: "unknownActionLayerType")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_redirectUrlValueNumberInsteadOfString() throws {
         let config = try getConfig(name: "redirectUrlValueNumberInsteadOfString")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingIntentPayloadInActionLayer() throws {
         let config = try getConfig(name: "missingIntentPayloadInActionLayer")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingSourceSection() throws {
         let config = try getConfig(name: "missingSourceSection")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_emptyVariantsArray() throws {
         let config = try getConfig(name: "emptyVariantsArray")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_unknownSourceType() throws {
         let config = try getConfig(name: "unknownSourceType")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingValueInSourceLayer() throws {
         let config = try getConfig(name: "missingValueInSourceLayer")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingImageLinkInSourceLayerValue() throws {
         let config = try getConfig(name: "missingImageLinkInSourceLayerValue")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_missingElementsSection() throws {
@@ -154,7 +161,7 @@ final class InappFilterServiceTests: XCTestCase {
                     }
                     switch type {
                         case .closeButton(let model):
-                            XCTAssertEqual(model.color, "#000000")
+                            XCTAssertEqual(model.color, Constants.defaultColor)
                         default:
                             break
                     }
@@ -178,10 +185,10 @@ final class InappFilterServiceTests: XCTestCase {
                     }
                     switch type {
                         case .closeButton(let model):
-                            XCTAssertEqual(model.color, "#000000")
-                            XCTAssertEqual(model.size.height, 24)
-                            XCTAssertEqual(model.size.width, 24)
-                            XCTAssertEqual(model.lineWidth, 1)
+                            XCTAssertEqual(model.color, Constants.defaultColor)
+                            XCTAssertEqual(model.size.height, Constants.defaultSize)
+                            XCTAssertEqual(model.size.width, Constants.defaultSize)
+                            XCTAssertEqual(model.lineWidth, Constants.defaultLineWidth)
                         default:
                             break
                     }
@@ -262,8 +269,8 @@ final class InappFilterServiceTests: XCTestCase {
                     switch elements.first! {
                         case .closeButton(let model):
                             XCTAssertEqual(model.size.kind, .dp)
-                            XCTAssertEqual(model.size.width, 24)
-                            XCTAssertEqual(model.size.height, 24)
+                            XCTAssertEqual(model.size.width, Constants.defaultSize)
+                            XCTAssertEqual(model.size.height, Constants.defaultSize)
                             return
                         default:
                             break
@@ -280,28 +287,28 @@ final class InappFilterServiceTests: XCTestCase {
         let config = try getConfig(name: "missingMarginFieldInSection")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_negativeCloseButtonSizeValues() throws {
         let config = try getConfig(name: "negativeCloseButtonSizeValues")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_closeButtonMarginAboveOne() throws {
         let config = try getConfig(name: "closeButtonMarginAboveOne")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     func test_closeButtonMarginBelowZero() throws {
         let config = try getConfig(name: "closeButtonMarginBelowZero")
         let inapps = sut.filter(inapps: config.inapps?.elements)
         XCTAssertEqual(inapps.count, 1)
-        XCTAssertEqual(inapps.first?.id, "5696ac18-70cb-496f-80c5-a47eb7573df7")
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
     }
     
     private func getConfig(name: String) throws -> ConfigResponse {
