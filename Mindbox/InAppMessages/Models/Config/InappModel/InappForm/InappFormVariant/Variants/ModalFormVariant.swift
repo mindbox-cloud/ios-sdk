@@ -7,6 +7,10 @@
 
 import Foundation
 
+struct ModalFormVariantDTO: iFormVariant, Decodable, Equatable {
+    let content: InappFormVariantContentDTO?
+}
+
 struct ModalFormVariant: iFormVariant, Decodable, Equatable {
     let content: InappFormVariantContent
 }

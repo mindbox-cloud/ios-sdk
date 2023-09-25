@@ -8,21 +8,10 @@
 
 import Foundation
 
+struct InAppFormDTO: Decodable, Equatable {
+    let variants: [MindboxFormVariantDTO]?
+}
+
 struct InAppForm: Decodable, Equatable {
-    let variants: FailableDecodableArray<MindboxFormVariant>
-    
-    enum CodingKeys: String, CodingKey {
-        case variants
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let variants = try container.decode(FailableDecodableArray<MindboxFormVariant>.self, forKey: .variants)
-        
-        if variants.elements.isEmpty {
-            throw CustomDecodingError.decodingError("Variants array cannot be empty.")
-        }
-        
-        self.variants = variants
-    }
+    let variants: [MindboxFormVariant]
 }

@@ -8,7 +8,12 @@
 
 import Foundation
 
+struct InappFormVariantContentDTO: Decodable, Equatable {
+    let background: ContentBackgroundDTO?
+    let elements: [ContentElementDTO]?
+}
+
 struct InappFormVariantContent: Decodable, Equatable {
     let background: ContentBackground
-    let elements: FailableDecodableArray<ContentElement>?
+    let elements: [ContentElement]?
 }

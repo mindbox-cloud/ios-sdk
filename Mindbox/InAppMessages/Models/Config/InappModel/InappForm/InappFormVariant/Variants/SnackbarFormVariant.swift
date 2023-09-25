@@ -8,6 +8,10 @@
 
 import Foundation
 
+struct SnackbarFormVariantDTO: iFormVariant, Decodable, Equatable {
+    let content: SnackbarFormVariantContentDTO?
+}
+
 struct SnackbarFormVariant: iFormVariant, Decodable, Equatable {
     let content: SnackbarFormVariantContent
 }

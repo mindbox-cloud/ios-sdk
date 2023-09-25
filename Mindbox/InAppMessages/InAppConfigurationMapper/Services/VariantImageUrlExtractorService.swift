@@ -17,18 +17,18 @@ class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
         var urlString: [String] = []
         
         let elements: [ContentBackgroundLayer]
-        
+
         switch variant {
         case .modal(let modalModel):
-            elements = modalModel.content.background.layers.elements
+            elements = modalModel.content.background.layers
         case .snackbar(let snackbarModel):
-            elements = snackbarModel.content.background.layers.elements
+            elements = snackbarModel.content.background.layers
         case .unknown:
             return []
         }
-        
+
         extractImageURLs(from: elements, into: &urlString)
-        
+
         return urlString
     }
     

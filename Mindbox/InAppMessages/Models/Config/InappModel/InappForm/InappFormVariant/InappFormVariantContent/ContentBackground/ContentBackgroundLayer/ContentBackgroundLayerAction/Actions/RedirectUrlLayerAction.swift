@@ -8,8 +8,12 @@
 
 import Foundation
 
+struct RedirectUrlLayerActionDTO: ContentBackgroundLayerActionProtocol {
+    let intentPayload: String?
+    let value: String?
+}
+
 struct RedirectUrlLayerAction: ContentBackgroundLayerActionProtocol {
     let intentPayload: String
     let value: String
 }
-
