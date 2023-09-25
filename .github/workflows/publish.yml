@@ -22,7 +22,7 @@ jobs:
 
   publish:
     needs: [unit]
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v2
     - name: Release generation
