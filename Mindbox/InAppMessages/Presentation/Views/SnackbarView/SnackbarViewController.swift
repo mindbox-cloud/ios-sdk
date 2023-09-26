@@ -11,7 +11,7 @@ import MindboxLogger
 
 class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     
-    var snackbarView: SnackbarView?
+
     var edgeConstraint: NSLayoutConstraint?
     let model: SnackbarFormVariant
     
@@ -35,9 +35,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private let imagesDict: [String: UIImage]
+    let snackbarView: SnackbarView
     private let firstImageValue: String
     private let onPresented: () -> Void
-    private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
     
     private var hasSetupLayers = false
@@ -52,16 +52,16 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     init(
         model: SnackbarFormVariant,
         imagesDict: [String: UIImage],
+        snackbarView: SnackbarView,
         firstImageValue: String,
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
-        onClose: @escaping () -> Void
+        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void
     ) {
         self.model = model
         self.imagesDict = imagesDict
+        self.snackbarView = snackbarView
         self.firstImageValue = firstImageValue
         self.onPresented = onPresented
-        self.onClose = onClose
         self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
@@ -73,12 +73,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.isUserInteractionEnabled = true
-        snackbarView = SnackbarView(onClose: onClose)
-        if let snackbarView = snackbarView {
-            snackbarView.translatesAutoresizingMaskIntoConstraints = false
-            snackbarView.isUserInteractionEnabled = true
-            view.addSubview(snackbarView)
-        }
+        snackbarView.translatesAutoresizingMaskIntoConstraints = false
+        snackbarView.isUserInteractionEnabled = true
+        view.addSubview(snackbarView)
     }
     
     override func viewDidLayoutSubviews() {
@@ -88,11 +85,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             setupConstraints()
             setupLayers()
 
-            if snackbarView?.bounds.size != .zero {
+            if snackbarView.bounds.size != .zero {
                 setupElements()
                 hasSetupElements = true
             }
-        } else if !hasSetupElements && snackbarView?.bounds.size != .zero {
+        } else if !hasSetupElements && snackbarView.bounds.size != .zero {
             UIView.performWithoutAnimation {
                 setupElements()
                 hasSetupElements = true
@@ -108,11 +105,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func setupLayers() {
-        let layers = model.content.background.layers
-        guard let snackbarView = snackbarView else {
-            return
-        }
-
+        let layers = model.content.background.layers.elements
+        
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
                 if case .image(let imageContentBackgroundLayer) = layer {
@@ -130,7 +124,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func setupElements() {
-        guard let snackbarView = snackbarView else {
+        guard let elements = model.content.elements?.elements else {
+            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
@@ -161,6 +156,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     
     func setupConstraints() {
         guard let image = imagesDict[firstImageValue] else {
+            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
@@ -170,9 +166,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
         
         setViewFrame(with: finalHeight)
-        guard let snackbarView = snackbarView else {
-            return
-        }
         
         snackbarView.swipeDirection = swipeDirection
         snackbarView.translatesAutoresizingMaskIntoConstraints = false
@@ -186,10 +179,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     func setupLayoutConstraints(with height: CGFloat) {
-        guard let snackbarView = snackbarView else {
-            return
-        }
-        
         if #available(iOS 11.0, *) {
             NSLayoutConstraint.activate([
                 snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
@@ -213,6 +202,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
 extension SnackbarViewController: GestureHandler {
     @objc func imageTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? InAppImageOnlyView else {
+            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
@@ -222,13 +212,14 @@ extension SnackbarViewController: GestureHandler {
     
     @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
         guard let crossView = gesture.view else {
+            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
         let location = gesture.location(in: crossView)
         let isInsideCrossView = crossView.bounds.contains(location)
         if gesture.state == .ended && isInsideCrossView {
-            snackbarView?.hide()
+            snackbarView.hide()
         }
     }
 }
@@ -253,9 +244,9 @@ class TopSnackbarViewController: SnackbarViewController {
 
     override func setupEdgeConstraint(with height: CGFloat) {
         if #available(iOS 11.0, *) {
-            edgeConstraint = snackbarView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -height)
+            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -height)
         } else {
-            edgeConstraint = snackbarView?.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
+            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
         }
         
         edgeConstraint?.isActive = true
@@ -280,13 +271,14 @@ class BottomSnackbarViewController: SnackbarViewController {
         self.view.frame = CGRect(x: leftOffset, y: screenHeight - finalHeight,
                                  width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
+        self.view.backgroundColor = .green
     }
 
     override func setupEdgeConstraint(with height: CGFloat) {
         if #available(iOS 11.0, *) {
-            edgeConstraint = snackbarView?.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
+            edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
         } else {
-            edgeConstraint = snackbarView?.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: height)
+            edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: height)
         }
         
         edgeConstraint?.isActive = true
