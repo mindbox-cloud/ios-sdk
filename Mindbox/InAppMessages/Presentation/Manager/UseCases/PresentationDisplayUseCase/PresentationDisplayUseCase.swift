@@ -30,10 +30,14 @@ final class PresentationDisplayUseCase {
             return
         }
         
+        Logger.common(message: "PresentationDisplayUseCase window: \(window)")
+        
         guard let factory = self.factory else {
             Logger.common(message: "Factory does not exists.", level: .error, category: .general)
             return
         }
+        
+        Logger.common(message: "PresentationDisplayUseCase factory: \(factory)", level: .error)
         
         guard let viewController = factory.create(model: model.content,
                                                   id: model.inAppId,
@@ -44,6 +48,8 @@ final class PresentationDisplayUseCase {
                                                   onClose: onClose) else {
             return
         }
+        
+        Logger.common(message: "PresentationDisplayUseCase viewController: \(viewController)")
         
         presentedVC = viewController
         presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)

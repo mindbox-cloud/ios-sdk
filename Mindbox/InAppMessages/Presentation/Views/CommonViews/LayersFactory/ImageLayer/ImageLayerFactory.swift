@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 class ImageLayerFactory: LayerFactory {
     func create(from image: UIImage, layer: ContentBackgroundLayer, in view: UIView, with controller: GestureHandler) -> UIView? {
@@ -14,10 +15,11 @@ class ImageLayerFactory: LayerFactory {
             let inAppView = InAppImageOnlyView(image: image, action: imageContentBackgroundLayer.action)
             let imageTapGestureRecognizer = UITapGestureRecognizer(target: controller, action: #selector(controller.imageTapped(_:)))
             inAppView.addGestureRecognizer(imageTapGestureRecognizer)
-
+            Logger.common(message: "ImageLayerFactory return uiView.")
             return inAppView
         }
-        
+
+        Logger.common(message: "ImageLayerFactory return nil.")
         return nil
     }
     
@@ -39,5 +41,6 @@ class ImageLayerFactory: LayerFactory {
             view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor),
             view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor)
         ])
+        Logger.common(message: "ImageLayerFactory setupConstraintsSnackbar finished.")
     }
 }

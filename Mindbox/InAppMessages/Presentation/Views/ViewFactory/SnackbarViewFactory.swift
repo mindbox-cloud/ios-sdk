@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MindboxLogger
 
 class SnackbarViewFactory: ViewFactoryProtocol {
 
@@ -20,18 +21,23 @@ class SnackbarViewFactory: ViewFactoryProtocol {
                 let snackbarView = SnackbarView(onClose: onClose)
                 switch gravity {
                     case .top:
+                        Logger.common(message: "SnackbarViewFactory TopSnackbarViewController handleSwipeGesture created.")
                         snackbarViewController = TopSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
                     case .bottom:
+                        Logger.common(message: "SnackbarViewFactory BottomSnackbarViewController handleSwipeGesture created.")
                         snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
                     default:
+                        Logger.common(message: "SnackbarViewFactory controller is nil.")
                         return nil
                 }
                 
                 self.viewController = snackbarViewController
+                
                 return viewController
             }
         }
-
+        
+        Logger.common(message: "SnackbarViewFactory create returns nil.")
         return nil
     }
 }

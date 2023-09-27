@@ -11,14 +11,20 @@ import MindboxLogger
 
 final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
     func getWindow() -> UIWindow? {
+        Logger.common(message: "SnackbarPresentationStrategy getWindow started.")
         if #available(iOS 13, *) {
-            return UIApplication.shared.connectedScenes
+            let window = UIApplication.shared.connectedScenes
                 .filter { $0.activationState == .foregroundActive }
                 .compactMap { $0 as? UIWindowScene }
                 .first?.windows
                 .first(where: { $0.isKeyWindow })
+
+            Logger.common(message: "SnackbarPresentationStrategy window iOS 13+: \(window).")
+            return window
         } else {
-            return UIApplication.shared.keyWindow
+            let window = UIApplication.shared.keyWindow
+            Logger.common(message: "SnackbarPresentationStrategy window iOS 12 or less: \(window).")
+            return window
         }
     }
 
@@ -26,6 +32,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         if var topController = window.rootViewController {
             while let presentedViewController = topController.presentedViewController {
                 topController = presentedViewController
+                Logger.common(message: "SnackbarPresentationStrategy topController equal = \(topController).")
             }
 
             topController.view.addSubview(viewController.view)
