@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 final class InAppImageOnlyView: UIView {
     var onClose: (() -> Void)?
@@ -29,11 +30,15 @@ final class InAppImageOnlyView: UIView {
 
     func customInit() {
         guard let image = image else {
+            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
+        Logger.common(message: "InAppImageOnlyView custom init started.")
+        
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
+        imageView.layer.opacity = 0.5
 
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(imageView)
