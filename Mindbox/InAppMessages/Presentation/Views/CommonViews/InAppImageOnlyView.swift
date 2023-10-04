@@ -38,7 +38,6 @@ final class InAppImageOnlyView: UIView {
         
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
-        imageView.layer.opacity = 0.5
 
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(imageView)
