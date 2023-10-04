@@ -64,7 +64,6 @@ class SnackbarView: UIView {
     private func handleSwipeGesture(translation: CGPoint) {
         if (swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0) {
             self.transform = CGAffineTransform(translationX: 0, y: translation.y)
-            Logger.common(message: "SnackbarView handleSwipeGesture.")
         }
     }
 
@@ -74,12 +73,10 @@ class SnackbarView: UIView {
         if ((swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0)) &&
             abs(translation.y) > threshold {
             animateHide(completion: onClose, animated: true)
-            Logger.common(message: "SnackbarView finalizeGesture.")
             
         } else {
             UIView.animate(withDuration: animationTime) {
                 self.transform = .identity
-                Logger.common(message: "SnackbarView finalizeGesture fallback.")
             }
         }
     }
@@ -108,7 +105,6 @@ class SnackbarView: UIView {
                 yOffset = 0
         }
         self.transform = CGAffineTransform(translationX: 0, y: yOffset)
-        Logger.common(message: "SnackbarView setHiddenTransform yOffset: \(yOffset).")
     }
 
     public func hide(animated: Bool = true, completion: (() -> Void)? = nil) {

@@ -71,6 +71,10 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        elements.forEach({
+            $0.removeFromSuperview()
+        })
+        
         setupElements()
     }
 

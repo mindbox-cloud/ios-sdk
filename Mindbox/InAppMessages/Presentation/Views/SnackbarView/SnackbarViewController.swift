@@ -10,7 +10,6 @@ import UIKit
 import MindboxLogger
 
 class SnackbarViewController: UIViewController, InappViewControllerProtocol {
-    
 
     var edgeConstraint: NSLayoutConstraint?
     let model: SnackbarFormVariant
@@ -78,48 +77,37 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         view.isUserInteractionEnabled = true
         snackbarView.translatesAutoresizingMaskIntoConstraints = false
         snackbarView.isUserInteractionEnabled = true
-        snackbarView.backgroundColor = .blue
-        Logger.common(message: "SnackbarViewController viewDidLoad.")
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        Logger.common(message: "SnackbarViewController flag hasSetupLayers: \(hasSetupLayers).")
         if !hasSetupLayers {
             hasSetupLayers = true
             setupConstraints()
             setupLayers()
-            Logger.common(message: "SnackbarViewController we're in !hasSetupLayers condition.")
 
             if snackbarView.bounds.size != .zero {
-                Logger.common(message: "SnackbarViewController we're in !snackbarView.bound.size != zero condition.")
                 setupElements()
                 hasSetupElements = true
             }
         } else if !hasSetupElements && snackbarView.bounds.size != .zero {
-            Logger.common(message: "SnackbarViewController we're in !hasSetupElements && snackbarView.bounds.size != .zero condition.")
             UIView.performWithoutAnimation {
                 setupElements()
                 hasSetupElements = true
                 view.layoutIfNeeded()
             }
         }
-        
-        Logger.common(message: "SnackbarViewController viewDidLayoutSubviews done.")
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         animateConstraints(withDuration: Constants.animationDuration)
         onPresented()
-        Logger.common(message: "SnackbarViewController viewDidAppear.")
     }
     
     private func setupLayers() {
-        Logger.common(message: "SnackbarViewController setupLayers function started.")
         let layers = model.content.background.layers.elements
-        
-        Logger.common(message: "SnackbarViewController layers: \(layers.count).")
+    
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
                 if case .image(let imageContentBackgroundLayer) = layer {
@@ -129,20 +117,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
                             self.layers.append(layerView)
                             snackbarView.addSubview(layerView)
                             factory.setupConstraintsSnackbar(for: layerView, in: snackbarView)
-                        } else {
-                            Logger.common(message: "SnackbarViewController layer view does not exists.")
                         }
-                    } else {
-                        Logger.common(message: "SnackbarViewController imageContentBackgroundLayer source or value does not exists.\n[Layer]: \(imageContentBackgroundLayer)\n[Dict]: \(imagesDict)")
                     }
-                } else {
-                    Logger.common(message: "SnackbarViewController not image type of layer.")
                 }
-            } else {
-                Logger.common(message: "SnackbarViewController layersFactory does not exists.")
             }
         }
-        Logger.common(message: "SnackbarViewController setupLayers function finished.")
     }
     
     private func setupElements() {
@@ -168,25 +147,21 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func animateConstraints(withDuration duration: TimeInterval) {
-        Logger.common(message: "SnackbarViewController animateConstraints function started.")
         view.layoutIfNeeded()
         
         UIView.animate(withDuration: duration) {
             self.edgeConstraint?.constant = 0
-            Logger.common(message: "SnackbarViewController animateConstraints UIView.animate condition.")
             self.view.layoutIfNeeded()
         }
-        Logger.common(message: "SnackbarViewController animateConstraints function finished.")
     }
     
     func setupConstraints() {
-        Logger.common(message: "SnackbarViewController setupConstraints function started.")
         guard let image = imagesDict[firstImageValue] else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
         
-        let width = view.layer.frame.width - leftOffset - rightOffset
+        let width = view.layer.frame.width
         let heightMultiplier = width / image.size.width
         let imageHeight = image.size.height * heightMultiplier
         let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
@@ -198,8 +173,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         
         setupLayoutConstraints(with: finalHeight)
         setupEdgeConstraint(with: finalHeight)
-        
-        Logger.common(message: "SnackbarViewController setupConstraints function finished.")
     }
 
     func setViewFrame(with height: CGFloat) {
@@ -207,7 +180,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     func setupLayoutConstraints(with height: CGFloat) {
-        Logger.common(message: "SnackbarViewController setupLayoutConstraints function started.")
         if #available(iOS 11.0, *) {
             Logger.common(message: "SnackbarViewController setupLayoutConstraints iOS 11+.")
             NSLayoutConstraint.activate([
@@ -223,7 +195,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         }
-        Logger.common(message: "SnackbarViewController setupLayoutConstraints function finished.")
     }
     
     func setupEdgeConstraint(with height: CGFloat) {
@@ -303,12 +274,10 @@ class BottomSnackbarViewController: SnackbarViewController {
         self.view.frame = CGRect(x: leftOffset, y: screenHeight - finalHeight,
                                  width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
-        self.view.backgroundColor = .yellow
         Logger.common(message: "SnackbarViewController setViewFrame function finished.")
     }
 
     override func setupEdgeConstraint(with height: CGFloat) {
-        Logger.common(message: "SnackbarViewController setupEdgeConstraint function started.")
         if #available(iOS 11.0, *) {
             Logger.common(message: "SnackbarViewController setupEdgeConstraint iOS 11+.")
             edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
@@ -318,6 +287,5 @@ class BottomSnackbarViewController: SnackbarViewController {
         }
         
         edgeConstraint?.isActive = true
-        Logger.common(message: "SnackbarViewController setupEdgeConstraint function finished.")
     }
 }

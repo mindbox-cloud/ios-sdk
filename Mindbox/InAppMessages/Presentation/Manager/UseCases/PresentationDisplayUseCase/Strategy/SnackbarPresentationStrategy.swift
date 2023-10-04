@@ -34,13 +34,10 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         
         window.frame = windowFrame
         window.backgroundColor = .clear
-        window.windowLevel = .alert
+        window.windowLevel = .normal + 3
         let viewController = UIViewController()
         window.rootViewController = viewController
         viewController.view.frame = windowFrame
-        viewController.view.layer.borderWidth = 2.0
-        viewController.view.layer.borderColor = UIColor.green.cgColor
-        
         window.isHidden = false
         self.window = window
         return window
@@ -50,7 +47,6 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         if var topController = window.rootViewController {
             while let presentedViewController = topController.presentedViewController {
                 topController = presentedViewController
-                Logger.common(message: "SnackbarPresentationStrategy topController equal = \(topController).")
             }
 
             viewController.view.frame = topController.view.frame
@@ -88,18 +84,9 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
                     let heightMultiplier = width / imageSize.width
                     let imageHeight = imageSize.height * heightMultiplier
                     let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
-//                    setWindowFrame(x: leftOffset, gravity: gravity, finalHeight: finalHeight, width: width)
-                    
-                    
                     let safeAreaInset = getSafeAreaInset(gravity: gravity)
                     let y = getYPosition(gravity: gravity, finalHeight: finalHeight, safeAreaInset: safeAreaInset)
-                    
-                    let superFinalWidth = width - leftOffset - rightOffset
-                    let asd = superFinalWidth / imageSize.width
-                    let superImageHeight = imageSize.height * asd
-                    let superFinalHeight = (superImageHeight < Constants.oneThirdScreenHeight) ? superImageHeight : Constants.oneThirdScreenHeight
-                    
-                    self.window?.frame = CGRect(x: leftOffset, y: y, width: width, height: superFinalHeight)
+                    self.window?.frame = CGRect(x: leftOffset, y: y, width: width, height: finalHeight)
                 }
             default:
                 break
@@ -126,27 +113,9 @@ private extension SnackbarPresentationStrategy {
         if gravity == .bottom {
             y = UIScreen.main.bounds.height - finalHeight - safeAreaInset
         } else if gravity == .top {
-            y = 0
+            y = safeAreaInset
         }
         
         return y
     }
-    
-//    func setWindowFrame(x: CGFloat, gravity: ContentPositionGravity.VerticalType, imageSize: CGSize, width: CGFloat) {
-//        guard let window = window else {
-//            Logger.common(message: "Unable to get window in getWindowFrame func. Abort.", level: .error, category: .inAppMessages)
-//            return
-//        }
-//        
-//        let newWidth = width - rightOffset -
-//        let heightMultiplier = newWidth / imageSize.width
-//        let imageHeight = imageSize.height * heightMultiplier
-//        let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
-//
-//        
-//        let safeAreaInset = getSafeAreaInset(gravity: gravity)
-//        let y = getYPosition(gravity: gravity, finalHeight: finalHeight, safeAreaInset: safeAreaInset)
-//        
-//        window.frame = CGRect(x: x, y: y, width: width, height: finalHeight)
-//    }
 }

@@ -26,7 +26,7 @@ final class PresentationDisplayUseCase {
         changeType(model: model.content)
         
         guard let window = presentationStrategy?.getWindow() else {
-            Logger.common(message: "In-app modal window creating failed")
+            Logger.common(message: "In-app window creating failed")
             return
         }
         
@@ -37,8 +37,6 @@ final class PresentationDisplayUseCase {
             return
         }
         
-        Logger.common(message: "PresentationDisplayUseCase factory: \(factory)", level: .error)
-        
         guard let viewController = factory.create(model: model.content,
                                                   id: model.inAppId,
                                                   imagesDict: model.imagesDict,
@@ -48,8 +46,6 @@ final class PresentationDisplayUseCase {
                                                   onClose: onClose) else {
             return
         }
-        
-        Logger.common(message: "PresentationDisplayUseCase viewController: \(viewController)")
         
         presentedVC = viewController
         
