@@ -16,7 +16,7 @@ final class PresentationDisplayUseCase {
     private var model: InAppFormData?
     private var factory: ViewFactoryProtocol?
     private var tracker: InAppMessagesTrackerProtocol
-    
+
     init(tracker: InAppMessagesTrackerProtocol) {
         self.tracker = tracker
     }
@@ -52,6 +52,11 @@ final class PresentationDisplayUseCase {
         Logger.common(message: "PresentationDisplayUseCase viewController: \(viewController)")
         
         presentedVC = viewController
+        
+        if let image = model.imagesDict[model.firstImageValue] {
+            presentationStrategy?.setupWindowFrame(model: model.content, imageSize: image.size)
+        }
+        
         presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)
     }
 
