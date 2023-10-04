@@ -10,7 +10,7 @@ import UIKit
 import MindboxLogger
 
 final class ModalPresentationStrategy: PresentationStrategyProtocol {
-    var inappWindow: UIWindow?
+    var window: UIWindow?
     
     func getWindow() -> UIWindow? {
         return makeInAppMessageWindow()
@@ -28,6 +28,10 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
         Logger.common(message: "In-app modal presentation dismissed", level: .debug, category: .inAppMessages)
     }
     
+    func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
+        // Not need to setup. 
+    }
+    
     private func makeInAppMessageWindow() -> UIWindow? {
         let window: UIWindow?
         if #available(iOS 13.0, *) {
@@ -35,8 +39,8 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
-        self.inappWindow = window
-        window?.windowLevel = UIWindow.Level.normal
+        self.window = window
+        window?.windowLevel = .alert
         window?.isHidden = false
         return window
     }

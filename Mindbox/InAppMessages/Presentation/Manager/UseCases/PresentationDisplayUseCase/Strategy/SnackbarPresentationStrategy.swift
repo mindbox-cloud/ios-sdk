@@ -10,22 +10,40 @@ import UIKit
 import MindboxLogger
 
 final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
+    
+    enum Constants {
+        static let oneThirdScreenHeight: CGFloat = UIScreen.main.bounds.height / 3.0
+    }
+    
+    var window: UIWindow?
+    
     func getWindow() -> UIWindow? {
+        let window: UIWindow
+        let screenBounds = UIScreen.main.bounds
+        let windowFrame = CGRect(x: 0, y: 0, width: screenBounds.width, height: screenBounds.height)
         Logger.common(message: "SnackbarPresentationStrategy getWindow started.")
         if #available(iOS 13, *) {
-            let window = UIApplication.shared.connectedScenes
-                .filter { $0.activationState == .foregroundActive }
-                .compactMap { $0 as? UIWindowScene }
-                .first?.windows
-                .first(where: { $0.isKeyWindow })
-
-            Logger.common(message: "SnackbarPresentationStrategy window iOS 13+: \(window).")
-            return window
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                window = UIWindow(windowScene: windowScene)
+            } else {
+                window = UIWindow(frame: UIScreen.main.bounds)
+            }
         } else {
-            let window = UIApplication.shared.keyWindow
-            Logger.common(message: "SnackbarPresentationStrategy window iOS 12 or less: \(window).")
-            return window
+            window = UIWindow(frame: UIScreen.main.bounds)
         }
+        
+        window.frame = windowFrame
+        window.backgroundColor = .clear
+        window.windowLevel = .alert
+        let viewController = UIViewController()
+        window.rootViewController = viewController
+        viewController.view.frame = windowFrame
+        viewController.view.layer.borderWidth = 2.0
+        viewController.view.layer.borderColor = UIColor.green.cgColor
+        
+        window.isHidden = false
+        self.window = window
+        return window
     }
 
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
@@ -35,8 +53,20 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
                 Logger.common(message: "SnackbarPresentationStrategy topController equal = \(topController).")
             }
 
+            viewController.view.frame = topController.view.frame
+            topController.addChild(viewController)
             topController.view.addSubview(viewController.view)
-            Logger.common(message: "In-app with id \(id) presented", level: .info, category: .inAppMessages)
+            
+            viewController.view.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                viewController.view.topAnchor.constraint(equalTo: topController.view.topAnchor),
+                viewController.view.bottomAnchor.constraint(equalTo: topController.view.bottomAnchor),
+                viewController.view.leadingAnchor.constraint(equalTo: topController.view.leadingAnchor),
+                viewController.view.trailingAnchor.constraint(equalTo: topController.view.trailingAnchor)
+            ])
+            
+            viewController.didMove(toParent: topController)
+            Logger.common(message: "In-app snackbar with id \(id) presented", level: .info, category: .inAppMessages)
         } else {
             Logger.common(message: "Unable to get top controller. Abort.", level: .error, category: .inAppMessages)
         }
@@ -45,6 +75,78 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
     func dismiss(viewController: UIViewController) {
         viewController.view.removeFromSuperview()
         viewController.removeFromParent()
-        Logger.common(message: "InApp presentation dismissed", level: .debug, category: .inAppMessages)
+        Logger.common(message: "In-app snackbar presentation dismissed", level: .debug, category: .inAppMessages)
     }
+    
+    func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
+        switch model {
+            case .snackbar(let snackbarFormVariant):
+                if let gravity = snackbarFormVariant.content.position?.gravity?.element?.vertical {
+                    let leftOffset = snackbarFormVariant.content.position?.margin?.element?.left ?? 0
+                    let rightOffset = snackbarFormVariant.content.position?.margin?.element?.right ?? 0
+                    let width = UIScreen.main.bounds.width - leftOffset - rightOffset
+                    let heightMultiplier = width / imageSize.width
+                    let imageHeight = imageSize.height * heightMultiplier
+                    let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
+//                    setWindowFrame(x: leftOffset, gravity: gravity, finalHeight: finalHeight, width: width)
+                    
+                    
+                    let safeAreaInset = getSafeAreaInset(gravity: gravity)
+                    let y = getYPosition(gravity: gravity, finalHeight: finalHeight, safeAreaInset: safeAreaInset)
+                    
+                    let superFinalWidth = width - leftOffset - rightOffset
+                    let asd = superFinalWidth / imageSize.width
+                    let superImageHeight = imageSize.height * asd
+                    let superFinalHeight = (superImageHeight < Constants.oneThirdScreenHeight) ? superImageHeight : Constants.oneThirdScreenHeight
+                    
+                    self.window?.frame = CGRect(x: leftOffset, y: y, width: width, height: superFinalHeight)
+                }
+            default:
+                break
+        }
+    }
+}
+
+private extension SnackbarPresentationStrategy {
+    func getSafeAreaInset(gravity: ContentPositionGravity.VerticalType) -> CGFloat {
+        var safeAreaInset: CGFloat = 0
+        if #available(iOS 11, *) {
+            if gravity == .bottom {
+                safeAreaInset = window?.safeAreaInsets.bottom ?? 0
+            } else if gravity == .top {
+                safeAreaInset = window?.safeAreaInsets.top ?? 0
+            }
+        }
+
+        return safeAreaInset
+    }
+    
+    func getYPosition(gravity: ContentPositionGravity.VerticalType, finalHeight: CGFloat, safeAreaInset: CGFloat) -> CGFloat {
+        var y = UIScreen.main.bounds.height - finalHeight
+        if gravity == .bottom {
+            y = UIScreen.main.bounds.height - finalHeight - safeAreaInset
+        } else if gravity == .top {
+            y = 0
+        }
+        
+        return y
+    }
+    
+//    func setWindowFrame(x: CGFloat, gravity: ContentPositionGravity.VerticalType, imageSize: CGSize, width: CGFloat) {
+//        guard let window = window else {
+//            Logger.common(message: "Unable to get window in getWindowFrame func. Abort.", level: .error, category: .inAppMessages)
+//            return
+//        }
+//        
+//        let newWidth = width - rightOffset -
+//        let heightMultiplier = newWidth / imageSize.width
+//        let imageHeight = imageSize.height * heightMultiplier
+//        let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
+//
+//        
+//        let safeAreaInset = getSafeAreaInset(gravity: gravity)
+//        let y = getYPosition(gravity: gravity, finalHeight: finalHeight, safeAreaInset: safeAreaInset)
+//        
+//        window.frame = CGRect(x: x, y: y, width: width, height: finalHeight)
+//    }
 }
