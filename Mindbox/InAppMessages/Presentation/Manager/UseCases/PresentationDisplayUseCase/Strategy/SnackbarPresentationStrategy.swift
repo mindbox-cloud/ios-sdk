@@ -77,9 +77,9 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
         switch model {
             case .snackbar(let snackbarFormVariant):
-                if let gravity = snackbarFormVariant.content.position?.gravity?.element?.vertical {
-                    let leftOffset = snackbarFormVariant.content.position?.margin?.element?.left ?? 0
-                    let rightOffset = snackbarFormVariant.content.position?.margin?.element?.right ?? 0
+                if let gravity = snackbarFormVariant.content.position.gravity?.vertical {
+                    let leftOffset = snackbarFormVariant.content.position.margin.left
+                    let rightOffset = snackbarFormVariant.content.position.margin.right
                     let width = UIScreen.main.bounds.width - leftOffset - rightOffset
                     let heightMultiplier = width / imageSize.width
                     let imageHeight = imageSize.height * heightMultiplier
@@ -95,7 +95,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
 }
 
 private extension SnackbarPresentationStrategy {
-    func getSafeAreaInset(gravity: ContentPositionGravity.VerticalType) -> CGFloat {
+    func getSafeAreaInset(gravity: GravityVerticalType) -> CGFloat {
         var safeAreaInset: CGFloat = 0
         if #available(iOS 11, *) {
             if gravity == .bottom {
@@ -108,7 +108,7 @@ private extension SnackbarPresentationStrategy {
         return safeAreaInset
     }
     
-    func getYPosition(gravity: ContentPositionGravity.VerticalType, finalHeight: CGFloat, safeAreaInset: CGFloat) -> CGFloat {
+    func getYPosition(gravity: GravityVerticalType, finalHeight: CGFloat, safeAreaInset: CGFloat) -> CGFloat {
         var y = UIScreen.main.bounds.height - finalHeight
         if gravity == .bottom {
             y = UIScreen.main.bounds.height - finalHeight - safeAreaInset

@@ -37,7 +37,6 @@ class CoreController {
             self.inAppMessagesManager.start()
         }
         
-        Logger.common(message: "New way 3 test commit!", level: .info, category: .general)
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
         Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
         Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)

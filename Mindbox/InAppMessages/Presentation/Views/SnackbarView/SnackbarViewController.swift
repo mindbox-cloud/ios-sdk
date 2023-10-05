@@ -106,7 +106,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
     
     private func setupLayers() {
-        let layers = model.content.background.layers.elements
+        let layers = model.content.background.layers
     
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
@@ -124,12 +124,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         }
     }
     
-    private func setupElements() {
-        guard let elements = model.content.elements?.elements else {
-            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
-            return
-        }
-        
+    private func setupElements() {        
         for element in model.content.elements {
             if let factory = elementFactories[element.elementType] {
                 let elementView = factory.create(from: element, with: self)

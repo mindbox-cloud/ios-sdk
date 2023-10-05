@@ -40,7 +40,7 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
         self.window = window
-        window?.windowLevel = .alert
+        window?.windowLevel = .normal + 3
         window?.isHidden = false
         return window
     }
