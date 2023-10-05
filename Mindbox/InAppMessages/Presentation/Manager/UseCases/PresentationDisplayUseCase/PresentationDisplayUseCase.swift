@@ -16,7 +16,7 @@ final class PresentationDisplayUseCase {
     private var model: InAppFormData?
     private var factory: ViewFactoryProtocol?
     private var tracker: InAppMessagesTrackerProtocol
-    
+
     init(tracker: InAppMessagesTrackerProtocol) {
         self.tracker = tracker
     }
@@ -26,9 +26,11 @@ final class PresentationDisplayUseCase {
         changeType(model: model.content)
         
         guard let window = presentationStrategy?.getWindow() else {
-            Logger.common(message: "In-app modal window creating failed")
+            Logger.common(message: "In-app window creating failed")
             return
         }
+        
+        Logger.common(message: "PresentationDisplayUseCase window: \(window)")
         
         guard let factory = self.factory else {
             Logger.common(message: "Factory does not exists.", level: .error, category: .general)
@@ -46,6 +48,11 @@ final class PresentationDisplayUseCase {
         }
         
         presentedVC = viewController
+        
+        if let image = model.imagesDict[model.firstImageValue] {
+            presentationStrategy?.setupWindowFrame(model: model.content, imageSize: image.size)
+        }
+        
         presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)
     }
 

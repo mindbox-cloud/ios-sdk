@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MindboxLogger
 
 class SnackbarViewFactory: ViewFactoryProtocol {
 
@@ -17,20 +18,24 @@ class SnackbarViewFactory: ViewFactoryProtocol {
         if case .snackbar(let snackbarFormVariant) = model {
             if let gravity = snackbarFormVariant.content.position.gravity?.vertical {
                 var snackbarViewController: UIViewController?
+                let snackbarView = SnackbarView(onClose: onClose)
                 switch gravity {
                     case .top:
-                        snackbarViewController = TopSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction, onClose: onClose)
+                        snackbarViewController = TopSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
                     case .bottom:
-                        snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction, onClose: onClose)
+                        snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
                     default:
+                        Logger.common(message: "SnackbarViewFactory controller is nil.")
                         return nil
                 }
                 
                 self.viewController = snackbarViewController
+                
                 return viewController
             }
         }
-
+        
+        Logger.common(message: "SnackbarViewFactory create returns nil.")
         return nil
     }
 }

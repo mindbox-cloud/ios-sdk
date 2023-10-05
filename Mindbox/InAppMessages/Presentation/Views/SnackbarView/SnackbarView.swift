@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 class SnackbarView: UIView {
 
@@ -39,7 +40,7 @@ class SnackbarView: UIView {
         self.onClose = onClose
         self.animationTime = animationTime
         super.init(frame: .zero)
-
+        Logger.common(message: "SnackbarView inited.")
         setupPanGesture()
     }
  
@@ -72,6 +73,7 @@ class SnackbarView: UIView {
         if ((swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0)) &&
             abs(translation.y) > threshold {
             animateHide(completion: onClose, animated: true)
+            
         } else {
             UIView.animate(withDuration: animationTime) {
                 self.transform = .identity
@@ -113,6 +115,7 @@ class SnackbarView: UIView {
     }
 
     required init?(coder: NSCoder) {
+        Logger.common(message: "SnackbarView init(coder:) has not been implemented.")
         fatalError("init(coder:) has not been implemented")
     }
 }
