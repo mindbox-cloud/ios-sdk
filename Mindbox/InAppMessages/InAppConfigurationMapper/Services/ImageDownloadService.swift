@@ -24,7 +24,7 @@ class ImageDownloadService: ImageDownloadServiceProtocol {
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
         self.imageDownloader.downloadImage(withUrl: url) { localURL, response, error in
             if let error = error as? NSError {
-                Logger.common(message: "Failed to download image for url: \(url). \nError: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
+                Logger.common(message: "Failed to download image. [URL]: \(url). \nError: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
                 if error.code == NSURLErrorTimedOut {
                     completion(.failure(error))
                 } else {

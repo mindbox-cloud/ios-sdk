@@ -21,6 +21,59 @@ enum ContentBackgroundLayerType: String, Decodable {
     }
 }
 
+enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
+    case image(ImageContentBackgroundLayerDTO)
+    case unknown
+    
+    enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+    
+    static func == (lhs: ContentBackgroundLayerDTO, rhs: ContentBackgroundLayerDTO) -> Bool {
+        switch (lhs, rhs) {
+            case (.image, .image): return true
+            case (.unknown, .unknown): return true
+            default: return false
+        }
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        switch self {
+            case .image: hasher.combine("image")
+            case .unknown: hasher.combine("unknown")
+        }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container: KeyedDecodingContainer<ContentBackgroundLayerDTO.CodingKeys> = try decoder.container(
+            keyedBy: CodingKeys.self)
+        guard let type = try? container.decode(ContentBackgroundLayerType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("The layer type could not be decoded. The layer will be ignored.")
+        }
+        
+        let layerContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
+        
+        switch type {
+            case .image:
+                let imageLayer = try layerContainer.decode(ImageContentBackgroundLayerDTO.self)
+                self = .image(imageLayer)
+            case .unknown:
+                self = .unknown
+        }
+    }
+}
+
+extension ContentBackgroundLayerDTO {
+    var layerType: ContentBackgroundLayerType {
+        switch self {
+            case .image:
+                return .image
+            case .unknown:
+                return .unknown
+        }
+    }
+}
+
 enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
     case image(ImageContentBackgroundLayer)
     case unknown
@@ -58,7 +111,7 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayer.self)
                 self = .image(imageLayer)
             case .unknown:
-                throw CustomDecodingError.unknownType("The layer type is unrecognized. The action will be ignored.")
+                self = .unknown
         }
     }
 }
@@ -70,6 +123,20 @@ extension ContentBackgroundLayer {
                 return .image
             case .unknown:
                 return .unknown
+        }
+    }
+}
+
+extension ContentBackgroundLayer {
+    init(type: ContentBackgroundLayerType, imageLayer: ImageContentBackgroundLayer? = nil) throws {
+        switch type {
+        case .image:
+            guard let imageLayer = imageLayer else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+                self = .image(imageLayer)
+        case .unknown:
+            self = .unknown
         }
     }
 }

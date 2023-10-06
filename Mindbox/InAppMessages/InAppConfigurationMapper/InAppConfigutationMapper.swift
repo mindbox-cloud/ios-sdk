@@ -16,6 +16,7 @@ protocol InAppConfigurationMapperProtocol {
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
+    private let inappFilterService: InappFilterProtocol
     private let geoService: GeoServiceProtocol
     private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
@@ -25,12 +26,13 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let imageDownloadService: ImageDownloadServiceProtocol
-    private let urlExtractorService: VariantImageUrlExtractorService
+    private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
     private let abTestDeviceMixer: ABTestDeviceMixer
 
     private let dispatchGroup = DispatchGroup()
 
-    init(geoService: GeoServiceProtocol,
+    init(inappFilterService: InappFilterProtocol,
+         geoService: GeoServiceProtocol,
          segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -38,8 +40,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
          imageDownloadService: ImageDownloadServiceProtocol,
-         urlExtractorService: VariantImageUrlExtractorService,
+         urlExtractorService: VariantImageUrlExtractorServiceProtocol,
          abTestDeviceMixer: ABTestDeviceMixer) {
+        self.inappFilterService = inappFilterService
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
@@ -57,7 +60,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: response.inapps?.elements)
+        let inapps = inappFilterService.filter(inapps: response.inapps?.elements)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: inapps)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         if filteredInapps.isEmpty {
@@ -242,7 +246,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
-            if let inAppFormVariants = inapp.form.variants.elements.first {
+            if let inAppFormVariants = inapp.form.variants.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    content: inAppFormVariants)
                 inAppsForEvent.append(formData)
@@ -255,39 +259,53 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
     private func buildInAppByEvent(inapps: [InAppTransitionData],
                                    completion: @escaping (InAppFormData?) -> Void) {
-        var shouldDownloadImage = true
         var formData: InAppFormData?
         let group = DispatchGroup()
+        let imageDictQueue = DispatchQueue(label: "com.mindbox.imagedict.queue", attributes: .concurrent)
 
         DispatchQueue.global().async {
             for inapp in inapps {
-                if !shouldDownloadImage {
+                guard formData == nil else {
                     break
                 }
+                
+                var imageDict: [String: UIImage] = [:]
+                var gotError = false
                 
                 if let shownInapps = self.persistenceStorage.shownInAppsIds, shownInapps.contains(inapp.inAppId) {
                     continue
                 }
                 
-                guard let imageValue = self.urlExtractorService.extractImageURL(from: inapp.content) else { continue }
+                let imageValues = self.urlExtractorService.extractImageURL(from: inapp.content)
                 
-                group.enter()
-                Logger.common(message: "Starting inapp processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-
-                self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
-                    defer { group.leave() }
-                    switch result {
-                    case .success(let image):
-                        formData = InAppFormData(inAppId: inapp.inAppId,
-                                                 image: image,
-                                                 content: inapp.content)
-                        shouldDownloadImage = false
-                    case .failure:
-                        break
+                Logger.common(message: "Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                for imageValue in imageValues {
+                    group.enter()
+                    Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
+                    self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
+                        defer {
+                            group.leave()
+                        }
+                        
+                        switch result {
+                            case .success(let image):
+                                imageDictQueue.async(flags: .barrier) {
+                                    imageDict[imageValue] = image
+                                }
+                            case .failure:
+                                gotError = true
+                        }
                     }
                 }
                 
                 group.wait()
+                
+                imageDictQueue.sync {
+                    if !imageDict.isEmpty && !gotError {
+                        let firstImageValue = imageValues.first ?? ""
+                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, firstImageValue: firstImageValue, content: inapp.content)
+                    }
+                }
             }
             
             group.notify(queue: .main) {

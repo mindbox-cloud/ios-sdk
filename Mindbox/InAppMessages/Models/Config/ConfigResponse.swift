@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 struct ConfigResponse: Decodable {
-    let inapps: FailableDecodableArray<InApp>?
+    let inapps: FailableDecodableArray<InAppDTO>?
     let monitoring: Monitoring?
     let settings: Settings?
     let abtests: [ABTest]?
@@ -21,7 +21,7 @@ struct ConfigResponse: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        inapps = try? container.decodeIfPresent(FailableDecodableArray<InApp>.self, forKey: .inapps)
+        inapps = try? container.decodeIfPresent(FailableDecodableArray<InAppDTO>.self, forKey: .inapps)
         monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
         settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
         
@@ -46,7 +46,7 @@ struct ConfigResponse: Decodable {
         }
     }
     
-    init(inapps: FailableDecodableArray<InApp>? = nil, monitoring: Monitoring? = nil, settings: Settings? = nil, abtests: [ABTest]? = nil) {
+    init(inapps: FailableDecodableArray<InAppDTO>? = nil, monitoring: Monitoring? = nil, settings: Settings? = nil, abtests: [ABTest]? = nil) {
         self.inapps = inapps
         self.monitoring = monitoring
         self.settings = settings

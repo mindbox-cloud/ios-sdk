@@ -8,40 +8,29 @@
 
 import Foundation
 
-struct ContentPositionMargin: Decodable, Equatable {
-    let kind: PositionMarginKind
+struct ContentPositionMarginDTO: Decodable, Equatable {
+    let kind: ContentPositionMarginKind
     let top: Double?
     let right: Double?
     let left: Double?
     let bottom: Double?
+}
+
+struct ContentPositionMargin: Decodable, Equatable {
+    let kind: ContentPositionMarginKind
+    let top: Double
+    let right: Double
+    let left: Double
+    let bottom: Double
+}
+
+enum ContentPositionMarginKind: String, Decodable, Equatable {
+    case dp
+    case unknown
     
-    enum CodingKeys: CodingKey {
-        case kind
-        case top
-        case right
-        case left
-        case bottom
-    }
-    
-    init(from decoder: Decoder, gravity: ContentPositionGravity) throws {
-        let container: KeyedDecodingContainer<ContentPositionMargin.CodingKeys> = try decoder.container(keyedBy: ContentPositionMargin.CodingKeys.self)
-        
-        self.kind = try container.decode(PositionMarginKind.self, forKey: .kind)
-        self.top = try container.decodeIfPresentSafely(Double.self, forKey: .top)
-        self.right = try container.decodeIfPresentSafely(Double.self, forKey: .right)
-        self.left = try container.decodeIfPresentSafely(Double.self, forKey: .left)
-        self.bottom = try container.decodeIfPresentSafely(Double.self, forKey: .bottom)
-        
-        if !ContentPositionMarginValidator().isValid(item: self) {
-            throw CustomDecodingError.decodingError("ContentPositionMargin not passed validation. It will be ignored.")
-        }
-    }
-    
-    init(kind: PositionMarginKind, top: Double? = nil, right: Double? = nil, left: Double? = nil, bottom: Double? = nil) {
-        self.kind = kind
-        self.top = top
-        self.right = right
-        self.left = left
-        self.bottom = bottom
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(RawValue.self)
+        self = ContentPositionMarginKind(rawValue: rawValue) ?? .unknown
     }
 }

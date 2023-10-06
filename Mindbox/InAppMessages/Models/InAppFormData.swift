@@ -12,7 +12,8 @@ import UIKit
 /// Domain model that contains all data needed to show inapp on screen
 struct InAppFormData {
     let inAppId: String
-    let image: UIImage
+    let imagesDict: [String: UIImage]
+    let firstImageValue: String
     let content: MindboxFormVariant
 }
 

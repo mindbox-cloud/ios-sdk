@@ -312,17 +312,13 @@
 		F331DCC12A80993600222120 /* ContentElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC9B2A80993600222120 /* ContentElement.swift */; };
 		F331DCC32A80993600222120 /* ContentElementPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC9F2A80993600222120 /* ContentElementPosition.swift */; };
 		F331DCC42A80993600222120 /* ContentElementPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */; };
-		F331DCC52A80993600222120 /* PositionMarginKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA32A80993600222120 /* PositionMarginKind.swift */; };
-		F331DCC62A80993600222120 /* ContentElementPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */; };
 		F331DCC82A80993600222120 /* ContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */; };
 		F331DCCB2A80993600222120 /* ContentBackgroundLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */; };
 		F331DCCC2A80993600222120 /* ContentBackgroundLayerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCAF2A80993600222120 /* ContentBackgroundLayerSource.swift */; };
 		F331DCD12A80993600222120 /* ContentBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB62A80993600222120 /* ContentBackground.swift */; };
 		F331DCD22A80993600222120 /* InappFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB72A80993600222120 /* InappFormVariantContent.swift */; };
 		F331DCD32A80993600222120 /* InappForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB82A80993600222120 /* InappForm.swift */; };
-		F331DCD42A80993600222120 /* InappValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCB92A80993600222120 /* InappValidator.swift */; };
 		F331DCD52A80993600222120 /* InAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCBA2A80993600222120 /* InAppModel.swift */; };
-		F331DCE22A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */; };
 		F331DD012A83A56500222120 /* InAppPresentationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCEA2A83A56500222120 /* InAppPresentationManager.swift */; };
 		F331DD022A83A56500222120 /* PresentationDisplayUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCEE2A83A56500222120 /* PresentationDisplayUseCase.swift */; };
 		F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF02A83A56500222120 /* ModalPresentationStrategy.swift */; };
@@ -346,13 +342,11 @@
 		F331DD2E2A84CA8900222120 /* UrlLayerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD2D2A84CA8900222120 /* UrlLayerSource.swift */; };
 		F331DD312A84CCA800222120 /* CloseButtonElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD302A84CCA800222120 /* CloseButtonElement.swift */; };
 		F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */; };
-		F331DD582A8648DB00222120 /* ContentElementSizeValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD572A8648DB00222120 /* ContentElementSizeValidator.swift */; };
 		F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336080C2A8A142800C7C9B7 /* SnackbarFormVariant.swift */; };
 		F336080F2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336080E2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift */; };
 		F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608112A8A151C00C7C9B7 /* ContentPosition.swift */; };
 		F33608152A8A156900C7C9B7 /* ContentPositionGravity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */; };
 		F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */; };
-		F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */; };
 		F336081C2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */; };
 		F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608252A8CC94A00C7C9B7 /* SnackbarViewController.swift */; };
 		F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */; };
@@ -367,6 +361,33 @@
 		F3482F232A65DC37002A41EC /* InAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */; };
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
+		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
+		F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F42AA9AF7A00852298 /* InappFilter.swift */; };
+		F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F72AA9B04E00852298 /* VariantsFilter.swift */; };
+		F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F92AA9B32E00852298 /* LayersFilter.swift */; };
+		F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */; };
+		F39116FE2AA9B54B00852298 /* LayersSourceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */; };
+		F39117012AA9B68B00852298 /* ElementsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117002AA9B68B00852298 /* ElementsFilter.swift */; };
+		F39117032AA9B79100852298 /* ElementsSizeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117022AA9B79100852298 /* ElementsSizeFilter.swift */; };
+		F39117052AA9B92500852298 /* ElementsPositionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117042AA9B92500852298 /* ElementsPositionFilter.swift */; };
+		F39117072AA9C69A00852298 /* ContentPositionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39117062AA9C69A00852298 /* ContentPositionFilter.swift */; };
+		F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F391170A2AB2E74F00852298 /* InappFilterServiceTests.swift */; };
+		F391170F2AB4B31800852298 /* unknownVariantType.json in Resources */ = {isa = PBXBuildFile; fileRef = F391170E2AB4B31800852298 /* unknownVariantType.json */; };
+		F39117112AB4BD4500852298 /* missingBackgroundSection.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117102AB4BD4500852298 /* missingBackgroundSection.json */; };
+		F39117132AB4BD8500852298 /* emptyLayersSection.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117122AB4BD8500852298 /* emptyLayersSection.json */; };
+		F39117152AB4BEB900852298 /* unknownLayerType.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117142AB4BEB900852298 /* unknownLayerType.json */; };
+		F39117172AB4BF2700852298 /* knownImageUnknownPictureLayerType.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117162AB4BF2700852298 /* knownImageUnknownPictureLayerType.json */; };
+		F39117192AB4C02500852298 /* unknownActionLayerType.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117182AB4C02500852298 /* unknownActionLayerType.json */; };
+		F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */ = {isa = PBXBuildFile; fileRef = F391171A2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json */; };
+		F391171D2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json in Resources */ = {isa = PBXBuildFile; fileRef = F391171C2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json */; };
+		F391171F2AB4C1C100852298 /* missingSourceSection.json in Resources */ = {isa = PBXBuildFile; fileRef = F391171E2AB4C1C100852298 /* missingSourceSection.json */; };
+		F39117212AB4C20200852298 /* emptyVariantsArray.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117202AB4C20200852298 /* emptyVariantsArray.json */; };
+		F39117232AB4C23900852298 /* unknownSourceType.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117222AB4C23900852298 /* unknownSourceType.json */; };
+		F39117252AB4C27B00852298 /* missingValueInSourceLayer.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117242AB4C27B00852298 /* missingValueInSourceLayer.json */; };
+		F39117272AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117262AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json */; };
+		F39117292AB4C2EF00852298 /* missingElementsSection.json in Resources */ = {isa = PBXBuildFile; fileRef = F39117282AB4C2EF00852298 /* missingElementsSection.json */; };
+		F391172B2AB4C4AD00852298 /* invalidCloseButtonColor.json in Resources */ = {isa = PBXBuildFile; fileRef = F391172A2AB4C4AD00852298 /* invalidCloseButtonColor.json */; };
+		F391172D2AB4C61000852298 /* ElementsColorFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F391172C2AB4C61000852298 /* ElementsColorFilter.swift */; };
 		F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAC2A4456C300D48CEC /* ProtocolError.swift */; };
 		F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEAE2A4456FD00D48CEC /* MindboxError.swift */; };
 		F397EEB12A44571300D48CEC /* UnknownDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F397EEB02A44571300D48CEC /* UnknownDecodable.swift */; };
@@ -414,6 +435,14 @@
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
+		F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */; };
+		F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */; };
+		F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */; };
+		F3FAD8702AB866B600D98C03 /* unknownSizeKind.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86F2AB866B600D98C03 /* unknownSizeKind.json */; };
+		F3FAD8722AB8673100D98C03 /* missingMarginFieldInSection.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8712AB8673100D98C03 /* missingMarginFieldInSection.json */; };
+		F3FAD8742AB8678900D98C03 /* negativeCloseButtonSizeValues.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */; };
+		F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */; };
+		F3FAD8782AB8685D00D98C03 /* closeButtonMarginBelowZero.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
 /* End PBXBuildFile section */
 
@@ -767,17 +796,13 @@
 		F331DC9B2A80993600222120 /* ContentElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElement.swift; sourceTree = "<group>"; };
 		F331DC9F2A80993600222120 /* ContentElementPosition.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPosition.swift; sourceTree = "<group>"; };
 		F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMargin.swift; sourceTree = "<group>"; };
-		F331DCA32A80993600222120 /* PositionMarginKind.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PositionMarginKind.swift; sourceTree = "<group>"; };
-		F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F331DCA82A80993600222120 /* ContentBackgroundLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		F331DCAD2A80993600222120 /* ContentBackgroundLayerAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerAction.swift; sourceTree = "<group>"; };
 		F331DCAF2A80993600222120 /* ContentBackgroundLayerSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackgroundLayerSource.swift; sourceTree = "<group>"; };
 		F331DCB62A80993600222120 /* ContentBackground.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentBackground.swift; sourceTree = "<group>"; };
 		F331DCB72A80993600222120 /* InappFormVariantContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappFormVariantContent.swift; sourceTree = "<group>"; };
 		F331DCB82A80993600222120 /* InappForm.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappForm.swift; sourceTree = "<group>"; };
-		F331DCB92A80993600222120 /* InappValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappValidator.swift; sourceTree = "<group>"; };
 		F331DCBA2A80993600222120 /* InAppModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppModel.swift; sourceTree = "<group>"; };
-		F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentElementPositionMarginValidatorTests.swift; sourceTree = "<group>"; };
 		F331DCEA2A83A56500222120 /* InAppPresentationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppPresentationManager.swift; sourceTree = "<group>"; };
 		F331DCEE2A83A56500222120 /* PresentationDisplayUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PresentationDisplayUseCase.swift; sourceTree = "<group>"; };
 		F331DCF02A83A56500222120 /* ModalPresentationStrategy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModalPresentationStrategy.swift; sourceTree = "<group>"; };
@@ -801,13 +826,11 @@
 		F331DD2D2A84CA8900222120 /* UrlLayerSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UrlLayerSource.swift; sourceTree = "<group>"; };
 		F331DD302A84CCA800222120 /* CloseButtonElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseButtonElement.swift; sourceTree = "<group>"; };
 		F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorService.swift; sourceTree = "<group>"; };
-		F331DD572A8648DB00222120 /* ContentElementSizeValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentElementSizeValidator.swift; sourceTree = "<group>"; };
 		F336080C2A8A142800C7C9B7 /* SnackbarFormVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarFormVariant.swift; sourceTree = "<group>"; };
 		F336080E2A8A14D800C7C9B7 /* SnackbarFormVariantContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarFormVariantContent.swift; sourceTree = "<group>"; };
 		F33608112A8A151C00C7C9B7 /* ContentPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPosition.swift; sourceTree = "<group>"; };
 		F33608142A8A156900C7C9B7 /* ContentPositionGravity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionGravity.swift; sourceTree = "<group>"; };
 		F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMargin.swift; sourceTree = "<group>"; };
-		F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionMarginValidator.swift; sourceTree = "<group>"; };
 		F336081B2A8B9EA800C7C9B7 /* SnackbarViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarViewFactory.swift; sourceTree = "<group>"; };
 		F33608252A8CC94A00C7C9B7 /* SnackbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarViewController.swift; sourceTree = "<group>"; };
 		F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarPresentationStrategy.swift; sourceTree = "<group>"; };
@@ -822,6 +845,33 @@
 		F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesDelegate.swift; sourceTree = "<group>"; };
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
+		F39116F42AA9AF7A00852298 /* InappFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilter.swift; sourceTree = "<group>"; };
+		F39116F72AA9B04E00852298 /* VariantsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantsFilter.swift; sourceTree = "<group>"; };
+		F39116F92AA9B32E00852298 /* LayersFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayersFilter.swift; sourceTree = "<group>"; };
+		F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayerActionFilter.swift; sourceTree = "<group>"; };
+		F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayersSourceFilter.swift; sourceTree = "<group>"; };
+		F39117002AA9B68B00852298 /* ElementsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsFilter.swift; sourceTree = "<group>"; };
+		F39117022AA9B79100852298 /* ElementsSizeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsSizeFilter.swift; sourceTree = "<group>"; };
+		F39117042AA9B92500852298 /* ElementsPositionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsPositionFilter.swift; sourceTree = "<group>"; };
+		F39117062AA9C69A00852298 /* ContentPositionFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPositionFilter.swift; sourceTree = "<group>"; };
+		F391170A2AB2E74F00852298 /* InappFilterServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilterServiceTests.swift; sourceTree = "<group>"; };
+		F391170E2AB4B31800852298 /* unknownVariantType.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = unknownVariantType.json; sourceTree = "<group>"; };
+		F39117102AB4BD4500852298 /* missingBackgroundSection.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingBackgroundSection.json; sourceTree = "<group>"; };
+		F39117122AB4BD8500852298 /* emptyLayersSection.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = emptyLayersSection.json; sourceTree = "<group>"; };
+		F39117142AB4BEB900852298 /* unknownLayerType.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = unknownLayerType.json; sourceTree = "<group>"; };
+		F39117162AB4BF2700852298 /* knownImageUnknownPictureLayerType.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = knownImageUnknownPictureLayerType.json; sourceTree = "<group>"; };
+		F39117182AB4C02500852298 /* unknownActionLayerType.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = unknownActionLayerType.json; sourceTree = "<group>"; };
+		F391171A2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = redirectUrlValueNumberInsteadOfString.json; sourceTree = "<group>"; };
+		F391171C2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingIntentPayloadInActionLayer.json; sourceTree = "<group>"; };
+		F391171E2AB4C1C100852298 /* missingSourceSection.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingSourceSection.json; sourceTree = "<group>"; };
+		F39117202AB4C20200852298 /* emptyVariantsArray.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = emptyVariantsArray.json; sourceTree = "<group>"; };
+		F39117222AB4C23900852298 /* unknownSourceType.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = unknownSourceType.json; sourceTree = "<group>"; };
+		F39117242AB4C27B00852298 /* missingValueInSourceLayer.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingValueInSourceLayer.json; sourceTree = "<group>"; };
+		F39117262AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingImageLinkInSourceLayerValue.json; sourceTree = "<group>"; };
+		F39117282AB4C2EF00852298 /* missingElementsSection.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingElementsSection.json; sourceTree = "<group>"; };
+		F391172A2AB4C4AD00852298 /* invalidCloseButtonColor.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = invalidCloseButtonColor.json; sourceTree = "<group>"; };
+		F391172C2AB4C61000852298 /* ElementsColorFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementsColorFilter.swift; sourceTree = "<group>"; };
 		F397EEAC2A4456C300D48CEC /* ProtocolError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F397EEAE2A4456FD00D48CEC /* MindboxError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F397EEB02A44571300D48CEC /* UnknownDecodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownDecodable.swift; sourceTree = "<group>"; };
@@ -869,6 +919,14 @@
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
+		F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingCloseButtonColorLineWidthSize.json; sourceTree = "<group>"; };
+		F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = twoCloseButtonsInApp.json; sourceTree = "<group>"; };
+		F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonWithOpenButton.json; sourceTree = "<group>"; };
+		F3FAD86F2AB866B600D98C03 /* unknownSizeKind.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = unknownSizeKind.json; sourceTree = "<group>"; };
+		F3FAD8712AB8673100D98C03 /* missingMarginFieldInSection.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingMarginFieldInSection.json; sourceTree = "<group>"; };
+		F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = negativeCloseButtonSizeValues.json; sourceTree = "<group>"; };
+		F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonMarginAboveOne.json; sourceTree = "<group>"; };
+		F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonMarginBelowZero.json; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1948,7 +2006,6 @@
 			isa = PBXGroup;
 			children = (
 				F331DCBA2A80993600222120 /* InAppModel.swift */,
-				F331DCB92A80993600222120 /* InappValidator.swift */,
 				F331DC8D2A80993600222120 /* InappForm */,
 			);
 			path = InappModel;
@@ -2000,7 +2057,6 @@
 			isa = PBXGroup;
 			children = (
 				F331DC982A80993600222120 /* ContentElementSize.swift */,
-				F331DD572A8648DB00222120 /* ContentElementSizeValidator.swift */,
 				F331DC992A80993600222120 /* Kind */,
 			);
 			path = ContentElementSize;
@@ -2027,18 +2083,8 @@
 			isa = PBXGroup;
 			children = (
 				F331DCA12A80993600222120 /* ContentElementPositionMargin.swift */,
-				F331DCA22A80993600222120 /* PositionMarginKind */,
-				F331DCA42A80993600222120 /* ContentElementPositionMarginValidator.swift */,
 			);
 			path = ContentElementPositionMargin;
-			sourceTree = "<group>";
-		};
-		F331DCA22A80993600222120 /* PositionMarginKind */ = {
-			isa = PBXGroup;
-			children = (
-				F331DCA32A80993600222120 /* PositionMarginKind.swift */,
-			);
-			path = PositionMarginKind;
 			sourceTree = "<group>";
 		};
 		F331DCA62A80993600222120 /* ContentBackground */ = {
@@ -2082,7 +2128,6 @@
 		F331DCDA2A80AC3300222120 /* ModelValidatorTests */ = {
 			isa = PBXGroup;
 			children = (
-				F331DCE12A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift */,
 			);
 			path = ModelValidatorTests;
 			sourceTree = "<group>";
@@ -2263,7 +2308,6 @@
 			isa = PBXGroup;
 			children = (
 				F33608172A8A161200C7C9B7 /* ContentPositionMargin.swift */,
-				F33608192A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift */,
 			);
 			path = ContentPositionMargin;
 			sourceTree = "<group>";
@@ -2322,6 +2366,78 @@
 				F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		F39116F32AA9AF3C00852298 /* InappFilterService */ = {
+			isa = PBXGroup;
+			children = (
+				F39116F42AA9AF7A00852298 /* InappFilter.swift */,
+				F39116F72AA9B04E00852298 /* VariantsFilter.swift */,
+				F39116FF2AA9B67E00852298 /* LayersFilter */,
+				F39117082AAA48CF00852298 /* ElementsFiter */,
+				F39117062AA9C69A00852298 /* ContentPositionFilter.swift */,
+			);
+			path = InappFilterService;
+			sourceTree = "<group>";
+		};
+		F39116FF2AA9B67E00852298 /* LayersFilter */ = {
+			isa = PBXGroup;
+			children = (
+				F39116F92AA9B32E00852298 /* LayersFilter.swift */,
+				F39116FB2AA9B4A200852298 /* LayerActionFilter.swift */,
+				F39116FD2AA9B54B00852298 /* LayersSourceFilter.swift */,
+			);
+			path = LayersFilter;
+			sourceTree = "<group>";
+		};
+		F39117082AAA48CF00852298 /* ElementsFiter */ = {
+			isa = PBXGroup;
+			children = (
+				F39117002AA9B68B00852298 /* ElementsFilter.swift */,
+				F39117022AA9B79100852298 /* ElementsSizeFilter.swift */,
+				F39117042AA9B92500852298 /* ElementsPositionFilter.swift */,
+				F391172C2AB4C61000852298 /* ElementsColorFilter.swift */,
+			);
+			path = ElementsFiter;
+			sourceTree = "<group>";
+		};
+		F391170C2AB4B2FC00852298 /* InappFilterServiceTests */ = {
+			isa = PBXGroup;
+			children = (
+				F391170D2AB4B30600852298 /* JSON  */,
+				F391170A2AB2E74F00852298 /* InappFilterServiceTests.swift */,
+			);
+			path = InappFilterServiceTests;
+			sourceTree = "<group>";
+		};
+		F391170D2AB4B30600852298 /* JSON  */ = {
+			isa = PBXGroup;
+			children = (
+				F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */,
+				F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */,
+				F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */,
+				F3FAD8712AB8673100D98C03 /* missingMarginFieldInSection.json */,
+				F3FAD86F2AB866B600D98C03 /* unknownSizeKind.json */,
+				F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */,
+				F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */,
+				F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */,
+				F391172A2AB4C4AD00852298 /* invalidCloseButtonColor.json */,
+				F39117282AB4C2EF00852298 /* missingElementsSection.json */,
+				F39117262AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json */,
+				F39117242AB4C27B00852298 /* missingValueInSourceLayer.json */,
+				F39117222AB4C23900852298 /* unknownSourceType.json */,
+				F39117202AB4C20200852298 /* emptyVariantsArray.json */,
+				F391171E2AB4C1C100852298 /* missingSourceSection.json */,
+				F391171C2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json */,
+				F391171A2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json */,
+				F39117182AB4C02500852298 /* unknownActionLayerType.json */,
+				F39117162AB4BF2700852298 /* knownImageUnknownPictureLayerType.json */,
+				F39117142AB4BEB900852298 /* unknownLayerType.json */,
+				F39117122AB4BD8500852298 /* emptyLayersSection.json */,
+				F39117102AB4BD4500852298 /* missingBackgroundSection.json */,
+				F391170E2AB4B31800852298 /* unknownVariantType.json */,
+			);
+			path = "JSON ";
 			sourceTree = "<group>";
 		};
 		F397EEAB2A4456A900D48CEC /* MindboxError */ = {
@@ -2393,6 +2509,7 @@
 		F3A8B9562A389D9300E9C055 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F39116F32AA9AF3C00852298 /* InappFilterService */,
 				F3A8B9572A389D9D00E9C055 /* GeoService.swift */,
 				F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */,
 				F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */,
@@ -2407,6 +2524,8 @@
 				F39B67AA2A3C7304005C0CCA /* ImageDownloadService */,
 				F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */,
 				F39B67A62A3C6C6A005C0CCA /* SegmentationServiceTests.swift */,
+				F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */,
+				F391170C2AB4B2FC00852298 /* InappFilterServiceTests */,
 			);
 			path = InAppConfigurationMapperTests;
 			sourceTree = "<group>";
@@ -2650,21 +2769,34 @@
 			files = (
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
 				F39B67C82A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json in Resources */,
+				F3FAD8782AB8685D00D98C03 /* closeButtonMarginBelowZero.json in Resources */,
+				F39117132AB4BD8500852298 /* emptyLayersSection.json in Resources */,
 				F39B67BC2A3FB9A8005C0CCA /* ConfigWithABNoSalt.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
+				F39117192AB4C02500852298 /* unknownActionLayerType.json in Resources */,
+				F39117152AB4BEB900852298 /* unknownLayerType.json in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
 				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
+				F39117172AB4BF2700852298 /* knownImageUnknownPictureLayerType.json in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
+				F3FAD8722AB8673100D98C03 /* missingMarginFieldInSection.json in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
 				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
 				F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
+				F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */,
+				F3FAD8742AB8678900D98C03 /* negativeCloseButtonSizeValues.json in Resources */,
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
+				F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
+				F3FAD8702AB866B600D98C03 /* unknownSizeKind.json in Resources */,
+				F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */,
 				F39B67C22A3FBB19005C0CCA /* ConfigWithABNoUpper.json in Resources */,
+				F39117292AB4C2EF00852298 /* missingElementsSection.json in Resources */,
 				F39B67C02A3FBA77005C0CCA /* ConfigWithABCrossRange.json in Resources */,
+				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
 				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
 				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
@@ -2672,16 +2804,26 @@
 				F39B67B32A3C8B1D005C0CCA /* ConfigWithAB_2.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
 				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
+				F391172B2AB4C4AD00852298 /* invalidCloseButtonColor.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
 				F39B67C62A3FBC47005C0CCA /* ConfigWithABNormal.json in Resources */,
 				F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */,
 				F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
+				F39117212AB4C20200852298 /* emptyVariantsArray.json in Resources */,
+				F39117252AB4C27B00852298 /* missingValueInSourceLayer.json in Resources */,
 				F39B67C42A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json in Resources */,
+				F391171D2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json in Resources */,
+				F39117112AB4BD4500852298 /* missingBackgroundSection.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
 				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,
+				F391170F2AB4B31800852298 /* unknownVariantType.json in Resources */,
+				F39117232AB4C23900852298 /* unknownSourceType.json in Resources */,
+				F391171F2AB4C1C100852298 /* missingSourceSection.json in Resources */,
+				F39117272AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json in Resources */,
 				F39B67BA2A3FB943005C0CCA /* ConfigWithABBrokenRange.json in Resources */,
 				31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */,
+				F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */,
 				9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2748,6 +2890,7 @@
 				33072F442664CC6C001F1AB2 /* IssuedPointOfContactResponse.swift in Sources */,
 				A17958762978AEC600609E91 /* OrTargetingChecker.swift in Sources */,
 				334F3AE1264C199900A6AC00 /* PromoCodeRequest.swift in Sources */,
+				F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */,
 				F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */,
 				A17958792978AEC600609E91 /* GeoTargetingChecker.swift in Sources */,
 				33BEE80D2681EB7700993720 /* NotificationDecoder.swift in Sources */,
@@ -2818,15 +2961,16 @@
 				F39B67A22A3C6AF4005C0CCA /* SegmentationService.swift in Sources */,
 				334F3AEC264C199900A6AC00 /* RequestedPromotionRequest.swift in Sources */,
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
+				F39117072AA9C69A00852298 /* ContentPositionFilter.swift in Sources */,
 				A179587C2978AED800609E91 /* GeoTargeting.swift in Sources */,
 				3333C1E12681EA4D00B60D84 /* NotificationsPayloads.swift in Sources */,
 				334F3AE7264C199900A6AC00 /* CatalogProductListRequest.swift in Sources */,
 				F331DCC02A80993600222120 /* ContentElementSizeType.swift in Sources */,
-				F331DCC52A80993600222120 /* PositionMarginKind.swift in Sources */,
 				F331DD0B2A83A56500222120 /* CrossView.swift in Sources */,
 				B3A625562689FDD400B6A3B7 /* BalanceResponse.swift in Sources */,
 				6FDD1459266F7CB700A50C35 /* ContentResponse.swift in Sources */,
 				F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */,
+				F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */,
 				F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */,
 				334F3AE2264C199900A6AC00 /* CouponRequest.swift in Sources */,
 				F3A8B9942A3A409C00E9C055 /* Validator.swift in Sources */,
@@ -2845,7 +2989,6 @@
 				334F3AEB264C199900A6AC00 /* DiscountCardRequest.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				A179587A2978AEC600609E91 /* AndTargetingChecker.swift in Sources */,
-				F331DD582A8648DB00222120 /* ContentElementSizeValidator.swift in Sources */,
 				F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */,
 				F331DD012A83A56500222120 /* InAppPresentationManager.swift in Sources */,
 				3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */,
@@ -2886,6 +3029,7 @@
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
+				F39117012AA9B68B00852298 /* ElementsFilter.swift in Sources */,
 				6FDD1461266F7CE300A50C35 /* DiscountAmountTypeResponse.swift in Sources */,
 				6FDD144F266F7C7000A50C35 /* UsedResponse.swift in Sources */,
 				330D8CCD26579581005106D5 /* Channel.swift in Sources */,
@@ -2901,6 +3045,7 @@
 				A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */,
 				F331DD072A83A56500222120 /* CloseButtonElementFactory.swift in Sources */,
 				9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */,
+				F39117032AA9B79100852298 /* ElementsSizeFilter.swift in Sources */,
 				F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */,
 				A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */,
 				A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */,
@@ -2921,9 +3066,11 @@
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
+				F391172D2AB4C61000852298 /* ElementsColorFilter.swift in Sources */,
 				A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
+				F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */,
@@ -2939,6 +3086,7 @@
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
 				F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
+				F39117052AA9B92500852298 /* ElementsPositionFilter.swift in Sources */,
 				334F3AE9264C199900A6AC00 /* OrderRequest.swift in Sources */,
 				9B24FAAC28C74B8300F10B5D /* InAppConfigurationRepository.swift in Sources */,
 				F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */,
@@ -2953,6 +3101,7 @@
 				334F3AEF264C199900A6AC00 /* DiscountPromoCodeRequest.swift in Sources */,
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */,
+				F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,
@@ -2990,7 +3139,6 @@
 				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
 				F331DD192A840D2100222120 /* ModalFormVariant.swift in Sources */,
 				F331DD2E2A84CA8900222120 /* UrlLayerSource.swift in Sources */,
-				F336081A2A8A163D00C7C9B7 /* ContentPositionMarginValidator.swift in Sources */,
 				337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */,
 				9B9C95312921116F00BB29DA /* UUIDDebugService.swift in Sources */,
 				6FDD1443266F7C1600A50C35 /* BalanceTypeReponse.swift in Sources */,
@@ -3000,17 +3148,16 @@
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
 				A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */,
 				A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */,
-				F331DCC62A80993600222120 /* ContentElementPositionMarginValidator.swift in Sources */,
 				F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */,
 				F33608182A8A161200C7C9B7 /* ContentPositionMargin.swift in Sources */,
 				847F581F25C8A3F500147A9A /* HTTPTypealiases.swift in Sources */,
 				33BEE8172681EC5F00993720 /* EventRoute.swift in Sources */,
-				F331DCD42A80993600222120 /* InappValidator.swift in Sources */,
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				F331DD092A83A56500222120 /* LayerFactory.swift in Sources */,
 				F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */,
+				F39116FE2AA9B54B00852298 /* LayersSourceFilter.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,
 				B3A625502689F8B600B6A3B7 /* BenefitResponse.swift in Sources */,
@@ -3034,7 +3181,6 @@
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
 				F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */,
 				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
-				F331DCE22A80B4C800222120 /* ContentElementPositionMarginValidatorTests.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
@@ -3049,6 +3195,7 @@
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
+				F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
@@ -3067,6 +3214,7 @@
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
 				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
+				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
 				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

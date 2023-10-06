@@ -8,25 +8,10 @@
 
 import Foundation
 
+struct ContentBackgroundDTO: Decodable, Equatable {
+    let layers: [ContentBackgroundLayerDTO]?
+}
+
 struct ContentBackground: Decodable, Equatable {
-    let layers: FailableDecodableArray<ContentBackgroundLayer>
-    
-    enum CodingKeys: String, CodingKey {
-        case layers
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let layers = try container.decode(FailableDecodableArray<ContentBackgroundLayer>.self, forKey: .layers)
-        
-        if layers.elements.isEmpty {
-            throw DecodingError.dataCorruptedError(
-                forKey: .layers,
-                in: container,
-                debugDescription: "Layers cannot be empty."
-            )
-        }
-        
-        self.layers = layers
-    }
+    let layers: [ContentBackgroundLayer]
 }

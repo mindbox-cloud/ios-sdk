@@ -30,6 +30,7 @@ final class DependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
+    var inappFilterService: InappFilterProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -69,11 +70,24 @@ final class DependencyProvider: DependencyContainer {
         let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
                                                            displayUseCase: displayUseCase)
         urlExtractorService = VariantImageUrlExtractorService()
+        let actionFilter = LayerActionFilterService()
+        let sourceFilter = LayersSourceFilterService()
+        let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
+        let sizeFilter = ElementSizeFilterService()
+        let colorFilter = ElementsColorFilterService()
+        let positionFilter = ElementsPositionFilterService()
+        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
+        let contentPositionFilterService = ContentPositionFilterService()
+        let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
+                                                         elementsFilter: elementsFilterService,
+                                                         contentPositionFilter: contentPositionFilterService)
+        inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(geoService: geoService,
+                inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
+                                                                   geoService: geoService,
                                                                    segmentationService: segmentationSevice,
                                                                    customerSegmentsAPI: .live,
                                                                    targetingChecker: inAppTargetingChecker,

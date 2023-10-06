@@ -34,14 +34,14 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     init(
         model: ModalFormVariant,
         id: String,
-        image: UIImage,
+        imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
         onClose: @escaping () -> Void
     ) {
         self.model = model
         self.id = id
-        self.image = image
+        self.imagesDict = imagesDict
         self.onPresented = onPresented
         self.onClose = onClose
         self.onTapAction = onTapAction
@@ -54,7 +54,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
 
     private let model: ModalFormVariant
     private let id: String
-    private let image: UIImage
+    private let imagesDict: [String: UIImage]
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
@@ -71,6 +71,10 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        elements.forEach({
+            $0.removeFromSuperview()
+        })
+        
         setupElements()
     }
 
@@ -108,31 +112,35 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     }
     
     private func setupLayers() {
-        let layers = model.content.background.layers.elements         
+        let layers = model.content.background.layers
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
-                let layerView = factory.create(from: self.image, layer: layer, in: view, with: self)
-                if let layerView = layerView {
-                    self.layers.append(layerView)
-                    view.addSubview(layerView)
-                    factory.setupConstraints(for: layerView, in: view)
+                if case .image(let imageContentBackgroundLayer) = layer {
+                    if case .url(let urlModel) = imageContentBackgroundLayer.source, let image = imagesDict[urlModel.value] {
+                        let layerView = factory.create(from: image, layer: layer, in: view, with: self)
+                        if let layerView = layerView {
+                            self.layers.append(layerView)
+                            view.addSubview(layerView)
+                            factory.setupConstraints(for: layerView, in: view)
+                        }
+                    }
                 }
             }
         }
     }
     
     private func setupElements() {
-        guard let elements = model.content.elements?.elements,
+        guard let elements = model.content.elements,
               let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
             return
         }
-        
+
         for element in elements {
             if let factory = elementFactories[element.elementType] {
-                let elementView = factory.create(from: element, in: inappView, with: self)
+                let elementView = factory.create(from: element, with: self)
                 if let elementView = elementView {
                     self.elements.append(elementView)
-                    inappView.addSubview(elementView)
+                    view.addSubview(elementView)
                     factory.setupConstraints(for: elementView, from: element, in: inappView)
                 }
             }
