@@ -29,11 +29,21 @@ git checkout $branch_name
 #Add changelog to the index and create a commit
 podspec_file="Mindbox.podspec"
 notifivation_podspec_file="MindboxNotifications.podspec"
-sdkversionprovider_file="SDKVersionProvider.swift"
+sdkversionprovider_file="SDKVersionProvider/SDKVersionProvider.swift"
+sdkversionconfig_file="SDKVersionProvider/SDKVersionConfig.xcconfig"
 current_version=$(grep -E '^\s+spec.version\s+=' "$podspec_file" | cut -d'"' -f2)
-sed -i '' "s/^ spec.version = ."$/ spec.version = "$version"/" $podspec_file
-sed -i '' "s/^ spec.version = ."$/ spec.version = "$version"/" $notifivation_podspec_file
-sed -i '' "s/public static let sdkVersion = ".*"$/public static let sdkVersion = "$version"/" $sdkversionprovider_file
+
+# Обновление версии в Mindbox.podspec
+sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $podspec_file
+
+# Обновление версии в MindboxNotifications.podspec
+sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $notifivation_podspec_file
+
+# Обновление версии в SDKVersionProvider.swift
+sed -i '' "s/public static let sdkVersion = \".*\"$/public static let sdkVersion = \"$version\"/" $sdkversionprovider_file
+
+# Обновление MARKETING_VERSION в SDKVersionConfig.xcconfig
+sed -i '' "s/^MARKETING_VERSION = .*$/MARKETING_VERSION = $version/" $sdkversionconfig_file
 
 echo "Bump SDK version from $current_version to $version."
 
