@@ -75,7 +75,7 @@ public class MBLoggerCoreDataManager {
             try delete()
         }
         
-        try self.context.performAndWait {
+        try self.context.mindboxPerformAndWait {
             let entity = CDLogMessage(context: self.context)
             entity.message = message
             entity.timestamp = timestamp
@@ -84,7 +84,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func getFirstLog() throws -> LogMessage? {
-        try context.performAndWait {
+        try context.mindboxPerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
@@ -100,7 +100,7 @@ public class MBLoggerCoreDataManager {
     }
 
     public func getLastLog() throws -> LogMessage? {
-        try context.performAndWait {
+        try context.mindboxPerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
@@ -116,7 +116,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
-        try context.performAndWait {
+        try context.mindboxPerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate,
@@ -132,7 +132,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func delete() throws {
-        try context.performAndWait {
+        try context.mindboxPerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             let count = try context.count(for: request)
             let limit: Double = (Double(count) * 0.1).rounded() // 10% percent of all records should be removed
@@ -152,7 +152,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func deleteAll() throws {
-        try context.performAndWait {
+        try context.mindboxPerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             request.includesPropertyValues = false
             let results = try context.fetch(request)
