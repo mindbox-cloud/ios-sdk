@@ -25,7 +25,7 @@ public class MBLogger {
      
      - Note: `.error` by default; `.none` for disable logging
      */
-    public var logLevel: LogLevel = .debug
+    public var logLevel: LogLevel = .error
         
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)

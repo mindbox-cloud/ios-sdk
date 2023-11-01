@@ -29,7 +29,7 @@ public class Mindbox: NSObject {
         - In __RELEASE__ schema logs writes _async_ on queue with __qos: .utility__
 
      - Warninig:
-      By default _logLevel_: __.none__
+      By default _logLevel_: __.error__
      */
     public static let logger = MBLogger.shared
 

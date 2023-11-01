@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 
 public extension NSManagedObjectContext {
-    func performAndWait<T>(_ block: () throws -> T) rethrows -> T {
+    func mindboxPerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
         return try _performAndWaitHelper(
             fn: performAndWait, execute: block, rescue: { throw $0 }
         )
