@@ -1,0 +1,18 @@
+name: Trigger build test
+
+on:
+  push:
+    branches:
+      - 'testing'
+
+jobs:
+  trigger:
+    runs-on: macos-14
+
+    steps:
+    - name: Trigger build workflow in ios-app
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        token: ${{ secrets.CHILD_TOKEN }}
+        workflow: connected_publish_workflow.yml
+        repo: your-ios-app-repo
