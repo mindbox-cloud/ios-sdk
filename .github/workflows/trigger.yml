@@ -1,18 +1,29 @@
-name: Trigger build test
+name: Build PushOk when PR open.
 
 on:
   push:
     branches:
-      - 'testing'
+      - 'testing/*'
+  pull_request: 
+    types: [opened, reopened, synchronize]
 
 jobs:
   trigger:
     runs-on: macos-13
-
     steps:
-    - name: Trigger build workflow in ios-app
-      uses: benc-uk/workflow-dispatch@v1
-      with:
-        token: ${{ secrets.CHILD_TOKEN }}
-        workflow: connected_publish_workflow.yml
-        repo: your-ios-app-repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get last 3 commit messages
+        run: |
+          commits=$(git log -3 --pretty=format:"%s")
+          echo "commits=$commits" >> $GITHUB_ENV
+
+      - name: Trigger build workflow in ios-app repo.
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.PAT_IOS_APP }}
+          workflow: connected_publish_workflow.yml
+          repo: mindbox-cloud/ios-app
+          ref: ${{ github.ref }}
+          inputs: '{"branch": "${{ github.ref_name }}", "commits": "${{ env.commits }}"}'
