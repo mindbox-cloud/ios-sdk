@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'testing/*'
+      - 'proverka/*'
   pull_request: 
     types: [opened, reopened, synchronize]
 
