@@ -1,0 +1,28 @@
+name: Build PushOk when PR open.
+
+on:
+  pull_request: 
+    types: [opened, synchronize]
+    branches:
+      - 'feature/*'
+    
+jobs:
+  trigger:
+    runs-on: macos-13
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get last 3 commit messages
+        run: |
+          commits=$(git log -3 --pretty=format:"%s")
+          echo "commits=$commits" >> $GITHUB_ENV
+
+      - name: Trigger build workflow in ios-app repo.
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.PAT_IOS_APP }}
+          workflow: connected_publish_workflow.yml
+          repo: mindbox-cloud/ios-app
+          ref: develop
+          inputs: '{"branch": "${{ github.head_ref }}", "commits": "${{ env.commits }}"}'
