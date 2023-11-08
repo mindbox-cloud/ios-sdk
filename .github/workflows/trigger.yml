@@ -7,7 +7,7 @@ on:
       - 'proverka/*'
   pull_request: 
     types: [opened, reopened, synchronize]
-   
+    
 jobs:
   trigger:
     runs-on: macos-13
