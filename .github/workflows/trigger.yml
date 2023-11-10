@@ -1,8 +1,11 @@
 name: Build PushOk when PR open.
 
 on:
-  pull_request: 
-    types: [opened, synchronize]
+  push:
+    branches: 
+      - 'feature/*'
+  pull_request_review: 
+    types: [submitted]
     branches:
       - 'feature/*'
     
@@ -17,12 +20,19 @@ jobs:
         run: |
           commits=$(git log -3 --pretty=format:"%s")
           echo "commits=$commits" >> $GITHUB_ENV
-
+      
+      - name: Get Mindbox SDK Version
+        run: |
+          version=$(grep -Eo "spec.version\s*=\s*'\d+\.\d+\.\d+'" Mindbox.podspec | grep -Eo '\d+\.\d+\.\d+')
+          echo "Mindbox SDK Version: $version"
+        
+  
       - name: Trigger build workflow in ios-app repo.
+        if: github.event.review.state == 'approved'
         uses: benc-uk/workflow-dispatch@v1
         with:
           token: ${{ secrets.PAT_IOS_APP }}
           workflow: connected_publish_workflow.yml
           repo: mindbox-cloud/ios-app
           ref: develop
-          inputs: '{"branch": "${{ github.head_ref }}", "commits": "${{ env.commits }}"}'
+          inputs: '{"branch": "${{ github.head_ref }}", "commits": "${{ env.commits }}", "sdkVersion": "${{ env.sdkVersion }}"}'
