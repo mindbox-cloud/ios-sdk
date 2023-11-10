@@ -4,10 +4,10 @@ on:
   push:
     branches: 
       - 'feature/*'
-  pull_request_review: 
-    types: [submitted]
-    branches:
-      - 'feature/*'
+  # pull_request_review: 
+  #   types: [submitted]
+  #   branches:
+  #     - 'feature/*'
     
 jobs:
   trigger:
@@ -20,15 +20,17 @@ jobs:
         run: |
           commits=$(git log -3 --pretty=format:"%s")
           echo "commits=$commits" >> $GITHUB_ENV
+
+      - name: "ASD"
+        run: echo "${{ github.head_ref }}"
       
       - name: Get Mindbox SDK Version
         run: |
-          version=$(grep -Eo "spec.version\s*=\s*'\d+\.\d+\.\d+'" Mindbox.podspec | grep -Eo '\d+\.\d+\.\d+')
-          echo "Mindbox SDK Version: $version"
-        
+          sdkVersion=$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
+          echo "sdkVersion=$sdkVersion" >> $GITHUB_ENV
   
       - name: Trigger build workflow in ios-app repo.
-        if: github.event.review.state == 'approved'
+        # if: github.event.review.state == 'approved'
         uses: benc-uk/workflow-dispatch@v1
         with:
           token: ${{ secrets.PAT_IOS_APP }}
