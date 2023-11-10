@@ -4,10 +4,10 @@ on:
   push:
     branches: 
       - 'feature/*'
-  # pull_request_review: 
-  #   types: [submitted]
-  #   branches:
-  #     - 'feature/*'
+  pull_request_review: 
+    types: [submitted]
+    branches:
+      - 'feature/*'
     
 jobs:
   trigger:
@@ -21,9 +21,6 @@ jobs:
           commits=$(git log -3 --pretty=format:"%s")
           echo "commits=$commits" >> $GITHUB_ENV
 
-      - name: "ASD"
-        run: echo "${{ github.head_ref }}"
-      
       - name: Get Mindbox SDK Version
         run: |
           sdkVersion=$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
