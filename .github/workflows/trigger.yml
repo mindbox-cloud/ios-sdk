@@ -5,11 +5,11 @@ on:
     types: [closed]
     branches:
       - 'feature/*'
+      - 'develop'
 
 jobs:
   trigger:
     runs-on: macos-13
-    if: github.event.pull_request.merged == true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,6 +26,7 @@ jobs:
 
       - name: Trigger build workflow in ios-app repo
         uses: benc-uk/workflow-dispatch@v1
+        if: github.event.pull_request.merged == true
         with:
           token: ${{ secrets.PAT_IOS_APP }}
           workflow: connected_publish_workflow.yml
