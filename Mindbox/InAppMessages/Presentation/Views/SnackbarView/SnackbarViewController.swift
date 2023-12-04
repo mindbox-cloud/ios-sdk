@@ -91,6 +91,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
                 hasSetupElements = true
             }
         } else if !hasSetupElements && snackbarView.bounds.size != .zero {
+            Logger.common(message: "In-app snackbar height: [\(snackbarView.frame.height)]")
+            Logger.common(message: "In-app snackbar width: [\(snackbarView.frame.width)]")
             UIView.performWithoutAnimation {
                 setupElements()
                 hasSetupElements = true
