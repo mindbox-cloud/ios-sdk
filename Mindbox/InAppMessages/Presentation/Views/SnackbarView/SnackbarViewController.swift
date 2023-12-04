@@ -178,8 +178,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         if #available(iOS 11.0, *) {
             Logger.common(message: "SnackbarViewController setupLayoutConstraints iOS 11+.")
             NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 snackbarView.heightAnchor.constraint(equalToConstant: height),
             ])
         } else {
@@ -242,7 +242,7 @@ class TopSnackbarViewController: SnackbarViewController {
 
     override func setupEdgeConstraint(with height: CGFloat) {
         if #available(iOS 11.0, *) {
-            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -height)
+            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
         } else {
             edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
         }
