@@ -74,8 +74,8 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
         super.viewDidLayoutSubviews()
         
         if let inappView = layers.first(where: { $0 is InAppImageOnlyView }) {
-            Logger.common(message: "In-app modal height: [\(inappView.frame.height)]")
-            Logger.common(message: "In-app modal width: [\(inappView.frame.width)]")
+            Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
+            Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
         }
 
         elements.forEach({
