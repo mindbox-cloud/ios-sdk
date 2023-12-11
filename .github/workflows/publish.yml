@@ -32,7 +32,7 @@ jobs:
     - name: Install bundler dependencies
       run: bundle install
     - name: Select Xcode
-      run: sudo xcode-select --switch /Applications/Xcode_13.2.1.app
+      run: sudo xcode-select --switch /Applications/Xcode_14.3.1.app
     - name: Run build
       run: bundle exec fastlane buildLane
       env:
