@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 protocol InappViewControllerProtocol {
     var layers: [UIView] { get set }
@@ -71,6 +72,12 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        
+        if let inappView = layers.first(where: { $0 is InAppImageOnlyView }) {
+            Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
+            Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
+        }
+
         elements.forEach({
             $0.removeFromSuperview()
         })
