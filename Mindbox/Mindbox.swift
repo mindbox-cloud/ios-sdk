@@ -58,7 +58,18 @@ public class Mindbox: NSObject {
             delegate?.mindBox(self, failedWithError: error)
         }
     }
+    
+    
+    /**
+     A delegate for handling in-app messages.
 
+     This property allows the conforming object to respond to in-app message related events. Setting this delegate enables the SDK to notify the conforming object about in-app message behaviors, updates, or user interactions.
+
+     - Note: If you use default implementation of in-app messaging provided by the SDK, subscribing to this delegate is not necessary. The default implementation will handle in-app message events automatically.
+
+     - However, if the user wishes to customize the handling of in-app messages, it is mandatory to subscribe to this delegate. Customization can include handling specific user interactions, presenting messages in a custom format, or integrating more complex in-app message logic.
+     */
+    
     public weak var inAppMessagesDelegate: InAppMessagesDelegate? {
         didSet {
             inAppMessagesManager?.delegate = inAppMessagesDelegate
