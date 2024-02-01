@@ -435,6 +435,8 @@
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
+		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
+		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */; };
 		F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */; };
 		F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */; };
@@ -919,6 +921,9 @@
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
+		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingCloseButtonColorLineWidthSize.json; sourceTree = "<group>"; };
 		F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = twoCloseButtonsInApp.json; sourceTree = "<group>"; };
 		F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonWithOpenButton.json; sourceTree = "<group>"; };
@@ -1016,6 +1021,7 @@
 				A1AC0431299A6B8700476E22 /* MindboxLogger */,
 				313B233325ADEA0F00A1CB72 /* Mindbox.h */,
 				313B233425ADEA0F00A1CB72 /* Info.plist */,
+				F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */,
 				314B38FC25AEE8B200E947B9 /* MBConfiguration.swift */,
 				3191C2A525ADFD8000E7D6B9 /* Mindbox.swift */,
 				334F3A65264AA18500A6AC00 /* MindboxAppDelegate.swift */,
@@ -1117,6 +1123,7 @@
 				337EDF332636DA3F0089559F /* MindboxNotificationService.swift */,
 				3333C19A2681D3CF00B60D84 /* MindboxNotifications.h */,
 				3333C19B2681D3CF00B60D84 /* Info.plist */,
+				F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */,
 			);
 			path = MindboxNotifications;
 			sourceTree = "<group>";
@@ -1861,6 +1868,7 @@
 				A154E37C299E5B7500F8F074 /* Network */,
 				A154E337299E5B6D00F8F074 /* Shared */,
 				A170EDE129B08A2700CE547F /* MindboxLogger.h */,
+				F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */,
 			);
 			path = MindboxLogger;
 			sourceTree = "<group>";
@@ -2759,6 +2767,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */,
 				A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2832,6 +2841,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
