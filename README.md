@@ -14,7 +14,8 @@ Follow the installation process detailed [here](https://developers.mindbox.ru/do
 
 1. Add the Mindbox SDK to your Podfile:
     ```markdown
-    pod 'Mindbox-iOS-SDK'
+   pod 'Mindbox'
+   pod 'MindboxNotifications'
     ```
 
 2. Install the pods:
