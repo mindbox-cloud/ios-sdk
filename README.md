@@ -1,4 +1,4 @@
-[![CocoaPods Compatible](https://img.shields.io/cocoapods/v/MindboxSDK.svg)](https://cocoapods.org/pods/MindboxSDK)
+[![CocoaPods Compatible](https://img.shields.io/cocoapods/v/MindboxSDK.svg)](https://cocoapods.org/pods/Mindbox)
 
 # Mindbox SDK for iOS
 
