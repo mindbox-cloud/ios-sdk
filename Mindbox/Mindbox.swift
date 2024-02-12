@@ -43,6 +43,7 @@ public class Mindbox: NSObject {
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
     private var inappMessageEventSender: InappMessageEventSender?
+    private var pushValidator: MindboxPushValidator?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -507,6 +508,10 @@ public class Mindbox: NSObject {
     ) {
         guaranteedDeliveryManager?.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
+    
+    public func isMindboxPush(notification: UNNotification) -> Bool {
+        return pushValidator?.isValid(item: notification) ?? false
+    }
 
     private var initError: Error?
 
@@ -536,6 +541,7 @@ public class Mindbox: NSObject {
         sessionTemporaryStorage = container.sessionTemporaryStorage
         inAppMessagesDelegate = self
         inappMessageEventSender = container.inappMessageEventSender
+        pushValidator = container.pushValidator
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,

@@ -29,6 +29,7 @@ protocol DependencyContainer {
     var abTestDeviceMixer: ABTestDeviceMixer { get }
     var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
+    var pushValidator: MindboxPushValidator { get }
 }
 
 protocol InstanceFactory {
