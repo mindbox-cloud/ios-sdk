@@ -14,25 +14,15 @@ class MindboxPushValidator: Validator {
     typealias T = UNNotification
     
     func isValid(item: UNNotification) -> Bool {
-        guard let pushData = item.request.content.userInfo as? [String: AnyObject] else {
-            return false
-        }
         
-        do {
-            let data = try JSONSerialization.data(withJSONObject: pushData, options: [])
-            let decoder = JSONDecoder()
-            let pushNotification = try decoder.decode(MBPushNotification.self, from: data)
-            
-            guard pushNotification.clickUrl != nil,
-                  let alert = pushNotification.aps?.alert,
-                  alert.body != nil,
-                  alert.title != nil else {
-                return false
-            }
-            
-            return true
-        } catch {
+        guard let pushModel = NotificationFormatter.formatNotification(item),
+              pushModel.clickUrl != nil,
+              let alert = pushModel.aps?.alert,
+              alert.body != nil,
+              alert.title != nil else {
             return false
         }
+                
+        return true
     }
 }

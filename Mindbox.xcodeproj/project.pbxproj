@@ -439,6 +439,9 @@
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
+		F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */; };
+		F3F5BB8D2B79F2F80022AC3F /* NotificationFormatStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB8C2B79F2F80022AC3F /* NotificationFormatStrategy.swift */; };
+		F3F5BB8F2B79F4070022AC3F /* NotificationFormatFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB8E2B79F4070022AC3F /* NotificationFormatFactory.swift */; };
 		F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */; };
 		F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */; };
 		F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */; };
@@ -928,6 +931,9 @@
 		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationFormatter.swift; sourceTree = "<group>"; };
+		F3F5BB8C2B79F2F80022AC3F /* NotificationFormatStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatStrategy.swift; sourceTree = "<group>"; };
+		F3F5BB8E2B79F4070022AC3F /* NotificationFormatFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatFactory.swift; sourceTree = "<group>"; };
 		F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingCloseButtonColorLineWidthSize.json; sourceTree = "<group>"; };
 		F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = twoCloseButtonsInApp.json; sourceTree = "<group>"; };
 		F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonWithOpenButton.json; sourceTree = "<group>"; };
@@ -1021,6 +1027,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				F3F5BB882B79F2430022AC3F /* PushNotifications */,
 				F34A45AC2B76286D00634C8B /* PublicModels */,
 				F37613DF2A6A8CFF009F2EE4 /* Extensions */,
 				A1AC0431299A6B8700476E22 /* MindboxLogger */,
@@ -2581,6 +2588,24 @@
 			path = ABTests;
 			sourceTree = "<group>";
 		};
+		F3F5BB882B79F2430022AC3F /* PushNotifications */ = {
+			isa = PBXGroup;
+			children = (
+				F3F5BB8B2B79F2D70022AC3F /* PushNotificationFormatStrategies */,
+				F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */,
+			);
+			path = PushNotifications;
+			sourceTree = "<group>";
+		};
+		F3F5BB8B2B79F2D70022AC3F /* PushNotificationFormatStrategies */ = {
+			isa = PBXGroup;
+			children = (
+				F3F5BB8C2B79F2F80022AC3F /* NotificationFormatStrategy.swift */,
+				F3F5BB8E2B79F4070022AC3F /* NotificationFormatFactory.swift */,
+			);
+			path = PushNotificationFormatStrategies;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2950,6 +2975,7 @@
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
+				F3F5BB8D2B79F2F80022AC3F /* NotificationFormatStrategy.swift in Sources */,
 				337A473E265528B5000DC613 /* MBDate.swift in Sources */,
 				F331DC842A80983000222120 /* FailableDecodableArray.swift in Sources */,
 				F3A8B99E2A3A4FD600E9C055 /* ABTestValidator.swift in Sources */,
@@ -3013,6 +3039,7 @@
 				334F3AEB264C199900A6AC00 /* DiscountCardRequest.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,
 				A179587A2978AEC600609E91 /* AndTargetingChecker.swift in Sources */,
+				F3F5BB8F2B79F4070022AC3F /* NotificationFormatFactory.swift in Sources */,
 				F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */,
 				F331DD012A83A56500222120 /* InAppPresentationManager.swift in Sources */,
 				3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */,
@@ -3023,6 +3050,7 @@
 				F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */,
 				3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */,
 				334F3AF5264C199900A6AC00 /* CodableDictionary.swift in Sources */,
+				F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */,
 				334F3AF3264C199900A6AC00 /* AreaRequest.swift in Sources */,
 				33B1C976265B910F00E293F8 /* SwiftyJSON.swift in Sources */,
 				F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */,

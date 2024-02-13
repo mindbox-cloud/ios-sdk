@@ -512,6 +512,10 @@ public class Mindbox: NSObject {
     public func isMindboxPush(notification: UNNotification) -> Bool {
         return pushValidator?.isValid(item: notification) ?? false
     }
+    
+    public func getMindboxPushData(notification: UNNotification) -> MBPushNotification? {
+        return NotificationFormatter.formatNotification(notification)
+    }
 
     private var initError: Error?
 

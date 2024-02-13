@@ -10,12 +10,12 @@ import Foundation
 
 // Основная структура для пуш-уведомления
 public struct MBPushNotification: Codable {
-    let aps: MBAps?
-    let clickUrl: String?
-    let imageUrl: String?
-    let payload: String?
-    let buttons: [MBPushNotificationButton]?
-    let uniqueKey: String?
+    public let aps: MBAps?
+    public let clickUrl: String?
+    public let imageUrl: String?
+    public let payload: String?
+    public let buttons: [MBPushNotificationButton]?
+    public let uniqueKey: String?
 
     enum CodingKeys: String, CodingKey {
         case aps, clickUrl, imageUrl, payload, buttons, uniqueKey
@@ -24,10 +24,10 @@ public struct MBPushNotification: Codable {
 
 // Структура для APS секции
 public struct MBAps: Codable {
-    let alert: MBApsAlert?
-    let sound: String?
-    let mutableContent: Int?
-    let contentAvailable: Int?
+    public let alert: MBApsAlert?
+    public let sound: String?
+    public let mutableContent: Int?
+    public let contentAvailable: Int?
 
     enum CodingKeys: String, CodingKey {
         case alert, sound
@@ -38,13 +38,13 @@ public struct MBAps: Codable {
 
 // Структура для alert секции
 public struct MBApsAlert: Codable {
-    let title: String?
-    let body: String?
+    public let title: String?
+    public let body: String?
 }
 
 // Структура для кнопок
 public struct MBPushNotificationButton: Codable {
-    let text: String?
-    let url: String?
-    let uniqueKey: String?
+    public let text: String?
+    public let url: String?
+    public let uniqueKey: String?
 }
