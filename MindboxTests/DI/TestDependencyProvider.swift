@@ -32,6 +32,7 @@ final class TestDependencyProvider: DependencyContainer {
     var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
+    var pushValidator: MindboxPushValidator
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -80,6 +81,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
+        pushValidator = MindboxPushValidator()
     }
 }
 

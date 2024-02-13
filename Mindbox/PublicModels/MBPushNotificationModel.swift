@@ -8,7 +8,7 @@
 
 import Foundation
 
-// Основная структура для пуш-уведомления
+
 public struct MBPushNotification: Codable {
     public let aps: MBAps?
     public let clickUrl: String?
@@ -22,7 +22,6 @@ public struct MBPushNotification: Codable {
     }
 }
 
-// Структура для APS секции
 public struct MBAps: Codable {
     public let alert: MBApsAlert?
     public let sound: String?
@@ -36,13 +35,11 @@ public struct MBAps: Codable {
     }
 }
 
-// Структура для alert секции
 public struct MBApsAlert: Codable {
     public let title: String?
     public let body: String?
 }
 
-// Структура для кнопок
 public struct MBPushNotificationButton: Codable {
     public let text: String?
     public let url: String?

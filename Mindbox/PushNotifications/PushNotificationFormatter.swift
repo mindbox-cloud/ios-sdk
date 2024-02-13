@@ -11,9 +11,8 @@ import NotificationCenter
 import MindboxLogger
 
 class NotificationFormatter {
-    static func formatNotification(_ notification: UNNotification) -> MBPushNotification? {
-        let strategy = NotificationStrategyFactory.strategy(for: notification)
-        let userInfo = notification.request.content.userInfo
+    static func formatNotification(_ userInfo: [AnyHashable: Any]) -> MBPushNotification? {
+        let strategy = NotificationStrategyFactory.strategy(for: userInfo)
         return strategy.handle(userInfo: userInfo)
     }
 }

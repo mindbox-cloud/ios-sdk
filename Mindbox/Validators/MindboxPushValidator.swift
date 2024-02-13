@@ -11,15 +11,14 @@ import UserNotifications
 
 class MindboxPushValidator: Validator {
     
-    typealias T = UNNotification
+    typealias T = [AnyHashable: Any]
     
-    func isValid(item: UNNotification) -> Bool {
-        
+    func isValid(item: [AnyHashable : Any]) -> Bool {
         guard let pushModel = NotificationFormatter.formatNotification(item),
-              pushModel.clickUrl != nil,
+              let clickUrl = pushModel.clickUrl,
               let alert = pushModel.aps?.alert,
-              alert.body != nil,
-              alert.title != nil else {
+              let body = alert.body,
+              let title = alert.title else {
             return false
         }
                 

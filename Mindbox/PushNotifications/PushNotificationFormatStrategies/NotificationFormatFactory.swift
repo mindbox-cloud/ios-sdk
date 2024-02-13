@@ -10,14 +10,13 @@ import Foundation
 import NotificationCenter
 
 class NotificationStrategyFactory {
-    static func strategy(for notification: UNNotification) -> NotificationFormatStrategy {
-        let userInfo = notification.request.content.userInfo
-        
-        if let aps = userInfo["aps"] as? [String: Any],
-           aps.keys.contains(where: { ["clickUrl", "uniqueKey"].contains($0) }) {
-            return LegacyFormatStrategy()
-        } else {
-            return CurrentFormatStrategy()
+    static func strategy(for userInfo: [AnyHashable: Any]) -> NotificationFormatStrategy {
+        if let aps = userInfo["aps"] as? [String: Any] {
+            if aps["clickUrl"] != nil && aps["uniqueKey"] != nil {
+                return LegacyFormatStrategy()
+            }
         }
+        
+        return CurrentFormatStrategy()
     }
 }
