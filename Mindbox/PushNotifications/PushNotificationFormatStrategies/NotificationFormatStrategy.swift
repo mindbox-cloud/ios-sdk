@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol NotificationFormatStrategy {
     func handle(userInfo: [AnyHashable: Any]) -> MBPushNotification?
@@ -19,6 +20,7 @@ class LegacyFormatStrategy: NotificationFormatStrategy {
               let title = alertData["title"] as? String,
               let body = alertData["body"] as? String,
               let clickUrl = apsData["clickUrl"] as? String else {
+            Logger.common(message: "LegacyFormatStrategy. Something went wrong. Check userInfo: \n\(userInfo)", level: .error, category: .notification)
             return nil
         }
         
@@ -30,6 +32,7 @@ class LegacyFormatStrategy: NotificationFormatStrategy {
             guard let text = dict["text"] as? String,
                   let url = dict["url"] as? String,
                   let uniqueKey = dict["uniqueKey"] as? String else {
+                Logger.common(message: "LegacyFormatStrategy Buttons. Something went wrong. Check dictionary: \n\(dict)", level: .error, category: .notification)
                 return nil
             }
             return MBPushNotificationButton(text: text, url: url, uniqueKey: uniqueKey)
@@ -57,6 +60,7 @@ class CurrentFormatStrategy: NotificationFormatStrategy {
               let alert = notificationModel.aps?.alert,
               let title = alert.title,
               let body = alert.body else {
+            Logger.common(message: "CurrentFormatStrategy. Something went wrong. Check userInfo: \n\(userInfo)", level: .error, category: .notification)
             return nil
         }
         

@@ -8,17 +8,15 @@
 
 import Foundation
 import UserNotifications
+import MindboxLogger
 
 class MindboxPushValidator: Validator {
     
     typealias T = [AnyHashable: Any]
     
     func isValid(item: [AnyHashable : Any]) -> Bool {
-        guard let pushModel = NotificationFormatter.formatNotification(item),
-              let clickUrl = pushModel.clickUrl,
-              let alert = pushModel.aps?.alert,
-              let body = alert.body,
-              let title = alert.title else {
+        guard let pushModel = NotificationFormatter.formatNotification(item) else {
+            Logger.common(message: "MindboxPushValidator. Cannot convert to Mindbox push model. Return false", level: .error, category: .notification)
             return false
         }
                 

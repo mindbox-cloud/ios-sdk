@@ -8,11 +8,13 @@
 
 import Foundation
 import NotificationCenter
+import MindboxLogger
 
 class NotificationStrategyFactory {
     static func strategy(for userInfo: [AnyHashable: Any]) -> NotificationFormatStrategy {
         if let aps = userInfo["aps"] as? [String: Any] {
             if aps["clickUrl"] != nil && aps["uniqueKey"] != nil {
+                Logger.common(message: "Legacy push notification format.", level: .debug, category: .notification)
                 return LegacyFormatStrategy()
             }
         }
