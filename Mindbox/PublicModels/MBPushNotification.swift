@@ -1,5 +1,5 @@
 //
-//  MBPushNotificationModel.swift
+//  MBPushNotification.swift
 //  Mindbox
 //
 //  Created by vailence on 09.02.2024.
