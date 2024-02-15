@@ -31,6 +31,7 @@ final class DependencyProvider: DependencyContainer {
     var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
+    var pushValidator: MindboxPushValidator
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -110,6 +111,8 @@ final class DependencyProvider: DependencyContainer {
             currentDateProvider: { return Date() },
             pasteboard: UIPasteboard.general
         )
+        
+        pushValidator = MindboxPushValidator()
     }
 }
 

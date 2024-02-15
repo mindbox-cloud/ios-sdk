@@ -43,6 +43,7 @@ public class Mindbox: NSObject {
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
     private var inappMessageEventSender: InappMessageEventSender?
+    private var pushValidator: MindboxPushValidator?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -507,6 +508,34 @@ public class Mindbox: NSObject {
     ) {
         guaranteedDeliveryManager?.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
+    
+    /**
+     Determines whether the given notification is a Mindbox push notification.
+
+     This method checks if the notification received is related to Mindbox by validating its content.
+
+     - Parameter notification: The `UNNotification` instance representing the received push notification.
+
+     - Returns: A Boolean value indicating whether the notification is related to Mindbox.
+    */
+    public func isMindboxPush(notification: UNNotification) -> Bool {
+        return pushValidator?.isValid(item: notification.request.content.userInfo) ?? false
+    }
+    
+    /**
+     Converts a `UNNotification` to a `MBPushNotification` model for Mindbox push notifications.
+
+     This method simplifies handling different Mindbox push notification formats. It takes a `UNNotification` as input, processes its content, and outputs a structured `MBPushNotification`. This allows applications to work with Mindbox notifications without concerning themselves with the underlying format details.
+
+     - Parameter notification: The `UNNotification` with the raw notification data.
+
+     - Returns: An optional `MBPushNotification` containing the notification's formatted data, or `nil` if the data cannot be formatted.
+     
+     Note: Mindbox manages various push notification formats internally. Just pass the `UNNotification` to this method to receive a formatted `MBPushNotification`.
+    */
+    public func getMindboxPushData(notification: UNNotification) -> MBPushNotification? {
+        return NotificationFormatter.formatNotification(notification.request.content.userInfo)
+    }
 
     private var initError: Error?
 
@@ -536,6 +565,7 @@ public class Mindbox: NSObject {
         sessionTemporaryStorage = container.sessionTemporaryStorage
         inAppMessagesDelegate = self
         inappMessageEventSender = container.inappMessageEventSender
+        pushValidator = container.pushValidator
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
