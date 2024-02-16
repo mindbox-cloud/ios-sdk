@@ -521,7 +521,7 @@ public class Mindbox: NSObject {
     public func isMindboxPush(notification: UNNotification) -> Bool {
         return pushValidator?.isValid(item: notification.request.content.userInfo) ?? false
     }
-    
+     
     /**
      Converts a `UNNotification` to a `MBPushNotification` model for Mindbox push notifications.
 
