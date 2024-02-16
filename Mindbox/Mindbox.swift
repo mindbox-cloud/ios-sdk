@@ -524,7 +524,7 @@ public class Mindbox: NSObject {
             }
             self.persistenceStorage?.storeToFileBackgroundExecution()            
         }
-    }
+    }  
 
     func assembly(with container: DependencyContainer) {
         persistenceStorage = container.persistenceStorage
