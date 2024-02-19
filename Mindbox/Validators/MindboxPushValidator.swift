@@ -16,10 +16,11 @@ class MindboxPushValidator: Validator {
     
     func isValid(item: [AnyHashable : Any]) -> Bool {
         guard let pushModel = NotificationFormatter.formatNotification(item) else {
-            Logger.common(message: "MindboxPushValidator. Cannot convert to Mindbox push model. Return false", level: .error, category: .notification)
+            Logger.common(message: "MindboxPushValidator: Failed to convert item to Mindbox push model. Validation failed.", level: .error, category: .notification)
             return false
         }
-                
+        
+        Logger.common(message: "MindboxPushValidator: Successfully validated Mindbox push model.", level: .info, category: .notification)
         return true
     }
 }
