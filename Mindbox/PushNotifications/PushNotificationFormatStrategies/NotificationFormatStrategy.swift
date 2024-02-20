@@ -17,13 +17,13 @@ class LegacyFormatStrategy: NotificationFormatStrategy {
     func handle(userInfo: [AnyHashable: Any]) -> MBPushNotification? {
         guard let apsData = userInfo["aps"] as? [String: Any],
               let alertData = apsData["alert"] as? [String: Any],
-              let title = alertData["title"] as? String,
               let body = alertData["body"] as? String,
               let clickUrl = apsData["clickUrl"] as? String else {
             Logger.common(message: "LegacyFormatStrategy: Failed to parse legacy notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
-        
+    
+        let title = alertData["title"] as? String
         let sound = apsData["sound"] as? String
         let mutableContent = apsData["mutable-content"] as? Int
         let contentAvailable = apsData["content-available"] as? Int
@@ -59,7 +59,6 @@ class CurrentFormatStrategy: NotificationFormatStrategy {
               let notificationModel = try? JSONDecoder().decode(MBPushNotification.self, from: data),
               let clickUrl = notificationModel.clickUrl,
               let alert = notificationModel.aps?.alert,
-              let title = alert.title,
               let body = alert.body else {
             Logger.common(message: "CurrentFormatStrategy: Failed to parse current notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
