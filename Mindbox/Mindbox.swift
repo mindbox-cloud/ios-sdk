@@ -518,8 +518,8 @@ public class Mindbox: NSObject {
 
      - Returns: A Boolean value indicating whether the notification is related to Mindbox.
     */
-    public func isMindboxPush(notification: UNNotification) -> Bool {
-        return pushValidator?.isValid(item: notification.request.content.userInfo) ?? false
+    public func isMindboxPush(userInfo: [AnyHashable: Any]) -> Bool {
+        return pushValidator?.isValid(item: userInfo) ?? false
     }
     
     /**
@@ -533,8 +533,8 @@ public class Mindbox: NSObject {
      
      Note: Mindbox manages various push notification formats internally. Just pass the `UNNotification` to this method to receive a formatted `MBPushNotification`.
     */
-    public func getMindboxPushData(notification: UNNotification) -> MBPushNotification? {
-        return NotificationFormatter.formatNotification(notification.request.content.userInfo)
+    public func getMindboxPushData(userInfo: [AnyHashable: Any]) -> MBPushNotification? {
+        return NotificationFormatter.formatNotification(userInfo)
     }
 
     private var initError: Error?
