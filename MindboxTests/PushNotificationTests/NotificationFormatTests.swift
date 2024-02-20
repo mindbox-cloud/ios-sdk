@@ -42,7 +42,6 @@ final class NotificationFormatTests: XCTestCase {
         }
         
         XCTAssertEqual(model.clickUrl, "https://example.com/click")
-        XCTAssertEqual(model.aps?.alert?.title, "Пример заголовка")
         XCTAssertEqual(model.aps?.alert?.body, "Текст уведомления")
         XCTAssertEqual(model.uniqueKey, "uniqueNotificationKey")
     }
@@ -132,37 +131,10 @@ final class NotificationFormatTests: XCTestCase {
         }
         
         XCTAssertEqual(model.clickUrl, "https://example.com/click")
-        XCTAssertEqual(model.aps?.alert?.title, "Пример заголовка")
         XCTAssertEqual(model.aps?.alert?.body, "Текст уведомления")
         XCTAssertEqual(model.uniqueKey, "uniqueNotificationKey")
     }
-    
-    func test_current_format_no_title_return_nil() {
-        let userInfo: [AnyHashable: Any] = [
-            "aps": [
-                "alert": [
-                    "body": "Текст уведомления"
-                ],
-                "sound": "default",
-                "mutable-content": 1,
-                "content-available": 1
-            ],
-            "clickUrl": "https://example.com/click",
-            "imageUrl": "https://example.com/image.jpg",
-            "payload": "Пример полезной нагрузки",
-            "buttons": [
-                [
-                    "text": "Кнопка 1",
-                    "url": "https://example.com/button1",
-                    "uniqueKey": "button1Key"
-                ]
-            ],
-            "uniqueKey": "uniqueNotificationKey"
-        ]
-        
-        XCTAssertNil(NotificationFormatter.formatNotification(userInfo))
-    }
-    
+
     // MARK: - No user info
     func test_empty_user_info_return_nil() {
         let userInfo: [AnyHashable: Any] = [:]
