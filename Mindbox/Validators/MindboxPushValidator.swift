@@ -1,0 +1,26 @@
+//
+//  MindboxPushValidator.swift
+//  Mindbox
+//
+//  Created by vailence on 09.02.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
+//
+
+import Foundation
+import UserNotifications
+import MindboxLogger
+
+class MindboxPushValidator: Validator {
+    
+    typealias T = [AnyHashable: Any]
+    
+    func isValid(item: [AnyHashable : Any]) -> Bool {
+        guard let pushModel = NotificationFormatter.formatNotification(item) else {
+            Logger.common(message: "MindboxPushValidator: Failed to convert item to Mindbox push model. Validation failed.", level: .error, category: .notification)
+            return false
+        }
+        
+        Logger.common(message: "MindboxPushValidator: Successfully validated Mindbox push model.", level: .info, category: .notification)
+        return true
+    }
+}
