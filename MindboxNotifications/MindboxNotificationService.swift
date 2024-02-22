@@ -143,16 +143,22 @@ public class MindboxNotificationService: NSObject {
               let data = FileManager.default.contents(atPath: imagePath) else { return }
 
         let imageView = UIImageView(image: UIImage(data: data))
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(imageView)
+
+        let imageHeight = imageView.image?.size.height ?? 0
+        let imageWidth = imageView.image?.size.width ?? 0
+        let imageRatio = imageHeight / imageWidth
+        let imageViewHeight = view.bounds.width * imageRatio
+        
         NSLayoutConstraint.activate([
             imageView.widthAnchor.constraint(equalTo: view.widthAnchor),
             imageView.leftAnchor.constraint(equalTo: view.leftAnchor),
             imageView.rightAnchor.constraint(equalTo: view.rightAnchor),
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight),
         ])
     }
 
