@@ -138,7 +138,7 @@ public class MindboxNotificationService: NSObject {
         }
     }
 
-    private func createImageView(with imagePath: String, view: UIView?) {
+private func createImageView(with imagePath: String, view: UIView?) {
         guard let view = view,
               let data = FileManager.default.contents(atPath: imagePath) else { return }
 
