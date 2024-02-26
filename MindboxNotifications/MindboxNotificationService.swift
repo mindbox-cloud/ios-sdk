@@ -149,7 +149,7 @@ private func createImageView(with imagePath: String, view: UIView?) {
 
         let imageHeight = imageView.image?.size.height ?? 0
         let imageWidth = imageView.image?.size.width ?? 0
-        let imageRatio imageHeight / imageWidth
+        let imageRatio = imageHeight / imageWidth
         let imageViewHeight = view.bounds.width * imageRatio
         
         NSLayoutConstraint.activate([
