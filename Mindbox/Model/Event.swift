@@ -22,6 +22,7 @@ struct Event {
 
         case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
+        case inAppTargetingEvent = "Inapp.Targeting"
         
         case sdkLogs = "MobileSdk.Logs"
     }

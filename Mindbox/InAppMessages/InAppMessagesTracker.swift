@@ -8,12 +8,17 @@
 
 import Foundation
 
+protocol InappTargetingTrackProtocol: AnyObject {
+    func trackTargeting(id: String) throws
+}
+
 protocol InAppMessagesTrackerProtocol: AnyObject {
     func trackView(id: String) throws
     func trackClick(id: String) throws
+
 }
 
-class InAppMessagesTracker: InAppMessagesTrackerProtocol {
+class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackProtocol {
 
     struct InAppBody: Codable {
         let inappId: String
@@ -34,6 +39,12 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol {
     func trackClick(id: String) throws {
         let encodable = InAppBody(inappId: id)
         let event = Event(type: .inAppClickEvent, body: BodyEncoder(encodable: encodable).body)
+        try databaseRepository.create(event: event)
+    }
+    
+    func trackTargeting(id: String) throws {
+        let encodable = InAppBody(inappId: id)
+        let event = Event(type: .inAppTargetingEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 }
