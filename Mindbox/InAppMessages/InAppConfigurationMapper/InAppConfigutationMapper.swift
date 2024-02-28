@@ -15,44 +15,34 @@ protocol InAppConfigurationMapperProtocol {
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
-
+    
     private let inappFilterService: InappFilterProtocol
-    private let geoService: GeoServiceProtocol
-    private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
     var targetingChecker: InAppTargetingCheckerProtocol
-    private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
-    private let imageDownloadService: ImageDownloadServiceProtocol
     private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
     private let abTestDeviceMixer: ABTestDeviceMixer
-
-    private let dispatchGroup = DispatchGroup()
+    
+    let dataFacade: InAppConfigurationDataFacadeProtocol
 
     init(inappFilterService: InappFilterProtocol,
-         geoService: GeoServiceProtocol,
-         segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
          targetingChecker: InAppTargetingCheckerProtocol,
-         sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
-         imageDownloadService: ImageDownloadServiceProtocol,
          urlExtractorService: VariantImageUrlExtractorServiceProtocol,
-         abTestDeviceMixer: ABTestDeviceMixer) {
+         abTestDeviceMixer: ABTestDeviceMixer,
+         dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
-        self.geoService = geoService
-        self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
         self.targetingChecker = targetingChecker
-        self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
-        self.imageDownloadService = imageDownloadService
         self.urlExtractorService = urlExtractorService
         self.abTestDeviceMixer = abTestDeviceMixer
+        self.dataFacade = dataFacade
     }
 
     /// Maps config response to business-logic handy InAppConfig model
@@ -72,9 +62,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
         targetingChecker.event = event
         prepareTargetingChecker(for: filteredInapps)
-        sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
+        dataFacade.setObservedOperation()
 
-        fetchDependencies(model: event?.model) {
+        dataFacade.fetchDependencies(model: event?.model) {
             self.filterByInappsEvents(inapps: filteredInapps)
             if let event = event {
                 if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
@@ -181,49 +171,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             targetingChecker.prepare(targeting: $0.targeting)
         })
     }
-
-    private func fetchDependencies(model: InappOperationJSONModel?,
-                                   _ completion: @escaping () -> Void) {
-        fetchSegmentationIfNeeded()
-        fetchGeoIfNeeded()
-        fetchProductSegmentationIfNeeded(products: model?.viewProduct?.product)
-
-        dispatchGroup.notify(queue: .main) {
-            completion()
-        }
-    }
-
-    private func fetchSegmentationIfNeeded() {
-        if !sessionTemporaryStorage.checkSegmentsRequestCompleted {
-            dispatchGroup.enter()
-            segmentationService.checkSegmentationRequest { response in
-                self.targetingChecker.checkedSegmentations = response
-                self.dispatchGroup.leave()
-            }
-        }
-    }
-
-    private func fetchGeoIfNeeded() {
-        if targetingChecker.context.isNeedGeoRequest
-            && !sessionTemporaryStorage.geoRequestCompleted {
-            dispatchGroup.enter()
-            geoService.geoRequest { model in
-                self.targetingChecker.geoModels = model
-                self.dispatchGroup.leave()
-            }
-        }
-    }
-
-    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
-        if !sessionTemporaryStorage.checkProductSegmentsRequestCompleted,
-            let products = products {
-            dispatchGroup.enter()
-            segmentationService.checkProductSegmentationRequest(products: products) { response in
-                self.targetingChecker.checkedProductSegmentations = response
-                self.dispatchGroup.leave()
-            }
-        }
-    }
     
     func filterByInappsEvents(inapps: [InApp]) {
         for inapp in inapps {
@@ -282,7 +229,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue) { result in
                         defer {
                             group.leave()
                         }

@@ -32,6 +32,7 @@ final class DependencyProvider: DependencyContainer {
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
+    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -83,21 +84,23 @@ final class DependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
+        inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
+                                                                    segmentationService: segmentationSevice,
+                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
+                                                                    targetingChecker: inAppTargetingChecker,
+                                                                    imageService: imageDownloadService)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
-                                                                   geoService: geoService,
-                                                                   segmentationService: segmentationSevice,
                                                                    customerSegmentsAPI: .live,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   sessionTemporaryStorage: sessionTemporaryStorage,
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
-                                                                   imageDownloadService: imageDownloadService,
                                                                    urlExtractorService: urlExtractorService,
-                                                                   abTestDeviceMixer: abTestDeviceMixer),
+                                                                   abTestDeviceMixer: abTestDeviceMixer,
+                                                                   dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage,

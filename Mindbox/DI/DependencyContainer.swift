@@ -30,6 +30,7 @@ protocol DependencyContainer {
     var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
     var pushValidator: MindboxPushValidator { get }
+    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
 }
 
 protocol InstanceFactory {

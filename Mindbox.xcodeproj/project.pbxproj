@@ -364,6 +364,7 @@
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
+		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
 		F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F42AA9AF7A00852298 /* InappFilter.swift */; };
@@ -857,6 +858,7 @@
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
+		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
 		F39116F42AA9AF7A00852298 /* InappFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilter.swift; sourceTree = "<group>"; };
@@ -2557,6 +2559,7 @@
 				F39B67A12A3C6AF4005C0CCA /* SegmentationService.swift */,
 				F39B67A82A3C72E5005C0CCA /* ImageDownloadService.swift */,
 				F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */,
+				F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -2989,6 +2992,7 @@
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
+				F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */,
 				F3F5BB8D2B79F2F80022AC3F /* NotificationFormatStrategy.swift in Sources */,
 				337A473E265528B5000DC613 /* MBDate.swift in Sources */,
 				F331DC842A80983000222120 /* FailableDecodableArray.swift in Sources */,
