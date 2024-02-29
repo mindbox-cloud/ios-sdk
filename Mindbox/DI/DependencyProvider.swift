@@ -88,7 +88,8 @@ final class DependencyProvider: DependencyContainer {
                                                                     segmentationService: segmentationSevice,
                                                                     sessionTemporaryStorage: sessionTemporaryStorage,
                                                                     targetingChecker: inAppTargetingChecker,
-                                                                    imageService: imageDownloadService)
+                                                                    imageService: imageDownloadService, 
+                                                                    tracker: tracker)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),

@@ -14,6 +14,7 @@ protocol InAppConfigurationDataFacadeProtocol {
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void)
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void)
     func setObservedOperation()
+    func trackTargeting(id: String?)
 }
 
 class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
@@ -23,17 +24,20 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let sessionTemporaryStorage: SessionTemporaryStorage
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
+    let tracker: InappTargetingTrackProtocol
     
     init(geoService: GeoServiceProtocol, 
          segmentationService: SegmentationServiceProtocol,
          sessionTemporaryStorage: SessionTemporaryStorage,
          targetingChecker: InAppTargetingCheckerProtocol,
-         imageService: ImageDownloadServiceProtocol) {
+         imageService: ImageDownloadServiceProtocol,
+         tracker: InappTargetingTrackProtocol) {
         self.geoService = geoService
         self.segmentationService = segmentationService
         self.sessionTemporaryStorage = sessionTemporaryStorage
         self.targetingChecker = targetingChecker
         self.imageService = imageService
+        self.tracker = tracker
     }
     
     private let dispatchGroup = DispatchGroup()
@@ -52,6 +56,27 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
     
+
+    
+    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
+        imageService.downloadImage(withUrl: url) { result in
+            completion(result)
+        }
+    }
+    
+    func trackTargeting(id: String?) {
+        if let id = id {
+            do {
+                try self.tracker.trackTargeting(id: id)
+                Logger.common(message: "Track InApp.Targeting. Id \(id)", level: .info, category: .inAppMessages)
+            } catch {
+                Logger.common(message: "Track InApp.Targeting failed with error: \(error)", level: .error, category: .inAppMessages)
+            }
+        }
+    }
+}
+
+private extension InAppConfigurationDataFacade {
     private func fetchSegmentationIfNeeded() {
         if !sessionTemporaryStorage.checkSegmentsRequestCompleted {
             dispatchGroup.enter()
@@ -81,12 +106,6 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
                 self.targetingChecker.checkedProductSegmentations = response
                 self.dispatchGroup.leave()
             }
-        }
-    }
-    
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
-        imageService.downloadImage(withUrl: url) { result in
-            completion(result)
         }
     }
 }

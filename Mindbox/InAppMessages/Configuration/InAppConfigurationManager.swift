@@ -141,6 +141,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             self.inapp = inapp
             Logger.common(message: "In-app applied: \(String(describing: inapp?.inAppId)))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()
+            DispatchQueue.global(qos: .utility).async {
+                self.inAppConfigurationMapper.handleOtherInappsTargeting()
+            }
         })
     }
     
