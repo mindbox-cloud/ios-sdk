@@ -56,8 +56,6 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
     
-
-    
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             completion(result)

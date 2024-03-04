@@ -12,6 +12,7 @@ import UIKit
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
+    func handleOtherInappsTargeting()
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -28,7 +29,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     let dataFacade: InAppConfigurationDataFacadeProtocol
     
     private var fullListOfInapps: [InApp] = []
-    private var inappsForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    private var inappsDictForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private var savedEventForTargeting: ApplicationEvent?
     private var shownInnapId: String = ""
 
@@ -61,6 +62,11 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let responseInapps = filterInappsByABTests(response.abtests, responseInapps: fullListOfInapps)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        
+        targetingChecker.event = event
+        prepareTargetingChecker(for: filteredInapps)
+        dataFacade.setObservedOperation()
+        
         if filteredInapps.isEmpty {
             Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
@@ -95,22 +101,18 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     func handleOtherInappsTargeting() {
         Logger.common(message: "Starting other Targetings", level: .debug, category: .inAppMessages)
         self.prepareTargetingChecker(for: fullListOfInapps)
+        dataFacade.setObservedOperation()
         self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
-            self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsForTargeting)
-            let ids = self.inAppsForEvent(event: self.savedEventForTargeting, asd: self.inappsForTargeting)
-            var realIds = ids.map { $0.inAppId }
-            realIds.removeAll {
-                $0 == self.shownInnapId
-            }
-            
-            var setRealIds = Set(realIds)
-            setRealIds.forEach { id in
-                self.dataFacade.trackTargeting(id: id)
-            }
+            self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
+            let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
+            var ids = inappsForTargeting.map { $0.inAppId }
+            ids.removeAll { $0 == self.shownInnapId }
+            var setIds = Set(ids)
+            setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
         }
     }
     
-    func inAppsForEvent(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
+    func inAppsByEventForTargeting(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
         if let event = event, let inappsByEvent = asd[.applicationEvent(event)] {
             return inappsByEvent
         } else if let inappsByEvent = asd[.start] {

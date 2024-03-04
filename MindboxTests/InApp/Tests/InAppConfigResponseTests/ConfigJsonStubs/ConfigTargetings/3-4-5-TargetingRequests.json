@@ -1,0 +1,129 @@
+{
+  "settings": {
+    "operations": {
+      "viewProduct": {
+        "systemName": "viewProduct"
+      }
+    }
+  },
+  "inapps": [
+    {
+      "id": "1",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://personalization-web-stable.mindbox.ru/user-media/29836/e17b389b8fcd5819c15933de78398dcb65769ae44483d4ac6807781e2bf7781d.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0.0,
+                  "right": 20.0,
+                  "left": 20.0,
+                  "bottom": 0.0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                }
+              },
+              "elements": [
+                
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://personalization-web-stable.mindbox.ru/user-media/29836/e17b389b8fcd5819c15933de78398dcb65769ae44483d4ac6807781e2bf7781d.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0.0,
+                  "right": 20.0,
+                  "left": 20.0,
+                  "bottom": 0.0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                }
+              },
+              "elements": [
+                
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    }
+  ]
+}

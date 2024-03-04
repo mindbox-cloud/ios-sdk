@@ -33,6 +33,7 @@ final class TestDependencyProvider: DependencyContainer {
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
+    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     
     init() throws {
         sessionTemporaryStorage = SessionTemporaryStorage()
@@ -59,7 +60,7 @@ final class TestDependencyProvider: DependencyContainer {
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
                                                           sessionStorage: sessionTemporaryStorage)
-        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 1)
+        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 8)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
@@ -69,6 +70,16 @@ final class TestDependencyProvider: DependencyContainer {
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
+        let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
+        
+        inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
+                                                                    segmentationService: segmentationSevice,
+                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
+                                                                    targetingChecker: inAppTargetingChecker,
+                                                                    imageService: imageDownloadService,
+                                                                    tracker: tracker)
+
+        
         let actionFilter = LayerActionFilterService()
         let sourceFilter = LayersSourceFilterService()
         let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)

@@ -1,0 +1,375 @@
+{
+  "monitoring": {
+    "logs": []
+  },
+  "settings": {
+    "operations": {
+      "viewProduct": {
+        "systemName": "viewProduct"
+      },
+      "viewCategory": {
+        "systemName": "viewCategory"
+      }
+    }
+  },
+  "inapps": [
+    {
+      "id": "1",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+            {
+              "$type": "true"
+            }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "snackbar",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "",
+                      "value": ""
+                    },
+                    "source": {
+                      "$type": "url",
+                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/5c7559bc-4095-4a66-9c43-8b8e3ec1f934.png"
+                    }
+                  }
+                ]
+              },
+              "position": {
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "bottom"
+                },
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "bottom": 0,
+                  "left": 0,
+                  "right": 0
+                }
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#0000FF",
+                  "lineWidth": 3,
+                  "size": {
+                    "kind": "dp",
+                    "width": 25,
+                    "height": 25
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.15,
+                      "right": 1,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "snackbar",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "",
+                      "value": ""
+                    },
+                    "source": {
+                      "$type": "url",
+                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/452c443e-8fe9-4caa-b357-8e4f9365dcab.png"
+                    }
+                  }
+                ]
+              },
+              "position": {
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                },
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "bottom": 0,
+                  "left": 0,
+                  "right": 0
+                }
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#0000FF",
+                  "lineWidth": 3,
+                  "size": {
+                    "kind": "dp",
+                    "width": 25,
+                    "height": 25
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.15,
+                      "right": 1,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "3",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "negative",
+            "ids": [
+              2077456
+            ],
+            "$type": "country"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "modal payload 1",
+                      "value": "https://klike.net/uploads/posts/2020-06/1593061853_23.jpg"
+                    },
+                    "source": {
+                      "$type": "url",
+                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/98f9509c-8c0d-4aec-8123-6c3c7ec3bac9.png"
+                    }
+                  }
+                ]
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#FF0000",
+                  "lineWidth": 5,
+                  "size": {
+                    "kind": "dp",
+                    "width": 35,
+                    "height": 35
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.25,
+                      "right": 0.25,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "4",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "93",
+            "systemName": "test",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "or"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "snackbar",
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "image",
+                    "action": {
+                      "$type": "redirectUrl",
+                      "intentPayload": "",
+                      "value": ""
+                    },
+                    "source": {
+                      "$type": "url",
+                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/98f1ca2f-fde1-43bb-aa66-5533fdaae1a1.png"
+                    }
+                  }
+                ]
+              },
+              "position": {
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                },
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "bottom": 0,
+                  "left": 0,
+                  "right": 0
+                }
+              },
+              "elements": [
+                {
+                  "$type": "closeButton",
+                  "color": "#0000FF",
+                  "lineWidth": 3,
+                  "size": {
+                    "kind": "dp",
+                    "width": 25,
+                    "height": 25
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.15,
+                      "right": 1,
+                      "left": 0.0,
+                      "bottom": 0.0
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "abtests": [
+    {
+      "id": "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
+      "sdkVersion": {
+        "min": 6,
+        "max": null
+      },
+      "salt": "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F5",
+      "variants": [
+        {
+          "id": "AA9DBF50-67C5-4376-8ABF-A93B3D460550",
+          "modulus": {
+            "lower": 0,
+            "upper": 30
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": []
+            }
+          ]
+        },
+        {
+          "id": "C5130E69-19E5-4F51-B737-F8A697326BA3",
+          "modulus": {
+            "lower": 30,
+            "upper": 65
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": [
+                "2",
+                "3"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "AC0110BA-C861-4CB4-8B2B-5310BA87E318",
+          "modulus": {
+            "lower": 65,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "all",
+              "inapps": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

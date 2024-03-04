@@ -302,6 +302,16 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */; };
+		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
+		F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */; };
+		F314708C2B96464900E01E5C /* 7-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F314708B2B96464900E01E5C /* 7-TargetingRequests.json */; };
+		F314708E2B964BFF00E01E5C /* 8-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F314708D2B964BFF00E01E5C /* 8-TargetingRequests.json */; };
+		F31470902B96514E00E01E5C /* 9-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F314708F2B96514E00E01E5C /* 9-TargetingRequests.json */; };
+		F31470922B96624F00E01E5C /* 14-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470912B96624F00E01E5C /* 14-TargetingRequests.json */; };
+		F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470932B96632100E01E5C /* 16-17-TargetingRequests.json */; };
+		F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470952B96681F00E01E5C /* 27-TargetingRequests.json */; };
+		F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470972B9668F100E01E5C /* 31-TargetingRequests.json */; };
 		F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801F72A38649D0021774C /* InappConfigResponseValid.json */; };
 		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
 		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
@@ -796,6 +806,16 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingRequestsTests.swift; sourceTree = "<group>"; };
+		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
+		F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "3-4-5-TargetingRequests.json"; sourceTree = "<group>"; };
+		F314708B2B96464900E01E5C /* 7-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "7-TargetingRequests.json"; sourceTree = "<group>"; };
+		F314708D2B964BFF00E01E5C /* 8-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "8-TargetingRequests.json"; sourceTree = "<group>"; };
+		F314708F2B96514E00E01E5C /* 9-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "9-TargetingRequests.json"; sourceTree = "<group>"; };
+		F31470912B96624F00E01E5C /* 14-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "14-TargetingRequests.json"; sourceTree = "<group>"; };
+		F31470932B96632100E01E5C /* 16-17-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "16-17-TargetingRequests.json"; sourceTree = "<group>"; };
+		F31470952B96681F00E01E5C /* 27-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "27-TargetingRequests.json"; sourceTree = "<group>"; };
+		F31470972B9668F100E01E5C /* 31-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "31-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31801F72A38649D0021774C /* InappConfigResponseValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseValid.json; sourceTree = "<group>"; };
 		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
 		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
@@ -1629,6 +1649,7 @@
 				84ECB42D25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift */,
 				84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */,
 				84A0CD59260B021F004CD91B /* MockFailureNetworkFetcher.swift */,
+				F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
@@ -1715,7 +1736,6 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				F331DCDA2A80AC3300222120 /* ModelValidatorTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
 				F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */,
 				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
@@ -1771,6 +1791,7 @@
 				9BE941F62916823300258077 /* ConfigJsonStubs */,
 				9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */,
 				A1A916E429C9191900D59D9E /* InAppConfigStub.swift */,
+				F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */,
 			);
 			path = InAppConfigResponseTests;
 			sourceTree = "<group>";
@@ -1778,6 +1799,7 @@
 		9BE941F62916823300258077 /* ConfigJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F31470852B96373600E01E5C /* ConfigTargetings */,
 				F31801F92A386A350021774C /* ConfigResponse */,
 				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
@@ -2019,6 +2041,21 @@
 			path = OSLogWritterTests;
 			sourceTree = "<group>";
 		};
+		F31470852B96373600E01E5C /* ConfigTargetings */ = {
+			isa = PBXGroup;
+			children = (
+				F31470972B9668F100E01E5C /* 31-TargetingRequests.json */,
+				F31470952B96681F00E01E5C /* 27-TargetingRequests.json */,
+				F31470932B96632100E01E5C /* 16-17-TargetingRequests.json */,
+				F31470912B96624F00E01E5C /* 14-TargetingRequests.json */,
+				F314708F2B96514E00E01E5C /* 9-TargetingRequests.json */,
+				F314708D2B964BFF00E01E5C /* 8-TargetingRequests.json */,
+				F314708B2B96464900E01E5C /* 7-TargetingRequests.json */,
+				F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */,
+			);
+			path = ConfigTargetings;
+			sourceTree = "<group>";
+		};
 		F31801F92A386A350021774C /* ConfigResponse */ = {
 			isa = PBXGroup;
 			children = (
@@ -2151,13 +2188,6 @@
 				F331DD2C2A84CA7A00222120 /* Sources */,
 			);
 			path = ContentBackgroundSource;
-			sourceTree = "<group>";
-		};
-		F331DCDA2A80AC3300222120 /* ModelValidatorTests */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = ModelValidatorTests;
 			sourceTree = "<group>";
 		};
 		F331DCE92A83A56500222120 /* Presentation */ = {
@@ -2842,6 +2872,7 @@
 				F39117152AB4BEB900852298 /* unknownLayerType.json in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
 				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
+				F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				F39117172AB4BF2700852298 /* knownImageUnknownPictureLayerType.json in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
@@ -2850,7 +2881,10 @@
 				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
 				F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
+				F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */,
+				F314708C2B96464900E01E5C /* 7-TargetingRequests.json in Resources */,
 				F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */,
+				F31470922B96624F00E01E5C /* 14-TargetingRequests.json in Resources */,
 				F3FAD8742AB8678900D98C03 /* negativeCloseButtonSizeValues.json in Resources */,
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */,
@@ -2868,7 +2902,9 @@
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
 				F39B67B32A3C8B1D005C0CCA /* ConfigWithAB_2.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
+				F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */,
 				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
+				F31470902B96514E00E01E5C /* 9-TargetingRequests.json in Resources */,
 				F391172B2AB4C4AD00852298 /* invalidCloseButtonColor.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
 				F39B67C62A3FBC47005C0CCA /* ConfigWithABNormal.json in Resources */,
@@ -2880,6 +2916,7 @@
 				F39B67C42A3FBB64005C0CCA /* ConfigWithABLowerBiggerThanUpper.json in Resources */,
 				F391171D2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json in Resources */,
 				F39117112AB4BD4500852298 /* missingBackgroundSection.json in Resources */,
+				F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
 				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,
 				F391170F2AB4B31800852298 /* unknownVariantType.json in Resources */,
@@ -2889,6 +2926,7 @@
 				F39B67BA2A3FB943005C0CCA /* ConfigWithABBrokenRange.json in Resources */,
 				31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */,
 				F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */,
+				F314708E2B964BFF00E01E5C /* 8-TargetingRequests.json in Resources */,
 				9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3259,7 +3297,9 @@
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */,
 				A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */,
+				F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
+				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,

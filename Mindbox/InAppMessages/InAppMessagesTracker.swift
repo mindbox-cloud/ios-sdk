@@ -15,7 +15,6 @@ protocol InappTargetingTrackProtocol: AnyObject {
 protocol InAppMessagesTrackerProtocol: AnyObject {
     func trackView(id: String) throws
     func trackClick(id: String) throws
-
 }
 
 class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackProtocol {
