@@ -12,7 +12,7 @@ import UIKit
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
-    func handleOtherInappsTargeting()
+    func sendRemainingInappsTargeting()
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
@@ -98,16 +98,20 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
-    func handleOtherInappsTargeting() {
-        Logger.common(message: "Starting other Targetings", level: .debug, category: .inAppMessages)
+    func sendRemainingInappsTargeting() {
+        Logger.common(message: "TR | Initiating processing of remaining in-app targeting requests.", level: .debug, category: .inAppMessages)
+        Logger.common(message: "TR | Full list of in-app messages: \(fullListOfInapps.map { $0.id })", level: .debug, category: .inAppMessages)
+        Logger.common(message: "TR | Saved event for targeting: \(savedEventForTargeting?.name ?? "None")", level: .debug, category: .inAppMessages)
         self.prepareTargetingChecker(for: fullListOfInapps)
         dataFacade.setObservedOperation()
+        
         self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
             self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
             let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
             var ids = inappsForTargeting.map { $0.inAppId }
             ids.removeAll { $0 == self.shownInnapId }
-            var setIds = Set(ids)
+            let setIds = Set(ids)
+            Logger.common(message: "TR | In-apps selected for targeting requests: \(setIds)", level: .debug, category: .inAppMessages)
             setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
         }
     }

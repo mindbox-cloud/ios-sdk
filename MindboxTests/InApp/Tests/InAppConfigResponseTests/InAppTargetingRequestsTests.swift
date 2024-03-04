@@ -38,11 +38,11 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
  
     func test_TwoInappsTrue_NotShownBefore() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
 
@@ -55,12 +55,12 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
 
     func test_TwoInappsTrue_FirstShownBefore() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         container.persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             
@@ -73,14 +73,14 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_OneInappGeo_NotShownBefore() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         do {
             let config = try getConfig(name: "7-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
             container.sessionTemporaryStorage.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             
@@ -92,14 +92,14 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_OneTrue_OneGeo_NotShownBefore() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         do {
             let config = try getConfig(name: "8-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
             container.sessionTemporaryStorage.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
@@ -112,7 +112,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_TrueShown_OperationTest_TrueNotShown_Geo_Segment() {
-        let expectationForHandleOtherInappsTargeting = XCTestExpectation(description: "Waiting for first handleOtherInappsTargeting to complete")
+        let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
         let expectationForMapConfigResponse = XCTestExpectation(description: "Waiting for mapConfigResponse to complete")
             
         container.persistenceStorage.shownInAppsIds = ["1"]
@@ -125,11 +125,11 @@ class InAppTargetingRequestsTests: XCTestCase {
             container.sessionTemporaryStorage.checkSegmentsRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
-                expectationForHandleOtherInappsTargeting.fulfill()
+                self.mapper.sendRemainingInappsTargeting()
+                expectationForsendRemainingInappsTargeting.fulfill()
             }
             
-            wait(for: [expectationForHandleOtherInappsTargeting], timeout: 1)
+            wait(for: [expectationForsendRemainingInappsTargeting], timeout: 1)
             targetingContains("3", expectedToShow: true)
             targetingContains("1")
             targetingContains("4")
@@ -139,7 +139,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let event = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(event, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationForMapConfigResponse.fulfill()
             }
             
@@ -158,7 +158,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             let config = try getConfig(name: "14-TargetingRequests")
             let testEvent = ApplicationEvent(name: "1", model: nil)
             mapper.mapConfigResponse(testEvent, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTest.fulfill()
             }
             
@@ -169,7 +169,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let test2Event = ApplicationEvent(name: "2", model: nil)
             mapper.mapConfigResponse(test2Event, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTest2.fulfill()
             }
             
@@ -190,7 +190,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "16-17-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTrue.fulfill()
             }
             
@@ -201,7 +201,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let testEvent = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(testEvent, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTest.fulfill()
             }
             
@@ -212,7 +212,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let testEventAgain = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(testEventAgain, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTestAgain.fulfill()
             }
             
@@ -224,12 +224,12 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_unknownInapp_lowerSDK_trueInapp() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         do {
             let config = try getConfig(name: "27-TargetingRequests")
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
@@ -241,7 +241,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_fourInappsWithABTests_variant1() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
 
         do {
@@ -253,7 +253,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             container.sessionTemporaryStorage.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
@@ -265,7 +265,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let testEventAgain = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(testEventAgain, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTestAgain.fulfill()
             }
             
@@ -278,7 +278,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_fourInappsWithABTests_variant2() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
 
         do {
@@ -290,7 +290,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             container.sessionTemporaryStorage.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
@@ -302,7 +302,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let testEventAgain = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(testEventAgain, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTestAgain.fulfill()
             }
             
@@ -315,7 +315,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     func test_fourInappsWithABTests_variant3() {
-        let expectation = XCTestExpectation(description: "Waiting for handleOtherInappsTargeting to complete")
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
 
         do {
@@ -327,7 +327,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             container.sessionTemporaryStorage.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
@@ -339,7 +339,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             let testEventAgain = ApplicationEvent(name: "test", model: nil)
             mapper.mapConfigResponse(testEventAgain, config) { _ in
-                self.mapper.handleOtherInappsTargeting()
+                self.mapper.sendRemainingInappsTargeting()
                 expectationTestAgain.fulfill()
             }
             
