@@ -53,7 +53,7 @@ class EventRepositoryTestCase: XCTestCase {
         waitForExpectations(timeout: 10, handler: nil)
     }
 
-    func testSendDecodableEvent() {
+    func testSendDecodableEvent() { // Flaky
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()

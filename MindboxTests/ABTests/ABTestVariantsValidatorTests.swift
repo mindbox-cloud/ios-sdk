@@ -22,6 +22,8 @@ class ABTestVariantsValidatorTests: XCTestCase {
     override func setUp() {
         super.setUp()
         
+        // TODO: - Divide to few different unit tests.
+        
         let object1 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
         let object2 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp2"])
         testCases = [
