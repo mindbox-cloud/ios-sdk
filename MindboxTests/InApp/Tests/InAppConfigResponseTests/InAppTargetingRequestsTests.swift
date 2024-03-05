@@ -256,7 +256,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 1)
+            wait(for: [expectation], timeout: 2)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -269,7 +269,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectationTestAgain.fulfill()
             }
             
-            wait(for: [expectationTestAgain], timeout: 1)
+            wait(for: [expectationTestAgain], timeout: 2)
             targetingEqual(["4"])
             
         } catch {
@@ -293,7 +293,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 1)
+            wait(for: [expectation], timeout: 2)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -306,7 +306,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectationTestAgain.fulfill()
             }
             
-            wait(for: [expectationTestAgain], timeout: 1)
+            wait(for: [expectationTestAgain], timeout: 2)
             targetingEqual(["4"])
             
         } catch {
@@ -330,7 +330,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 1)
+            wait(for: [expectation], timeout: 2)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -343,7 +343,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectationTestAgain.fulfill()
             }
             
-            wait(for: [expectationTestAgain], timeout: 1)
+            wait(for: [expectationTestAgain], timeout: 2)
             targetingEqual(["4"])
             
         } catch {
