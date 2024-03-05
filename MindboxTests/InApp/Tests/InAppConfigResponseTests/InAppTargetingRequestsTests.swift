@@ -293,7 +293,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 2)
+            wait(for: [expectation], timeout: 3)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -306,7 +306,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectationTestAgain.fulfill()
             }
             
-            wait(for: [expectationTestAgain], timeout: 2)
+            wait(for: [expectationTestAgain], timeout: 3)
             targetingEqual(["4"])
             
         } catch {

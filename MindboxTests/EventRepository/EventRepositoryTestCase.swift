@@ -31,29 +31,29 @@ class EventRepositoryTestCase: XCTestCase {
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
     }
-//
-//    func testSendEvent() {
-//        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
-//        coreController.initialization(configuration: configuration)
-//        waitForInitializationFinished()
-//        let repository: EventRepository = container.instanceFactory.makeEventRepository()
-//        let event = Event(
-//            type: .installed,
-//            body: ""
-//        )
-//        let expectation = self.expectation(description: "send event")
-//        repository.send(event: event) { result in
-//            switch result {
-//            case .success:
-//                expectation.fulfill()
-//            case .failure:
-//                XCTFail()
-//            }
-//        }
-//        waitForExpectations(timeout: 10, handler: nil)
-//    }
 
-    func testSendDecodableEvent() { // Flaky
+    func testSendEvent() {
+        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
+        coreController.initialization(configuration: configuration)
+        waitForInitializationFinished()
+        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let event = Event(
+            type: .installed,
+            body: ""
+        )
+        let expectation = self.expectation(description: "send event")
+        repository.send(event: event) { result in
+            switch result {
+            case .success:
+                expectation.fulfill()
+            case .failure:
+                XCTFail()
+            }
+        }
+        waitForExpectations(timeout: 2, handler: nil)
+    }
+
+    func testSendDecodableEvent() { 
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
@@ -72,7 +72,7 @@ class EventRepositoryTestCase: XCTestCase {
                 XCTFail()
             }
         }
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 2, handler: nil)
     }
 
     private struct SuccessCase: Decodable {
@@ -82,6 +82,6 @@ class EventRepositoryTestCase: XCTestCase {
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
         controllerQueue.sync { expectation.fulfill() }
-        self.wait(for: [expectation], timeout: 10)
+        self.wait(for: [expectation], timeout: 2)
     }
 }
