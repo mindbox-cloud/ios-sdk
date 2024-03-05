@@ -8,29 +8,29 @@
 
 @testable import Mindbox
 import XCTest
-//
-//class EventRepositoryTestCase: XCTestCase {
-//    var coreController: CoreController!
-//
-//    var container: DependencyContainer!
-//    var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
-//    override func setUp() {
-//        container = try! TestDependencyProvider()
-//        coreController = CoreController(
-//            persistenceStorage: container.persistenceStorage,
-//            utilitiesFetcher: container.utilitiesFetcher,
-//            notificationStatusProvider: container.authorizationStatusProvider,
-//            databaseRepository: container.databaseRepository,
-//            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-//            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-//            sessionManager: container.sessionManager,
-//            inAppMessagesManager: InAppCoreManagerMock(),
-//            uuidDebugService: MockUUIDDebugService(),
-//            controllerQueue: controllerQueue
-//        )
-//        container.persistenceStorage.reset()
-//        try! container.databaseRepository.erase()
-//    }
+
+class EventRepositoryTestCase: XCTestCase {
+    var coreController: CoreController!
+
+    var container: DependencyContainer!
+    var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
+    override func setUp() {
+        container = try! TestDependencyProvider()
+        coreController = CoreController(
+            persistenceStorage: container.persistenceStorage,
+            utilitiesFetcher: container.utilitiesFetcher,
+            notificationStatusProvider: container.authorizationStatusProvider,
+            databaseRepository: container.databaseRepository,
+            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
+            sessionManager: container.sessionManager,
+            inAppMessagesManager: InAppCoreManagerMock(),
+            uuidDebugService: MockUUIDDebugService(),
+            controllerQueue: controllerQueue
+        )
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
+    }
 //
 //    func testSendEvent() {
 //        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
@@ -52,36 +52,36 @@ import XCTest
 //        }
 //        waitForExpectations(timeout: 10, handler: nil)
 //    }
-//
-//    func testSendDecodableEvent() { // Flaky
-//        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
-//        coreController.initialization(configuration: configuration)
-//        waitForInitializationFinished()
-//        let repository: EventRepository = container.instanceFactory.makeEventRepository()
-//        let event = Event(type: .syncEvent, body: "")
-//        let expectation = self.expectation(description: "send event")
-//        repository.send(type: SuccessCase.self, event: event) { result in
-//            switch result {
-//            case let .success(data):
-//                if data.status == "Success" {
-//                    expectation.fulfill()
-//                } else {
-//                    XCTFail()
-//                }
-//            case .failure:
-//                XCTFail()
-//            }
-//        }
-//        waitForExpectations(timeout: 10, handler: nil)
-//    }
-//
-//    private struct SuccessCase: Decodable {
-//        let status: String
-//    }
-//
-//    private func waitForInitializationFinished() {
-//        let expectation = self.expectation(description: "controller initialization")
-//        controllerQueue.async { expectation.fulfill() }
-//        self.wait(for: [expectation], timeout: 10)
-//    }
-//}
+
+    func testSendDecodableEvent() { // Flaky
+        let configuration = try! MBConfiguration(plistName: "TestEventConfig")
+        coreController.initialization(configuration: configuration)
+        waitForInitializationFinished()
+        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let event = Event(type: .syncEvent, body: "")
+        let expectation = self.expectation(description: "send event")
+        repository.send(type: SuccessCase.self, event: event) { result in
+            switch result {
+            case let .success(data):
+                if data.status == "Success" {
+                    expectation.fulfill()
+                } else {
+                    XCTFail()
+                }
+            case .failure:
+                XCTFail()
+            }
+        }
+        waitForExpectations(timeout: 10, handler: nil)
+    }
+
+    private struct SuccessCase: Decodable {
+        let status: String
+    }
+
+    private func waitForInitializationFinished() {
+        let expectation = self.expectation(description: "controller initialization")
+        controllerQueue.sync { expectation.fulfill() }
+        self.wait(for: [expectation], timeout: 10)
+    }
+}
