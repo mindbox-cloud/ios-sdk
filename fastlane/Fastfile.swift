@@ -24,7 +24,7 @@ class Fastfile: LaneFile {
              xcodebuildFormatter: "",
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
-             xcargs: "CI=true GCC_PREPROCESSOR_DEFINITIONS='$(inherited) CI=1' -quiet -verbose"
+             xcargs: "CI=true"
         )
     }
 } 
