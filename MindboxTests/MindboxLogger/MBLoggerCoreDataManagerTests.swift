@@ -87,7 +87,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         XCTAssertEqual(fetchResult[1].timestamp, timestamp2)
     }
 
-    func testDelete_10_percents() throws {
+    func testDelete_10_percents() throws { // Flaky
         try manager.deleteAll()
         let message = "Test message"
         let timestamp = Date()

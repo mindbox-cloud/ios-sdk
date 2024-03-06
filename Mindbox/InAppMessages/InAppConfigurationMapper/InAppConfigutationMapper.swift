@@ -12,47 +12,44 @@ import UIKit
 protocol InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
+    func sendRemainingInappsTargeting()
 }
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
-
+    
     private let inappFilterService: InappFilterProtocol
-    private let geoService: GeoServiceProtocol
-    private let segmentationService: SegmentationServiceProtocol
     private let customerSegmentsAPI: CustomerSegmentsAPI
     var targetingChecker: InAppTargetingCheckerProtocol
-    private let sessionTemporaryStorage: SessionTemporaryStorage
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
-    private let imageDownloadService: ImageDownloadServiceProtocol
     private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
     private let abTestDeviceMixer: ABTestDeviceMixer
-
-    private let dispatchGroup = DispatchGroup()
+    
+    let dataFacade: InAppConfigurationDataFacadeProtocol
+    
+    private var fullListOfInapps: [InApp] = []
+    private var inappsDictForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    private var savedEventForTargeting: ApplicationEvent?
+    private var shownInnapId: String = ""
+    private var completionSuccess = false
 
     init(inappFilterService: InappFilterProtocol,
-         geoService: GeoServiceProtocol,
-         segmentationService: SegmentationServiceProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
          targetingChecker: InAppTargetingCheckerProtocol,
-         sessionTemporaryStorage: SessionTemporaryStorage,
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
-         imageDownloadService: ImageDownloadServiceProtocol,
          urlExtractorService: VariantImageUrlExtractorServiceProtocol,
-         abTestDeviceMixer: ABTestDeviceMixer) {
+         abTestDeviceMixer: ABTestDeviceMixer,
+         dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
-        self.geoService = geoService
-        self.segmentationService = segmentationService
         self.customerSegmentsAPI = customerSegmentsAPI
         self.targetingChecker = targetingChecker
-        self.sessionTemporaryStorage = sessionTemporaryStorage
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
-        self.imageDownloadService = imageDownloadService
         self.urlExtractorService = urlExtractorService
         self.abTestDeviceMixer = abTestDeviceMixer
+        self.dataFacade = dataFacade
     }
 
     /// Maps config response to business-logic handy InAppConfig model
@@ -60,22 +57,25 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
         let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        let inapps = inappFilterService.filter(inapps: response.inapps?.elements)
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: inapps)
+        savedEventForTargeting = event
+        self.targetingChecker.event = nil
+        fullListOfInapps = inappFilterService.filter(inapps: response.inapps?.elements)
+        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: fullListOfInapps)
         let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        
+        targetingChecker.event = event
+        prepareTargetingChecker(for: filteredInapps)
+        dataFacade.setObservedOperation()
+        
         if filteredInapps.isEmpty {
             Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
 
-        targetingChecker.event = event
-        prepareTargetingChecker(for: filteredInapps)
-        sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
-
-        fetchDependencies(model: event?.model) {
-            self.filterByInappsEvents(inapps: filteredInapps)
+        dataFacade.fetchDependencies(model: event?.model) {
+            self.filterByInappsEvents(inapps: filteredInapps, filteredInAppsByEvent: &self.filteredInAppsByEvent)
             if let event = event {
                 if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
                     self.buildInAppByEvent(inapps: inappsByEvent) { formData in
@@ -92,6 +92,39 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             } else {
                 completion(nil)
             }
+        }
+    }
+    
+    func sendRemainingInappsTargeting() {
+        Logger.common(message: "TR | Initiating processing of remaining in-app targeting requests.", level: .debug, category: .inAppMessages)
+        Logger.common(message: "TR | Full list of in-app messages: \(fullListOfInapps.map { $0.id })", level: .debug, category: .inAppMessages)
+        Logger.common(message: "TR | Saved event for targeting: \(savedEventForTargeting?.name ?? "None")", level: .debug, category: .inAppMessages)
+        
+        self.prepareTargetingChecker(for: fullListOfInapps)
+        dataFacade.setObservedOperation()
+        self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
+            self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
+            let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
+            var ids = inappsForTargeting.map { $0.inAppId }
+            if self.completionSuccess && ids.contains(self.shownInnapId) {
+                ids.removeAll { $0 == self.shownInnapId }
+            }
+
+            let setIds = Set(ids)
+            Logger.common(message: "TR | In-apps selected for targeting requests: \(setIds)", level: .debug, category: .inAppMessages)
+            setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
+            self.completionSuccess = false
+        }
+    }
+    
+    func inAppsByEventForTargeting(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
+        if let event = event, let inappsByEvent = asd[.applicationEvent(event)] {
+            return inappsByEvent
+        } else if let inappsByEvent = asd[.start] {
+            return inappsByEvent
+        } else {
+            Logger.common(message: "No inapps available for the event or start.")
+            return []
         }
     }
     
@@ -181,59 +214,15 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             targetingChecker.prepare(targeting: $0.targeting)
         })
     }
-
-    private func fetchDependencies(model: InappOperationJSONModel?,
-                                   _ completion: @escaping () -> Void) {
-        fetchSegmentationIfNeeded()
-        fetchGeoIfNeeded()
-        fetchProductSegmentationIfNeeded(products: model?.viewProduct?.product)
-
-        dispatchGroup.notify(queue: .main) {
-            completion()
-        }
-    }
-
-    private func fetchSegmentationIfNeeded() {
-        if !sessionTemporaryStorage.checkSegmentsRequestCompleted {
-            dispatchGroup.enter()
-            segmentationService.checkSegmentationRequest { response in
-                self.targetingChecker.checkedSegmentations = response
-                self.dispatchGroup.leave()
-            }
-        }
-    }
-
-    private func fetchGeoIfNeeded() {
-        if targetingChecker.context.isNeedGeoRequest
-            && !sessionTemporaryStorage.geoRequestCompleted {
-            dispatchGroup.enter()
-            geoService.geoRequest { model in
-                self.targetingChecker.geoModels = model
-                self.dispatchGroup.leave()
-            }
-        }
-    }
-
-    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
-        if !sessionTemporaryStorage.checkProductSegmentsRequestCompleted,
-            let products = products {
-            dispatchGroup.enter()
-            segmentationService.checkProductSegmentationRequest(products: products) { response in
-                self.targetingChecker.checkedProductSegmentations = response
-                self.dispatchGroup.leave()
-            }
-        }
-    }
     
-    func filterByInappsEvents(inapps: [InApp]) {
+    func filterByInappsEvents(inapps: [InApp], filteredInAppsByEvent: inout [InAppMessageTriggerEvent: [InAppTransitionData]]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
             
-            let inAppAlreadyAddedForEvent = filteredInAppsByEvent.values.flatMap { $0 }
-                .filter { $0.inAppId == inapp.id }
+            let inAppAlreadyAddedForEvent = filteredInAppsByEvent[triggerEvent]?.contains(where: { $0.inAppId == inapp.id }) ?? false
             
             // If the in-app message has already been added, continue to the next message
-            guard inAppAlreadyAddedForEvent.isEmpty else {
+            guard !inAppAlreadyAddedForEvent else {
                 continue
             }
             
@@ -253,8 +242,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 filteredInAppsByEvent[triggerEvent] = inAppsForEvent
             }
         }
-        
-        self.targetingChecker.event = nil
     }
     
     private func buildInAppByEvent(inapps: [InAppTransitionData],
@@ -282,7 +269,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.imageDownloadService.downloadImage(withUrl: imageValue) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue) { result in
                         defer {
                             group.leave()
                         }
@@ -309,7 +296,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             }
             
             group.notify(queue: .main) {
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    self?.shownInnapId = formData?.inAppId ?? ""
+                    self?.dataFacade.trackTargeting(id: formData?.inAppId)
+                    self?.completionSuccess = true
                     completion(formData)
                 }
             }

@@ -34,6 +34,8 @@ class ABTestValidatorTests: XCTestCase {
             createVariant(lower: 50, upper: 100, objects: [abObject])
         ])
         
+        // TODO: - Divide to few different unit tests.
+        
         testCases = [
             // Valid cases
             TestCase(abTest: abtest, isValid: true),
