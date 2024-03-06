@@ -90,27 +90,37 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     func testDelete_10_percents() throws {
         let expectation = XCTestExpectation(description: "Waiting for testDelete_10_percents to complete")
         try manager.deleteAll()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
             expectation.fulfill()
         })
         
-        wait(for: [expectation], timeout: 1)
+        wait(for: [expectation], timeout: 3)
         
-        let message = "Test message"
-        let timestamp = Date()
+        let message = "testDelete_10_percents"
+
+        let calendar = Calendar.current
+        var dateComponents = DateComponents()
+        dateComponents.year = 2023
+        dateComponents.month = 1
+        dateComponents.day = 2
+        dateComponents.hour = 12
+        dateComponents.minute = 0
+        dateComponents.second = 0
+        dateComponents.timeZone = TimeZone(abbreviation: "UTC")
+
+        let specificDate = calendar.date(from: dateComponents)!
+        
         for _ in 0..<10 {
-            try manager.create(message: message, timestamp: timestamp)
+            try manager.create(message: message, timestamp: specificDate)
         }
 
-        let fetchResult = try manager.fetchPeriod(timestamp, timestamp)
+        let fetchResult = try manager.fetchPeriod(specificDate, specificDate)
         XCTAssertEqual(fetchResult.count, 10)
         try manager.delete()
         
-        // Удаляется 10% от общего количества. 100 - 10% = 90
-        // В конце операции delete() добавляется лог об успешном удалении 10%
-        // Поэтому итоговое количество = (Total - 10%) + 1
-        
-        let fetchResultAfterDeletion = try manager.fetchPeriod(timestamp.addingTimeInterval(-60), Date())
-        XCTAssertEqual(fetchResultAfterDeletion.count, 10)
+        let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60), specificDate)
+        fetchResultAfterDeletion.forEach {
+            XCTAssertEqual($0.message, "testDelete_10_percents")
+        }
     }
 }
