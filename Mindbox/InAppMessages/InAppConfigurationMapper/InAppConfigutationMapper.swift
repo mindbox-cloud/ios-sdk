@@ -32,6 +32,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var inappsDictForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private var savedEventForTargeting: ApplicationEvent?
     private var shownInnapId: String = ""
+    private var completionSuccess = false
 
     init(inappFilterService: InappFilterProtocol,
          customerSegmentsAPI: CustomerSegmentsAPI,
@@ -73,10 +74,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             return
         }
 
-        targetingChecker.event = event
-        prepareTargetingChecker(for: filteredInapps)
-        dataFacade.setObservedOperation()
-        
         dataFacade.fetchDependencies(model: event?.model) {
             self.filterByInappsEvents(inapps: filteredInapps, filteredInAppsByEvent: &self.filteredInAppsByEvent)
             if let event = event {
@@ -102,17 +99,21 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         Logger.common(message: "TR | Initiating processing of remaining in-app targeting requests.", level: .debug, category: .inAppMessages)
         Logger.common(message: "TR | Full list of in-app messages: \(fullListOfInapps.map { $0.id })", level: .debug, category: .inAppMessages)
         Logger.common(message: "TR | Saved event for targeting: \(savedEventForTargeting?.name ?? "None")", level: .debug, category: .inAppMessages)
+        
         self.prepareTargetingChecker(for: fullListOfInapps)
         dataFacade.setObservedOperation()
-        
         self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
             self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
             let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
             var ids = inappsForTargeting.map { $0.inAppId }
-            ids.removeAll { $0 == self.shownInnapId }
+            if self.completionSuccess && ids.contains(self.shownInnapId) {
+                ids.removeAll { $0 == self.shownInnapId }
+            }
+
             let setIds = Set(ids)
             Logger.common(message: "TR | In-apps selected for targeting requests: \(setIds)", level: .debug, category: .inAppMessages)
             setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
+            self.completionSuccess = false
         }
     }
     
@@ -298,6 +299,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 DispatchQueue.main.async { [weak self] in
                     self?.shownInnapId = formData?.inAppId ?? ""
                     self?.dataFacade.trackTargeting(id: formData?.inAppId)
+                    self?.completionSuccess = true
                     completion(formData)
                 }
             }
