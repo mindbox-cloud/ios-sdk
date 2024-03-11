@@ -50,10 +50,10 @@ class EventRepositoryTestCase: XCTestCase {
                 XCTFail()
             }
         }
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 2, handler: nil)
     }
 
-    func testSendDecodableEvent() { // Flaky
+    func testSendDecodableEvent() { 
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
@@ -72,7 +72,7 @@ class EventRepositoryTestCase: XCTestCase {
                 XCTFail()
             }
         }
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 2, handler: nil)
     }
 
     private struct SuccessCase: Decodable {
@@ -81,7 +81,7 @@ class EventRepositoryTestCase: XCTestCase {
 
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
-        controllerQueue.async { expectation.fulfill() }
-        self.wait(for: [expectation], timeout: 10)
+        controllerQueue.sync { expectation.fulfill() }
+        self.wait(for: [expectation], timeout: 2)
     }
 }

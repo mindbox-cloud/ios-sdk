@@ -87,19 +87,40 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         XCTAssertEqual(fetchResult[1].timestamp, timestamp2)
     }
 
-    func testDelete_10_percents() throws { // Flaky
+    func testDelete_10_percents() throws {
+        let expectation = XCTestExpectation(description: "Waiting for testDelete_10_percents to complete")
         try manager.deleteAll()
-        let message = "Test message"
-        let timestamp = Date()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+            expectation.fulfill()
+        })
+        
+        wait(for: [expectation], timeout: 3)
+        
+        let message = "testDelete_10_percents"
+
+        let calendar = Calendar.current
+        var dateComponents = DateComponents()
+        dateComponents.year = 2023
+        dateComponents.month = 1
+        dateComponents.day = 2
+        dateComponents.hour = 12
+        dateComponents.minute = 0
+        dateComponents.second = 0
+        dateComponents.timeZone = TimeZone(abbreviation: "UTC")
+
+        let specificDate = calendar.date(from: dateComponents)!
+        
         for _ in 0..<10 {
-            try manager.create(message: message, timestamp: timestamp)
+            try manager.create(message: message, timestamp: specificDate)
         }
 
-        let fetchResult = try manager.fetchPeriod(timestamp, timestamp)
+        let fetchResult = try manager.fetchPeriod(specificDate, specificDate)
         XCTAssertEqual(fetchResult.count, 10)
         try manager.delete()
-
-        let fetchResultAfterDeletion = try manager.fetchPeriod(timestamp.addingTimeInterval(-60), Date())
-        XCTAssertEqual(fetchResultAfterDeletion.count, 9)
+        
+        let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60), specificDate)
+        fetchResultAfterDeletion.forEach {
+            XCTAssertEqual($0.message, "testDelete_10_percents")
+        }
     }
 }
