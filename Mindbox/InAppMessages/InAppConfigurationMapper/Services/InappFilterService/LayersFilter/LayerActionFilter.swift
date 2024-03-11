@@ -20,6 +20,11 @@ final class LayerActionFilterService: LayerActionFilterProtocol {
         }
         
         switch action {
+            case .pushPermission(let pushPermissionAction):
+                if let value = pushPermissionAction.value, let payload = pushPermissionAction.intentPayload {
+                    let pushPermissionActionModel = PushPermissionLayerAction(intentPayload: payload, value: value)
+                    return try ContentBackgroundLayerAction(type: .pushPermission, pushPermissionModel: pushPermissionActionModel)
+                }
             case .redirectUrl(let redirectUrlLayerAction):
                 if let value = redirectUrlLayerAction.value, let payload = redirectUrlLayerAction.intentPayload {
                     let redirectUrlLayerActionModel = RedirectUrlLayerAction(intentPayload: payload, value: value)
