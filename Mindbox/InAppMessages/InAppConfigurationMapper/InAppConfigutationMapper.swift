@@ -118,8 +118,12 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     }
     
     func inAppsByEventForTargeting(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
-        if let event = event, let inappsByEvent = asd[.applicationEvent(event)] {
-            return inappsByEvent
+        if let event = event {
+            if let inappsByEvent = asd[.applicationEvent(event)] {
+                return inappsByEvent
+            } else {
+                return []
+            }
         } else if let inappsByEvent = asd[.start] {
             return inappsByEvent
         } else {
