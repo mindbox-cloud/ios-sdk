@@ -10,10 +10,8 @@ import Foundation
 
 struct PushPermissionLayerActionDTO: ContentBackgroundLayerActionProtocol {
     let intentPayload: String?
-    let value: String?
 }
 
 struct PushPermissionLayerAction: ContentBackgroundLayerActionProtocol {
     let intentPayload: String
-    let value: String
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol InAppActionHandlerProtocol {
     func handleAction(
@@ -30,8 +31,9 @@ final class InAppActionHandler: InAppActionHandlerProtocol {
                       close: @escaping () -> Void) {
         switch action {
             case .pushPermission(let pushPermissionModel):
+                Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
                 actionUseCase.onTapAction(id: id,
-                                          value: pushPermissionModel.value,
+                                          value: "",
                                           payload: pushPermissionModel.intentPayload,
                                           onTap: onTap,
                                           close: close)
