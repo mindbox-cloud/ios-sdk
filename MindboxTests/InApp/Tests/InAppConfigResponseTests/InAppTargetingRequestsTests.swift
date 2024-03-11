@@ -10,15 +10,18 @@ import XCTest
 @testable import Mindbox
 
 class InAppTargetingRequestsTests: XCTestCase {
-    var container = try! TestDependencyProvider()
+
+    var container: TestDependencyProvider!
 
     private var mockDataFacade: MockInAppConfigurationDataFacade!
     private var mapper: InAppConfigurationMapperProtocol!
     
-    private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
+    private var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
+        container = try! TestDependencyProvider()
+        targetingChecker = container.inAppTargetingChecker
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
         mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
                                                               segmentationService: container.segmentationSevice,
@@ -38,6 +41,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     override func tearDown() {
+        container = nil
         mockDataFacade.clean()
         super.tearDown()
     }
