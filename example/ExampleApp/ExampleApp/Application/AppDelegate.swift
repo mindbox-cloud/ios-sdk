@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Mindbox
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +15,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        do {
+            let mindboxSdkConfiguration = try MBConfiguration(
+                endpoint: "Mpush-test.ExampleCocoaPods.IosApp",
+                domain: "api.mindbox.ru",
+                subscribeCustomerIfCreated: true,
+                shouldCreateCustomer: true
+            )
+            
+            Mindbox.shared.initialization(configuration: mindboxSdkConfiguration)
+            Mindbox.shared.getDeviceUUID { deviceUUID in
+                print(deviceUUID)
+            }
+        } catch {
+            print(error)
+        }
+        
         return true
     }
 

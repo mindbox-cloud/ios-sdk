@@ -1,0 +1,20 @@
+PODS:
+  - Mindbox (2.8.3):
+    - MindboxLogger (= 0.0.5)
+  - MindboxLogger (0.0.5)
+
+DEPENDENCIES:
+  - Mindbox (= 2.8.3)
+
+SPEC REPOS:
+  trunk:
+    - Mindbox
+    - MindboxLogger
+
+SPEC CHECKSUMS:
+  Mindbox: 946468c4acbbd34dcbacf2e0992dfc474937d8dc
+  MindboxLogger: bf3f88787711478a0f3651865b1ccc0bbe0c2b05
+
+PODFILE CHECKSUM: 2c9101582969deb6d3e3eea931beac820692329f
+
+COCOAPODS: 1.13.0
