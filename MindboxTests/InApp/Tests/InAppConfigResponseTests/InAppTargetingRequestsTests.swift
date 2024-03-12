@@ -22,6 +22,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         super.setUp()
         container = try! TestDependencyProvider()
         targetingChecker = container.inAppTargetingChecker
+        try! container.databaseRepository.erase()
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
         mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
                                                               segmentationService: container.segmentationSevice,
@@ -45,7 +46,6 @@ class InAppTargetingRequestsTests: XCTestCase {
         mockDataFacade.clean()
         super.tearDown()
     }
-
 
     func test_TwoInappsTrue_NotShownBefore() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
