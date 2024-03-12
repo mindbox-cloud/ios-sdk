@@ -8,46 +8,46 @@
 
 import XCTest
 @testable import Mindbox
-//
-//class MBConfigurationTestCase: XCTestCase {
-//    //Invalid
-//    let emptyDomainFile = "TestConfig_Invalid_1"
-//    let emptyEndpointFile = "TestConfig_Invalid_2"
-//    //Valid
-//    let emptyUUIDFile = "TestConfig_Invalid_3"
-//    let emptyIDDomainFile = "TestConfig_Invalid_4"
-//
-//    override func setUpWithError() throws {
-//    }
-//
-//    override func tearDownWithError() throws {
-//    }
-//
-//    func test_MBConfiguration_should_not_throw() throws {
-//        try [
-//            emptyUUIDFile,
-//            emptyIDDomainFile
-//        ].forEach { (file) in
-//            XCTAssertNoThrow(try MBConfiguration(plistName: file), "")
-//        }
-//    }
-//
-//    func test_MBConfiguration_should_throw() throws {
-//        try [
-//            emptyDomainFile,
-//            emptyEndpointFile,
-//        ].forEach { (file) in
-//            XCTAssertThrowsError(try MBConfiguration(plistName: file), "") { (error) in
-//                if let localizedError = error as? LocalizedError {
-//                    XCTAssertNotNil(localizedError.errorDescription)
-//                    XCTAssertNotNil(localizedError.failureReason)
-//                }
-//            }
-//        }
-//
-//        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig1"))
-//        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig2"))
-//        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig3"))
-//        XCTAssertNil(try? MBConfiguration(plistName: "file_that_|never_exist№%:,.;()(;.,:%№"))
-//    }
-//}
+
+class MBConfigurationTestCase: XCTestCase {
+    //Invalid
+    let emptyDomainFile = "TestConfig_Invalid_1"
+    let emptyEndpointFile = "TestConfig_Invalid_2"
+    //Valid
+    let emptyUUIDFile = "TestConfig_Invalid_3"
+    let emptyIDDomainFile = "TestConfig_Invalid_4"
+
+    override func setUpWithError() throws {
+    }
+
+    override func tearDownWithError() throws {
+    }
+
+    func test_MBConfiguration_should_not_throw() throws {
+        try [
+            emptyUUIDFile,
+            emptyIDDomainFile
+        ].forEach { (file) in
+            XCTAssertNoThrow(try MBConfiguration(plistName: file), "")
+        }
+    }
+
+    func test_MBConfiguration_should_throw() throws {
+        try [
+            emptyDomainFile,
+            emptyEndpointFile,
+        ].forEach { (file) in
+            XCTAssertThrowsError(try MBConfiguration(plistName: file), "") { (error) in
+                if let localizedError = error as? LocalizedError {
+                    XCTAssertNotNil(localizedError.errorDescription)
+                    XCTAssertNotNil(localizedError.failureReason)
+                }
+            }
+        }
+
+        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig1"))
+        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig2"))
+        XCTAssertNotNil(try? MBConfiguration(plistName: "TestConfig3"))
+        XCTAssertNil(try? MBConfiguration(plistName: "file_that_|never_exist№%:,.;()(;.,:%№"))
+    }
+}
