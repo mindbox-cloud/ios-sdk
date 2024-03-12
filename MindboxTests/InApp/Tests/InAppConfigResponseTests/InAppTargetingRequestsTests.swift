@@ -250,162 +250,160 @@ class InAppTargetingRequestsTests: XCTestCase {
             print("Произошла ошибка: \(error)")
         }
     }
-    
-    func test_fourInappsWithABTests_combined() {
-        let variants = [
-            ("40909d27-4bef-4a8d-9164-6bfcf58ecc76", 3), // variant 1
-            ("b4e0f767-fe8f-4825-9772-f1162f2db52d", 3), // variant 2
-            ("55fbd965-c658-47a8-8786-d72ba79b38a2", 3)  // variant 3
-        ]
-        
-        for (deviceUUID, timeout) in variants {
-            let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-            let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+//    
+//    func test_fourInappsWithABTests_combined() {
+//        let variants = [
+//            ("40909d27-4bef-4a8d-9164-6bfcf58ecc76", 3), // variant 1
+//            ("b4e0f767-fe8f-4825-9772-f1162f2db52d", 3), // variant 2
+//            ("55fbd965-c658-47a8-8786-d72ba79b38a2", 3)  // variant 3
+//        ]
+//        
+//        for (deviceUUID, timeout) in variants {
+//            let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+//            let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+//
+//            container.persistenceStorage.deviceUUID = deviceUUID
+//            
+//            do {
+//                let config = try getConfig(name: "31-TargetingRequests")
+//                
+//                targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+//                container.sessionTemporaryStorage.geoRequestCompleted = true
+//                
+//                mapper.mapConfigResponse(nil, config) { _ in
+//                    self.mapper.sendRemainingInappsTargeting()
+//                    expectation.fulfill()
+//                }
+//                wait(for: [expectation], timeout: TimeInterval(timeout))
+//                targetingContains("1")
+//                targetingContains("2")
+//                targetingContains("3")
+//                
+//                mockDataFacade.clean()
+//                
+//                let testEventAgain = ApplicationEvent(name: "test", model: nil)
+//                mapper.mapConfigResponse(testEventAgain, config) { _ in
+//                    self.mapper.sendRemainingInappsTargeting()
+//                    expectationTestAgain.fulfill()
+//                }
+//                
+//                wait(for: [expectationTestAgain], timeout: TimeInterval(timeout))
+//                targetingEqual(["4"])
+//                
+//            } catch {
+//                print("Произошла ошибка: \(error)")
+//            }
+//        }
+//    }
 
-            container.persistenceStorage.deviceUUID = deviceUUID
+    func test_fourInappsWithABTests_variant1() {
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+
+        do {
+            let config = try getConfig(name: "31-TargetingRequests")
             
-            do {
-                let config = try getConfig(name: "31-TargetingRequests")
-                
-                targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-                container.sessionTemporaryStorage.geoRequestCompleted = true
-                
-                mapper.mapConfigResponse(nil, config) { _ in
-                    self.mapper.sendRemainingInappsTargeting()
-                    expectation.fulfill()
-                }
-                wait(for: [expectation], timeout: TimeInterval(timeout))
-                targetingContains("1")
-                targetingContains("2")
-                targetingContains("3")
-                
-                mockDataFacade.clean()
-                
-                let testEventAgain = ApplicationEvent(name: "test", model: nil)
-                mapper.mapConfigResponse(testEventAgain, config) { _ in
-                    self.mapper.sendRemainingInappsTargeting()
-                    expectationTestAgain.fulfill()
-                }
-                
-                wait(for: [expectationTestAgain], timeout: TimeInterval(timeout))
-                targetingEqual(["4"])
-                
-            } catch {
-                print("Произошла ошибка: \(error)")
+            container.persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
+            
+            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+            container.sessionTemporaryStorage.geoRequestCompleted = true
+            
+            mapper.mapConfigResponse(nil, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectation.fulfill()
             }
+            wait(for: [expectation], timeout: 2)
+            targetingContains("1")
+            targetingContains("2")
+            targetingContains("3")
+            
+            mockDataFacade.clean()
+            
+            let testEventAgain = ApplicationEvent(name: "test", model: nil)
+            mapper.mapConfigResponse(testEventAgain, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectationTestAgain.fulfill()
+            }
+            
+            wait(for: [expectationTestAgain], timeout: 2)
+            targetingEqual(["4"])
+            
+        } catch {
+            print("Произошла ошибка: \(error)")
         }
     }
-//
-//    func test_fourInappsWithABTests_variant1() {
-//        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-//
-//        do {
-//            let config = try getConfig(name: "31-TargetingRequests")
-//            
-//            container.persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
-//            
-//            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-//            container.sessionTemporaryStorage.geoRequestCompleted = true
-//            
-//            mapper.mapConfigResponse(nil, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectation.fulfill()
-//            }
-//            wait(for: [expectation], timeout: 2)
-//            targetingContains("1")
-//            targetingContains("2")
-//            targetingContains("3")
-//            
-//            mockDataFacade.clean()
-//            
-//            let testEventAgain = ApplicationEvent(name: "test", model: nil)
-//            mapper.mapConfigResponse(testEventAgain, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectationTestAgain.fulfill()
-//            }
-//            
-//            wait(for: [expectationTestAgain], timeout: 2)
-//            targetingEqual(["4"])
-//            
-//        } catch {
-//            print("Произошла ошибка: \(error)")
-//        }
-//    }
-//    
-//    func test_fourInappsWithABTests_variant2() {
-//        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-//
-//        container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
-//        
-//        do {
-//            let config = try getConfig(name: "31-TargetingRequests")
-//            
-//            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-//            container.sessionTemporaryStorage.geoRequestCompleted = true
-//            
-//            mapper.mapConfigResponse(nil, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectation.fulfill()
-//            }
-//            wait(for: [expectation], timeout: 3)
-//            targetingContains("1")
-//            targetingContains("2")
-//            targetingContains("3")
-//            
-//            mockDataFacade.clean()
-//            
-//            let testEventAgain = ApplicationEvent(name: "test", model: nil)
-//            mapper.mapConfigResponse(testEventAgain, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectationTestAgain.fulfill()
-//            }
-//            
-//            wait(for: [expectationTestAgain], timeout: 3)
-//            targetingEqual(["4"])
-//            
-//        } catch {
-//            print("Произошла ошибка: \(error)")
-//        }
-//    }
-//    
-//    func test_fourInappsWithABTests_variant3() {
-//        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-//
-//        do {
-//            let config = try getConfig(name: "31-TargetingRequests")
-//            
-//            container.persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
-//            
-//            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-//            container.sessionTemporaryStorage.geoRequestCompleted = true
-//            
-//            mapper.mapConfigResponse(nil, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectation.fulfill()
-//            }
-//            wait(for: [expectation], timeout: 2)
-//            targetingContains("1")
-//            targetingContains("2")
-//            targetingContains("3")
-//            
-//            mockDataFacade.clean()
-//            
-//            let testEventAgain = ApplicationEvent(name: "test", model: nil)
-//            mapper.mapConfigResponse(testEventAgain, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectationTestAgain.fulfill()
-//            }
-//            
-//            wait(for: [expectationTestAgain], timeout: 2)
-//            targetingEqual(["4"])
-//            
-//        } catch {
-//            print("Произошла ошибка: \(error)")
-//        }
-//    }
+    
+    func test_fourInappsWithABTests_variant2() {
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        
+        do {
+            let config = try getConfig(name: "31-TargetingRequests")
+            container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
+            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+            container.sessionTemporaryStorage.geoRequestCompleted = true
+            
+            mapper.mapConfigResponse(nil, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectation.fulfill()
+            }
+            wait(for: [expectation], timeout: 3)
+            targetingContains("1")
+            targetingContains("2")
+            targetingContains("3")
+            
+            mockDataFacade.clean()
+            
+            let testEventAgain = ApplicationEvent(name: "test", model: nil)
+            mapper.mapConfigResponse(testEventAgain, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectationTestAgain.fulfill()
+            }
+            
+            wait(for: [expectationTestAgain], timeout: 3)
+            targetingEqual(["4"])
+            
+        } catch {
+            print("Произошла ошибка: \(error)")
+        }
+    }
+    
+    func test_fourInappsWithABTests_variant3() {
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+
+        do {
+            let config = try getConfig(name: "31-TargetingRequests")
+            
+            container.persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
+            
+            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+            container.sessionTemporaryStorage.geoRequestCompleted = true
+            
+            mapper.mapConfigResponse(nil, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectation.fulfill()
+            }
+            wait(for: [expectation], timeout: 2)
+            targetingContains("1")
+            targetingContains("2")
+            targetingContains("3")
+            
+            mockDataFacade.clean()
+            
+            let testEventAgain = ApplicationEvent(name: "test", model: nil)
+            mapper.mapConfigResponse(testEventAgain, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectationTestAgain.fulfill()
+            }
+            
+            wait(for: [expectationTestAgain], timeout: 2)
+            targetingEqual(["4"])
+            
+        } catch {
+            print("Произошла ошибка: \(error)")
+        }
+    }
     
     private func getConfig(name: String) throws -> ConfigResponse {
         let bundle = Bundle(for: InAppTargetingRequestsTests.self)
