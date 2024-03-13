@@ -9,16 +9,21 @@
 import XCTest
 @testable import Mindbox
 
-class InAppTargetingRequestsTests: XCTestCase {
-    var container = try! TestDependencyProvider()
+class AInAppTargetingRequestsTests: XCTestCase {
+
+    var container: TestDependencyProvider!
 
     private var mockDataFacade: MockInAppConfigurationDataFacade!
     private var mapper: InAppConfigurationMapperProtocol!
     
-    private let targetingChecker: InAppTargetingCheckerProtocol = InAppTargetingChecker()
+    private var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
+        container = try! TestDependencyProvider()
+        container.sessionTemporaryStorage.erase()
+        targetingChecker = container.inAppTargetingChecker
+        try! container.databaseRepository.erase()
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
         mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
                                                               segmentationService: container.segmentationSevice,
@@ -26,9 +31,9 @@ class InAppTargetingRequestsTests: XCTestCase {
                                                               targetingChecker: targetingChecker, 
                                                               imageService: container.imageDownloadService,
                                                               tracker: tracker)
-        
+        mockDataFacade.clean()
+
         mapper = InAppConfigutationMapper(inappFilterService: container.inappFilterService,
-                                          customerSegmentsAPI: .live,
                                           targetingChecker: targetingChecker,
                                           persistenceStorage: container.persistenceStorage,
                                           sdkVersionValidator: container.sdkVersionValidator,
@@ -38,10 +43,12 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     override func tearDown() {
-        mockDataFacade.clean()
+        container = nil
+        mockDataFacade = nil
+        targetingChecker = nil
+        mapper = nil
         super.tearDown()
     }
-
 
     func test_TwoInappsTrue_NotShownBefore() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
@@ -245,55 +252,11 @@ class InAppTargetingRequestsTests: XCTestCase {
             print("Произошла ошибка: \(error)")
         }
     }
-//    
-//    func test_fourInappsWithABTests_combined() {
-//        let variants = [
-//            ("40909d27-4bef-4a8d-9164-6bfcf58ecc76", 3), // variant 1
-//            ("b4e0f767-fe8f-4825-9772-f1162f2db52d", 3), // variant 2
-//            ("55fbd965-c658-47a8-8786-d72ba79b38a2", 3)  // variant 3
-//        ]
-//        
-//        for (deviceUUID, timeout) in variants {
-//            let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//            let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-//
-//            container.persistenceStorage.deviceUUID = deviceUUID
-//            
-//            do {
-//                let config = try getConfig(name: "31-TargetingRequests")
-//                
-//                targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-//                container.sessionTemporaryStorage.geoRequestCompleted = true
-//                
-//                mapper.mapConfigResponse(nil, config) { _ in
-//                    self.mapper.sendRemainingInappsTargeting()
-//                    expectation.fulfill()
-//                }
-//                wait(for: [expectation], timeout: TimeInterval(timeout))
-//                targetingContains("1")
-//                targetingContains("2")
-//                targetingContains("3")
-//                
-//                mockDataFacade.clean()
-//                
-//                let testEventAgain = ApplicationEvent(name: "test", model: nil)
-//                mapper.mapConfigResponse(testEventAgain, config) { _ in
-//                    self.mapper.sendRemainingInappsTargeting()
-//                    expectationTestAgain.fulfill()
-//                }
-//                
-//                wait(for: [expectationTestAgain], timeout: TimeInterval(timeout))
-//                targetingEqual(["4"])
-//                
-//            } catch {
-//                print("Произошла ошибка: \(error)")
-//            }
-//        }
-//    }
-//
+
     func test_fourInappsWithABTests_variant1() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
 
         do {
             let config = try getConfig(name: "31-TargetingRequests")
@@ -307,7 +270,13 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 2)
+            wait(for: [expectation], timeout: 3)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+                expectationForArray.fulfill()
+            })
+            
+            wait(for: [expectationForArray], timeout: 3)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -320,54 +289,60 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectationTestAgain.fulfill()
             }
             
-            wait(for: [expectationTestAgain], timeout: 2)
+            wait(for: [expectationTestAgain], timeout: 3)
             targetingEqual(["4"])
             
         } catch {
             print("Произошла ошибка: \(error)")
         }
     }
-//    
-//    func test_fourInappsWithABTests_variant2() {
-//        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-//
-//        container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
-//        
-//        do {
-//            let config = try getConfig(name: "31-TargetingRequests")
-//            
-//            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-//            container.sessionTemporaryStorage.geoRequestCompleted = true
-//            
-//            mapper.mapConfigResponse(nil, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectation.fulfill()
-//            }
-//            wait(for: [expectation], timeout: 3)
-//            targetingContains("1")
-//            targetingContains("2")
-//            targetingContains("3")
-//            
-//            mockDataFacade.clean()
-//            
-//            let testEventAgain = ApplicationEvent(name: "test", model: nil)
-//            mapper.mapConfigResponse(testEventAgain, config) { _ in
-//                self.mapper.sendRemainingInappsTargeting()
-//                expectationTestAgain.fulfill()
-//            }
-//            
-//            wait(for: [expectationTestAgain], timeout: 3)
-//            targetingEqual(["4"])
-//            
-//        } catch {
-//            print("Произошла ошибка: \(error)")
-//        }
-//    }
+    
+    func test_A_fourInappsWithABTests_variant2() {
+        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+        
+        do {
+            let config = try getConfig(name: "31-TargetingRequests")
+            container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
+            targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+            container.sessionTemporaryStorage.geoRequestCompleted = true
+            
+            mapper.mapConfigResponse(nil, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectation.fulfill()
+            }
+            wait(for: [expectation], timeout: 3)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+                expectationForArray.fulfill()
+            })
+            
+            wait(for: [expectationForArray], timeout: 3)
+            targetingContains("1")
+            targetingContains("2")
+            targetingContains("3")
+            
+            mockDataFacade.clean()
+            
+            let testEventAgain = ApplicationEvent(name: "test", model: nil)
+            mapper.mapConfigResponse(testEventAgain, config) { _ in
+                self.mapper.sendRemainingInappsTargeting()
+                expectationTestAgain.fulfill()
+            }
+            
+            wait(for: [expectationTestAgain], timeout: 3)
+            targetingEqual(["4"])
+            
+        } catch {
+            print("Произошла ошибка: \(error)")
+        }
+    }
     
     func test_fourInappsWithABTests_variant3() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
 
         do {
             let config = try getConfig(name: "31-TargetingRequests")
@@ -381,7 +356,13 @@ class InAppTargetingRequestsTests: XCTestCase {
                 self.mapper.sendRemainingInappsTargeting()
                 expectation.fulfill()
             }
-            wait(for: [expectation], timeout: 2)
+            wait(for: [expectation], timeout: 3)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+                expectationForArray.fulfill()
+            })
+            
+            wait(for: [expectationForArray], timeout: 3)
             targetingContains("1")
             targetingContains("2")
             targetingContains("3")
@@ -403,7 +384,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     private func getConfig(name: String) throws -> ConfigResponse {
-        let bundle = Bundle(for: InAppTargetingRequestsTests.self)
+        let bundle = Bundle(for: AInAppTargetingRequestsTests.self)
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
         return try JSONDecoder().decode(ConfigResponse.self, from: data)

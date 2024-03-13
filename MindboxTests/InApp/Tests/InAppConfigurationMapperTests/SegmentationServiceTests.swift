@@ -11,19 +11,16 @@ import XCTest
 
 final class SegmentationServiceTests: XCTestCase {
     
+    var container: TestDependencyProvider!
     var sut: SegmentationServiceProtocol!
-    let container = try! TestDependencyProvider()
-    
-    var sessionTemporaryStorage: SessionTemporaryStorage {
-        container.sessionTemporaryStorage
-    }
-    
-    var targetingChecker: InAppTargetingCheckerProtocol {
-        container.inAppTargetingChecker
-    }
+    var sessionTemporaryStorage: SessionTemporaryStorage!
+    var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
+        container = try! TestDependencyProvider()
+        sessionTemporaryStorage = container.sessionTemporaryStorage
+        targetingChecker = container.inAppTargetingChecker
         sut = SegmentationService(customerSegmentsAPI: .init(fetchSegments: { segmentationCheckRequest, completion in
             completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
                                                                              segment: .init(ids: .init(externalId: "2")))]))
@@ -35,6 +32,9 @@ final class SegmentationServiceTests: XCTestCase {
     }
     
     override func tearDown() {
+        container = nil
+        sessionTemporaryStorage = nil
+        targetingChecker = nil
         sut = nil
         super.tearDown()
     }
