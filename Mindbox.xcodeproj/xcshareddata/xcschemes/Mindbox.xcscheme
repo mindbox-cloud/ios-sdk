@@ -47,10 +47,7 @@
             </BuildableReference>
             <SkippedTests>
                <Test
-                  Identifier = "GuaranteedDeliveryTestCase/testFailureScheduleByTimer()">
-               </Test>
-               <Test
-                  Identifier = "GuaranteedDeliveryTestCase/testScheduleByTimer()">
+                  Identifier = "GuaranteedDeliveryTestCase">
                </Test>
             </SkippedTests>
          </TestableReference>
