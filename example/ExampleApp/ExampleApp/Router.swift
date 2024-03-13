@@ -1,0 +1,22 @@
+//
+//  Router.swift
+//  ExampleApp
+//
+//  Created by Sergei Semko on 3/12/24.
+//
+
+import UIKit
+
+protocol Router {
+    func showWebViewController(from viewController: UIViewController, url: URL?)
+}
+
+final class EARouter { }
+
+extension EARouter: Router {
+    func showWebViewController(from viewController: UIViewController, url: URL?) {
+        let webVC = WebViewController(url: url)
+        webVC.modalPresentationStyle = .popover
+        viewController.present(webVC, animated: true)
+    }
+}

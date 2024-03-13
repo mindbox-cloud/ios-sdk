@@ -8,17 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		3F8BA80FD3B318141FBBED1F /* Pods_ExampleApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80ADE3A288769725B42EA6DA /* Pods_ExampleApp.framework */; };
+		BB15E8EA2BA19592006998B3 /* PlistReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB15E8E92BA19592006998B3 /* PlistReader.swift */; };
+		BB15E8EC2BA1960A006998B3 /* ExampleApp-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB15E8EB2BA1960A006998B3 /* ExampleApp-Info.plist */; };
 		BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */; };
 		BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */; };
 		BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CC012B9EFFED0068E7EE /* ViewController.swift */; };
 		BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */; };
 		BB30CC0A2B9EFFEE0068E7EE /* Base in Resources */ = {isa = PBXBuildFile; fileRef = BB30CC092B9EFFEE0068E7EE /* Base */; };
+		BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8462BA09108009A6037 /* WebViewController.swift */; };
+		BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8482BA0A75B009A6037 /* Router.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1C88DCC67B821BCAC4F6C6C6 /* Pods-ExampleApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExampleApp.release.xcconfig"; path = "Target Support Files/Pods-ExampleApp/Pods-ExampleApp.release.xcconfig"; sourceTree = "<group>"; };
 		3334A7FB40477F10B892D94B /* Pods-ExampleApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExampleApp.debug.xcconfig"; path = "Target Support Files/Pods-ExampleApp/Pods-ExampleApp.debug.xcconfig"; sourceTree = "<group>"; };
 		80ADE3A288769725B42EA6DA /* Pods_ExampleApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ExampleApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB15E8E92BA19592006998B3 /* PlistReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlistReader.swift; sourceTree = "<group>"; };
+		BB15E8EB2BA1960A006998B3 /* ExampleApp-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ExampleApp-Info.plist"; sourceTree = "<group>"; };
 		BB253A202B9F06DA0042446C /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
 		BB30CBFA2B9EFFED0068E7EE /* ExampleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExampleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -27,6 +33,9 @@
 		BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB30CC092B9EFFEE0068E7EE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BB30CC0B2B9EFFEE0068E7EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BBA0EA1B2B9F71F600A46841 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		BBCCF8462BA09108009A6037 /* WebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
+		BBCCF8482BA0A75B009A6037 /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +62,7 @@
 		BB30CBF12B9EFFED0068E7EE = {
 			isa = PBXGroup;
 			children = (
+				BBA0EA1B2B9F71F600A46841 /* README.md */,
 				BB30CBFC2B9EFFED0068E7EE /* ExampleApp */,
 				BB30CBFB2B9EFFED0068E7EE /* Products */,
 				07E6BAE1E722A929899D6AB9 /* Pods */,
@@ -74,6 +84,8 @@
 				BB30CC122B9F001B0068E7EE /* Application */,
 				BB30CC112B9F00130068E7EE /* Resources */,
 				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
+				BBCCF8482BA0A75B009A6037 /* Router.swift */,
+				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
 			);
 			path = ExampleApp;
 			sourceTree = "<group>";
@@ -85,6 +97,7 @@
 				BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */,
 				BB30CC082B9EFFEE0068E7EE /* LaunchScreen.storyboard */,
 				BB30CC0B2B9EFFEE0068E7EE /* Info.plist */,
+				BB15E8EB2BA1960A006998B3 /* ExampleApp-Info.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -92,6 +105,7 @@
 		BB30CC122B9F001B0068E7EE /* Application */ = {
 			isa = PBXGroup;
 			children = (
+				BB15E8E92BA19592006998B3 /* PlistReader.swift */,
 				BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */,
 				BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */,
 			);
@@ -166,6 +180,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB15E8EC2BA1960A006998B3 /* ExampleApp-Info.plist in Resources */,
 				BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */,
 				BB30CC0A2B9EFFEE0068E7EE /* Base in Resources */,
 			);
@@ -220,9 +235,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB15E8EA2BA19592006998B3 /* PlistReader.swift in Sources */,
 				BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */,
 				BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */,
+				BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */,
 				BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */,
+				BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,7 +394,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -407,7 +425,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
