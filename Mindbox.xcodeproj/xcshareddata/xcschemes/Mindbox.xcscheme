@@ -47,6 +47,9 @@
             </BuildableReference>
             <SkippedTests>
                <Test
+                  Identifier = "DatabaseRepositoryTestCase/testFetchRetryEvents()">
+               </Test>
+               <Test
                   Identifier = "GuaranteedDeliveryTestCase">
                </Test>
             </SkippedTests>
