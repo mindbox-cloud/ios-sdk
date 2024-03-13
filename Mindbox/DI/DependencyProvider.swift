@@ -95,7 +95,6 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
-                                                                   customerSegmentsAPI: .live,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,

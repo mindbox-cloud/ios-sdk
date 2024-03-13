@@ -36,8 +36,6 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         self.tracker = tracker
     }
     
-    private let dispatchGroup = DispatchGroup()
-    
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
         completion()
     }
