@@ -7,6 +7,7 @@
 
 import UIKit
 import Mindbox
+import OSLog
 
 fileprivate enum Constants {
     static let copyButtonTitle = "Copy"
@@ -21,6 +22,8 @@ final class ViewController: UIViewController {
     private var deviceUUID: String
     
     private let router: Router
+    
+    private let plistReader: PlistReaderOperation
     
     private lazy var deviceUuidLabel: UILabel = {
         let label = UILabel()
@@ -52,10 +55,15 @@ final class ViewController: UIViewController {
     }()
     
     // MARK: Init
-
-    init(deviceUUID: String = String(), router: Router = EARouter()) {
+    
+    init(
+        deviceUUID: String = String(),
+        router: Router = EARouter(),
+        plistReader: PlistReaderOperation = EAPlistReader()
+    ) {
         self.deviceUUID = deviceUUID
         self.router = router
+        self.plistReader = plistReader
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -79,22 +87,14 @@ final class ViewController: UIViewController {
     }
 }
 
-//extension ViewController: URLInappMessageDelegate {
-//    
-//}
-//
-//extension ViewController: CopyInappMessageDelegate {
-//    
-//}
-
 // MARK: - InAppMessagesDelegate
 
 extension ViewController: InAppMessagesDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        print(#function)
-        print("""
+        Logger.mindboxInAppActions.log("""
+            Function: \(#function)
             Id: \(id)
-            url: \(url)
+            url: \(String(describing: url))
             payload: \(payload)
         """)
         
@@ -102,18 +102,25 @@ extension ViewController: InAppMessagesDelegate {
     }
     
     func inAppMessageDismissed(id: String) {
-        print(#function)
+        Logger.mindboxInAppActions.log("""
+            Function: \(#function)
+        """)
     }
 }
 
-// MARK: - SetUp Layout
+// MARK: - SetUp ViewController
 
 private extension ViewController {
+    
+    // MARK: SetUp Layout
+
     func setUpLayout() {
         view.backgroundColor = .systemBackground
-        view.addSubview(deviceUuidLabel)
-        view.addSubview(copyButton)
-        view.addSubview(inAppTriggerButton)
+        view.addSubviews(
+            deviceUuidLabel,
+            copyButton,
+            inAppTriggerButton
+        )
         NSLayoutConstraint.activate([
             deviceUuidLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             deviceUuidLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -129,6 +136,8 @@ private extension ViewController {
         ])
     }
     
+    // MARK: SetUp Buttons
+    
     func setUpButtons() {
         copyButton.addTarget(self, action: #selector(copyButtonDidTap), for: .touchUpInside)
         inAppTriggerButton.addTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
@@ -142,7 +151,7 @@ private extension ViewController {
     
     @objc
     func triggerInApp(_ sender: UIButton) {
-        let operationSystemName = "InAppTestOperationIOSExampleApp"
+        let operationSystemName = plistReader.operationSystemName
         let json = "{}"
         
         Mindbox.shared.executeAsyncOperation(
@@ -151,7 +160,8 @@ private extension ViewController {
         )
     }
     
-    
+    // MARK: Private methods
+
     func showDeviceUUID() {
         DispatchQueue.main.async {
             self.deviceUuidLabel.text = self.deviceUUID

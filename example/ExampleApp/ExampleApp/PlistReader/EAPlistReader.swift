@@ -1,5 +1,5 @@
 //
-//  PlistReader.swift
+//  EAPlistReader.swift
 //  ExampleApp
 //
 //  Created by Sergei Semko on 3/13/24.
@@ -13,11 +13,8 @@ fileprivate enum Constants {
     
     static let plistDomain: String = "Domain"
     static let plistEndpoint: String = "Endpoint"
-}
-
-protocol PlistReader {
-    var endpoint: String { get }
-    var domain: String { get }
+    
+    static let plistOperationSystemName: String = "Operation system name"
 }
 
 final class EAPlistReader {
@@ -50,26 +47,36 @@ final class EAPlistReader {
 
 extension EAPlistReader: PlistReader {
     var endpoint: String {
-        get {
-            let dictionary = serializeBundleData()
-            
-            guard let endpointValue = dictionary[Constants.plistEndpoint] as? String else {
-                fatalError("Couldn't file value '\(Constants.plistEndpoint)'")
-            }
-            
-            return endpointValue
+        let dictionary = serializeBundleData()
+        
+        guard let endpointValue = dictionary[Constants.plistEndpoint] as? String else {
+            fatalError("Couldn't file value '\(Constants.plistEndpoint)'")
         }
+        
+        return endpointValue
     }
     
     var domain: String {
-        get {
-            let dictionary = serializeBundleData()
-            
-            guard let domainValue = dictionary[Constants.plistDomain] as? String else {
-                fatalError("Couldn't fine value '\(Constants.plistDomain)'")
-            }
-            
-            return domainValue
+        let dictionary = serializeBundleData()
+        
+        guard let domainValue = dictionary[Constants.plistDomain] as? String else {
+            fatalError("Couldn't fine value '\(Constants.plistDomain)'")
         }
+        
+        return domainValue
+    }
+}
+
+// MARK: - PlistReaderOperation
+
+extension EAPlistReader: PlistReaderOperation {
+    var operationSystemName: String {
+        let dictionary = serializeBundleData()
+        
+        guard let operationValue = dictionary[Constants.plistOperationSystemName] as? String else {
+            fatalError("Couldn't fine value '\(Constants.plistOperationSystemName)'")
+        }
+        
+        return operationValue
     }
 }

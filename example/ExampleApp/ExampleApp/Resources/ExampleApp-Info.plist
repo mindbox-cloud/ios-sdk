@@ -8,5 +8,7 @@
 	<string>Mpush-test.ExampleCocoaPods.IosApp</string>
 	<key>Domain</key>
 	<string>api.mindbox.ru</string>
+	<key>Operation system name</key>
+	<string>InAppTestOperationIOSExampleApp</string>
 </dict>
 </plist>
