@@ -18,7 +18,6 @@ protocol InAppConfigurationMapperProtocol {
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
     private let inappFilterService: InappFilterProtocol
-    private let customerSegmentsAPI: CustomerSegmentsAPI
     var targetingChecker: InAppTargetingCheckerProtocol
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
@@ -35,7 +34,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     private var completionSuccess = false
 
     init(inappFilterService: InappFilterProtocol,
-         customerSegmentsAPI: CustomerSegmentsAPI,
          targetingChecker: InAppTargetingCheckerProtocol,
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
@@ -43,7 +41,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          abTestDeviceMixer: ABTestDeviceMixer,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
-        self.customerSegmentsAPI = customerSegmentsAPI
         self.targetingChecker = targetingChecker
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
