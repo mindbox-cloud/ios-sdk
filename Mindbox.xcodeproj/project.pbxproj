@@ -302,6 +302,7 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
 		F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
 		F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */; };
@@ -806,6 +807,7 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
 		F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingRequestsTests.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "3-4-5-TargetingRequests.json"; sourceTree = "<group>"; };
@@ -2314,6 +2316,7 @@
 			isa = PBXGroup;
 			children = (
 				F331DD1E2A84B62200222120 /* RedirectUrlLayerAction.swift */,
+				F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */,
 			);
 			path = Actions;
 			sourceTree = "<group>";
@@ -3216,6 +3219,7 @@
 				84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */,
 				843DAA5C26087F3D00CAC489 /* DependencyContainer.swift in Sources */,
 				F39B67A52A3C6BE3005C0CCA /* SegmentationCheckRequest.swift in Sources */,
+				F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */,
 				A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */,
 				F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */,
 				330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */,
