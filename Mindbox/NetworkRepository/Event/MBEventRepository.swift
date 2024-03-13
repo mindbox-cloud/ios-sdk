@@ -88,6 +88,7 @@ class MBEventRepository: EventRepository {
              .installedWithoutCustomer,
              .inAppViewEvent,
              .inAppClickEvent,
+             .inAppTargetingEvent,
              .sdkLogs:
             return EventRoute.asyncEvent(wrapper)
         case .customEvent:

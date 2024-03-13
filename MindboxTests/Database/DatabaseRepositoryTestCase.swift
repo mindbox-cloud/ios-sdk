@@ -12,19 +12,30 @@ import CoreData
 
 class DatabaseRepositoryTestCase: XCTestCase {
     
-    var databaseRepository: MBDatabaseRepository {
-        container.databaseRepository
-    }
+    var container: DependencyContainer!
+    var databaseRepository: MBDatabaseRepository!
+    var eventGenerator: EventGenerator!
     
-    let eventGenerator = EventGenerator()
-    
-    let container = try! TestDependencyProvider()
+
     
     override func setUp() {
+        super.setUp()
+        container = try! TestDependencyProvider()
+        databaseRepository = container.databaseRepository
+        eventGenerator = EventGenerator()
+        
         try! databaseRepository.erase()
         updateDatabaseRepositoryWith(createsDeprecated: false)
 //        (databaseRepository as! MockDatabaseRepository).tempLimit = nil
         // Put setup code here. This method is called before the invocation of each test method in the class.
+    }
+    
+    override func tearDown() {
+        
+        container = nil
+        databaseRepository = nil
+        eventGenerator = nil
+        super.tearDown()
     }
     
     private func updateDatabaseRepositoryWith(createsDeprecated: Bool) {

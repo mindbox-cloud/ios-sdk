@@ -1,0 +1,144 @@
+{
+    "settings": {
+      "operations": {
+        "viewProduct": {
+          "systemName": "viewProduct"
+        }
+      }
+    },
+    "inapps": [
+      {
+        "id": "1",
+        "sdkVersion": {
+          "min": 8,
+          "max": null
+        },
+        "targeting": {
+          "$type": "true"
+        },
+        "form": {
+          "variants": [
+            {
+              "content": {
+                "background": {
+                  "layers": [
+                    {
+                      "action": {
+                        "intentPayload": "",
+                        "value": "",
+                        "$type": "redirectUrl"
+                      },
+                      "source": {
+                        "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/5c7559bc-4095-4a66-9c43-8b8e3ec1f934.png",
+                        "$type": "url"
+                      },
+                      "$type": "image"
+                    }
+                  ]
+                },
+                "position": {
+                  "margin": {
+                    "kind": "dp",
+                    "top": 0.0,
+                    "right": 20.0,
+                    "left": 20.0,
+                    "bottom": 0.0
+                  },
+                  "gravity": {
+                    "horizontal": "center",
+                    "vertical": "top"
+                  }
+                },
+                "elements": [
+                  
+                ]
+              },
+              "imageUrl": "",
+              "redirectUrl": "",
+              "intentPayload": "",
+              "$type": "snackbar"
+            }
+          ]
+        }
+      },
+      {
+        "id": "2",
+        "sdkVersion": {
+          "min": 8,
+          "max": null
+        },
+        "targeting": {
+          "nodes": [
+            {
+                "internalId": "93",
+                "systemName": "test",
+                "$type": "apiMethodCall"
+              }
+          ],
+          "$type": "and"
+        },
+        "form": {
+          "variants": [
+            {
+              "$type": "snackbar",
+              "imageUrl": "",
+              "redirectUrl": "",
+              "intentPayload": "",
+              "content": {
+                "background": {
+                  "layers": [
+                    {
+                      "$type": "image",
+                      "action": {
+                        "$type": "redirectUrl",
+                        "intentPayload": "",
+                        "value": ""
+                      },
+                      "source": {
+                        "$type": "url",
+                        "value": "https://mobpush-images.mindbox.ru/Mpush-test/456/452c443e-8fe9-4caa-b357-8e4f9365dcab.png"
+                      }
+                    }
+                  ]
+                },
+                "position": {
+                  "gravity": {
+                    "horizontal": "center",
+                    "vertical": "top"
+                  },
+                  "margin": {
+                    "kind": "dp",
+                    "top": 0,
+                    "bottom": 0,
+                    "left": 0,
+                    "right": 0
+                  }
+                },
+                "elements": [
+                  {
+                    "$type": "closeButton",
+                    "color": "#0000FF",
+                    "lineWidth": 3,
+                    "size": {
+                      "kind": "dp",
+                      "width": 25,
+                      "height": 25
+                    },
+                    "position": {
+                      "margin": {
+                        "kind": "proportion",
+                        "top": 0.15,
+                        "right": 1,
+                        "left": 0.0,
+                        "bottom": 0.0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }

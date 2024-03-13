@@ -31,14 +31,14 @@ class MockNetworkFetcher: NetworkFetcher {
 
     func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T : Decodable {
         if let error = error {
-            completion(Result.failure(error))
+            completion(.failure(error))
         } else if let data = data {
             do {
                 let decoded = try JSONDecoder().decode(type, from: data)
-                completion(Result.success(decoded))
+                completion(.success(decoded))
             } catch let decodeError {
                 let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError, statusCode: nil))
-                completion(Result.failure(error))
+                completion(.failure(error))
             }
         }
     }

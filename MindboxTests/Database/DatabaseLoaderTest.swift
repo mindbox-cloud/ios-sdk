@@ -19,7 +19,14 @@ class DatabaseLoaderTest: XCTestCase {
     var container: TestDependencyProvider!
     
     override func setUp() {
+        super.setUp()
         container = try! TestDependencyProvider()
+    }
+    
+    override func tearDown() {
+        
+        container = nil
+        super.tearDown()
     }
     
     func testDestroyDatabase() {

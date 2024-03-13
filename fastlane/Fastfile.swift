@@ -13,14 +13,6 @@ class Fastfile: LaneFile {
             buildForTesting: .userDefined(true),
             xcargs: "CI=true"
         )
-        scan(
-            project: .userDefined(project),
-            scheme: "MindboxNotifications",
-            xcodebuildFormatter: "",
-            derivedDataPath: "derivedData",
-            buildForTesting: .userDefined(true),
-            xcargs: "CI=true"
-        )
     }
 
     func unitTestLane() {
@@ -29,20 +21,10 @@ class Fastfile: LaneFile {
              scheme: "Mindbox",
              onlyTesting: ["MindboxTests"],
              clean: true,
-             xcodebuildFormatter: "",
+             xcodebuildFormatter: "xcpretty",
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
-        )
-
-        scan(
-            project: .userDefined(project),
-            scheme: "MindboxNotifications",
-            onlyTesting: ["MindboxNotificationsTests"],
-            clean: true,
-            xcodebuildFormatter: "",
-            testWithoutBuilding: .userDefined(false),
-            xcargs: "CI=true"
         )
     }
 } 

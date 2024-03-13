@@ -11,11 +11,13 @@ import XCTest
 
 class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
-
     var container: DependencyContainer!
-    var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
+    var controllerQueue: DispatchQueue!
+    
     override func setUp() {
+        super.setUp()
         container = try! TestDependencyProvider()
+        controllerQueue = DispatchQueue(label: "test-core-controller-queue")
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
@@ -31,7 +33,15 @@ class EventRepositoryTestCase: XCTestCase {
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
     }
-
+    
+    override func tearDown() {
+        
+        coreController = nil
+        container = nil
+        controllerQueue = nil
+        super.tearDown()
+    }
+    
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
@@ -44,15 +54,15 @@ class EventRepositoryTestCase: XCTestCase {
         let expectation = self.expectation(description: "send event")
         repository.send(event: event) { result in
             switch result {
-            case .success:
-                expectation.fulfill()
-            case .failure:
-                XCTFail()
+                case .success:
+                    expectation.fulfill()
+                case .failure:
+                    XCTFail()
             }
         }
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 2, handler: nil)
     }
-
+    
     func testSendDecodableEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
@@ -62,26 +72,26 @@ class EventRepositoryTestCase: XCTestCase {
         let expectation = self.expectation(description: "send event")
         repository.send(type: SuccessCase.self, event: event) { result in
             switch result {
-            case let .success(data):
-                if data.status == "Success" {
-                    expectation.fulfill()
-                } else {
+                case let .success(data):
+                    if data.status == "Success" {
+                        expectation.fulfill()
+                    } else {
+                        XCTFail()
+                    }
+                case .failure:
                     XCTFail()
-                }
-            case .failure:
-                XCTFail()
             }
         }
-        waitForExpectations(timeout: 10, handler: nil)
+        waitForExpectations(timeout: 2, handler: nil)
     }
-
+    
     private struct SuccessCase: Decodable {
         let status: String
     }
-
+    
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
-        controllerQueue.async { expectation.fulfill() }
-        self.wait(for: [expectation], timeout: 10)
+        controllerQueue.sync { expectation.fulfill() }
+        self.wait(for: [expectation], timeout: 2)
     }
 }
