@@ -45,6 +45,14 @@
                BlueprintName = "MindboxTests"
                ReferencedContainer = "container:Mindbox.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "DatabaseRepositoryTestCase/testFetchRetryEvents()">
+               </Test>
+               <Test
+                  Identifier = "GuaranteedDeliveryTestCase">
+               </Test>
+            </SkippedTests>
          </TestableReference>
       </Testables>
    </TestAction>

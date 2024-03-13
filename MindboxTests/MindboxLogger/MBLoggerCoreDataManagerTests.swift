@@ -14,6 +14,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     var manager: MBLoggerCoreDataManager!
 
     override func setUp() {
+        super.setUp()
         manager = MBLoggerCoreDataManager.shared
     }
 
@@ -22,6 +23,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             try manager.deleteAll()
         } catch { }
         manager = nil
+        super.tearDown()
     }
 
     func testCreate() throws {

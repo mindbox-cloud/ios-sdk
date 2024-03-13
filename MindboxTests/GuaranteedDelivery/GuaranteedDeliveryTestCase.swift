@@ -11,28 +11,25 @@ import CoreData
 import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
-
-    var databaseRepository: MBDatabaseRepository {
-        container.databaseRepository
-    }
-
+    
+    var container: TestDependencyProvider!
+    var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
-
-    var persistenceStorage: PersistenceStorage {
-        container.persistenceStorage
-    }
-
-    let eventGenerator = EventGenerator()
-
-    var isDelivering: Bool {
-        guaranteedDeliveryManager.state.isDelivering
-    }
-
-    var container = try! TestDependencyProvider()
+    var persistenceStorage: PersistenceStorage!
+    var eventGenerator: EventGenerator!
+    var isDelivering: Bool!
 
     override func setUp() {
+        super.setUp()
         Mindbox.logger.logLevel = .none
+        
+        container = try! TestDependencyProvider()
+        databaseRepository = container.databaseRepository
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
+        persistenceStorage = container.persistenceStorage
+        eventGenerator = EventGenerator()
+        isDelivering = guaranteedDeliveryManager.state.isDelivering
+        
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
         persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
@@ -40,6 +37,17 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         try! databaseRepository.erase()
         updateInstanceFactory(withFailureNetworkFetcher: false)
         // Put setup code here. This method is called before the invocation of each test method in the class.
+    }
+    
+    override func tearDown() {
+        
+        container = nil
+        databaseRepository = nil
+        guaranteedDeliveryManager = nil
+        persistenceStorage = nil
+        eventGenerator = nil
+        isDelivering = nil
+        super.tearDown()
     }
 
     private func updateInstanceFactory(withFailureNetworkFetcher: Bool) {
