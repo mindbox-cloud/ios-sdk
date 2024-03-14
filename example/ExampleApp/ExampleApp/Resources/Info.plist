@@ -25,5 +25,11 @@
 		<string>processing</string>
 		<string>remote-notification</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>cloud.Mindbox.$(PRODUCT_BUNDLE_IDENTIFIER).GDAppRefresh</string>
+		<string>cloud.Mindbox.$(PRODUCT_BUNDLE_IDENTIFIER).GDAppProcessing</string>
+		<string>cloud.Mindbox.$(PRODUCT_BUNDLE_IDENTIFIER).DBCleanAppProcessing</string>
+	</array>
 </dict>
 </plist>

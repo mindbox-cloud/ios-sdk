@@ -18,6 +18,49 @@ fileprivate enum Constants {
 }
 
 final class EAPlistReader {
+    
+    static let shared = EAPlistReader()
+    
+    private var _domain = String()
+    private var _endpoint = String()
+    private var _operationSystemName = String()
+    
+    private init() {
+        _domain = getDomain()
+        _endpoint = getEndpoint()
+        _operationSystemName = getOperationSystemName()
+    }
+    
+    private func getEndpoint() -> String {
+        let dictionary = serializeBundleData()
+        
+        guard let endpointValue = dictionary[Constants.plistEndpoint] as? String else {
+            fatalError("Couldn't file value '\(Constants.plistEndpoint)'")
+        }
+        
+        return endpointValue
+    }
+    
+    private func getDomain() -> String {
+        let dictionary = serializeBundleData()
+        
+        guard let domainValue = dictionary[Constants.plistDomain] as? String else {
+            fatalError("Couldn't find value '\(Constants.plistDomain)'")
+        }
+        
+        return domainValue
+    }
+    
+    private func getOperationSystemName() -> String {
+        let dictionary = serializeBundleData()
+        
+        guard let operationValue = dictionary[Constants.plistOperationSystemName] as? String else {
+            fatalError("Couldn't find value '\(Constants.plistOperationSystemName)'")
+        }
+        
+        return operationValue
+    }
+    
     private func serializeBundleData() -> [String : Any] {
         let url = bundleUrl
         do {
@@ -47,23 +90,11 @@ final class EAPlistReader {
 
 extension EAPlistReader: PlistReader {
     var endpoint: String {
-        let dictionary = serializeBundleData()
-        
-        guard let endpointValue = dictionary[Constants.plistEndpoint] as? String else {
-            fatalError("Couldn't file value '\(Constants.plistEndpoint)'")
-        }
-        
-        return endpointValue
+        _endpoint
     }
     
     var domain: String {
-        let dictionary = serializeBundleData()
-        
-        guard let domainValue = dictionary[Constants.plistDomain] as? String else {
-            fatalError("Couldn't fine value '\(Constants.plistDomain)'")
-        }
-        
-        return domainValue
+        _domain
     }
 }
 
@@ -71,12 +102,6 @@ extension EAPlistReader: PlistReader {
 
 extension EAPlistReader: PlistReaderOperation {
     var operationSystemName: String {
-        let dictionary = serializeBundleData()
-        
-        guard let operationValue = dictionary[Constants.plistOperationSystemName] as? String else {
-            fatalError("Couldn't fine value '\(Constants.plistOperationSystemName)'")
-        }
-        
-        return operationValue
+        _operationSystemName
     }
 }

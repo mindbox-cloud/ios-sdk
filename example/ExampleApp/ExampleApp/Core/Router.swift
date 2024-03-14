@@ -16,6 +16,8 @@ final class EARouter { }
 extension EARouter: Router {
     func showWebViewController(from viewController: UIViewController, url: URL?) {
         let webVC = WebViewController(url: url)
+        webVC.sheetPresentationController?.detents = [.medium()]
+        webVC.sheetPresentationController?.prefersGrabberVisible = true
         webVC.modalPresentationStyle = .popover
         viewController.present(webVC, animated: true)
     }

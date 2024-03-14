@@ -17,6 +17,6 @@ extension UIView {
 extension Logger {
     private static var subsystem = Bundle.main.bundleIdentifier!
     
-    static let mindboxInAppActions = Logger(subsystem: subsystem, category: "InAppActions")
+    static let pushNotifications = Logger(subsystem: subsystem, category: "PushNotifications")
 }
 

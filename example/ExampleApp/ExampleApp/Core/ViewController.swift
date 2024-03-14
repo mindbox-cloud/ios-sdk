@@ -59,7 +59,7 @@ final class ViewController: UIViewController {
     init(
         deviceUUID: String = String(),
         router: Router = EARouter(),
-        plistReader: PlistReaderOperation = EAPlistReader()
+        plistReader: PlistReaderOperation = EAPlistReader.shared
     ) {
         self.deviceUUID = deviceUUID
         self.router = router
@@ -79,6 +79,7 @@ final class ViewController: UIViewController {
         setUpButtons()
         getDeviceUUID()
         Mindbox.shared.inAppMessagesDelegate = self
+        Mindbox.logger.logLevel = .default
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -91,7 +92,7 @@ final class ViewController: UIViewController {
 
 extension ViewController: InAppMessagesDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        Logger.mindboxInAppActions.log("""
+        Mindbox.logger.log(level: .debug, message: """
             Function: \(#function)
             Id: \(id)
             url: \(String(describing: url))
@@ -102,7 +103,7 @@ extension ViewController: InAppMessagesDelegate {
     }
     
     func inAppMessageDismissed(id: String) {
-        Logger.mindboxInAppActions.log("""
+        Mindbox.logger.log(level: .debug, message: """
             Function: \(#function)
         """)
     }
@@ -172,5 +173,7 @@ private extension ViewController {
         Mindbox.shared.getDeviceUUID { deviceUUID in
             self.deviceUUID = deviceUUID
         }
+        
+        Logger.pushNotifications.log("Device UUID: \(self.deviceUUID)")
     }
 }
