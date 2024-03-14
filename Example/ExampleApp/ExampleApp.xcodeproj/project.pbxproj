@@ -20,9 +20,6 @@
 		0A69A2472B9F15890063E89E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2462B9F15890063E89E /* ViewController.swift */; };
 		0A69A24C2B9F158B0063E89E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24B2B9F158B0063E89E /* Assets.xcassets */; };
 		0A69A24F2B9F158B0063E89E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24E2B9F158B0063E89E /* Base */; };
-		0A69A25A2B9F158B0063E89E /* ExampleAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2592B9F158B0063E89E /* ExampleAppTests.swift */; };
-		0A69A2642B9F158B0063E89E /* ExampleAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2632B9F158B0063E89E /* ExampleAppUITests.swift */; };
-		0A69A2662B9F158B0063E89E /* ExampleAppUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2652B9F158B0063E89E /* ExampleAppUITestsLaunchTests.swift */; };
 		0A69A2742B9F17460063E89E /* Mindbox in Frameworks */ = {isa = PBXBuildFile; productRef = 0A69A2732B9F17460063E89E /* Mindbox */; };
 		0A6C602B2BA3067700F23881 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6C602A2BA3067700F23881 /* NotificationService.swift */; };
 /* End PBXBuildFile section */
@@ -90,10 +87,7 @@
 		0A69A24E2B9F158B0063E89E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0A69A2502B9F158B0063E89E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0A69A2552B9F158B0063E89E /* ExampleAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExampleAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		0A69A2592B9F158B0063E89E /* ExampleAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleAppTests.swift; sourceTree = "<group>"; };
 		0A69A25F2B9F158B0063E89E /* ExampleAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExampleAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		0A69A2632B9F158B0063E89E /* ExampleAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleAppUITests.swift; sourceTree = "<group>"; };
-		0A69A2652B9F158B0063E89E /* ExampleAppUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleAppUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		0A69A2792B9F230D0063E89E /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
 		0A6C602A2BA3067700F23881 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		0A6C60322BA3077800F23881 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -168,8 +162,6 @@
 			isa = PBXGroup;
 			children = (
 				0A69A2412B9F15890063E89E /* ExampleApp */,
-				0A69A2582B9F158B0063E89E /* ExampleAppTests */,
-				0A69A2622B9F158B0063E89E /* ExampleAppUITests */,
 				0A5602732BA34179000A444A /* MindboxNotificationServiceExtension */,
 				0A5602DA2BA3602A000A444A /* MindboxNotificationContentExtension */,
 				0A6C60312BA3077800F23881 /* Frameworks */,
@@ -202,23 +194,6 @@
 				0A6C602A2BA3067700F23881 /* NotificationService.swift */,
 			);
 			path = ExampleApp;
-			sourceTree = "<group>";
-		};
-		0A69A2582B9F158B0063E89E /* ExampleAppTests */ = {
-			isa = PBXGroup;
-			children = (
-				0A69A2592B9F158B0063E89E /* ExampleAppTests.swift */,
-			);
-			path = ExampleAppTests;
-			sourceTree = "<group>";
-		};
-		0A69A2622B9F158B0063E89E /* ExampleAppUITests */ = {
-			isa = PBXGroup;
-			children = (
-				0A69A2632B9F158B0063E89E /* ExampleAppUITests.swift */,
-				0A69A2652B9F158B0063E89E /* ExampleAppUITestsLaunchTests.swift */,
-			);
-			path = ExampleAppUITests;
 			sourceTree = "<group>";
 		};
 		0A6C60312BA3077800F23881 /* Frameworks */ = {
@@ -458,7 +433,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A69A25A2B9F158B0063E89E /* ExampleAppTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,8 +440,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A69A2642B9F158B0063E89E /* ExampleAppUITests.swift in Sources */,
-				0A69A2662B9F158B0063E89E /* ExampleAppUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

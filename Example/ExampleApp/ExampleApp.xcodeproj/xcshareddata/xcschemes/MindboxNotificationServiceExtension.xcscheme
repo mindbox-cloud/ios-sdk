@@ -16,7 +16,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0A6C601A2BA3033000F23881"
+               BlueprintIdentifier = "0A5602712BA34179000A444A"
                BuildableName = "MindboxNotificationServiceExtension.appex"
                BlueprintName = "MindboxNotificationServiceExtension"
                ReferencedContainer = "container:ExampleApp.xcodeproj">
