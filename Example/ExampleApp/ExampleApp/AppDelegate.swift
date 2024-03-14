@@ -12,6 +12,7 @@ import Foundation
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, InAppMessagesDelegate {
+    
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
         print("click")
     }
@@ -19,9 +20,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func inAppMessageDismissed(id: String) {
         print("close")
     }
-    
-    
-    
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         do {
@@ -66,6 +64,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     ) {
         completionHandler([.alert, .badge, .sound])
     }
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void) {
+            Mindbox.shared.pushClicked(response: response)
+            completionHandler()
+        }
     
     func application(
         _ application: UIApplication,
