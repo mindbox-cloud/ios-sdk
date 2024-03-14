@@ -153,11 +153,11 @@ private extension ViewController {
     @objc
     func triggerInApp(_ sender: UIButton) {
         let operationSystemName = plistReader.operationSystemName
-        let json = "{}"
+        let operationBody = OperationBodyRequest()
         
         Mindbox.shared.executeAsyncOperation(
             operationSystemName: operationSystemName,
-            json: json
+            operationBody: operationBody
         )
     }
     
