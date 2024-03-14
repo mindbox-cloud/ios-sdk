@@ -152,6 +152,7 @@ private extension ViewController {
     
     @objc
     func triggerInApp(_ sender: UIButton) {
+        /// https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
         let operationSystemName = plistReader.operationSystemName
         let operationBody = OperationBodyRequest()
         
