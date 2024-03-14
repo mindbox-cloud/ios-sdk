@@ -15,7 +15,6 @@ protocol InappFilterProtocol {
 
 final class InappsFilterService: InappFilterProtocol {
     private let variantsFilter: VariantFilterProtocol
-    private let sdkVersionNumeric = 8
 
     init(variantsFilter: VariantFilterProtocol) {
         self.variantsFilter = variantsFilter
@@ -56,8 +55,8 @@ final class InappsFilterService: InappFilterProtocol {
         let inapps = inapps
 
         let filteredInapps = inapps.filter {
-            let minVersionValid = $0.sdkVersion.min.map { $0 <= sdkVersionNumeric } ?? false
-            let maxVersionValid = $0.sdkVersion.max.map { $0 >= sdkVersionNumeric } ?? true
+            let minVersionValid = $0.sdkVersion.min.map { $0 <= Constants.Versions.sdkVersionNumeric } ?? false
+            let maxVersionValid = $0.sdkVersion.max.map { $0 >= Constants.Versions.sdkVersionNumeric } ?? true
             
             return minVersionValid && maxVersionValid
         }

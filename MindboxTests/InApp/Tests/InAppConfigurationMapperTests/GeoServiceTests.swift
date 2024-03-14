@@ -12,20 +12,17 @@ import XCTest
 final class GeoServiceTests: XCTestCase {
     
     var sut: GeoServiceProtocol!
-    let container = try! TestDependencyProvider()
     var networkFetcher: MockNetworkFetcher!
-    
-    var sessionTemporaryStorage: SessionTemporaryStorage {
-        container.sessionTemporaryStorage
-    }
-    
-    var targetingChecker: InAppTargetingCheckerProtocol {
-        container.inAppTargetingChecker
-    }
+    var sessionTemporaryStorage: SessionTemporaryStorage!
+    var targetingChecker: InAppTargetingCheckerProtocol!
+    var container: TestDependencyProvider!
     
     override func setUp() {
         super.setUp()
+        container = try! TestDependencyProvider()
         networkFetcher = MockNetworkFetcher()
+        sessionTemporaryStorage = container.sessionTemporaryStorage
+        targetingChecker = container.inAppTargetingChecker
         sut = GeoService(fetcher: networkFetcher,
                          sessionTemporaryStorage: sessionTemporaryStorage,
                          targetingChecker: targetingChecker)
@@ -34,6 +31,9 @@ final class GeoServiceTests: XCTestCase {
     override func tearDown() {
         sut = nil
         networkFetcher = nil
+        sessionTemporaryStorage = nil
+        targetingChecker = nil
+        container = nil
         super.tearDown()
     }
     
