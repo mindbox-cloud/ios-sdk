@@ -19,6 +19,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         setUpDelegates()
         initMindbox()
+        setUpMindboxLogger()
         Mindbox.shared.track(.launch(launchOptions))
         
         registerForRemoteNotifications()
@@ -152,6 +153,10 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
         
         UIApplication.shared.open(url)
+    }
+    
+    private func setUpMindboxLogger() {
+        Mindbox.logger.logLevel = .default
     }
     
     // Handling notifcations

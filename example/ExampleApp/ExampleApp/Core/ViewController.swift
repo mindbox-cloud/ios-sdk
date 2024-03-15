@@ -78,8 +78,7 @@ final class ViewController: UIViewController {
         setUpLayout()
         setUpButtons()
         getDeviceUUID()
-        Mindbox.shared.inAppMessagesDelegate = self
-        Mindbox.logger.logLevel = .default
+        setUpDelegates()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -176,5 +175,9 @@ private extension ViewController {
         }
         
         Logger.pushNotifications.log("Device UUID: \(self.deviceUUID)")
+    }
+    
+    func setUpDelegates() {
+        Mindbox.shared.inAppMessagesDelegate = self
     }
 }
