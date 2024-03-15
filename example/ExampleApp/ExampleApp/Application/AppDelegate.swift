@@ -125,39 +125,35 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         
-        // // https://developers.mindbox.ru/docs/ios-get-click-advanced#1-передача-кликов-по-push-уведомлениям
+        // https://developers.mindbox.ru/docs/ios-get-click-advanced#1-передача-кликов-по-push-уведомлениям
         Mindbox.shared.pushClicked(response: response)
         
-        // // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
+        // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
         Mindbox.shared.track(.push(response))
         
         let userInfo = response.notification.request.content.userInfo
-        guard let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
-                Mindbox.shared.isMindboxPush(userInfo: userInfo) else {
-            Mindbox.logger.log(
-                level: .info,
-                message: "Push Notifications are not from Mindbox. Process them separately."
-            )
-            return
+        if let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
+           Mindbox.shared.isMindboxPush(userInfo: userInfo) {
+            
+            var url: URL? = URL(string: "")
+            
+            if let buttons = pushModel.buttons,
+               let clickedButton = buttons.first(where: { $0.uniqueKey == response.actionIdentifier }),
+               let buttonStringUrl = clickedButton.url,
+               let buttonUrl = URL(string: buttonStringUrl) {
+                url = buttonUrl
+            } else if
+                let clickStringUrl = pushModel.clickUrl,
+                let clickUrl = URL(string: clickStringUrl) {
+                url = clickUrl
+            }
+            
+            if let payload = pushModel.payload {
+                Mindbox.logger.log(level: .debug, message: payload)
+            }
+            
+            openUrl(url)
         }
-        
-        var url: URL? = URL(string: "")
-        if let buttons = pushModel.buttons,
-           let clickedButton = buttons.first(where: { $0.uniqueKey == response.actionIdentifier }),
-           let buttonStringUrl = clickedButton.url,
-           let buttonUrl = URL(string: buttonStringUrl) {
-            url = buttonUrl
-        } else if
-            let clickStringUrl = pushModel.clickUrl,
-            let clickUrl = URL(string: clickStringUrl) {
-            url = clickUrl
-        }
-        
-        if let payload = pushModel.payload {
-            Mindbox.logger.log(level: .debug, message: payload)
-        }
-        
-        openUrl(url)
         
         completionHandler()
     }
