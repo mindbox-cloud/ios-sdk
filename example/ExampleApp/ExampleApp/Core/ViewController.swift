@@ -7,15 +7,6 @@
 
 import UIKit
 import Mindbox
-import OSLog
-
-fileprivate enum Constants {
-    static let copyButtonTitle = "Copy"
-    static let copyButtonSystemImageName = "doc.on.doc"
-    
-    static let inAppTriggerButtonTitle = "Trigger In-App"
-    static let inAppTriggerButtonSystemImageName = "icloud.and.arrow.up"
-}
 
 final class ViewController: UIViewController {
     
@@ -32,16 +23,7 @@ final class ViewController: UIViewController {
         return label
     }()
     
-    private lazy var copyButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(Constants.copyButtonTitle, for: .normal)
-        button.setImage(
-            UIImage(systemName: Constants.copyButtonSystemImageName),
-            for: .normal
-        )
-        return button
-    }()
+    private lazy var copyButton = UIButton(type: .system)
     
     private lazy var inAppTriggerButton: UIButton = {
         let button = UIButton(type: .system)
@@ -85,6 +67,27 @@ final class ViewController: UIViewController {
         super.viewWillAppear(animated)
         showDeviceUUID()
     }
+    
+    // MARK: Private methods
+    
+    private func getDeviceUUID() {
+        Mindbox.shared.getDeviceUUID { deviceUUID in
+            self.deviceUUID = deviceUUID
+        }
+        
+        Mindbox.logger.log(level: .info, message: "Device UUID: \(self.deviceUUID)")
+    }
+    
+    private func setUpDelegates() {
+        Mindbox.shared.inAppMessagesDelegate = self
+    }
+    
+    private func showDeviceUUID() {
+        DispatchQueue.main.async {
+            self.deviceUuidLabel.text = self.deviceUUID
+        }
+    }
+
 }
 
 // MARK: - InAppMessagesDelegate
@@ -108,19 +111,23 @@ extension ViewController: InAppMessagesDelegate {
     }
 }
 
-// MARK: - SetUp ViewController
+// MARK: - SetUp Layout
 
 private extension ViewController {
     
-    // MARK: SetUp Layout
-
     func setUpLayout() {
         view.backgroundColor = .systemBackground
+        
         view.addSubviews(
             deviceUuidLabel,
             copyButton,
             inAppTriggerButton
         )
+        
+        setUpConstraints()
+    }
+    
+    func setUpConstraints() {
         NSLayoutConstraint.activate([
             deviceUuidLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             deviceUuidLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -135,12 +142,36 @@ private extension ViewController {
             inAppTriggerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
         ])
     }
-    
-    // MARK: SetUp Buttons
+}
+
+// MARK: - SetUp Buttons
+
+private extension ViewController {
     
     func setUpButtons() {
+        setUpCopyButton()
         copyButton.addTarget(self, action: #selector(copyButtonDidTap), for: .touchUpInside)
+        
+        setUpInAppTriggerButton()
         inAppTriggerButton.addTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
+    }
+    
+    func setUpCopyButton() {
+        copyButton.translatesAutoresizingMaskIntoConstraints = false
+        copyButton.setTitle(Constants.copyButtonTitle, for: .normal)
+        copyButton.setImage(
+            UIImage(systemName: Constants.copyButtonSystemImageName),
+            for: .normal
+        )
+    }
+    
+    func setUpInAppTriggerButton() {
+        inAppTriggerButton.translatesAutoresizingMaskIntoConstraints = false
+        inAppTriggerButton.setTitle(Constants.inAppTriggerButtonTitle, for: .normal)
+        inAppTriggerButton.setImage(
+            UIImage(systemName: Constants.inAppTriggerButtonSystemImageName),
+            for: .normal
+        )
     }
     
     @objc
@@ -160,24 +191,12 @@ private extension ViewController {
             operationBody: operationBody
         )
     }
-    
-    // MARK: Private methods
+}
 
-    func showDeviceUUID() {
-        DispatchQueue.main.async {
-            self.deviceUuidLabel.text = self.deviceUUID
-        }
-    }
+fileprivate enum Constants {
+    static let copyButtonTitle = "Copy"
+    static let copyButtonSystemImageName = "doc.on.doc"
     
-    func getDeviceUUID() {
-        Mindbox.shared.getDeviceUUID { deviceUUID in
-            self.deviceUUID = deviceUUID
-        }
-        
-        Logger.pushNotifications.log("Device UUID: \(self.deviceUUID)")
-    }
-    
-    func setUpDelegates() {
-        Mindbox.shared.inAppMessagesDelegate = self
-    }
+    static let inAppTriggerButtonTitle = "Trigger In-App"
+    static let inAppTriggerButtonSystemImageName = "icloud.and.arrow.up"
 }

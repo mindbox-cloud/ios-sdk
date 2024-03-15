@@ -6,6 +6,12 @@ Make sure you have CocoaPods installed or install it according to the [instructi
 
 1. Install the pods
   ```ruby
+  pod update
+  ```
+  
+  Or
+
+  ```ruby
   pod install
   ```
 2. Open `ExampleApp.xcworkspace`

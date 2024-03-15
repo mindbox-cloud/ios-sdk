@@ -10,6 +10,7 @@ import UserNotifications
 import UserNotificationsUI
 import MindboxNotifications
 
+// https://developers.mindbox.ru/docs/ios-send-rich-push-advanced#32-реализация-кода-расширения-в-приложении-1
 final class NotificationViewController: UIViewController {
     
     lazy var mindboxService = MindboxNotificationService()

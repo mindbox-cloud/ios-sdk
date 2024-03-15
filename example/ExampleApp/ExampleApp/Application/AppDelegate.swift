@@ -7,7 +7,6 @@
 
 import UIKit
 import Mindbox
-import OSLog
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,12 +16,22 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         
-        setUpDelegates()
+        UNUserNotificationCenter.current().delegate = self
+        
         initMindbox()
-        setUpMindboxLogger()
+        
+        #if DEBUG
+            Mindbox.logger.logLevel = .debug
+        #endif
+        
+        // https://developers.mindbox.ru/docs/ios-setup-background-tasks-advanced#регистрация-фоновых-задач
+        Mindbox.shared.registerBGTasks()
+        
+        // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
         Mindbox.shared.track(.launch(launchOptions))
         
         registerForRemoteNotifications()
+        
         return true
     }
     
@@ -30,19 +39,20 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
+        /// https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced#4-передать-в-sdk-apns-токен
         Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
         
         let deviceToken: String = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        Logger.pushNotifications.log("DeviceToken: \(deviceToken)")
-        UIPasteboard.general.string = deviceToken
+        Mindbox.logger.log(level: .info, message: "DeviceToken: \(deviceToken)")
     }
     
     func application(
         _ application: UIApplication,
         didFailToRegisterForRemoteNotificationsWithError error: any Error
     ) {
-        Logger.pushNotifications.critical(
-            "Fail to register for remote notifications with error: \(error.localizedDescription)"
+        Mindbox.logger.log(
+            level: .fault,
+            message: "Fail to register for remote notifications with error: \(error.localizedDescription)"
         )
     }
     
@@ -51,35 +61,32 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         continue userActivity: NSUserActivity,
         restorationHandler: @escaping ([any UIUserActivityRestoring]?) -> Void
     ) -> Bool {
+        
+        // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
         Mindbox.shared.track(.universalLink(userActivity))
+        
         return true
     }
     
+    // https://developers.mindbox.ru/docs/ios-sdk-initialization
     private func initMindbox() {
-        DispatchQueue.global().async {
-            let plistReader: PlistReader = EAPlistReader.shared
-            let endpoint = plistReader.endpoint
-            let domain = plistReader.domain
+        
+        let plistReader: PlistReader = EAPlistReader.shared
+        let endpoint = plistReader.endpoint
+        let domain = plistReader.domain
+        
+        do {
+            let mindboxSdkConfiguration = try MBConfiguration(
+                endpoint: endpoint,
+                domain: domain,
+                subscribeCustomerIfCreated: true,
+                shouldCreateCustomer: true
+            )
             
-            DispatchQueue.main.sync {
-                do {
-                    let mindboxSdkConfiguration = try MBConfiguration(
-                        endpoint: endpoint,
-                        domain: domain,
-                        subscribeCustomerIfCreated: true,
-                        shouldCreateCustomer: true
-                    )
-                    
-                    Mindbox.shared.initialization(configuration: mindboxSdkConfiguration)
-                } catch {
-                    Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
-                }
-            }
+            Mindbox.shared.initialization(configuration: mindboxSdkConfiguration)
+        } catch {
+            Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
         }
-    }
-    
-    private func setUpDelegates() {
-        UNUserNotificationCenter.current().delegate = self
     }
 
     // MARK: UISceneSession Lifecycle
@@ -102,6 +109,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     
+    // https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced#3-реализовать-отображение-стандартных-уведомлений
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -116,13 +124,20 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        
+        // // https://developers.mindbox.ru/docs/ios-get-click-advanced#1-передача-кликов-по-push-уведомлениям
         Mindbox.shared.pushClicked(response: response)
+        
+        // // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
         Mindbox.shared.track(.push(response))
         
         let userInfo = response.notification.request.content.userInfo
         guard let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
                 Mindbox.shared.isMindboxPush(userInfo: userInfo) else {
-            Logger.pushNotifications.warning("Push Notifications are not from Mindbox. Process them separately.")
+            Mindbox.logger.log(
+                level: .info,
+                message: "Push Notifications are not from Mindbox. Process them separately."
+            )
             return
         }
         
@@ -149,20 +164,18 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     
     private func openUrl(_ url: URL?) {
         guard let url else {
-            Logger.pushNotifications.log("Couldn't open the page. Url is empty.")
+            Mindbox.logger.log(
+                level: .debug,
+                message: "Couldn't open the page. Url is empty."
+            )
             return
         }
         
         UIApplication.shared.open(url)
     }
     
-    private func setUpMindboxLogger() {
-        #if DEBUG
-            Mindbox.logger.logLevel = .debug
-        #endif
-    }
-    
     // Handling notifcations
+    // https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced#2-запросить-разрешение-на-отображение-уведомлений
     private func registerForRemoteNotifications() {
         DispatchQueue.main.async {
             UIApplication.shared.registerForRemoteNotifications()
@@ -170,10 +183,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         
         UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-                Logger.pushNotifications.log("Permission granted \(granted)")
+                Mindbox.logger.log(level: .info, message: "Permission granted \(granted)")
                 if let error {
-                    Logger.pushNotifications.error(
-                        "NotificationsRequestAuthorization failed with error: \(error.localizedDescription)"
+                    Mindbox.logger.log(
+                        level: .error,
+                        message: "NotificationsRequestAuthorization failed with error: \(error.localizedDescription)"
                     )
                 }
                 

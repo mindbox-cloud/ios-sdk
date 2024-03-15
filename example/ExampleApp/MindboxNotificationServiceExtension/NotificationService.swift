@@ -8,6 +8,7 @@
 import UserNotifications
 import MindboxNotifications
 
+// https://developers.mindbox.ru/docs/ios-send-rich-push-advanced#32-реализация-кода-расширения-в-приложении
 final class NotificationService: UNNotificationServiceExtension {
 
     lazy var mindboxService = MindboxNotificationService()

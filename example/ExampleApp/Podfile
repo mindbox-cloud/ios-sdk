@@ -15,13 +15,13 @@ end
 
 target 'MindboxNotificationServiceExtension' do
 
-  pod 'MindboxNotifications'
+  pod 'MindboxNotifications', '2.8.4'
 
 end
 
 
 target 'MindboxNotificationContentExtension' do
 
-  pod 'MindboxNotifications'
+  pod 'MindboxNotifications', '2.8.4'
 
 end
