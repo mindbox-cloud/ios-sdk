@@ -13,6 +13,7 @@ class UNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
     
     func getStatus(result: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
+            SessionTemporaryStorage.shared.pushPermissionStatus = settings.authorizationStatus
             var grantedStatused = [UNAuthorizationStatus.authorized]
             if #available(iOS 12.0, *) {
                 grantedStatused.append(UNAuthorizationStatus.provisional)
@@ -21,5 +22,4 @@ class UNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
             result(isAuthorized)
         }
     }
-    
 }

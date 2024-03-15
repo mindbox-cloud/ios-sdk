@@ -334,7 +334,6 @@
 		F331DD022A83A56500222120 /* PresentationDisplayUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCEE2A83A56500222120 /* PresentationDisplayUseCase.swift */; };
 		F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF02A83A56500222120 /* ModalPresentationStrategy.swift */; };
 		F331DD042A83A56500222120 /* PresentationStrategyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF12A83A56500222120 /* PresentationStrategyProtocol.swift */; };
-		F331DD052A83A56500222120 /* PresentationActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF22A83A56500222120 /* PresentationActionUseCase.swift */; };
 		F331DD062A83A56500222120 /* ModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF52A83A56500222120 /* ModalViewController.swift */; };
 		F331DD072A83A56500222120 /* CloseButtonElementFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF82A83A56500222120 /* CloseButtonElementFactory.swift */; };
 		F331DD082A83A56500222120 /* ElementFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DCF92A83A56500222120 /* ElementFactory.swift */; };
@@ -373,6 +372,11 @@
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
+		F36128412BA315A4000382D9 /* RedirectURLActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361283F2BA315A3000382D9 /* RedirectURLActionUseCase.swift */; };
+		F36128492BA3193E000382D9 /* PresentationClickTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36128482BA3193E000382D9 /* PresentationClickTracker.swift */; };
+		F361284B2BA31AC4000382D9 /* ActionUseCaseFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */; };
+		F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */; };
+		F361284F2BA32C16000382D9 /* InappFilterByPushPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284E2BA32C16000382D9 /* InappFilterByPushPermission.swift */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
 		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
@@ -839,7 +843,6 @@
 		F331DCEE2A83A56500222120 /* PresentationDisplayUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PresentationDisplayUseCase.swift; sourceTree = "<group>"; };
 		F331DCF02A83A56500222120 /* ModalPresentationStrategy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModalPresentationStrategy.swift; sourceTree = "<group>"; };
 		F331DCF12A83A56500222120 /* PresentationStrategyProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PresentationStrategyProtocol.swift; sourceTree = "<group>"; };
-		F331DCF22A83A56500222120 /* PresentationActionUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PresentationActionUseCase.swift; sourceTree = "<group>"; };
 		F331DCF52A83A56500222120 /* ModalViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModalViewController.swift; sourceTree = "<group>"; };
 		F331DCF82A83A56500222120 /* CloseButtonElementFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloseButtonElementFactory.swift; sourceTree = "<group>"; };
 		F331DCF92A83A56500222120 /* ElementFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ElementFactory.swift; sourceTree = "<group>"; };
@@ -878,6 +881,11 @@
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
+		F361283F2BA315A3000382D9 /* RedirectURLActionUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedirectURLActionUseCase.swift; sourceTree = "<group>"; };
+		F36128482BA3193E000382D9 /* PresentationClickTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationClickTracker.swift; sourceTree = "<group>"; };
+		F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionUseCaseFactory.swift; sourceTree = "<group>"; };
+		F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionActionUseCase.swift; sourceTree = "<group>"; };
+		F361284E2BA32C16000382D9 /* InappFilterByPushPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilterByPushPermission.swift; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
 		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
@@ -2212,8 +2220,8 @@
 		F331DCEC2A83A56500222120 /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
+				F361283E2BA315A3000382D9 /* PresentationActionUseCase */,
 				F331DCED2A83A56500222120 /* PresentationDisplayUseCase */,
-				F331DCF22A83A56500222120 /* PresentationActionUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -2325,6 +2333,7 @@
 			isa = PBXGroup;
 			children = (
 				F331DD282A84C4BC00222120 /* InappActionHandler.swift */,
+				F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */,
 			);
 			path = ActionHandler;
 			sourceTree = "<group>";
@@ -2426,6 +2435,16 @@
 			path = PublicModels;
 			sourceTree = "<group>";
 		};
+		F361283E2BA315A3000382D9 /* PresentationActionUseCase */ = {
+			isa = PBXGroup;
+			children = (
+				F36128482BA3193E000382D9 /* PresentationClickTracker.swift */,
+				F361283F2BA315A3000382D9 /* RedirectURLActionUseCase.swift */,
+				F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */,
+			);
+			path = PresentationActionUseCase;
+			sourceTree = "<group>";
+		};
 		F36730192B7B6E5500DD0039 /* PushNotificationTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -2452,6 +2471,7 @@
 				F39116FF2AA9B67E00852298 /* LayersFilter */,
 				F39117082AAA48CF00852298 /* ElementsFiter */,
 				F39117062AA9C69A00852298 /* ContentPositionFilter.swift */,
+				F361284E2BA32C16000382D9 /* InappFilterByPushPermission.swift */,
 			);
 			path = InappFilterService;
 			sourceTree = "<group>";
@@ -3107,6 +3127,7 @@
 				F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */,
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				F331DD042A83A56500222120 /* PresentationStrategyProtocol.swift in Sources */,
+				F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */,
 				F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */,
 				A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */,
 				9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */,
@@ -3118,8 +3139,8 @@
 				840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */,
 				A1D017EC2976CC2E00CD9F99 /* TrueTargeting.swift in Sources */,
 				33072F302664C2E4001F1AB2 /* SubscriptionResponse.swift in Sources */,
-				F331DD052A83A56500222120 /* PresentationActionUseCase.swift in Sources */,
 				A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */,
+				F361284B2BA31AC4000382D9 /* ActionUseCaseFactory.swift in Sources */,
 				9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */,
 				F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */,
 				33072F482664CCBA001F1AB2 /* PoolResponse.swift in Sources */,
@@ -3167,6 +3188,7 @@
 				9B24FAAE28C74BA500F10B5D /* InAppCoreManager.swift in Sources */,
 				A15D701A29AF8142007131E7 /* SDKLogsManager.swift in Sources */,
 				334F3AF6264C199900A6AC00 /* ProductListRequest.swift in Sources */,
+				F36128492BA3193E000382D9 /* PresentationClickTracker.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
@@ -3223,6 +3245,7 @@
 				A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */,
 				F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */,
 				330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */,
+				F361284F2BA32C16000382D9 /* InappFilterByPushPermission.swift in Sources */,
 				A184654729C32FEF00E64780 /* CategoryIDChecker.swift in Sources */,
 				A192786729D389EE00CDB53D /* ProductIDTargeting.swift in Sources */,
 				6FDD1445266F7C2200A50C35 /* CouponResponse.swift in Sources */,
@@ -3263,6 +3286,7 @@
 				317054CB25AF189800AE624C /* PersistenceStorage.swift in Sources */,
 				F331DD092A83A56500222120 /* LayerFactory.swift in Sources */,
 				F336080D2A8A142800C7C9B7 /* SnackbarFormVariant.swift in Sources */,
+				F36128412BA315A4000382D9 /* RedirectURLActionUseCase.swift in Sources */,
 				F39116FE2AA9B54B00852298 /* LayersSourceFilter.swift in Sources */,
 				840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */,
 				334F3AEE264C199900A6AC00 /* SegmentationRequest.swift in Sources */,

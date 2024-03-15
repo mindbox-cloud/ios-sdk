@@ -52,14 +52,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
-        serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue"),
-        sessionStorage: SessionTemporaryStorage
+        serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
         self.serialQueue = serialQueue
-        self.sessionStorage = sessionStorage
     }
 
     weak var delegate: InAppMessagesDelegate?
@@ -70,7 +68,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private var isConfigurationReady = false
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
-    private let sessionStorage: SessionTemporaryStorage
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
@@ -102,7 +99,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard !sessionStorage.isPresentingInAppMessage else {
+        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
             return
         }
         
@@ -115,7 +112,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
 
-        self.sessionStorage.isPresentingInAppMessage = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
 
         Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
 
@@ -138,7 +135,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onError: { error in
                 switch error {
                 case .failedToLoadWindow:
-                        self.sessionStorage.isPresentingInAppMessage = false
+                        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                         Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
                 default:
                     break

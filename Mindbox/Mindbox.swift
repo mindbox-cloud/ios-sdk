@@ -562,7 +562,6 @@ public class Mindbox: NSObject {
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
         inAppMessagesManager = container.inAppMessagesManager
-        sessionTemporaryStorage = container.sessionTemporaryStorage
         inAppMessagesDelegate = self
         inappMessageEventSender = container.inappMessageEventSender
         pushValidator = container.pushValidator

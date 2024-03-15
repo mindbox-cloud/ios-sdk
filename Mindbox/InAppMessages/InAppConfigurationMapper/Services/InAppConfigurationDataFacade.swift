@@ -21,20 +21,17 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     
     let geoService: GeoServiceProtocol
     let segmentationService: SegmentationServiceProtocol
-    let sessionTemporaryStorage: SessionTemporaryStorage
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
     
     init(geoService: GeoServiceProtocol, 
          segmentationService: SegmentationServiceProtocol,
-         sessionTemporaryStorage: SessionTemporaryStorage,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
          tracker: InappTargetingTrackProtocol) {
         self.geoService = geoService
         self.segmentationService = segmentationService
-        self.sessionTemporaryStorage = sessionTemporaryStorage
         self.targetingChecker = targetingChecker
         self.imageService = imageService
         self.tracker = tracker
@@ -53,7 +50,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     }
     
     func setObservedOperation() {
-        sessionTemporaryStorage.observedCustomOperations = Set(targetingChecker.context.operationsName)
+        SessionTemporaryStorage.shared.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
     
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
@@ -76,7 +73,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
 private extension InAppConfigurationDataFacade {
     private func fetchSegmentationIfNeeded() {
-        if !sessionTemporaryStorage.checkSegmentsRequestCompleted {
+        if !SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
             dispatchGroup.enter()
             segmentationService.checkSegmentationRequest { response in
                 self.targetingChecker.checkedSegmentations = response
@@ -87,7 +84,7 @@ private extension InAppConfigurationDataFacade {
 
     private func fetchGeoIfNeeded() {
         if targetingChecker.context.isNeedGeoRequest
-            && !sessionTemporaryStorage.geoRequestCompleted {
+            && !SessionTemporaryStorage.shared.geoRequestCompleted {
             dispatchGroup.enter()
             geoService.geoRequest { model in
                 self.targetingChecker.geoModels = model
@@ -97,7 +94,7 @@ private extension InAppConfigurationDataFacade {
     }
 
     private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
-        if !sessionTemporaryStorage.checkProductSegmentsRequestCompleted,
+        if !SessionTemporaryStorage.shared.checkProductSegmentsRequestCompleted,
             let products = products {
             dispatchGroup.enter()
             segmentationService.checkProductSegmentationRequest(products: products) { response in
