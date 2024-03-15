@@ -122,6 +122,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         guard let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
                 Mindbox.shared.isMindboxPush(userInfo: userInfo) else {
+            Logger.pushNotifications.warning("Push Notifications are not from Mindbox. Process them separately.")
             return
         }
         
@@ -156,7 +157,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
     
     private func setUpMindboxLogger() {
-        Mindbox.logger.logLevel = .default
+        #if DEBUG
+            Mindbox.logger.logLevel = .debug
+        #endif
     }
     
     // Handling notifcations

@@ -8,7 +8,7 @@ target 'ExampleApp' do
   # use_frameworks!
 
   # Pods for ExampleApp
-  pod 'Mindbox', '2.8.3'
+  pod 'Mindbox', '2.8.4'
 
 end
 
