@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string></string>
+	<key>Endpoint</key>
+	<string>Mpush-test.ExampleCocoaPods.IosApp</string>
+	<key>Domain</key>
+	<string>api.mindbox.ru</string>
+	<key>Operation system name</key>
+	<string>InAppTestOperationIOSExampleApp</string>
+</dict>
+</plist>
