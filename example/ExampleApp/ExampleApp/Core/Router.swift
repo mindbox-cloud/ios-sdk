@@ -11,9 +11,7 @@ protocol Router {
     func showWebViewController(from viewController: UIViewController, url: URL?)
 }
 
-final class EARouter { }
-
-extension EARouter: Router {
+final class EARouter: Router {
     func showWebViewController(from viewController: UIViewController, url: URL?) {
         let webVC = WebViewController(url: url)
         webVC.sheetPresentationController?.detents = [.medium()]

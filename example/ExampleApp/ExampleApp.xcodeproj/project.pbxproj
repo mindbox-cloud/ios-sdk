@@ -219,9 +219,9 @@
 		BBECB4A22BA1A2C900B78428 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				BBCCF8482BA0A75B009A6037 /* Router.swift */,
 				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
 				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
+				BBCCF8482BA0A75B009A6037 /* Router.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
