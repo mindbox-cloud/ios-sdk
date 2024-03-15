@@ -15,9 +15,9 @@
 		BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */; };
 		BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CC012B9EFFED0068E7EE /* ViewController.swift */; };
 		BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */; };
-		BB30CC0A2B9EFFEE0068E7EE /* Base in Resources */ = {isa = PBXBuildFile; fileRef = BB30CC092B9EFFEE0068E7EE /* Base */; };
 		BB44C5882BA231F1004FD9A1 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44C5872BA231F1004FD9A1 /* NotificationService.swift */; };
 		BB44C58C2BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB44C5852BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB8460DE2BA493BE0062F16D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */; };
 		BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8462BA09108009A6037 /* WebViewController.swift */; };
 		BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8482BA0A75B009A6037 /* Router.swift */; };
 		BBECB4A12BA1A2A700B78428 /* PlistReaderProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBECB4A02BA1A2A700B78428 /* PlistReaderProtocols.swift */; };
@@ -79,11 +79,11 @@
 		BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		BB30CC012B9EFFED0068E7EE /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		BB30CC092B9EFFEE0068E7EE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BB30CC0B2B9EFFEE0068E7EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB44C5852BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MindboxNotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB44C5872BA231F1004FD9A1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		BB44C5892BA231F1004FD9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BBA0EA1B2B9F71F600A46841 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBCCF8462BA09108009A6037 /* WebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
 		BBCCF8482BA0A75B009A6037 /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
@@ -180,7 +180,7 @@
 			children = (
 				BB253A202B9F06DA0042446C /* ExampleApp.entitlements */,
 				BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */,
-				BB30CC082B9EFFEE0068E7EE /* LaunchScreen.storyboard */,
+				BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */,
 				BB30CC0B2B9EFFEE0068E7EE /* Info.plist */,
 				BB15E8EB2BA1960A006998B3 /* ExampleApp-Info.plist */,
 				BBECB4A32BA1A31500B78428 /* Extensions.swift */,
@@ -355,9 +355,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB8460DE2BA493BE0062F16D /* LaunchScreen.storyboard in Resources */,
 				BB15E8EC2BA1960A006998B3 /* ExampleApp-Info.plist in Resources */,
 				BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */,
-				BB30CC0A2B9EFFEE0068E7EE /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -509,17 +509,6 @@
 			targetProxy = BBF978B92BA23CD500A2BC09 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		BB30CC082B9EFFEE0068E7EE /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				BB30CC092B9EFFEE0068E7EE /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		BB30CC0C2B9EFFEE0068E7EE /* Debug */ = {
