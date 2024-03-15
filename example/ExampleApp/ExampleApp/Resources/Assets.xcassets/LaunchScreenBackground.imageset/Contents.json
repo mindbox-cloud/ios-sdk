@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "img.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "img 1.png",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "img 2.png",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "m-green_Main_large.png",
+      "idiom" : "universal"
     }
   ],
   "info" : {
