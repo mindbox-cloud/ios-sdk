@@ -150,11 +150,11 @@ final class ViewController: UIViewController {
             
             self.activityIndicator.stopAnimating()
             
-            UIView.animate(withDuration: 0.5) {
-                self.sdkVersionLabel.alpha = 1
-                self.deviceUuidLabel.alpha = 1
-                self.copyButton.alpha = 1
-                self.inAppTriggerButton.alpha = 1
+            UIView.animate(withDuration: Constants.animationDuration) {
+                self.sdkVersionLabel.alpha = Constants.endAlpha
+                self.deviceUuidLabel.alpha = Constants.endAlpha
+                self.copyButton.alpha = Constants.endAlpha
+                self.inAppTriggerButton.alpha = Constants.endAlpha
             }
         }
     }
@@ -207,7 +207,7 @@ private extension ViewController {
 
             deviceUuidLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             deviceUuidLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            deviceUuidLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            deviceUuidLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 30),
             
             copyButton.topAnchor.constraint(equalTo: deviceUuidLabel.bottomAnchor, constant: 25),
             copyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -228,12 +228,12 @@ private extension ViewController {
         // SetUp SDKVersionLabel
         sdkVersionLabel.translatesAutoresizingMaskIntoConstraints = false
         sdkVersionLabel.textAlignment = .center
-        sdkVersionLabel.alpha = 0
+        sdkVersionLabel.alpha = Constants.startAlpha
         
         // SetUp DeviceUUIDLabel
         deviceUuidLabel.translatesAutoresizingMaskIntoConstraints = false
         deviceUuidLabel.textAlignment = .center
-        deviceUuidLabel.alpha = 0
+        deviceUuidLabel.alpha = Constants.startAlpha
         
         // SetUp ActivityIndicator
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -263,8 +263,8 @@ private extension ViewController {
         )
         copyButton.backgroundColor = Constants.mindboxColor
         copyButton.tintColor = .white
-        copyButton.alpha = 0
-        copyButton.layer.cornerRadius = 15
+        copyButton.alpha = Constants.startAlpha
+        copyButton.layer.cornerRadius = Constants.cornerRadius
     }
     
     func setUpInAppTriggerButton() {
@@ -276,8 +276,8 @@ private extension ViewController {
         )
         inAppTriggerButton.backgroundColor = Constants.mindboxColor
         inAppTriggerButton.tintColor = .white
-        inAppTriggerButton.alpha = 0
-        inAppTriggerButton.layer.cornerRadius = 15
+        inAppTriggerButton.alpha = Constants.startAlpha
+        inAppTriggerButton.layer.cornerRadius = Constants.cornerRadius
     }
     
     @objc
@@ -304,4 +304,11 @@ fileprivate enum Constants {
         blue: 101 / 255,
         alpha: 1
     )
+    
+    static let startAlpha: CGFloat = 0
+    static let endAlpha: CGFloat = 1
+    
+    static let cornerRadius: CGFloat = 15
+    
+    static let animationDuration: TimeInterval = 0.5
 }
