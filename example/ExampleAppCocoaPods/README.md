@@ -4,6 +4,8 @@ This is an example of SDK [integration](https://developers.mindbox.ru/docs/ios-s
 
 Make sure you have CocoaPods installed or install it according to the [instructions](https://guides.cocoapods.org/using/getting-started.html#getting-started).
 
+# Steps to launch the application
+
 1. Install the pods
   ```ruby
   pod update
