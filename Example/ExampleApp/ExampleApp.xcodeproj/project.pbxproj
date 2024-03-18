@@ -20,7 +20,6 @@
 		0A69A2472B9F15890063E89E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2462B9F15890063E89E /* ViewController.swift */; };
 		0A69A24C2B9F158B0063E89E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24B2B9F158B0063E89E /* Assets.xcassets */; };
 		0A69A24F2B9F158B0063E89E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24E2B9F158B0063E89E /* Base */; };
-		0A6C602B2BA3067700F23881 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6C602A2BA3067700F23881 /* NotificationService.swift */; };
 		0AA077172BA7953C00F0838F /* Mindbox in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA077162BA7953C00F0838F /* Mindbox */; };
 /* End PBXBuildFile section */
 
@@ -89,7 +88,6 @@
 		0A69A2552B9F158B0063E89E /* ExampleAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExampleAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A69A25F2B9F158B0063E89E /* ExampleAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExampleAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A69A2792B9F230D0063E89E /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
-		0A6C602A2BA3067700F23881 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		0A6C60322BA3077800F23881 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		0A6C60342BA3077800F23881 /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -191,7 +189,6 @@
 				0A69A24B2B9F158B0063E89E /* Assets.xcassets */,
 				0A69A24D2B9F158B0063E89E /* LaunchScreen.storyboard */,
 				0A69A2502B9F158B0063E89E /* Info.plist */,
-				0A6C602A2BA3067700F23881 /* NotificationService.swift */,
 			);
 			path = ExampleApp;
 			sourceTree = "<group>";
@@ -422,7 +419,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A6C602B2BA3067700F23881 /* NotificationService.swift in Sources */,
 				0A69A2472B9F15890063E89E /* ViewController.swift in Sources */,
 				0A69A2432B9F15890063E89E /* AppDelegate.swift in Sources */,
 				0A69A2452B9F15890063E89E /* SceneDelegate.swift in Sources */,
