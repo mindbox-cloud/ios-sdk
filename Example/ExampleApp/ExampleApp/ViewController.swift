@@ -37,7 +37,6 @@ class ViewController: UIViewController {
         NSLayoutConstraint.activate([
             
             buttonAsync.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            //buttonAsync.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             buttonAsync.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -100),
             buttonAsync.widthAnchor.constraint(equalToConstant: 250),
             buttonAsync.heightAnchor.constraint(equalToConstant: 100),
