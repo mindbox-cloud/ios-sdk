@@ -78,6 +78,17 @@ final class ViewController: UIViewController {
         Mindbox.logger.log(level: .info, message: "Device UUID: \(self.deviceUUID)")
     }
     
+    private func triggerInApp() {
+        /// https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
+        let operationSystemName = plistReader.operationSystemName
+        let operationBody = OperationBodyRequest()
+        
+        Mindbox.shared.executeAsyncOperation(
+            operationSystemName: operationSystemName,
+            operationBody: operationBody
+        )
+    }
+    
     private func setUpDelegates() {
         Mindbox.shared.inAppMessagesDelegate = self
     }
@@ -153,7 +164,7 @@ private extension ViewController {
         copyButton.addTarget(self, action: #selector(copyButtonDidTap), for: .touchUpInside)
         
         setUpInAppTriggerButton()
-        inAppTriggerButton.addTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
+        inAppTriggerButton.addTarget(self, action: #selector(triggerInAppButtonDidTap), for: .touchUpInside)
     }
     
     func setUpCopyButton() {
@@ -177,19 +188,11 @@ private extension ViewController {
     @objc
     func copyButtonDidTap(_ sender: UIButton) {
         UIPasteboard.general.string = deviceUUID
-        triggerInApp(sender)
     }
     
     @objc
-    func triggerInApp(_ sender: UIButton) {
-        /// https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
-        let operationSystemName = plistReader.operationSystemName
-        let operationBody = OperationBodyRequest()
-        
-        Mindbox.shared.executeAsyncOperation(
-            operationSystemName: operationSystemName,
-            operationBody: operationBody
-        )
+    func triggerInAppButtonDidTap(_ sender: UIButton) {
+        triggerInApp()
     }
 }
 
