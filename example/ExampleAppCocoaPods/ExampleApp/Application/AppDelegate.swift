@@ -21,11 +21,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         initMindbox()
         
         #if DEBUG
+        // https://developers.mindbox.ru/docs/ios-sdk-methods#управление-логированием
             Mindbox.logger.logLevel = .debug
         #endif
         
-        // https://developers.mindbox.ru/docs/ios-setup-background-tasks-advanced#регистрация-фоновых-задач
-        Mindbox.shared.registerBGTasks()
+        registerBackgroundTasks()
         
         // https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
         Mindbox.shared.track(.launch(launchOptions))
@@ -50,6 +50,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFailToRegisterForRemoteNotificationsWithError error: any Error
     ) {
+        // https://developers.mindbox.ru/docs/ios-sdk-methods#mindboxloggerlog
         Mindbox.logger.log(
             level: .fault,
             message: "Fail to register for remote notifications with error: \(error.localizedDescription)"
@@ -68,14 +69,28 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
+    func application(
+        _ application: UIApplication,
+        performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        // https://developers.mindbox.ru/docs/ios-setup-background-tasks-advanced#регистрация-фоновых-задач
+        Mindbox.shared.application(
+            application,
+            performFetchWithCompletionHandler: completionHandler
+        )
+    }
+    
+    
+    // MARK: Private methods
+    
     // https://developers.mindbox.ru/docs/ios-sdk-initialization
     private func initMindbox() {
         
-        let plistReader: PlistReader = EAPlistReader.shared
-        let endpoint = plistReader.endpoint
-        let domain = plistReader.domain
+        let endpoint = "Mpush-test.ExampleCocoaPods.IosApp"
+        let domain = "api.mindbox.ru"
         
         do {
+            // https://developers.mindbox.ru/docs/ios-sdk-initialization#2-выбор-варианта-конфигурации-sdk
             let mindboxSdkConfiguration = try MBConfiguration(
                 endpoint: endpoint,
                 domain: domain,
@@ -83,9 +98,21 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                 shouldCreateCustomer: true
             )
             
+            // https://developers.mindbox.ru/docs/ios-sdk-initialization#3-инициализация-sdk
             Mindbox.shared.initialization(configuration: mindboxSdkConfiguration)
         } catch {
             Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
+        }
+    }
+    
+    private func registerBackgroundTasks() {
+        // https://developers.mindbox.ru/docs/ios-setup-background-tasks-advanced#регистрация-фоновых-задач
+        if #available(iOS 13.0, *) {
+            Mindbox.shared.registerBGTasks()
+        } else {
+            UIApplication.shared.setMinimumBackgroundFetchInterval(
+                UIApplication.backgroundFetchIntervalMinimum
+            )
         }
     }
 
@@ -157,6 +184,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         
         completionHandler()
     }
+    
+    
+    // MARK: Private Methods
     
     private func openUrl(_ url: URL?) {
         guard let url else {
