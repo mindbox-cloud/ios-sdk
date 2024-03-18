@@ -10,26 +10,25 @@ import Mindbox
 
 final class ViewController: UIViewController {
     
-    private var deviceUUID: String
+    private var deviceUUID: String = ""
     
+    // MARK: Dependency Injection Private Properties
+
     private let router: Router
-    
     private let plistReader: PlistReaderOperation
     
+    // MARK: UI Private Properties
+    
     private lazy var deviceUuidLabel = UILabel()
-    
     private lazy var copyButton = UIButton(type: .system)
-    
     private lazy var inAppTriggerButton = UIButton(type: .system)
     
     // MARK: Init
     
     init(
-        deviceUUID: String = String(),
         router: Router = EARouter(),
         plistReader: PlistReaderOperation = EAPlistReader.shared
     ) {
-        self.deviceUUID = deviceUUID
         self.router = router
         self.plistReader = plistReader
         super.init(nibName: nil, bundle: nil)
