@@ -16,25 +16,11 @@ final class ViewController: UIViewController {
     
     private let plistReader: PlistReaderOperation
     
-    private lazy var deviceUuidLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textAlignment = .center
-        return label
-    }()
+    private lazy var deviceUuidLabel = UILabel()
     
     private lazy var copyButton = UIButton(type: .system)
     
-    private lazy var inAppTriggerButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(Constants.inAppTriggerButtonTitle, for: .normal)
-        button.setImage(
-            UIImage(systemName: Constants.inAppTriggerButtonSystemImageName),
-            for: .normal
-        )
-        return button
-    }()
+    private lazy var inAppTriggerButton = UIButton(type: .system)
     
     // MARK: Init
     
@@ -58,6 +44,7 @@ final class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpLayout()
+        setUpDeviceUUIDLabel()
         setUpButtons()
         getDeviceUUID()
         setUpDelegates()
@@ -98,7 +85,6 @@ final class ViewController: UIViewController {
             self.deviceUuidLabel.text = self.deviceUUID
         }
     }
-
 }
 
 // MARK: - InAppMessagesDelegate
@@ -152,6 +138,11 @@ private extension ViewController {
             inAppTriggerButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             inAppTriggerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
         ])
+    }
+    
+    func setUpDeviceUUIDLabel() {
+        deviceUuidLabel.translatesAutoresizingMaskIntoConstraints = false
+        deviceUuidLabel.textAlignment = .center
     }
 }
 
