@@ -9,7 +9,11 @@
 import Foundation
 import UserNotifications
 
-class InappFilterByPushPermission {
+protocol InappFilterByPushPermissionProtocol {
+    func checkPushPermissionConditionPassed(from variant: MindboxFormVariant) -> Bool
+}
+
+class InappFilterByPushPermission: InappFilterByPushPermissionProtocol {
     
     func checkPushPermissionConditionPassed(from variant: MindboxFormVariant) -> Bool {
         switch variant {
@@ -31,7 +35,6 @@ class InappFilterByPushPermission {
             case .image(let imageModel):
                 switch imageModel.action {
                     case .pushPermission:
-                        
                         return checkPushPermission()
                     default:
                         return true

@@ -23,7 +23,6 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     let uuidDebugService: UUIDDebugService
-    let sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
     let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
@@ -34,9 +33,9 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
+    var pushPermissionFilterService: InappFilterByPushPermission
     
     init() throws {
-        sessionTemporaryStorage = SessionTemporaryStorage()
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
@@ -58,28 +57,23 @@ final class TestDependencyProvider: DependencyContainer {
         inAppTargetingChecker = InAppTargetingChecker()
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
-        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
-                                                          sessionStorage: sessionTemporaryStorage)
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 8)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
-                                sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
-                                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        
+        pushPermissionFilterService = InappFilterByPushPermission()
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
-                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService,
                                                                     tracker: tracker)
 
-        
         let actionFilter = LayerActionFilterService()
         let sourceFilter = LayersSourceFilterService()
         let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
