@@ -28,15 +28,12 @@ class ViewController: UIViewController {
             button.widthAnchor.constraint(equalToConstant: 200),
             button.heightAnchor.constraint(equalToConstant: 100)
         ])
-        
     }
     
     @objc private func didTapButton() {
         let json = "{}"
-        Mindbox.shared.executeSyncOperation(operationSystemName: "Test1",
-                                            json: json) { result in
-            print("click")
-        }
+        Mindbox.shared.executeAsyncOperation(operationSystemName: "Test1",
+                                             json: json)
     }
 }
 

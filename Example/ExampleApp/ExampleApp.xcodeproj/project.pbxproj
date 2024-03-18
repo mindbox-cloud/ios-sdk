@@ -20,8 +20,8 @@
 		0A69A2472B9F15890063E89E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69A2462B9F15890063E89E /* ViewController.swift */; };
 		0A69A24C2B9F158B0063E89E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24B2B9F158B0063E89E /* Assets.xcassets */; };
 		0A69A24F2B9F158B0063E89E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 0A69A24E2B9F158B0063E89E /* Base */; };
-		0A69A2742B9F17460063E89E /* Mindbox in Frameworks */ = {isa = PBXBuildFile; productRef = 0A69A2732B9F17460063E89E /* Mindbox */; };
 		0A6C602B2BA3067700F23881 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6C602A2BA3067700F23881 /* NotificationService.swift */; };
+		0AA077172BA7953C00F0838F /* Mindbox in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA077162BA7953C00F0838F /* Mindbox */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,7 +117,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A69A2742B9F17460063E89E /* Mindbox in Frameworks */,
+				0AA077172BA7953C00F0838F /* Mindbox in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,7 +265,7 @@
 			);
 			name = ExampleApp;
 			packageProductDependencies = (
-				0A69A2732B9F17460063E89E /* Mindbox */,
+				0AA077162BA7953C00F0838F /* Mindbox */,
 			);
 			productName = ExampleApp;
 			productReference = 0A69A23F2B9F15890063E89E /* ExampleApp.app */;
@@ -922,7 +922,7 @@
 			package = 0A69A2722B9F17460063E89E /* XCRemoteSwiftPackageReference "ios-sdk" */;
 			productName = MindboxNotificationsContent;
 		};
-		0A69A2732B9F17460063E89E /* Mindbox */ = {
+		0AA077162BA7953C00F0838F /* Mindbox */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0A69A2722B9F17460063E89E /* XCRemoteSwiftPackageReference "ios-sdk" */;
 			productName = Mindbox;

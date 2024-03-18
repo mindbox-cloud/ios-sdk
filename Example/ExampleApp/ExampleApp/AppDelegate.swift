@@ -11,28 +11,18 @@ import Foundation
 
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, InAppMessagesDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
-    func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        print("click")
-    }
-    
-    func inAppMessageDismissed(id: String) {
-        print("close")
-    }
-    
+    //https://developers.mindbox.ru/docs/ios-sdk-initialization
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         do {
-            
             let mindboxSdkConfig = try MBConfiguration(
                 endpoint: "Mpush-test.ExampleApp.IosApp",
                 domain: "api.mindbox.ru",
                 subscribeCustomerIfCreated: true,
                 shouldCreateCustomer: true
             )
-            
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
-            Mindbox.shared.inAppMessagesDelegate = self
             Mindbox.shared.getDeviceUUID {
                 deviceUUID in print(deviceUUID)
             }
@@ -43,6 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         return true
     }
     
+    //https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced
     func registerForRemoteNotifications() {
         UNUserNotificationCenter.current().delegate = self
         DispatchQueue.main.async {
@@ -57,6 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         }
     }
     
+    //https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -65,6 +57,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         completionHandler([.alert, .badge, .sound])
     }
     
+    //https://developers.mindbox.ru/docs/ios-app-start-tracking-advanced
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -73,10 +66,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             completionHandler()
         }
     
+    //https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced
     func application(
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-            // Остальной код в методе, если есть.
             Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
         }
     
@@ -91,8 +84,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
-    
-    
 }
 
 
