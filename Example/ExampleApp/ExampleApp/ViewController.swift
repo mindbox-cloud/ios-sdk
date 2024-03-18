@@ -69,6 +69,12 @@ class ViewController: UIViewController {
         let json = "{}"
         Mindbox.shared.executeSyncOperation(operationSystemName: "Test1",
                                             json: json) { result in
+            switch result {
+            case .success(let operationResponse):
+                break
+            case .failure(let mindboxError):
+                Mindbox.logger.log(level: .error, message: "\(mindboxError)")
+            }
         }
     }
 }
