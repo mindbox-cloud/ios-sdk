@@ -41,7 +41,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             UNUserNotificationCenter.current().requestAuthorization(options: [ .alert, .sound, .badge]) { granted, error in
                 print("Permission granted: \(granted)")
                 if let error = error {
-                    print("NotificationsRequestAuthorization failed with error: \(error.localizedDescription)")
+                    Mindbox.logger.log(level: .error, message: "NotificationsRequestAuthorization failed with error: \(error.localizedDescription)")
                 }
                 Mindbox.shared.notificationsRequestAuthorization(granted: granted)
             }
