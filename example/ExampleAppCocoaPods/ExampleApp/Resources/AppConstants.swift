@@ -9,17 +9,13 @@ import UIKit
 
 enum Constants {
     
-    enum Buttons {
-        enum Title: String {
-            case copy = "Copy"
-            case trigger = "Trigger In-App"
-        }
-        
-        enum ImageName: String {
-            case copy = "doc.on.doc"
-            case trigger = "icloud.and.arrow.up"
-        }
-    }
+    static let NotificationCenterName = "MindboxNotificationReceived"
+    
+    static let inAppTriggerButtonTitle = "Trigger In-App: Sync Operation"
+    static let inAppTriggerButtonImage = UIImage(systemName: "icloud.and.arrow.up")
+    
+    static let copyActionTitle = "Copy"
+    static let copyActionImage = UIImage(systemName: "doc.on.doc")
     
     static let mindboxColor = UIColor(
         red: 91 / 255,

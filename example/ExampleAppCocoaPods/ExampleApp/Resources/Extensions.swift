@@ -13,29 +13,8 @@ extension UIView {
     }
 }
 
-extension UIButton {
-    convenience init(title: Constants.Buttons.Title, image: Constants.Buttons.ImageName) {
-        self.init(type: .system)
-        self.translatesAutoresizingMaskIntoConstraints = false
-        self.setTitle(title.rawValue, for: .normal)
-        self.setImage(
-            UIImage(systemName: image.rawValue),
-            for: .normal
-        )
-        self.backgroundColor = Constants.mindboxColor
-        self.tintColor = .white
-        self.alpha = Constants.startAlpha
-        self.isHidden = true
-        self.layer.cornerRadius = Constants.cornerRadius
-    }
-}
-
-extension UILabel {
-    convenience init(numberOfLines: Int) {
-        self.init()
-        self.translatesAutoresizingMaskIntoConstraints = false
-        self.numberOfLines = numberOfLines
-        self.textAlignment = .center
-        self.alpha = Constants.startAlpha
+extension UIStackView {
+    func addArrangedSubviews(_ views: UIView...) {
+        views.forEach { addArrangedSubview($0) }
     }
 }

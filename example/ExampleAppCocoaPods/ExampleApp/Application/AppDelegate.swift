@@ -22,7 +22,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         #if DEBUG
         // https://developers.mindbox.ru/docs/ios-sdk-methods#управление-логированием
-            Mindbox.logger.logLevel = .debug
+//            Mindbox.logger.logLevel = .debug
         #endif
         
         registerBackgroundTasks()
@@ -178,9 +178,18 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             if let payload = pushModel.payload {
                 Mindbox.logger.log(level: .debug, message: payload)
             }
-            
-            openUrl(url)
+            // TODO: Uncomment
+//            openUrl(url)
         }
+        
+        NotificationCenter.default.post(
+            name: Notification.Name(Constants.NotificationCenterName),
+            object: nil,
+            userInfo: [
+                "userInfo": userInfo,
+                "actionIdentifier": response.actionIdentifier
+            ]
+        )
         
         completionHandler()
     }

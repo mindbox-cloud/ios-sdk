@@ -11,13 +11,14 @@
 		3F8BA80FD3B318141FBBED1F /* Pods_ExampleApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80ADE3A288769725B42EA6DA /* Pods_ExampleApp.framework */; };
 		BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF272BA99DD900005FEC /* Extensions.swift */; };
 		BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF292BA99E9C00005FEC /* AppConstants.swift */; };
-		BB29AF2D2BA9A31100005FEC /* ButtonFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF2C2BA9A31100005FEC /* ButtonFactory.swift */; };
 		BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */; };
 		BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */; };
 		BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CC012B9EFFED0068E7EE /* ViewController.swift */; };
 		BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB30CC062B9EFFEE0068E7EE /* Assets.xcassets */; };
 		BB44C5882BA231F1004FD9A1 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44C5872BA231F1004FD9A1 /* NotificationService.swift */; };
 		BB44C58C2BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB44C5852BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB641D4A2BA9BB0E005F64D3 /* View.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB641D492BA9BB0E005F64D3 /* View.swift */; };
+		BB641D4D2BA9F53E005F64D3 /* PushNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB641D4C2BA9F53E005F64D3 /* PushNotificationView.swift */; };
 		BB8460DE2BA493BE0062F16D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */; };
 		BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8462BA09108009A6037 /* WebViewController.swift */; };
 		BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8482BA0A75B009A6037 /* Router.swift */; };
@@ -73,7 +74,6 @@
 		BB253A202B9F06DA0042446C /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
 		BB29AF272BA99DD900005FEC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		BB29AF292BA99E9C00005FEC /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
-		BB29AF2C2BA9A31100005FEC /* ButtonFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonFactory.swift; sourceTree = "<group>"; };
 		BB30CBFA2B9EFFED0068E7EE /* ExampleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExampleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BB30CBFF2B9EFFED0068E7EE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -83,6 +83,8 @@
 		BB44C5852BA231F1004FD9A1 /* MindboxNotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MindboxNotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB44C5872BA231F1004FD9A1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		BB44C5892BA231F1004FD9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB641D492BA9BB0E005F64D3 /* View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View.swift; sourceTree = "<group>"; };
+		BB641D4C2BA9F53E005F64D3 /* PushNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationView.swift; sourceTree = "<group>"; };
 		BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BBA0EA1B2B9F71F600A46841 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBCCF8462BA09108009A6037 /* WebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
@@ -204,13 +206,22 @@
 			path = MindboxNotificationServiceExtension;
 			sourceTree = "<group>";
 		};
+		BB641D4E2BA9F572005F64D3 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				BB641D492BA9BB0E005F64D3 /* View.swift */,
+				BB641D4C2BA9F53E005F64D3 /* PushNotificationView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		BBECB4A22BA1A2C900B78428 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				BB641D4E2BA9F572005F64D3 /* Views */,
 				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
 				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
 				BBCCF8482BA0A75B009A6037 /* Router.swift */,
-				BB29AF2C2BA9A31100005FEC /* ButtonFactory.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -458,11 +469,12 @@
 			files = (
 				BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */,
 				BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */,
-				BB29AF2D2BA9A31100005FEC /* ButtonFactory.swift in Sources */,
 				BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */,
 				BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */,
+				BB641D4A2BA9BB0E005F64D3 /* View.swift in Sources */,
 				BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */,
 				BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */,
+				BB641D4D2BA9F53E005F64D3 /* PushNotificationView.swift in Sources */,
 				BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

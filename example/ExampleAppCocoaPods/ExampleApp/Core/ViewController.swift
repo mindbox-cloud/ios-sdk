@@ -14,30 +14,16 @@ final class ViewController: UIViewController {
     private var sdkVersion: String = ""
     private var apnsToken: String = ""
     
-    // MARK: Dependency Injection Private Properties
-
     private let router: Router
-    private let factory: ButtonFactory
     
-    // MARK: UI Private Properties
-    
-    private lazy var activityIndicator = UIActivityIndicatorView(style: .large)
-    private lazy var deviceUuidLabel = UILabel(numberOfLines: 2)
-    private lazy var sdkVersionLabel = UILabel(numberOfLines: 1)
-    private lazy var apnsTokenLabel = UILabel(numberOfLines: 0)
-    private lazy var copyDeviceUUIDButton = factory.createButton(type: .copy)
-    private lazy var copyAPNSTokenButton = factory.createButton(type: .copy)
-    private lazy var inAppTriggerButton = factory.createButton(type: .trigger)
-    
+    private let eaView = View()
     
     // MARK: Init
     
     init(
-        router: Router = EARouter(),
-        factory: ButtonFactory = EAButtonFactory()
+        router: Router = EARouter()
     ) {
         self.router = router
-        self.factory = factory
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -46,19 +32,29 @@ final class ViewController: UIViewController {
     }
     
     // MARK: Life Cycle
+    
+    override func loadView() {
+        view = eaView
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setUpLayout()
+        setUpNotificationCenter()
+        setUpDelegates()
+        
         getDeviceUUID()
         getSdkVersion()
         getApnsTokenVersion()
-        setUpDelegates()
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        showData()
+        eaView.showData(apnsToken: apnsToken, deviceUUID: deviceUUID, sdkVersion: sdkVersion)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: Private methods
@@ -87,7 +83,7 @@ final class ViewController: UIViewController {
     }
     
     private func triggerInApp() {
-        activityIndicator.startAnimating()
+        eaView.startAnimationOfActivityIndicator()
         
         /// https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation#ios
         let operationSystemName = "InAppTestOperationIOSExampleApp"
@@ -112,7 +108,7 @@ final class ViewController: UIViewController {
                 )
             }
             
-            self?.activityIndicator.stopAnimating()
+            self?.eaView.stopAnimationOfActivityIndicator()
         }
     }
     
@@ -155,38 +151,45 @@ final class ViewController: UIViewController {
         Mindbox.shared.inAppMessagesDelegate = self
     }
     
-    private func showData() {
-        activityIndicator.startAnimating()
+    private func setUpNotificationCenter() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleMindboxNotification),
+            name: Notification.Name(Constants.NotificationCenterName),
+            object: nil
+        )
+    }
+    
+    @objc private func handleMindboxNotification(_ notification: Notification) {
+        guard let notificationInfo = notification.userInfo as? [String: Any],
+              let userInfo = notificationInfo["userInfo"] as? [AnyHashable: Any],
+              let actionIdentifier = notificationInfo["actionIdentifier"] as? String else {
+            return
+        }
         
-        DispatchQueue.main.async {
-            self.apnsTokenLabel.text = "APNS token: \(self.apnsToken)"
-            self.deviceUuidLabel.text = "Device UUID:\n\(self.deviceUUID)"
-            self.sdkVersionLabel.text = "SDK version: \(self.sdkVersion)"
+        if let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
+           Mindbox.shared.isMindboxPush(userInfo: userInfo) {
             
-            self.activityIndicator.stopAnimating()
+            var buttons = [(text: String?, url: String?)]()
             
-            UIView.animate(withDuration: Constants.animationDuration) {
-                self.sdkVersionLabel.alpha = Constants.endAlpha
-                self.deviceUuidLabel.alpha = Constants.endAlpha
-                self.apnsTokenLabel.alpha = Constants.endAlpha
-                
-                self.inAppTriggerButton.isHidden = false
-                self.inAppTriggerButton.alpha = Constants.endAlpha
-                
-                if !self.deviceUUID.isEmpty {
-                    self.copyDeviceUUIDButton.isHidden = false
-                    self.copyDeviceUUIDButton.alpha = Constants.endAlpha
-                } else {
-                    self.deviceUuidLabel.text = "Device UUID is missing"
-                }
-                
-                if !self.apnsToken.isEmpty {
-                    self.copyAPNSTokenButton.isHidden = false
-                    self.copyAPNSTokenButton.alpha = Constants.endAlpha
-                } else {
-                    self.apnsTokenLabel.text = "APNS token is missing"
-                }
+            if let mbButtons = pushModel.buttons {
+                print(mbButtons.count)
+                mbButtons.forEach { buttons.append((text: $0.text, url: $0.url)) }
             }
+            
+            var clickUrl = ""
+            
+            if let clickStringUrl = pushModel.clickUrl {
+                clickUrl = clickStringUrl
+            }
+            
+            var payloadText = ""
+            
+            if let payload = pushModel.payload {
+                payloadText = payload
+            }
+            
+            eaView.createNotificationInfo(buttons: buttons, urlFromPush: clickUrl, payload: payloadText)
         }
     }
 }
@@ -209,100 +212,5 @@ extension ViewController: InAppMessagesDelegate {
     
     func inAppMessageDismissed(id: String) {
         Mindbox.logger.log(level: .debug, message: "Dismiss InAppView")
-    }
-}
-
-// MARK: - SetUp Layout
-
-private extension ViewController {
-    
-    func setUpLayout() {
-        view.backgroundColor = .systemBackground
-        
-        view.addSubviews(
-            activityIndicator,
-            apnsTokenLabel,
-            deviceUuidLabel,
-            copyDeviceUUIDButton,
-            copyAPNSTokenButton,
-            inAppTriggerButton,
-            sdkVersionLabel
-        )
-        
-        setUpActivityIndicator()
-        setUpButtons()
-        
-        setUpConstraints()
-    }
-    
-    func setUpConstraints() {
-        NSLayoutConstraint.activate([
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            apnsTokenLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 25),
-            apnsTokenLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            apnsTokenLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 25),
-            apnsTokenLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -25),
-            
-            copyAPNSTokenButton.topAnchor.constraint(equalTo: apnsTokenLabel.bottomAnchor, constant: 15),
-            copyAPNSTokenButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            copyAPNSTokenButton.widthAnchor.constraint(equalToConstant: 100),
-            copyAPNSTokenButton.heightAnchor.constraint(equalToConstant: 40),
-            
-
-            deviceUuidLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            deviceUuidLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            deviceUuidLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 35),
-            
-            copyDeviceUUIDButton.topAnchor.constraint(equalTo: deviceUuidLabel.bottomAnchor, constant: 15),
-            copyDeviceUUIDButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            copyDeviceUUIDButton.widthAnchor.constraint(equalToConstant: 100),
-            copyDeviceUUIDButton.heightAnchor.constraint(equalToConstant: 40),
-            
-            inAppTriggerButton.topAnchor.constraint(equalTo: copyDeviceUUIDButton.bottomAnchor, constant: 50),
-            inAppTriggerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            inAppTriggerButton.widthAnchor.constraint(equalToConstant: 150),
-            inAppTriggerButton.heightAnchor.constraint(equalToConstant: 40),
-            
-            sdkVersionLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -25),
-            sdkVersionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-        ])
-    }
-    
-    func setUpActivityIndicator() {
-        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicator.hidesWhenStopped = true
-        activityIndicator.color = Constants.mindboxColor
-    }
-}
-
-// MARK: - SetUp Buttons
-
-private extension ViewController {
-    
-    func setUpButtons() {
-        copyDeviceUUIDButton.addTarget(self, action: #selector(copyDeviceUUIDButtonDidTap), for: .touchUpInside)
-        copyAPNSTokenButton.addTarget(self, action: #selector(copyAPNSTokenButtonDidTap), for: .touchUpInside)
-        inAppTriggerButton.addTarget(self, action: #selector(triggerInAppButtonDidTap), for: .touchUpInside)
-    }
-    
-    @objc
-    func copyDeviceUUIDButtonDidTap(_ sender: UIButton) {
-        if !deviceUUID.isEmpty {
-            UIPasteboard.general.string = deviceUUID
-        }
-    }
-    
-    @objc
-    func copyAPNSTokenButtonDidTap(_ sender: UIButton) {
-        if !apnsToken.isEmpty {
-            UIPasteboard.general.string = apnsToken
-        }
-    }
-    
-    @objc
-    func triggerInAppButtonDidTap(_ sender: UIButton) {
-        triggerInApp()
     }
 }
