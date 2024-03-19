@@ -23,8 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 shouldCreateCustomer: true
             )
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
-            Mindbox.shared.getDeviceUUID {
-                deviceUUID in print(deviceUUID)
+            Mindbox.shared.getDeviceUUID {deviceUUID in
+                print(deviceUUID)
             }
         } catch  {
             Mindbox.logger.log(level: .error, message: "\(error)")
