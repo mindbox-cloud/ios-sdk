@@ -39,6 +39,7 @@ class ViewController: UIViewController {
         }
     }
     
+    //Next comes the interface layout, which is not related to the use of SDK 
     let buttonAsync = UIButton()
     let buttonSync = UIButton()
     let labelDeviceUUID = UILabel()
@@ -102,7 +103,6 @@ class ViewController: UIViewController {
         buttonCopyAPNSToken.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonCopyAPNSToken)
         
-
         NSLayoutConstraint.activate([
             
             buttonAsync.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -132,23 +132,17 @@ class ViewController: UIViewController {
             buttonCopyAPNSToken.topAnchor.constraint(equalTo: labelAPNSToken.bottomAnchor, constant: 25),
             buttonCopyAPNSToken.widthAnchor.constraint(equalToConstant: 250),
             buttonCopyAPNSToken.heightAnchor.constraint(equalToConstant: 70),
-            
-            
         ])
     }
-    
-
     
     @objc
     func copyDeviceUUIDToClipboard() {
         UIPasteboard.general.string = labelDeviceUUID.text
-        print("copy")
     }
     
     @objc
     func copyAPNSTokenToClipboard() {
         UIPasteboard.general.string = labelAPNSToken.text
-        print("copy")
     }
 }
 
