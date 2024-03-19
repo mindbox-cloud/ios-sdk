@@ -17,21 +17,32 @@ class ViewController: UIViewController {
     //Change "operationSystemName" according to the name of the operation
     //For "didTapButtonAsync" and "didTapButtonSync"
     @objc private func didTapButtonAsync() {
-        let json = "{}"
-        Mindbox.shared.executeAsyncOperation(operationSystemName: "Test1",
+        let json = """
+        { "viewProduct":
+            { "product":
+                { "ids":
+                    { "website": "9" }
+                }
+            }
+        }
+        """
+        Mindbox.shared.executeAsyncOperation(operationSystemName: "Test2",
                                              json: json)
     }
     
     @objc private func didTapButtonSync() {
-        let json = "{}"
-        Mindbox.shared.executeSyncOperation(operationSystemName: "Test1",
-                                            json: json) { result in
-            switch result {
-            case .success(_):
-                break
-            case .failure(let mindboxError):
-                Mindbox.logger.log(level: .error, message: "\(mindboxError)")
+        let json = """
+        { "viewProduct":
+            { "product":
+                { "ids":
+                    { "website": "94" }
+                }
             }
+        }
+        """
+        Mindbox.shared.executeSyncOperation(operationSystemName: "Test2",
+                                   json: json) { result in
+
         }
     }
     
