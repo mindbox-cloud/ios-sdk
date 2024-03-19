@@ -24,9 +24,9 @@ class SnackbarView: UIView {
     }
     private var safeAreaTopInset: CGFloat {
         if #available(iOS 11.0, *) {
-            return window?.safeAreaInsets.top ?? Constants.defaultSafeAreaBottomInset
+            return window?.safeAreaInsets.top ?? Constants.defaultSafeAreaTopInset
         } else {
-            return Constants.defaultSafeAreaBottomInset
+            return Constants.defaultSafeAreaTopInset
         }
     }
 
@@ -34,6 +34,7 @@ class SnackbarView: UIView {
         static let defaultAnimationTime: TimeInterval = 0.3
         static let swipeThresholdFraction: CGFloat = 0.5
         static let defaultSafeAreaBottomInset: CGFloat = .zero
+        static let defaultSafeAreaTopInset: CGFloat = .zero
         static let noTranslationX: CGFloat = .zero
         static let noTranslationY: CGFloat = .zero
     }
