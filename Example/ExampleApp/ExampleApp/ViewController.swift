@@ -31,7 +31,7 @@ class ViewController: UIViewController {
         Mindbox.shared.executeSyncOperation(operationSystemName: "Test1",
                                             json: json) { result in
             switch result {
-            case .success(let operationResponse):
+            case .success(_):
                 break
             case .failure(let mindboxError):
                 Mindbox.logger.log(level: .error, message: "\(mindboxError)")
@@ -61,53 +61,49 @@ class ViewController: UIViewController {
         
         //Next comes the interface layout, which is not related to the use of SDK
         
+        let defaultButtonColor = UIColor(named: "MindboxGreen")
+        let defaultButtonTextColor = UIColor.white
+        let defaultLabelTextColor = UIColor.black
+        
+        func defaultSetupButton(title: String, button: UIButton) {
+            button.setTitle(title, for: .normal)
+            button.backgroundColor = defaultButtonColor
+            button.setTitleColor(defaultButtonTextColor, for: .normal)
+            button.titleLabel?.numberOfLines = 0
+            button.titleLabel?.lineBreakMode = .byWordWrapping
+            button.translatesAutoresizingMaskIntoConstraints = false
+        }
+        
+        func defaultSetupLabel(label: UILabel) {
+            label.numberOfLines = 0
+            label.textColor = defaultLabelTextColor
+            label.translatesAutoresizingMaskIntoConstraints = false
+        }
+        
+        func addSubViews(views: [UIView]) {
+            views.forEach { v in
+                view.addSubview(v)
+            }
+        }
+        addSubViews(views: [buttonSync, buttonAsync, buttonCopyAPNSToken, buttonCopyDeviceUUID, labelAPNSToken, labelDeviceUUID])
+        
         view.backgroundColor = .white
-        
-        buttonAsync.setTitle("Show in-app (with executeAsyncOperation)", for: .normal)
-        buttonAsync.backgroundColor = UIColor(red: 55/255, green: 169/255, blue: 92/255, alpha: 1)
-        buttonAsync.setTitleColor(.white, for: .normal)
+
         buttonAsync.addTarget(self, action: #selector(didTapButtonAsync), for: .touchUpInside)
-        buttonAsync.titleLabel?.numberOfLines = 0
-        buttonAsync.titleLabel?.lineBreakMode = .byWordWrapping
-        buttonAsync.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonAsync)
+        defaultSetupButton(title: "Show in-app (with executeAsyncOperation)", button: buttonAsync)
         
-        buttonSync.setTitle("Show in-app (with executeSyncOperation)", for: .normal)
-        buttonSync.backgroundColor = UIColor(red: 55/255, green: 169/255, blue: 92/255, alpha: 1)
-        buttonSync.setTitleColor(.white, for: .normal)
         buttonSync.addTarget(self, action: #selector(didTapButtonAsync), for: .touchUpInside)
-        buttonSync.titleLabel?.numberOfLines = 0
-        buttonSync.titleLabel?.lineBreakMode = .byWordWrapping
-        buttonSync.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonSync)
-
-        labelDeviceUUID.numberOfLines = 0
-        labelDeviceUUID.textColor = .black
-        labelDeviceUUID.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(labelDeviceUUID)
+        defaultSetupButton(title: "Show in-app (with executeSyncOperation)", button: buttonSync)
         
-        buttonCopyDeviceUUID.setTitle("Сopy deviceUUID to clipboard", for: .normal)
-        buttonCopyDeviceUUID.backgroundColor = UIColor(red: 55/255, green: 169/255, blue: 92/255, alpha: 1)
-        buttonCopyDeviceUUID.setTitleColor(.white, for: .normal)
         buttonCopyDeviceUUID.addTarget(self, action: #selector(copyDeviceUUIDToClipboard), for: .touchUpInside)
-        buttonCopyDeviceUUID.titleLabel?.numberOfLines = 0
-        buttonCopyDeviceUUID.titleLabel?.lineBreakMode = .byWordWrapping
-        buttonCopyDeviceUUID.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonCopyDeviceUUID)
-
-        labelAPNSToken.numberOfLines = 0
-        labelAPNSToken.textColor = .black
-        labelAPNSToken.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(labelAPNSToken)
+        defaultSetupButton(title: "Сopy deviceUUID to clipboard", button: buttonCopyDeviceUUID)
         
-        buttonCopyAPNSToken.setTitle("Сopy APNSToken to clipboard", for: .normal)
-        buttonCopyAPNSToken.backgroundColor = UIColor(red: 55/255, green: 169/255, blue: 92/255, alpha: 1)
-        buttonCopyAPNSToken.setTitleColor(.white, for: .normal)
         buttonCopyAPNSToken.addTarget(self, action: #selector(copyAPNSTokenToClipboard), for: .touchUpInside)
-        buttonCopyAPNSToken.titleLabel?.numberOfLines = 0
-        buttonCopyAPNSToken.titleLabel?.lineBreakMode = .byWordWrapping
-        buttonCopyAPNSToken.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonCopyAPNSToken)
+        defaultSetupButton(title: "Сopy APNSToken to clipboard", button: buttonCopyAPNSToken)
+
+        defaultSetupLabel(label: labelDeviceUUID)
+        
+        defaultSetupLabel(label: labelAPNSToken)
         
         NSLayoutConstraint.activate([
             
