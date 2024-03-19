@@ -88,7 +88,7 @@ class ViewController: UIViewController {
         buttonAsync.addTarget(self, action: #selector(didTapButtonAsync), for: .touchUpInside)
         defaultSetupButton(title: "Show in-app (with executeAsyncOperation)", button: buttonAsync)
         
-        buttonSync.addTarget(self, action: #selector(didTapButtonAsync), for: .touchUpInside)
+        buttonSync.addTarget(self, action: #selector(didTapButtonSync), for: .touchUpInside)
         defaultSetupButton(title: "Show in-app (with executeSyncOperation)", button: buttonSync)
         
         buttonCopyDeviceUUID.addTarget(self, action: #selector(copyDeviceUUIDToClipboard), for: .touchUpInside)
