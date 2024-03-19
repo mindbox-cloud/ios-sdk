@@ -12,26 +12,32 @@ final class ViewController: UIViewController {
     
     private var deviceUUID: String = ""
     private var sdkVersion: String = ""
+    private var apnsToken: String = ""
     
     // MARK: Dependency Injection Private Properties
 
     private let router: Router
+    private let factory: ButtonFactory
     
     // MARK: UI Private Properties
     
     private lazy var activityIndicator = UIActivityIndicatorView(style: .large)
     private lazy var deviceUuidLabel = UILabel()
     private lazy var sdkVersionLabel = UILabel()
-    private lazy var copyButton = UIButton(type: .system)
-    private lazy var inAppTriggerButton = UIButton(type: .system)
+    private lazy var apnsTokenLabel = UILabel()
+    private lazy var copyDeviceUUIDButton = factory.createButton(type: .copy)
+    private lazy var copyAPNSTokenButton = factory.createButton(type: .copy)
+    private lazy var inAppTriggerButton = factory.createButton(type: .trigger)
     
     
     // MARK: Init
     
     init(
-        router: Router = EARouter()
+        router: Router = EARouter(),
+        factory: ButtonFactory = EAButtonFactory()
     ) {
         self.router = router
+        self.factory = factory
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -46,6 +52,7 @@ final class ViewController: UIViewController {
         setUpLayout()
         getDeviceUUID()
         getSdkVersion()
+        getApnsTokenVersion()
         setUpDelegates()
     }
     
@@ -70,6 +77,12 @@ final class ViewController: UIViewController {
         sdkVersion = Mindbox.shared.sdkVersion
         
         Mindbox.logger.log(level: .info, message: "SDK version: \(sdkVersion)")
+    }
+    
+    private func getApnsTokenVersion() {
+        Mindbox.shared.getAPNSToken({ [weak self] token in
+            self?.apnsToken = token
+        })
     }
     
     private func triggerInApp() {
@@ -145,7 +158,8 @@ final class ViewController: UIViewController {
         activityIndicator.startAnimating()
         
         DispatchQueue.main.async {
-            self.deviceUuidLabel.text = self.deviceUUID
+            self.apnsTokenLabel.text = "APNS token: \(self.apnsToken)"
+            self.deviceUuidLabel.text = "Device UUID:\n\(self.deviceUUID)"
             self.sdkVersionLabel.text = "SDK version: \(self.sdkVersion)"
             
             self.activityIndicator.stopAnimating()
@@ -153,8 +167,10 @@ final class ViewController: UIViewController {
             UIView.animate(withDuration: Constants.animationDuration) {
                 self.sdkVersionLabel.alpha = Constants.endAlpha
                 self.deviceUuidLabel.alpha = Constants.endAlpha
-                self.copyButton.alpha = Constants.endAlpha
+                self.copyDeviceUUIDButton.alpha = Constants.endAlpha
+                self.copyAPNSTokenButton.alpha = Constants.endAlpha
                 self.inAppTriggerButton.alpha = Constants.endAlpha
+                self.apnsTokenLabel.alpha = Constants.endAlpha
             }
         }
     }
@@ -188,11 +204,15 @@ private extension ViewController {
     func setUpLayout() {
         view.backgroundColor = .systemBackground
         
-        view.addSubview(activityIndicator)
-        view.addSubview(deviceUuidLabel)
-        view.addSubview(copyButton)
-        view.addSubview(inAppTriggerButton)
-        view.addSubview(sdkVersionLabel)
+        view.addSubviews(
+            activityIndicator,
+            apnsTokenLabel,
+            deviceUuidLabel,
+            copyDeviceUUIDButton,
+            copyAPNSTokenButton,
+            inAppTriggerButton,
+            sdkVersionLabel
+        )
         
         setUpUIViews()
         setUpButtons()
@@ -204,17 +224,28 @@ private extension ViewController {
         NSLayoutConstraint.activate([
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            apnsTokenLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 25),
+            apnsTokenLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            apnsTokenLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 25),
+            apnsTokenLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -25),
+            
+            copyAPNSTokenButton.topAnchor.constraint(equalTo: apnsTokenLabel.bottomAnchor, constant: 15),
+            copyAPNSTokenButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            copyAPNSTokenButton.widthAnchor.constraint(equalToConstant: 100),
+            copyAPNSTokenButton.heightAnchor.constraint(equalToConstant: 40),
+            
 
             deviceUuidLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             deviceUuidLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            deviceUuidLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 30),
+            deviceUuidLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 35),
             
-            copyButton.topAnchor.constraint(equalTo: deviceUuidLabel.bottomAnchor, constant: 25),
-            copyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            copyButton.widthAnchor.constraint(equalToConstant: 100),
-            copyButton.heightAnchor.constraint(equalToConstant: 40),
+            copyDeviceUUIDButton.topAnchor.constraint(equalTo: deviceUuidLabel.bottomAnchor, constant: 15),
+            copyDeviceUUIDButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            copyDeviceUUIDButton.widthAnchor.constraint(equalToConstant: 100),
+            copyDeviceUUIDButton.heightAnchor.constraint(equalToConstant: 40),
             
-            inAppTriggerButton.topAnchor.constraint(equalTo: copyButton.bottomAnchor, constant: 25),
+            inAppTriggerButton.topAnchor.constraint(equalTo: copyDeviceUUIDButton.bottomAnchor, constant: 50),
             inAppTriggerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             inAppTriggerButton.widthAnchor.constraint(equalToConstant: 150),
             inAppTriggerButton.heightAnchor.constraint(equalToConstant: 40),
@@ -225,6 +256,12 @@ private extension ViewController {
     }
     
     func setUpUIViews() {
+        // SetUp APNSTokenLabel
+        apnsTokenLabel.translatesAutoresizingMaskIntoConstraints = false
+        apnsTokenLabel.numberOfLines = 0
+        apnsTokenLabel.textAlignment = .center
+        apnsTokenLabel.alpha = Constants.startAlpha
+        
         // SetUp SDKVersionLabel
         sdkVersionLabel.translatesAutoresizingMaskIntoConstraints = false
         sdkVersionLabel.textAlignment = .center
@@ -232,6 +269,7 @@ private extension ViewController {
         
         // SetUp DeviceUUIDLabel
         deviceUuidLabel.translatesAutoresizingMaskIntoConstraints = false
+        deviceUuidLabel.numberOfLines = 2
         deviceUuidLabel.textAlignment = .center
         deviceUuidLabel.alpha = Constants.startAlpha
         
@@ -247,68 +285,23 @@ private extension ViewController {
 private extension ViewController {
     
     func setUpButtons() {
-        setUpCopyButton()
-        copyButton.addTarget(self, action: #selector(copyButtonDidTap), for: .touchUpInside)
-        
-        setUpInAppTriggerButton()
+        copyDeviceUUIDButton.addTarget(self, action: #selector(copyDeviceUUIDButtonDidTap), for: .touchUpInside)
+        copyAPNSTokenButton.addTarget(self, action: #selector(copyAPNSTokenButtonDidTap), for: .touchUpInside)
         inAppTriggerButton.addTarget(self, action: #selector(triggerInAppButtonDidTap), for: .touchUpInside)
     }
     
-    func setUpCopyButton() {
-        copyButton.translatesAutoresizingMaskIntoConstraints = false
-        copyButton.setTitle(Constants.copyButtonTitle, for: .normal)
-        copyButton.setImage(
-            UIImage(systemName: Constants.copyButtonSystemImageName),
-            for: .normal
-        )
-        copyButton.backgroundColor = Constants.mindboxColor
-        copyButton.tintColor = .white
-        copyButton.alpha = Constants.startAlpha
-        copyButton.layer.cornerRadius = Constants.cornerRadius
-    }
-    
-    func setUpInAppTriggerButton() {
-        inAppTriggerButton.translatesAutoresizingMaskIntoConstraints = false
-        inAppTriggerButton.setTitle(Constants.inAppTriggerButtonTitle, for: .normal)
-        inAppTriggerButton.setImage(
-            UIImage(systemName: Constants.inAppTriggerButtonSystemImageName),
-            for: .normal
-        )
-        inAppTriggerButton.backgroundColor = Constants.mindboxColor
-        inAppTriggerButton.tintColor = .white
-        inAppTriggerButton.alpha = Constants.startAlpha
-        inAppTriggerButton.layer.cornerRadius = Constants.cornerRadius
+    @objc
+    func copyDeviceUUIDButtonDidTap(_ sender: UIButton) {
+        UIPasteboard.general.string = deviceUUID
     }
     
     @objc
-    func copyButtonDidTap(_ sender: UIButton) {
-        UIPasteboard.general.string = deviceUUID
+    func copyAPNSTokenButtonDidTap(_ sender: UIButton) {
+        UIPasteboard.general.string = apnsToken
     }
     
     @objc
     func triggerInAppButtonDidTap(_ sender: UIButton) {
         triggerInApp()
     }
-}
-
-fileprivate enum Constants {
-    static let copyButtonTitle = "Copy"
-    static let copyButtonSystemImageName = "doc.on.doc"
-    
-    static let inAppTriggerButtonTitle = "Trigger In-App"
-    static let inAppTriggerButtonSystemImageName = "icloud.and.arrow.up"
-    
-    static let mindboxColor = UIColor(
-        red: 91 / 255,
-        green: 168 / 255,
-        blue: 101 / 255,
-        alpha: 1
-    )
-    
-    static let startAlpha: CGFloat = 0
-    static let endAlpha: CGFloat = 1
-    
-    static let cornerRadius: CGFloat = 15
-    
-    static let animationDuration: TimeInterval = 0.5
 }
