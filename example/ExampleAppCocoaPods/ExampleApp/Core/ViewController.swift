@@ -22,9 +22,9 @@ final class ViewController: UIViewController {
     // MARK: UI Private Properties
     
     private lazy var activityIndicator = UIActivityIndicatorView(style: .large)
-    private lazy var deviceUuidLabel = UILabel()
-    private lazy var sdkVersionLabel = UILabel()
-    private lazy var apnsTokenLabel = UILabel()
+    private lazy var deviceUuidLabel = UILabel(numberOfLines: 2)
+    private lazy var sdkVersionLabel = UILabel(numberOfLines: 1)
+    private lazy var apnsTokenLabel = UILabel(numberOfLines: 0)
     private lazy var copyDeviceUUIDButton = factory.createButton(type: .copy)
     private lazy var copyAPNSTokenButton = factory.createButton(type: .copy)
     private lazy var inAppTriggerButton = factory.createButton(type: .trigger)
@@ -214,7 +214,7 @@ private extension ViewController {
             sdkVersionLabel
         )
         
-        setUpUIViews()
+        setUpActivityIndicator()
         setUpButtons()
         
         setUpConstraints()
@@ -255,25 +255,7 @@ private extension ViewController {
         ])
     }
     
-    func setUpUIViews() {
-        // SetUp APNSTokenLabel
-        apnsTokenLabel.translatesAutoresizingMaskIntoConstraints = false
-        apnsTokenLabel.numberOfLines = 0
-        apnsTokenLabel.textAlignment = .center
-        apnsTokenLabel.alpha = Constants.startAlpha
-        
-        // SetUp SDKVersionLabel
-        sdkVersionLabel.translatesAutoresizingMaskIntoConstraints = false
-        sdkVersionLabel.textAlignment = .center
-        sdkVersionLabel.alpha = Constants.startAlpha
-        
-        // SetUp DeviceUUIDLabel
-        deviceUuidLabel.translatesAutoresizingMaskIntoConstraints = false
-        deviceUuidLabel.numberOfLines = 2
-        deviceUuidLabel.textAlignment = .center
-        deviceUuidLabel.alpha = Constants.startAlpha
-        
-        // SetUp ActivityIndicator
+    func setUpActivityIndicator() {
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.hidesWhenStopped = true
         activityIndicator.color = Constants.mindboxColor

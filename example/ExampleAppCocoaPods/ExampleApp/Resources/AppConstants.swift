@@ -21,12 +21,6 @@ enum Constants {
         }
     }
     
-//    static let copyButtonTitle = "Copy"
-//    static let copyButtonSystemImageName = "doc.on.doc"
-//    
-//    static let inAppTriggerButtonTitle = "Trigger In-App"
-//    static let inAppTriggerButtonSystemImageName = "icloud.and.arrow.up"
-    
     static let mindboxColor = UIColor(
         red: 91 / 255,
         green: 168 / 255,
