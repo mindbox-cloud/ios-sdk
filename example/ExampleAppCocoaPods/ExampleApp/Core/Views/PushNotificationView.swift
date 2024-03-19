@@ -13,7 +13,7 @@ final class PushNotificationView: UIView {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
-        stackView.alignment = .leading
+        stackView.alignment = .fill
         stackView.distribution = .fillProportionally
         stackView.spacing = 10
         stackView.isLayoutMarginsRelativeArrangement = true
@@ -27,6 +27,13 @@ final class PushNotificationView: UIView {
         stackView.alpha = Constants.startAlpha
         
         return stackView
+    }()
+    
+    private lazy var separator: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = Constants.mindboxColor
+        return view
     }()
     
     private lazy var pushNotificationInfoLabel: UILabel = {
@@ -130,6 +137,7 @@ final class PushNotificationView: UIView {
         
         stackView.addArrangedSubviews(
             pushNotificationInfoLabel,
+            separator,
             urlFromPushLabel,
             payloadLabel,
             firstButtonLabel,
@@ -146,6 +154,8 @@ final class PushNotificationView: UIView {
             stackView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
+            
+            separator.heightAnchor.constraint(equalToConstant: 1),
         ])
     }
 }
