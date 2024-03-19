@@ -39,7 +39,7 @@ class ViewController: UIViewController {
         }
     }
     
-    //Next comes the interface layout, which is not related to the use of SDK 
+
     let buttonAsync = UIButton()
     let buttonSync = UIButton()
     let labelDeviceUUID = UILabel()
@@ -48,7 +48,19 @@ class ViewController: UIViewController {
     let buttonCopyAPNSToken  = UIButton()
     
     override func viewDidLoad() {
+        
         super.viewDidLoad()
+        
+        Mindbox.shared.getAPNSToken { APNSToken in
+            self.labelAPNSToken.text = APNSToken
+        }
+        
+        Mindbox.shared.getDeviceUUID { deviceUUID in
+            self.labelDeviceUUID.text = deviceUUID
+        }
+        
+        //Next comes the interface layout, which is not related to the use of SDK
+        
         view.backgroundColor = .white
         
         buttonAsync.setTitle("Show in-app (with executeAsyncOperation)", for: .normal)
@@ -69,9 +81,6 @@ class ViewController: UIViewController {
         buttonSync.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonSync)
 
-        Mindbox.shared.getDeviceUUID { deviceUUID in
-            self.labelDeviceUUID.text = deviceUUID
-        }
         labelDeviceUUID.numberOfLines = 0
         labelDeviceUUID.textColor = .black
         labelDeviceUUID.translatesAutoresizingMaskIntoConstraints = false
@@ -85,10 +94,7 @@ class ViewController: UIViewController {
         buttonCopyDeviceUUID.titleLabel?.lineBreakMode = .byWordWrapping
         buttonCopyDeviceUUID.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonCopyDeviceUUID)
-        
-        Mindbox.shared.getAPNSToken { APNSToken in
-            self.labelAPNSToken.text = APNSToken
-        }
+
         labelAPNSToken.numberOfLines = 0
         labelAPNSToken.textColor = .black
         labelAPNSToken.translatesAutoresizingMaskIntoConstraints = false
