@@ -19,10 +19,11 @@ final class InappFilterServiceTests: XCTestCase {
     }
 
     var sut: InappFilterProtocol!
-    var container = try! TestDependencyProvider()
+    var container: TestDependencyProvider!
     
     override func setUp() {
         super.setUp()
+        container = try! TestDependencyProvider()
         sut = container.inappFilterService
     }
     

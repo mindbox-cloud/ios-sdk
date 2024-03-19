@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol InAppActionHandlerProtocol {
     func handleAction(
@@ -29,6 +30,13 @@ final class InAppActionHandler: InAppActionHandlerProtocol {
                       onTap: @escaping InAppMessageTapAction,
                       close: @escaping () -> Void) {
         switch action {
+            case .pushPermission(let pushPermissionModel):
+                Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
+                actionUseCase.onTapAction(id: id,
+                                          value: "",
+                                          payload: pushPermissionModel.intentPayload,
+                                          onTap: onTap,
+                                          close: close)
             case .redirectUrl(let redirectModel):
                 actionUseCase.onTapAction(id: id,
                                           value: redirectModel.value,
