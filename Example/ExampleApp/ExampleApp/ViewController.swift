@@ -27,8 +27,7 @@ class ViewController: UIViewController {
             }
         }
         """
-        Mindbox.shared.executeAsyncOperation(operationSystemName: "Test2",
-                                             json: json)
+        Mindbox.shared.executeAsyncOperation(operationSystemName: "Test2", json: json)
     }
     
     @objc private func didTapButtonSync() {
@@ -41,9 +40,13 @@ class ViewController: UIViewController {
             }
         }
         """
-        Mindbox.shared.executeSyncOperation(operationSystemName: "Test2",
-                                   json: json) { result in
-
+        Mindbox.shared.executeSyncOperation(operationSystemName: "Test2", json: json) { result in
+            switch result {
+            case .success(_):
+                break
+            case .failure(let error):
+                Mindbox.logger.log(level: .error, message: "\(error)")
+            }
         }
     }
     
@@ -92,6 +95,7 @@ class ViewController: UIViewController {
                 view.addSubview(v)
             }
         }
+        
         addSubViews(views: [buttonSync, buttonAsync, buttonCopyAPNSToken, buttonCopyDeviceUUID, labelAPNSToken, labelDeviceUUID])
         
         view.backgroundColor = .white
