@@ -25,6 +25,7 @@ extension UIButton {
         self.backgroundColor = Constants.mindboxColor
         self.tintColor = .white
         self.alpha = Constants.startAlpha
+        self.isHidden = true
         self.layer.cornerRadius = Constants.cornerRadius
     }
 }

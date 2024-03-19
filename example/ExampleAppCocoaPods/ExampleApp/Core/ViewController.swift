@@ -80,6 +80,7 @@ final class ViewController: UIViewController {
     }
     
     private func getApnsTokenVersion() {
+        // https://developers.mindbox.ru/docs/ios-sdk-methods#getapnstoken
         Mindbox.shared.getAPNSToken({ [weak self] token in
             self?.apnsToken = token
         })
@@ -167,10 +168,24 @@ final class ViewController: UIViewController {
             UIView.animate(withDuration: Constants.animationDuration) {
                 self.sdkVersionLabel.alpha = Constants.endAlpha
                 self.deviceUuidLabel.alpha = Constants.endAlpha
-                self.copyDeviceUUIDButton.alpha = Constants.endAlpha
-                self.copyAPNSTokenButton.alpha = Constants.endAlpha
-                self.inAppTriggerButton.alpha = Constants.endAlpha
                 self.apnsTokenLabel.alpha = Constants.endAlpha
+                
+                self.inAppTriggerButton.isHidden = false
+                self.inAppTriggerButton.alpha = Constants.endAlpha
+                
+                if !self.deviceUUID.isEmpty {
+                    self.copyDeviceUUIDButton.isHidden = false
+                    self.copyDeviceUUIDButton.alpha = Constants.endAlpha
+                } else {
+                    self.deviceUuidLabel.text = "Device UUID is missing"
+                }
+                
+                if !self.apnsToken.isEmpty {
+                    self.copyAPNSTokenButton.isHidden = false
+                    self.copyAPNSTokenButton.alpha = Constants.endAlpha
+                } else {
+                    self.apnsTokenLabel.text = "APNS token is missing"
+                }
             }
         }
     }
@@ -274,12 +289,16 @@ private extension ViewController {
     
     @objc
     func copyDeviceUUIDButtonDidTap(_ sender: UIButton) {
-        UIPasteboard.general.string = deviceUUID
+        if !deviceUUID.isEmpty {
+            UIPasteboard.general.string = deviceUUID
+        }
     }
     
     @objc
     func copyAPNSTokenButtonDidTap(_ sender: UIButton) {
-        UIPasteboard.general.string = apnsToken
+        if !apnsToken.isEmpty {
+            UIPasteboard.general.string = apnsToken
+        }
     }
     
     @objc
