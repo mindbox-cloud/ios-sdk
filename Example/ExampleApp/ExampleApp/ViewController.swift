@@ -15,17 +15,13 @@ class ViewController: UIViewController {
     //Сreate an operation:
     //https://help.mindbox.ru/docs/%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B8-v-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%B5-%D1%81%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F
     //Change "operationSystemName" according to the name of the operation
+    //For "didTapButtonAsync" and "didTapButtonSync"
     @objc private func didTapButtonAsync() {
         let json = "{}"
         Mindbox.shared.executeAsyncOperation(operationSystemName: "Test1",
                                              json: json)
     }
     
-    //Create an In-App according to these instructions:
-    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
-    //Сreate an operation:
-    //https://help.mindbox.ru/docs/%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B8-v-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%B5-%D1%81%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F
-    //Change "operationSystemName" according to the name of the operation
     @objc private func didTapButtonSync() {
         let json = "{}"
         Mindbox.shared.executeSyncOperation(operationSystemName: "Test1",
