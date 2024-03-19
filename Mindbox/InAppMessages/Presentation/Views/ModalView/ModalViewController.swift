@@ -22,6 +22,10 @@ protocol InappViewControllerProtocol {
 
 final class ModalViewController: UIViewController, InappViewControllerProtocol, GestureHandler {
     
+    enum Constants {
+        static let alphaBackgroundColor: CGFloat = 0.2
+    }
+    
     var layers = [UIView]()
     var elements = [UIView]()
     let elementFactories: [ContentElementType: ElementFactory] = [
@@ -62,7 +66,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black.withAlphaComponent(0.2)
+        view.backgroundColor = .black.withAlphaComponent(Constants.alphaBackgroundColor)
         let onTapDimmedViewGesture = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true

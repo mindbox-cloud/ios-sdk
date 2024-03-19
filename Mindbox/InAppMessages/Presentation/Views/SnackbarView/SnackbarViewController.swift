@@ -46,6 +46,10 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         static let animationDuration: TimeInterval = 0.5
         static let screenPart: CGFloat = 3.0
         static let oneThirdScreenHeight: CGFloat = UIScreen.main.bounds.height / Constants.screenPart
+        static let edgeConstraint: CGFloat = .zero
+        static let initialSafeAreaTopOffset: CGFloat = .zero
+        static let initialSafeAreaBottomOffset: CGFloat = .zero
+        static let topOffset: CGFloat = .zero
     }
 
     init(
@@ -147,7 +151,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         view.layoutIfNeeded()
         
         UIView.animate(withDuration: duration) {
-            self.edgeConstraint?.constant = 0
+            self.edgeConstraint?.constant = Constants.edgeConstraint
             self.view.layoutIfNeeded()
         }
     }
@@ -230,14 +234,14 @@ class TopSnackbarViewController: SnackbarViewController {
     }
 
     override func setViewFrame(with height: CGFloat) {
-        var safeAreaTopOffset: CGFloat = 0
+        var safeAreaTopOffset: CGFloat = Constants.initialSafeAreaTopOffset
         if #available(iOS 11.0, *) {
             safeAreaTopOffset = view.safeAreaInsets.top
         }
 
         let finalHeight = height + safeAreaTopOffset
 
-        self.view.frame = CGRect(x: leftOffset, y: 0,
+        self.view.frame = CGRect(x: leftOffset, y: Constants.topOffset,
                                  width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
     }
@@ -261,7 +265,7 @@ class BottomSnackbarViewController: SnackbarViewController {
     
     override func setViewFrame(with height: CGFloat) {
         let screenHeight = UIScreen.main.bounds.height
-        var safeAreaBottomOffset: CGFloat = 0
+        var safeAreaBottomOffset: CGFloat = Constants.initialSafeAreaBottomOffset
         if #available(iOS 11.0, *) {
             safeAreaBottomOffset = view.safeAreaInsets.bottom
         }

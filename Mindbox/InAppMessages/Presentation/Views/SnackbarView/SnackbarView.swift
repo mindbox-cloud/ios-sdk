@@ -17,22 +17,25 @@ class SnackbarView: UIView {
     
     private var safeAreaBottomInset: CGFloat {
         if #available(iOS 11.0, *) {
-            return window?.safeAreaInsets.bottom ?? 0
+            return window?.safeAreaInsets.bottom ?? Constants.defaultSafeAreaBottomInset
         } else {
-            return 0
+            return Constants.defaultSafeAreaBottomInset
         }
     }
     private var safeAreaTopInset: CGFloat {
         if #available(iOS 11.0, *) {
-            return window?.safeAreaInsets.top ?? 0
+            return window?.safeAreaInsets.top ?? Constants.defaultSafeAreaBottomInset
         } else {
-            return 0
+            return Constants.defaultSafeAreaBottomInset
         }
     }
 
-    enum Constants {
+    private enum Constants {
         static let defaultAnimationTime: TimeInterval = 0.3
         static let swipeThresholdFraction: CGFloat = 0.5
+        static let defaultSafeAreaBottomInset: CGFloat = .zero
+        static let noTranslationX: CGFloat = .zero
+        static let noTranslationY: CGFloat = .zero
     }
 
     init(onClose: @escaping () -> Void,
@@ -62,15 +65,17 @@ class SnackbarView: UIView {
     }
 
     private func handleSwipeGesture(translation: CGPoint) {
-        if (swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0) {
-            self.transform = CGAffineTransform(translationX: 0, y: translation.y)
+        if (swipeDirection == .up && translation.y < .zero) || 
+            (swipeDirection == .down && translation.y > .zero) {
+            self.transform = CGAffineTransform(translationX: Constants.noTranslationX, y: translation.y)
         }
     }
 
     private func finalizeGesture(translation: CGPoint) {
         let threshold = frame.height * Constants.swipeThresholdFraction +
         (swipeDirection == .up ? safeAreaTopInset : safeAreaBottomInset)
-        if ((swipeDirection == .up && translation.y < 0) || (swipeDirection == .down && translation.y > 0)) &&
+        if ((swipeDirection == .up && translation.y < .zero) || 
+            (swipeDirection == .down && translation.y > .zero)) &&
             abs(translation.y) > threshold {
             animateHide(completion: onClose, animated: true)
             
@@ -102,9 +107,9 @@ class SnackbarView: UIView {
             case .down:
                 yOffset = frame.height + safeAreaBottomInset
             default:
-                yOffset = 0
+                yOffset = Constants.noTranslationY
         }
-        self.transform = CGAffineTransform(translationX: 0, y: yOffset)
+        self.transform = CGAffineTransform(translationX: Constants.noTranslationX, y: yOffset)
     }
 
     public func hide(animated: Bool = true, completion: (() -> Void)? = nil) {
