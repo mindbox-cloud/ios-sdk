@@ -12,7 +12,6 @@ final class PushNotificationView: UIView {
     private lazy var stackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
-//        stackView.isHidden = true
         stackView.axis = .vertical
         stackView.alignment = .leading
         stackView.distribution = .fillProportionally
@@ -25,7 +24,7 @@ final class PushNotificationView: UIView {
         stackView.layer.borderColor = Constants.mindboxColor.cgColor
         stackView.layer.borderWidth = 1
         
-        stackView.alpha = 0
+        stackView.alpha = Constants.startAlpha
         
         return stackView
     }()
@@ -33,43 +32,46 @@ final class PushNotificationView: UIView {
     private lazy var pushNotificationInfoLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 22)
-        label.text = "PushNotification Info"
+        label.text = Constants.pushNotificationInfoTitle
         label.isHidden = true
         return label
     }()
     
     private lazy var urlFromPushLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
+        label.numberOfLines = 2
         return label
     }()
     
     private lazy var payloadLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
+        label.numberOfLines = 3
         return label
     }()
     
     private lazy var firstButtonLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
-//        label.textAlignment = .center
+        label.numberOfLines = 3
         return label
     }()
     
     private lazy var secondButtonLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
-//        label.textAlignment = .center
+        label.numberOfLines = 3
         return label
     }()
     
     private lazy var thirdButtonLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
-//        label.textAlignment = .center
+        label.numberOfLines = 3
         return label
     }()
+    
+    private lazy var buttonLabels: [UILabel] = [
+        firstButtonLabel,
+        secondButtonLabel,
+        thirdButtonLabel
+    ]
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -81,48 +83,40 @@ final class PushNotificationView: UIView {
     }
     
     func fillData(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String) {
-//        stackView.isHidden = false
-        UIView.animate(withDuration: 1) {
-            self.stackView.alpha = 1
+        UIView.animate(withDuration: Constants.animationDuration) {
+            self.stackView.alpha = Constants.startAlpha
+        } completion: { flag in
+            UIView.animate(withDuration: Constants.animationDuration) {
+                self.stackView.alpha = Constants.endAlpha
+            }
         }
+
         pushNotificationInfoLabel.isHidden = false
-        if !urlFromPush.isEmpty {
-            urlFromPushLabel.text = "URL from push: \(urlFromPush)"
-        } else {
-            urlFromPushLabel.text = "URL from push: Empty"
-        }
+        
+        urlFromPushLabel.text = !urlFromPush.isEmpty ? "URL from push: \"\(urlFromPush)\"" : "URL from push: \(Constants.emptyString)"
         
         if !payload.isEmpty {
             payloadLabel.isHidden = false
-            payloadLabel.text = "Payload: \(payload)"
+            payloadLabel.text = "Payload: \"\(payload)\""
         } else {
             payloadLabel.isHidden = true
-            payloadLabel.text = "Payload: Empty"
+            payloadLabel.text = "Payload: \(Constants.emptyString)"
         }
         
+        buttonLabels.forEach { $0.isHidden = true }
+        
         if !buttons.isEmpty {
-            firstButtonLabel.isHidden = false
-            secondButtonLabel.isHidden = false
-            thirdButtonLabel.isHidden = false
-            for (index, button) in buttons.enumerated() {
+            for (index, button) in buttons.enumerated() where index < buttonLabels.count {
                 
-                if index == 0 {
-                    firstButtonLabel.text = "Button \(index + 1):\nText: \(button.text ?? "Empty"),\nURL: \(button.url ?? "Empty")"
-                }
-                if index == 1 {
-                    secondButtonLabel.text = "Button \(index + 1):\nText: \(button.text ?? "Empty"),\nURL: \(button.url ?? "Empty")"
-                }
-                if index == 2 {
-                    thirdButtonLabel.text = "Button \(index + 1):\nText: \(button.text ?? "Empty"),\nURL: \(button.url ?? "Empty")"
-                }
+                let buttonLabel = buttonLabels[index]
+                
+                buttonLabel.isHidden = false
+                
+                let buttonText = button.text ?? Constants.emptyString
+                let buttonUrl = button.url ?? Constants.emptyString
+                
+                buttonLabel.text = "Button \(index + 1):\nText: \"\(buttonText)\" \nURL: \"\(buttonUrl)\""
             }
-        } else {
-            firstButtonLabel.isHidden = true
-            secondButtonLabel.isHidden = true
-            thirdButtonLabel.isHidden = true
-//            firstButtonLabel.alpha = 0
-//            secondButtonLabel.alpha = 0
-//            thirdButtonLabel.alpha = 0
         }
     }
     

@@ -11,8 +11,8 @@ protocol ViewProtocol: AnyObject {
     func startAnimationOfActivityIndicator()
     func stopAnimationOfActivityIndicator()
     func showData(apnsToken: String, deviceUUID: String, sdkVersion: String)
-    
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event)
+    func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String)
 }
 
 final class View: UIView {
@@ -113,35 +113,6 @@ final class View: UIView {
     
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String) {
         pushNotificationView.fillData(buttons: buttons, urlFromPush: urlFromPush, payload: payload)
-//        if !urlFromPush.isEmpty {
-//            let urlFromPushLabel = UILabel()
-//            urlFromPushLabel.text = "URL from push: \(urlFromPush)"
-//            urlFromPushLabel.alpha = 0
-//            let stackViewsCount = stackView.subviews.count - 1
-//            self.stackView.insertArrangedSubview(urlFromPushLabel, at: stackViewsCount - 1)
-//            UIView.animate(withDuration: 1) {
-//                urlFromPushLabel.alpha = 1
-//            }
-//        }
-//        
-//        if !payload.isEmpty {
-//            let payloadLabel = UILabel()
-//            payloadLabel.text = "Payload: \(payload)"
-//            let stackViewsCount = stackView.subviews.count - 1
-//            stackView.insertArrangedSubview(payloadLabel, at: stackViewsCount - 1)
-//        }
-//        
-//        if !buttons.isEmpty {
-//            for (index, button) in buttons.enumerated(){
-//                let buttonLabel = UILabel()
-//                buttonLabel.numberOfLines = 3
-//                buttonLabel.textAlignment = .center
-//                buttonLabel.text = "Button \(index + 1):\nText: \(button.text),\nURL: \(button.url)"
-//                let stackViewsCount = stackView.subviews.count - 1
-//                stackView.insertArrangedSubview(buttonLabel, at: stackViewsCount - 1)
-//            }
-//        }
-        
     }
     
     // MARK: Private methods
@@ -150,8 +121,8 @@ final class View: UIView {
         self.backgroundColor = .systemBackground
         
         self.addSubviews(
-            activityIndicator,
-            stackView
+            stackView,
+            activityIndicator
         )
         
         stackView.addArrangedSubviews(

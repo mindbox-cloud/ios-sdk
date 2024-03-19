@@ -16,7 +16,7 @@ final class ViewController: UIViewController {
     
     private let router: Router
     
-    private let eaView = View()
+    private lazy var eaView = View()
     
     // MARK: Init
     
@@ -41,11 +41,11 @@ final class ViewController: UIViewController {
         super.viewDidLoad()
         setUpNotificationCenter()
         setUpDelegates()
+        setUpTriggerInApp()
         
         getDeviceUUID()
         getSdkVersion()
         getApnsTokenVersion()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -82,6 +82,7 @@ final class ViewController: UIViewController {
         })
     }
     
+    @objc
     private func triggerInApp() {
         eaView.startAnimationOfActivityIndicator()
         
@@ -151,21 +152,21 @@ final class ViewController: UIViewController {
         Mindbox.shared.inAppMessagesDelegate = self
     }
     
+    private func setUpTriggerInApp() {
+        eaView.addTriggerInAppTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
+    }
+    
     private func setUpNotificationCenter() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleMindboxNotification),
-            name: Notification.Name(Constants.NotificationCenterName),
+            name: Notification.Name(Constants.notificationCenterName),
             object: nil
         )
     }
     
     @objc private func handleMindboxNotification(_ notification: Notification) {
-        guard let notificationInfo = notification.userInfo as? [String: Any],
-              let userInfo = notificationInfo["userInfo"] as? [AnyHashable: Any],
-              let actionIdentifier = notificationInfo["actionIdentifier"] as? String else {
-            return
-        }
+        guard let userInfo = notification.userInfo else { return }
         
         if let pushModel = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
            Mindbox.shared.isMindboxPush(userInfo: userInfo) {
