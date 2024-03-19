@@ -16,6 +16,7 @@ class ViewController: UIViewController {
     //https://help.mindbox.ru/docs/%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B8-v-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%B5-%D1%81%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F
     //Change "operationSystemName" according to the name of the operation
     //For "didTapButtonAsync" and "didTapButtonSync"
+    //If you don't want to test targeting by product and category use empty json like `let json = "{}"`
     @objc private func didTapButtonAsync() {
         let json = """
         { "viewProduct":
@@ -46,7 +47,6 @@ class ViewController: UIViewController {
         }
     }
     
-
     let buttonAsync = UIButton()
     let buttonSync = UIButton()
     let labelDeviceUUID = UILabel()
