@@ -58,7 +58,7 @@ final class ViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        showDeviceUUIDandSDKVersion()
+        showData()
     }
     
     // MARK: Private methods
@@ -155,7 +155,7 @@ final class ViewController: UIViewController {
         Mindbox.shared.inAppMessagesDelegate = self
     }
     
-    private func showDeviceUUIDandSDKVersion() {
+    private func showData() {
         activityIndicator.startAnimating()
         
         DispatchQueue.main.async {
