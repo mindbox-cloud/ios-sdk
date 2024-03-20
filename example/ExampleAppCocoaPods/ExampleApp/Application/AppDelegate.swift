@@ -179,7 +179,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 Mindbox.logger.log(level: .debug, message: payload)
             }
             
-//            openUrl(url)
+//            openUrlInBrowser(url)
         }
         
         NotificationCenter.default.post(
@@ -194,7 +194,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     
     // MARK: Private Methods
     
-    private func openUrl(_ url: URL?) {
+    private func openUrlInBrowser(_ url: URL?) {
         guard let url else {
             Mindbox.logger.log(
                 level: .debug,
