@@ -29,9 +29,13 @@ final class View: UIView {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
-        stackView.alignment = .center
+        stackView.alignment = .fill
         stackView.distribution = .fillProportionally
         stackView.spacing = 10
+        
+        stackView.isLayoutMarginsRelativeArrangement = true
+        stackView.layoutMargins = .init(top: 10, left: 10, bottom: 10, right: 10)
+        
         return stackView
     }()
     

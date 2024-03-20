@@ -56,29 +56,7 @@ final class PushNotificationView: UIView {
         return label
     }()
     
-    private lazy var firstButtonLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 3
-        return label
-    }()
-    
-    private lazy var secondButtonLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 3
-        return label
-    }()
-    
-    private lazy var thirdButtonLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 3
-        return label
-    }()
-    
-    private lazy var buttonLabels: [UILabel] = [
-        firstButtonLabel,
-        secondButtonLabel,
-        thirdButtonLabel
-    ]
+    private lazy var buttonLabels: [UILabel] = []
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -102,29 +80,35 @@ final class PushNotificationView: UIView {
         
         urlFromPushLabel.text = !urlFromPush.isEmpty ? "URL from push: \"\(urlFromPush)\"" : "URL from push: \(Constants.emptyString)"
         
-        if !payload.isEmpty {
-            payloadLabel.isHidden = false
-            payloadLabel.text = "Payload: \"\(payload)\""
-        } else {
-            payloadLabel.isHidden = true
-            payloadLabel.text = "Payload: \(Constants.emptyString)"
+        payloadLabel.text = !payload.isEmpty ? "Payload: \"\(payload)\"" : "Payload: \(Constants.emptyString)"
+        
+        buttonLabels.forEach {
+            stackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
         }
         
-        buttonLabels.forEach { $0.isHidden = true }
+        buttonLabels.removeAll()
         
         if !buttons.isEmpty {
-            for (index, button) in buttons.enumerated() where index < buttonLabels.count {
-                
-                let buttonLabel = buttonLabels[index]
-                
-                buttonLabel.isHidden = false
-                
+            for (index, button) in buttons.enumerated() {
                 let buttonText = button.text ?? Constants.emptyString
                 let buttonUrl = button.url ?? Constants.emptyString
-                
-                buttonLabel.text = "Button \(index + 1):\nText: \"\(buttonText)\" \nURL: \"\(buttonUrl)\""
+                let buttonLabel = createPushNotificationButtonInfoLabel(index: index, text: buttonText, url: buttonUrl)
+                stackView.addArrangedSubview(buttonLabel)
+                buttonLabels.append(buttonLabel)
             }
         }
+    }
+    
+    private func createPushNotificationButtonInfoLabel(
+        index: Int,
+        text: String,
+        url: String
+    ) -> UILabel {
+        let label = UILabel()
+        label.numberOfLines = 3
+        label.text = "Button \(index + 1):\nText: \"\(text)\" \nURL: \"\(url)\""
+        return label
     }
     
     private func setUpLayout() {
@@ -139,10 +123,7 @@ final class PushNotificationView: UIView {
             pushNotificationInfoLabel,
             separator,
             urlFromPushLabel,
-            payloadLabel,
-            firstButtonLabel,
-            secondButtonLabel,
-            thirdButtonLabel
+            payloadLabel
         )
         
         setUpConstraints()
