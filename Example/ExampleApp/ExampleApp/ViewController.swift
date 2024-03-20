@@ -56,18 +56,24 @@ class ViewController: UIViewController {
     let buttonCopyDeviceUUID  = UIButton()
     let labelAPNSToken = UILabel()
     let buttonCopyAPNSToken  = UIButton()
+    let labelSDKVerson = UILabel()
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
+        //https://developers.mindbox.ru/docs/ios-sdk-methods#getapnstoken
         Mindbox.shared.getAPNSToken { APNSToken in
             self.labelAPNSToken.text = APNSToken
         }
         
+        //https://developers.mindbox.ru/docs/ios-sdk-methods#getdeviceuuid
         Mindbox.shared.getDeviceUUID { deviceUUID in
             self.labelDeviceUUID.text = deviceUUID
         }
+        
+        //https://developers.mindbox.ru/docs/ios-sdk-methods#sdkversion
+        labelSDKVerson.text = "SDK version: \(Mindbox.shared.sdkVersion)"
         
         //Next comes the interface layout, which is not related to the use of SDK
         
@@ -87,8 +93,6 @@ class ViewController: UIViewController {
         func defaultSetupLabel(label: UILabel) {
             label.numberOfLines = 0
             label.textColor = defaultLabelTextColor
-//            label.layer.borderColor = defaultButtonColor?.cgColor
-//            label.layer.borderWidth = 1.0
             label.translatesAutoresizingMaskIntoConstraints = false
         }
         
@@ -98,7 +102,7 @@ class ViewController: UIViewController {
             }
         }
         
-        addSubViews(views: [buttonSync, buttonAsync, buttonCopyAPNSToken, buttonCopyDeviceUUID, labelAPNSToken, labelDeviceUUID])
+        addSubViews(views: [buttonSync, buttonAsync, buttonCopyAPNSToken, buttonCopyDeviceUUID, labelAPNSToken, labelDeviceUUID, labelSDKVerson])
         
         view.backgroundColor = .white
 
@@ -117,6 +121,8 @@ class ViewController: UIViewController {
         defaultSetupLabel(label: labelDeviceUUID)
         
         defaultSetupLabel(label: labelAPNSToken)
+        
+        defaultSetupLabel(label: labelSDKVerson)
         
         NSLayoutConstraint.activate([
             
@@ -147,6 +153,10 @@ class ViewController: UIViewController {
             buttonCopyAPNSToken.topAnchor.constraint(equalTo: labelAPNSToken.bottomAnchor, constant: 10),
             buttonCopyAPNSToken.widthAnchor.constraint(equalToConstant: 300),
             buttonCopyAPNSToken.heightAnchor.constraint(equalToConstant: 40),
+            
+            labelSDKVerson.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            labelSDKVerson.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
+
         ])
     }
     
