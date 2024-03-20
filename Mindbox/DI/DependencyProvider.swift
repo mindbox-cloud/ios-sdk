@@ -22,7 +22,6 @@ final class DependencyProvider: DependencyContainer {
     let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let uuidDebugService: UUIDDebugService
-    var sessionTemporaryStorage: SessionTemporaryStorage
     var inappMessageEventSender: InappMessageEventSender
     let sdkVersionValidator: SDKVersionValidator
     let geoService: GeoServiceProtocol
@@ -33,6 +32,7 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
+    var pushPermissionFilterService: InappFilterByPushPermission
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -54,21 +54,19 @@ final class DependencyProvider: DependencyContainer {
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
-        sessionTemporaryStorage = SessionTemporaryStorage()
+
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
-                                sessionTemporaryStorage: sessionTemporaryStorage,
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
-                                                 sessionTemporaryStorage: sessionTemporaryStorage,
                                                  targetingChecker: inAppTargetingChecker)
         let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
         abTestDeviceMixer = ABTestDeviceMixer()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
-        let actionUseCase = PresentationActionUseCase(tracker: tracker)
-        let actionHandler = InAppActionHandler(actionUseCase: actionUseCase)
+        let actionUseCaseFactory = ActionUseCaseFactory(tracker: tracker)
+        let actionHandler = InAppActionHandler(actionUseCaseFactory: actionUseCaseFactory)
         let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
                                                            displayUseCase: displayUseCase)
         urlExtractorService = VariantImageUrlExtractorService()
@@ -86,10 +84,11 @@ final class DependencyProvider: DependencyContainer {
         inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
-                                                                    sessionTemporaryStorage: sessionTemporaryStorage,
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService, 
                                                                     tracker: tracker)
+        pushPermissionFilterService = InappFilterByPushPermission()
+        
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -99,15 +98,14 @@ final class DependencyProvider: DependencyContainer {
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
                                                                    urlExtractorService: urlExtractorService,
+                                                                   pushPermissionService: pushPermissionFilterService,
                                                                    abTestDeviceMixer: abTestDeviceMixer,
                                                                    dataFacade: inAppConfigurationDataFacade),
-                logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
+                logsManager: logsManager),
             presentationManager: presentationManager,
-            persistenceStorage: persistenceStorage,
-            sessionStorage: sessionTemporaryStorage
+            persistenceStorage: persistenceStorage
         )
-        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
-                                                          sessionStorage: sessionTemporaryStorage)
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
         uuidDebugService = PasteboardUUIDDebugService(
             notificationCenter: NotificationCenter.default,
