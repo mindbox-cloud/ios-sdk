@@ -87,6 +87,8 @@ class ViewController: UIViewController {
         func defaultSetupLabel(label: UILabel) {
             label.numberOfLines = 0
             label.textColor = defaultLabelTextColor
+//            label.layer.borderColor = defaultButtonColor?.cgColor
+//            label.layer.borderWidth = 1.0
             label.translatesAutoresizingMaskIntoConstraints = false
         }
         
@@ -120,31 +122,31 @@ class ViewController: UIViewController {
             
             buttonAsync.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             buttonAsync.topAnchor.constraint(equalTo: view.topAnchor, constant: 75),
-            buttonAsync.widthAnchor.constraint(equalToConstant: 250),
-            buttonAsync.heightAnchor.constraint(equalToConstant: 70),
+            buttonAsync.widthAnchor.constraint(equalToConstant: 300),
+            buttonAsync.heightAnchor.constraint(equalToConstant: 60),
             
             buttonSync.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             buttonSync.topAnchor.constraint(equalTo: buttonAsync.bottomAnchor, constant: 25),
-            buttonSync.widthAnchor.constraint(equalToConstant: 250),
-            buttonSync.heightAnchor.constraint(equalToConstant: 70),
+            buttonSync.widthAnchor.constraint(equalToConstant: 300),
+            buttonSync.heightAnchor.constraint(equalToConstant: 60),
             
             labelDeviceUUID.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            labelDeviceUUID.topAnchor.constraint(equalTo: buttonSync.bottomAnchor, constant: 75),
+            labelDeviceUUID.topAnchor.constraint(equalTo: buttonSync.bottomAnchor, constant: 25),
             labelDeviceUUID.widthAnchor.constraint(equalToConstant: 300),
             
             buttonCopyDeviceUUID.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonCopyDeviceUUID.topAnchor.constraint(equalTo: labelDeviceUUID.bottomAnchor, constant: 25),
-            buttonCopyDeviceUUID.widthAnchor.constraint(equalToConstant: 250),
-            buttonCopyDeviceUUID.heightAnchor.constraint(equalToConstant: 70),
+            buttonCopyDeviceUUID.topAnchor.constraint(equalTo: labelDeviceUUID.bottomAnchor, constant: 10),
+            buttonCopyDeviceUUID.widthAnchor.constraint(equalToConstant: 300),
+            buttonCopyDeviceUUID.heightAnchor.constraint(equalToConstant: 40),
             
             labelAPNSToken.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            labelAPNSToken.topAnchor.constraint(equalTo: buttonCopyDeviceUUID.bottomAnchor, constant: 75),
+            labelAPNSToken.topAnchor.constraint(equalTo: buttonCopyDeviceUUID.bottomAnchor, constant: 25),
             labelAPNSToken.widthAnchor.constraint(equalToConstant: 300),
             
             buttonCopyAPNSToken.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonCopyAPNSToken.topAnchor.constraint(equalTo: labelAPNSToken.bottomAnchor, constant: 25),
-            buttonCopyAPNSToken.widthAnchor.constraint(equalToConstant: 250),
-            buttonCopyAPNSToken.heightAnchor.constraint(equalToConstant: 70),
+            buttonCopyAPNSToken.topAnchor.constraint(equalTo: labelAPNSToken.bottomAnchor, constant: 10),
+            buttonCopyAPNSToken.widthAnchor.constraint(equalToConstant: 300),
+            buttonCopyAPNSToken.heightAnchor.constraint(equalToConstant: 40),
         ])
     }
     
