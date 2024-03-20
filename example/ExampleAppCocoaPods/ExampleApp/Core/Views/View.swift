@@ -12,6 +12,7 @@ protocol ViewProtocol: AnyObject {
     func stopAnimationOfActivityIndicator()
     func showData(apnsToken: String, deviceUUID: String, sdkVersion: String)
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event)
+    func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String)
 }
 
@@ -101,6 +102,30 @@ final class View: UIView {
         return button
     }()
     
+    private lazy var asyncOperationButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.alpha = Constants.startAlpha
+        button.isHidden = true
+        
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = Constants.asyncButtonTitle
+        configuration.image = Constants.asyncButtonImage
+        configuration.baseBackgroundColor = Constants.mindboxColor
+        configuration.cornerStyle = .medium
+        
+        configuration.contentInsets = NSDirectionalEdgeInsets(
+            top: 10,
+            leading: 10,
+            bottom: 10,
+            trailing: 10
+        )
+        
+        button.configuration = configuration
+        
+        return button
+    }()
+    
     private lazy var pushNotificationView = PushNotificationView()
     
     // MARK: Init
@@ -136,6 +161,7 @@ final class View: UIView {
             pushNotificationView,
             
             inAppTriggerButton,
+            asyncOperationButton,
             sdkVersionLabel
         )
         
@@ -152,7 +178,8 @@ final class View: UIView {
             stackView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
             
-            inAppTriggerButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
+            inAppTriggerButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70),
+            asyncOperationButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
         ])
     }
     
@@ -178,13 +205,11 @@ extension View: UIContextMenuInteractionDelegate {
                 if interaction.view == self?.apnsTokenLabel {
                     guard let apnsToken = self?.apnsTokenLabel.text?.split(separator: " ").last else { return }
                     textToCopy = String(apnsToken)
-                    print(textToCopy)
                 }
                 
                 if interaction.view == self?.deviceUuidLabel {
                     guard let deviceUUID = self?.deviceUuidLabel.text?.split(separator: "\n").last else { return }
                     textToCopy = String(deviceUUID)
-                    print(textToCopy)
                 }
                 
                 UIPasteboard.general.string = textToCopy
@@ -224,6 +249,9 @@ extension View: ViewProtocol {
                 self.inAppTriggerButton.isHidden = false
                 self.inAppTriggerButton.alpha = Constants.endAlpha
                 
+                self.asyncOperationButton.isHidden = false
+                self.asyncOperationButton.alpha = Constants.endAlpha
+                
                 if deviceUUID.isEmpty {
                     self.deviceUuidLabel.text = "Device UUID is missing"
                 }
@@ -237,5 +265,9 @@ extension View: ViewProtocol {
     
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
         inAppTriggerButton.addTarget(target, action: action, for: `for`)
+    }
+    
+    func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
+        asyncOperationButton.addTarget(target, action: action, for: `for`)
     }
 }

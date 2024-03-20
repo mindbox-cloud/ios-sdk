@@ -41,7 +41,7 @@ final class ViewController: UIViewController {
         super.viewDidLoad()
         setUpNotificationCenter()
         setUpDelegates()
-        setUpTriggerInApp()
+        setUpOperationsButtons()
         
         getDeviceUUID()
         getSdkVersion()
@@ -50,7 +50,16 @@ final class ViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        eaView.showData(apnsToken: apnsToken, deviceUUID: deviceUUID, sdkVersion: sdkVersion)
+        eaView.showData(
+            apnsToken: apnsToken,
+            deviceUUID: deviceUUID,
+            sdkVersion: sdkVersion
+        )
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        presentWelcomeAlert()
     }
     
     deinit {
@@ -102,10 +111,21 @@ final class ViewController: UIViewController {
                     level: .info,
                     message: "Operation \(operationSystemName) succeeded. Response: \(operationResponse)"
                 )
+                self?.presentAlertController(
+                    title: "Success",
+                    message: "\(operationResponse)",
+                    style: .actionSheet
+                )
             case .failure(let mindboxError):
                 Mindbox.logger.log(
                     level: .info,
                     message: "Operation \(operationSystemName) failed. Error: \(mindboxError.localizedDescription)"
+                )
+                
+                self?.presentAlertController(
+                    title: "Error",
+                    message: "\(mindboxError.localizedDescription)",
+                    style: .actionSheet
                 )
             }
             
@@ -113,6 +133,7 @@ final class ViewController: UIViewController {
         }
     }
     
+    @objc
     private func registerCustomer() {
         // https://developers.mindbox.ru/docs/ios-integration-actions#передача-данных-в-mindbox--асинхронное-выполнение
         let operationSystemName = "CustomerOperationIOSExampleApp"
@@ -146,14 +167,21 @@ final class ViewController: UIViewController {
             operationSystemName: operationSystemName,
             operationBody: operationBody
         )
+        
+        presentAlertController(
+            title: "Info",
+            message: "Async operation sent to Mindbox",
+            style: .alert
+        )
     }
     
     private func setUpDelegates() {
         Mindbox.shared.inAppMessagesDelegate = self
     }
     
-    private func setUpTriggerInApp() {
+    private func setUpOperationsButtons() {
         eaView.addTriggerInAppTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
+        eaView.addAsyncOperationTarget(self, action: #selector(registerCustomer), for: .touchUpInside)
     }
     
     private func setUpNotificationCenter() {
@@ -213,5 +241,41 @@ extension ViewController: InAppMessagesDelegate {
     
     func inAppMessageDismissed(id: String) {
         Mindbox.logger.log(level: .debug, message: "Dismiss InAppView")
+    }
+}
+
+// MARK: - Alert Controller
+
+extension ViewController {
+    @discardableResult
+    private func presentAlertController(
+        title: String,
+        message: String,
+        style: UIAlertController.Style
+    ) -> UIAlertController {
+        let alertController = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: style
+        )
+        
+        let action = UIAlertAction(title: "OK", style: .default)
+        alertController.addAction(action)
+        present(alertController, animated: true)
+        
+        return alertController
+    }
+    
+    
+    private func presentWelcomeAlert() {
+        let alertVC = presentAlertController(
+            title: "Info",
+            message: "If you need to copy the APNS token or Device UUID, then hold your finger on the desired field.",
+            style: .actionSheet
+        )
+        
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + .seconds(3)) {
+            alertVC.dismiss(animated: true)
+        }
     }
 }

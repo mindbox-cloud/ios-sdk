@@ -14,7 +14,10 @@ enum Constants {
     static let pushNotificationInfoTitle = "PushNotification Info"
     
     static let inAppTriggerButtonTitle = "Trigger In-App: Sync Operation"
-    static let inAppTriggerButtonImage = UIImage(systemName: "icloud.and.arrow.up")
+    static let inAppTriggerButtonImage = UIImage(systemName: "icloud.and.arrow.down")
+    
+    static let asyncButtonTitle = "Async Operation"
+    static let asyncButtonImage = UIImage(systemName: "icloud.and.arrow.up")
     
     static let copyActionTitle = "Copy"
     static let copyActionImage = UIImage(systemName: "doc.on.doc")
