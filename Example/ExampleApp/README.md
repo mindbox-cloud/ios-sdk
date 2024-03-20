@@ -9,7 +9,7 @@ This is an example of SDK [integration](https://developers.mindbox.ru/docs/ios-s
 1. [Clone this repository](https://github.com/mindbox-cloud/ios-sdk/tree/feature/MBX-3197-ExampleAppSPM).
 2. Go to `ios-sdk/Example/ExampleApp/ExampleApp.xcodeproj`
 3. Run file `ExampleApp.xcodeproj`
-4. 
+
 ### Setting up a test application with your personal account
 
 1. Change [team](https://developers.mindbox.ru/docs/ios-get-keys) and bundle identifiers and App Group name for next targets:
