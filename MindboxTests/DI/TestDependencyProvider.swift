@@ -33,7 +33,6 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var pushPermissionFilterService: InappFilterByPushPermission
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -67,7 +66,6 @@ final class TestDependencyProvider: DependencyContainer {
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        pushPermissionFilterService = InappFilterByPushPermission()
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,

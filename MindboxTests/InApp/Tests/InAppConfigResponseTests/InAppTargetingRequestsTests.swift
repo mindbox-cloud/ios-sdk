@@ -37,7 +37,6 @@ class AInAppTargetingRequestsTests: XCTestCase {
                                           persistenceStorage: container.persistenceStorage,
                                           sdkVersionValidator: container.sdkVersionValidator,
                                           urlExtractorService: container.urlExtractorService,
-                                          pushPermissionService: container.pushPermissionFilterService,
                                           abTestDeviceMixer: container.abTestDeviceMixer,
                                           dataFacade: mockDataFacade)
     }
