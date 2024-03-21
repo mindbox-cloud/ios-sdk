@@ -45,6 +45,10 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
     
     private var viewWillAppearWasCalled = false
+    
+    private enum Constants {
+        static let defaultAlphaBackgroundColor: CGFloat = 0.2
+    }
 
     // MARK: Init
 
@@ -73,7 +77,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black.withAlphaComponent(0.2)
+        view.backgroundColor = .black.withAlphaComponent(Constants.defaultAlphaBackgroundColor)
         let onTapDimmedViewGesture = UITapGestureRecognizer(
             target: self,
             action: #selector(onTapDimmedView)

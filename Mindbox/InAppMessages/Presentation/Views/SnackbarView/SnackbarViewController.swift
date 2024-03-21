@@ -47,6 +47,10 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         static let animationDuration: TimeInterval = 0.5
         static let screenPart: CGFloat = 3.0
         static let oneThirdScreenHeight: CGFloat = UIScreen.main.bounds.height / Constants.screenPart
+        static let defaultEdgeConstraint: CGFloat = .zero
+        static let initialSafeAreaOffset: CGFloat = .zero
+        static let noTopOffset: CGFloat = .zero
+        static let noSize: CGSize = .zero
     }
     
     // MARK: Private properties
@@ -103,11 +107,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             setupConstraints()
             setupLayers()
 
-            if snackbarView.bounds.size != .zero {
+            if snackbarView.bounds.size != Constants.noSize {
                 setupElements()
                 hasSetupElements = true
             }
-        } else if !hasSetupElements && snackbarView.bounds.size != .zero {
+        } else if !hasSetupElements && snackbarView.bounds.size != Constants.noSize {
             Logger.common(message: "In-app snackbar height: [\(snackbarView.frame.height)]")
             Logger.common(message: "In-app snackbar width: [\(snackbarView.frame.width)]")
             UIView.performWithoutAnimation {
@@ -172,7 +176,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         view.layoutIfNeeded()
         
         UIView.animate(withDuration: duration) {
-            self.edgeConstraint?.constant = 0
+            self.edgeConstraint?.constant = Constants.defaultEdgeConstraint
             self.view.layoutIfNeeded()
         }
     }
@@ -249,14 +253,14 @@ class TopSnackbarViewController: SnackbarViewController {
     }
 
     override func setViewFrame(with height: CGFloat) {
-        var safeAreaTopOffset: CGFloat = 0
+        var safeAreaTopOffset: CGFloat = Constants.initialSafeAreaOffset
         if #available(iOS 11.0, *) {
             safeAreaTopOffset = view.safeAreaInsets.top
         }
 
         let finalHeight = height + safeAreaTopOffset
 
-        self.view.frame = CGRect(x: leftOffset, y: 0,
+        self.view.frame = CGRect(x: leftOffset, y: Constants.noTopOffset,
                                  width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
     }
@@ -280,7 +284,7 @@ class BottomSnackbarViewController: SnackbarViewController {
     
     override func setViewFrame(with height: CGFloat) {
         let screenHeight = UIScreen.main.bounds.height
-        var safeAreaBottomOffset: CGFloat = 0
+        var safeAreaBottomOffset: CGFloat = Constants.initialSafeAreaOffset
         if #available(iOS 11.0, *) {
             safeAreaBottomOffset = view.safeAreaInsets.bottom
         }
