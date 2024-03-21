@@ -383,6 +383,7 @@
 		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F382F20B2BAC50D000BC97FF /* VisitTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */; };
+		F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20C2BAC548900BC97FF /* VisitTargetingChecker.swift */; };
 		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
 		F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F42AA9AF7A00852298 /* InappFilter.swift */; };
 		F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F72AA9B04E00852298 /* VariantsFilter.swift */; };
@@ -894,6 +895,7 @@
 		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargeting.swift; sourceTree = "<group>"; };
+		F382F20C2BAC548900BC97FF /* VisitTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargetingChecker.swift; sourceTree = "<group>"; };
 		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
 		F39116F42AA9AF7A00852298 /* InappFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilter.swift; sourceTree = "<group>"; };
 		F39116F72AA9B04E00852298 /* VariantsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantsFilter.swift; sourceTree = "<group>"; };
@@ -1940,6 +1942,7 @@
 				A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */,
 				A192786B29D3A24000CDB53D /* ProductIDChecker.swift */,
 				A192787129D442D900CDB53D /* ProductSegmentChecker.swift */,
+				F382F20C2BAC548900BC97FF /* VisitTargetingChecker.swift */,
 			);
 			path = TargetingCheckerTypes;
 			sourceTree = "<group>";
@@ -3216,6 +3219,7 @@
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
+				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
 				F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,

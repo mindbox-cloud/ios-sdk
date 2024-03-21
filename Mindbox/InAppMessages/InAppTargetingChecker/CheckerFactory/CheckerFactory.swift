@@ -232,3 +232,25 @@ final class ProductSegmentTargetingFactory: CheckerFactory {
         )
     }
 }
+
+final class VisitTargetingFactory: CheckerFactory {
+    private let checker: InAppTargetingCheckerProtocol
+
+    init(checker: InAppTargetingCheckerProtocol) {
+        self.checker = checker
+    }
+
+    func makeChecker(for targetType: Targeting) -> CheckerFunctions {
+        let checkerFunctions = CheckerFunctions()
+        guard case let .visit(targeting) = targetType else {
+            return checkerFunctions
+        }
+        
+        let visitChecker = VisitTargetingChecker()
+        visitChecker.checker = checker
+        return CheckerFunctions(
+            prepare: { context in visitChecker.prepare(targeting: targeting, context: &context) },
+            check: { visitChecker.check(targeting: targeting) }
+        )
+    }
+}

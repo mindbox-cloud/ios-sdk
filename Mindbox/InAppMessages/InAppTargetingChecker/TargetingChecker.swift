@@ -130,5 +130,9 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                                                               segmentExternalId: "")
         let productSegmentTargetingFactory = ProductSegmentTargetingFactory(checker: self)
         checkerMap[.viewProductSegment(productSegmentTargeting)] = productSegmentTargetingFactory.makeChecker(for:)
+        
+        let visitTargeting = VisitTargeting(kind: .equals, value: 1)
+        let visitTargetingFactory = VisitTargetingFactory(checker: self)
+        checkerMap[.visit(visitTargeting)] = visitTargetingFactory.makeChecker(for:)
     }
 }
