@@ -32,7 +32,6 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var pushPermissionFilterService: InappFilterByPushPermission
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -87,7 +86,6 @@ final class DependencyProvider: DependencyContainer {
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService, 
                                                                     tracker: tracker)
-        pushPermissionFilterService = InappFilterByPushPermission()
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
@@ -98,7 +96,6 @@ final class DependencyProvider: DependencyContainer {
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
                                                                    urlExtractorService: urlExtractorService,
-                                                                   pushPermissionService: pushPermissionFilterService,
                                                                    abTestDeviceMixer: abTestDeviceMixer,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager),

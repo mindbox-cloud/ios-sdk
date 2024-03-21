@@ -9,10 +9,17 @@
 import Foundation
 
 enum VisitTargetingKindType: String, Decodable {
-    case gte
-    case lte
-    case equals
-    case notEquals
+    case greaterOrEqual
+    case lessOrEqual
+    case equal
+    case notEqual
+    
+    enum CodingKeys: String, CodingKey {
+        case greaterOrEqual = "gte"
+        case lessOrEqual = "lte"
+        case equals
+        case notEquals
+    }
 }
 
 struct VisitTargeting: ITargeting, Decodable {

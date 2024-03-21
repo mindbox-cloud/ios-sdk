@@ -71,6 +71,7 @@ enum Targeting: Decodable, Hashable, Equatable {
             case (.viewProductCategoryIdIn, .viewProductCategoryIdIn): return true
             case (.viewProductId, .viewProductId): return true
             case (.viewProductSegment, .viewProductSegment): return true
+            case (.visit, .visit): return true
             case (.unknown, .unknown): return true
             default: return false
         }

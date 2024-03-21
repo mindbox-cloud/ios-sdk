@@ -9,24 +9,8 @@
 import Foundation
 
 final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
-    weak var checker: TargetingCheckerContextProtocol?
-    
-    override func prepareInternal(targeting: VisitTargeting, context: inout PreparationContext) -> Void {
-        
-    }
-    
     override func checkInternal(targeting: VisitTargeting) -> Bool {
-        guard let checker = checker else {
-            return false
-        }
-        
-        switch SessionTemporaryStorage.shared.pushPermissionStatus {
-            case .notDetermined, .denied:
-                return true
-            case .authorized, .provisional, .ephemeral:
-                return false
-            @unknown default:
-                return false
-        }
+        // MARK: - Change logic when [iOS] Подсчет количества посещений приложения will be done
+        return targeting.value == 1
     }
 }
