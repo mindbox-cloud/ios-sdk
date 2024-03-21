@@ -20,7 +20,9 @@ protocol InappViewControllerProtocol {
     @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer)
 }
 
-final class ModalViewController: UIViewController, InappViewControllerProtocol, GestureHandler {
+final class ModalViewController: UIViewController, InappViewControllerProtocol {
+    
+    // MARK: InappViewControllerProtocol
     
     var layers = [UIView]()
     var elements = [UIView]()
@@ -31,6 +33,20 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
+    
+    // MARK: Private properties
+    
+    private let model: ModalFormVariant
+    private let id: String
+    private let imagesDict: [String: UIImage]
+    
+    private let onPresented: () -> Void
+    private let onClose: () -> Void
+    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    
+    private var viewWillAppearWasCalled = false
+
+    // MARK: Init
 
     init(
         model: ModalFormVariant,
@@ -53,17 +69,15 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
         fatalError("init(coder:) has not been implemented")
     }
 
-    private let model: ModalFormVariant
-    private let id: String
-    private let imagesDict: [String: UIImage]
-    private let onPresented: () -> Void
-    private let onClose: () -> Void
-    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    // MARK: Life cycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black.withAlphaComponent(0.2)
-        let onTapDimmedViewGesture = UITapGestureRecognizer(target: self, action: #selector(onTapDimmedView))
+        let onTapDimmedViewGesture = UITapGestureRecognizer(
+            target: self,
+            action: #selector(onTapDimmedView)
+        )
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
         
@@ -85,37 +99,17 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
         setupElements()
     }
 
-    private var viewWillAppearWasCalled = false
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         guard !viewWillAppearWasCalled else { return }
         viewWillAppearWasCalled = true
         onPresented()
     }
-    
-    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
-        guard let crossView = gesture.view else {
-            return
-        }
-        
-        let location = gesture.location(in: crossView)
-        let isInsideCrossView = crossView.bounds.contains(location)
-        if gesture.state == .ended && isInsideCrossView {
-            onClose()
-        }
-    }
+
+    // MARK: Private methods
 
     @objc private func onTapDimmedView() {
         onClose()
-    }
-
-    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? InAppImageOnlyView else {
-            return
-        }
-        
-        let action = imageView.action
-        onTapAction(action)
     }
     
     private func setupLayers() {
@@ -151,6 +145,31 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol, 
                     factory.setupConstraints(for: elementView, from: element, in: inappView)
                 }
             }
+        }
+    }
+}
+
+// MARK: - GestureHandler
+
+extension ModalViewController: GestureHandler {
+    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
+        guard let imageView = sender.view as? InAppImageOnlyView else {
+            return
+        }
+        
+        let action = imageView.action
+        onTapAction(action)
+    }
+    
+    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
+        guard let crossView = gesture.view else {
+            return
+        }
+        
+        let location = gesture.location(in: crossView)
+        let isInsideCrossView = crossView.bounds.contains(location)
+        if gesture.state == .ended && isInsideCrossView {
+            onClose()
         }
     }
 }
