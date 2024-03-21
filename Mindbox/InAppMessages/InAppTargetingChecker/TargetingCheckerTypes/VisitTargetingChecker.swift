@@ -11,6 +11,15 @@ import Foundation
 final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
     override func checkInternal(targeting: VisitTargeting) -> Bool {
         // MARK: - Change logic when [iOS] Подсчет количества посещений приложения will be done
-        return targeting.value == 1
+        switch targeting.kind {
+            case .gte:
+                return targeting.value >= 1
+            case .lte:
+                return targeting.value <= 1
+            case .equals:
+                return targeting.value == 1
+            case .notEquals:
+                return targeting.value != 1
+        }
     }
 }
