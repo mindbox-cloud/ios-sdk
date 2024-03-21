@@ -34,7 +34,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     
     func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Logger.common(message: "Notification permission status: \(settings.authorizationStatus.rawValue)", level: .debug, category: .inAppMessages)
+            Logger.common(message: "Notification permission status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
             switch settings.authorizationStatus {
                 case .notDetermined:
                     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -70,7 +70,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
                 case .authorized, .provisional, .ephemeral:
                     return
                 @unknown default:
-                    Logger.common(message: "Caught unexpected new notification status. \(settings.authorizationStatus.rawValue)", level: .debug, category: .inAppMessages)
+                    Logger.common(message: "Caught unexpected new notification status. \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
                     return
             }
         }
