@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct BodyEncoder<T: Encodable> {
     
@@ -15,8 +16,10 @@ struct BodyEncoder<T: Encodable> {
     init(encodable: T) {
         if let encodedBody = try? JSONEncoder().encode(encodable) {
             body = String(data: encodedBody, encoding: .utf8) ?? ""
+            Logger.common(message: "BodyEncoder: Successfully encoded body. body: \(body)", level: .info, category: .general)
         } else {
             body = ""
+            Logger.common(message: "BodyEncoder: Failed to encode JSON. encodable: \(encodable)", level: .error, category: .general)
         }
     }
     
