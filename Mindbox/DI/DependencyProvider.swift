@@ -53,7 +53,7 @@ final class DependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
-        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
 
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)

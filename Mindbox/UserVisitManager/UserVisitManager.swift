@@ -2,7 +2,7 @@
 //  UserVisitManager.swift
 //  Mindbox
 //
-//  Created by ENotniy on 22.03.2024.
+//  Created by Egor Kitseliuk on 22.03.2024.
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
@@ -40,7 +40,7 @@ class UserVisitManager {
         let previosUserVisitCount = persistenceStorage.userVisitCount ?? 0
         var userVisitCount = previosUserVisitCount + 1
         
-        if (SessionTemporaryStorage.shared.isFirstInitialiazion) {
+        if (!SessionTemporaryStorage.shared.isFirstInitialiazion && previosUserVisitCount == 0) {
             userVisitCount += 1
         }
         

@@ -41,7 +41,8 @@ class MindboxTests: XCTestCase {
             sessionManager: container.sessionManager,
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue
+            controllerQueue: controllerQueue, 
+            userVisitManager: container.userVisitManager
         )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
@@ -84,7 +85,8 @@ class MindboxTests: XCTestCase {
             sessionManager: container.sessionManager,
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue
+            controllerQueue: controllerQueue,
+            userVisitManager: container.userVisitManager
         )
 
         //        //        //        //        //        //        //        //        //        //        //        //

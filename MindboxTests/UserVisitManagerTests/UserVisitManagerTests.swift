@@ -1,35 +1,124 @@
 //
 //  UserVisitManagerTests.swift
-//  
+//  Mindbox
 //
-//  Created by ENotniy on 22.03.2024.
+//  Created by Egor Kitseliuk on 22.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import XCTest
+@testable import Mindbox
 
 final class UserVisitManagerTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    
+    private var persistenceStorageMock: PersistenceStorage!
+    private var userVisitManager: UserVisitManager!
+    private var sessionManagerMock: MockSessionManager!
+    private var container: TestDependencyProvider!
+    
+    override func setUp() {
+        super.setUp()
+        container = try! TestDependencyProvider()
+        persistenceStorageMock = MockPersistenceStorage()
+        sessionManagerMock = MockSessionManager()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
+        SessionTemporaryStorage.shared.isInitialiazionCalled = true
+        SessionTemporaryStorage.shared.isFirstInitialiazion = false
+        sessionManagerMock._isActiveNow = true
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    func test_save_first_user_visit_no_active() throws {
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_not_first_user_visit_no_active() throws {
+        persistenceStorageMock.userVisitCount = 42
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
+    }
+    
+    func test_save_first_user_visit_no_init_and_no_active() throws {
+        SessionTemporaryStorage.shared.isInitialiazionCalled = false
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_first_user_visit_no_init() throws {
+        SessionTemporaryStorage.shared.isInitialiazionCalled = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_not_first_user_visit_no_init() throws {
+        persistenceStorageMock.userVisitCount = 42
+        SessionTemporaryStorage.shared.isInitialiazionCalled = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    func test_save_first_user_visit_for_first_initialization() throws {
+        SessionTemporaryStorage.shared.isFirstInitialiazion = true
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 1)
+    }
+    
+    func test_save_user_visit_for_difference_session() throws {
+        persistenceStorageMock.userVisitCount = 1
+        
+        userVisitManager.saveUserVisit()
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)
+        
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 3)
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    func test_save_not_first_user_visit_for_first_initialization() throws {
+        persistenceStorageMock.userVisitCount = 10
+        SessionTemporaryStorage.shared.isFirstInitialiazion = true
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 11)
     }
-
+    
+    func test_save_first_user_visit_for_not_first_initialization() throws {
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)
+    }
+    
+    func test_save_not_first_user_visit_for_not_first_initialization() throws {
+        persistenceStorageMock.userVisitCount = 10
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 11)
+    }
+    
+    func test_save_user_visit_twice() throws {
+        persistenceStorageMock.userVisitCount = 10
+        
+        userVisitManager.saveUserVisit()
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 11)
+    }
 }
