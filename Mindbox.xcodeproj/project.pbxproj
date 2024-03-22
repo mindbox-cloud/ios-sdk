@@ -302,6 +302,7 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		D2F7E2432BADB89900B24BB8 /* UserVisitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */; };
 		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
 		F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
@@ -812,6 +813,7 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManager.swift; sourceTree = "<group>"; };
 		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
 		F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingRequestsTests.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
@@ -1065,6 +1067,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				F3F5BB882B79F2430022AC3F /* PushNotifications */,
 				F34A45AC2B76286D00634C8B /* PublicModels */,
 				F37613DF2A6A8CFF009F2EE4 /* Extensions */,
@@ -2049,6 +2052,14 @@
 				A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */,
 			);
 			path = OSLogWritterTests;
+			sourceTree = "<group>";
+		};
+		D2F7E2402BADB89900B24BB8 /* UserVisitManager */ = {
+			isa = PBXGroup;
+			children = (
+				D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */,
+			);
+			path = UserVisitManager;
 			sourceTree = "<group>";
 		};
 		F31470852B96373600E01E5C /* ConfigTargetings */ = {
@@ -3231,6 +3242,7 @@
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */,
 				F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */,
+				D2F7E2432BADB89900B24BB8 /* UserVisitManager.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,

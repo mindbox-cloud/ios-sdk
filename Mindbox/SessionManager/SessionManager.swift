@@ -17,6 +17,7 @@ final class SessionManager {
     }
 
     var sessionHandler: ((Bool) -> Void)?
+    var isActiveNow: Bool { return isActive }
     
     func trackDirect() {
         do {

@@ -33,6 +33,7 @@ final class DependencyProvider: DependencyContainer {
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var pushPermissionFilterService: InappFilterByPushPermission
+    var userVisitManager: UserVisitManager
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -114,6 +115,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
 }
 
