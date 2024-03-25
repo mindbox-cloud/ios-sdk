@@ -24,10 +24,11 @@ class MBUtilitiesFetcher {
         var bundle = Bundle(for: MindboxNotificationService.self)
         return bundle
     }()
-    
-    var applicationGroupIdentifier: String {
+
+    var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
-            fatalError("CFBundleShortVersionString not found for host app")
+            Logger.common(message: "UtilitiesFetcher: Failed to get applicationGroupIdentifier. hostApplicationName: \(String(describing: hostApplicationName))", level: .error, category: .notification)
+            return nil
         }
         let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
         let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
@@ -35,8 +36,8 @@ class MBUtilitiesFetcher {
             #if targetEnvironment(simulator)
             return ""
             #else
-            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
-            fatalError(message)
+            Logger.common(message: "UtilitiesFetcher: Failed to get AppGroup for \(hostApplicationName). identifier: \(identifier))", level: .error, category: .notification)
+            return nil
             #endif
         }
         return identifier
