@@ -21,7 +21,7 @@ struct URLRequestBuilder {
         let components = makeURLComponents(for: route)
 
         guard let url = components.url else {
-            Logger.common(message: "asURLRequest: Failed to create URL. error: \(URLError(.badURL))", level: .error, category: .general)
+            Logger.common(message: "asURLRequest: Failed to create URL. error: \(URLError(.badURL))", level: .error, category: .notification)
             throw URLError(.badURL)
         }
         
@@ -32,7 +32,7 @@ struct URLRequestBuilder {
         urlRequest.httpBody = route.body
         urlRequest.httpMethod = route.method.rawValue.uppercased()
         
-        Logger.common(message: "asURLRequest: Successfully created URL request. urlRequest: \(urlRequest)", level: .info, category: .general)
+        Logger.common(message: "asURLRequest: Successfully created URL request. urlRequest: \(urlRequest)", level: .info, category: .notification)
         return urlRequest
     }
     
