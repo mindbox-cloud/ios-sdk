@@ -113,7 +113,7 @@
 		33BEE81D2681ED2900993720 /* PushDeliveredEventRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33BEE81C2681ED2900993720 /* PushDeliveredEventRoute.swift */; };
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
-		33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* SessionManager.swift */; };
+		33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
 		6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */; };
 		6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */; };
@@ -302,6 +302,10 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		D2F7E2432BADB89900B24BB8 /* UserVisitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */; };
+		D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */; };
+		D2F7E24A2BADC2AB00B24BB8 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */; };
+		D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */; };
 		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
 		F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
@@ -621,7 +625,7 @@
 		33BEE81C2681ED2900993720 /* PushDeliveredEventRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeliveredEventRoute.swift; sourceTree = "<group>"; };
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
-		33EBF0AF264E6283002A35D5 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
 		6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingStatusResponse.swift; sourceTree = "<group>"; };
 		6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemResponse.swift; sourceTree = "<group>"; };
@@ -813,6 +817,10 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManager.swift; sourceTree = "<group>"; };
+		D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManagerTests.swift; sourceTree = "<group>"; };
+		D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSessionManager.swift; sourceTree = "<group>"; };
 		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
 		F31470812B9634E000E01E5C /* InAppTargetingRequestsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingRequestsTests.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
@@ -1092,6 +1100,7 @@
 				A179589C2979708B00609E91 /* Resources */,
 				33EBF0AE264E6269002A35D5 /* SessionManager */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
+				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				84B625E725C989B100AB6228 /* Validators */,
 			);
@@ -1101,6 +1110,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindboxTests */ = {
 			isa = PBXGroup;
 			children = (
+				D2F7E2452BADB9EF00B24BB8 /* UserVisitManagerTests */,
 				F3D818B12A3885E00002957C /* ABTests */,
 				F36730192B7B6E5500DD0039 /* PushNotificationTests */,
 				A154E302299C187D00F8F074 /* MindboxLogger */,
@@ -1364,7 +1374,8 @@
 		33EBF0AE264E6269002A35D5 /* SessionManager */ = {
 			isa = PBXGroup;
 			children = (
-				33EBF0AF264E6283002A35D5 /* SessionManager.swift */,
+				33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */,
+				D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */,
 			);
 			path = SessionManager;
 			sourceTree = "<group>";
@@ -1662,6 +1673,7 @@
 				84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */,
 				84A0CD59260B021F004CD91B /* MockFailureNetworkFetcher.swift */,
 				F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */,
+				D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
@@ -2053,6 +2065,22 @@
 				A1F3EE4D298BEF0B005FA828 /* OSLogWritterTests.swift */,
 			);
 			path = OSLogWritterTests;
+			sourceTree = "<group>";
+		};
+		D2F7E2402BADB89900B24BB8 /* UserVisitManager */ = {
+			isa = PBXGroup;
+			children = (
+				D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */,
+			);
+			path = UserVisitManager;
+			sourceTree = "<group>";
+		};
+		D2F7E2452BADB9EF00B24BB8 /* UserVisitManagerTests */ = {
+			isa = PBXGroup;
+			children = (
+				D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */,
+			);
+			path = UserVisitManagerTests;
 			sourceTree = "<group>";
 		};
 		F31470852B96373600E01E5C /* ConfigTargetings */ = {
@@ -3013,6 +3041,7 @@
 				F331DCC12A80993600222120 /* ContentElement.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
 				33072F442664CC6C001F1AB2 /* IssuedPointOfContactResponse.swift in Sources */,
+				D2F7E24A2BADC2AB00B24BB8 /* SessionManager.swift in Sources */,
 				A17958762978AEC600609E91 /* OrTargetingChecker.swift in Sources */,
 				334F3AE1264C199900A6AC00 /* PromoCodeRequest.swift in Sources */,
 				F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */,
@@ -3236,6 +3265,7 @@
 				84F5655E2628434D00269FD6 /* TrackVisitManager.swift in Sources */,
 				F397EEAF2A4456FD00D48CEC /* MindboxError.swift in Sources */,
 				F39116FC2AA9B4A200852298 /* LayerActionFilter.swift in Sources */,
+				D2F7E2432BADB89900B24BB8 /* UserVisitManager.swift in Sources */,
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,
@@ -3273,7 +3303,7 @@
 				6FDD1441266F7C0600A50C35 /* AppliedPromotionTypeResponse.swift in Sources */,
 				F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */,
 				F3482F1F2A65DC20002A41EC /* CopyInappMessageDelegate.swift in Sources */,
-				33EBF0B0264E6283002A35D5 /* SessionManager.swift in Sources */,
+				33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */,
 				F331DD192A840D2100222120 /* ModalFormVariant.swift in Sources */,
 				F331DD2E2A84CA8900222120 /* UrlLayerSource.swift in Sources */,
 				337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */,
@@ -3322,11 +3352,13 @@
 				F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
+				D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */,
 				A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */,
 				F31470822B9634E000E01E5C /* InAppTargetingRequestsTests.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
+				D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */,
 				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,

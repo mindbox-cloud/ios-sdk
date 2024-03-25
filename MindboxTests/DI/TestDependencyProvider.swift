@@ -33,6 +33,8 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
+    var pushPermissionFilterService: InappFilterByPushPermission
+    var userVisitManager: UserVisitManager
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -52,7 +54,7 @@ final class TestDependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
-        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        sessionManager = MockSessionManager()
         inAppTargetingChecker = InAppTargetingChecker()
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
@@ -85,6 +87,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
         pushValidator = MindboxPushValidator()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
 }
 

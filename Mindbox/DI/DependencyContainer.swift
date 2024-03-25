@@ -30,6 +30,8 @@ protocol DependencyContainer {
     var inappFilterService: InappFilterProtocol { get }
     var pushValidator: MindboxPushValidator { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
+    var pushPermissionFilterService: InappFilterByPushPermission { get }
+    var userVisitManager: UserVisitManager { get }
 }
 
 protocol InstanceFactory {
