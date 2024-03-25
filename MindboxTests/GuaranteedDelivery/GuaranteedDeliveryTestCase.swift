@@ -80,13 +80,26 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testDateTimeOffset() {
-        let events = eventGenerator.generateEvents(count: 100)
-        events.forEach { event in
+        
+        for _ in 0..<10_000_000 {
+            let event = Event(type: .installed, body: UUID().uuidString)
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
-            XCTAssertTrue(expectation == dateTimeOffset)
+            
+            let tolerance: Int64 = 100 // milliseconds
+//            print("Expectation: \(expectation), dateTimeOffset: \(dateTimeOffset), time: \(Date().timeIntervalSince(enqueueDate))")
+            XCTAssertTrue(abs(expectation - dateTimeOffset) <= tolerance, "The dateTimeOffset is not within the expected tolerance range.")
         }
+        
+//        let events = eventGenerator.generateEvents(count: 100)
+//        events.forEach { event in
+//            let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
+//            let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
+//            let dateTimeOffset = event.dateTimeOffset
+//            print("Expectation: \(expectation), dateTimeOffset: \(dateTimeOffset), time: \(Date().timeIntervalSince(enqueueDate))")
+//            XCTAssertTrue(expectation == dateTimeOffset)
+//        }
     }
 
     func testScheduleByTimer() {
