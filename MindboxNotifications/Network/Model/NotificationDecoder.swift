@@ -53,7 +53,7 @@ struct NotificationDecoder<T: Codable> {
                 throw error
             }
         } catch {
-            Logger.error(.init(errorType: .internal, description: error.localizedDescription))
+            Logger.common(message: "NotificationDecoder: Failed to serialize userInfo into data. error: \(error)", level: .error, category: .general)
             throw error
         }
     }
