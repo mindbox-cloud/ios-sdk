@@ -16,14 +16,14 @@ struct BodyDecoder<T: Decodable> {
     init?(decodable: String) {
         if let data = decodable.data(using: .utf8) {
             if let body = try? JSONDecoder().decode(T.self, from: data) {
-                Logger.common(message: "BodyDecoder: Successfully decoded body. body: \(body)", level: .info, category: .general)
+                Logger.common(message: "BodyDecoder: Successfully decoded body. body: \(body)", level: .info, category: .notification)
                 self.body = body
             } else {
-                Logger.common(message: "BodyDecoder: Failed to decode JSON. data: \(data)", level: .error, category: .general)
+                Logger.common(message: "BodyDecoder: Failed to decode JSON. data: \(data)", level: .error, category: .notification)
                 return nil
             }
         } else {
-            Logger.common(message: "BodyDecoder: Failed to decode string. decodable: \(decodable)", level: .error, category: .general)
+            Logger.common(message: "BodyDecoder: Failed to decode string. decodable: \(decodable)", level: .error, category: .notification)
             return nil
         }
     }
