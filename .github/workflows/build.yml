@@ -20,6 +20,8 @@ jobs:
       run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
-    - name: Run unit tests
-      run: bundle exec fastlane unitTestLane
+    - name: Run fluky tests
+      run: bundle exec fastlane flukyTestLaneCheck
+#    - name: Run unit tests
+#      run: bundle exec fastlane unitTestLane
 

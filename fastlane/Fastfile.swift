@@ -27,4 +27,17 @@ class Fastfile: LaneFile {
              xcargs: "CI=true"
         )
     }
-} 
+    
+    func flukyTestLaneCheck() {
+        desc("Run fluky tests")
+        scan(project: .userDefined(project),
+             scheme: "Mindbox",
+             onlyTesting: ["MindboxTests/GuaranteedDeliveryTestCase"],
+             clean: true,
+             xcodebuildFormatter: "xcpretty",
+             disableConcurrentTesting: true,
+             testWithoutBuilding: .userDefined(false),
+             xcargs: "CI=true"
+        )
+    }
+}
