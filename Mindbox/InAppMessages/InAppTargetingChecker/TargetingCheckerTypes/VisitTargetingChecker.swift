@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
     
@@ -18,6 +19,7 @@ final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
         }
         
         guard let count = checker.persistenceStorage.userVisitCount else {
+            Logger.common(message: "VisitTargetingChecker. userVisitCount doesn't exists.", level: .error, category: .inAppMessages)
             return false
         }
         
