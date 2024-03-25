@@ -234,9 +234,9 @@ final class ProductSegmentTargetingFactory: CheckerFactory {
 }
 
 final class VisitTargetingFactory: CheckerFactory {
-    private let checker: InAppTargetingCheckerProtocol
+    private let checker: TargetingCheckerPersistenceStorageProtocol
 
-    init(checker: InAppTargetingCheckerProtocol) {
+    init(checker: TargetingCheckerPersistenceStorageProtocol) {
         self.checker = checker
     }
 
@@ -247,6 +247,7 @@ final class VisitTargetingFactory: CheckerFactory {
         }
         
         let visitChecker = VisitTargetingChecker()
+        visitChecker.checker = checker
         return CheckerFunctions(
             prepare: { context in visitChecker.prepare(targeting: targeting, context: &context) },
             check: { visitChecker.check(targeting: targeting) }

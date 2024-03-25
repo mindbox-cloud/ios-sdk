@@ -33,14 +33,12 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var pushPermissionFilterService: InappFilterByPushPermission
     var userVisitManager: UserVisitManager
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
-        inAppTargetingChecker = InAppTargetingChecker()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
@@ -55,7 +53,7 @@ final class TestDependencyProvider: DependencyContainer {
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = MockSessionManager()
-        inAppTargetingChecker = InAppTargetingChecker()
+        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)

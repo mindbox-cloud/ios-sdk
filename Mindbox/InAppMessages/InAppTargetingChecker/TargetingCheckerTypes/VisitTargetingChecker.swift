@@ -9,17 +9,27 @@
 import Foundation
 
 final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
+    
+    weak var checker: TargetingCheckerPersistenceStorageProtocol?
+    
     override func checkInternal(targeting: VisitTargeting) -> Bool {
-        // MARK: - Change logic when [iOS] Подсчет количества посещений приложения will be done
+        guard let checker = checker else {
+            return false
+        }
+        
+        guard let count = checker.persistenceStorage.userVisitCount else {
+            return false
+        }
+        
         switch targeting.kind {
             case .gte:
-                return targeting.value >= 1
+                return targeting.value >= count
             case .lte:
-                return targeting.value <= 1
+                return targeting.value <= count
             case .equals:
-                return targeting.value == 1
+                return targeting.value == count
             case .notEquals:
-                return targeting.value != 1
+                return targeting.value != count
         }
     }
 }

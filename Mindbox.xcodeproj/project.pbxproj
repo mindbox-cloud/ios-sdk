@@ -265,7 +265,7 @@
 		A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */; };
 		A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A179588B2978BE6F00609E91 /* GeoTargetingModelValid.json */; };
 		A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = A17958912978C88B00609E91 /* AllTargetingsModelValid.json */; };
-		A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */; };
+		A17958972978D2B300609E91 /* InAppTargetingCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958962978D2B300609E91 /* InAppTargetingCheckerTests.swift */; };
 		A17958992978E04600609E91 /* InAppStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17958982978E04600609E91 /* InAppStub.swift */; };
 		A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A179589D2979708B00609E91 /* MindBoxAssets.xcassets */; };
 		A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A184654229C3102A00E64780 /* CategoryIDTargeting.swift */; };
@@ -466,6 +466,7 @@
 		F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */; };
 		F3F5BB8D2B79F2F80022AC3F /* NotificationFormatStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB8C2B79F2F80022AC3F /* NotificationFormatStrategy.swift */; };
 		F3F5BB8F2B79F4070022AC3F /* NotificationFormatFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB8E2B79F4070022AC3F /* NotificationFormatFactory.swift */; };
+		F3F9E3572BB19A9500340045 /* VisitTargetingModelValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F3F9E3562BB19A9500340045 /* VisitTargetingModelValid.json */; };
 		F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */; };
 		F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */; };
 		F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */; };
@@ -778,7 +779,7 @@
 		A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = TrueTargetingModelValid.json; sourceTree = "<group>"; };
 		A179588B2978BE6F00609E91 /* GeoTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = GeoTargetingModelValid.json; sourceTree = "<group>"; };
 		A17958912978C88B00609E91 /* AllTargetingsModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = AllTargetingsModelValid.json; sourceTree = "<group>"; };
-		A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingcheckerTests.swift; sourceTree = "<group>"; };
+		A17958962978D2B300609E91 /* InAppTargetingCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTargetingCheckerTests.swift; sourceTree = "<group>"; };
 		A17958982978E04600609E91 /* InAppStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppStub.swift; sourceTree = "<group>"; };
 		A179589D2979708B00609E91 /* MindBoxAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MindBoxAssets.xcassets; sourceTree = "<group>"; };
 		A184654229C3102A00E64780 /* CategoryIDTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDTargeting.swift; sourceTree = "<group>"; };
@@ -982,6 +983,7 @@
 		F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationFormatter.swift; sourceTree = "<group>"; };
 		F3F5BB8C2B79F2F80022AC3F /* NotificationFormatStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatStrategy.swift; sourceTree = "<group>"; };
 		F3F5BB8E2B79F4070022AC3F /* NotificationFormatFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatFactory.swift; sourceTree = "<group>"; };
+		F3F9E3562BB19A9500340045 /* VisitTargetingModelValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = VisitTargetingModelValid.json; sourceTree = "<group>"; };
 		F3FAD8692AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = missingCloseButtonColorLineWidthSize.json; sourceTree = "<group>"; };
 		F3FAD86B2AB8642C00D98C03 /* twoCloseButtonsInApp.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = twoCloseButtonsInApp.json; sourceTree = "<group>"; };
 		F3FAD86D2AB8656700D98C03 /* closeButtonWithOpenButton.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonWithOpenButton.json; sourceTree = "<group>"; };
@@ -1969,6 +1971,7 @@
 		A17958822978B46D00609E91 /* JSONStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F3F9E3562BB19A9500340045 /* VisitTargetingModelValid.json */,
 				A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */,
 				A17958912978C88B00609E91 /* AllTargetingsModelValid.json */,
 				A179588A2978BE6F00609E91 /* TrueTargetingModelValid.json */,
@@ -1983,7 +1986,7 @@
 		A17958932978D03200609E91 /* InAppTargetingCheckerTests */ = {
 			isa = PBXGroup;
 			children = (
-				A17958962978D2B300609E91 /* InAppTargetingcheckerTests.swift */,
+				A17958962978D2B300609E91 /* InAppTargetingCheckerTests.swift */,
 				A17958982978E04600609E91 /* InAppStub.swift */,
 			);
 			path = InAppTargetingCheckerTests;
@@ -2912,6 +2915,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
+				F3F9E3572BB19A9500340045 /* VisitTargetingModelValid.json in Resources */,
 				F39B67C82A3FBEA7005C0CCA /* ConfigWithABTypeNotInapps.json in Resources */,
 				F3FAD8782AB8685D00D98C03 /* closeButtonMarginBelowZero.json in Resources */,
 				F39117132AB4BD8500852298 /* emptyLayersSection.json in Resources */,
@@ -3374,7 +3378,7 @@
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
-				A17958972978D2B300609E91 /* InAppTargetingcheckerTests.swift in Sources */,
+				A17958972978D2B300609E91 /* InAppTargetingCheckerTests.swift in Sources */,
 				F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
