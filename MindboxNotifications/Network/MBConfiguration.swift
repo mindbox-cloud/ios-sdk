@@ -45,7 +45,7 @@ public struct MBConfiguration: Codable {
         }
 
         self = configuration
-        Logger.common(message: "LegacyFormatStrategy: Successfully initialized configuration. configuration. \(configuration)", level: .info, category: .notification)
+        Logger.common(message: "MBConfiguration: Successfully initialized configuration. configuration. \(configuration)", level: .info, category: .notification)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -85,7 +85,7 @@ public struct MBConfiguration: Codable {
         self.previousDeviceUUID = previousDeviceUUID
         self.previousInstallationId = previousInstallationId
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
-        Logger.common(message: "LegacyFormatStrategy: Successfully initialized configuration. configuration", level: .info, category: .notification)
+        Logger.common(message: "MBConfiguration: Successfully initialized configuration. configuration", level: .info, category: .notification)
     }
 }
 
