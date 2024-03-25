@@ -32,7 +32,7 @@ class Fastfile: LaneFile {
         desc("Run fluky tests")
         scan(project: .userDefined(project),
              scheme: "Mindbox",
-             onlyTesting: ["MindboxTests/GuaranteedDeliveryTestCase"],
+             onlyTesting: ["MindboxTests/GuaranteedDelivery/GuaranteedDeliveryTestCase"],
              clean: true,
              xcodebuildFormatter: "xcpretty",
              disableConcurrentTesting: true,
