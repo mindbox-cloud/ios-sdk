@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 #if SWIFT_PACKAGE
 import SDKVersionProvider
 #endif
@@ -51,6 +52,7 @@ class MBUtilitiesFetcher {
             let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
             if let otherBundle = Bundle(url: url) {
                 bundle = otherBundle
+                Logger.common(message: "MindboxNotifications: Successfully prepared bundle. bundle: \(bundle)", level: .info, category: .notification)
             }
         }
     }
@@ -72,7 +74,11 @@ class MBUtilitiesFetcher {
     }
     
     var configuration: MBConfiguration? {
-        guard let data = userDefaults?.data(forKey: "MBPersistenceStorage-configurationData") else { return nil }
+        guard let data = userDefaults?.data(forKey: "MBPersistenceStorage-configurationData") else {
+            Logger.common(message: "MindboxNotifications: Failed to get data from userDefaults for key 'MBPersistenceStorage-configurationData'", level: .error, category: .notification)
+            return nil
+        }
+        Logger.common(message: "MindboxNotifications: Successfully received data for key 'MBPersistenceStorage-configurationData'. data: \(data)", level: .info, category: .notification)
         return try? JSONDecoder().decode(MBConfiguration.self, from: data)
     }
 }
