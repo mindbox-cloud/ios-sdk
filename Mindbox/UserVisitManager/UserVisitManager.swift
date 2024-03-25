@@ -39,8 +39,9 @@ class UserVisitManager {
         self.isVisitSaved = true
         let previosUserVisitCount = persistenceStorage.userVisitCount ?? 0
         var userVisitCount = previosUserVisitCount + 1
+        let deviceUUID = persistenceStorage.deviceUUID
         
-        if (!SessionTemporaryStorage.shared.isFirstInitialiazion && previosUserVisitCount == 0) {
+        if (deviceUUID != nil && previosUserVisitCount == 0) {
             userVisitCount += 1
         }
         
