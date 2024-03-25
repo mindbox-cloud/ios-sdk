@@ -15,11 +15,31 @@ jobs:
     runs-on: macos-13
     timeout-minutes: 15
     steps:
+    
     - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+    
+    - name: Cache Bundler dependencies
+      uses: actions/cache@v2
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gems-
+          
+    - name: Cache Derived Data
+      uses: actions/cache@v2
+      with:
+        path: derivedData
+        key: ${{ runner.os }}-derivedData-${{ hashFiles('**/*.xcodeproj', '**/*.xcworkspace') }}
+        restore-keys: |
+          ${{ runner.os }}-derivedData-
+    
     - name: Update bundler
       run: gem install bundler
+      
     - name: Install bundler dependencies
       run: bundle install
+      
     - name: Run fluky tests
       run: bundle exec fastlane flukyCheckTestLane
 #    - name: Run unit tests
