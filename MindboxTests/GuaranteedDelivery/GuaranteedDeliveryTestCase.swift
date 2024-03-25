@@ -80,26 +80,42 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testDateTimeOffset() {
-        
-        for _ in 0..<100_000 {
-            let event = Event(type: .installed, body: UUID().uuidString)
-            let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
-            let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
-            let dateTimeOffset = event.dateTimeOffset
-            
-            let tolerance: Int64 = 100 // milliseconds
-//            print("Expectation: \(expectation), dateTimeOffset: \(dateTimeOffset), time: \(Date().timeIntervalSince(enqueueDate))")
-            XCTAssertTrue(abs(expectation - dateTimeOffset) <= tolerance, "The dateTimeOffset is not within the expected tolerance range.")
+        let events = eventGenerator.generateEvents(count: 1_000)
+        do {
+            try events.forEach {
+
+                try databaseRepository.create(event: $0)
+                
+                if let createdCdEvent = try databaseRepository.read(by: $0.transactionId) {
+                    createdCdEvent.retryTimestamp = Date().timeIntervalSince1970 + 1000
+                    guard let newEvent = Event(createdCdEvent) else {
+                        XCTFail("Failed to initialize Event with CdEvent")
+                        return
+                    }
+                    try databaseRepository.update(event: newEvent)
+                }
+                
+                if let updatedEvent = try databaseRepository.read(by: $0.transactionId) {
+                    if let eventToTest = Event(updatedEvent) {
+                        XCTAssertTrue(eventToTest.isRetry, "isRetry must be true")
+                        
+                        let enqueueDate = Date(timeIntervalSince1970: eventToTest.enqueueTimeStamp)
+                        let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
+                        let dateTimeOffset = eventToTest.dateTimeOffset
+                        
+                        let tolerance: Int64 = 100
+
+                        XCTAssertTrue(abs(expectation - dateTimeOffset) <= tolerance)
+                    } else {
+                        XCTFail("Failed to initialize Event")
+                    }
+                } else {
+                    XCTFail("UpdatedEvent must be exist")
+                }
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
         }
-        
-//        let events = eventGenerator.generateEvents(count: 100)
-//        events.forEach { event in
-//            let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
-//            let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
-//            let dateTimeOffset = event.dateTimeOffset
-//            print("Expectation: \(expectation), dateTimeOffset: \(dateTimeOffset), time: \(Date().timeIntervalSince(enqueueDate))")
-//            XCTAssertTrue(expectation == dateTimeOffset)
-//        }
     }
 
     func testScheduleByTimer() {
