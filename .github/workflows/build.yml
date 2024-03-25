@@ -21,7 +21,7 @@ jobs:
     - name: Install bundler dependencies
       run: bundle install
     - name: Run fluky tests
-      run: bundle exec fastlane flukyTestLaneCheck
+      run: bundle exec fastlane flukyCheckTestLane
 #    - name: Run unit tests
 #      run: bundle exec fastlane unitTestLane
 

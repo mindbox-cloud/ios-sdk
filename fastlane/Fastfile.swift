@@ -28,7 +28,7 @@ class Fastfile: LaneFile {
         )
     }
     
-    func flukyTestLaneCheck() {
+    func flukyCheckTestLane() {
         desc("Run fluky tests")
         scan(project: .userDefined(project),
              scheme: "Mindbox",
