@@ -85,7 +85,7 @@ public struct MBConfiguration: Codable {
         self.previousDeviceUUID = previousDeviceUUID
         self.previousInstallationId = previousInstallationId
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
-        Logger.common(message: "MBConfiguration: Successfully initialized configuration. configuration", level: .info, category: .notification)
+        Logger.common(message: "MBConfiguration: Successfully initialized configuration. configuration: \(self)", level: .info, category: .notification)
     }
 }
 
