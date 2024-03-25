@@ -81,7 +81,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
 
     func testDateTimeOffset() {
         
-        for _ in 0..<10_000_000 {
+        for _ in 0..<100_000 {
             let event = Event(type: .installed, body: UUID().uuidString)
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())

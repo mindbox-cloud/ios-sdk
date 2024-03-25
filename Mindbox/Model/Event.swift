@@ -31,8 +31,10 @@ struct Event {
     
     var dateTimeOffset: Int64 {
         guard isRetry else {
+//            print("\(#function) else")
             return 0
         }
+//        print("\(#function) inside")
         let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
         let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
         return Int64(ms)
