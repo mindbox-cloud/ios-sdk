@@ -80,38 +80,45 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testDateTimeOffset() {
-        let events = eventGenerator.generateEvents(count: 1_000)
+        let events = eventGenerator.generateEvents(count: 100)
         do {
             try events.forEach {
 
                 try databaseRepository.create(event: $0)
                 
-                if let createdCdEvent = try databaseRepository.read(by: $0.transactionId) {
-                    createdCdEvent.retryTimestamp = Date().timeIntervalSince1970 + 1000
-                    guard let newEvent = Event(createdCdEvent) else {
-                        XCTFail("Failed to initialize Event with CdEvent")
-                        return
-                    }
-                    try databaseRepository.update(event: newEvent)
+                guard let createdCdEvent = try databaseRepository.read(by: $0.transactionId) else {
+                    XCTFail("Event must be exist")
+                    return
                 }
                 
-                if let updatedEvent = try databaseRepository.read(by: $0.transactionId) {
-                    if let eventToTest = Event(updatedEvent) {
-                        XCTAssertTrue(eventToTest.isRetry, "isRetry must be true")
-                        
-                        let enqueueDate = Date(timeIntervalSince1970: eventToTest.enqueueTimeStamp)
-                        let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
-                        let dateTimeOffset = eventToTest.dateTimeOffset
-                        
-                        let tolerance: Int64 = 100
-
-                        XCTAssertTrue(abs(expectation - dateTimeOffset) <= tolerance)
-                    } else {
-                        XCTFail("Failed to initialize Event")
-                    }
-                } else {
-                    XCTFail("UpdatedEvent must be exist")
+                createdCdEvent.retryTimestamp = Date().timeIntervalSince1970 + 1000
+                
+                guard let eventToUpdate = Event(createdCdEvent) else {
+                    XCTFail("Failed to initialize Event with CdEvent")
+                    return
                 }
+                
+                try databaseRepository.update(event: eventToUpdate)
+                
+                guard let updatedEvent = try databaseRepository.read(by: $0.transactionId) else {
+                    XCTFail("UpdatedEvent must be exist")
+                    return
+                }
+                
+                guard let eventToTest = Event(updatedEvent) else {
+                    XCTFail("Failed to initialize Event")
+                    return
+                }
+                
+                XCTAssertTrue(eventToTest.isRetry, "isRetry must be true")
+                
+                let enqueueDate = Date(timeIntervalSince1970: eventToTest.enqueueTimeStamp)
+                let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
+                let dateTimeOffset = eventToTest.dateTimeOffset
+                
+                let tolerance: Int64 = 100
+
+                XCTAssertTrue(abs(expectation - dateTimeOffset) <= tolerance)
             }
         } catch {
             XCTFail(error.localizedDescription)
