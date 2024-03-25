@@ -33,6 +33,7 @@ final class DependencyProvider: DependencyContainer {
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var pushPermissionFilterService: InappFilterByPushPermission
+    var userVisitManager: UserVisitManager
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -52,7 +53,7 @@ final class DependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
-        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
 
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
@@ -114,6 +115,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
 }
 

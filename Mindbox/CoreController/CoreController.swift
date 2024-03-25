@@ -19,6 +19,8 @@ class CoreController {
     private let trackVisitManager: TrackVisitManager
     private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
+    private let userVisitManager: UserVisitManager
+    private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
 
     var controllerQueue: DispatchQueue
@@ -26,6 +28,8 @@ class CoreController {
     func initialization(configuration: MBConfiguration) {
         
         controllerQueue.async {
+            SessionTemporaryStorage.shared.isInitialiazionCalled = true
+            self.userVisitManager.saveUserVisit()
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -170,6 +174,7 @@ class CoreController {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
+            SessionTemporaryStorage.shared.isFirstInitialiazion = true
             Logger.common(message: "MobileApplicationInstalled", level: .default, category: .general)
         } catch {
             Logger.common(message: "MobileApplicationInstalled failed with error: \(error.localizedDescription)", level: .error, category: .general)
@@ -241,7 +246,8 @@ class CoreController {
         sessionManager: SessionManager,
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
-        controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue")
+        controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
+        userVisitManager: UserVisitManager
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
@@ -252,10 +258,13 @@ class CoreController {
         self.uuidDebugService = uuidDebugService
         self.controllerQueue = controllerQueue
         self.inAppMessagesManager = inAppMessagesManager
+        self.sessionManager = sessionManager
+        self.userVisitManager = userVisitManager
 
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive {
                 self?.checkNotificationStatus()
+                self?.userVisitManager.saveUserVisit()
             }
         }
 

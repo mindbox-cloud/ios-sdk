@@ -210,6 +210,13 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
+    @UserDefaultsWrapper(key: .userVisitCount, defaultValue: 0)
+    var userVisitCount: Int? {
+        didSet {
+            onDidChange?()
+        }
+    }
+
     func reset() {
         installationDate = nil
         deviceUUID = nil
@@ -260,6 +267,7 @@ extension MBPersistenceStorage {
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
+            case userVisitCount = "MBPersistenceStorage-userVisitCount"
         }
         
         private let key: Key
