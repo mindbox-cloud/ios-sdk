@@ -56,7 +56,7 @@ public class MindboxNotificationService: NSObject {
                 self?.proceedFinalStage(bestAttemptContent)
             }
         } else {
-            Logger.common(message: "LegacyFormatStrategy: Failed to parse imageUrl", level: .error, category: .notification)
+            Logger.common(message: "MindboxNotificationService: Failed to parse imageUrl", level: .error, category: .notification)
             proceedFinalStage(bestAttemptContent)
         }
     }
@@ -65,7 +65,7 @@ public class MindboxNotificationService: NSObject {
     public func pushDelivered(_ request: UNNotificationRequest) {
         let utilities = MBUtilitiesFetcher()
         guard let configuration = utilities.configuration else {
-            Logger.common(message: "LegacyFormatStrategy: Failed to get configuration. utilities.configuration: \(String(describing: utilities.configuration))", level: .error, category: .notification)
+            Logger.common(message: "MindboxNotificationService: Failed to get configuration. utilities.configuration: \(String(describing: utilities.configuration))", level: .error, category: .notification)
             return
         }
         Logger.common(message: "MindboxNotificationService: Successfully received configuration. configuration: \(configuration)", level: .info, category: .notification)
@@ -115,7 +115,7 @@ public class MindboxNotificationService: NSObject {
     private func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
-            Logger.common(message: "LegacyFormatStrategy: Failed to parse payload. request: \(request)", level: .error, category: .notification)
+            Logger.common(message: "MindboxNotificationService: Failed to parse payload. request: \(request)", level: .error, category: .notification)
             return
         }
         
@@ -184,10 +184,10 @@ public class MindboxNotificationService: NSObject {
         var payload = Payload()
         
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
-        Logger.common(message: "LegacyFormatStrategy: payload.withButton: \(String(describing: payload.withButton))", level: .info, category: .notification)
+        Logger.common(message: "MindboxNotificationService: payload.withButton: \(String(describing: payload.withButton))", level: .info, category: .notification)
         
         payload.withImageURL = try? JSONDecoder().decode(Payload.ImageURL.self, from: data)
-        Logger.common(message: "LegacyFormatStrategy: payload.withImageURL: \(String(describing: payload.withImageURL))", level: .info, category: .notification)
+        Logger.common(message: "MindboxNotificationService: payload.withImageURL: \(String(describing: payload.withImageURL))", level: .info, category: .notification)
         
         return payload
     }
