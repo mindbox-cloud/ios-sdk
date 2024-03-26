@@ -32,7 +32,6 @@ class NetworkService {
     public func sendPushDelivered(event: Event, completion: @escaping ((Bool) -> Void)) {
         guard let deviceUUID = configuration.previousDeviceUUID else {
             completion(false)
-            Logger.common(message: "NetworkService: Failed to get deviceUUID. configuration.previousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))", level: .error, category: .network)
             return
         }
 
