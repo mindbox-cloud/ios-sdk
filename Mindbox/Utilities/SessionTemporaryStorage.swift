@@ -21,7 +21,6 @@ final class SessionTemporaryStorage {
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
     var isInitialiazionCalled = false
-    var isFirstInitialiazion = false
     
     private init() {
         

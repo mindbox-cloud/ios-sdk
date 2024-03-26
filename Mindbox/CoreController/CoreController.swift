@@ -174,7 +174,6 @@ class CoreController {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
-            SessionTemporaryStorage.shared.isFirstInitialiazion = true
             Logger.common(message: "MobileApplicationInstalled", level: .default, category: .general)
         } catch {
             Logger.common(message: "MobileApplicationInstalled failed with error: \(error.localizedDescription)", level: .error, category: .general)
