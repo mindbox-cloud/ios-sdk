@@ -20,6 +20,10 @@ protocol TargetingCheckerMap: AnyObject {
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] { get set }
 }
 
+protocol TargetingCheckerPersistenceStorageProtocol: AnyObject {
+    var persistenceStorage: PersistenceStorage { get set }
+}
+
 protocol TargetingCheckerActionProtocol: AnyObject {
     func prepare(targeting: Targeting)
     func check(targeting: Targeting) -> Bool
@@ -37,11 +41,12 @@ class CheckerFunctions {
     init() {}
 }
 
-protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap { }
+protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap, TargetingCheckerPersistenceStorageProtocol { }
 
 final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     
-    init() {
+    init(persistenceStorage: PersistenceStorage) {
+        self.persistenceStorage = persistenceStorage
         setupCheckerMap()
     }
     
@@ -50,6 +55,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]? = nil
     var geoModels: InAppGeoResponse?
     var event: ApplicationEvent?
+    var persistenceStorage: PersistenceStorage
     
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
     
@@ -130,5 +136,9 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                                                               segmentExternalId: "")
         let productSegmentTargetingFactory = ProductSegmentTargetingFactory(checker: self)
         checkerMap[.viewProductSegment(productSegmentTargeting)] = productSegmentTargetingFactory.makeChecker(for:)
+        
+        let visitTargeting = VisitTargeting(kind: .equals, value: 1)
+        let visitTargetingFactory = VisitTargetingFactory(checker: self)
+        checkerMap[.visit(visitTargeting)] = visitTargetingFactory.makeChecker(for:)
     }
 }
