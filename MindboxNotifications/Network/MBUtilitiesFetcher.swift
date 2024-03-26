@@ -53,7 +53,7 @@ class MBUtilitiesFetcher {
             let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
             if let otherBundle = Bundle(url: url) {
                 bundle = otherBundle
-                Logger.common(message: "MindboxNotifications: Successfully prepared bundle. bundle: \(bundle)", level: .info, category: .notification)
+                Logger.common(message: "MindboxNotifications: Successfully prepared bundle. bundle: \(bundle)", level: .debug, category: .notification)
             }
         }
     }
@@ -79,7 +79,6 @@ class MBUtilitiesFetcher {
             Logger.common(message: "MindboxNotifications: Failed to get data from userDefaults for key 'MBPersistenceStorage-configurationData'", level: .error, category: .notification)
             return nil
         }
-        Logger.common(message: "MindboxNotifications: Successfully received data for key 'MBPersistenceStorage-configurationData'. data: \(data)", level: .info, category: .notification)
         return try? JSONDecoder().decode(MBConfiguration.self, from: data)
     }
 }
