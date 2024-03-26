@@ -61,7 +61,7 @@ struct MockEvent: EventProtocol {
 }
 
 extension MockEvent {
-    init(type: Event.Operation, body: String, isRetry: Bool) {
+    init(type: Event.Operation, body: String, isRetry: Bool = false) {
         self.transactionId = UUID().uuidString
         self.enqueueTimeStamp = Date().timeIntervalSince1970
         self.type = type

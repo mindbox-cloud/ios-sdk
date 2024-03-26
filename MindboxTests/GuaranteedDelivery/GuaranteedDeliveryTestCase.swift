@@ -78,6 +78,23 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     var state: NSString {
         NSString(string: guaranteedDeliveryManager.state.rawValue)
     }
+    
+    func testEventEqualsMockEvent() {
+        let type: Event.Operation = .installed
+        let body = UUID().uuidString
+        
+        let event: EventProtocol = Event(type: type, body: body)
+        let mockEvent: EventProtocol = MockEvent(type: type, body: body)
+        
+        XCTAssertEqual(!event.transactionId.isEmpty, !mockEvent.transactionId.isEmpty, "Transaction Ids should not be empty")
+        XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.001, "Enqueue timestamps should match with some accuracy")
+        
+        XCTAssertEqual(event.serialNumber, mockEvent.serialNumber, "Serial numbers should be equal")
+        XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
+        XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
+        XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
+        XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
+    }
 
     func testDateTimeOffset() {
         let events = eventGenerator.generateMockEvents(count: 100)
