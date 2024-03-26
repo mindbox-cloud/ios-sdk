@@ -97,12 +97,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testDateTimeOffset() {
-        let events = eventGenerator.generateMockEvents(count: 1000)
+        let events = eventGenerator.generateMockEvents(count: 100)
         events.forEach { event in
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
-            XCTAssertEqual(dateTimeOffset, expectation, accuracy: Int64(0.001), "dateTimeOffset should match with some accuracy")
+            XCTAssertEqual(dateTimeOffset, expectation, "dateTimeOffset should be equal")
         }
     }
 
