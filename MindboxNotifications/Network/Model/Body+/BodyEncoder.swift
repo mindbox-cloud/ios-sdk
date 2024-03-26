@@ -16,11 +16,9 @@ struct BodyEncoder<T: Encodable> {
     init(encodable: T) {
         if let encodedBody = try? JSONEncoder().encode(encodable) {
             body = String(data: encodedBody, encoding: .utf8) ?? ""
-            Logger.common(message: "BodyEncoder: Successfully encoded body. body: \(body)", level: .info, category: .notification)
         } else {
             body = ""
-            Logger.common(message: "BodyEncoder: Failed to encode JSON. encodable: \(encodable)", level: .error, category: .
-            notification)
+            Logger.common(message: "BodyEncoder: Failed to encode JSON. encodable: \(encodable)", level: .error, category: .notification)
         }
     }
     
