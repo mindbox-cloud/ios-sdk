@@ -106,7 +106,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
     }
 
-    // FIXME: Fix this
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -146,14 +145,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-//        waitForExpectations(timeout: (retryDeadline + 2) * 2) { _ in
         waitForExpectations(timeout: 30) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
     }
 
-    // FIXME: Fix this
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
@@ -198,19 +195,9 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-//        waitForExpectations(timeout: (retryDeadline + 5) * 2) { _ in
         waitForExpectations(timeout: 30) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
     }
-
-//    private func generateAndSaveToDatabaseEvents() {
-//        let event = eventGenerator.generateEvent()
-//        do {
-//            try databaseRepository.create(event: event)
-//        } catch {
-//            XCTFail(error.localizedDescription)
-//        }
-//    }
 }
