@@ -21,10 +21,9 @@ struct DeviceModelHelper {
         let machineMirror = Mirror(reflecting: systemInfo.machine)
         let identifier = machineMirror.children.reduce("") { identifier, element in
             guard let value = element.value as? Int8, value != 0 else {
-                Logger.common(message: "DeviceModelHelper: failed to cast element.value into Int8 or value == 0. element.value: \(element.value), value: \(0), identifier: \(identifier)", level: .error, category: .notification)
+                Logger.common(message: "DeviceModelHelper: failed to cast element.value. Element.value: \(element.value)", level: .error, category: .notification)
                 return identifier
             }
-            Logger.common(message: "DeviceModelHelper: Successfully created identifier. Identifier: \(identifier)", level: .info, category: .notification)
             return identifier + String(UnicodeScalar(UInt8(value)))
         }
         return identifier
