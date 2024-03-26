@@ -224,12 +224,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
     }
 
-    private func generateAndSaveToDatabaseEvents() {
-        let event = eventGenerator.generateEvent()
-        do {
-            try databaseRepository.create(event: event)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-    }
+//    private func generateAndSaveToDatabaseEvents() {
+//        let event = eventGenerator.generateEvent()
+//        do {
+//            try databaseRepository.create(event: event)
+//        } catch {
+//            XCTFail(error.localizedDescription)
+//        }
+//    }
 }
