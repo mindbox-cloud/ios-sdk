@@ -17,25 +17,25 @@ public class MindboxNotificationService: NSObject {
     // Public
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
-    
+
     // Private
     private var context: NSExtensionContext?
     private var viewController: UIViewController?
     private let log = OSLog(subsystem: "cloud.Mindbox", category: "Notifications")
-    
+
     /// Mindbox proxy for NotificationsService and NotificationViewController
     public override init() {
         super.init()
     }
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
         context = extensionContext
         self.viewController = viewController
-        
+
         createContent(for: notification, extensionContext: extensionContext)
     }
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of `NotificationService`
     public func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
@@ -44,11 +44,11 @@ public class MindboxNotificationService: NSObject {
             Logger.common(message: "MindboxNotificationService: Failed to get bestAttemptContent. bestAttemptContent: \(String(describing: bestAttemptContent))", level: .error, category: .notification)
             return
         }
-        
+
         pushDelivered(request)
-        
+
         Logger.common(message: "Push notification UniqueKey: \(request.identifier)", level: .info, category: .notification)
-        
+
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: allowedUrl) {
@@ -60,7 +60,7 @@ public class MindboxNotificationService: NSObject {
             proceedFinalStage(bestAttemptContent)
         }
     }
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService. This is necessary as an indicator that the push notification has been delivered to Mindbox services.
     public func pushDelivered(_ request: UNNotificationRequest) {
         let utilities = MBUtilitiesFetcher()
@@ -72,7 +72,7 @@ public class MindboxNotificationService: NSObject {
         
         let networkService = NetworkService(utilitiesFetcher: utilities, configuration: configuration)
         let deliveryService = DeliveryService(utilitiesFetcher: utilities, networkService: networkService)
-        
+
         do {
             try deliveryService.track(request: request)
             Logger.common(message: "MindboxNotificationService: Successfully tracked. request: \(request)", level: .info, category: .notification)
@@ -80,7 +80,7 @@ public class MindboxNotificationService: NSObject {
             Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
         }
     }
-    
+
     private func downloadImage(with url: URL, completion: @escaping () -> Void) {
         Logger.common(message: "Image loading. [URL]: \(url)", level: .info, category: .notification)
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
@@ -90,7 +90,7 @@ public class MindboxNotificationService: NSObject {
                 Logger.common(message: "MindboxNotificationService: Failed to get self or data. self: \(String(describing: self)), data: \(String(describing: data))", level: .error, category: .notification)
                 return
             }
-            
+
             Logger.response(data: data, response: response, error: error)
             
             if let attachment = self.saveImage(data) {
@@ -98,12 +98,12 @@ public class MindboxNotificationService: NSObject {
             }
         }.resume()
     }
-    
+
     private func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
         bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
         contentHandler?(bestAttemptContent)
     }
-    
+
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     public func serviceExtensionTimeWillExpire() {
         if let bestAttemptContent = bestAttemptContent {
@@ -111,21 +111,21 @@ public class MindboxNotificationService: NSObject {
             proceedFinalStage(bestAttemptContent)
         }
     }
-    
+
     private func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
             Logger.common(message: "MindboxNotificationService: Failed to parse payload. request: \(request)", level: .error, category: .notification)
             return
         }
-        
+
         if let attachment = notification.request.content.attachments.first,
            attachment.url.startAccessingSecurityScopedResource() {
             createImageView(with: attachment.url.path, view: viewController?.view)
         }
         createActions(with: payload, context: context)
     }
-    
+
     private func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
             Logger.common(message: "MindboxNotificationService: Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))", level: .error, category: .notification)
@@ -138,7 +138,7 @@ public class MindboxNotificationService: NSObject {
                 options: [.foreground]
             )
         }
-        
+
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
@@ -149,14 +149,14 @@ public class MindboxNotificationService: NSObject {
             }
         }
     }
-    
+
     private func createImageView(with imagePath: String, view: UIView?) {
         guard let view = view,
               let data = FileManager.default.contents(atPath: imagePath) else {
             Logger.common(message: "MindboxNotificationService: Failed to create view. imagePath: \(imagePath), view: \(String(describing: view))", level: .error, category: .notification)
             return
         }
-        
+
         let imageView = UIImageView(image: UIImage(data: data))
         imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -170,7 +170,7 @@ public class MindboxNotificationService: NSObject {
             imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
         ])
     }
-    
+
     private func parse(request: UNNotificationRequest) -> Payload? {
         guard let userInfo = getUserInfo(from: request) else {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
@@ -180,7 +180,7 @@ public class MindboxNotificationService: NSObject {
             Logger.common(message: "MindboxNotificationService: Failed to get data. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
-        
+
         var payload = Payload()
         
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
