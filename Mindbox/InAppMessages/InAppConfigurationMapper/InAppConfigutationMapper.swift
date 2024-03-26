@@ -23,7 +23,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
-    private let pushPermissionService: InappFilterByPushPermission
     private let abTestDeviceMixer: ABTestDeviceMixer
     
     let dataFacade: InAppConfigurationDataFacadeProtocol
@@ -39,7 +38,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
          persistenceStorage: PersistenceStorage,
          sdkVersionValidator: SDKVersionValidator,
          urlExtractorService: VariantImageUrlExtractorServiceProtocol,
-         pushPermissionService: InappFilterByPushPermission,
          abTestDeviceMixer: ABTestDeviceMixer,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
@@ -47,7 +45,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.persistenceStorage = persistenceStorage
         self.sdkVersionValidator = sdkVersionValidator
         self.urlExtractorService = urlExtractorService
-        self.pushPermissionService = pushPermissionService
         self.abTestDeviceMixer = abTestDeviceMixer
         self.dataFacade = dataFacade
     }
@@ -234,10 +231,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 continue
             }
             
-            if let variant = inapp.form.variants.first, !self.pushPermissionService.checkPushPermissionConditionPassed(from: variant) {
-                continue
-            }
-            
             if let event = targetingChecker.event {
                 triggerEvent = .applicationEvent(event)
             }
@@ -269,10 +262,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 var gotError = false
                 
                 if let shownInapps = self.persistenceStorage.shownInAppsIds, shownInapps.contains(inapp.inAppId) {
-                    continue
-                }
-                
-                if !self.pushPermissionService.checkPushPermissionConditionPassed(from: inapp.content) {
                     continue
                 }
                 

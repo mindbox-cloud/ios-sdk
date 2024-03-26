@@ -27,6 +27,7 @@ enum InAppTargetingType: String, Decodable {
     case viewProductCategoryIdIn
     case viewProductId
     case viewProductSegment
+    case visit
     case unknown
     
     init(from decoder: Decoder) throws {
@@ -49,6 +50,7 @@ enum Targeting: Decodable, Hashable, Equatable {
     case viewProductCategoryIdIn(CategoryIDInTargeting)
     case viewProductId(ProductIDTargeting)
     case viewProductSegment(ProductSegmentTargeting)
+    case visit(VisitTargeting)
     case unknown
     
     enum CodingKeys: String, CodingKey {
@@ -69,6 +71,7 @@ enum Targeting: Decodable, Hashable, Equatable {
             case (.viewProductCategoryIdIn, .viewProductCategoryIdIn): return true
             case (.viewProductId, .viewProductId): return true
             case (.viewProductSegment, .viewProductSegment): return true
+            case (.visit, .visit): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -88,6 +91,7 @@ enum Targeting: Decodable, Hashable, Equatable {
             case .viewProductCategoryIdIn: hasher.combine("viewProductCategoryIdIn")
             case .viewProductId: hasher.combine("viewProductId")
             case .viewProductSegment: hasher.combine("viewProductSegment")
+            case .visit: hasher.combine("visit")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -139,9 +143,11 @@ enum Targeting: Decodable, Hashable, Equatable {
             case .viewProductSegment:
                 let productSegmentTargeting = try targetingContainer.decode(ProductSegmentTargeting.self)
                 self = .viewProductSegment(productSegmentTargeting)
+            case .visit:
+                let visitTargeting = try targetingContainer.decode(VisitTargeting.self)
+                self = .visit(visitTargeting)
             case .unknown:
                 self = .unknown
         }
     }
 }
-
