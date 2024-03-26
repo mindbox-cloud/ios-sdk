@@ -182,7 +182,7 @@ public class MindboxNotificationService: NSObject {
         }
 
         var payload = Payload()
-        
+
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
         Logger.common(message: "MindboxNotificationService: payload.withButton: \(String(describing: payload.withButton))", level: .info, category: .notification)
         
@@ -191,7 +191,7 @@ public class MindboxNotificationService: NSObject {
         
         return payload
     }
-    
+
     private func getUserInfo(from request: UNNotificationRequest) -> [AnyHashable: Any]? {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
@@ -205,7 +205,7 @@ public class MindboxNotificationService: NSObject {
             return userInfo
         }
     }
-    
+
     private func saveImage(_ data: Data) -> UNNotificationAttachment? {
         let name = UUID().uuidString
         guard let format = ImageFormat(data) else {
