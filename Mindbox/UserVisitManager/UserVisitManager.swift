@@ -37,14 +37,14 @@ class UserVisitManager {
         }
         
         self.isVisitSaved = true
-        let previosUserVisitCount = persistenceStorage.userVisitCount ?? 0
-        var userVisitCount = previosUserVisitCount + 1
         let deviceUUID = persistenceStorage.deviceUUID
-        
+        var previosUserVisitCount = persistenceStorage.userVisitCount ?? 0
         if (deviceUUID != nil && previosUserVisitCount == 0) {
-            userVisitCount += 1
+            previosUserVisitCount = 1
         }
         
+        let userVisitCount = previosUserVisitCount + 1
+      
         persistenceStorage.userVisitCount = userVisitCount
         Logger.common(message: "UserVisit has been changed from \(previosUserVisitCount) to \(userVisitCount)", level: .info, category: .visit)
     }
