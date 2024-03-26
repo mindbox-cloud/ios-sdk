@@ -207,14 +207,14 @@ final class InAppTargetingCheckerTests: XCTestCase {
     }
     
     func test_visit_gte_greater_true() {
-        storage.userVisitCount = 1
-        let visitTargeting = VisitTargeting(kind: .gte, value: 2)
+        storage.userVisitCount = 2
+        let visitTargeting = VisitTargeting(kind: .gte, value: 1)
         XCTAssertTrue(targetingChecker.check(targeting: .visit(visitTargeting)))
     }
     
     func test_visit_gte_false() {
-        storage.userVisitCount = 10
-        let visitTargeting = VisitTargeting(kind: .gte, value: 1)
+        storage.userVisitCount = 1
+        let visitTargeting = VisitTargeting(kind: .gte, value: 2)
         XCTAssertFalse(targetingChecker.check(targeting: .visit(visitTargeting)))
     }
     
@@ -225,14 +225,14 @@ final class InAppTargetingCheckerTests: XCTestCase {
     }
     
     func test_visit_lte_less_true() {
-        storage.userVisitCount = 2
-        let visitTargeting = VisitTargeting(kind: .lte, value: 1)
+        storage.userVisitCount = 1
+        let visitTargeting = VisitTargeting(kind: .lte, value: 2)
         XCTAssertTrue(targetingChecker.check(targeting: .visit(visitTargeting)))
     }
     
     func test_visit_lte_false() {
-        storage.userVisitCount = 1
-        let visitTargeting = VisitTargeting(kind: .lte, value: 10)
+        storage.userVisitCount = 2
+        let visitTargeting = VisitTargeting(kind: .lte, value: 1)
         XCTAssertFalse(targetingChecker.check(targeting: .visit(visitTargeting)))
     }
     

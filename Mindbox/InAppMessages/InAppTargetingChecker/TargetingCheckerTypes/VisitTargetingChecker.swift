@@ -25,13 +25,13 @@ final class VisitTargetingChecker: InternalTargetingChecker<VisitTargeting> {
         
         switch targeting.kind {
             case .gte:
-                return targeting.value >= count
+                return count >= targeting.value
             case .lte:
-                return targeting.value <= count
+                return count <= targeting.value
             case .equals:
-                return targeting.value == count
+                return count == targeting.value
             case .notEquals:
-                return targeting.value != count
+                return count != targeting.value
         }
     }
 }
