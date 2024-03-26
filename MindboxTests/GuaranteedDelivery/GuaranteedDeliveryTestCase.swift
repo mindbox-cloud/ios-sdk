@@ -97,16 +97,16 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testDateTimeOffset() {
-        let events = eventGenerator.generateMockEvents(count: 100)
+        let events = eventGenerator.generateMockEvents(count: 1000)
         events.forEach { event in
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
-            XCTAssertTrue(expectation == dateTimeOffset)
+            XCTAssertEqual(dateTimeOffset, expectation, accuracy: Int64(0.001), "dateTimeOffset should match with some accuracy")
         }
     }
 
-    // TODO: Fix this
+    // FIXME: Fix this
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -147,13 +147,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
 //        waitForExpectations(timeout: (retryDeadline + 2) * 2) { _ in
-        waitForExpectations(timeout: 60) { _ in
+        waitForExpectations(timeout: 30) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
     }
 
-    // TODO: Fix this
+    // FIXME: Fix this
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
@@ -199,7 +199,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
 //        waitForExpectations(timeout: (retryDeadline + 5) * 2) { _ in
-        waitForExpectations(timeout: 60) { _ in
+        waitForExpectations(timeout: 30) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
