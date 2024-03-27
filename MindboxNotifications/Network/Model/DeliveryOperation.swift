@@ -52,11 +52,9 @@ class PushDeliveryOperation: Operation {
             case true:
                 self.onCompleted?(self.event, true)
                 self.isFinished = true
-                Logger.common(message: "PushDeliveryOperation: result: \(result), onCompleted: \(String(describing: self.onCompleted))", level: .info, category: .notification)
             case false:
                 self.onCompleted?(self.event, false)
                 self.isFinished = true
-                Logger.common(message: "PushDeliveryOperation: result: \(result), onCompleted: \(String(describing: self.onCompleted))", level: .error, category: .notification)
             }
         }
     }
