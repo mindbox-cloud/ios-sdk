@@ -216,10 +216,8 @@ public class MindboxNotificationService: NSObject {
         let directory = url.appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-            Logger.common(message: "MindboxNotificationService: Successfully created directory", level: .info, category: .notification)
             let fileURL = directory.appendingPathComponent(name, isDirectory: true).appendingPathExtension(format.extension)
             try data.write(to: fileURL, options: .atomic)
-            Logger.common(message: "MindboxNotificationService: Successfully data written", level: .info, category: .notification)
             return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
         } catch {
             Logger.common(message: "MindboxNotificationService: Failed to save image. data: \(data), name: \(name), url: \(url), directory: \(directory)", level: .error, category: .notification)
