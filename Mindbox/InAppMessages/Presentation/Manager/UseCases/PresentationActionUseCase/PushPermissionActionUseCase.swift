@@ -41,6 +41,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
                 case .denied:
                     self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
+                    UIPasteboard.general.string = self.model.intentPayload
                     return
                 @unknown default:
                     Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
@@ -77,6 +78,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
             
             guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
+                Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
                 return
             }
             

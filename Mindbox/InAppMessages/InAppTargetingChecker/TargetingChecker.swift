@@ -140,5 +140,9 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         let visitTargeting = VisitTargeting(kind: .equals, value: 1)
         let visitTargetingFactory = VisitTargetingFactory(checker: self)
         checkerMap[.visit(visitTargeting)] = visitTargetingFactory.makeChecker(for:)
+        
+        let pushEnabledTargeting = PushEnabledTargeting(value: false)
+        let pushEnabledFactory = PushEnabledTargetingFactory()
+        checkerMap[.pushEnabled(pushEnabledTargeting)] = pushEnabledFactory.makeChecker(for:)
     }
 }
