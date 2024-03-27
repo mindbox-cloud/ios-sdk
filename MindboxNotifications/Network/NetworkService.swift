@@ -30,47 +30,39 @@ class NetworkService {
     }
 
     public func sendPushDelivered(event: Event, completion: @escaping ((Bool) -> Void)) {
-            guard let deviceUUID = configuration.previousDeviceUUID else {
-                completion(false)
-                Logger.common(message: "NetworkService: Failed to get deviceUUID. configuration.previousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))", level: .error, category: .network)
-                return
-            }
-
-            let wrapper = EventWrapper(
-                event: event,
-                endpoint: configuration.endpoint,
-                deviceUUID: deviceUUID
-            )
-
-            let builder = URLRequestBuilder(domain: configuration.domain)
-            do {
-                let urlRequest = try builder.asURLRequest(route: PushDeliveredEventRoute(wrapper: wrapper))
-
-                Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
-                
-                session.dataTask(with: urlRequest) { data, response, error in
-                    Logger.response(data: data, response: response, error: error)
-                    if let error = error {
-                        Logger.error(.init(errorType: .server, description: error.localizedDescription))
-                        completion(false)
-                    }
-
-                    if let response = response as? HTTPURLResponse {
-                        if (200 ... 399).contains(response.statusCode) {
-                            Logger.common(message: "Push delivered", level: .info, category: .network)
-                            completion(true)
-                        } else {
-                            Logger.error(.init(errorType: .invalid, description: response.debugDescription))
-                            completion(false)
-                        }
-                    } else {
-                        Logger.error(.init(errorType: .invalid, description: response.debugDescription))
-                        completion(false)
-                    }
-                }.resume()
-            } catch let error {
-                Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
-                completion(false)
-            }
+        guard let deviceUUID = configuration.previousDeviceUUID else {
+            completion(false)
+            return
         }
+
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+
+        let builder = URLRequestBuilder(domain: configuration.domain)
+        do {
+            let urlRequest = try builder.asURLRequest(route: PushDeliveredEventRoute(wrapper: wrapper))
+            
+            session.dataTask(with: urlRequest) { data, response, error in
+                Logger.response(data: data, response: response, error: error)
+                if let error = error {
+                    completion(false)
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    if (200 ... 399).contains(response.statusCode) {
+                        completion(true)
+                    } else {
+                        completion(false)
+                    }
+                } else {
+                    completion(false)
+                }
+            }.resume()
+        } catch let error {
+            completion(false)
+        }
+    }
 }
