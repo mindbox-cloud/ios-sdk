@@ -44,31 +44,24 @@ class NetworkService {
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: PushDeliveredEventRoute(wrapper: wrapper))
-
-            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             
             session.dataTask(with: urlRequest) { data, response, error in
                 Logger.response(data: data, response: response, error: error)
                 if let error = error {
-                    Logger.error(.init(errorType: .server, description: error.localizedDescription))
                     completion(false)
                 }
 
                 if let response = response as? HTTPURLResponse {
                     if (200 ... 399).contains(response.statusCode) {
-                        Logger.common(message: "Push delivered", level: .info, category: .network)
                         completion(true)
                     } else {
-                        Logger.error(.init(errorType: .invalid, description: response.debugDescription))
                         completion(false)
                     }
                 } else {
-                    Logger.error(.init(errorType: .invalid, description: response.debugDescription))
                     completion(false)
                 }
             }.resume()
         } catch let error {
-            Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
             completion(false)
         }
     }
