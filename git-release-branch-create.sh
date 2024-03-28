@@ -52,4 +52,9 @@ git add $notifivation_podspec_file
 git add $sdkversionprovider_file
 git commit -m "Bump SDK version to $version"
 
-echo "Branch $branch_name has been created."
+git push origin $branch_name
+
+git tag $branch_name
+git push origin $branch_name --tags
+
+echo "Branch $branch_name has been created and pushed."
