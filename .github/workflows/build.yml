@@ -15,20 +15,18 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 15
     steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
-    - uses: ruby/setup-ruby@v1
-      with:
-        bundler-cache: true
+#    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+    - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
         path: .build
         key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
         restore-keys: |
           ${{ runner.os }}-spm-
-#    - name: Update bundler
-#      run: gem install bundler
-#    - name: Install bundler dependencies
-#      run: bundle install
+    - name: Update bundler
+      run: gem install bundler
+    - name: Install bundler dependencies
+      run: bundle install
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
 
