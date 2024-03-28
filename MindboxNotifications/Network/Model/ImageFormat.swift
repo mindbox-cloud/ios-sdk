@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 enum ImageFormat: String {
     case png, jpg, gif
@@ -26,7 +27,10 @@ enum ImageFormat: String {
 
 extension ImageFormat {
     static func get(from data: Data) -> ImageFormat? {
-        guard let firstByte = data.first else { return nil }
+        guard let firstByte = data.first else { 
+            Logger.common(message: "ImageFormat: Failed to get firstByte", level: .error, category: .notification)
+            return nil
+        }
         switch firstByte {
         case 0x89:
             return .png
@@ -35,6 +39,7 @@ extension ImageFormat {
         case 0x47:
             return .gif
         default:
+            Logger.common(message: "ImageFormat: Failed to get image format", level: .error, category: .notification)
             return nil
         }
     }

@@ -22,7 +22,7 @@ struct Event {
         return Int64(ms)
     }
     
-    // Время добавляения персистентно в очередь событий
+    // The time of adding is persistent to the event queue
     let enqueueTimeStamp: Double
     
     let serialNumber: String?

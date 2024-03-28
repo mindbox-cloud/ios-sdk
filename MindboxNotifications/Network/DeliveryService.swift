@@ -42,9 +42,11 @@ public class DeliveryService {
     @discardableResult
     func track(request: UNNotificationRequest) throws -> Bool {
         guard let decoder = NotificationDecoder<NotificationsPayloads.Delivery>(request: request) else {
+            Logger.common(message: "DeliveryService: Failed to create decoder. request: \(request)", level: .error, category: .notification)
             return false
         }
         guard decoder.isMindboxNotification else {
+            Logger.common(message: "DeliveryService: Not MindboxNotification. decoder.isMindboxNotification: \(decoder.isMindboxNotification)", level: .error, category: .notification)
             return false
         }
         let payload = try decoder.decode()

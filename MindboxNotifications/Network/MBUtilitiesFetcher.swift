@@ -1,5 +1,5 @@
 //
-//  UtilitiesFetcher.swift
+//  MBUtilitiesFetcher.swift
 //  MindboxNotifications
 //
 //  Created by Ihor Kandaurov on 22.06.2021.
@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 #if SWIFT_PACKAGE
 import SDKVersionProvider
 #endif
@@ -23,10 +24,11 @@ class MBUtilitiesFetcher {
         var bundle = Bundle(for: MindboxNotificationService.self)
         return bundle
     }()
-    
-    var applicationGroupIdentifier: String {
+
+    var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
-            fatalError("CFBundleShortVersionString not found for host app")
+            Logger.common(message: "MBUtilitiesFetcher: Failed to get applicationGroupIdentifier. hostApplicationName: \(String(describing: hostApplicationName))", level: .error, category: .notification)
+            return nil
         }
         let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
         let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
@@ -34,8 +36,8 @@ class MBUtilitiesFetcher {
             #if targetEnvironment(simulator)
             return ""
             #else
-            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
-            fatalError(message)
+            Logger.common(message: "MBUtilitiesFetcher: Failed to get AppGroup for \(hostApplicationName). identifier: \(identifier))", level: .error, category: .notification)
+            return nil
             #endif
         }
         return identifier
@@ -51,6 +53,7 @@ class MBUtilitiesFetcher {
             let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
             if let otherBundle = Bundle(url: url) {
                 bundle = otherBundle
+                Logger.common(message: "MBUtilitiesFetcher: Successfully prepared bundle. bundle: \(bundle)", level: .debug, category: .notification)
             }
         }
     }
@@ -72,7 +75,10 @@ class MBUtilitiesFetcher {
     }
     
     var configuration: MBConfiguration? {
-        guard let data = userDefaults?.data(forKey: "MBPersistenceStorage-configurationData") else { return nil }
+        guard let data = userDefaults?.data(forKey: "MBPersistenceStorage-configurationData") else {
+            Logger.common(message: "MBUtilitiesFetcher: Failed to get data from userDefaults for key 'MBPersistenceStorage-configurationData'", level: .error, category: .notification)
+            return nil
+        }
         return try? JSONDecoder().decode(MBConfiguration.self, from: data)
     }
 }

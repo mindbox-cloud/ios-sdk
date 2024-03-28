@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class PushDeliveryOperation: Operation {
     private let event: Event
@@ -43,7 +44,10 @@ class PushDeliveryOperation: Operation {
         }
 
         service.sendPushDelivered(event: event) { [weak self] result in
-            guard let self = self else { return }
+            guard let self = self else {
+                Logger.common(message: "PushDeliveryOperation: Failed to get PushDeliveryOperation. self: \(String(describing: self))", level: .error, category: .notification)
+                return
+            }
             switch result {
             case true:
                 self.onCompleted?(self.event, true)
