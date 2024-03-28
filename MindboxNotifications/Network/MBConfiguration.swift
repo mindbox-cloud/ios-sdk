@@ -41,7 +41,6 @@ public struct MBConfiguration: Codable {
         }
 
         self = configuration
-        Logger.common(message: "MBConfiguration: Successfully initialized configuration. Configuration: \(configuration)", level: .info, category: .notification)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -79,7 +78,6 @@ public struct MBConfiguration: Codable {
         self.previousDeviceUUID = previousDeviceUUID
         self.previousInstallationId = previousInstallationId
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
-        Logger.common(message: "MBConfiguration: Successfully initialized configuration. Configuration: \(self)", level: .info, category: .notification)
     }
 }
 
