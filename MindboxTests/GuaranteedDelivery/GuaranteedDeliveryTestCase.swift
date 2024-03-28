@@ -146,7 +146,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 30) { _ in
+        waitForExpectations(timeout: 15) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
@@ -197,7 +197,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 30) { _ in
+        waitForExpectations(timeout: 15) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
