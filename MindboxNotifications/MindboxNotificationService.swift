@@ -65,7 +65,7 @@ public class MindboxNotificationService: NSObject {
     public func pushDelivered(_ request: UNNotificationRequest) {
         let utilities = MBUtilitiesFetcher()
         guard let configuration = utilities.configuration else {
-            Logger.common(message: "MindboxNotificationService: Failed to get configuration. utilities.configuration: \(String(describing: utilities.configuration))", level: .error, category: .notification)
+            Logger.common(message: "MindboxNotificationService: Failed to get configuration", level: .error, category: .notification)
             return
         }
         Logger.common(message: "MindboxNotificationService: Successfully received configuration. configuration: \(configuration)", level: .info, category: .notification)
