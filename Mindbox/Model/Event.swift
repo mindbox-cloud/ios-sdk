@@ -9,7 +9,20 @@
 import Foundation
 import MindboxLogger
 
-struct Event {
+protocol EventProtocol {
+    var transactionId: String { get }
+    var dateTimeOffset: Int64 { get }
+    var enqueueTimeStamp: Double { get }
+    var serialNumber: String? { get }
+    var type: Event.Operation { get }
+    var isRetry: Bool { get }
+    var body: String { get }
+    
+    init(type: Event.Operation, body: String)
+    init?(_ event: CDEvent)
+}
+
+struct Event: EventProtocol {
     
     enum Operation: String {
         case installed = "MobilePush.ApplicationInstalled"

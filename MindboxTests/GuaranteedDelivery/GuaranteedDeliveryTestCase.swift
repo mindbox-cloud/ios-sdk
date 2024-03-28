@@ -78,14 +78,31 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     var state: NSString {
         NSString(string: guaranteedDeliveryManager.state.rawValue)
     }
+    
+    func testEventEqualsMockEvent() {
+        let type: Event.Operation = .installed
+        let body = UUID().uuidString
+        
+        let event: EventProtocol = Event(type: type, body: body)
+        let mockEvent: EventProtocol = MockEvent(type: type, body: body)
+        
+        XCTAssertEqual(!event.transactionId.isEmpty, !mockEvent.transactionId.isEmpty, "Transaction Ids should not be empty")
+        XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.001, "Enqueue timestamps should match with some accuracy")
+        
+        XCTAssertEqual(event.serialNumber, mockEvent.serialNumber, "Serial numbers should be equal")
+        XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
+        XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
+        XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
+        XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
+    }
 
     func testDateTimeOffset() {
-        let events = eventGenerator.generateEvents(count: 100)
+        let events = eventGenerator.generateMockEvents(count: 100)
         events.forEach { event in
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
-            XCTAssertTrue(expectation == dateTimeOffset)
+            XCTAssertEqual(dateTimeOffset, expectation, "dateTimeOffset should be equal")
         }
     }
 
@@ -128,7 +145,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 1) * 2) { _ in
+        waitForExpectations(timeout: 15) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
@@ -178,18 +195,9 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: (retryDeadline + 5) * 2) { _ in
+        waitForExpectations(timeout: 15) { _ in
             observationToken?.invalidate()
             observationToken = nil
-        }
-    }
-
-    private func generateAndSaveToDatabaseEvents() {
-        let event = eventGenerator.generateEvent()
-        do {
-            try databaseRepository.create(event: event)
-        } catch {
-            XCTFail(error.localizedDescription)
         }
     }
 }
