@@ -10,7 +10,7 @@ import CoreData
 @testable import Mindbox
 import XCTest
 
-class GuaranteedDeliveryTestCase: XCTestCase {
+final class GuaranteedDeliveryTestCase: XCTestCase {
     
     var container: TestDependencyProvider!
     var databaseRepository: MBDatabaseRepository!

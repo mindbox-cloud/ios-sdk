@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
+final class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedInAppUIModel: InAppFormData?
     var presentCallsCount = 0
     var receivedOnPresent: (() -> Void)?

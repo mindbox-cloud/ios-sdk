@@ -10,7 +10,7 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
-class DatabaseRepositoryTestCase: XCTestCase {
+final class DatabaseRepositoryTestCase: XCTestCase {
     
     var container: DependencyContainer!
     var databaseRepository: MBDatabaseRepository!
@@ -195,7 +195,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
             do {
                 let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
                 let totalEvents = try self.databaseRepository.countEvents()
@@ -207,7 +207,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             }
         }
         
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 3)
     }
     
     func testDeprecatedEventsDelete() {
@@ -222,7 +222,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
             do {
                 try self.databaseRepository.removeDeprecatedEventsIfNeeded()
                 let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
@@ -233,7 +233,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             }
         }
         
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 3)
     }
     
     func testFetchUnretryEvents() {

@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class ImageDownloadServiceTests: XCTestCase {
+final class ImageDownloadServiceTests: XCTestCase {
     var sut: ImageDownloadServiceProtocol!
 
     override func setUp() {

@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class MockSessionManager: SessionManager {
+final class MockSessionManager: SessionManager {
 
     public var _isActiveNow: Bool = false
     var isActiveNow: Bool { return _isActiveNow }

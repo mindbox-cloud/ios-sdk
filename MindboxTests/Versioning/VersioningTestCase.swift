@@ -9,7 +9,7 @@
 @testable import Mindbox
 import XCTest
 
-class VersioningTestCase: XCTestCase {
+final class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
     var container: DependencyContainer!

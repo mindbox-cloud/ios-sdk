@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class ABTestVariantsValidatorTests: XCTestCase {
+final class ABTestVariantsValidatorTests: XCTestCase {
     var variantValidator: ABTestVariantsValidator!
     
     struct TestCase {

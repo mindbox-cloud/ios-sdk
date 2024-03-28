@@ -9,7 +9,7 @@
 @testable import Mindbox
 import XCTest
 
-class EventRepositoryTestCase: XCTestCase {
+final class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
     var container: DependencyContainer!
     var controllerQueue: DispatchQueue!

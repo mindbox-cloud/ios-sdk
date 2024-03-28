@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class ValidatorsTestCase: XCTestCase {
+final class ValidatorsTestCase: XCTestCase {
     
     func testURLValidator() {
         [

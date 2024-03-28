@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class MockFailureNetworkFetcher: NetworkFetcher {
+final class MockFailureNetworkFetcher: NetworkFetcher {
     
     init() {
     }

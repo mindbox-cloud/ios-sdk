@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class MindboxTests: XCTestCase {
+final class MindboxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 

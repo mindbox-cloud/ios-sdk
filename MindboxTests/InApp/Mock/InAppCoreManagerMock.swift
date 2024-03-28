@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class InAppCoreManagerMock: InAppCoreManagerProtocol {
+final class InAppCoreManagerMock: InAppCoreManagerProtocol {
     var delegate: InAppMessagesDelegate?
 
     func start() {

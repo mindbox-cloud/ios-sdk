@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class EventRepositoryMock: EventRepository {
+final class EventRepositoryMock: EventRepository {
     
     var lastBody: SDKLogsRequest?
     var requests: [SDKLogsRequest] = []

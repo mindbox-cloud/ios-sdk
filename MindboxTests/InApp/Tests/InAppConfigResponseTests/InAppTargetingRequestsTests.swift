@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class AInAppTargetingRequestsTests: XCTestCase {
+final class AInAppTargetingRequestsTests: XCTestCase {
 
     var container: TestDependencyProvider!
 

@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class URLSessionImageDownloaderTests: XCTestCase {
+final class URLSessionImageDownloaderTests: XCTestCase {
 
     var imageDownloader: ImageDownloader!
 

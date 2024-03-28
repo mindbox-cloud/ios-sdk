@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class SDKVersionValidatorTests: XCTestCase {
+final class SDKVersionValidatorTests: XCTestCase {
     
     var validator: SDKVersionValidator!
 

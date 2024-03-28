@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 @testable import Mindbox
 
-class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
+final class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     
     let geoService: GeoServiceProtocol
     let segmentationService: SegmentationServiceProtocol

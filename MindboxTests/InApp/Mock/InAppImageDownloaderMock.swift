@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class MockImageDownloader: ImageDownloader {
+final class MockImageDownloader: ImageDownloader {
     var expectedLocalURL: URL?
     var expectedResponse: HTTPURLResponse?
     var expectedError: Error?

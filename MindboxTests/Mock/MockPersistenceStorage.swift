@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class MockPersistenceStorage: PersistenceStorage {
+final class MockPersistenceStorage: PersistenceStorage {
     
     var onDidChange: (() -> Void)?
     private var _userVisitCount: Int? = 0

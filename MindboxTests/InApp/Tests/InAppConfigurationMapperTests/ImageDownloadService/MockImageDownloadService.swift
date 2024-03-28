@@ -10,7 +10,7 @@ import UIKit
 import MindboxLogger
 @testable import Mindbox
 
-class MockImageDownloadService: ImageDownloadServiceProtocol {
+final class MockImageDownloadService: ImageDownloadServiceProtocol {
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
         if url == "https://example.com/image.jpg" {
             completion(.success(UIImage()))

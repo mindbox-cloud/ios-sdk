@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class InAppStub {
+final class InAppStub {
     func getTargetingTrueNode() -> Targeting {
         .true(TrueTargeting())
     }

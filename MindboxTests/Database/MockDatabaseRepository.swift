@@ -9,7 +9,7 @@
 import Foundation
 @testable import Mindbox
 
-class MockDatabaseRepository: MBDatabaseRepository {
+final class MockDatabaseRepository: MBDatabaseRepository {
     
     var createsDeprecated: Bool = false
 //    var tempLimit: Int?

@@ -89,7 +89,7 @@ final class TestDependencyProvider: DependencyContainer {
     }
 }
 
-class MockInstanceFactory: InstanceFactory {
+final class MockInstanceFactory: InstanceFactory {
     
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher

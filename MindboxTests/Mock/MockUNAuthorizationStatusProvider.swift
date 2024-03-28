@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 @testable import Mindbox
 
-class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
+final class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
     
     func getStatus(result: @escaping (Bool) -> Void) {
         result(status.rawValue == UNAuthorizationStatus.authorized.rawValue)

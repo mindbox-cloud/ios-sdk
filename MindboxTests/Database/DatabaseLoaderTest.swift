@@ -10,7 +10,7 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
-class DatabaseLoaderTest: XCTestCase {
+final class DatabaseLoaderTest: XCTestCase {
     
     var persistentContainer: NSPersistentContainer {
         container.databaseRepository.persistentContainer
