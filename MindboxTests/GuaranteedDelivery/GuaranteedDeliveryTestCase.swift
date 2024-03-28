@@ -151,7 +151,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
     }
 
-    
     func testFailureScheduleByTimer() {
         updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
