@@ -19,10 +19,18 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: .build
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
         restore-keys: |
-          ${{ runner.os }}-spm-
+          ${{ runner.os }}-gems-
+          
+    - uses: actions/cache@v4
+      with:
+        path: derivedData
+        key: ${{ runner.os }}-derivedData-${{ hashFiles('**/*.xcodeproj', '**/*.xcworkspace') }}
+        restore-keys: |
+          ${{ runner.os }}-derivedData-
+          
     - name: Update bundler
       run: gem install bundler
     - name: Install bundler dependencies
