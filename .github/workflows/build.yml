@@ -17,24 +17,15 @@ jobs:
     steps:
 #    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
     - uses: actions/checkout@v4
-    - uses: actions/cache@v4
+    - uses: ruby/setup-ruby@v1
       with:
-        path: vendor/bundle
-        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-gems-
+        ruby-version: 2.7
+        bundler-cache: true
           
-    - uses: actions/cache@v4
-      with:
-        path: derivedData
-        key: ${{ runner.os }}-derivedData-${{ hashFiles('**/*.xcodeproj', '**/*.xcworkspace') }}
-        restore-keys: |
-          ${{ runner.os }}-derivedData-
-          
-    - name: Update bundler
-      run: gem install bundler
-    - name: Install bundler dependencies
-      run: bundle install
+#    - name: Update bundler
+#      run: gem install bundler
+#    - name: Install bundler dependencies
+#      run: bundle install
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
 
