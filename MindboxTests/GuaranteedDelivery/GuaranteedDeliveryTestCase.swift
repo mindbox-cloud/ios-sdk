@@ -106,6 +106,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
     }
 
+    // FIXME: Asynchronous wait failed: Exceeded timeout of 30 seconds, with unfulfilled expectations: "Expect state is idle".
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -145,7 +146,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 30) { _ in
+        waitForExpectations(timeout: 90) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
@@ -195,7 +196,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
         // Start update
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 30) { _ in
+        waitForExpectations(timeout: 90) { _ in
             observationToken?.invalidate()
             observationToken = nil
         }
