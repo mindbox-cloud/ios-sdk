@@ -33,13 +33,12 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var pushPermissionFilterService: InappFilterByPushPermission
+    var userVisitManager: UserVisitManager
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
-        inAppTargetingChecker = InAppTargetingChecker()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
@@ -53,8 +52,8 @@ final class TestDependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
-        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
-        inAppTargetingChecker = InAppTargetingChecker()
+        sessionManager = MockSessionManager()
+        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManagerMock()
         uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
@@ -67,7 +66,6 @@ final class TestDependencyProvider: DependencyContainer {
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        pushPermissionFilterService = InappFilterByPushPermission()
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -87,6 +85,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
         pushValidator = MindboxPushValidator()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
 }
 

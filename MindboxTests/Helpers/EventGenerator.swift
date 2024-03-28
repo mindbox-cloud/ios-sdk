@@ -27,4 +27,13 @@ struct EventGenerator {
         }
     }
 
+    func generateMockEvents(count: Int) -> [MockEvent] {
+        return (1...count).map { _ in
+            return MockEvent(
+                type: .installed,
+                body: UUID().uuidString,
+                isRetry: true
+            )
+        }
+    }
 }

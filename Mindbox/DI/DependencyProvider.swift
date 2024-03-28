@@ -32,12 +32,12 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var pushPermissionFilterService: InappFilterByPushPermission
+    var userVisitManager: UserVisitManager
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
-        inAppTargetingChecker = InAppTargetingChecker()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
+        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
@@ -52,7 +52,7 @@ final class DependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
-        sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
+        sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
 
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
@@ -87,7 +87,6 @@ final class DependencyProvider: DependencyContainer {
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService, 
                                                                     tracker: tracker)
-        pushPermissionFilterService = InappFilterByPushPermission()
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
@@ -98,7 +97,6 @@ final class DependencyProvider: DependencyContainer {
                                                                    persistenceStorage: persistenceStorage,
                                                                    sdkVersionValidator: sdkVersionValidator,
                                                                    urlExtractorService: urlExtractorService,
-                                                                   pushPermissionService: pushPermissionFilterService,
                                                                    abTestDeviceMixer: abTestDeviceMixer,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager),
@@ -114,6 +112,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
 }
 
