@@ -55,26 +55,20 @@ struct SDKDataView: View {
                         .padding(.bottom, 5)
                     Spacer()
                 }
-
                 TitleDescrptionView(title: "SDK version", message: viewModel.SDKVersion)
-
                 Divider()
                 TitleDescrptionView(title: "APNS token", message: viewModel.APNSToken)
-
                 Divider()
                 TitleDescrptionView(title: "Device UUID", message: viewModel.deviceUUID)
-                   
             }
             .frame(width: 310)
 
         }
-        
     }
 }
 
 struct SDKDataView_Preview: PreviewProvider {
     static var previews: some View {
-//        SDKDataView(SDKVersion: "0.0.0", diceUUID: "sdfjklfghsdflkjhglaskjhfdgl", APNSToken: "ds;fyhasdljkfhlsdjk")
         SDKDataView(viewModel: MainViewModel())
     }
 }
