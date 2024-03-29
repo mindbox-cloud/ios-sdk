@@ -22,11 +22,9 @@ class AppDelegate: MindboxAppDelegate {
                 shouldCreateCustomer: true
             )
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
-            //DispatchQueue.main.async {
-                Mindbox.shared.getDeviceUUID { deviceUUID in
-                    print(deviceUUID)
-                }
-            //}
+            Mindbox.shared.getDeviceUUID { deviceUUID in
+                print(deviceUUID)
+            }
         } catch  {
             print(error)
         }

@@ -14,29 +14,13 @@ class MainViewModel: ObservableObject {
     @Published var deviceUUID: String = ""
     @Published var APNSToken: String = ""
     
-    init() {
-        setupData()
-    }
-    
     func setupData() {
         self.SDKVersion = Mindbox.shared.sdkVersion
-//        DispatchQueue.main.async {
-//            Mindbox.shared.getDeviceUUID { deviceUUID in
-//                self.deviceUUID = deviceUUID
-//            }
-//        }
-//        DispatchQueue.main.async {
-//            Mindbox.shared.getAPNSToken { APNSToken in
-//                self.APNSToken = APNSToken
-//            }
-//        }
-        //DispatchQueue.main.async {
             Mindbox.shared.getDeviceUUID { deviceUUID in
                 DispatchQueue.main.async {
                     self.deviceUUID = deviceUUID
                 }
             }
-        //}
         Mindbox.shared.getAPNSToken { APNSToken in
             DispatchQueue.main.async {
                 self.APNSToken = APNSToken
