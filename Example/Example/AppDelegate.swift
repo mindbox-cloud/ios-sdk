@@ -18,6 +18,9 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
         
         do {
             let mindboxSdkConfig = try MBConfiguration(
+                //To run the application on a physical device you need to change the endpoint
+                //You should also change the application bundle ID in all targets, more details in the readme
+                //You can still run the application on the simulator to see In-Apps
                 endpoint: "Mpush-test.ReleaseExample.IosApp",
                 domain: "api.mindbox.ru",
                 subscribeCustomerIfCreated: true,
@@ -29,7 +32,9 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
             }
             
             //https://developers.mindbox.ru/docs/in-app
-            Mindbox.shared.inAppMessagesDelegate = self
+            ChooseInappMessageDelegate.select(chooseInappMessageDelegate: .InAppMessagesDelegate) {
+                Mindbox.shared.inAppMessagesDelegate = self
+            }
         } catch  {
             print(error)
         }
@@ -43,12 +48,11 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
     
     //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.alert, .badge, .sound])
+        completionHandler([.list, .badge, .sound])
         
         //https://developers.mindbox.ru/docs/ios-sdk-methods
         print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo))")
         print("Notification data: \(String(describing: Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)))")
-        
         if let uniqueKey = Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)?.uniqueKey {
             Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
         }

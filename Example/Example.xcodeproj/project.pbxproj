@@ -13,6 +13,7 @@
 		0AD271D22BB9D81E00750279 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD271D12BB9D81E00750279 /* UserNotificationsUI.framework */; };
 		0AD271D52BB9D81E00750279 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD271D42BB9D81E00750279 /* NotificationViewController.swift */; };
 		0AD271DC2BB9D81E00750279 /* MindboxNotificationContentExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0AD271CE2BB9D81D00750279 /* MindboxNotificationContentExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		0AD271E22BBA196C00750279 /* ChooseInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD271E12BBA196C00750279 /* ChooseInappMessageDelegate.swift */; };
 		0AEDBC7A2BB6F8F200EE8722 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC792BB6F8F200EE8722 /* AppDelegate.swift */; };
 		0AEDBC7C2BB6F8F200EE8722 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC7B2BB6F8F200EE8722 /* SceneDelegate.swift */; };
 		0AEDBC832BB6F8F400EE8722 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0AEDBC822BB6F8F400EE8722 /* Assets.xcassets */; };
@@ -69,6 +70,7 @@
 		0AD271D42BB9D81E00750279 /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		0AD271D92BB9D81E00750279 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0AD271E02BB9D84800750279 /* MindboxNotificationContentExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MindboxNotificationContentExtension.entitlements; sourceTree = "<group>"; };
+		0AD271E12BBA196C00750279 /* ChooseInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseInappMessageDelegate.swift; sourceTree = "<group>"; };
 		0AEDBC762BB6F8F200EE8722 /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AEDBC792BB6F8F200EE8722 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0AEDBC7B2BB6F8F200EE8722 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 				0AEDBC822BB6F8F400EE8722 /* Assets.xcassets */,
 				0AEDBC842BB6F8F400EE8722 /* LaunchScreen.storyboard */,
 				0AEDBC872BB6F8F400EE8722 /* Info.plist */,
+				0AD271E12BBA196C00750279 /* ChooseInappMessageDelegate.swift */,
 			);
 			path = Example;
 			sourceTree = "<group>";
@@ -470,6 +473,7 @@
 				0AEDBC962BB6FE4900EE8722 /* MainViewModel.swift in Sources */,
 				0AEDBC7C2BB6F8F200EE8722 /* SceneDelegate.swift in Sources */,
 				0AEDBC9B2BB70D6E00EE8722 /* SDKDataView.swift in Sources */,
+				0AD271E22BBA196C00750279 /* ChooseInappMessageDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
