@@ -7,6 +7,7 @@
 
 import Mindbox
 import Foundation
+import UIKit
 
 @main
 class AppDelegate: MindboxAppDelegate {

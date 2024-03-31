@@ -7,6 +7,7 @@
 
 import Foundation
 import Mindbox
+import UIKit
 
 class MainViewModel: ObservableObject {
     

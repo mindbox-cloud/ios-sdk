@@ -2,19 +2,24 @@ PODS:
   - Mindbox (2.8.5):
     - MindboxLogger (= 0.0.6)
   - MindboxLogger (0.0.6)
+  - MindboxNotifications (2.8.5):
+    - MindboxLogger (= 0.0.6)
 
 DEPENDENCIES:
   - Mindbox (= 2.8.5)
+  - MindboxNotifications
 
 SPEC REPOS:
   trunk:
     - Mindbox
     - MindboxLogger
+    - MindboxNotifications
 
 SPEC CHECKSUMS:
   Mindbox: ff0cf579406343e606ade907e66f75cdc19e8cb6
   MindboxLogger: d59b32ee8ee008c848fe33e5862b74bac3b327bd
+  MindboxNotifications: f0f687e2305c2d30fd09f2c9a6f821a3ee8e2b66
 
-PODFILE CHECKSUM: ddf78eae25bc45218f4aed38ad2a6b20b826c9b6
+PODFILE CHECKSUM: 107d0f609fc9a38c9b9756e33424f380d8de0961
 
 COCOAPODS: 1.15.2
