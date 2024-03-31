@@ -9,3 +9,7 @@ end
 target 'MindboxNotificationServiceExtension' do
    pod 'MindboxNotifications'
 end
+
+target 'MindboxNotificationContentExtension' do
+   pod 'MindboxNotifications'
+end

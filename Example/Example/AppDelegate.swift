@@ -12,6 +12,7 @@ import UIKit
 @main
 class AppDelegate: MindboxAppDelegate {
 
+    //https://developers.mindbox.ru/docs/ios-sdk-initialization
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
         
@@ -47,7 +48,15 @@ class AppDelegate: MindboxAppDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.list, .badge, .sound])
+        //completionHandler([.list, .banner, .badge, .sound])
+        completionHandler([.alert, .badge, .sound])
+        
+        print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo))")
+        print("Notification data: \(String(describing: Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)))")
+        
+        if let uniqueKey = Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)?.uniqueKey {
+            Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
+        }
     }
     
     func registerForRemoteNotifications() {
