@@ -15,6 +15,7 @@ class MainViewModel: ObservableObject {
     @Published var deviceUUID: String = ""
     @Published var APNSToken: String = ""
     
+    //https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
         self.SDKVersion = Mindbox.shared.sdkVersion
             Mindbox.shared.getDeviceUUID { deviceUUID in
@@ -29,6 +30,7 @@ class MainViewModel: ObservableObject {
         }
     }
     
+    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteSyncOperation () {
         let json = """
         { "viewProduct":
@@ -49,6 +51,7 @@ class MainViewModel: ObservableObject {
         }
     }
     
+    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteAsyncOperation () {
         let json = """
         { "viewProduct":
@@ -61,4 +64,5 @@ class MainViewModel: ObservableObject {
         """
         Mindbox.shared.executeAsyncOperation(operationSystemName: "APIMethodForReleaseExampleIos", json: json)
     }
+    
 }

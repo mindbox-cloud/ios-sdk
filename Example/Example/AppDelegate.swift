@@ -10,8 +10,8 @@ import Foundation
 import UIKit
 
 @main
-class AppDelegate: MindboxAppDelegate {
-
+class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
+    
     //https://developers.mindbox.ru/docs/ios-sdk-initialization
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -27,6 +27,9 @@ class AppDelegate: MindboxAppDelegate {
             Mindbox.shared.getDeviceUUID { deviceUUID in
                 print(deviceUUID)
             }
+            
+            //https://developers.mindbox.ru/docs/in-app
+            Mindbox.shared.inAppMessagesDelegate = self
         } catch  {
             print(error)
         }
@@ -34,23 +37,15 @@ class AppDelegate: MindboxAppDelegate {
         return true
     }
 
-
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Called when a new scene session is being created.
-        // Use this method to select a configuration to create the new scene with.
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
-
-    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
-        // Called when the user discards a scene session.
-        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
-    }
     
+    //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        //completionHandler([.list, .banner, .badge, .sound])
         completionHandler([.alert, .badge, .sound])
         
+        //https://developers.mindbox.ru/docs/ios-sdk-methods
         print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo))")
         print("Notification data: \(String(describing: Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)))")
         
@@ -59,6 +54,7 @@ class AppDelegate: MindboxAppDelegate {
         }
     }
     
+    //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func registerForRemoteNotifications() {
         UNUserNotificationCenter.current().delegate = self
         DispatchQueue.main.async {
@@ -71,6 +67,16 @@ class AppDelegate: MindboxAppDelegate {
                 Mindbox.shared.notificationsRequestAuthorization(granted: granted)
             }
         }
+    }
+    
+    //https://developers.mindbox.ru/docs/in-app
+    func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+        print("inAppMessageTapAction")
+    }
+    
+    //https://developers.mindbox.ru/docs/in-app
+    func inAppMessageDismissed(id: String) {
+        print("inAppMessageDismissed")
     }
 }
 
