@@ -7,6 +7,26 @@
 
 import SwiftUI
 
+struct ButtonsViewline: View {
+    var label: String
+    var action: () -> ()
+    var body: some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(.mbText)
+            Spacer()
+            Button("Show In-App") {
+                action()
+            }
+            .frame(width: 120)
+            .frame(height: 30)
+            .background(Color.mbGreen)
+            .cornerRadius(10)
+            .tint(.white)
+        }
+    }
+}
+
 struct ButtonsView: View {
     
     @ObservedObject var viewModel: MainViewModel
@@ -16,38 +36,17 @@ struct ButtonsView: View {
             RoundedRectangle(cornerRadius: 20)
                 .frame(width: 350)
                 .frame(height: 110)
-                .foregroundColor(.mbLightGray)
+                .foregroundColor(.mbView)
             VStack {
-                HStack {
-                    Text("Async operation")
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Button("Show In-App") {
-                        viewModel.showInAppWithExecuteAsyncOperation()
-                    }
-                    .frame(width: 120)
-                    .frame(height: 30)
-                    .background(Color.mbGreen)
-                    .cornerRadius(10)
-                    .tint(.white)
+                ButtonsViewline(label: "Async operation") {
+                    viewModel.showInAppWithExecuteAsyncOperation()
                 }
                 Divider()
-                HStack {
-                    Text("Sync operation")
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Button("Show In-App") {
-                        viewModel.showInAppWithExecuteSyncOperation()
-                    }
-                    .frame(width: 120)
-                    .frame(height: 30)
-                    .background(Color.mbGreen)
-                    .cornerRadius(10)
-                    .tint(.white)
+                ButtonsViewline(label: "Sync operation") {
+                    viewModel.showInAppWithExecuteSyncOperation()
                 }
             }
             .frame(width: 310)
-            
         }
     }
 }

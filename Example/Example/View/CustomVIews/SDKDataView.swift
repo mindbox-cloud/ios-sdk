@@ -18,7 +18,7 @@ struct TitleDescrptionView: View {
                     .font(.system(size: 9))
                     .padding(.bottom, 2)
                     .lineLimit(1)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.mbText)
                 Text(message)
                     .font(.system(size: 13))
                     .contextMenu {
@@ -29,9 +29,8 @@ struct TitleDescrptionView: View {
                         }
                     }
                     .lineLimit(1)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.mbText)
             }
-            
             Spacer()
         }
     }
@@ -46,11 +45,11 @@ struct SDKDataView: View {
             RoundedRectangle(cornerRadius: 20)
                 .frame(width: 350)
                 .frame(height: 190)
-                .foregroundColor(.mbLightGray)
+                .foregroundColor(.mbView)
             VStack {
                 HStack {
                     Text("Data from SDK:")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.mbText)
                         .padding(.leading, -1)
                         .padding(.bottom, 5)
                     Spacer()
@@ -62,7 +61,6 @@ struct SDKDataView: View {
                 TitleDescrptionView(title: "Device UUID", message: viewModel.deviceUUID)
             }
             .frame(width: 310)
-
         }
     }
 }

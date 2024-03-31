@@ -14,7 +14,7 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-                Color.mbDarkGray.ignoresSafeArea()
+            Color.mbBackground.ignoresSafeArea()
             VStack {
                 ButtonsView(viewModel: viewModel)
                 SDKDataView(viewModel: viewModel)
@@ -26,7 +26,7 @@ struct MainView: View {
                 UserDefaults.standard.set(true, forKey: "ShownAlert")
             }
         }.alert("BE CAREFUL: In-App can only be shown once per session", isPresented: $showingAlert) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         }
     }
 }
