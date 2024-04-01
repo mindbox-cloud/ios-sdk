@@ -17,7 +17,7 @@ The app has integration via cocoapods, but you can use SPM if you need.
   pod install
   ```
 3. [Clone this repository](https://github.com/mindbox-cloud/ios-sdk/tree/feature/MBX-3248-ExampleApp).
-4. Go to `ios-sdk/Example/Example/Example.xcodeproj`.
+4. Go to `ios-sdk/Example/Example/Example.xcworkspace`.
 5. Run file `Example.xcworkspace`.
 #### SPM:
 1. -
