@@ -21,6 +21,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     var targetingChecker: InAppTargetingCheckerProtocol
     private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    var filteredInappsByEventForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private let sdkVersionValidator: SDKVersionValidator
     private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
     private let abTestDeviceMixer: ABTestDeviceMixer
@@ -28,10 +29,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     let dataFacade: InAppConfigurationDataFacadeProtocol
     
     private var fullListOfInapps: [InApp] = []
-    private var inappsDictForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     private var savedEventForTargeting: ApplicationEvent?
-    private var shownInnapId: String = ""
-    private var completionSuccess = false
+    private var shownInnapId = ""
 
     init(inappFilterService: InappFilterProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -58,18 +57,22 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         self.targetingChecker.event = nil
         fullListOfInapps = inappFilterService.filter(inapps: response.inapps?.elements)
         let responseInapps = filterInappsByABTests(response.abtests, responseInapps: fullListOfInapps)
-        let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
+        let filteredInapps = filterInappsByAlreadyShown(responseInapps, shownInAppsIds: shownInAppsIds)
         Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
         
         targetingChecker.event = event
         prepareTargetingChecker(for: filteredInapps)
         dataFacade.setObservedOperation()
         
+        prepareForRemainingTargeting()
+        
         if filteredInapps.isEmpty {
             Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
             completion(nil)
             return
         }
+        
+
 
         dataFacade.fetchDependencies(model: event?.model) {
             self.filterByInappsEvents(inapps: filteredInapps, filteredInAppsByEvent: &self.filteredInAppsByEvent)
@@ -92,26 +95,40 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
+    func prepareForRemainingTargeting() {
+        let estimatedInapps = fullListOfInapps
+        prepareTargetingChecker(for: estimatedInapps)
+        
+        self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
+            self.filterByInappsEvents(inapps: estimatedInapps,
+                                      filteredInAppsByEvent: &self.filteredInappsByEventForTargeting)
+        }
+    }
+    
     func sendRemainingInappsTargeting() {
         Logger.common(message: "TR | Initiating processing of remaining in-app targeting requests.", level: .debug, category: .inAppMessages)
         Logger.common(message: "TR | Full list of in-app messages: \(fullListOfInapps.map { $0.id })", level: .debug, category: .inAppMessages)
         Logger.common(message: "TR | Saved event for targeting: \(savedEventForTargeting?.name ?? "None")", level: .debug, category: .inAppMessages)
+                
+        var inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting,
+                                                                asd: self.filteredInappsByEventForTargeting)
         
-        self.prepareTargetingChecker(for: fullListOfInapps)
-        dataFacade.setObservedOperation()
-        self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
-            self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
-            let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
-            var ids = inappsForTargeting.map { $0.inAppId }
-            if self.completionSuccess && ids.contains(self.shownInnapId) {
-                ids.removeAll { $0 == self.shownInnapId }
+        Logger.common(message: "TR | In-apps selected for targeting requests: \(inappsForTargeting)", level: .debug, category: .inAppMessages)
+        
+        var estimatedInapps = fullListOfInapps
+        estimatedInapps.removeAll(where: {
+            $0.id == shownInnapId
+        })
+        
+        var asd = inappsForTargeting.filter { inapp in
+            estimatedInapps.contains { estimatedInapp in
+                inapp.inAppId == estimatedInapp.id
             }
-
-            let setIds = Set(ids)
-            Logger.common(message: "TR | In-apps selected for targeting requests: \(setIds)", level: .debug, category: .inAppMessages)
-            setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
-            self.completionSuccess = false
         }
+
+        asd.forEach( {
+            self.dataFacade.trackTargeting(id: $0.inAppId)
+        })
     }
     
     func inAppsByEventForTargeting(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
@@ -129,7 +146,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
-    func filterInappsBySDKVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
+    func filterInappsByAlreadyShown(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
         guard let inapps = inapps else {
             return []
         }
@@ -301,7 +318,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 DispatchQueue.main.async { [weak self] in
                     self?.shownInnapId = formData?.inAppId ?? ""
                     self?.dataFacade.trackTargeting(id: formData?.inAppId)
-                    self?.completionSuccess = true
                     completion(formData)
                 }
             }
