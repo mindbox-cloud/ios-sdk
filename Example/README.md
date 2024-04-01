@@ -27,7 +27,7 @@ The app has integration via cocoapods, but you can use SPM if you need.
    - `rm Podfile.lock`
    - `rm Example.xcworkspace`
    - `rm -rf Pods`
-2. Lounch `Example.xcodeproj`
+2. Lounch `Example.xcodeproj`.
 3. [Read this](https://developers.mindbox.ru/docs/add-ios-sdk) and follow the initialization instructions via SPM.
 
 Now you can test the in-app on the simulator. 
@@ -51,14 +51,14 @@ To run the application on a real device and try push notifications, follow the i
 2. To check the inapp anywhere in the application:
   - [Read this](https://help.mindbox.ru/docs/in-app-location).
   - Replace `operationSystemName` in `showInAppWithExecuteSyncOperation` and `showInAppWithExecuteAsyncOperation` in MainViewModel.
-  - Click to the button `Show in-app` opposite the selected operation
+  - Click to the button `Show in-app` opposite the selected operation.
 3. To check push notifications:
   - [Read this](https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced)
-  - Send a notification from your account
+  - Send a notification from your account.
 4. To check rich notifications:
   - [Read this](https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced)
-  - Send a notification from your account
+  - Send a notification from your account.
 
 ### Additionally
-  - Currently the In-App only comes once per session
-  - There are comments and links in the ExampleApp code that can help you
+  - Currently the In-App only comes once per session.
+  - There are comments and links in the ExampleApp code that can help you.
