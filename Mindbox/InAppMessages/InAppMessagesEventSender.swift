@@ -11,16 +11,13 @@ import MindboxLogger
 
 class InappMessageEventSender {
     private let inAppMessagesManager: InAppCoreManagerProtocol?
-    private let sessionStorage: SessionTemporaryStorage?
 
-    init(inAppMessagesManager: InAppCoreManagerProtocol?,
-         sessionStorage: SessionTemporaryStorage?) {
+    init(inAppMessagesManager: InAppCoreManagerProtocol?) {
         self.inAppMessagesManager = inAppMessagesManager
-        self.sessionStorage = sessionStorage
     }
 
     func sendEventIfEnabled(_ operatingSystemName: String, jsonString: String?) {
-        if let isPresenting = sessionStorage?.isPresentingInAppMessage, isPresenting {
+        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
             Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
         }
 
@@ -34,12 +31,9 @@ class InappMessageEventSender {
     }
 
     private func shouldSendEventForOperation(_ operationName: String) -> Bool {
-        guard let sessionStorage = sessionStorage else {
-            return false
-        }
 
-        return sessionStorage.customOperations.contains(operationName)
-            || sessionStorage.operationsFromSettings.contains(operationName)
+        return SessionTemporaryStorage.shared.customOperations.contains(operationName)
+            || SessionTemporaryStorage.shared.operationsFromSettings.contains(operationName)
     }
 
     private func decodeInAppOperationJSONModel(from jsonString: String) -> InappOperationJSONModel? {

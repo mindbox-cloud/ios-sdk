@@ -12,6 +12,7 @@ import Foundation
 class MockPersistenceStorage: PersistenceStorage {
     
     var onDidChange: (() -> Void)?
+    private var _userVisitCount: Int? = 0
     
     init() {
 
@@ -81,6 +82,11 @@ class MockPersistenceStorage: PersistenceStorage {
     var handledlogRequestIds: [String]?
     
     var imageLoadingMaxTimeInSeconds: Double?
+    
+    var userVisitCount: Int? {
+        get { return _userVisitCount }
+        set { _userVisitCount = newValue }
+    }
 
     func reset() {
         installationDate = nil

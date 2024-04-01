@@ -253,6 +253,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
         DispatchQueue.global().async {
             for inapp in inapps {
+                
                 guard formData == nil else {
                     break
                 }
