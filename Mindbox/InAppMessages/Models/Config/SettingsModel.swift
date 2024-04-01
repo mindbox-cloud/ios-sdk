@@ -24,14 +24,14 @@ struct Settings: Decodable, Equatable {
     }
     
     struct TimeToLive: Decodable, Equatable {
-        let inapps: TTLUnit
+        let inapps: TTLUnit?
     }
 }
 
 extension Settings.TimeToLive {
     struct TTLUnit: Decodable, Equatable {
-        let unit: Unit
-        let value: Int
+        let unit: Unit?
+        let value: Int?
         
         enum Unit: String, Decodable {
             case seconds
@@ -42,15 +42,11 @@ extension Settings.TimeToLive {
         
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            value = try container.decode(Int.self, forKey: .value)
-            let unitString = try container.decode(String.self, forKey: .unit).lowercased()
-            
-            guard let unit = Unit(rawValue: unitString) else {
-                throw DecodingError.dataCorruptedError(forKey: .unit, in: container, debugDescription: "Неверная единица времени")
-            }
-            
-            self.unit = unit
+            value = try? container.decode(Int.self, forKey: .value)
+            let unitString = try? container.decode(String.self, forKey: .unit).lowercased()
+            self.unit = Unit(rawValue: unitString ?? "")
         }
+
         
         private enum CodingKeys: String, CodingKey {
             case unit, value

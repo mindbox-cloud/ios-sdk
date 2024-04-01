@@ -318,6 +318,7 @@
 		F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470932B96632100E01E5C /* 16-17-TargetingRequests.json */; };
 		F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470952B96681F00E01E5C /* 27-TargetingRequests.json */; };
 		F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470972B9668F100E01E5C /* 31-TargetingRequests.json */; };
+		F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F315503E2BBB24E20072A071 /* TTLValidationService.swift */; };
 		F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801F72A38649D0021774C /* InappConfigResponseValid.json */; };
 		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
 		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
@@ -837,6 +838,7 @@
 		F31470932B96632100E01E5C /* 16-17-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "16-17-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31470952B96681F00E01E5C /* 27-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "27-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31470972B9668F100E01E5C /* 31-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "31-TargetingRequests.json"; sourceTree = "<group>"; };
+		F315503E2BBB24E20072A071 /* TTLValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTLValidationService.swift; sourceTree = "<group>"; };
 		F31801F72A38649D0021774C /* InappConfigResponseValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseValid.json; sourceTree = "<group>"; };
 		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
 		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
@@ -1708,6 +1710,7 @@
 		9B24FAAF28C74BB700F10B5D /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
+				F315503D2BBB24D60072A071 /* Services */,
 				9BC24E7128F6953D00C2619C /* API */,
 				9B4F9DF628D088A9002C9CF0 /* InAppConfig.swift */,
 				9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */,
@@ -2108,6 +2111,14 @@
 				F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */,
 			);
 			path = ConfigTargetings;
+			sourceTree = "<group>";
+		};
+		F315503D2BBB24D60072A071 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F315503E2BBB24E20072A071 /* TTLValidationService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		F31801F92A386A350021774C /* ConfigResponse */ = {
@@ -3169,6 +3180,7 @@
 				9B24FAB528C751E400F10B5D /* InAppImagesStorage.swift in Sources */,
 				F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */,
 				3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */,
+				F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */,
 				334F3AF5264C199900A6AC00 /* CodableDictionary.swift in Sources */,
 				F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */,
 				334F3AF3264C199900A6AC00 /* AreaRequest.swift in Sources */,
