@@ -34,10 +34,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
 
         mapper = InAppConfigutationMapper(inappFilterService: container.inappFilterService,
                                           targetingChecker: targetingChecker,
-                                          persistenceStorage: container.persistenceStorage,
-                                          sdkVersionValidator: container.sdkVersionValidator,
                                           urlExtractorService: container.urlExtractorService,
-                                          abTestDeviceMixer: container.abTestDeviceMixer,
                                           dataFacade: mockDataFacade)
     }
     
@@ -77,7 +74,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
             }
             
             wait(for: [expectation], timeout: 1)
-            targetingContains("2", expectedToShow: true)
+            targetingContains("2")
             targetingContains("1")
         } catch {
             XCTFail("Some error: \(error)")
@@ -142,7 +139,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
             }
             
             wait(for: [expectationForsendRemainingInappsTargeting], timeout: 1)
-            targetingContains("3", expectedToShow: true)
+            targetingContains("3")
             targetingContains("1")
             targetingContains("4")
             targetingContains("5")
