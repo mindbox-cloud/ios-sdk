@@ -20,9 +20,15 @@ The app has integration via cocoapods, but you can use SPM if you need.
 4. Go to `ios-sdk/Example/Example.xcworkspace`.
 5. Run file `Example.xcworkspace`.
 #### SPM:
-1. -
-2. -
-3. -
+1. To deintegrate cocoapods you can use next comands:
+   - `sudo gem install cocoapods-deintegrate`
+   - `pod deintegrate`
+   - `rm Podfile`
+   - `rm Podfile.lock`
+   - `rm Example.xcworkspace`
+   - `rm -rf Pods`
+2. Lounch `Example.xcodeproj`
+3. [Read this](https://developers.mindbox.ru/docs/add-ios-sdk) and follow the initialization instructions via SPM.
 
 Now you can test the in-app on the simulator. 
 In our admin panel there are already 3 ready-made in-apps that you can look at. 
