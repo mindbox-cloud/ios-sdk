@@ -9,6 +9,7 @@ import SwiftUI
 import Foundation
 
 struct MainView: View {
+    
     @ObservedObject var viewModel: MainViewModel
     @State private var showingAlert = !UserDefaults.standard.bool(forKey: "ShownAlert")
     
@@ -25,7 +26,8 @@ struct MainView: View {
             if !alertShown {
                 UserDefaults.standard.set(true, forKey: "ShownAlert")
             }
-        }.alert("BE CAREFUL: In-App can only be shown once per session", isPresented: $showingAlert) {
+        }
+        .alert("In-App can only be shown once per session", isPresented: $showingAlert) {
             Button("OK", role: .cancel) {}
         }
     }

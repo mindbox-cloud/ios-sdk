@@ -7,7 +7,6 @@
 
 import Mindbox
 import Foundation
-import UIKit
 
 @main
 class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
@@ -37,6 +36,7 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
         } catch  {
             print(error)
         }
+        //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
         registerForRemoteNotifications()
         return true
     }
@@ -76,12 +76,16 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
         //Here you can add your custom logic
         print("inAppMessageTapAction")
+        print(id)
+        print(url ?? "")
+        print(payload)
     }
     
     //https://developers.mindbox.ru/docs/in-app
     func inAppMessageDismissed(id: String) {
         //Here you can add your custom logic
         print("inAppMessageDismissed")
+        print(id)
     }
 }
 

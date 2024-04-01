@@ -11,11 +11,10 @@ import UserNotificationsUI
 import MindboxNotifications
 
 class NotificationViewController: UIViewController, UNNotificationContentExtension {
-
-  lazy var mindboxService = MindboxNotificationService()
-
-  func didReceive(_ notification: UNNotification) {
-    mindboxService.didReceive(notification: notification, viewController: self, extensionContext: extensionContext)
-  }
-
+    
+    lazy var mindboxService = MindboxNotificationService()
+    
+    func didReceive(_ notification: UNNotification) {
+        mindboxService.didReceive(notification: notification, viewController: self, extensionContext: extensionContext)
+    }
 }

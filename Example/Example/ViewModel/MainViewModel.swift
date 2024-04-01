@@ -36,7 +36,7 @@ class MainViewModel: ObservableObject {
         { "viewProduct":
             { "product":
                 { "ids":
-                    { "website": "94" }
+                    { "website": "9" }
                 }
             }
         }
@@ -57,12 +57,11 @@ class MainViewModel: ObservableObject {
         { "viewProduct":
             { "product":
                 { "ids":
-                    { "website": "9" }
+                    { "website": "94" }
                 }
             }
         }
         """
         Mindbox.shared.executeAsyncOperation(operationSystemName: "APIMethodForReleaseExampleIos", json: json)
     }
-    
 }
