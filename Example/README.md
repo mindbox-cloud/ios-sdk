@@ -29,6 +29,7 @@ The app has integration via cocoapods, but you can use SPM if you need.
    - `rm -rf Pods`
 2. Lounch `Example.xcodeproj`.
 3. [Read this](https://developers.mindbox.ru/docs/add-ios-sdk) and follow the initialization instructions via SPM.
+4. import UIKit to AppDelegate.swift
 
 Now you can test the in-app on the simulator. 
 In our admin panel there are already 3 ready-made in-apps that you can look at. 
