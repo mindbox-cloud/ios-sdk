@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TitleDescrptionView: View {
+    
     var title: String
     var message: String
     

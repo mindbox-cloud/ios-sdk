@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct ButtonsViewline: View {
+    
     var label: String
     var action: () -> ()
+    
     var body: some View {
         HStack {
             Text(label)

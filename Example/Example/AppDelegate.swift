@@ -30,9 +30,8 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
             Mindbox.shared.getDeviceUUID { deviceUUID in
                 print(deviceUUID)
             }
-            
-            //https://developers.mindbox.ru/docs/in-app
             ChooseInappMessageDelegate.select(chooseInappMessageDelegate: .InAppMessagesDelegate) {
+                //https://developers.mindbox.ru/docs/in-app
                 Mindbox.shared.inAppMessagesDelegate = self
             }
         } catch  {
@@ -75,11 +74,13 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
     
     //https://developers.mindbox.ru/docs/in-app
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
+        //Here you can add your custom logic
         print("inAppMessageTapAction")
     }
     
     //https://developers.mindbox.ru/docs/in-app
     func inAppMessageDismissed(id: String) {
+        //Here you can add your custom logic
         print("inAppMessageDismissed")
     }
 }
