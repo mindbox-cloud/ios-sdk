@@ -27,10 +27,11 @@
                             </visualEffectView>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreenBackground" translatesAutoresizingMaskIntoConstraints="NO" id="2hJ-tK-BTD">
                                 <rect key="frame" x="-58" y="210" width="508" height="433"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="XLQ-Sm-Dsc"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" red="0.2193854153" green="0.66742777819999999" blue="0.3661368787" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="XLQ-Sm-Dsc" firstAttribute="bottom" secondItem="2hJ-tK-BTD" secondAttribute="bottom" constant="175" id="93N-4c-QLO"/>
                             <constraint firstAttribute="trailing" secondItem="2hJ-tK-BTD" secondAttribute="trailing" constant="-57" id="HNg-7W-a9L"/>
