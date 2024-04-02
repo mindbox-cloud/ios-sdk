@@ -232,3 +232,37 @@ final class ProductSegmentTargetingFactory: CheckerFactory {
         )
     }
 }
+
+final class VisitTargetingFactory: CheckerFactory {
+    private let checker: TargetingCheckerPersistenceStorageProtocol
+
+    init(checker: TargetingCheckerPersistenceStorageProtocol) {
+        self.checker = checker
+    }
+
+    func makeChecker(for targetType: Targeting) -> CheckerFunctions {
+        let checkerFunctions = CheckerFunctions()
+        guard case let .visit(targeting) = targetType else {
+            return checkerFunctions
+        }
+        
+        let visitChecker = VisitTargetingChecker()
+        visitChecker.checker = checker
+        return CheckerFunctions(
+            prepare: { context in visitChecker.prepare(targeting: targeting, context: &context) },
+            check: { visitChecker.check(targeting: targeting) }
+        )
+    }
+}
+
+final class PushEnabledTargetingFactory: CheckerFactory {
+    func makeChecker(for targetType: Targeting) -> CheckerFunctions {
+        let checkerFunctions = CheckerFunctions()
+        guard case let .pushEnabled(targeting) = targetType else { return checkerFunctions }
+        let pushEnabledChecker = PushEnabledTargetingChecker()
+        return CheckerFunctions(
+            prepare: { context in pushEnabledChecker.prepare(targeting: targeting, context: &context) },
+            check: { pushEnabledChecker.check(targeting: targeting) }
+        )
+    }
+}

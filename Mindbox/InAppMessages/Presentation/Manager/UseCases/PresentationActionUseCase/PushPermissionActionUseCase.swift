@@ -12,10 +12,10 @@ import UserNotifications
 import UIKit
 
 final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
-
+    
     private let tracker: PresentationClickTracker
     private let model: PushPermissionLayerAction
-
+    
     init(tracker: PresentationClickTracker, model: PushPermissionLayerAction) {
         self.tracker = tracker
         self.model = model
@@ -34,44 +34,62 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     
     func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Logger.common(message: "Notification permission status: \(settings.authorizationStatus.rawValue)", level: .debug, category: .inAppMessages)
+            Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
             switch settings.authorizationStatus {
                 case .notDetermined:
-                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-                        if let error = error {
-                            Logger.common(message: "Notification permission error: \(error)", level: .error, category: .inAppMessages)
-                            return
-                        }
-
-                        if granted {
-                            DispatchQueue.main.async {
-                                UIApplication.shared.registerForRemoteNotifications()
-                            }
-                            Logger.common(message: "Notification permission granted", level: .debug, category: .inAppMessages)
-                        } else {
-                            Logger.common(message: "Notification permission not granted", level: .debug, category: .inAppMessages)
-                        }
-                    }
+                    self.pushNotificationRequest()
                 case .denied:
-                    DispatchQueue.main.async {
-                        guard let settingsUrl = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(settingsUrl) else { return }
-                        if UIApplication.shared.canOpenURL(settingsUrl) {
-                            if #available(iOS 10.0, *) {
-                                UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
-
-                                })
-                            } else {
-                                UIApplication.shared.openURL(settingsUrl)
-                            }
-                            
-                            Logger.common(message: "Open app settings with notification permission", level: .debug, category: .inAppMessages)
-                        }
-                    }
+                    self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
+                    UIPasteboard.general.string = self.model.intentPayload
                     return
                 @unknown default:
-                    Logger.common(message: "Caught unexpected new notification status. \(settings.authorizationStatus.rawValue)", level: .debug, category: .inAppMessages)
+                    Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
                     return
+            }
+        }
+    }
+    
+    private func pushNotificationRequest() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                Logger.common(message: "Error requesting notification permissions: \(error)", level: .error, category: .inAppMessages)
+                return
+            }
+            
+            if granted {
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+                Logger.common(message: "Notification permission was granted by the user.", level: .debug, category: .inAppMessages)
+            } else {
+                Logger.common(message: "User did not grant notification permissions.", level: .debug, category: .inAppMessages)
+            }
+        }
+    }
+    
+    private func openPushNotificationSettings() {
+        DispatchQueue.main.async {
+            let settingsUrl: URL?
+            if #available(iOS 16.0, *) {
+                settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
+            } else {
+                settingsUrl = URL(string: UIApplication.openSettingsURLString)
+            }
+            
+            guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
+                Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
+                return
+            }
+            
+            if UIApplication.shared.canOpenURL(settingsUrl) {
+                if #available(iOS 10.0, *) {
+                    UIApplication.shared.open(settingsUrl)
+                } else {
+                    UIApplication.shared.openURL(settingsUrl)
+                }
+                
+                Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
             }
         }
     }
