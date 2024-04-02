@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		15FD839E7FB29E48923BD02A /* Pods_MindboxNotificationContentExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41CD6A5E5E1355BFB2C97474 /* Pods_MindboxNotificationContentExtension.framework */; };
 		3F8BA80FD3B318141FBBED1F /* Pods_ExampleApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80ADE3A288769725B42EA6DA /* Pods_ExampleApp.framework */; };
+		BB085C842BBC3F3B0004617C /* EARouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C832BBC3F3B0004617C /* EARouter.swift */; };
+		BB085C862BBC3F670004617C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C852BBC3F670004617C /* LogManager.swift */; };
+		BB085C882BBC4BA90004617C /* FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C872BBC4BA90004617C /* FileManager.swift */; };
 		BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF272BA99DD900005FEC /* Extensions.swift */; };
 		BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF292BA99E9C00005FEC /* AppConstants.swift */; };
 		BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */; };
@@ -71,6 +74,9 @@
 		9BE3FCC82B2A473E0ADDC517 /* Pods-MindboxNotificationContentExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindboxNotificationContentExtension.debug.xcconfig"; path = "Target Support Files/Pods-MindboxNotificationContentExtension/Pods-MindboxNotificationContentExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		B1FA330BB7DD7C6BABF5E93E /* Pods-MindboxNotificationServiceExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindboxNotificationServiceExtension.debug.xcconfig"; path = "Target Support Files/Pods-MindboxNotificationServiceExtension/Pods-MindboxNotificationServiceExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		B4C7F7D99C4F327325940863 /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB085C832BBC3F3B0004617C /* EARouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EARouter.swift; sourceTree = "<group>"; };
+		BB085C852BBC3F670004617C /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
+		BB085C872BBC4BA90004617C /* FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManager.swift; sourceTree = "<group>"; };
 		BB253A202B9F06DA0042446C /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
 		BB29AF272BA99DD900005FEC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		BB29AF292BA99E9C00005FEC /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
@@ -139,6 +145,24 @@
 				00B63D81AB9324C4CEBC239F /* Pods-MindboxNotificationContentExtension.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		BB085C812BBC3F0C0004617C /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
+				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
+			);
+			path = ViewControllers;
+			sourceTree = "<group>";
+		};
+		BB085C822BBC3F250004617C /* Router */ = {
+			isa = PBXGroup;
+			children = (
+				BBCCF8482BA0A75B009A6037 /* Router.swift */,
+				BB085C832BBC3F3B0004617C /* EARouter.swift */,
+			);
+			path = Router;
 			sourceTree = "<group>";
 		};
 		BB30CBF12B9EFFED0068E7EE = {
@@ -219,9 +243,10 @@
 			isa = PBXGroup;
 			children = (
 				BB641D4E2BA9F572005F64D3 /* Views */,
-				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
-				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
-				BBCCF8482BA0A75B009A6037 /* Router.swift */,
+				BB085C812BBC3F0C0004617C /* ViewControllers */,
+				BB085C822BBC3F250004617C /* Router */,
+				BB085C852BBC3F670004617C /* LogManager.swift */,
+				BB085C872BBC4BA90004617C /* FileManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -468,11 +493,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB30CC022B9EFFED0068E7EE /* ViewController.swift in Sources */,
+				BB085C862BBC3F670004617C /* LogManager.swift in Sources */,
 				BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */,
+				BB085C882BBC4BA90004617C /* FileManager.swift in Sources */,
 				BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */,
 				BB30CC002B9EFFED0068E7EE /* SceneDelegate.swift in Sources */,
 				BB641D4A2BA9BB0E005F64D3 /* View.swift in Sources */,
 				BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */,
+				BB085C842BBC3F3B0004617C /* EARouter.swift in Sources */,
 				BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */,
 				BB641D4D2BA9F53E005F64D3 /* PushNotificationView.swift in Sources */,
 				BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */,
@@ -648,7 +676,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -680,7 +708,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -706,7 +734,7 @@
 				INFOPLIST_FILE = MindboxNotificationServiceExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindboxNotificationServiceExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -734,7 +762,7 @@
 				INFOPLIST_FILE = MindboxNotificationServiceExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindboxNotificationServiceExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -762,7 +790,7 @@
 				INFOPLIST_FILE = MindboxNotificationContentExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindboxNotificationContentExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -790,7 +818,7 @@
 				INFOPLIST_FILE = MindboxNotificationContentExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindboxNotificationContentExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

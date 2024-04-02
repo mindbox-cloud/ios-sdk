@@ -1,15 +1,11 @@
 //
-//  Router.swift
+//  EARouter.swift
 //  ExampleApp
 //
-//  Created by Sergei Semko on 3/12/24.
+//  Created by Sergei Semko on 4/2/24.
 //
 
 import UIKit
-
-protocol Router {
-    func showWebViewController(from viewController: UIViewController, url: URL?)
-}
 
 final class EARouter: Router {
     func showWebViewController(from viewController: UIViewController, url: URL?) {

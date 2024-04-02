@@ -10,19 +10,25 @@ import Mindbox
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    private let logManager = EALogManager()
 
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        logManager.log("Start \(#function)")
+        logManager.log("isProtectedDataAvailable before initMindbox: \(UIApplication.shared.isProtectedDataAvailable)")
+        logManager.logUserDefaultsMindbox()
         
         UNUserNotificationCenter.current().delegate = self
         
         initMindbox()
+        logManager.log("isProtectedDataAvailable after initMindbox: \(UIApplication.shared.isProtectedDataAvailable)")
         
         #if DEBUG
         // https://developers.mindbox.ru/docs/ios-sdk-methods#управление-логированием
-            Mindbox.logger.logLevel = .debug
+//            Mindbox.logger.logLevel = .debug
         #endif
         
         registerBackgroundTasks()
@@ -32,7 +38,17 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         registerForRemoteNotifications()
         
+        defer {
+            logManager.log("End of \(#function)")
+        }
         return true
+    }
+    
+    func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
+        logManager.log(#function)
+        logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
+        logManager.logUserDefaultsMindbox()
+        logManager.log("End of \(#function)")
     }
     
     func application(
@@ -41,9 +57,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     ) {
         /// https://developers.mindbox.ru/docs/ios-send-push-notifications-advanced#4-передать-в-sdk-apns-токен
         Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
+        logManager.log(#function)
         
         let deviceToken: String = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         Mindbox.logger.log(level: .info, message: "DeviceToken: \(deviceToken)")
+        
+        logManager.log("DeviceToken: \(deviceToken)")
     }
     
     func application(
@@ -86,6 +105,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     // https://developers.mindbox.ru/docs/ios-sdk-initialization
     private func initMindbox() {
         
+        logManager.log("Start \(#function)")
+        
         let endpoint = "Mpush-test.ExampleCocoaPods.IosApp"
         let domain = "api.mindbox.ru"
         
@@ -103,6 +124,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         } catch {
             Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
         }
+        
+        logManager.log("End \(#function)")
     }
     
     private func registerBackgroundTasks() {

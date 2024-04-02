@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import OSLog
 
 extension UIView {
     func addSubviews(_ views: UIView...) {
@@ -17,4 +18,10 @@ extension UIStackView {
     func addArrangedSubviews(_ views: UIView...) {
         views.forEach { addArrangedSubview($0) }
     }
+}
+
+extension Logger {
+    private static var subsystem = Bundle.main.bundleIdentifier!
+    
+    static let logManager = Logger(subsystem: subsystem, category: "logManager")
 }
