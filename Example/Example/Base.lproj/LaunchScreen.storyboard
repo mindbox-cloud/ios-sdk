@@ -16,31 +16,26 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreenBackground" translatesAutoresizingMaskIntoConstraints="NO" id="7Hj-mR-1ez">
-                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
-                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <preferredSymbolConfiguration key="preferredSymbolConfiguration" scale="default"/>
-                            </imageView>
                             <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="A8Y-so-6ZC">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="mTj-jf-xIW">
                                     <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                                 <blurEffect style="regular"/>
                             </visualEffectView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreenBackground" translatesAutoresizingMaskIntoConstraints="NO" id="2hJ-tK-BTD">
+                                <rect key="frame" x="-58" y="210" width="508" height="433"/>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="XLQ-Sm-Dsc"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="A8Y-so-6ZC" firstAttribute="bottom" secondItem="7Hj-mR-1ez" secondAttribute="bottom" id="ECY-aC-Mt3"/>
-                            <constraint firstItem="A8Y-so-6ZC" firstAttribute="trailing" secondItem="7Hj-mR-1ez" secondAttribute="trailing" id="G4A-gt-QyA"/>
-                            <constraint firstItem="A8Y-so-6ZC" firstAttribute="top" secondItem="7Hj-mR-1ez" secondAttribute="top" id="IBa-83-kq6"/>
-                            <constraint firstItem="7Hj-mR-1ez" firstAttribute="leading" secondItem="XLQ-Sm-Dsc" secondAttribute="leading" id="JWN-ln-JE1"/>
-                            <constraint firstAttribute="bottom" secondItem="7Hj-mR-1ez" secondAttribute="bottom" id="X5C-GA-uhQ"/>
-                            <constraint firstItem="7Hj-mR-1ez" firstAttribute="trailing" secondItem="XLQ-Sm-Dsc" secondAttribute="trailing" id="cWq-t9-QB3"/>
-                            <constraint firstItem="A8Y-so-6ZC" firstAttribute="leading" secondItem="7Hj-mR-1ez" secondAttribute="leading" id="fdu-Ra-K4A"/>
-                            <constraint firstItem="7Hj-mR-1ez" firstAttribute="top" secondItem="nxg-SZ-mKJ" secondAttribute="top" id="l8G-rB-drn"/>
+                            <constraint firstItem="XLQ-Sm-Dsc" firstAttribute="bottom" secondItem="2hJ-tK-BTD" secondAttribute="bottom" constant="175" id="93N-4c-QLO"/>
+                            <constraint firstAttribute="trailing" secondItem="2hJ-tK-BTD" secondAttribute="trailing" constant="-57" id="HNg-7W-a9L"/>
+                            <constraint firstItem="2hJ-tK-BTD" firstAttribute="top" secondItem="XLQ-Sm-Dsc" secondAttribute="top" constant="151" id="eSl-EJ-HO5"/>
+                            <constraint firstItem="2hJ-tK-BTD" firstAttribute="leading" secondItem="nxg-SZ-mKJ" secondAttribute="leading" constant="-58" id="kMz-ce-xb7"/>
                         </constraints>
                         <variation key="default">
                             <mask key="subviews">
@@ -51,11 +46,11 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="GX0-AK-DPn" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="52.173913043478265" y="375"/>
+            <point key="canvasLocation" x="51.145038167938928" y="374.64788732394368"/>
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchScreenBackground" width="302" height="302"/>
+        <image name="LaunchScreenBackground" width="833.33331298828125" height="833.33331298828125"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
