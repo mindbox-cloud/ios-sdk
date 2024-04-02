@@ -23,6 +23,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window?.rootViewController = viewController
         window?.makeKeyAndVisible()
+        
+        EALogManager.shared.log(#function)
     }
 }
 

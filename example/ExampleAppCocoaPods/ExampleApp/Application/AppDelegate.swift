@@ -11,7 +11,15 @@ import Mindbox
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     
-    private let logManager = EALogManager()
+    private let logManager = EALogManager.shared
+    
+    func application(
+        _ application: UIApplication,
+        willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool
+    {
+        logManager.log(#function)
+        return true
+    }
 
     func application(
         _ application: UIApplication,

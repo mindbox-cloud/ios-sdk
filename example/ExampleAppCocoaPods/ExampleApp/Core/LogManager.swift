@@ -11,10 +11,12 @@ import Mindbox
 
 final class EALogManager {
     
+    static let shared = EALogManager()
+    
     private let fileManager: FileManagerProtocol
     private let logFileName = "appLogs.txt"
     
-    init(fileManager: FileManagerProtocol = EAFileManager()) {
+    private init(fileManager: FileManagerProtocol = EAFileManager()) {
         self.fileManager = fileManager
         self.log("\n\n\nNew start \(Array(repeating: "=", count: 100).joined())")
     }
@@ -49,29 +51,28 @@ final class EALogManager {
         let allEntries = userDefaults.dictionaryRepresentation()
         var logString = "UserDefaults:\n"
         
-        for (key, value) in allEntries {
-            if key == "MBPersistenceStorage-configurationData" {
-                if let data = value as? Data {
-                    do {
-                        let configuration = try JSONDecoder().decode(MBConfiguration.self, from: data)
-                        let configurationDescription = """
-                        Configuration:
-                            Endpoint: \(configuration.endpoint)
-                            Domain: \(configuration.domain)
-                            PreviousInstallationId: \(String(describing: configuration.previousInstallationId))
-                            PreviousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))
-                            SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
-                            ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
-                            ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))
-                        """
-                        logString += configurationDescription
-                    } catch {
-                        Logger.logManager.error("Failed to decode configuration for key \(key): \(error.localizedDescription)")
-                    }
-                }
-            } else {
-                logString += "\(key): \(value)\n"
+        let configurationDataKey = "MBPersistenceStorage-configurationData"
+        if let data = allEntries[configurationDataKey] as? Data {
+            do {
+                let configuration = try JSONDecoder().decode(MBConfiguration.self, from: data)
+                let configurationDescription = """
+                Configuration:
+                    Endpoint: \(configuration.endpoint)
+                    Domain: \(configuration.domain)
+                    PreviousInstallationId: \(String(describing: configuration.previousInstallationId))
+                    PreviousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))
+                    SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
+                    ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
+                    ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))
+                """
+                logString += configurationDescription
+            } catch {
+                Logger.logManager.error("Failed to decode configuration for key \(configurationDataKey): \(error.localizedDescription)")
             }
+        }
+        
+        for (key, value) in allEntries where key != configurationDataKey {
+            logString += "\(key): \(value)\n"
         }
         
         log(logString)
