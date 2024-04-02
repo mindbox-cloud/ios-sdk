@@ -21,7 +21,7 @@ final class EAFileManager {
     
     private func makeURL(forFileNamed fileName: String) -> URL? {
         guard let url = fileManager.urls(
-            for: .documentDirectory,
+            for: .libraryDirectory,
             in: .userDomainMask).first
         else {
             return nil
