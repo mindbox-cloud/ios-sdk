@@ -18,11 +18,11 @@ class MainViewModel: ObservableObject {
     //https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
         self.SDKVersion = Mindbox.shared.sdkVersion
-            Mindbox.shared.getDeviceUUID { deviceUUID in
-                DispatchQueue.main.async {
-                    self.deviceUUID = deviceUUID
-                }
+        Mindbox.shared.getDeviceUUID { deviceUUID in
+            DispatchQueue.main.async {
+                self.deviceUUID = deviceUUID
             }
+        }
         Mindbox.shared.getAPNSToken { APNSToken in
             DispatchQueue.main.async {
                 self.APNSToken = APNSToken
