@@ -122,6 +122,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             // https://developers.mindbox.ru/docs/ios-sdk-initialization#3-инициализация-sdk
             Mindbox.shared.initialization(configuration: mindboxSdkConfiguration)
         } catch {
+            logManager.log("Mindbox init failed: \(error.localizedDescription)")
             Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
         }
         

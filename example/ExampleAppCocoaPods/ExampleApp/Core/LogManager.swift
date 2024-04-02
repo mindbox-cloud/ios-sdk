@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import Mindbox
 
 final class EALogManager {
     
@@ -15,6 +16,7 @@ final class EALogManager {
     
     init(fileManager: FileManagerProtocol = EAFileManager()) {
         self.fileManager = fileManager
+        self.log("\n\n\nNew start \(Array(repeating: "=", count: 100).joined())")
     }
     
     func log(_ message: String) {
@@ -32,18 +34,47 @@ final class EALogManager {
     }
     
     func logUserDefaultsMindbox() {
-        if let bundleIdentifier = Bundle.main.bundleIdentifier {
-            let suiteName = "group.cloud.Mindbox.\(bundleIdentifier)"
-            if let userDefaults = UserDefaults(suiteName: suiteName) {
-                let allEntries = userDefaults.dictionaryRepresentation()
-                var logString = "UserDefaults:\n"
-                
-                for (key, value) in allEntries {
-                    logString += "\(key): \(value)\n"
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier else {
+            Logger.logManager.warning("Couldn't find bundle id")
+            return
+        }
+        
+        let suiteName = "group.cloud.Mindbox.\(bundleIdentifier)"
+        
+        guard let userDefaults = UserDefaults(suiteName: suiteName) else {
+            Logger.logManager.warning("Couldn't read UD with suiteName: \(suiteName)")
+            return
+        }
+        
+        let allEntries = userDefaults.dictionaryRepresentation()
+        var logString = "UserDefaults:\n"
+        
+        for (key, value) in allEntries {
+            if key == "MBPersistenceStorage-configurationData" {
+                if let data = value as? Data {
+                    do {
+                        let configuration = try JSONDecoder().decode(MBConfiguration.self, from: data)
+                        let configurationDescription = """
+                        Configuration:
+                            Endpoint: \(configuration.endpoint)
+                            Domain: \(configuration.domain)
+                            PreviousInstallationId: \(String(describing: configuration.previousInstallationId))
+                            PreviousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))
+                            SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
+                            ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
+                            ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))
+                        """
+                        logString += configurationDescription
+                    } catch {
+                        Logger.logManager.error("Failed to decode configuration for key \(key): \(error.localizedDescription)")
+                    }
                 }
-                
-                log(logString)
+            } else {
+                logString += "\(key): \(value)\n"
             }
         }
+        
+        log(logString)
     }
+    
 }
