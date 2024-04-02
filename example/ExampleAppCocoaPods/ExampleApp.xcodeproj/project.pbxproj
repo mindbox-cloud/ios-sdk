@@ -12,6 +12,7 @@
 		BB085C842BBC3F3B0004617C /* EARouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C832BBC3F3B0004617C /* EARouter.swift */; };
 		BB085C862BBC3F670004617C /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C852BBC3F670004617C /* LogManager.swift */; };
 		BB085C882BBC4BA90004617C /* FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB085C872BBC4BA90004617C /* FileManager.swift */; };
+		BB187AC42BBC93DD005E44DA /* LogReaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB187AC32BBC93DD005E44DA /* LogReaderViewController.swift */; };
 		BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF272BA99DD900005FEC /* Extensions.swift */; };
 		BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB29AF292BA99E9C00005FEC /* AppConstants.swift */; };
 		BB30CBFE2B9EFFED0068E7EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB30CBFD2B9EFFED0068E7EE /* AppDelegate.swift */; };
@@ -77,6 +78,7 @@
 		BB085C832BBC3F3B0004617C /* EARouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EARouter.swift; sourceTree = "<group>"; };
 		BB085C852BBC3F670004617C /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		BB085C872BBC4BA90004617C /* FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManager.swift; sourceTree = "<group>"; };
+		BB187AC32BBC93DD005E44DA /* LogReaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogReaderViewController.swift; sourceTree = "<group>"; };
 		BB253A202B9F06DA0042446C /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
 		BB29AF272BA99DD900005FEC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		BB29AF292BA99E9C00005FEC /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
@@ -152,6 +154,7 @@
 			children = (
 				BB30CC012B9EFFED0068E7EE /* ViewController.swift */,
 				BBCCF8462BA09108009A6037 /* WebViewController.swift */,
+				BB187AC32BBC93DD005E44DA /* LogReaderViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -163,6 +166,15 @@
 				BB085C832BBC3F3B0004617C /* EARouter.swift */,
 			);
 			path = Router;
+			sourceTree = "<group>";
+		};
+		BB187AC52BBC9C30005E44DA /* LogManager */ = {
+			isa = PBXGroup;
+			children = (
+				BB085C852BBC3F670004617C /* LogManager.swift */,
+				BB085C872BBC4BA90004617C /* FileManager.swift */,
+			);
+			path = LogManager;
 			sourceTree = "<group>";
 		};
 		BB30CBF12B9EFFED0068E7EE = {
@@ -242,11 +254,10 @@
 		BBECB4A22BA1A2C900B78428 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				BB187AC52BBC9C30005E44DA /* LogManager */,
 				BB641D4E2BA9F572005F64D3 /* Views */,
 				BB085C812BBC3F0C0004617C /* ViewControllers */,
 				BB085C822BBC3F250004617C /* Router */,
-				BB085C852BBC3F670004617C /* LogManager.swift */,
-				BB085C872BBC4BA90004617C /* FileManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -502,6 +513,7 @@
 				BB29AF2A2BA99E9C00005FEC /* AppConstants.swift in Sources */,
 				BB085C842BBC3F3B0004617C /* EARouter.swift in Sources */,
 				BB29AF282BA99DD900005FEC /* Extensions.swift in Sources */,
+				BB187AC42BBC93DD005E44DA /* LogReaderViewController.swift in Sources */,
 				BB641D4D2BA9F53E005F64D3 /* PushNotificationView.swift in Sources */,
 				BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */,
 			);

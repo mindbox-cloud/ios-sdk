@@ -41,7 +41,7 @@ final class ViewController: UIViewController {
         super.viewDidLoad()
         setUpNotificationCenter()
         setUpDelegates()
-        setUpOperationsButtons()
+        setUpButtons()
         
         getDeviceUUID()
         getSdkVersion()
@@ -179,7 +179,8 @@ final class ViewController: UIViewController {
         Mindbox.shared.inAppMessagesDelegate = self
     }
     
-    private func setUpOperationsButtons() {
+    private func setUpButtons() {
+        eaView.addOpenLogsButtonTarget(self, action: #selector(openLogReader), for: .touchUpInside)
         eaView.addTriggerInAppTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
         eaView.addAsyncOperationTarget(self, action: #selector(registerCustomer), for: .touchUpInside)
     }
@@ -218,8 +219,12 @@ final class ViewController: UIViewController {
                 payloadText = payload
             }
             
-            eaView.createNotificationInfo(buttons: buttons, urlFromPush: clickUrl, payload: payloadText)
+//            eaView.createNotificationInfo(buttons: buttons, urlFromPush: clickUrl, payload: payloadText)
         }
+    }
+    
+    @objc private func openLogReader(_ sender: UIButton) {
+        router.showLogReaderViewController(from: self)
     }
 }
 

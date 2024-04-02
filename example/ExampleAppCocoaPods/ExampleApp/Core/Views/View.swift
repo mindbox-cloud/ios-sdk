@@ -13,6 +13,7 @@ protocol ViewProtocol: AnyObject {
     func showData(apnsToken: String, deviceUUID: String, sdkVersion: String)
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event)
+    func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String)
 }
 
@@ -31,7 +32,8 @@ final class View: UIView {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
         stackView.alignment = .fill
-        stackView.distribution = .fillProportionally
+//        stackView.distribution = .fillProportionally
+        stackView.distribution = .fillEqually
         stackView.spacing = 10
         
         stackView.isLayoutMarginsRelativeArrangement = true
@@ -57,7 +59,7 @@ final class View: UIView {
     
     private lazy var apnsTokenLabel: UILabel = {
         let label = UILabel()
-        label.numberOfLines = 0
+        label.numberOfLines = 1
         label.textAlignment = .center
         label.alpha = Constants.startAlpha
         label.isUserInteractionEnabled = true
@@ -126,6 +128,28 @@ final class View: UIView {
         return button
     }()
     
+    private lazy var openLogReaderButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+//        button.setTitle("Open Logs", for: .normal)
+        
+        var configuration = UIButton.Configuration.filled()
+        configuration.baseBackgroundColor = Constants.mindboxColor
+        configuration.cornerStyle = .medium
+        
+        configuration.contentInsets = NSDirectionalEdgeInsets(
+            top: 10,
+            leading: 10,
+            bottom: 10,
+            trailing: 10
+        )
+        
+        configuration.title = "Open Logs"
+        
+        button.configuration = configuration
+        return button
+    }()
+    
     private lazy var pushNotificationView = PushNotificationView()
     
     // MARK: Init
@@ -138,10 +162,6 @@ final class View: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String) {
-        pushNotificationView.fillData(buttons: buttons, urlFromPush: urlFromPush, payload: payload)
     }
     
     // MARK: Private methods
@@ -157,11 +177,11 @@ final class View: UIView {
         stackView.addArrangedSubviews(
             apnsTokenLabel,
             deviceUuidLabel,
+            openLogReaderButton,
+//            pushNotificationView,
             
-            pushNotificationView,
-            
-            inAppTriggerButton,
-            asyncOperationButton,
+//            inAppTriggerButton,
+//            asyncOperationButton,
             sdkVersionLabel
         )
         
@@ -178,8 +198,9 @@ final class View: UIView {
             stackView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
             
-            inAppTriggerButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70),
-            asyncOperationButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
+//            openLogReaderButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70),
+//            inAppTriggerButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70),
+//            asyncOperationButton.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
         ])
     }
     
@@ -223,6 +244,10 @@ extension View: UIContextMenuInteractionDelegate {
 // MARK: - ViewProtocol
 
 extension View: ViewProtocol {
+    func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String) {
+        pushNotificationView.fillData(buttons: buttons, urlFromPush: urlFromPush, payload: payload)
+    }
+    
     func startAnimationOfActivityIndicator() {
         activityIndicator.startAnimating()
     }
@@ -269,5 +294,9 @@ extension View: ViewProtocol {
     
     func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
         asyncOperationButton.addTarget(target, action: action, for: `for`)
+    }
+    
+    func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
+        openLogReaderButton.addTarget(target, action: action, for: `for`)
     }
 }

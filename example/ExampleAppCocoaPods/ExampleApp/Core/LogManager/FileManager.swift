@@ -9,6 +9,7 @@ import Foundation
 
 protocol FileManagerProtocol {
     func append(toFileNamed fileName: String, data: Data) throws
+    func read(fileNamed fileName: String) throws -> Data
 }
 
 final class EAFileManager {
@@ -32,6 +33,19 @@ final class EAFileManager {
 }
 
 extension EAFileManager: FileManagerProtocol {
+    func read(fileNamed fileName: String) throws -> Data {
+        guard let url = makeURL(forFileNamed: fileName) else {
+            throw FileManagerError.invalidDirectory
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            return data
+        } catch {
+            throw FileManagerError.readingFailed
+        }
+    }
+    
     func append(toFileNamed fileName: String, data: Data) throws {
         guard let url = makeURL(forFileNamed: fileName) else {
             throw FileManagerError.invalidDirectory

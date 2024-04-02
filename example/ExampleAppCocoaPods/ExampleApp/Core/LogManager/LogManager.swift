@@ -78,4 +78,18 @@ final class EALogManager {
         log(logString)
     }
     
+    func readLogs() -> String {
+        do {
+            let logData = try fileManager.read(fileNamed: logFileName)
+            
+            if let logString = String(data: logData, encoding: .utf8) {
+                return logString
+            } else {
+                return "Logs are not readable in UTF-8."
+            }
+        } catch {
+            Logger.logManager.error("Error reading logs: \(error.localizedDescription)")
+            return "Failed to read logs: \(error.localizedDescription)"
+        }
+    }
 }
