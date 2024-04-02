@@ -36,7 +36,7 @@ class MainViewModel: ObservableObject {
         { "viewProduct":
             { "product":
                 { "ids":
-                    { "website": "94" }
+                    { "website": "1" }
                 }
             }
         }
@@ -57,7 +57,7 @@ class MainViewModel: ObservableObject {
         { "viewProduct":
             { "product":
                 { "ids":
-                    { "website": "9" }
+                    { "website": "2" }
                 }
             }
         }
