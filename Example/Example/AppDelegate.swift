@@ -7,9 +7,10 @@
 
 import Mindbox
 import Foundation
+import UIKit
 
 @main
-class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
+class AppDelegate: MindboxAppDelegate {
     
     //https://developers.mindbox.ru/docs/ios-sdk-initialization
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -29,10 +30,7 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
             Mindbox.shared.getDeviceUUID { deviceUUID in
                 print(deviceUUID)
             }
-            ChooseInappMessageDelegate.select(chooseInappMessageDelegate: .InAppMessagesDelegate) {
-                //https://developers.mindbox.ru/docs/in-app
-                Mindbox.shared.inAppMessagesDelegate = self
-            }
+            ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
         } catch  {
             print(error)
         }
@@ -70,22 +68,6 @@ class AppDelegate: MindboxAppDelegate, InAppMessagesDelegate {
                 Mindbox.shared.notificationsRequestAuthorization(granted: granted)
             }
         }
-    }
-    
-    //https://developers.mindbox.ru/docs/in-app
-    func inAppMessageTapAction(id: String, url: URL?, payload: String) {
-        //Here you can add your custom logic
-        print("inAppMessageTapAction")
-        print(id)
-        print(url ?? "")
-        print(payload)
-    }
-    
-    //https://developers.mindbox.ru/docs/in-app
-    func inAppMessageDismissed(id: String) {
-        //Here you can add your custom logic
-        print("inAppMessageDismissed")
-        print(id)
     }
 }
 
