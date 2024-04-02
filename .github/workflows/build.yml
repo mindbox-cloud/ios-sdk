@@ -20,6 +20,10 @@ jobs:
       run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
+    - name: Install yeetd
+      run: |
+          wget https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
+          sudo installer -pkg yeetd-normal.pkg -target /
+          yeetd &
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
-
