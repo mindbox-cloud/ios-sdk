@@ -52,6 +52,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
+    func applicationProtectedDataWillBecomeUnavailable(_ application: UIApplication) {
+        logManager.log(#function)
+        logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
+        logManager.logUserDefaultsMindbox()
+        logManager.log("End of \(#function)")
+    }
+    
     func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
@@ -161,6 +168,30 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             name: "Default Configuration",
             sessionRole: connectingSceneSession.role
         )
+    }
+}
+
+// MARK: - App Life Cycle
+
+extension AppDelegate {
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        logManager.log(#function)
+    }
+    
+    func applicationWillResignActive(_ application: UIApplication) {
+        logManager.log(#function)
+    }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        logManager.log(#function)
+    }
+    
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        logManager.log(#function)
+    }
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+        logManager.log(#function)
     }
 }
 

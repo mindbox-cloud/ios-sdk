@@ -26,5 +26,25 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         EALogManager.shared.log(#function)
     }
+    
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        EALogManager.shared.log(#function)
+    }
+    
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        EALogManager.shared.log(#function)
+    }
+    
+    func sceneWillResignActive(_ scene: UIScene) {
+        EALogManager.shared.log(#function)
+    }
+    
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        EALogManager.shared.log(#function)
+    }
+    
+    func sceneDidDisconnect(_ scene: UIScene) {
+        EALogManager.shared.log(#function)
+    }
 }
 
