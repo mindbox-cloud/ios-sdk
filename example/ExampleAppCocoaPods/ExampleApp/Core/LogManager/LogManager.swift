@@ -59,8 +59,8 @@ final class EALogManager {
                 Configuration:
                     Endpoint: \(configuration.endpoint)
                     Domain: \(configuration.domain)
-                    PreviousInstallationId: \(String(describing: configuration.previousInstallationId))
-                    PreviousDeviceUUID: \(String(describing: configuration.previousDeviceUUID))
+                    PreviousInstallationId: \(configuration.previousInstallationId ?? "nil")
+                    PreviousDeviceUUID: \(configuration.previousDeviceUUID ?? "nil")
                     SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
                     ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
                     ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))

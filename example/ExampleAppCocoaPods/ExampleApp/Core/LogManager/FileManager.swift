@@ -52,7 +52,12 @@ extension EAFileManager: FileManagerProtocol {
         }
         
         if !fileManager.fileExists(atPath: url.path) {
-            fileManager.createFile(atPath: url.path, contents: data)
+//            fileManager.createFile(atPath: url.path, contents: data)
+            do {
+                try data.write(to: url, options: .noFileProtection)
+            } catch {
+                throw FileManagerError.creatingFileFailed
+            }
         } else {
             if let fileHandle = try? FileHandle(forWritingTo: url) {
                 try fileHandle.seekToEnd()
@@ -71,4 +76,5 @@ enum FileManagerError: Error {
     case writingFailed
     case fileNotExist
     case readingFailed
+    case creatingFileFailed
 }
