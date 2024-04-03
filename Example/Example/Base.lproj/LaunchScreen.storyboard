@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="bFA-g9-xEE">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -25,18 +24,17 @@
                                 </view>
                                 <blurEffect style="regular"/>
                             </visualEffectView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreenBackground" translatesAutoresizingMaskIntoConstraints="NO" id="2hJ-tK-BTD">
-                                <rect key="frame" x="-58" y="210" width="508" height="433"/>
-                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="MindboxIcon" translatesAutoresizingMaskIntoConstraints="NO" id="agp-t9-tgV">
+                                <rect key="frame" x="-43" y="240" width="478" height="372"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="XLQ-Sm-Dsc"/>
                         <color key="backgroundColor" red="0.2193854153" green="0.66742777819999999" blue="0.3661368787" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="XLQ-Sm-Dsc" firstAttribute="bottom" secondItem="2hJ-tK-BTD" secondAttribute="bottom" constant="175" id="93N-4c-QLO"/>
-                            <constraint firstAttribute="trailing" secondItem="2hJ-tK-BTD" secondAttribute="trailing" constant="-57" id="HNg-7W-a9L"/>
-                            <constraint firstItem="2hJ-tK-BTD" firstAttribute="top" secondItem="XLQ-Sm-Dsc" secondAttribute="top" constant="151" id="eSl-EJ-HO5"/>
-                            <constraint firstItem="2hJ-tK-BTD" firstAttribute="leading" secondItem="nxg-SZ-mKJ" secondAttribute="leading" constant="-58" id="kMz-ce-xb7"/>
+                            <constraint firstItem="XLQ-Sm-Dsc" firstAttribute="bottom" secondItem="agp-t9-tgV" secondAttribute="bottom" constant="206" id="Df2-1x-SAd"/>
+                            <constraint firstAttribute="trailing" secondItem="agp-t9-tgV" secondAttribute="trailing" constant="-42" id="KFL-Ip-Td7"/>
+                            <constraint firstItem="agp-t9-tgV" firstAttribute="leading" secondItem="nxg-SZ-mKJ" secondAttribute="leading" constant="-43" id="Kci-bS-sXj"/>
+                            <constraint firstItem="agp-t9-tgV" firstAttribute="top" secondItem="XLQ-Sm-Dsc" secondAttribute="top" constant="181" id="TPj-E1-Ryc"/>
                         </constraints>
                         <variation key="default">
                             <mask key="subviews">
@@ -51,9 +49,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchScreenBackground" width="833.33331298828125" height="833.33331298828125"/>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
+        <image name="MindboxIcon" width="833.33331298828125" height="833.33331298828125"/>
     </resources>
 </document>
