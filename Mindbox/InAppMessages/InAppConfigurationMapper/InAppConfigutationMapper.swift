@@ -86,14 +86,14 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     func prepareForRemainingTargeting() {
         let estimatedInapps = validInapps
         prepareTargetingChecker(for: estimatedInapps)
-        
-        self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
-            self.filterByInappsEvents(inapps: estimatedInapps,
-                                      filteredInAppsByEvent: &self.filteredInappsByEventForTargeting)
-        }
     }
     
     func sendRemainingInappsTargeting() {
+        self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
+            self.filterByInappsEvents(inapps: self.validInapps,
+                                      filteredInAppsByEvent: &self.filteredInappsByEventForTargeting)
+        }
+        
         let logMessage = """
         TR | Initiating processing of remaining in-app targeting requests.
              Full list of in-app messages: \(validInapps.map { $0.id })

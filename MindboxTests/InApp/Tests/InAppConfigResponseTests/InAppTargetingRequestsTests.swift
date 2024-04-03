@@ -9,7 +9,7 @@
 import XCTest
 @testable import Mindbox
 
-class AInAppTargetingRequestsTests: XCTestCase {
+class InAppTargetingRequestsTests: XCTestCase {
 
     var container: TestDependencyProvider!
 
@@ -380,7 +380,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
     }
     
     private func getConfig(name: String) throws -> ConfigResponse {
-        let bundle = Bundle(for: AInAppTargetingRequestsTests.self)
+        let bundle = Bundle(for: InAppTargetingRequestsTests.self)
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
         return try JSONDecoder().decode(ConfigResponse.self, from: data)
