@@ -30,11 +30,13 @@ final class LogReaderViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if !textView.text.isEmpty {
-            let location = textView.text.count - 1
-            let bottom = NSMakeRange(location, 1)
-            
-            textView.scrollRangeToVisible(bottom)
+        DispatchQueue.main.async {
+            if !self.textView.text.isEmpty {
+                let range = (self.textView.text as NSString).length - 1
+                let bottom = NSMakeRange(range, 1)
+                
+                self.textView.scrollRangeToVisible(bottom)
+            }
         }
     }
 }
