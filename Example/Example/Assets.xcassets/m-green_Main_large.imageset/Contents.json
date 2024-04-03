@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "m-green_Main_large@3x.png",
+      "filename" : "m-green_Main_large.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "m-green_Main_large@3x 1.png",
+      "filename" : "m-green_Main_large 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "m-green_Main_large@3x 2.png",
+      "filename" : "m-green_Main_large 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

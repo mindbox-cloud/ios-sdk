@@ -10,7 +10,7 @@
 		0A0DE3482BB8455A00812E73 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0DE3472BB8455A00812E73 /* NotificationService.swift */; };
 		0A0DE34C2BB8455A00812E73 /* MindboxNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0A0DE3452BB8455A00812E73 /* MindboxNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0A4B681A2BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4B68192BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift */; };
-		0A4B68202BBD75EA00639BC5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A4B681F2BBD75EA00639BC5 /* LaunchScreen.storyboard */; };
+		0A4B682A2BBD7D5100639BC5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A4B68292BBD7D5100639BC5 /* LaunchScreen.storyboard */; };
 		0AD271D02BB9D81E00750279 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD271CF2BB9D81D00750279 /* UserNotifications.framework */; };
 		0AD271D22BB9D81E00750279 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD271D12BB9D81E00750279 /* UserNotificationsUI.framework */; };
 		0AD271D52BB9D81E00750279 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD271D42BB9D81E00750279 /* NotificationViewController.swift */; };
@@ -66,7 +66,7 @@
 		0A0DE3492BB8455A00812E73 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0A0DE3512BB8457100812E73 /* MindboxNotificationServiceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MindboxNotificationServiceExtension.entitlements; sourceTree = "<group>"; };
 		0A4B68192BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChooseInAppMessagesDelegate.swift; sourceTree = "<group>"; };
-		0A4B681F2BBD75EA00639BC5 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		0A4B68292BBD7D5100639BC5 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0AD271CE2BB9D81D00750279 /* MindboxNotificationContentExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MindboxNotificationContentExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AD271CF2BB9D81D00750279 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		0AD271D12BB9D81E00750279 /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
@@ -175,7 +175,7 @@
 				0AD271E32BBAAA8800750279 /* PrivacyInfo.xcprivacy */,
 				0AEDBC7B2BB6F8F200EE8722 /* SceneDelegate.swift */,
 				0AEDBC822BB6F8F400EE8722 /* Assets.xcassets */,
-				0A4B681F2BBD75EA00639BC5 /* LaunchScreen.storyboard */,
+				0A4B68292BBD7D5100639BC5 /* LaunchScreen.storyboard */,
 				0AEDBC872BB6F8F400EE8722 /* Info.plist */,
 				0AEDBC9E2BB71FD700EE8722 /* ViewModel */,
 				0AEDBC9D2BB71FC600EE8722 /* View */,
@@ -356,7 +356,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A4B68202BBD75EA00639BC5 /* LaunchScreen.storyboard in Resources */,
+				0A4B682A2BBD7D5100639BC5 /* LaunchScreen.storyboard in Resources */,
 				0AD271E42BBAAA8800750279 /* PrivacyInfo.xcprivacy in Resources */,
 				0AEDBC832BB6F8F400EE8722 /* Assets.xcassets in Resources */,
 			);
