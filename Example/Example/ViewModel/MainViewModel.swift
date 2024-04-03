@@ -28,6 +28,7 @@ class MainViewModel: ObservableObject {
                 self.APNSToken = APNSToken
             }
         }
+        ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
     }
     
     //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation

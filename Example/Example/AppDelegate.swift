@@ -30,7 +30,6 @@ class AppDelegate: MindboxAppDelegate {
             Mindbox.shared.getDeviceUUID { deviceUUID in
                 print(deviceUUID)
             }
-            ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
         } catch  {
             print(error)
         }
