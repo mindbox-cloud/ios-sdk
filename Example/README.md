@@ -34,7 +34,7 @@ Now you can test the in-app on the simulator.
 In our admin panel there are already 3 ready-made in-apps that you can look at. 
 To run the application on a real device and try push notifications, follow the instructions below.
 
-### Setting up a Example application with your personal account
+### Setting up a Example application with your personal account (to run on a real device)
 
 1. Change [team](https://developers.mindbox.ru/docs/ios-get-keys) and bundle identifiers and App Group name for next targets:
   - ExampleApp
