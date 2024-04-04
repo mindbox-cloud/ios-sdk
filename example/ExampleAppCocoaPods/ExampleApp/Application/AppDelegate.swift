@@ -47,7 +47,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         registerForRemoteNotifications()
         
         defer {
-            logManager.log("End of \(#function)")
+            logManager.log("\(#function) done")
         }
         return true
     }
@@ -56,14 +56,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("End of \(#function)")
+        logManager.log("\(#function) done")
     }
     
     func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("End of \(#function)")
+        logManager.log("\(#function) done")
     }
     
     func application(

@@ -9,6 +9,16 @@ import Foundation
 import OSLog
 import Mindbox
 
+enum UserDefaultsSdkKeys: String, CaseIterable {
+    case installationId = "MBPersistenceStorage-installationId"
+    case deviceUUID = "MBPersistenceStorage-deviceUUID"
+    case apnsToken = "MBPersistenceStorage-apnsToken"
+    case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
+    case configurationData = "MBPersistenceStorage-configurationData"
+    case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
+    case installationData = "MBPersistenceStorage-installationData"
+}
+
 final class EALogManager {
     
     static let shared = EALogManager()
@@ -18,11 +28,25 @@ final class EALogManager {
     
     private init(fileManager: FileManagerProtocol = EAFileManager()) {
         self.fileManager = fileManager
-        self.log("\n\n\nNew start \(Array(repeating: "=", count: 100).joined())")
+        logLaunchApp()
+    }
+    
+    private func logLaunchApp() {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
+        let message = "New launch app \(Array(repeating: "=", count: 123).joined())"
+        let logMessage = "\n\n\n[\(timestamp)] \(message)\n"
+        
+        if let logData = logMessage.data(using: .utf8) {
+            do {
+                try self.fileManager.append(toFileNamed: self.logFileName, data: logData)
+            } catch {
+                Logger.logManager.error("Error writing \(error.localizedDescription)")
+            }
+        }
     }
     
     func log(_ message: String) {
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .long)
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
         let logMessage = "[\(timestamp)] \(message)\n"
         
         
@@ -51,28 +75,27 @@ final class EALogManager {
         let allEntries = userDefaults.dictionaryRepresentation()
         var logString = "UserDefaults:\n"
         
-        let configurationDataKey = "MBPersistenceStorage-configurationData"
-        if let data = allEntries[configurationDataKey] as? Data {
-            do {
-                let configuration = try JSONDecoder().decode(MBConfiguration.self, from: data)
-                let configurationDescription = """
-                Configuration:
-                    Endpoint: \(configuration.endpoint)
-                    Domain: \(configuration.domain)
-                    PreviousInstallationId: \(configuration.previousInstallationId ?? "nil")
-                    PreviousDeviceUUID: \(configuration.previousDeviceUUID ?? "nil")
-                    SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
-                    ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
-                    ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))
-                """
-                logString += configurationDescription
-            } catch {
-                Logger.logManager.error("Failed to decode configuration for key \(configurationDataKey): \(error.localizedDescription)")
+        UserDefaultsSdkKeys.allCases.forEach { key in
+            if key == .configurationData, let data = userDefaults.data(forKey: key.rawValue) {
+                do {
+                    let configuration = try JSONDecoder().decode(MBConfiguration.self, from: data)
+                    let configurationDescription = """
+                        \nConfiguration:
+                            Endpoint: \(configuration.endpoint)
+                            Domain: \(configuration.domain)
+                            PreviousInstallationId: \(configuration.previousInstallationId ?? "nil")
+                            PreviousDeviceUUID: \(configuration.previousDeviceUUID ?? "nil")
+                            SubscribeCustomerIfCreated: \(configuration.subscribeCustomerIfCreated)
+                            ShouldCreateCustomer: \(configuration.shouldCreateCustomer)
+                            ImageLoadingMaxTimeInSeconds: \(String(describing: configuration.imageLoadingMaxTimeInSeconds))\n\n
+                        """
+                    logString += configurationDescription
+                } catch {
+                    Logger.logManager.error("Failed to decode configuration for key \(key.rawValue): \(error.localizedDescription)")
+                }
+            } else if let value = userDefaults.object(forKey: key.rawValue) {
+                logString += "\(key.rawValue.split(separator: "-").last ?? ""): \(value)\n"
             }
-        }
-        
-        for (key, value) in allEntries where key != configurationDataKey {
-            logString += "\(key): \(value)\n"
         }
         
         log(logString)
