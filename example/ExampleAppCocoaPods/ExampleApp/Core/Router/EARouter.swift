@@ -16,7 +16,7 @@ final class EARouter: Router {
         case .userDefaultsLogs:
             vc = LogReaderViewController(openFile: .userDefaultsLogs)
         }
-        
+        vc.sheetPresentationController?.prefersGrabberVisible = true
         viewController.present(vc, animated: true)
     }
     
