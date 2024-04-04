@@ -14,6 +14,7 @@ protocol ViewProtocol: AnyObject {
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event)
+    func addOpenUserDefaultsLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String)
 }
 
@@ -131,7 +132,6 @@ final class View: UIView {
     private lazy var openLogReaderButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-//        button.setTitle("Open Logs", for: .normal)
         
         var configuration = UIButton.Configuration.filled()
         configuration.baseBackgroundColor = Constants.mindboxColor
@@ -145,6 +145,27 @@ final class View: UIView {
         )
         
         configuration.title = "Open Logs"
+        
+        button.configuration = configuration
+        return button
+    }()
+    
+    private lazy var openUserDefaultsLogReaderButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        var configuration = UIButton.Configuration.filled()
+        configuration.baseBackgroundColor = Constants.mindboxColor
+        configuration.cornerStyle = .medium
+        
+        configuration.contentInsets = NSDirectionalEdgeInsets(
+            top: 10,
+            leading: 10,
+            bottom: 10,
+            trailing: 10
+        )
+        
+        configuration.title = "Open UserDefaults Logs"
         
         button.configuration = configuration
         return button
@@ -178,6 +199,7 @@ final class View: UIView {
             apnsTokenLabel,
             deviceUuidLabel,
             openLogReaderButton,
+            openUserDefaultsLogReaderButton,
 //            pushNotificationView,
             
 //            inAppTriggerButton,
@@ -244,6 +266,14 @@ extension View: UIContextMenuInteractionDelegate {
 // MARK: - ViewProtocol
 
 extension View: ViewProtocol {
+    func addOpenUserDefaultsLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
+        openUserDefaultsLogReaderButton.addTarget(target, action: action, for: `for`)
+    }
+    
+    func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
+        openLogReaderButton.addTarget(target, action: action, for: `for`)
+    }
+    
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String) {
         pushNotificationView.fillData(buttons: buttons, urlFromPush: urlFromPush, payload: payload)
     }
@@ -294,9 +324,5 @@ extension View: ViewProtocol {
     
     func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
         asyncOperationButton.addTarget(target, action: action, for: `for`)
-    }
-    
-    func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
-        openLogReaderButton.addTarget(target, action: action, for: `for`)
     }
 }

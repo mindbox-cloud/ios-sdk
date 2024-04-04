@@ -181,6 +181,8 @@ final class ViewController: UIViewController {
     
     private func setUpButtons() {
         eaView.addOpenLogsButtonTarget(self, action: #selector(openLogReader), for: .touchUpInside)
+        eaView.addOpenUserDefaultsLogsButtonTarget(self, action: #selector(openLogUserDefaultsReader), for: .touchUpInside)
+        
         eaView.addTriggerInAppTarget(self, action: #selector(triggerInApp), for: .touchUpInside)
         eaView.addAsyncOperationTarget(self, action: #selector(registerCustomer), for: .touchUpInside)
     }
@@ -224,7 +226,11 @@ final class ViewController: UIViewController {
     }
     
     @objc private func openLogReader(_ sender: UIButton) {
-        router.showLogReaderViewController(from: self)
+        router.showLogReaderViewController(from: self, type: .logs)
+    }
+    
+    @objc private func openLogUserDefaultsReader(_ sender: UIButton) {
+        router.showLogReaderViewController(from: self, type: .userDefaultsLogs)
     }
 }
 

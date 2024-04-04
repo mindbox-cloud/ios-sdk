@@ -47,7 +47,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         registerForRemoteNotifications()
         
         defer {
-            logManager.log("End of \(#function)")
+            logManager.log("\(#function) done")
         }
         return true
     }
@@ -56,14 +56,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("End of \(#function)")
+        logManager.log("\(#function) done")
     }
     
     func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("End of \(#function)")
+        logManager.log("\(#function) done")
     }
     
     func application(
@@ -77,7 +77,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let deviceToken: String = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         Mindbox.logger.log(level: .info, message: "DeviceToken: \(deviceToken)")
         
-        logManager.log("DeviceToken: \(deviceToken)")
+        defer {
+            logManager.log("DeviceToken: \(deviceToken)")
+        }
     }
     
     func application(
@@ -120,8 +122,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     // https://developers.mindbox.ru/docs/ios-sdk-initialization
     private func initMindbox() {
         
-        logManager.log("Start \(#function)")
-        
         let endpoint = "Mpush-test.ExampleCocoaPods.IosApp"
         let domain = "api.mindbox.ru"
         
@@ -141,7 +141,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
         }
         
-        logManager.log("End \(#function)")
+        defer {
+            logManager.log("\(#function) done")
+        }
     }
     
     private func registerBackgroundTasks() {
