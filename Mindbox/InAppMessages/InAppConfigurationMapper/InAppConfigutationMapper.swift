@@ -52,9 +52,10 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         
         targetingChecker.event = event
         prepareTargetingChecker(for: filteredInapps)
-        dataFacade.setObservedOperation()
         
         prepareForRemainingTargeting()
+        
+        dataFacade.setObservedOperation()
         
         if filteredInapps.isEmpty {
             Logger.common(message: "No inapps to show", level: .debug, category: .inAppMessages)
