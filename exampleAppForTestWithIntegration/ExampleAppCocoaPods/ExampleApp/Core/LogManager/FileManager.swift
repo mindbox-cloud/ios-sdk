@@ -84,9 +84,13 @@ extension EAFileManager: FileManagerProtocol {
             }
         } else {
             if let fileHandle = try? FileHandle(forWritingTo: url) {
-                try fileHandle.seekToEnd()
-                try fileHandle.write(contentsOf: data)
-                try fileHandle.close()
+                do {
+                    try fileHandle.seekToEnd()
+                    try fileHandle.write(contentsOf: data)
+                    try fileHandle.close()
+                } catch {
+                    throw FileManagerError.writingFailed
+                }
             } else {
                 throw FileManagerError.writingFailed
             }
