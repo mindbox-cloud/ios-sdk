@@ -16,7 +16,7 @@ The app has integration via cocoapods, but you can use SPM if you need.
   ```ruby
   pod install
   ```
-3. Clone ios-sdk repository.
+3. [Clone ios-sdk repository](https://github.com/mindbox-cloud/ios-sdk).
 4. Go to `ios-sdk/Example/Example.xcworkspace`.
 5. Run file `Example.xcworkspace`.
 #### SPM:
