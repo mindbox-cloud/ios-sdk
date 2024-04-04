@@ -17,6 +17,8 @@ final class EAFileManager {
     
     let fileManager: FileManager
     
+    private let fileAccessQueue = DispatchQueue(label: "com.app.fileAccessQueue")
+    
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
     }
@@ -30,6 +32,16 @@ final class EAFileManager {
         }
 
         return url.appending(path: fileName)
+    }
+    
+    func appendSafely(fileNamed fileName: String, data: Data) throws {
+        fileAccessQueue.async {
+            do {
+                try self.append(toFileNamed: fileName, data: data)
+            } catch {
+                debugPrint("Failed to append data safely: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
@@ -55,7 +67,7 @@ extension EAFileManager: FileManagerProtocol {
         if !fileManager.fileExists(atPath: url.path) {
 //            fileManager.createFile(atPath: url.path, contents: data)
             do {
-                try data.write(to: url, options: .noFileProtection)
+                try data.write(to: url, options: [.noFileProtection, .atomic])
             } catch {
                 throw FileManagerError.creatingFileFailed
             }
@@ -78,7 +90,7 @@ extension EAFileManager: FileManagerProtocol {
         if !fileManager.fileExists(atPath: url.path) {
 //            fileManager.createFile(atPath: url.path, contents: data)
             do {
-                try data.write(to: url, options: .completeFileProtection)
+                try data.write(to: url, options: [.completeFileProtection, .atomic])
             } catch {
                 throw FileManagerError.creatingFileFailed
             }

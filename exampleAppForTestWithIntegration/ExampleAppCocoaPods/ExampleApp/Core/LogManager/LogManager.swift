@@ -137,9 +137,9 @@ extension EALogManager {
         if let logData = logMessage.data(using: .utf8) {
             do {
                 try self.fileManager.appendWithProtection(toFileNamed: fileName, data: logData)
-                log("Attempt to write protectionFile succeed")
+                log("Attempt write prtctdFile succeed")
             } catch {
-                log("Attempt to write protectionFile failed")
+                log("Attempt write prtctdFile failed")
                 Logger.logManager.error("Error writing \(error.localizedDescription)")
             }
         }
