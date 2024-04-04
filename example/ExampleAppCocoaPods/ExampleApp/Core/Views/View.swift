@@ -14,7 +14,6 @@ protocol ViewProtocol: AnyObject {
     func addTriggerInAppTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func addAsyncOperationTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event)
-    func addOpenUserDefaultsLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event)
     func createNotificationInfo(buttons: [(text: String?, url: String?)], urlFromPush: String, payload: String)
 }
 
@@ -150,27 +149,6 @@ final class View: UIView {
         return button
     }()
     
-    private lazy var openUserDefaultsLogReaderButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        
-        var configuration = UIButton.Configuration.filled()
-        configuration.baseBackgroundColor = Constants.mindboxColor
-        configuration.cornerStyle = .medium
-        
-        configuration.contentInsets = NSDirectionalEdgeInsets(
-            top: 10,
-            leading: 10,
-            bottom: 10,
-            trailing: 10
-        )
-        
-        configuration.title = "Open UserDefaults Logs"
-        
-        button.configuration = configuration
-        return button
-    }()
-    
     private lazy var pushNotificationView = PushNotificationView()
     
     // MARK: Init
@@ -199,7 +177,6 @@ final class View: UIView {
             apnsTokenLabel,
             deviceUuidLabel,
             openLogReaderButton,
-            openUserDefaultsLogReaderButton,
 //            pushNotificationView,
             
 //            inAppTriggerButton,
@@ -266,9 +243,6 @@ extension View: UIContextMenuInteractionDelegate {
 // MARK: - ViewProtocol
 
 extension View: ViewProtocol {
-    func addOpenUserDefaultsLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
-        openUserDefaultsLogReaderButton.addTarget(target, action: action, for: `for`)
-    }
     
     func addOpenLogsButtonTarget(_ target: Any?, action: Selector, for: UIControl.Event) {
         openLogReaderButton.addTarget(target, action: action, for: `for`)

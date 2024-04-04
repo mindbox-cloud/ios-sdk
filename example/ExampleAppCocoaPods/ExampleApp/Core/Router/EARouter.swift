@@ -8,14 +8,8 @@
 import UIKit
 
 final class EARouter: Router {
-    func showLogReaderViewController(from viewController: UIViewController, type: TypeOfLogsFile) {
-        let vc: UIViewController
-        switch type {
-        case .logs:
-            vc = LogReaderViewController(openFile: .logs)
-        case .userDefaultsLogs:
-            vc = LogReaderViewController(openFile: .userDefaultsLogs)
-        }
+    func showLogReaderViewController(from viewController: UIViewController) {
+        let vc = LogReaderViewController()
         vc.sheetPresentationController?.prefersGrabberVisible = true
         viewController.present(vc, animated: true)
     }

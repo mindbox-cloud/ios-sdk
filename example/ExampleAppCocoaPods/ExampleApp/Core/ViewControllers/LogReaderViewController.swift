@@ -7,23 +7,7 @@
 
 import UIKit
 
-enum TypeOfLogsFile {
-    case logs
-    case userDefaultsLogs
-    
-    var nameOfFile: String {
-        switch self {
-        case .logs:
-            EALogManager.shared.logFileName
-        case .userDefaultsLogs:
-            EALogManager.shared.logUserDefaultsFileName
-        }
-    }
-}
-
 final class LogReaderViewController: UIViewController {
-    
-    private let typeOfFile: TypeOfLogsFile
     
     private lazy var textView: UITextView = {
         let textView = UITextView()
@@ -32,15 +16,6 @@ final class LogReaderViewController: UIViewController {
         return textView
     }()
     
-    init(openFile: TypeOfLogsFile) {
-        self.typeOfFile = openFile
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
@@ -48,12 +23,7 @@ final class LogReaderViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        switch typeOfFile {
-        case .logs:
-            textView.text = EALogManager.shared.readMainLogs()
-        case .userDefaultsLogs:
-            textView.text = EALogManager.shared.readUserDefaultsLogs()
-        }
+        textView.text = EALogManager.shared.readLogs()
     }
     
     override func viewDidAppear(_ animated: Bool) {

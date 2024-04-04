@@ -24,8 +24,14 @@ final class EALogManager {
     static let shared = EALogManager()
     
     private let fileManager: FileManagerProtocol
-    let logFileName = "appLogs.txt"
-    let logUserDefaultsFileName = "appUserDefaultsLogs.txt"
+    private let logFileName = "appLogs.txt"
+    
+    private lazy var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "dd/MM, HH:mm:ss:SSS"
+        return formatter
+    }()
     
     private init(fileManager: FileManagerProtocol = EAFileManager()) {
         self.fileManager = fileManager
@@ -33,7 +39,7 @@ final class EALogManager {
     }
     
     private func logLaunchApp() {
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
+        let timestamp = dateFormatter.string(from: Date())
         let message = "New launch app \(Array(repeating: "=", count: 123).joined())"
         let logMessage = "\n\n\n[\(timestamp)] \(message)\n"
         
@@ -47,7 +53,7 @@ final class EALogManager {
     }
     
     func log(_ message: String) {
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
+        let timestamp = dateFormatter.string(from: Date())
         let logMessage = "[\(timestamp)] \(message)\n"
         
         if let logData = logMessage.data(using: .utf8) {
@@ -72,7 +78,6 @@ final class EALogManager {
             return
         }
         
-        let allEntries = userDefaults.dictionaryRepresentation()
         var logString = "UserDefaults:\n"
         
         UserDefaultsSdkKeys.allCases.forEach { key in
@@ -100,37 +105,9 @@ final class EALogManager {
         log(logString)
     }
     
-    private func saveUserDefaultsLogs(_ message: String) {
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .long)
-        let logMessage = "[\(timestamp)] \(message)\n"
-        
-        if let logData = logMessage.data(using: .utf8) {
-            do {
-                try self.fileManager.append(toFileNamed: self.logUserDefaultsFileName, data: logData)
-            } catch {
-                Logger.logManager.error("Error writing \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    func readMainLogs() -> String {
+    func readLogs() -> String {
         do {
             let logData = try fileManager.read(fileNamed: logFileName)
-            
-            if let logString = String(data: logData, encoding: .utf8) {
-                return logString
-            } else {
-                return "Logs are not readable in UTF-8."
-            }
-        } catch {
-            Logger.logManager.error("Error reading logs: \(error.localizedDescription)")
-            return "Failed to read logs: \(error.localizedDescription)"
-        }
-    }
-    
-    func readUserDefaultsLogs() -> String {
-        do {
-            let logData = try fileManager.read(fileNamed: logUserDefaultsFileName)
             
             if let logString = String(data: logData, encoding: .utf8) {
                 return logString

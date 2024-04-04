@@ -47,7 +47,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         registerForRemoteNotifications()
         
         defer {
-            logManager.log("\(#function) done")
+            logManager.log("Finished \(#function)")
         }
         return true
     }
@@ -56,14 +56,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("\(#function) done")
+        logManager.log("Finished \(#function)")
     }
     
     func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
-        logManager.log("\(#function) done")
+        logManager.log("Finished \(#function)")
     }
     
     func application(
@@ -77,9 +77,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let deviceToken: String = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         Mindbox.logger.log(level: .info, message: "DeviceToken: \(deviceToken)")
         
-        defer {
-            logManager.log("DeviceToken: \(deviceToken)")
-        }
+        logManager.log("DeviceToken: \(deviceToken)")
     }
     
     func application(
@@ -142,7 +140,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         defer {
-            logManager.log("\(#function) done")
+            logManager.log("\(#function)")
         }
     }
     
