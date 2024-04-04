@@ -144,9 +144,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             Mindbox.logger.log(level: .error, message: "\(error.localizedDescription)")
         }
         
-        defer {
-            logManager.log("\(#function)")
-        }
+        logManager.log("\(#function)")
     }
     
     private func registerBackgroundTasks() {
@@ -247,6 +245,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 Mindbox.logger.log(level: .debug, message: payload)
             }
             
+            debugPrint(String(describing: url))
 //            openUrlInBrowser(url)
         }
         
