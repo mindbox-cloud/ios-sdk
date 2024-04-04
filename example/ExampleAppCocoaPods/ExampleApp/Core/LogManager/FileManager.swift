@@ -10,6 +10,7 @@ import Foundation
 protocol FileManagerProtocol {
     func append(toFileNamed fileName: String, data: Data) throws
     func read(fileNamed fileName: String) throws -> Data
+    func appendWithProtection(toFileNamed fileName: String, data: Data) throws
 }
 
 final class EAFileManager {
@@ -55,6 +56,29 @@ extension EAFileManager: FileManagerProtocol {
 //            fileManager.createFile(atPath: url.path, contents: data)
             do {
                 try data.write(to: url, options: .noFileProtection)
+            } catch {
+                throw FileManagerError.creatingFileFailed
+            }
+        } else {
+            if let fileHandle = try? FileHandle(forWritingTo: url) {
+                try fileHandle.seekToEnd()
+                try fileHandle.write(contentsOf: data)
+                try fileHandle.close()
+            } else {
+                throw FileManagerError.writingFailed
+            }
+        }
+    }
+    
+    func appendWithProtection(toFileNamed fileName: String, data: Data) throws {
+        guard let url = makeURL(forFileNamed: fileName) else {
+            throw FileManagerError.invalidDirectory
+        }
+        
+        if !fileManager.fileExists(atPath: url.path) {
+//            fileManager.createFile(atPath: url.path, contents: data)
+            do {
+                try data.write(to: url, options: .completeFileProtection)
             } catch {
                 throw FileManagerError.creatingFileFailed
             }

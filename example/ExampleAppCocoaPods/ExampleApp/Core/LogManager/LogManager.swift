@@ -19,12 +19,16 @@ enum UserDefaultsSdkKeys: String, CaseIterable {
     case installationData = "MBPersistenceStorage-installationData"
 }
 
+enum FileNames: String {
+    case logFile = "appLogs.txt"
+    case fileWithProtection = "testFileWithProtection.txt"
+}
+
 final class EALogManager {
     
     static let shared = EALogManager()
     
     private let fileManager: FileManagerProtocol
-    private let logFileName = "appLogs.txt"
     
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -45,7 +49,7 @@ final class EALogManager {
         
         if let logData = logMessage.data(using: .utf8) {
             do {
-                try self.fileManager.append(toFileNamed: self.logFileName, data: logData)
+                try self.fileManager.append(toFileNamed: FileNames.logFile.rawValue, data: logData)
             } catch {
                 Logger.logManager.error("Error writing \(error.localizedDescription)")
             }
@@ -58,7 +62,7 @@ final class EALogManager {
         
         if let logData = logMessage.data(using: .utf8) {
             do {
-                try self.fileManager.append(toFileNamed: self.logFileName, data: logData)
+                try self.fileManager.append(toFileNamed: FileNames.logFile.rawValue, data: logData)
             } catch {
                 Logger.logManager.error("Error writing \(error.localizedDescription)")
             }
@@ -105,9 +109,9 @@ final class EALogManager {
         log(logString)
     }
     
-    func readLogs() -> String {
+    func readLogs(fileName: FileNames) -> String {
         do {
-            let logData = try fileManager.read(fileNamed: logFileName)
+            let logData = try fileManager.read(fileNamed: fileName.rawValue)
             
             if let logString = String(data: logData, encoding: .utf8) {
                 return logString
@@ -117,6 +121,27 @@ final class EALogManager {
         } catch {
             Logger.logManager.error("Error reading logs: \(error.localizedDescription)")
             return "Failed to read logs: \(error.localizedDescription)"
+        }
+    }
+}
+
+
+extension EALogManager {
+    func testWriteLogsWithProtection() {
+        let fileName = FileNames.fileWithProtection.rawValue
+        
+        let message = #function + "\nisProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)"
+        let timestamp = dateFormatter.string(from: Date())
+        let logMessage = "[\(timestamp)] \(message)\n"
+        
+        if let logData = logMessage.data(using: .utf8) {
+            do {
+                try self.fileManager.appendWithProtection(toFileNamed: fileName, data: logData)
+                log("Attempt to write protectionFile succeed")
+            } catch {
+                log("Attempt to write protectionFile failed")
+                Logger.logManager.error("Error writing \(error.localizedDescription)")
+            }
         }
     }
 }

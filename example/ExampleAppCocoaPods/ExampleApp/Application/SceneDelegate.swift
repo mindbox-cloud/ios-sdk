@@ -24,9 +24,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = viewController
         window?.makeKeyAndVisible()
         
-        defer {
-            EALogManager.shared.log(#function)
-        }
+        EALogManager.shared.log(#function)
     }
     
     func sceneWillEnterForeground(_ scene: UIScene) {

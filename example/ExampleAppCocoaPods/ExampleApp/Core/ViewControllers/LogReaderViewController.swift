@@ -23,7 +23,7 @@ final class LogReaderViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        textView.text = EALogManager.shared.readLogs()
+        textView.text = EALogManager.shared.readLogs(fileName: .logFile)
     }
     
     override func viewDidAppear(_ animated: Bool) {

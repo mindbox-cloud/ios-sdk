@@ -18,6 +18,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool
     {
         logManager.log(#function)
+        logManager.testWriteLogsWithProtection()
         return true
     }
 
@@ -25,7 +26,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        logManager.log("Start \(#function)")
+        logManager.log("\(#function)")
+        logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable before initMindbox: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
         
@@ -48,12 +50,14 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         defer {
             logManager.log("Finished \(#function)")
+            logManager.testWriteLogsWithProtection()
         }
         return true
     }
     
     func applicationProtectedDataWillBecomeUnavailable(_ application: UIApplication) {
         logManager.log(#function)
+        logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
         logManager.log("Finished \(#function)")
@@ -61,6 +65,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
+        logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
         logManager.log("Finished \(#function)")
