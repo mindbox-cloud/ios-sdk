@@ -2,8 +2,6 @@ name: Preparation for release
 
 on:
   push:
-    branches: 
-      - 'feature/MBX-0000-AutoCreateReleaseBranch'
     tags:
       - '*'
 
@@ -37,57 +35,57 @@ jobs:
           fi
         shell: bash
 
-      # - name: Create Pull Request
-      #   id: create-pr
-      #   uses: peter-evans/create-pull-request@v4
-      #   with:
-      #     commit-message: Update release version to ${{ env.VERSION }}
-      #     title: "Release/${{ env.VERSION }}"
-      #     body: |
-      #       Updates the release version to ${{ env.VERSION }}.
-      #     branch: "release/${{ env.VERSION }}"
-      #     base: "master"
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: Update release version to ${{ env.VERSION }}
+          title: "Release/${{ env.VERSION }}"
+          body: |
+            Updates the release version to ${{ env.VERSION }}.
+          branch: "release/${{ env.VERSION }}"
+          base: "master"
 
-      # - name: Post to a Slack channel
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.25.0
-      #   with:
-      #     channel-id: 'C06RXV161RA'
-      #     payload: |
-      #       {
-      #         "text": "iOS Release Branch Notification",
-      #         "blocks": [
-      #           {
-      #             "type": "header",
-      #             "text": {
-      #               "type": "plain_text",
-      #               "text": "🚀 iOS Release Branch Created"
-      #             }
-      #           },
-      #           {
-      #             "type": "section",
-      #             "text": {
-      #               "type": "mrkdwn",
-      #               "text": "*Branch Name:* *`release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
-      #             }
-      #           },
-      #           {
-      #             "type": "divider"
-      #           },
-      #           {
-      #             "type": "actions",
-      #             "elements": [
-      #               {
-      #                 "type": "button",
-      #                 "text": {
-      #                   "type": "plain_text",
-      #                   "text": "Pull Request"
-      #                 },
-      #                 "url": "${{ steps.create-pr.outputs.pull-request-url }}"
-      #               }
-      #             ]
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          channel-id: 'C06RXV161RA'
+          payload: |
+            {
+              "text": "iOS Release Branch Notification",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 iOS Release Branch Created"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Branch Name:* *`release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Pull Request"
+                      },
+                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
