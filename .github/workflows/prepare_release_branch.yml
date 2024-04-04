@@ -1,0 +1,91 @@
+name: Preparation for release 
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  preparation:
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from branch name
+        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+
+      - name: Check for existing branch
+        run: |
+          if git ls-remote --heads origin release/${{ env.VERSION }} | grep release/${{ env.VERSION }}; then
+            echo "Branch release/${{ env.VERSION }} already exists."
+            exit 1
+          fi
+        shell: bash
+
+      - name: Bump version
+        run: ./git-release-branch-create.sh "${{ env.VERSION }}"
+
+      - name: Check if sdkVersion matches VERSION
+        run: |
+          SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
+          if [ "$SDK_VERSION" != "${{ env.VERSION }}" ]; then
+            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ env.VERSION }})."
+            exit 1
+          fi
+        shell: bash
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: Update release version to ${{ env.VERSION }}
+          title: "Release/${{ env.VERSION }}"
+          body: |
+            Updates the release version to ${{ env.VERSION }}.
+          branch: "release/${{ env.VERSION }}"
+          base: "master"
+
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          channel-id: 'C06RXV161RA'
+          payload: |
+            {
+              "text": "iOS Release Branch Notification",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 iOS Release Branch Created"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Branch Name:* *`release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Pull Request"
+                      },
+                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
