@@ -7,8 +7,10 @@ This is an example of SDK [integration](https://developers.mindbox.ru/docs/ios-s
 ### Launching the application
 The app has integration via cocoapods, but you can use SPM if you need.
 #### Cocoapods:
-1. Make sure you have CocoaPods installed or install it according to the instructions.
-2. Install the pods.
+1. [Clone ios-sdk repository](https://github.com/mindbox-cloud/ios-sdk).
+2. Make sure you have CocoaPods installed or install it according to the instructions.
+3. Go to `ios-sdk/Example/`
+4. Install the pods.
   ```ruby
   pod update
   ```
@@ -16,9 +18,8 @@ The app has integration via cocoapods, but you can use SPM if you need.
   ```ruby
   pod install
   ```
-3. [Clone ios-sdk repository](https://github.com/mindbox-cloud/ios-sdk).
-4. Go to `ios-sdk/Example/Example.xcworkspace`.
-5. Run file `Example.xcworkspace`.
+5. Go to `ios-sdk/Example/Example.xcworkspace`.
+6. Run file `Example.xcworkspace`.
 #### SPM:
 1. To deintegrate cocoapods you can use next comands:
    - `sudo gem install cocoapods-deintegrate`
