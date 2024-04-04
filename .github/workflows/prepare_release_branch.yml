@@ -2,8 +2,10 @@ name: Preparation for release
 
 on:
   push:
-    branches:
-      - 'release/*'
+    branches: 
+      - 'feature/MBX-0000-AutoCreateReleaseBranch'
+    tags:
+      - '*'
 
 jobs:
   preparation:
@@ -13,7 +15,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract version from branch name
-        run: echo "VERSION=$(echo ${GITHUB_REF#refs/heads/release/})" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+
+      - name: Check for existing branch
+        run: |
+          if git ls-remote --heads origin release/${{ env.VERSION }} | grep release/${{ env.VERSION }}; then
+            echo "Branch release/${{ env.VERSION }} already exists."
+            exit 1
+          fi
+        shell: bash
 
       - name: Check if sdkVersion matches VERSION
         run: |
