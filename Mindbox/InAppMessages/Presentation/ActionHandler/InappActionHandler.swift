@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol InAppActionHandlerProtocol {
     func handleAction(
@@ -18,25 +19,21 @@ protocol InAppActionHandlerProtocol {
 
 final class InAppActionHandler: InAppActionHandlerProtocol {
     
-    private let actionUseCase: PresentationActionUseCase
+    private let actionUseCaseFactory: ActionUseCaseFactory
     
-    init(actionUseCase: PresentationActionUseCase) {
-        self.actionUseCase = actionUseCase
+    init(actionUseCaseFactory: ActionUseCaseFactory) {
+        self.actionUseCaseFactory = actionUseCaseFactory
     }
-    
+
     func handleAction(_ action: ContentBackgroundLayerAction,
                       for id: String,
                       onTap: @escaping InAppMessageTapAction,
                       close: @escaping () -> Void) {
-        switch action {
-            case .redirectUrl(let redirectModel):
-                actionUseCase.onTapAction(id: id,
-                                          value: redirectModel.value,
-                                          payload: redirectModel.intentPayload,
-                                          onTap: onTap,
-                                          close: close)
-            case .unknown:
-                return
+        
+        guard let action = actionUseCaseFactory.createUseCase(action: action) else {
+            return 
         }
+        
+        action.onTapAction(id: id, onTap: onTap, close: close)
     }
 }

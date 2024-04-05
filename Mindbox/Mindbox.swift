@@ -562,7 +562,6 @@ public class Mindbox: NSObject {
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
         inAppMessagesManager = container.inAppMessagesManager
-        sessionTemporaryStorage = container.sessionTemporaryStorage
         inAppMessagesDelegate = self
         inappMessageEventSender = container.inappMessageEventSender
         pushValidator = container.pushValidator
@@ -576,7 +575,8 @@ public class Mindbox: NSObject {
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
             sessionManager: container.sessionManager,
             inAppMessagesManager: container.inAppMessagesManager,
-            uuidDebugService: container.uuidDebugService
+            uuidDebugService: container.uuidDebugService,
+            userVisitManager: container.userVisitManager
         )
     }
 

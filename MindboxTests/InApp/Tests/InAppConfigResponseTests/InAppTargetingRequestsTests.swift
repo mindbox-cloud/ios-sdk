@@ -21,13 +21,12 @@ class AInAppTargetingRequestsTests: XCTestCase {
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        container.sessionTemporaryStorage.erase()
+        SessionTemporaryStorage.shared.erase()
         targetingChecker = container.inAppTargetingChecker
         try! container.databaseRepository.erase()
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
         mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
                                                               segmentationService: container.segmentationSevice,
-                                                              sessionTemporaryStorage: container.sessionTemporaryStorage,
                                                               targetingChecker: targetingChecker, 
                                                               imageService: container.imageDownloadService,
                                                               tracker: tracker)
@@ -90,7 +89,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "7-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()
@@ -109,7 +108,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "8-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()
@@ -132,10 +131,10 @@ class AInAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "9-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)]
-            container.sessionTemporaryStorage.checkSegmentsRequestCompleted = true
+            SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()
@@ -264,7 +263,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
             container.persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
             
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()
@@ -306,7 +305,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
             let config = try getConfig(name: "31-TargetingRequests")
             container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()
@@ -350,7 +349,7 @@ class AInAppTargetingRequestsTests: XCTestCase {
             container.persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
             
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-            container.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             
             mapper.mapConfigResponse(nil, config) { _ in
                 self.mapper.sendRemainingInappsTargeting()

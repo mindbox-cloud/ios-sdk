@@ -13,13 +13,11 @@ final class SegmentationServiceTests: XCTestCase {
     
     var container: TestDependencyProvider!
     var sut: SegmentationServiceProtocol!
-    var sessionTemporaryStorage: SessionTemporaryStorage!
     var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        sessionTemporaryStorage = container.sessionTemporaryStorage
         targetingChecker = container.inAppTargetingChecker
         sut = SegmentationService(customerSegmentsAPI: .init(fetchSegments: { segmentationCheckRequest, completion in
             completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
@@ -28,12 +26,12 @@ final class SegmentationServiceTests: XCTestCase {
             completion(.init(status: .success, products: [.init(ids: ["Hello": "World"],
                                                                 segmentations: [.init(ids: .init(externalId: "123"),
                                                                                       segment: .init(ids: .init(externalId: "456")))])]))
-        }), sessionTemporaryStorage: sessionTemporaryStorage, targetingChecker: targetingChecker)
+        }), targetingChecker: targetingChecker)
     }
     
     override func tearDown() {
         container = nil
-        sessionTemporaryStorage = nil
+        SessionTemporaryStorage.shared.erase()
         targetingChecker = nil
         sut = nil
         super.tearDown()
@@ -43,7 +41,7 @@ final class SegmentationServiceTests: XCTestCase {
         targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "Completed")),
                                                        segment: .init(ids: .init(externalId: "Completed")))]
         
-        sessionTemporaryStorage.checkSegmentsRequestCompleted = true
+        SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
         
         let expectations = expectation(description: "test_checkSegmentation_requestCompleted")
         var result: [SegmentationCheckResponse.CustomerSegmentation]?
@@ -92,7 +90,7 @@ final class SegmentationServiceTests: XCTestCase {
     }
     
     func test_checkProductSegmentation_isPresentingInAppMessage() throws {
-        sessionTemporaryStorage.isPresentingInAppMessage = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         let expectations = expectation(description: "test_checkProductSegmentation_isPresentingInAppMessage")
         var result: [InAppProductSegmentResponse.CustomerSegmentation]?
         sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { segmentations in

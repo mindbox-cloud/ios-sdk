@@ -7,14 +7,24 @@
 //
 
 import Foundation
+import UserNotifications
 
 final class SessionTemporaryStorage {
+    
+    public static let shared = SessionTemporaryStorage()
+    
     var observedCustomOperations: Set<String> = []
     var operationsFromSettings: Set<String> = []
     var geoRequestCompleted = false
     var checkSegmentsRequestCompleted = false
     var checkProductSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
+    var pushPermissionStatus: UNAuthorizationStatus = .denied
+    var isInitialiazionCalled = false
+    
+    private init() {
+        
+    }
     
     var customOperations: Set<String> {
         return observedCustomOperations.union(operationsFromSettings)

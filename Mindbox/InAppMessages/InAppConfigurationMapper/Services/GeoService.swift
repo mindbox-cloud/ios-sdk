@@ -15,26 +15,23 @@ protocol GeoServiceProtocol {
 
 class GeoService: GeoServiceProtocol {
     let fetcher: NetworkFetcher
-    var sessionTemporaryStorage: SessionTemporaryStorage
     var targetingChecker: InAppTargetingCheckerProtocol
 
     init(fetcher: NetworkFetcher,
-         sessionTemporaryStorage: SessionTemporaryStorage,
          targetingChecker: InAppTargetingCheckerProtocol) {
         self.fetcher = fetcher
-        self.sessionTemporaryStorage = sessionTemporaryStorage
         self.targetingChecker = targetingChecker
     }
 
     func geoRequest(completion: @escaping (InAppGeoResponse?) -> Void) {
-        if sessionTemporaryStorage.geoRequestCompleted {
+        if SessionTemporaryStorage.shared.geoRequestCompleted {
             completion(targetingChecker.geoModels)
             return
         }
 
         let route = FetchInAppGeoRoute()
         fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
-            self.sessionTemporaryStorage.geoRequestCompleted = true
+            SessionTemporaryStorage.shared.geoRequestCompleted = true
             switch response {
             case .success(let result):
                 completion(result)

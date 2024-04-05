@@ -46,4 +46,6 @@ protocol PersistenceStorage: AnyObject {
     var onDidChange: (() -> Void)? { get set }
     
     var needUpdateInfoOnce: Bool? { get set }
+
+    var userVisitCount: Int? { get set }
 }
