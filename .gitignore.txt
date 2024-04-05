@@ -1,5 +1,5 @@
 #SPM
 
-/.build/
-/.swiftpm/
+.build
+.swiftpm
 Package.resolved
