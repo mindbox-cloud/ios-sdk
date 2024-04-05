@@ -248,8 +248,10 @@ playground.xcworkspace
 # Swift Package Manager
 #
 # Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
-# Packages/
-# Package.pins
+Packages/
+Package.pins
+.swiftpm
+Package.resolved
 .build/
 
 # CocoaPods - Refactored to standalone file
