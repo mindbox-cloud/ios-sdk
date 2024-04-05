@@ -11,7 +11,7 @@ Pod::Spec.new do |spec|
   spec.source_files  = "MindboxLogger/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.resource_bundles = { 
-   'MindboxLogger' => ["MindboxLogger/**/*.xcdatamodeld"] 
+   'MindboxLogger' => ["MindboxLogger/**/*.xcdatamodeld", 'MindboxLogger/**/*.xcprivacy']
   } 
   spec.swift_version = "5"
 
