@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseCrashlytics
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -25,6 +26,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
         
         EALogManager.shared.log(#function)
+        Crashlytics.crashlytics().log("Finished \(#function),: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
     }
     
     func sceneWillEnterForeground(_ scene: UIScene) {

@@ -226,6 +226,10 @@ final class ViewController: UIViewController {
     
     @objc private func openLogReader(_ sender: UIButton) {
         router.showLogReaderViewController(from: self)
+        
+//        Crash app
+//        let numbers = [0]
+//        let _ = numbers[1]
     }
 }
 

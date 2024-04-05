@@ -9,6 +9,9 @@ import UIKit
 import Mindbox
 import MindboxLogger
 
+import Firebase
+import FirebaseCrashlytics
+
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -28,7 +31,25 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         logManager.log("\(#function)")
+        
+        FirebaseApp.configure()
+        
+        Crashlytics.crashlytics().setCustomValue(
+            UIApplication.shared.isProtectedDataAvailable,
+            forKey: "Start \(#function), before MindboxLogger: isProtectedDataAvailable"
+        )
+        
+        Crashlytics.crashlytics().log("Start \(#function), before MindboxLogger: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
+        
         Mindbox.logger.log(level: .info, message: "Test log isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
+        
+        Crashlytics.crashlytics().setCustomValue(
+            UIApplication.shared.isProtectedDataAvailable,
+            forKey: "\(#function), after MindboxLogger: isProtectedDataAvailable"
+        )
+        
+        Crashlytics.crashlytics().log("\(#function), after MindboxLogger: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
+        
         logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable before initMindbox: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
@@ -53,6 +74,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         defer {
             logManager.log("Finished \(#function)")
             logManager.testWriteLogsWithProtection()
+            Crashlytics.crashlytics().log("Finished \(#function),: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         }
         return true
     }
@@ -63,6 +85,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
         logManager.log("Finished \(#function)")
+        Crashlytics.crashlytics().log("Finished \(#function),: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
     }
     
     func applicationProtectedDataWillBecomeUnavailable(_ application: UIApplication) {
@@ -71,6 +94,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
         logManager.log("Finished \(#function)")
+        Crashlytics.crashlytics().log("Finished \(#function),: isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
     }
     
     func application(

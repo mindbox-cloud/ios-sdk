@@ -26,6 +26,12 @@
 		BB8460DE2BA493BE0062F16D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB8460DD2BA493BE0062F16D /* LaunchScreen.storyboard */; };
 		BBCCF8472BA09108009A6037 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8462BA09108009A6037 /* WebViewController.swift */; };
 		BBCCF8492BA0A75B009A6037 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCCF8482BA0A75B009A6037 /* Router.swift */; };
+		BBE1AC0D2BC03A8D00825A5A /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = BBE1AC0C2BC03A8D00825A5A /* FirebaseAnalytics */; };
+		BBE1AC0F2BC03A8D00825A5A /* FirebaseAnalyticsSwift in Frameworks */ = {isa = PBXBuildFile; productRef = BBE1AC0E2BC03A8D00825A5A /* FirebaseAnalyticsSwift */; };
+		BBE1AC112BC03B8B00825A5A /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = BBE1AC102BC03B8B00825A5A /* FirebaseCrashlytics */; };
+		BBE1AC152BC045F100825A5A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BBE1AC142BC045F100825A5A /* GoogleService-Info.plist */; };
+		BBE1AC162BC045F100825A5A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BBE1AC142BC045F100825A5A /* GoogleService-Info.plist */; };
+		BBE1AC172BC045F100825A5A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BBE1AC142BC045F100825A5A /* GoogleService-Info.plist */; };
 		BBF978AF2BA23CD500A2BC09 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBF978AE2BA23CD500A2BC09 /* UserNotifications.framework */; };
 		BBF978B12BA23CD500A2BC09 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBF978B02BA23CD500A2BC09 /* UserNotificationsUI.framework */; };
 		BBF978B42BA23CD500A2BC09 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF978B32BA23CD500A2BC09 /* NotificationViewController.swift */; };
@@ -97,6 +103,7 @@
 		BBA0EA1B2B9F71F600A46841 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBCCF8462BA09108009A6037 /* WebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
 		BBCCF8482BA0A75B009A6037 /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
+		BBE1AC142BC045F100825A5A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		BBF978A82BA2396800A2BC09 /* MindboxNotificationServiceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MindboxNotificationServiceExtension.entitlements; sourceTree = "<group>"; };
 		BBF978AD2BA23CD500A2BC09 /* MindboxNotificationContentExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MindboxNotificationContentExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF978AE2BA23CD500A2BC09 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -111,6 +118,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBE1AC0F2BC03A8D00825A5A /* FirebaseAnalyticsSwift in Frameworks */,
+				BBE1AC112BC03B8B00825A5A /* FirebaseCrashlytics in Frameworks */,
+				BBE1AC0D2BC03A8D00825A5A /* FirebaseAnalytics in Frameworks */,
 				3F8BA80FD3B318141FBBED1F /* Pods_ExampleApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -203,6 +213,7 @@
 		BB30CBFC2B9EFFED0068E7EE /* ExampleApp */ = {
 			isa = PBXGroup;
 			children = (
+				BBE1AC142BC045F100825A5A /* GoogleService-Info.plist */,
 				BB30CC122B9F001B0068E7EE /* Application */,
 				BB30CC112B9F00130068E7EE /* Resources */,
 				BBECB4A22BA1A2C900B78428 /* Core */,
@@ -297,6 +308,7 @@
 				BB30CBF82B9EFFED0068E7EE /* Resources */,
 				33A6F5173B308E1729379BDB /* [CP] Embed Pods Frameworks */,
 				BB44C58D2BA231F1004FD9A1 /* Embed Foundation Extensions */,
+				BBE1AC122BC03C5100825A5A /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -305,6 +317,11 @@
 				BBF978BA2BA23CD500A2BC09 /* PBXTargetDependency */,
 			);
 			name = ExampleApp;
+			packageProductDependencies = (
+				BBE1AC0C2BC03A8D00825A5A /* FirebaseAnalytics */,
+				BBE1AC0E2BC03A8D00825A5A /* FirebaseAnalyticsSwift */,
+				BBE1AC102BC03B8B00825A5A /* FirebaseCrashlytics */,
+			);
 			productName = ExampleApp;
 			productReference = BB30CBFA2B9EFFED0068E7EE /* ExampleApp.app */;
 			productType = "com.apple.product-type.application";
@@ -375,6 +392,9 @@
 				Base,
 			);
 			mainGroup = BB30CBF12B9EFFED0068E7EE;
+			packageReferences = (
+				BBE1AC0B2BC03A8D00825A5A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = BB30CBFB2B9EFFED0068E7EE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -392,6 +412,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB8460DE2BA493BE0062F16D /* LaunchScreen.storyboard in Resources */,
+				BBE1AC152BC045F100825A5A /* GoogleService-Info.plist in Resources */,
 				BB30CC072B9EFFEE0068E7EE /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -400,6 +421,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBE1AC162BC045F100825A5A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -407,6 +429,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBE1AC172BC045F100825A5A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +496,28 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		BBE1AC122BC03C5100825A5A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
 		D71384574AEA6CCF883131E8 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -680,6 +725,7 @@
 				CODE_SIGN_ENTITLEMENTS = ExampleApp/Resources/ExampleApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = N39VVWZXXP;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -694,6 +740,16 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"Mindbox\"",
+					"-framework",
+					"\"MindboxLogger\"",
+					"-framework",
+					"\"MindboxNotifications\"",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.mindbox.ExampleApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -726,6 +782,16 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"Mindbox\"",
+					"-framework",
+					"\"MindboxLogger\"",
+					"-framework",
+					"\"MindboxNotifications\"",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.mindbox.ExampleApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -886,6 +952,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		BBE1AC0B2BC03A8D00825A5A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BBE1AC0C2BC03A8D00825A5A /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BBE1AC0B2BC03A8D00825A5A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		BBE1AC0E2BC03A8D00825A5A /* FirebaseAnalyticsSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BBE1AC0B2BC03A8D00825A5A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsSwift;
+		};
+		BBE1AC102BC03B8B00825A5A /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BBE1AC0B2BC03A8D00825A5A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = BB30CBF22B9EFFED0068E7EE /* Project object */;
 }
