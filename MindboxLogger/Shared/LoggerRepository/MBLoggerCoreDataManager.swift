@@ -50,6 +50,7 @@ public class MBLoggerCoreDataManager {
         
         let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
+        storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
         container.loadPersistentStores {
