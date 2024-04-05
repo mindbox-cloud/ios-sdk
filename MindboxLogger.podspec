@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "MindboxLogger"
-  spec.version      = "0.0.6"
+  spec.version      = "0.0.7"
   spec.summary      = "SDK for utilities to work with Mindbox"
   spec.description  = "-"
   spec.homepage     = "https://github.com/mindbox-cloud/ios-sdk"
@@ -11,7 +11,7 @@ Pod::Spec.new do |spec|
   spec.source_files  = "MindboxLogger/**/*.{swift}", "SDKVersionProvider/**/*.{swift}"
   spec.exclude_files = "Classes/Exclude"
   spec.resource_bundles = { 
-   'MindboxLogger' => ["MindboxLogger/**/*.xcdatamodeld"] 
+   'MindboxLogger' => ["MindboxLogger/**/*.xcdatamodeld", 'MindboxLogger/**/*.xcprivacy']
   } 
   spec.swift_version = "5"
 
