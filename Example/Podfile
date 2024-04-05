@@ -1,7 +1,7 @@
 use_frameworks!
 
 target 'Example' do
-  pod 'Mindbox', '2.8.5'
+  pod 'Mindbox', '2.8.6'
 end
 
 target 'MindboxNotificationServiceExtension' do
