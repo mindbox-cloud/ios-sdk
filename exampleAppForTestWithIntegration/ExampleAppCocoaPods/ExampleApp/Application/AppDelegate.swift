@@ -7,6 +7,7 @@
 
 import UIKit
 import Mindbox
+import MindboxLogger
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -27,6 +28,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         logManager.log("\(#function)")
+        Mindbox.logger.log(level: .info, message: "Test log isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable before initMindbox: \(UIApplication.shared.isProtectedDataAvailable)")
         logManager.logUserDefaultsMindbox()
@@ -55,7 +57,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
-    func applicationProtectedDataWillBecomeUnavailable(_ application: UIApplication) {
+    func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")
@@ -63,7 +65,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         logManager.log("Finished \(#function)")
     }
     
-    func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
+    func applicationProtectedDataWillBecomeUnavailable(_ application: UIApplication) {
         logManager.log(#function)
         logManager.testWriteLogsWithProtection()
         logManager.log("isProtectedDataAvailable: \(UIApplication.shared.isProtectedDataAvailable)")

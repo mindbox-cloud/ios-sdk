@@ -13,6 +13,7 @@ final class LogReaderViewController: UIViewController {
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.font = .systemFont(ofSize: 15, weight: .regular)
+        textView.isEditable = false
         return textView
     }()
     
