@@ -46,7 +46,11 @@ extension Settings.TimeToLive {
             let unitString = try? container.decode(String.self, forKey: .unit).lowercased()
             self.unit = Unit(rawValue: unitString ?? "")
         }
-
+        
+        init(unit: Unit?, value: Int?) {
+            self.unit = unit
+            self.value = value
+        }
         
         private enum CodingKeys: String, CodingKey {
             case unit, value

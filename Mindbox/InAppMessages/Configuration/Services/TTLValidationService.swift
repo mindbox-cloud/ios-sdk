@@ -47,7 +47,7 @@ class TTLValidationService: TTLValidationProtocol {
         """
         
         Logger.common(message: message)
-        return now > downloadConfigDateWithTTL
+        return nowString > downloadConfigDateWithTTLString
     }
     
     private func getDateWithIntervalByType(ttl: Settings.TimeToLive.TTLUnit, date: Date) -> Date? {
