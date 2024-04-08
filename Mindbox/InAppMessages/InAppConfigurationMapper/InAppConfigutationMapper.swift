@@ -17,35 +17,26 @@ protocol InAppConfigurationMapperProtocol {
 
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     
-    private let inappFilterService: InappFilterProtocol
     var targetingChecker: InAppTargetingCheckerProtocol
-    private let persistenceStorage: PersistenceStorage
     var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
-    private let sdkVersionValidator: SDKVersionValidator
-    private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
-    private let abTestDeviceMixer: ABTestDeviceMixer
+    var filteredInappsByEventForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
     
     let dataFacade: InAppConfigurationDataFacadeProtocol
     
-    private var fullListOfInapps: [InApp] = []
-    private var inappsDictForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+    private let inappFilterService: InappFilterProtocol
+    private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
+    
+    private var validInapps: [InApp] = []
     private var savedEventForTargeting: ApplicationEvent?
-    private var shownInnapId: String = ""
-    private var completionSuccess = false
+    private var shownInnapId = ""
 
     init(inappFilterService: InappFilterProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
-         persistenceStorage: PersistenceStorage,
-         sdkVersionValidator: SDKVersionValidator,
          urlExtractorService: VariantImageUrlExtractorServiceProtocol,
-         abTestDeviceMixer: ABTestDeviceMixer,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
         self.targetingChecker = targetingChecker
-        self.persistenceStorage = persistenceStorage
-        self.sdkVersionValidator = sdkVersionValidator
         self.urlExtractorService = urlExtractorService
-        self.abTestDeviceMixer = abTestDeviceMixer
         self.dataFacade = dataFacade
     }
 
@@ -53,16 +44,17 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     func mapConfigResponse(_ event: ApplicationEvent?,
                            _ response: ConfigResponse,
                            _ completion: @escaping (InAppFormData?) -> Void) {
-        let shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
         savedEventForTargeting = event
         self.targetingChecker.event = nil
-        fullListOfInapps = inappFilterService.filter(inapps: response.inapps?.elements)
-        let responseInapps = filterInappsByABTests(response.abtests, responseInapps: fullListOfInapps)
-        let filteredInapps = filterInappsBySDKVersion(responseInapps, shownInAppsIds: shownInAppsIds)
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        
+        let filteredInapps = inappFilterService.filter(inapps: response.inapps?.elements, abTests: response.abtests)
+        validInapps = inappFilterService.validInapps
         
         targetingChecker.event = event
         prepareTargetingChecker(for: filteredInapps)
+        
+        prepareForRemainingTargeting()
+        
         dataFacade.setObservedOperation()
         
         if filteredInapps.isEmpty {
@@ -92,122 +84,48 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
     }
     
+    func prepareForRemainingTargeting() {
+        let estimatedInapps = validInapps
+        prepareTargetingChecker(for: estimatedInapps)
+    }
+    
     func sendRemainingInappsTargeting() {
-        Logger.common(message: "TR | Initiating processing of remaining in-app targeting requests.", level: .debug, category: .inAppMessages)
-        Logger.common(message: "TR | Full list of in-app messages: \(fullListOfInapps.map { $0.id })", level: .debug, category: .inAppMessages)
-        Logger.common(message: "TR | Saved event for targeting: \(savedEventForTargeting?.name ?? "None")", level: .debug, category: .inAppMessages)
-        
-        self.prepareTargetingChecker(for: fullListOfInapps)
-        dataFacade.setObservedOperation()
         self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
-            self.filterByInappsEvents(inapps: self.fullListOfInapps, filteredInAppsByEvent: &self.inappsDictForTargeting)
-            let inappsForTargeting = self.inAppsByEventForTargeting(event: self.savedEventForTargeting, asd: self.inappsDictForTargeting)
-            var ids = inappsForTargeting.map { $0.inAppId }
-            if self.completionSuccess && ids.contains(self.shownInnapId) {
-                ids.removeAll { $0 == self.shownInnapId }
-            }
+            self.filterByInappsEvents(inapps: self.validInapps,
+                                      filteredInAppsByEvent: &self.filteredInappsByEventForTargeting)
+            
+            let logMessage = """
+            TR | Initiating processing of remaining in-app targeting requests.
+                 Full list of in-app messages: \(self.validInapps.map { $0.id })
+                 Saved event for targeting: \(self.savedEventForTargeting?.name ?? "None")
+            """
+            Logger.common(message: logMessage, level: .debug, category: .inAppMessages)
 
-            let setIds = Set(ids)
-            Logger.common(message: "TR | In-apps selected for targeting requests: \(setIds)", level: .debug, category: .inAppMessages)
-            setIds.forEach { self.dataFacade.trackTargeting(id: $0) }
-            self.completionSuccess = false
-        }
-    }
-    
-    func inAppsByEventForTargeting(event: ApplicationEvent?, asd: [InAppMessageTriggerEvent: [InAppTransitionData]]) -> [InAppTransitionData] {
-        if let event = event {
-            if let inappsByEvent = asd[.applicationEvent(event)] {
-                return inappsByEvent
-            } else {
-                return []
-            }
-        } else if let inappsByEvent = asd[.start] {
-            return inappsByEvent
-        } else {
-            Logger.common(message: "No inapps available for the event or start.")
-            return []
-        }
-    }
-    
-    func filterInappsBySDKVersion(_ inapps: [InApp]?, shownInAppsIds: Set<String>) -> [InApp] {
-        guard let inapps = inapps else {
-            return []
-        }
-        
-        let filteredInapps = inapps.filter {
-            sdkVersionValidator.isValid(item: $0.sdkVersion)
-            && !shownInAppsIds.contains($0.id)
-        }
-        
-        return filteredInapps
-    }
-    
-    func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
-        let responseInapps = responseInapps ?? []
-        guard let abTests = abTests, !abTests.isEmpty else {
-            return responseInapps
-        }
-        
-        var result: [InApp] = responseInapps
-        
-        for abTest in abTests {
-            guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
-                  let salt = abTest.salt,
-                  let variants = abTest.variants else {
-                continue
+            let targetedEventKey: InAppMessageTriggerEvent = self.savedEventForTargeting != nil
+            ? .applicationEvent(self.savedEventForTargeting!)
+            : .start
+            
+            guard let inappsByEvent = self.filteredInappsByEventForTargeting[targetedEventKey] else {
+                return
             }
             
-            let hashValue = try? abTestDeviceMixer.modulusGuidHash(identifier: uuid, salt: salt)
-            
-            guard let hashValue = hashValue else {
-                continue
-            }
-            
-            Logger.common(message: "[Hash Value]: \(hashValue) for [UUID]: \(persistenceStorage.deviceUUID ?? "nil")")
-            Logger.common(message: "[AB-test ID]: \(abTest.id)")
-            
-            var allInappsInVariantsExceptCurrentBranch: [String] = []
-            
-            for variant in variants {
-                if let objects = variant.objects {
-                    for object in objects {
-                        if object.kind == .all {
-                            responseInapps.forEach( {
-                                allInappsInVariantsExceptCurrentBranch.append($0.id)
-                            })
-                        } else {
-                            allInappsInVariantsExceptCurrentBranch += object.inapps ?? []
-                        }
-                    }
+            let preparedForTrackTargetingInapps: Set<String> = Set(self.validInapps.compactMap { inapp -> String? in
+                guard inapp.id != self.shownInnapId,
+                      inappsByEvent.contains(where: { $0.inAppId == inapp.id }),
+                      self.targetingChecker.check(targeting: inapp.targeting) else {
+                    return nil
                 }
+                return inapp.id
+            })
+
+            Logger.common(message: "TR | In-apps selected for targeting requests: \(preparedForTrackTargetingInapps)", level: .debug, category: .inAppMessages)
+
+            preparedForTrackTargetingInapps.forEach { id in
+                self.dataFacade.trackTargeting(id: id)
             }
             
-            var setInapps = Set(allInappsInVariantsExceptCurrentBranch)
-            
-            for variant in variants {
-                if let modulus = variant.modulus, let objects = variant.objects, let upper = modulus.upper {
-                    let range = modulus.lower..<upper
-                    if range.contains(hashValue) {
-                        Logger.common(message: "[AB-test branch ID]: \(variant.id)")
-                        for object in objects {
-                            if object.kind == .all {
-                                setInapps.removeAll()
-                            } else if let inapps = object.inapps {
-                                setInapps.subtract(inapps)
-                            }
-                        }
-                    }
-                }
-            }
-            
-            let currentResult = responseInapps.filter { !setInapps.contains($0.id) }
-            result = result.filter { currentResult.contains($0) }
+            self.shownInnapId = ""
         }
-        
-        let ids = result.map { $0.id }
-        Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
-        
-        return result
     }
 
     private func prepareTargetingChecker(for inapps: [InApp]) {
@@ -261,7 +179,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 var imageDict: [String: UIImage] = [:]
                 var gotError = false
                 
-                if let shownInapps = self.persistenceStorage.shownInAppsIds, shownInapps.contains(inapp.inAppId) {
+                if self.inappFilterService.shownInAppsIds.contains(inapp.inAppId) {
                     continue
                 }
                 
@@ -299,9 +217,11 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             
             group.notify(queue: .main) {
                 DispatchQueue.main.async { [weak self] in
-                    self?.shownInnapId = formData?.inAppId ?? ""
-                    self?.dataFacade.trackTargeting(id: formData?.inAppId)
-                    self?.completionSuccess = true
+                    if !SessionTemporaryStorage.shared.isPresentingInAppMessage {
+                        self?.shownInnapId = formData?.inAppId ?? ""
+                        self?.dataFacade.trackTargeting(id: formData?.inAppId)
+                    }
+                    
                     completion(formData)
                 }
             }

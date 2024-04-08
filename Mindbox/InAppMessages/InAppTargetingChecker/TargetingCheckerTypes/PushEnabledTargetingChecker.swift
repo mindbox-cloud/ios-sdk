@@ -7,19 +7,26 @@
 //
 
 import Foundation
+import UserNotifications
 
 final class PushEnabledTargetingChecker: InternalTargetingChecker<PushEnabledTargeting> {
     override func checkInternal(targeting: PushEnabledTargeting) -> Bool {
-        var pushPermissionBoolean = true
-        switch SessionTemporaryStorage.shared.pushPermissionStatus {
-            case .notDetermined, .denied:
-                pushPermissionBoolean = false
-            case .authorized, .provisional, .ephemeral:
-                pushPermissionBoolean = true
-            @unknown default:
-                pushPermissionBoolean = true
+        let lock = DispatchSemaphore(value: 0)
+        var isNotificationsEnabled = true
+        
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+                case .notDetermined, .denied:
+                    isNotificationsEnabled = false
+                case .authorized, .provisional, .ephemeral:
+                    isNotificationsEnabled = true
+                @unknown default:
+                    isNotificationsEnabled = true
+            }
+            lock.signal()
         }
         
-        return targeting.value == pushPermissionBoolean
+        lock.wait()
+        return targeting.value == isNotificationsEnabled
     }
 }

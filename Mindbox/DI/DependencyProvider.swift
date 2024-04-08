@@ -81,7 +81,12 @@ final class DependencyProvider: DependencyContainer {
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
-        inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
+
+        inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
+                                                 abTestDeviceMixer: abTestDeviceMixer,
+                                                 variantsFilter: variantsFilterService,
+                                                 sdkVersionValidator: sdkVersionValidator)
+        
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -94,10 +99,7 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   persistenceStorage: persistenceStorage,
-                                                                   sdkVersionValidator: sdkVersionValidator,
                                                                    urlExtractorService: urlExtractorService,
-                                                                   abTestDeviceMixer: abTestDeviceMixer,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager),
             presentationManager: presentationManager,
