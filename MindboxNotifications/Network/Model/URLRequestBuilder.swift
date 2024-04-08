@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct URLRequestBuilder {
     
@@ -20,6 +21,7 @@ struct URLRequestBuilder {
         let components = makeURLComponents(for: route)
 
         guard let url = components.url else {
+            Logger.common(message: "URLRequestBuilder: Failed to create URL. Components: \(components)", level: .error, category: .notification)
             throw URLError(.badURL)
         }
         
