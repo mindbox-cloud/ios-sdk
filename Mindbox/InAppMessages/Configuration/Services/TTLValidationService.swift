@@ -35,19 +35,29 @@ class TTLValidationService: TTLValidationProtocol {
             return false
         }
         
+        let calendar = Calendar.current
+        let nowComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now)
+        let ttlComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: downloadConfigDateWithTTL)
+        
+        guard let nowWithoutMilliseconds = calendar.date(from: nowComponents),
+              let downloadConfigDateWithTTLWithoutMilliseconds = calendar.date(from: ttlComponents) else {
+            Logger.common(message: "[TTL] Error in date components. Inapps reset will not be performed.")
+            return false
+        }
+        
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let nowString = dateFormatter.string(from: now)
-        let downloadConfigDateWithTTLString = dateFormatter.string(from: downloadConfigDateWithTTL)
+        let nowString = dateFormatter.string(from: nowWithoutMilliseconds)
+        let downloadConfigDateWithTTLString = dateFormatter.string(from: downloadConfigDateWithTTLWithoutMilliseconds)
         
         let message = """
         [TTL] Current date: \(nowString).
         Config download date with TTL: \(downloadConfigDateWithTTLString).
-        Need to reset inapps: \(now > downloadConfigDateWithTTL).
+        Need to reset inapps: \(nowWithoutMilliseconds > downloadConfigDateWithTTLWithoutMilliseconds).
         """
         
         Logger.common(message: message)
-        return nowString > downloadConfigDateWithTTLString
+        return nowWithoutMilliseconds > downloadConfigDateWithTTLWithoutMilliseconds
     }
     
     private func getDateWithIntervalByType(ttl: Settings.TimeToLive.TTLUnit, date: Date) -> Date? {
