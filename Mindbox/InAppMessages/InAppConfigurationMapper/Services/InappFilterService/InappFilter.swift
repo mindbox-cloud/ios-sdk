@@ -72,7 +72,8 @@ private extension InappsFilterService {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
                                            sdkVersion: inapp.sdkVersion,
-                                           targeting: inapp.targeting,
+                                           targeting: inapp.targeting, 
+                                           frequency: inapp.frequency,
                                            form: formModel)
                     filteredInapps.append(inappModel)
                 }
