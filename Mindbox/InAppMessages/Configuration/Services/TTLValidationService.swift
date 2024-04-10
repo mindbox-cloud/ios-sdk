@@ -46,7 +46,7 @@ class TTLValidationService: TTLValidationProtocol {
         }
         
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss" 
         let nowString = dateFormatter.string(from: nowWithoutMilliseconds)
         let downloadConfigDateWithTTLString = dateFormatter.string(from: downloadConfigDateWithTTLWithoutMilliseconds)
         
