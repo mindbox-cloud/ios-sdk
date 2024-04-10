@@ -323,6 +323,9 @@
 		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
 		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
 		F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */; };
+		F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A94772BC6995500E6C978 /* InappFrequency.swift */; };
+		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
+		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F331DC842A80983000222120 /* FailableDecodableArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC832A80983000222120 /* FailableDecodableArray.swift */; };
@@ -844,6 +847,9 @@
 		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
 		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
 		F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseMonitoringInvalid.json; sourceTree = "<group>"; };
+		F31A94772BC6995500E6C978 /* InappFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequency.swift; sourceTree = "<group>"; };
+		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
+		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F331DC832A80983000222120 /* FailableDecodableArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FailableDecodableArray.swift; sourceTree = "<group>"; };
@@ -2135,9 +2141,28 @@
 			path = ConfigResponse;
 			sourceTree = "<group>";
 		};
+		F31A94792BC69E0500E6C978 /* InappFrequency */ = {
+			isa = PBXGroup;
+			children = (
+				F31A947A2BC69E2400E6C978 /* Types */,
+				F31A94772BC6995500E6C978 /* InappFrequency.swift */,
+			);
+			path = InappFrequency;
+			sourceTree = "<group>";
+		};
+		F31A947A2BC69E2400E6C978 /* Types */ = {
+			isa = PBXGroup;
+			children = (
+				F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */,
+				F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */,
+			);
+			path = Types;
+			sourceTree = "<group>";
+		};
 		F331DC8C2A80993600222120 /* InappModel */ = {
 			isa = PBXGroup;
 			children = (
+				F31A94792BC69E0500E6C978 /* InappFrequency */,
 				F331DCBA2A80993600222120 /* InAppModel.swift */,
 				F331DC8D2A80993600222120 /* InappForm */,
 			);
@@ -3260,10 +3285,12 @@
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
 				F391172D2AB4C61000852298 /* ElementsColorFilter.swift in Sources */,
 				A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */,
+				F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */,
 				317054C425AEF88E00AE624C /* DependencyProvider.swift in Sources */,
+				F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */,
 				3337E6A92664C16A006949EB /* CustomerResponse.swift in Sources */,
@@ -3287,6 +3314,7 @@
 				F3A8B9922A3A408C00E9C055 /* SDKVersionValidator.swift in Sources */,
 				9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */,
 				9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */,
+				F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */,
 				F3482F212A65DC2C002A41EC /* URLInappMessageDelegate.swift in Sources */,
 				84A312C325DA65690096A017 /* BackgroundTaskManagerType.swift in Sources */,
 				84CC798025CABB0B00C062BD /* Event.swift in Sources */,

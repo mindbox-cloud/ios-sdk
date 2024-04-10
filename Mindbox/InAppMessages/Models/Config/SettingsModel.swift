@@ -33,20 +33,6 @@ extension Settings.TimeToLive {
         let unit: Unit?
         let value: Int?
         
-        enum Unit: String, Decodable {
-            case seconds
-            case minutes
-            case hours
-            case days
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            value = try? container.decode(Int.self, forKey: .value)
-            let unitString = try? container.decode(String.self, forKey: .unit).lowercased()
-            self.unit = Unit(rawValue: unitString ?? "")
-        }
-        
         init(unit: Unit?, value: Int?) {
             self.unit = unit
             self.value = value
@@ -55,5 +41,23 @@ extension Settings.TimeToLive {
         private enum CodingKeys: String, CodingKey {
             case unit, value
         }
+    }
+}
+
+enum Unit: String, Decodable {
+    case seconds = "seconds"
+    case minutes = "minutes"
+    case hours = "hours"
+    case days = "days"
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let decodedString = try container.decode(String.self).lowercased() // Преобразование к нижнему регистру
+        
+        guard let value = Unit(rawValue: decodedString) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Неизвестная единица времени")
+        }
+        
+        self = value
     }
 }
