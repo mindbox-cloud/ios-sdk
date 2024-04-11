@@ -39,6 +39,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
                 case .notDetermined:
                     self.pushNotificationRequest()
                 case .denied:
+                    UIPasteboard.general.string = self.model.intentPayload
                     self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
                     UIPasteboard.general.string = self.model.intentPayload
