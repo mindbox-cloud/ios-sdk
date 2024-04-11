@@ -6,7 +6,7 @@
 //  Copyright © 2021 Mindbox. All rights reserved.
 //
 
-import Foundation
+import UIKit
 import MindboxLogger
 
 enum ImageFormat: String {
