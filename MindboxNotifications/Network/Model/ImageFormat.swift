@@ -8,6 +8,7 @@
 
 import UIKit
 import MindboxLogger
+import ImageIO
 
 enum ImageFormat: String {
     case png, jpg, gif
