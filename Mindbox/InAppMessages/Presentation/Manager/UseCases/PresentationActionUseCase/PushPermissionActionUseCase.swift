@@ -35,14 +35,13 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
+            UIPasteboard.general.string = self.model.intentPayload
             switch settings.authorizationStatus {
                 case .notDetermined:
                     self.pushNotificationRequest()
                 case .denied:
-                    UIPasteboard.general.string = self.model.intentPayload
                     self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
-                    UIPasteboard.general.string = self.model.intentPayload
                     return
                 @unknown default:
                     Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
