@@ -29,7 +29,6 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         tracker.trackClick(id: id)
         Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
         requestOrOpenSettingsForNotifications { settingsUrl in
-            print("settingsUrl: \(settingsUrl)")
             onTap(settingsUrl, self.model.intentPayload)
         }
         close()
