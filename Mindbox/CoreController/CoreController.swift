@@ -89,11 +89,13 @@ class CoreController {
 
     // MARK: - Private
     private func startInAppMessagesManager() {
-        DispatchQueue.main.async {
-            if UIApplication.shared.applicationState == .active {
-                self.controllerQueue.async {
-                    self.inAppMessagesManager.start()
-                }
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: nil,
+            using: { [weak self] _ in
+                LogManager.shared.log("async \(#function) if appState == active (0)")
+                self?.inAppMessagesManager.start()
             }
         }
     }
