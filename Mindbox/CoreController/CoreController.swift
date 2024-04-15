@@ -89,14 +89,11 @@ class CoreController {
 
     // MARK: - Private
     private func startInAppMassagesManager() {
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: nil,
-            using: { [weak self] _ in
-                self?.inAppMessagesManager.start()
+        DispatchQueue.main.async {
+            if UIApplication.shared.applicationState == .active {
+                self.inAppMessagesManager.start()
             }
-        )
+        }
     }
     
     private func notificationStatus() -> Bool {
