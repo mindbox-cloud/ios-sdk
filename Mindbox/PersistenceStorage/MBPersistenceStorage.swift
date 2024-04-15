@@ -11,6 +11,10 @@ import MindboxLogger
 
 class MBPersistenceStorage: PersistenceStorage {
     
+    init() {
+        migrateShownInAppsIds()
+    }
+    
     var onDidChange: (() -> Void)?
 
     // MARK: - Dependency
@@ -161,13 +165,15 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
     
+    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: nil)
+    var shownInappsDictionary: [String : Date]?
+    
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
     
     @UserDefaultsWrapper(key: .imageLoadingMaxTimeInSeconds, defaultValue: nil)
     var imageLoadingMaxTimeInSeconds: Double?
     
-
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
         didSet {
@@ -233,7 +239,19 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
     }
+    
+    func migrateShownInAppsIds() {
+        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
+            let migrationTimestamp = Date()
+            var newFormat: [String: Date] = [:]
 
+            for id in oldIds {
+                newFormat[id] = migrationTimestamp
+            }
+            shownInappsDictionary = newFormat
+            shownInAppsIds = nil
+        }
+    }
 }
 
 struct BackgroudExecution: Codable {
@@ -264,6 +282,7 @@ extension MBPersistenceStorage {
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            case shownInAppsDictionary = "MBPersistenceStorage-shownInAppsDictionary"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"

@@ -30,7 +30,7 @@ struct InAppDTO: Decodable, Equatable {
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
         
         if frequency == .unknown {
-            throw CustomDecodingError.unknownType("ASDASDASD")
+            throw CustomDecodingError.unknownType("Frequency has unknown type. Inapp will be ignored.")
         }
         
         if frequency == nil {

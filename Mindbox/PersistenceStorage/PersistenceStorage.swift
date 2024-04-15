@@ -29,7 +29,10 @@ protocol PersistenceStorage: AnyObject {
 
     var isNotificationsEnabled: Bool? { get set }
 
+    @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
     var shownInAppsIds: [String]? { get set }
+    
+    var shownInappsDictionary: [String: Date]? { get set }
     
     var handledlogRequestIds: [String]? { get set }
     

@@ -326,6 +326,7 @@
 		F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A94772BC6995500E6C978 /* InappFrequency.swift */; };
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
+		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F331DC842A80983000222120 /* FailableDecodableArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DC832A80983000222120 /* FailableDecodableArray.swift */; };
@@ -849,6 +850,7 @@
 		F31A94772BC6995500E6C978 /* InappFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequency.swift; sourceTree = "<group>"; };
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
+		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F331DC832A80983000222120 /* FailableDecodableArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FailableDecodableArray.swift; sourceTree = "<group>"; };
@@ -1537,6 +1539,7 @@
 				F3A8B99D2A3A4FD600E9C055 /* ABTestValidator.swift */,
 				F3482F292A65DCFC002A41EC /* String+Extensions.swift */,
 				F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */,
+				F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */,
 			);
 			path = Validators;
 			sourceTree = "<group>";
@@ -3289,6 +3292,7 @@
 				F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */,
 				F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
+				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
 				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
