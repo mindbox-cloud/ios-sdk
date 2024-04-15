@@ -96,7 +96,7 @@ class CoreController {
             using: { [weak self] _ in
                 self?.inAppMessagesManager.start()
             }
-        }
+        )
     }
     
     private func notificationStatus() -> Bool {
