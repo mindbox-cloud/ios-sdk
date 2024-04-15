@@ -176,7 +176,7 @@ public class Mindbox: NSObject {
             }
             
             guard persistenceAPNSToken != token else {
-                Logger.common(message: "persistenceAPNSToken not equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
+                Logger.common(message: "persistenceAPNSToken is equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)
