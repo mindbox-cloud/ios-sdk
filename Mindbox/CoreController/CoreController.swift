@@ -94,7 +94,6 @@ class CoreController {
             object: nil,
             queue: nil,
             using: { [weak self] _ in
-                LogManager.shared.log("async \(#function) if appState == active (0)")
                 self?.inAppMessagesManager.start()
             }
         }
