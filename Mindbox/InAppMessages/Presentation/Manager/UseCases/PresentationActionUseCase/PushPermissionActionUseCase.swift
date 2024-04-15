@@ -29,6 +29,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         tracker.trackClick(id: id)
         Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
         requestOrOpenSettingsForNotifications { settingsUrl in
+            print("settingsUrl: \(settingsUrl)")
             onTap(settingsUrl, self.model.intentPayload)
         }
         close()
@@ -82,10 +83,10 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
             
             if let settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) {
+                completion(settingsUrl)
+            } else {
                 Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
                 completion(nil)
-            } else {
-                completion(settingsUrl)
             }
         }
     }
