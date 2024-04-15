@@ -23,7 +23,7 @@ class CoreController {
     private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
 
-    private var controllerQueue: DispatchQueue
+    var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
         
