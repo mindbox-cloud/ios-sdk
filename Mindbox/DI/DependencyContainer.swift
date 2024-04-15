@@ -32,6 +32,7 @@ protocol DependencyContainer {
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
     var userVisitManager: UserVisitManager { get }
     var ttlValidationService: TTLValidationProtocol { get }
+    var frequencyValidator: InappFrequencyValidator { get }
 }
 
 protocol InstanceFactory {
