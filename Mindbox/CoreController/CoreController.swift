@@ -38,7 +38,7 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            self.inAppMessagesManager.start()
+            self.startInAppMassagesManager()
         }
         
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
@@ -88,6 +88,17 @@ class CoreController {
     }
 
     // MARK: - Private
+    private func startInAppMassagesManager() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: nil,
+            using: { [weak self] _ in
+                self?.inAppMessagesManager.start()
+            }
+        )
+    }
+    
     private func notificationStatus() -> Bool {
         let lock = DispatchSemaphore(value: 0)
         var isNotificationsEnabled = false
