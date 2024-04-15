@@ -11,6 +11,10 @@ import MindboxLogger
 
 class MBPersistenceStorage: PersistenceStorage {
     
+    init() {
+        migrateShownInAppsIds()
+    }
+    
     var onDidChange: (() -> Void)?
 
     // MARK: - Dependency
