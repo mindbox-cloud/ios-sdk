@@ -38,7 +38,7 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            self.startInAppMassagesManager()
+            self.startInAppMessagesManager()
         }
         
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
@@ -88,10 +88,12 @@ class CoreController {
     }
 
     // MARK: - Private
-    private func startInAppMassagesManager() {
+    private func startInAppMessagesManager() {
         DispatchQueue.main.async {
             if UIApplication.shared.applicationState == .active {
-                self.inAppMessagesManager.start()
+                self.controllerQueue.async {
+                    self.inAppMessagesManager.start()
+                }
             }
         }
     }
