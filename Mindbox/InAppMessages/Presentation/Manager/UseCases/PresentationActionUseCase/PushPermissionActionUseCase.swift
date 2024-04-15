@@ -48,11 +48,9 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
                     }
                 case .authorized, .provisional, .ephemeral:
                     completion(nil)
-                    return
                 @unknown default:
                     completion(nil)
                     Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
-                    return
             }
         }
     }
