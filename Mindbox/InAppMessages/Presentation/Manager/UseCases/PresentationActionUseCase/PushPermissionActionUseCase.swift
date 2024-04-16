@@ -5,12 +5,10 @@
 //  Created by vailence on 14.03.2024.
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
-
 import Foundation
 import MindboxLogger
 import UserNotifications
 import UIKit
-
 final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     
     private let tracker: PresentationClickTracker
@@ -28,28 +26,24 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     ) {
         tracker.trackClick(id: id)
         Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
-        requestOrOpenSettingsForNotifications { settingsUrl in
-            onTap(settingsUrl, self.model.intentPayload)
-        }
+        requestOrOpenSettingsForNotifications()
+        onTap(nil, model.intentPayload)
         close()
     }
     
-    func requestOrOpenSettingsForNotifications(_ completion: @escaping (URL?) -> Void) {
+    func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
             switch settings.authorizationStatus {
                 case .notDetermined:
-                    completion(nil)
                     self.pushNotificationRequest()
                 case .denied:
-                    self.getPushNotificationSettingsUrl { url in
-                        completion(url)
-                    }
+                    self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
-                    completion(nil)
+                    return
                 @unknown default:
-                    completion(nil)
                     Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
+                    return
             }
         }
     }
@@ -72,7 +66,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         }
     }
     
-    private func getPushNotificationSettingsUrl(_ completion: @escaping (URL?) -> Void) {
+    private func openPushNotificationSettings() {
         DispatchQueue.main.async {
             let settingsUrl: URL?
             if #available(iOS 16.0, *) {
@@ -80,12 +74,20 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             } else {
                 settingsUrl = URL(string: UIApplication.openSettingsURLString)
             }
-            
-            if let settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) {
-                completion(settingsUrl)
-            } else {
+
+            guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
                 Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
-                completion(nil)
+                return
+            }
+
+            if UIApplication.shared.canOpenURL(settingsUrl) {
+                if #available(iOS 10.0, *) {
+                    UIApplication.shared.open(settingsUrl)
+                } else {
+                    UIApplication.shared.openURL(settingsUrl)
+                }
+                
+                Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
             }
         }
     }
