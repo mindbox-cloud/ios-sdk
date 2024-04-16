@@ -27,9 +27,6 @@ class AppDelegate: MindboxAppDelegate {
                 shouldCreateCustomer: true
             )
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
-            Mindbox.shared.getDeviceUUID { deviceUUID in
-                print(deviceUUID)
-            }
         } catch  {
             print(error)
         }

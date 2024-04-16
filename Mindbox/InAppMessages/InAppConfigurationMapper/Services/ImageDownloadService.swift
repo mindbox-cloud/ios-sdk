@@ -37,7 +37,7 @@ class ImageDownloadService: ImageDownloadServiceProtocol {
             } else if let localURL = localURL {
                 do {
                     let imageData = try Data(contentsOf: localURL)
-                    guard let image = UIImage(data: imageData) else {
+                    guard let image = ImageFormat.getImage(imageData: imageData) else {
                         Logger.common(message: "Inapps image is incorrect. [URL]: \(localURL)", level: .debug, category: .inAppMessages)
                         let error = NSError(domain: "", code: NSURLErrorCannotDecodeContentData, userInfo: nil)
                         completion(.failure(error))
