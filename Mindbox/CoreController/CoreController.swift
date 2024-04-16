@@ -22,10 +22,13 @@ class CoreController {
     private let userVisitManager: UserVisitManager
     private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
+    
+    private var observer: NSObjectProtocol?
 
     var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
+        startInAppMessagesManager()
         
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInitialiazionCalled = true
@@ -38,7 +41,6 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            self.startInAppMessagesManager()
         }
         
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
@@ -89,12 +91,17 @@ class CoreController {
 
     // MARK: - Private
     private func startInAppMessagesManager() {
-        NotificationCenter.default.addObserver(
+        observer = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: nil,
             using: { [weak self] _ in
-                self?.inAppMessagesManager.start()
+                self?.controllerQueue.async {
+                    self?.inAppMessagesManager.start()
+                }
+                if let observer = self?.observer {
+                    NotificationCenter.default.removeObserver(observer)
+                }
             }
         )
     }
