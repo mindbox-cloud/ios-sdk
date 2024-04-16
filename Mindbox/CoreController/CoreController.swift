@@ -101,6 +101,7 @@ class CoreController {
                 }
                 if let observer = self?.observer {
                     NotificationCenter.default.removeObserver(observer)
+                    self?.observer = nil
                 }
             }
         )
