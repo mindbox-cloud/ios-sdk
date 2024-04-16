@@ -29,13 +29,13 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         tracker.trackClick(id: id)
         Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
         requestOrOpenSettingsForNotifications()
+        onTap(nil, model.intentPayload)
         close()
     }
     
     func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
-            UIPasteboard.general.string = self.model.intentPayload
             switch settings.authorizationStatus {
                 case .notDetermined:
                     self.pushNotificationRequest()
