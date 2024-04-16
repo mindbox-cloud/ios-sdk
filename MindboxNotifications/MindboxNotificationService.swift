@@ -157,6 +157,7 @@ public class MindboxNotificationService: NSObject {
             return
         }
 
+        //let imageView = UIImageView(image: UIImage(data: data))
         let imageView = UIImageView(image: ImageFormat.getImage(imageData: data))
         imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
