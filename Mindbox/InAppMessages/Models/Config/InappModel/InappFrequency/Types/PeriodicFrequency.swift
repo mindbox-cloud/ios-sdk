@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct PeriodicFrequency: iFormVariant, Decodable, Equatable {
+struct PeriodicFrequency: Decodable, Equatable {
     let unit: Unit
     let value: Int
 }

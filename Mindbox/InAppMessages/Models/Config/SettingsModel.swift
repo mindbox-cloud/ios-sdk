@@ -56,3 +56,18 @@ enum Unit: String, Decodable {
         self = value
     }
 }
+
+extension Unit {
+    var calendarComponent: Calendar.Component {
+        switch self {
+        case .seconds:
+            return .second
+        case .minutes:
+            return .minute
+        case .hours:
+            return .hour
+        case .days:
+            return .day
+        }
+    }
+}

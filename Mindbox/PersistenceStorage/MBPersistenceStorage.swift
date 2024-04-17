@@ -11,10 +11,6 @@ import MindboxLogger
 
 class MBPersistenceStorage: PersistenceStorage {
     
-    init() {
-        migrateShownInAppsIds()
-    }
-    
     var onDidChange: (() -> Void)?
 
     // MARK: - Dependency
@@ -242,7 +238,8 @@ class MBPersistenceStorage: PersistenceStorage {
     
     func migrateShownInAppsIds() {
         if let oldIds = shownInAppsIds, !oldIds.isEmpty {
-            let migrationTimestamp = Date()
+            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
+            let migrationTimestamp = Date(timeIntervalSince1970: 0)
             var newFormat: [String: Date] = [:]
 
             for id in oldIds {
@@ -250,6 +247,7 @@ class MBPersistenceStorage: PersistenceStorage {
             }
             shownInappsDictionary = newFormat
             shownInAppsIds = nil
+            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
         }
     }
 }
