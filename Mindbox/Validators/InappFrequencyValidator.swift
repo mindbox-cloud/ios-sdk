@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 class InappFrequencyValidator: Validator {
     typealias T = InApp
@@ -44,16 +45,25 @@ class OnceFrequencyValidator {
     
     func isValid(item: OnceFrequency, id: String) -> Bool {
         let shownInAppsIds = persistenceStorage.shownInappsDictionary ?? [:]
+        var result = false
         switch item.kind {
             case .lifetime:
-                return shownInAppsIds[id] == nil
+                result = shownInAppsIds[id] == nil
             case .session:
+                Logger.common(message: "[Inapp frequency] Current frequency is [once] and kind is [lifetime]. Valid = \(result)",
+                              level: .debug, category: .inAppMessages)
                 if let savedTime = shownInAppsIds[id], Date() < savedTime {
-                    return false
+                    Logger.common(message: "[Inapp frequency] Saved date less than current date. Inapp is invalid.",
+                                  level: .debug, category: .inAppMessages)
+                    result = false
+                } else {
+                    result = true
                 }
-                
-                return true
         }
+        
+        Logger.common(message: "[Inapp frequency] Current frequency is [once] and kind is [\(item.kind.rawValue)]. Valid = \(result)",
+                      level: .debug, category: .inAppMessages)
+        return result
     }
 }
 
@@ -65,32 +75,44 @@ class PeriodicFrequencyValidator {
     }
     
     func isValid(item: PeriodicFrequency, id: String) -> Bool {
+        guard item.value > 0 else {
+            Logger.common(message: """
+            [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)]. 
+            Value (\(item.value)) is zero or negative.
+            Inapp is not valid.
+            """, level: .info, category: .inAppMessages)
+            return false
+        }
+
         let currentDate = Date()
         guard let inappsDict = persistenceStorage.shownInappsDictionary else {
+            Logger.common(message: "shownInappsDictionary not exists. Inapp is not valid.", level: .error, category: .inAppMessages)
             return false
         }
         
         guard let shownDate = inappsDict[id] else {
+            Logger.common(message: """
+            [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)].
+            Inapp ID \(id) is never shown before. 
+            Valid for display.
+            """, level: .info, category: .inAppMessages)
             return true
         }
         
         let calendar = Calendar.current
-        var shownDatePlusFrequency: Date?
-        switch item.unit {
-            case .seconds:
-                shownDatePlusFrequency = calendar.date(byAdding: .second, value: item.value, to: shownDate)
-            case .minutes:
-                shownDatePlusFrequency = calendar.date(byAdding: .minute, value: item.value, to: shownDate)
-            case .hours:
-                shownDatePlusFrequency = calendar.date(byAdding: .hour, value: item.value, to: shownDate)
-            case .days:
-                shownDatePlusFrequency = calendar.date(byAdding: .day, value: item.value, to: shownDate)
-        }
-        
-        guard let shownDatePlusFrequency = shownDatePlusFrequency else {
+        let component = item.unit.calendarComponent
+        if let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: shownDate) {
+            let isValid = currentDate > shownDatePlusFrequency
+            Logger.common(message: """
+            [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)] value is (\(item.value)).
+            Last shown date plus frequency: \(shownDatePlusFrequency.asDateTimeWithSeconds).
+            Current date: \(currentDate.asDateTimeWithSeconds).
+            Valid = \(isValid)
+            """, level: .debug, category: .inAppMessages)
+            return isValid
+        } else {
+            Logger.common(message: "Failed to calculate the next valid show date for Inapp ID \(id).", level: .error, category: .inAppMessages)
             return false
         }
-        
-        return currentDate > shownDatePlusFrequency
     }
 }
