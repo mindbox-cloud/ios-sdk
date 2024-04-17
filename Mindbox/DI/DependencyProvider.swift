@@ -39,6 +39,7 @@ final class DependencyProvider: DependencyContainer {
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
+        persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()

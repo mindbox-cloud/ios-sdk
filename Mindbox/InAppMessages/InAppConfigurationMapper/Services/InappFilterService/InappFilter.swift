@@ -159,18 +159,12 @@ private extension InappsFilterService {
         shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
         Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
-            return self.frequencyValidator.isValid(item: $0)
+            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            let result = self.frequencyValidator.isValid(item: $0)
+            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            return result
         }
 
         return filteredInapps
     }
 }
-
-//periodic
-//days
-
-//once
-//lifetime
-//session
-
-
