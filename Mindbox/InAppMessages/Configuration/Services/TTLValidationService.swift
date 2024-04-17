@@ -44,15 +44,10 @@ class TTLValidationService: TTLValidationProtocol {
             Logger.common(message: "[TTL] Error in date components. Inapps reset will not be performed.")
             return false
         }
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss" 
-        let nowString = dateFormatter.string(from: nowWithoutMilliseconds)
-        let downloadConfigDateWithTTLString = dateFormatter.string(from: downloadConfigDateWithTTLWithoutMilliseconds)
-        
+
         let message = """
-        [TTL] Current date: \(nowString).
-        Config download date with TTL: \(downloadConfigDateWithTTLString).
+        [TTL] Current date: \(nowWithoutMilliseconds.asDateTimeWithSeconds).
+        Config with TTL valid until: \(downloadConfigDateWithTTLWithoutMilliseconds.asDateTimeWithSeconds).
         Need to reset inapps: \(nowWithoutMilliseconds > downloadConfigDateWithTTLWithoutMilliseconds).
         """
         

@@ -122,7 +122,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         
         if ttlValidationService.needResetInapps(config: cachedConfig) {
             cachedConfig.inapps = nil
-            Logger.common(message: "[TTL] Resetting in-app purchases due to the expiration of the current configuration.")
+            Logger.common(message: "[TTL] Resetting in-app due to the expiration of the current configuration.")
         }
         
         setConfigPrepared(cachedConfig)
@@ -144,7 +144,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private func saveConfigToCache(_ data: Data) {
         let now = Date()
         persistenceStorage.configDownloadDate = now
-        Logger.common(message: "Config download date successfully updated to: \(now).")
+        Logger.common(message: "[TTL] Config download date successfully updated to: \(now.asDateTimeWithSeconds).")
         inAppConfigRepository.saveConfigToCache(data)
     }
     
