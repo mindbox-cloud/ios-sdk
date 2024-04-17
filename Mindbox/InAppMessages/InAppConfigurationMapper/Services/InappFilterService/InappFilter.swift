@@ -167,12 +167,3 @@ private extension InappsFilterService {
         return filteredInapps
     }
 }
-
-//periodic
-//days
-
-//once
-//lifetime
-//session
-
-
