@@ -55,6 +55,32 @@ final class PresentationDisplayUseCase {
         
         presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)
     }
+    
+    func presentInAppUIModelWithObserver(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) {
+        switch UIApplication.shared.applicationState {
+        case .active:
+            presentInAppUIModel(model: model,
+                                onPresented: onPresented,
+                                onTapAction: onTapAction,
+                                onClose: onClose)
+        case .inactive:
+            var observer: NSObjectProtocol?
+            observer = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: nil) { _ in
+                self.presentInAppUIModel(model: model,
+                                         onPresented: onPresented,
+                                         onTapAction: onTapAction,
+                                         onClose: onClose)
+                if let observer = observer {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                observer = nil
+            }
+        case .background:
+            return
+        @unknown default:
+            return
+        }
+    }
 
     func dismissInAppUIModel(onClose: @escaping () -> Void) {
         guard let presentedVC = presentedVC else {

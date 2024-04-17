@@ -62,7 +62,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 return
             }
             
-            self.displayUseCase.presentInAppUIModel(model: inAppFormData,
+            self.displayUseCase.presentInAppUIModelWithObserver(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
             }, onTapAction: { [weak self] action in
