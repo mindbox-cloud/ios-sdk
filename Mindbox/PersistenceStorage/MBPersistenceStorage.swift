@@ -95,23 +95,6 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
-    var configDownloadDate: Date? {
-        get {
-            if let dateString = configDownloadDateString {
-                return dateFormatter.date(from: dateString)
-            } else {
-                return nil
-            }
-        }
-        set {
-            if let date = newValue {
-                configDownloadDateString = dateFormatter.string(from: date)
-            } else {
-                configDownloadDateString = nil
-            }
-        }
-    }
-    
     var backgroundExecutions: [BackgroudExecution] {
         get {
             if let data = MBPersistenceStorage.defaults.value(forKey:"backgroundExecution") as? Data {
@@ -233,13 +216,6 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-    
-    @UserDefaultsWrapper(key: .configDownloadDate, defaultValue: nil)
-    private var configDownloadDateString: String? {
-        didSet {
-            onDidChange?()
-        }
-    }
 
     func reset() {
         installationDate = nil
@@ -250,7 +226,6 @@ class MBPersistenceStorage: PersistenceStorage {
         deprecatedEventsRemoveDate = nil
         configuration = nil
         isNotificationsEnabled = nil
-        configDownloadDate = nil
         resetBackgroundExecutions()
     }
     
@@ -293,7 +268,6 @@ extension MBPersistenceStorage {
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
             case userVisitCount = "MBPersistenceStorage-userVisitCount"
-            case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
         }
         
         private let key: Key

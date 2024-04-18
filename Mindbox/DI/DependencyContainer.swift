@@ -31,7 +31,6 @@ protocol DependencyContainer {
     var pushValidator: MindboxPushValidator { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
     var userVisitManager: UserVisitManager { get }
-    var ttlValidationService: TTLValidationProtocol { get }
 }
 
 protocol InstanceFactory {

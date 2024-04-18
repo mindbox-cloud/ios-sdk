@@ -9,7 +9,7 @@ import Foundation
 import MindboxLogger
 
 struct ConfigResponse: Decodable {
-    var inapps: FailableDecodableArray<InAppDTO>?
+    let inapps: FailableDecodableArray<InAppDTO>?
     let monitoring: Monitoring?
     let settings: Settings?
     let abtests: [ABTest]?
