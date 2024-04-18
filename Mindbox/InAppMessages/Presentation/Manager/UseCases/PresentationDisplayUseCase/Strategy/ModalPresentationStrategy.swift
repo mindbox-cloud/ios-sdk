@@ -11,6 +11,7 @@ import MindboxLogger
 
 final class ModalPresentationStrategy: PresentationStrategyProtocol {
     var window: UIWindow?
+    var isForgroundSceneExist = false
     
     func getWindow() -> UIWindow? {
         return makeInAppMessageWindow()
@@ -23,8 +24,14 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     }
 
     func dismiss(viewController: UIViewController) {
-        viewController.view.window?.isHidden = true
-        viewController.view.window?.rootViewController = nil
+        Logger.common(message: "Is forground scene exist: \(isForgroundSceneExist)", level: .debug, category: .inAppMessages)
+        if isForgroundSceneExist {
+            viewController.view.window?.isHidden = true
+            viewController.view.window?.rootViewController = nil
+        } else {
+            viewController.view.removeFromSuperview()
+            viewController.removeFromParent()
+        }
         Logger.common(message: "In-app modal presentation dismissed", level: .debug, category: .inAppMessages)
     }
     
@@ -37,7 +44,7 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
         if #available(iOS 13.0, *) {
             window = iOS13PlusWindow
         } else {
-            window = UIWindow(frame: UIScreen.main.bounds)
+            window = configurateNewWindow()
         }
         self.window = window
         window?.windowLevel = .normal + 3
@@ -52,16 +59,23 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
                 return windowScene
             }
         }
-    
-        return nil
+        return UIApplication.shared.connectedScenes.first as? UIWindowScene
     }
 
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
         if let foregroundedScene = foregroundedScene {
+            isForgroundSceneExist = true
             return UIWindow(windowScene: foregroundedScene)
         } else {
-            return UIWindow(frame: UIScreen.main.bounds)
+            return configurateNewWindow()
         }
+    }
+    
+    func configurateNewWindow() -> UIWindow {
+        let newWindow =  UIWindow(frame: UIScreen.main.bounds)
+        newWindow.makeKeyAndVisible()
+        UIApplication.shared.windows.first?.addSubview(newWindow)
+        return newWindow
     }
 }
