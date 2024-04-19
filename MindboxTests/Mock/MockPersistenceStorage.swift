@@ -88,6 +88,12 @@ class MockPersistenceStorage: PersistenceStorage {
         set { _userVisitCount = newValue }
     }
 
+    var configDownloadDate: Date? {
+        didSet { 
+            onDidChange?()
+        }
+    }
+    
     func reset() {
         installationDate = nil
         deviceUUID = nil
