@@ -79,6 +79,10 @@ extension Date {
     public var asDateTime: DateTime {
         return DateTime(self)
     }
+    
+    public var asDateTimeWithSeconds: String {
+        return DateTimeWithSeconds(self).string
+    }
 }
 
 fileprivate extension Date {
@@ -106,5 +110,18 @@ fileprivate extension String {
             data = data.replacingOccurrences(of: "Z", with: ".000000Z")
         }
         return Date.Formatter.iso8601.date(from: data)
+    }
+}
+
+public final class DateTimeWithSeconds: MBDate {
+    override var dateFormat: String {
+        "yyyy-MM-dd HH:mm:ss"
+    }
+
+    override func decodeWithFormat(_ rawString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = dateFormat
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter.date(from: rawString)
     }
 }

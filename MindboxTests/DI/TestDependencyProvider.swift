@@ -67,6 +67,7 @@ final class TestDependencyProvider: DependencyContainer {
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
+        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,

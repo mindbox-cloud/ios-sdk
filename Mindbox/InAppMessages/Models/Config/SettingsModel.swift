@@ -10,6 +10,7 @@ import Foundation
 
 struct Settings: Decodable, Equatable {
     let operations: SettingsOperations?
+    let ttl: TimeToLive?
     
     struct SettingsOperations: Decodable, Equatable {
         
@@ -20,6 +21,10 @@ struct Settings: Decodable, Equatable {
         struct Operation: Decodable, Equatable {
             let systemName: String
         }
+    }
+    
+    struct TimeToLive: Decodable, Equatable {
+        let inapps: TTLUnit?
     }
 }
 
@@ -47,7 +52,7 @@ enum Unit: String, Decodable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let decodedString = try container.decode(String.self).lowercased() // Преобразование к нижнему регистру
+        let decodedString = try container.decode(String.self).lowercased()
         
         guard let value = Unit(rawValue: decodedString) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Неизвестная единица времени")

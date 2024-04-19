@@ -81,6 +81,7 @@ final class DependencyProvider: DependencyContainer {
         let positionFilter = ElementsPositionFilterService()
         let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         let contentPositionFilterService = ContentPositionFilterService()
+
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
@@ -92,6 +93,7 @@ final class DependencyProvider: DependencyContainer {
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
         
+        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -106,7 +108,9 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    urlExtractorService: urlExtractorService,
                                                                    dataFacade: inAppConfigurationDataFacade),
-                logsManager: logsManager),
+                logsManager: logsManager,
+            persistenceStorage: persistenceStorage,
+            ttlValidationService: ttlValidationService),
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage
         )
