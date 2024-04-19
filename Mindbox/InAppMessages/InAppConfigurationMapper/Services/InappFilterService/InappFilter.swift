@@ -12,13 +12,12 @@ import MindboxLogger
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
     var validInapps: [InApp] { get }
-    var shownInAppsIds: Set<String> { get }
+    var shownInAppDictionary: [String: Date] { get }
 }
 
 final class InappsFilterService: InappFilterProtocol {
     
     var validInapps: [InApp] = []
-    var shownInAppsIds: Set<String> = []
     var shownInAppDictionary: [String: Date] = [:]
     
     private let persistenceStorage: PersistenceStorage
@@ -156,7 +155,7 @@ private extension InappsFilterService {
     }
     
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
+        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
         Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
             Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
