@@ -11,7 +11,6 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-
     var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
@@ -35,11 +34,13 @@ final class TestDependencyProvider: DependencyContainer {
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManager
     var ttlValidationService: TTLValidationProtocol
+    var frequencyValidator: InappFrequencyValidator
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
+        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
@@ -88,7 +89,8 @@ final class TestDependencyProvider: DependencyContainer {
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator)
+                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 frequencyValidator: frequencyValidator)
         pushValidator = MindboxPushValidator()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }

@@ -44,15 +44,15 @@ class OnceFrequencyValidator {
     }
     
     func isValid(item: OnceFrequency, id: String) -> Bool {
-        let shownInAppsIds = persistenceStorage.shownInappsDictionary ?? [:]
+        let shownInappsDictionary = persistenceStorage.shownInappsDictionary ?? [:]
         var result = false
         switch item.kind {
             case .lifetime:
-                result = shownInAppsIds[id] == nil
+                result = shownInappsDictionary[id] == nil
             case .session:
                 Logger.common(message: "[Inapp frequency] Current frequency is [once] and kind is [lifetime]. Valid = \(result)",
                               level: .debug, category: .inAppMessages)
-                if let savedTime = shownInAppsIds[id], Date() < savedTime {
+                if let savedTime = shownInappsDictionary[id], Date() < savedTime {
                     Logger.common(message: "[Inapp frequency] Saved date less than current date. Inapp is invalid.",
                                   level: .debug, category: .inAppMessages)
                     result = false
