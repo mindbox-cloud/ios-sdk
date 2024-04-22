@@ -29,6 +29,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         tracker.trackClick(id: id)
         Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
         requestOrOpenSettingsForNotifications()
+        onTap(nil, model.intentPayload)
         close()
     }
     
@@ -41,7 +42,6 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
                 case .denied:
                     self.openPushNotificationSettings()
                 case .authorized, .provisional, .ephemeral:
-                    UIPasteboard.general.string = self.model.intentPayload
                     return
                 @unknown default:
                     Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)

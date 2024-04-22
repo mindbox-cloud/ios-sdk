@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct BodyDecoder<T: Decodable> {
     
@@ -17,9 +18,11 @@ struct BodyDecoder<T: Decodable> {
             if let body = try? JSONDecoder().decode(T.self, from: data) {
                 self.body = body
             } else {
+                Logger.common(message: "BodyDecoder: Failed to decode JSON. data: \(data)", level: .error, category: .notification)
                 return nil
             }
         } else {
+            Logger.common(message: "BodyDecoder: Failed to decode string. decodable: \(decodable)", level: .error, category: .notification)
             return nil
         }
     }

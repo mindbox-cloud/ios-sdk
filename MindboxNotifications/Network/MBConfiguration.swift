@@ -8,6 +8,7 @@
 
 
 import Foundation
+import MindboxLogger
 
 public struct MBConfiguration: Codable {
     public let endpoint: String
@@ -27,11 +28,18 @@ public struct MBConfiguration: Codable {
             }
         }
 
-        guard let url = findeURL else { return nil }
+        guard let url = findeURL else {
+            return nil
+        }
 
-        guard let data = try? Data(contentsOf: url) else { return nil }
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
 
-        guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else { return nil }
+        guard let configuration = try? decoder.decode(MBConfiguration.self, from: data) else {
+            return nil
+        }
+
         self = configuration
     }
 
@@ -48,17 +56,21 @@ public struct MBConfiguration: Codable {
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
         var previousInstallationId: String?
+        
         if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {
                 previousInstallationId = value
             }
         }
+        
         var previousDeviceUUID: String?
+        
         if let value = try? values.decode(String.self, forKey: .previousDeviceUUID) {
             if !value.isEmpty {
                 previousDeviceUUID = value
             }
         }
+        
         let subscribeCustomerIfCreated = try values.decodeIfPresent(Bool.self, forKey: .subscribeCustomerIfCreated) ?? false
         
         self.endpoint = endpoint

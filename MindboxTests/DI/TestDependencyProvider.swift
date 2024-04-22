@@ -83,7 +83,10 @@ final class TestDependencyProvider: DependencyContainer {
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
-        inappFilterService = InappsFilterService(variantsFilter: variantsFilterService)
+        inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
+                                                 abTestDeviceMixer: abTestDeviceMixer,
+                                                 variantsFilter: variantsFilterService,
+                                                 sdkVersionValidator: sdkVersionValidator)
         pushValidator = MindboxPushValidator()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
     }
