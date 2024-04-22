@@ -7,7 +7,7 @@ exit 1
 fi
 
 #Check if the version number matches the semver format
-if ! [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+(-rc)?$ ]]; then
+if ! [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
 echo "The release version number does not match the semver format (X.Y.Z or X.Y.Z-rc)."
 exit 1
 fi
