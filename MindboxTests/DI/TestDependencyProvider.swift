@@ -34,6 +34,7 @@ final class TestDependencyProvider: DependencyContainer {
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManager
+    var ttlValidationService: TTLValidationProtocol
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -65,6 +66,7 @@ final class TestDependencyProvider: DependencyContainer {
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
+        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
