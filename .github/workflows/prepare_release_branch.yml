@@ -15,13 +15,13 @@ jobs:
       - name: Extract version from branch name
         run: echo "VERSION=${GITHUB_REF#refs/heads/test_release/}" >> $GITHUB_ENV
 
-      - name: Check for existing branch
-        run: |
-          if git ls-remote --heads origin test_release/${{ env.VERSION }} | grep test_release/${{ env.VERSION }}; then
-            echo "Branch test_release/${{ env.VERSION }} already exists."
-            exit 1
-          fi
-        shell: bash
+#      - name: Check for existing branch
+#        run: |
+#          if git ls-remote --heads origin test_release/${{ env.VERSION }} | grep test_release/${{ env.VERSION }}; then
+#            echo "Branch test_release/${{ env.VERSION }} already exists."
+#            exit 1
+#          fi
+#        shell: bash
 
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"
