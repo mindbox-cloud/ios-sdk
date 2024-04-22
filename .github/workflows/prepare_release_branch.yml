@@ -1,9 +1,9 @@
 name: Preparation for release 
 
 on:
-  push:
-    tags:
-      - '*'
+  create:
+    branch:
+      - 'test_release/*'
 
 jobs:
   preparation:
@@ -12,8 +12,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract version from tags
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Extract version from branch name
+        run: echo "VERSION=${GITHUB_REF#refs/heads/test_release/}" >> $GITHUB_ENV
 
       - name: Check for existing branch
         run: |

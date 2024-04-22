@@ -13,18 +13,20 @@ exit 1
 fi
 
 #Check the current Git branch
-#current_branch=$(git symbolic-ref --short HEAD)
+current_branch=$(git symbolic-ref --short HEAD)
+echo "Currently on branch: $current_branch"
 
-#if [[ $current_branch != "develop" && ! $current_branch =~ ^release/[0-9]+.[0-9]+.[0-9]+(-rc)?$ ]]; then
-#echo "The current Git branch ($current_branch) is not 'develop' or in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
-#exit 1
-#fi
+if [[ ! $current_branch =~ ^test_release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
+echo "The current Git branch ($current_branch) is not 'develop' or in the format 'test_release/X.Y.Z' or 'test_release/X.Y.Z-rc'."
+exit 1
+fi
 
 #Create a branch with the version name
 version=$1
-branch_name="release/$version"
-git branch $branch_name
-git checkout $branch_name
+#branch_name="test_release/$version"
+#git branch $branch_name
+#git checkout $branch_name
+
 
 #Add changelog to the index and create a commit
 podspec_file="Mindbox.podspec"
@@ -52,9 +54,11 @@ git add $notifivation_podspec_file
 git add $sdkversionprovider_file
 git commit -m "Bump SDK version to $version"
 
-git push origin $branch_name
+#git push origin $branch_name
+git push origin $current_branch
 
-git tag $branch_name
-git push origin $branch_name --tags
+git tag $version
+git push origin $version
 
-echo "Branch $branch_name has been created and pushed."
+#echo "Branch $branch_name has been created and pushed."
+echo "Changes have been committed and tagged as $version on branch $current_branch."
