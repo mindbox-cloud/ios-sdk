@@ -46,20 +46,20 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     }
 
     @available(iOS 13.0, *)
-    private var foregroundedScene: UIWindowScene? {
+    private var mostSuitableScene: UIWindowScene? {
         for connectedScene in UIApplication.shared.connectedScenes {
             if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
                 return windowScene
             }
         }
     
-        return nil
+        return UIApplication.shared.connectedScenes.first as? UIWindowScene
     }
 
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
-        if let foregroundedScene = foregroundedScene {
-            return UIWindow(windowScene: foregroundedScene)
+        if let mostSuitableScene = mostSuitableScene {
+            return UIWindow(windowScene: mostSuitableScene)
         } else {
             return nil
         }
