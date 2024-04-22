@@ -15,10 +15,10 @@ fi
 #Check the current Git branch
 current_branch=$(git symbolic-ref --short HEAD)
 
-if [[ $current_branch != "develop" && ! $current_branch =~ ^release/[0-9]+.[0-9]+.[0-9]+(-rc)?$ ]]; then
-echo "The current Git branch ($current_branch) is not 'develop' or in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
-exit 1
-fi
+#if [[ $current_branch != "develop" && ! $current_branch =~ ^release/[0-9]+.[0-9]+.[0-9]+(-rc)?$ ]]; then
+#echo "The current Git branch ($current_branch) is not 'develop' or in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
+#exit 1
+#fi
 
 #Create a branch with the version name
 version=$1
