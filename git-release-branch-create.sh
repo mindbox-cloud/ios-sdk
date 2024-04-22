@@ -73,21 +73,32 @@ grep "spec.version" $sdkversionconfig_file
 
 echo "Bump SDK version from $current_version to $version."
 
-#git add $podspec_file
-#git add $notifivation_podspec_file
-#git add $sdkversionprovider_file
-#git add $sdkversionconfig_file
-git add .
-git commit -m "Bump SDK version to $version"
+git add $podspec_file
+git commit -m "Bump SDK version to $version in $podspec_file"
+git push origin $current_branch
+
+git add $notifivation_podspec_file
+git commit -m "Bump SDK version to $version in $notifivation_podspec_file"
+git push origin $current_branch
+
+git add $sdkversionprovider_file
+git commit -m "Bump SDK version to $version in $sdkversionprovider_file"
+git push origin $current_branch
+
+git add $sdkversionconfig_file
+git commit -m "Bump SDK version to $version in $sdkversionconfig_file"
+git push origin $current_branch
+#git add .
+#git commit -m "Bump SDK version to $version"
 
 #git push origin $branch_name
-echo "Pushing changes to branch: $current_branch"
+#echo "Pushing changes to branch: $current_branch"
 #git push origin $current_branch
 
-if ! git push origin $current_branch; then
-    echo "Failed to push changes to the origin"
-    exit 1
-fi
+#if ! git push origin $current_branch; then
+#    echo "Failed to push changes to the origin"
+#    exit 1
+#fi
 
 git tag $version
 git push origin $version
