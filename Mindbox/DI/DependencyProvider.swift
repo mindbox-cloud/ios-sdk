@@ -33,7 +33,6 @@ final class DependencyProvider: DependencyContainer {
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManager
-    var ttlValidationService: TTLValidationProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -79,7 +78,6 @@ final class DependencyProvider: DependencyContainer {
         let positionFilter = ElementsPositionFilterService()
         let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         let contentPositionFilterService = ContentPositionFilterService()
-
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
@@ -89,7 +87,6 @@ final class DependencyProvider: DependencyContainer {
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: sdkVersionValidator)
         
-        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -104,9 +101,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    urlExtractorService: urlExtractorService,
                                                                    dataFacade: inAppConfigurationDataFacade),
-                logsManager: logsManager,
-            persistenceStorage: persistenceStorage,
-            ttlValidationService: ttlValidationService),
+                logsManager: logsManager),
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage
         )

@@ -33,23 +33,17 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
     private let logsManager: SDKLogsManagerProtocol
-    private let persistenceStorage: PersistenceStorage
-    private let ttlValidationService: TTLValidationProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
-        logsManager: SDKLogsManagerProtocol,
-        persistenceStorage: PersistenceStorage,
-        ttlValidationService: TTLValidationProtocol
+        logsManager: SDKLogsManagerProtocol
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.logsManager = logsManager
-        self.persistenceStorage = persistenceStorage
-        self.ttlValidationService = ttlValidationService
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -115,16 +109,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     private func applyConfigFromCache() {
-        guard var cachedConfig = self.fetchConfigFromCache() else {
-            Logger.common(message: "Failed to apply configuration from cache: No cached configuration found.")
+        guard let cachedConfig = self.fetchConfigFromCache() else {
             return
         }
-        
-        if ttlValidationService.needResetInapps(config: cachedConfig) {
-            cachedConfig.inapps = nil
-            Logger.common(message: "[TTL] Resetting in-app purchases due to the expiration of the current configuration.")
-        }
-        
         setConfigPrepared(cachedConfig)
     }
 
@@ -142,9 +129,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     private func saveConfigToCache(_ data: Data) {
-        let now = Date()
-        persistenceStorage.configDownloadDate = now
-        Logger.common(message: "Config download date successfully updated to: \(now).")
         inAppConfigRepository.saveConfigToCache(data)
     }
     
