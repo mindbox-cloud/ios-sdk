@@ -73,9 +73,10 @@ grep "spec.version" $sdkversionconfig_file
 
 echo "Bump SDK version from $current_version to $version."
 
-git add $podspec_file
-git add $notifivation_podspec_file
-git add $sdkversionprovider_file
+#git add $podspec_file
+#git add $notifivation_podspec_file
+#git add $sdkversionprovider_file
+git add .
 git commit -m "Bump SDK version to $version"
 
 #git push origin $branch_name
