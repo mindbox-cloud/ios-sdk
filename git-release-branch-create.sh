@@ -55,50 +55,57 @@ grep "spec.version" $notifivation_podspec_file
 
 # Обновление версии в SDKVersionProvider.swift
 echo "SDKVersionProvider.swift Before updating version:"
-grep "spec.version" $sdkversionprovider_file
+grep "sdkVersion" $sdkversionprovider_file
 
 sed -i '' "s/public static let sdkVersion = \".*\"$/public static let sdkVersion = \"$version\"/" $sdkversionprovider_file
 
 echo "SDKVersionProvider.swift After updating version:"
-grep "spec.version" $sdkversionprovider_file
+grep "sdkVersion" $sdkversionprovider_file
 
 # Обновление MARKETING_VERSION в SDKVersionConfig.xcconfig
 echo "SDKVersionConfig.xcconfig Before updating version:"
-grep "spec.version" $sdkversionconfig_file
+grep "MARKETING_VERSION" $sdkversionconfig_file
 
 sed -i '' "s/^MARKETING_VERSION = .*$/MARKETING_VERSION = $version/" $sdkversionconfig_file
 
 echo "SDKVersionConfig.xcconfig After updating version:"
-grep "spec.version" $sdkversionconfig_file
+grep "MARKETING_VERSION" $sdkversionconfig_file
 
 echo "Bump SDK version from $current_version to $version."
 
-git add $podspec_file
-git commit -m "Bump SDK version to $version in $podspec_file"
-git push origin $current_branch
+#git add $podspec_file
+#git commit -m "Bump SDK version to $version in $podspec_file"
+#git push origin $current_branch
+#
+#git add $notifivation_podspec_file
+#git commit -m "Bump SDK version to $version in $notifivation_podspec_file"
+#git push origin $current_branch
+#
+#git add $sdkversionprovider_file
+#git commit -m "Bump SDK version to $version in $sdkversionprovider_file"
+#git push origin $current_branch
+#
+#git add $sdkversionconfig_file
+#git commit -m "Bump SDK version to $version in $sdkversionconfig_file"
+#git push origin $current_branch
 
-git add $notifivation_podspec_file
-git commit -m "Bump SDK version to $version in $notifivation_podspec_file"
-git push origin $current_branch
-
-git add $sdkversionprovider_file
-git commit -m "Bump SDK version to $version in $sdkversionprovider_file"
-git push origin $current_branch
-
-git add $sdkversionconfig_file
-git commit -m "Bump SDK version to $version in $sdkversionconfig_file"
-git push origin $current_branch
 #git add .
 #git commit -m "Bump SDK version to $version"
+
+git add $podspec_file
+git add $notifivation_podspec_file
+git add $sdkversionprovider_file
+git add $sdkversionconfig_file
+git commit -m "Bump SDK version to $version"
 
 #git push origin $branch_name
 #echo "Pushing changes to branch: $current_branch"
 #git push origin $current_branch
 
-#if ! git push origin $current_branch; then
-#    echo "Failed to push changes to the origin"
-#    exit 1
-#fi
+if ! git push origin $current_branch; then
+    echo "Failed to push changes to the origin"
+    exit 1
+fi
 
 git tag $version
 git push origin $version
