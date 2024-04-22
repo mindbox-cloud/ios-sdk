@@ -3,7 +3,7 @@ name: Preparation for release
 on:
   create:
     branch:
-      - 'test_release/*'
+      - 'test_release/*.*.*'
 
 jobs:
   preparation:

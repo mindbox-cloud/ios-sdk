@@ -2,14 +2,14 @@ name: SDK CI
 
 on:
   push:
-    branches:
-      - '**'
-      - '!master'
-      - '!release-*'
-    paths-ignore:
-      - '**.md'
-    tags-ignore:
-      - '**'
+#    branches:
+#      - '**'
+#      - '!master'
+#      - '!release-*'
+#    paths-ignore:
+#      - '**.md'
+#    tags-ignore:
+#      - '**'
 jobs:
   build:
     runs-on: macos-14
