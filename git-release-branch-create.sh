@@ -76,11 +76,18 @@ echo "Bump SDK version from $current_version to $version."
 #git add $podspec_file
 #git add $notifivation_podspec_file
 #git add $sdkversionprovider_file
+#git add $sdkversionconfig_file
 git add .
 git commit -m "Bump SDK version to $version"
 
 #git push origin $branch_name
-git push origin $current_branch
+echo "Pushing changes to branch: $current_branch"
+#git push origin $current_branch
+
+if ! git push origin $current_branch; then
+    echo "Failed to push changes to the origin"
+    exit 1
+fi
 
 git tag $version
 git push origin $version
