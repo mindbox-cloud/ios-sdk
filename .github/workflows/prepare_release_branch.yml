@@ -13,12 +13,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract version from branch name
-        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF#refs/heads/test_release/}" >> $GITHUB_ENV
 
       - name: Check for existing branch
         run: |
-          if git ls-remote --heads origin release/${{ env.VERSION }} | grep release/${{ env.VERSION }}; then
-            echo "Branch release/${{ env.VERSION }} already exists."
+          if git ls-remote --heads origin test_release/${{ env.VERSION }} | grep test_release/${{ env.VERSION }}; then
+            echo "Branch test_release/${{ env.VERSION }} already exists."
             exit 1
           fi
         shell: bash
@@ -40,52 +40,52 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: Update release version to ${{ env.VERSION }}
-          title: "Release/${{ env.VERSION }}"
+          title: "Test Release/${{ env.VERSION }}"
           body: |
             Updates the release version to ${{ env.VERSION }}.
-          branch: "release/${{ env.VERSION }}"
-          base: "master"
+          branch: "test_release/${{ env.VERSION }}"
+          base: "develop"
 
-      - name: Post to a Slack channel
-        id: slack
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'C06RXV161RA'
-          payload: |
-            {
-              "text": "iOS Release Branch Notification",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚀 iOS Release Branch Created"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Branch Name:* *`release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "Pull Request"
-                      },
-                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+#      - name: Post to a Slack channel
+#        id: slack
+#        uses: slackapi/slack-github-action@v1.25.0
+#        with:
+#          channel-id: 'C06RXV161RA'
+#          payload: |
+#            {
+#              "text": "iOS Release Branch Notification",
+#              "blocks": [
+#                {
+#                  "type": "header",
+#                  "text": {
+#                    "type": "plain_text",
+#                    "text": "🚀 iOS Release Branch Created"
+#                  }
+#                },
+#                {
+#                  "type": "section",
+#                  "text": {
+#                    "type": "mrkdwn",
+#                    "text": "*Branch Name:* *`release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
+#                  }
+#                },
+#                {
+#                  "type": "divider"
+#                },
+#                {
+#                  "type": "actions",
+#                  "elements": [
+#                    {
+#                      "type": "button",
+#                      "text": {
+#                        "type": "plain_text",
+#                        "text": "Pull Request"
+#                      },
+#                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
+#                    }
+#                  ]
+#                }
+#              ]
+#            }
+#        env:
+#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
