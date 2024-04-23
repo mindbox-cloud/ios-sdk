@@ -3,7 +3,7 @@ name: Preparation for release
 on:
   create:
     branch:
-      - 'test_release/*'
+      - 'test_release/*.*.*'
 
 jobs:
   preparation:
@@ -15,13 +15,13 @@ jobs:
       - name: Extract version from branch name
         run: echo "VERSION=${GITHUB_REF#refs/heads/test_release/}" >> $GITHUB_ENV
 
-      - name: Check for existing branch
-        run: |
-          if git ls-remote --heads origin test_release/${{ env.VERSION }} | grep test_release/${{ env.VERSION }}; then
-            echo "Branch test_release/${{ env.VERSION }} already exists."
-            exit 1
-          fi
-        shell: bash
+#      - name: Check for existing branch
+#        run: |
+#          if git ls-remote --heads origin test_release/${{ env.VERSION }} | grep test_release/${{ env.VERSION }}; then
+#            echo "Branch test_release/${{ env.VERSION }} already exists."
+#            exit 1
+#          fi
+#        shell: bash
 
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"
@@ -48,7 +48,7 @@ jobs:
 
 #      - name: Post to a Slack channel
 #        id: slack
-#        uses: slackapi/slack-github-action@v1.26.0
+#        uses: slackapi/slack-github-action@v1.25.0
 #        with:
 #          channel-id: 'C06RXV161RA'
 #          payload: |
