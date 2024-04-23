@@ -2,8 +2,8 @@ name: Preparation for release
 
 on:
   push:
-  branch:
-    - 'test_release/*.*.*'
+    branches:
+      - 'test_release/*.*.*'
 
 jobs:
   preparation:
