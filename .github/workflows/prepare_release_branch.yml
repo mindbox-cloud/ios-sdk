@@ -28,15 +28,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Check if sdkVersion matches VERSION
-#        run: |
-#          SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-#          if [ "$SDK_VERSION" != "${{ env.VERSION }}" ]; then
-#            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ env.VERSION }})."
-#            exit 1
-#          fi
-#        shell: bash
-#
+      - name: Check if sdkVersion matches VERSION
+        run: |
+          SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
+          if [ "$SDK_VERSION" != "${{ env.VERSION }}" ]; then
+            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ env.VERSION }})."
+            exit 1
+          fi
+        shell: bash
+        
+      - name: Create Pull Request
+        run: |
+          gr pr create \
+            --base develop \
+            --head ${{ github.ref_name }} \
+            --title "Test Release/${{ env.VERSION }}" \
+            --body "Updates the release version to ${{ env.VERSION }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 #      - name: Create Pull Request
 #        id: create-pr
 #        uses: peter-evans/create-pull-request@v6

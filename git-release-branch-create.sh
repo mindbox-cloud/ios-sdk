@@ -96,11 +96,27 @@ git add $podspec_file
 git add $notifivation_podspec_file
 git add $sdkversionprovider_file
 git add $sdkversionconfig_file
-git commit -m "Bump SDK version to $version"
+git commit -m "Bump SDK version from $current_version to $version"
 
 #git push origin $branch_name
 #echo "Pushing changes to branch: $current_branch"
 #git push origin $current_branch
+
+podfile="Example/Podfile"
+
+echo "Example Podfile Before updating version:"
+grep "pod 'Mindbox'" $podfile
+grep "pod 'MindboxNotifications'" $podfile
+
+sed -i '' "s/pod 'Mindbox', '[^']*'/pod 'Mindbox', '$version'/g" $podfile
+sed -i '' "s/pod 'MindboxNotifications', '[^']*'/pod 'MindboxNotifications', '$version'/g" $podfile
+
+echo "Example Podfile After updating version:"
+grep "pod 'Mindbox'" $podfile
+grep "pod 'MindboxNotifications'" $podfile
+
+git add $podfile
+git commit -m "Bump Example Podfile SDK version from $current_version to $version"
 
 if ! git push origin $current_branch; then
     echo "Failed to push changes to the origin"
@@ -112,12 +128,3 @@ git push origin $version
 
 #echo "Branch $branch_name has been created and pushed."
 echo "Changes have been committed and tagged as $version on branch $current_branch."
-
-SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-if [ "$SDK_VERSION" != "$version" ]; then
-    echo "SDK version ($SDK_VERSION) does not match the branch version ($version)."
-    exit 1
-fi
-
-echo "Creating Pull Request..."
-gh pr create --base develop --head $current_branch --title "Test Release/$version" --body "Updates the release version to $version"
