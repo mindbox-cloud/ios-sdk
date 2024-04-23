@@ -179,7 +179,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 var imageDict: [String: UIImage] = [:]
                 var gotError = false
                 
-                if self.inappFilterService.shownInAppsIds.contains(inapp.inAppId) {
+                if let _ = self.inappFilterService.shownInAppDictionary[inapp.inAppId] {
                     continue
                 }
                 

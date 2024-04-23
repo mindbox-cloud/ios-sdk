@@ -34,10 +34,12 @@ final class DependencyProvider: DependencyContainer {
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManager
     var ttlValidationService: TTLValidationProtocol
+    var frequencyValidator: InappFrequencyValidator
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
+        persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
@@ -84,10 +86,12 @@ final class DependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
 
+        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator)
+                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 frequencyValidator: frequencyValidator)
         
         ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,

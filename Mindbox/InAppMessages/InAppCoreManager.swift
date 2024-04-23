@@ -120,9 +120,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
-                    var newShownInAppsIds = self.persistenceStorage.shownInAppsIds ?? []
-                    newShownInAppsIds.append(inapp.inAppId)
-                    self.persistenceStorage.shownInAppsIds = newShownInAppsIds
+                    var shownInappsDictionary = self.persistenceStorage.shownInappsDictionary ?? [:]
+                    shownInappsDictionary[inapp.inAppId] = Date()
+                    self.persistenceStorage.shownInappsDictionary = shownInappsDictionary
 
                 }
             },
