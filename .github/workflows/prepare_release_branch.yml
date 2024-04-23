@@ -30,13 +30,17 @@ jobs:
         shell: bash
         
       - name: Create Pull Request
+        id: create_pr
         run: |
-          gh pr create \
+          PR_URL=$(gh pr create \
             --draft \
             --base develop \
             --head ${{ github.ref_name }} \
             --title "Test Release/${{ env.VERSION }}" \
-            --body "Updates the release version to ${{ env.VERSION }}"
+            --body "Updates the release version to ${{ env.VERSION }}" \
+            --repo ${{ github.repository }} \
+            --json url --jq '.url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -75,7 +79,7 @@ jobs:
                         "type": "plain_text",
                         "text": "Pull Request"
                       },
-                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
+                      "url": "${{ env.PR_URL }}"
                     }
                   ]
                 }
