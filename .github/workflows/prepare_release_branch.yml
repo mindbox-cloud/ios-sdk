@@ -25,6 +25,8 @@ jobs:
 
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 #      - name: Check if sdkVersion matches VERSION
 #        run: |
