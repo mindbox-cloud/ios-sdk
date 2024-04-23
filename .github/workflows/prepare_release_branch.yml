@@ -38,8 +38,7 @@ jobs:
             --head ${{ github.ref_name }} \
             --title "Test Release/${{ env.VERSION }}" \
             --body "Updates the release version to ${{ env.VERSION }}" \
-            --repo ${{ github.repository }} \
-            --json url --jq '.url')
+            | grep -o 'https://github.com/[a-zA-Z0-9\._\-]*/pull/[0-9]*')
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
