@@ -1,12 +1,14 @@
 name: Preparation for release 
 
 on:
-  create:
-    branch:
-      - 'test_release/*.*.*'
+  push:
+  branch:
+    - 'test_release/*.*.*'
 
 jobs:
   preparation:
+    if: github.event.created
+    
     runs-on: macos-14
     steps:
       - name: Checkout code

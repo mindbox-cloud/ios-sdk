@@ -3,7 +3,7 @@ name: SDK CI
 on:
   push:
     branches:
-      - '**'
+      - '!**'
       - '!feature/*'
       - '!rest_release-*'
       - '!master'
