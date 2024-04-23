@@ -1,7 +1,7 @@
-name: SDK CI
+#name: SDK CI
 
-on:
-  push:
+#on:
+#  push:
 #    branches:
 #      - '**'
 #      - '!master'
