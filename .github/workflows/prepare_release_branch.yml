@@ -26,25 +26,25 @@ jobs:
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"
 
-      - name: Check if sdkVersion matches VERSION
-        run: |
-          SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-          if [ "$SDK_VERSION" != "${{ env.VERSION }}" ]; then
-            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ env.VERSION }})."
-            exit 1
-          fi
-        shell: bash
-
-      - name: Create Pull Request
-        id: create-pr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: Update release version to ${{ env.VERSION }}
-          title: "Test Release/${{ env.VERSION }}"
-          body: |
-            Updates the release version to ${{ env.VERSION }}.
-          branch: "test_release/${{ env.VERSION }}"
-          base: "develop"
+#      - name: Check if sdkVersion matches VERSION
+#        run: |
+#          SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
+#          if [ "$SDK_VERSION" != "${{ env.VERSION }}" ]; then
+#            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ env.VERSION }})."
+#            exit 1
+#          fi
+#        shell: bash
+#
+#      - name: Create Pull Request
+#        id: create-pr
+#        uses: peter-evans/create-pull-request@v6
+#        with:
+#          commit-message: Update release version to ${{ env.VERSION }}
+#          title: "Test Release/${{ env.VERSION }}"
+#          body: |
+#            Updates the release version to ${{ env.VERSION }}.
+#          branch: "test_release/${{ env.VERSION }}"
+#          base: "develop"
 
 #      - name: Post to a Slack channel
 #        id: slack

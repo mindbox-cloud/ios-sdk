@@ -112,3 +112,12 @@ git push origin $version
 
 #echo "Branch $branch_name has been created and pushed."
 echo "Changes have been committed and tagged as $version on branch $current_branch."
+
+SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
+if [ "$SDK_VERSION" != "$version" ]; then
+    echo "SDK version ($SDK_VERSION) does not match the branch version ($version)."
+    exit 1
+fi
+
+echo "Creating Pull Request..."
+gh pr create --base develop --head $current_branch --title "Test Release/$version" --body "Updates the release version to $version"
