@@ -178,13 +178,15 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
     
+    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: nil)
+    var shownInappsDictionary: [String : Date]?
+    
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
     
     @UserDefaultsWrapper(key: .imageLoadingMaxTimeInSeconds, defaultValue: nil)
     var imageLoadingMaxTimeInSeconds: Double?
     
-
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
         didSet {
@@ -258,7 +260,21 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
     }
+    
+    func migrateShownInAppsIds() {
+        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
+            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
+            let migrationTimestamp = Date(timeIntervalSince1970: 0)
+            var newFormat: [String: Date] = [:]
 
+            for id in oldIds {
+                newFormat[id] = migrationTimestamp
+            }
+            shownInappsDictionary = newFormat
+            shownInAppsIds = nil
+            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
+        }
+    }
 }
 
 struct BackgroudExecution: Codable {
@@ -289,6 +305,7 @@ extension MBPersistenceStorage {
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            case shownInAppsDictionary = "MBPersistenceStorage-shownInAppsDictionary"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
