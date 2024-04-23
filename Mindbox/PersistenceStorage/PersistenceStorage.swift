@@ -48,4 +48,6 @@ protocol PersistenceStorage: AnyObject {
     var needUpdateInfoOnce: Bool? { get set }
 
     var userVisitCount: Int? { get set }
+    
+    var configDownloadDate: Date? { get set }
 }
