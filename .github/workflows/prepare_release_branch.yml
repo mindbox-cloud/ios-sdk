@@ -1,8 +1,8 @@
 name: Preparation for release 
 
 on:
-  push:
-    branches:
+  create:
+    branch:
       - 'test_release/*'
 
 jobs:
