@@ -39,7 +39,8 @@ current_version=$(grep -E '^\s+spec.version\s+=' "$podspec_file" | cut -d'"' -f2
 echo "Mindbox.podspec Before updating version:"
 grep "spec.version" $podspec_file
 
-sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $podspec_file
+#sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $podspec_file
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
 
 echo "Mindbox.podspec After updating version:"
 grep "spec.version" $podspec_file
@@ -48,7 +49,9 @@ grep "spec.version" $podspec_file
 echo "MindboxNotifications.podspec Before updating version:"
 grep "spec.version" $notifivation_podspec_file
 
-sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $notifivation_podspec_file
+#sed -i '' "s/^[[:space:]]*spec.version[[:space:]]*=[[:space:]]*\".*\"$/  spec.version      = \"$version\"/" $notifivation_podspec_file
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $notifivation_podspec_file
+
 
 echo "MindboxNotifications.podspec After updating version:"
 grep "spec.version" $notifivation_podspec_file
@@ -57,7 +60,8 @@ grep "spec.version" $notifivation_podspec_file
 echo "SDKVersionProvider.swift Before updating version:"
 grep "sdkVersion" $sdkversionprovider_file
 
-sed -i '' "s/public static let sdkVersion = \".*\"$/public static let sdkVersion = \"$version\"/" $sdkversionprovider_file
+#sed -i '' "s/public static let sdkVersion = \".*\"$/public static let sdkVersion = \"$version\"/" $sdkversionprovider_file
+sed -i '' "s/\(public static let sdkVersion = \"\).*\(\"$\)/\1$version\2/" $sdkversionprovider_file
 
 echo "SDKVersionProvider.swift After updating version:"
 grep "sdkVersion" $sdkversionprovider_file
@@ -66,7 +70,7 @@ grep "sdkVersion" $sdkversionprovider_file
 echo "SDKVersionConfig.xcconfig Before updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
 
-sed -i '' "s/^MARKETING_VERSION = .*$/MARKETING_VERSION = $version/" $sdkversionconfig_file
+sed -i '' "s/\(MARKETING_VERSION = \).*\$/\1$version/" $sdkversionconfig_file
 
 echo "SDKVersionConfig.xcconfig After updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
@@ -108,8 +112,11 @@ echo "Example Podfile Before updating version:"
 grep "pod 'Mindbox'" $podfile
 grep "pod 'MindboxNotifications'" $podfile
 
-sed -i '' "s/pod 'Mindbox', '[^']*'/pod 'Mindbox', '$version'/g" $podfile
-sed -i '' "s/pod 'MindboxNotifications', '[^']*'/pod 'MindboxNotifications', '$version'/g" $podfile
+#sed -i '' "s/pod 'Mindbox', '[^']*'/pod 'Mindbox', '$version'/g" $podfile
+#sed -i '' "s/pod 'MindboxNotifications', '[^']*'/pod 'MindboxNotifications', '$version'/g" $podfile
+
+sed -i '' "s/\(pod 'Mindbox', '\)[^']*\(\'\)/\1$version\2/g" $podfile
+sed -i '' "s/\(pod 'MindboxNotifications', '\)[^']*\(\'\)/\1$version\2/g" $podfile
 
 echo "Example Podfile After updating version:"
 grep "pod 'Mindbox'" $podfile
