@@ -19,7 +19,7 @@ struct OnceFrequency: iFormVariant, Decodable, Equatable {
             let container = try decoder.singleValueContainer()
             let decodedString = try container.decode(String.self).lowercased()
             guard let value = OnceFrequencyKind(rawValue: decodedString) else {
-                throw CustomDecodingError.unknownType("BBBKBKB")
+                throw CustomDecodingError.unknownType("Cannot decode OnceFrequency. Inapp will be ignored.")
             }
             
             self = value
