@@ -30,17 +30,18 @@ jobs:
         shell: bash
         
       - name: Create Pull Request
-         run: |
-           gh pr create \
-             --draft \
-             --base develop \
-             --head ${{ github.ref_name }} \
-             --title "Test Release/${{ env.VERSION }}" \
-             --body "Updates the release version to ${{ env.VERSION }}"
-            PR_URL=$(gh pr view --json url --jq '.url')
-            echo "PR_URL=$PR_URL" >> $GITHUB_ENV
-         env:
-           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --draft \
+            --base develop \
+            --head ${{ github.ref_name }} \
+            --title "Test Release/${{ env.VERSION }}" \
+            --body "Updates the release version to ${{ env.VERSION }}"
+          PR_URL=$(gh pr view --json url --jq '.url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
 
       - name: Post to a Slack channel
         id: slack
