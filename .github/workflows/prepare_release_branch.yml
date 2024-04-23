@@ -43,46 +43,46 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
 
-      - name: Post to a Slack channel
-        id: slack
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'C06RXV161RA'
-          payload: |
-            {
-              "text": "iOS Test Release Branch Notification",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚀 iOS Test Release Branch Created"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Branch Name:* *`test_release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "Pull Request"
-                      },
-                      "url": "${{ env.PR_URL }}"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+#      - name: Post to a Slack channel
+#        id: slack
+#        uses: slackapi/slack-github-action@v1.25.0
+#        with:
+#          channel-id: 'C06RXV161RA'
+#          payload: |
+#            {
+#              "text": "iOS Test Release Branch Notification",
+#              "blocks": [
+#                {
+#                  "type": "header",
+#                  "text": {
+#                    "type": "plain_text",
+#                    "text": "🚀 iOS Test Release Branch Created"
+#                  }
+#                },
+#                {
+#                  "type": "section",
+#                  "text": {
+#                    "type": "mrkdwn",
+#                    "text": "*Branch Name:* *`test_release/${{ env.VERSION }}`*\n*Status:* Success :white_check_mark:"
+#                  }
+#                },
+#                {
+#                  "type": "divider"
+#                },
+#                {
+#                  "type": "actions",
+#                  "elements": [
+#                    {
+#                      "type": "button",
+#                      "text": {
+#                        "type": "plain_text",
+#                        "text": "Pull Request"
+#                      },
+#                      "url": "${{ env.PR_URL }}"
+#                    }
+#                  ]
+#                }
+#              ]
+#            }
+#        env:
+#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
