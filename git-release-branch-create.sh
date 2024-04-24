@@ -16,8 +16,8 @@ fi
 current_branch=$(git symbolic-ref --short HEAD)
 echo "Currently on branch: $current_branch"
 
-if [[ $current_branch != "develop" && ! $current_branch =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
-echo "The current Git branch ($current_branch) is not 'develop' or in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
+if [[ ! $current_branch =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
+echo "The current Git branch ($current_branch) is not in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
 exit 1
 fi
 
