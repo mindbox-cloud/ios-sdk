@@ -29,7 +29,7 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     }
     
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
-        // Not need to setup. 
+        // Not need to setup.
     }
     
     private func makeInAppMessageWindow() -> UIWindow? {
@@ -37,7 +37,7 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
         if #available(iOS 13.0, *) {
             window = iOS13PlusWindow
         } else {
-            window = UIWindow(frame: UIScreen.main.bounds)
+            window = nil
         }
         self.window = window
         window?.windowLevel = .normal + 3
@@ -46,22 +46,22 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     }
 
     @available(iOS 13.0, *)
-    private var foregroundedScene: UIWindowScene? {
+    private var mostSuitableScene: UIWindowScene? {
         for connectedScene in UIApplication.shared.connectedScenes {
             if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
                 return windowScene
             }
         }
     
-        return nil
+        return UIApplication.shared.connectedScenes.first as? UIWindowScene
     }
 
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
-        if let foregroundedScene = foregroundedScene {
-            return UIWindow(windowScene: foregroundedScene)
+        if let mostSuitableScene = mostSuitableScene {
+            return UIWindow(windowScene: mostSuitableScene)
         } else {
-            return UIWindow(frame: UIScreen.main.bounds)
+            return nil
         }
     }
 }
