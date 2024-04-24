@@ -102,5 +102,4 @@ fi
 git tag $version
 git push origin $version
 
-#echo "Branch $branch_name has been created and pushed."
 echo "Changes have been committed and tagged as $version on branch $current_branch."
