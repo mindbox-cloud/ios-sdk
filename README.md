@@ -2,7 +2,7 @@
 
 # Mindbox SDK for iOS
 
-The Mindbox SDK allows developers to integrate mobile push notifications, in-app messages, and client events into your iOS projects.
+<!--The Mindbox SDK allows developers to integrate mobile push notifications, in-app messages, and client events into your iOS projects.-->
 
 ## Getting Started
 
