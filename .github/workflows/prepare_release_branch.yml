@@ -2,11 +2,13 @@ name: Preparation for release
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - 'release/*.*.*'
 
 jobs:
   preparation:
+    if: github.event.created
+    
     runs-on: macos-14
     steps:
       - name: Checkout code
@@ -14,14 +16,6 @@ jobs:
 
       - name: Extract version from branch name
         run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
-
-      - name: Check for existing branch
-        run: |
-          if git ls-remote --heads origin release/${{ env.VERSION }} | grep release/${{ env.VERSION }}; then
-            echo "Branch release/${{ env.VERSION }} already exists."
-            exit 1
-          fi
-        shell: bash
 
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"
@@ -34,17 +28,19 @@ jobs:
             exit 1
           fi
         shell: bash
-
+        
       - name: Create Pull Request
-        id: create-pr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: Update release version to ${{ env.VERSION }}
-          title: "Release/${{ env.VERSION }}"
-          body: |
-            Updates the release version to ${{ env.VERSION }}.
-          branch: "release/${{ env.VERSION }}"
-          base: "master"
+        run: |
+          gh pr create \
+            --base master \
+            --head ${{ github.ref_name }} \
+            --title "Release/${{ env.VERSION }}" \
+            --body "Updates the release version to ${{ env.VERSION }}"
+          PR_URL=$(gh pr view --json url --jq '.url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
 
       - name: Post to a Slack channel
         id: slack
@@ -81,7 +77,7 @@ jobs:
                         "type": "plain_text",
                         "text": "Pull Request"
                       },
-                      "url": "${{ steps.create-pr.outputs.pull-request-url }}"
+                      "url": "${{ env.PR_URL }}"
                     }
                   ]
                 }
