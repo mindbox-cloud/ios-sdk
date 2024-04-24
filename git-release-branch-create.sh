@@ -16,8 +16,8 @@ fi
 current_branch=$(git symbolic-ref --short HEAD)
 echo "Currently on branch: $current_branch"
 
-if [[ ! $current_branch =~ ^test_release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
-echo "The current Git branch ($current_branch) is not in the format 'test_release/X.Y.Z' or 'test_release/X.Y.Z-rc'."
+if [[ $current_branch != "develop" && ! $current_branch =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
+echo "The current Git branch ($current_branch) is not 'develop' or in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
 exit 1
 fi
 
@@ -95,7 +95,7 @@ git commit -m "Bump `Example/Podfile` SDK version from $current_version to $vers
 
 echo "Pushing changes to branch: $current_branch"
 if ! git push origin $current_branch; then
-    echo "Failed to push changes to the origin"
+    echo "Failed to push changes to the origin $current_branch"
     exit 1
 fi
 
