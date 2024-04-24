@@ -120,10 +120,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
-                    var shownInappsDictionary = self.persistenceStorage.shownInappsDictionary ?? [:]
-                    shownInappsDictionary[inapp.inAppId] = Date()
-                    self.persistenceStorage.shownInappsDictionary = shownInappsDictionary
-
+                    self.persistenceStorage.shownInappsDictionary?[inapp.inAppId] = Date()
                 }
             },
             onTapAction: { [delegate] url, payload in
