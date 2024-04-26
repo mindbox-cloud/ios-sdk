@@ -32,7 +32,7 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManager
+    var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
     

@@ -12,7 +12,7 @@ import XCTest
 final class UserVisitManagerTests: XCTestCase {
     
     private var persistenceStorageMock: PersistenceStorage!
-    private var userVisitManager: UserVisitManager!
+    private var userVisitManager: UserVisitManagerProtocol!
     private var sessionManagerMock: MockSessionManager!
     private var container: TestDependencyProvider!
     
@@ -22,7 +22,7 @@ final class UserVisitManagerTests: XCTestCase {
         persistenceStorageMock = MockPersistenceStorage()
         sessionManagerMock = MockSessionManager()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
-        SessionTemporaryStorage.shared.isInitialiazionCalled = true
+        SessionTemporaryStorage.shared.isInitializationCalled = true
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
         sessionManagerMock._isActiveNow = true
     }
@@ -53,7 +53,7 @@ final class UserVisitManagerTests: XCTestCase {
     }
     
     func test_save_first_user_visit_no_init() throws {
-        SessionTemporaryStorage.shared.isInitialiazionCalled = false
+        SessionTemporaryStorage.shared.isInitializationCalled = false
         
         userVisitManager.saveUserVisit()
         
@@ -62,7 +62,7 @@ final class UserVisitManagerTests: XCTestCase {
     
     func test_save_not_first_user_visit_no_init() throws {
         persistenceStorageMock.userVisitCount = 42
-        SessionTemporaryStorage.shared.isInitialiazionCalled = false
+        SessionTemporaryStorage.shared.isInitializationCalled = false
         
         userVisitManager.saveUserVisit()
         

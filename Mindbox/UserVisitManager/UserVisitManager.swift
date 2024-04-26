@@ -30,6 +30,18 @@ extension UserVisitManager: UserVisitManagerProtocol {
             Logger.common(message: "Skip changing userVisit because it is already saved", level: .info, category: .visit)
             return
         }
+        
+        let isActive = sessionManager.isActiveNow
+        let isInit = SessionTemporaryStorage.shared.isInitializationCalled
+        guard isActive && isInit else {
+            if (!isActive) {
+                Logger.common(message: "Skip changing userVisit because it is initialized in an not active state.", level: .info, category: .visit)
+            } else {
+                Logger.common(message: "Skip changing userVisit it is not initialized.", level: .info, category: .visit)
+            }
+            return
+        }
+        
         isVisitSaved = true
         let deviceUUID = persistenceStorage.deviceUUID
         var previosUserVisitCount = persistenceStorage.userVisitCount ?? 0
