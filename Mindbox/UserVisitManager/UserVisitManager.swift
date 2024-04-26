@@ -24,6 +24,8 @@ final class UserVisitManager {
     }
 }
 
+// MARK: - UserVisitManagerProtocol
+
 extension UserVisitManager: UserVisitManagerProtocol {
     func saveUserVisit() {
         guard !isVisitSaved else {
