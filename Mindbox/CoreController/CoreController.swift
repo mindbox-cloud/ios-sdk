@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-class CoreController {
+final class CoreController {
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
     private let notificationStatusProvider: UNAuthorizationStatusProviding
@@ -19,7 +19,7 @@ class CoreController {
     private let trackVisitManager: TrackVisitManager
     private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
-    private let userVisitManager: UserVisitManager
+    private let userVisitManager: UserVisitManagerProtocol
     private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
 
@@ -28,7 +28,7 @@ class CoreController {
     func initialization(configuration: MBConfiguration) {
         
         controllerQueue.async {
-            SessionTemporaryStorage.shared.isInitialiazionCalled = true
+            SessionTemporaryStorage.shared.isInitializationCalled = true
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -258,7 +258,7 @@ class CoreController {
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
-        userVisitManager: UserVisitManager
+        userVisitManager: UserVisitManagerProtocol
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher

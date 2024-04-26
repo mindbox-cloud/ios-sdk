@@ -20,7 +20,7 @@ final class SessionTemporaryStorage {
     var checkProductSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
-    var isInitialiazionCalled = false
+    var isInitializationCalled = false
     var sessionShownInApps: Set<String> = []
     
     private init() {
