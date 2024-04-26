@@ -29,7 +29,6 @@ class CoreController {
         
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInitialiazionCalled = true
-            self.userVisitManager.saveUserVisit()
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -38,9 +37,22 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            self.inAppMessagesManager.start()
         }
         
+        DispatchQueue.main.async {
+            let stateDescription: String
+            switch UIApplication.shared.applicationState {
+            case .active:
+                stateDescription = "active"
+            case .inactive:
+                stateDescription = "inactive"
+            case .background:
+                stateDescription = "background"
+            @unknown default:
+                stateDescription = "unknown"
+            }
+            Logger.common(message: "[App State]: \(stateDescription)", level: .info, category: .general)
+        }
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
         Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
         Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
@@ -264,6 +276,7 @@ class CoreController {
             if isActive {
                 self?.checkNotificationStatus()
                 self?.userVisitManager.saveUserVisit()
+                self?.inAppMessagesManager.start()
             }
         }
 

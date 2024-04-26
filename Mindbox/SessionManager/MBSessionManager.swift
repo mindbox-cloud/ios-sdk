@@ -49,15 +49,18 @@ final class MBSessionManager: SessionManager {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: nil) { [weak self] _ in
+            queue: OperationQueue.main
+        ) { [weak self] _ in
             if UIApplication.shared.applicationState == .active {
                 self?.isActive = true
             }
         }
+        
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
-            queue: nil) { [weak self] _ in
+            queue: nil
+        ) { [weak self] _ in
             self?.isActive = false
         }
     }
