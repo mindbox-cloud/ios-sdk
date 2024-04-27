@@ -37,6 +37,9 @@ final class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
+            
+            self.userVisitManager.saveUserVisit()
+            self.inAppMessagesManager.start()
         }
         
         DispatchQueue.main.async {

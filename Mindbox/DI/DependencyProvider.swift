@@ -112,7 +112,8 @@ final class DependencyProvider: DependencyContainer {
             persistenceStorage: persistenceStorage,
             ttlValidationService: ttlValidationService),
             presentationManager: presentationManager,
-            persistenceStorage: persistenceStorage
+            persistenceStorage: persistenceStorage, 
+            sessionManager: sessionManager
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 

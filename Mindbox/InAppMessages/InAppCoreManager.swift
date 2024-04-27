@@ -52,11 +52,13 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
+        sessionManager: SessionManager,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
+        self.sessionManager = sessionManager
         self.serialQueue = serialQueue
     }
 
@@ -65,6 +67,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let configManager: InAppConfigurationManagerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
+    private let sessionManager: SessionManager
     private var isConfigurationReady = false
     private var isInAppManagerLaunched: Bool = false
     private let serialQueue: DispatchQueue
@@ -77,6 +80,18 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             Logger.common(message: "Skip launching InAppManager because it is already launched", level: .info, category: .visit)
             return
         }
+        
+        let isActive = sessionManager.isActiveNow
+        let isInit = SessionTemporaryStorage.shared.isInitializationCalled
+        guard isActive && isInit else {
+            if (!isActive) {
+                Logger.common(message: "Skip launching InAppManager because it is initialized in an not active state.", level: .info, category: .visit)
+            } else {
+                Logger.common(message: "Skip launching InAppManager because it is not initialized.", level: .info, category: .visit)
+            }
+            return
+        }
+        
         isInAppManagerLaunched = true
         sendEvent(.start)
         configManager.delegate = self

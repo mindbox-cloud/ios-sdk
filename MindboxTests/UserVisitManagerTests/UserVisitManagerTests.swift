@@ -22,7 +22,51 @@ final class UserVisitManagerTests: XCTestCase {
         persistenceStorageMock = MockPersistenceStorage()
         sessionManagerMock = MockSessionManager()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
+        SessionTemporaryStorage.shared.isInitializationCalled = true
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
+        sessionManagerMock._isActiveNow = true
+    }
+    
+    func test_save_first_user_visit_no_active() throws {
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_not_first_user_visit_no_active() throws {
+        persistenceStorageMock.userVisitCount = 42
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
+    }
+    
+    func test_save_first_user_visit_no_init_and_no_active() throws {
+        sessionManagerMock._isActiveNow = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_first_user_visit_no_init() throws {
+        SessionTemporaryStorage.shared.isInitializationCalled = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
+    }
+    
+    func test_save_not_first_user_visit_no_init() throws {
+        persistenceStorageMock.userVisitCount = 42
+        SessionTemporaryStorage.shared.isInitializationCalled = false
+        
+        userVisitManager.saveUserVisit()
+        
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
     }
 
     func test_save_first_user_visit_for_first_initialization() throws {
