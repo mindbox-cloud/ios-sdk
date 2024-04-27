@@ -29,6 +29,7 @@ final class CoreController {
         
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInitializationCalled = true
+            self.userVisitManager.saveUserVisit()
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -37,8 +38,6 @@ final class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            
-            self.userVisitManager.saveUserVisit()
             self.inAppMessagesManager.start()
         }
         
