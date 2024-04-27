@@ -19,10 +19,7 @@ jobs:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-    - uses: futureware-tech/simulator-action@v3
-      with:
-        os_version: '>=17.2'
-        
+
     - name: Update bundler
       run: gem install bundler
     - name: Install bundler dependencies
