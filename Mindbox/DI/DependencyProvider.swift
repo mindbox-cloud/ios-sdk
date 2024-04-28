@@ -112,8 +112,7 @@ final class DependencyProvider: DependencyContainer {
             persistenceStorage: persistenceStorage,
             ttlValidationService: ttlValidationService),
             presentationManager: presentationManager,
-            persistenceStorage: persistenceStorage, 
-            sessionManager: sessionManager
+            persistenceStorage: persistenceStorage
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
@@ -124,7 +123,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 

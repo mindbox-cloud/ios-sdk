@@ -92,7 +92,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 
