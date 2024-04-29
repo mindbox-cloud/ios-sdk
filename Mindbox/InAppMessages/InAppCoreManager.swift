@@ -73,7 +73,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
-        Logger.common(message: "InApp trying to start", level: .default, category: .notification, subsystem: "semkoTest")
         guard !isInAppManagerLaunched else {
             Logger.common(message: "Skip launching InAppManager because it is already launched", level: .info, category: .visit)
             return
@@ -83,8 +82,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         sendEvent(.start)
         configManager.delegate = self
         configManager.prepareConfiguration()
-        
-        Logger.common(message: "InApp started", level: .default, category: .notification, subsystem: "semkoTest")
     }
 
     /// This method handles events and decides if in-app message should be shown
