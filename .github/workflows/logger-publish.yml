@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - 'logger-release/*.*.*'
+      - 'test-logger-release/*.*.*'
 jobs:
   publish:
     if: github.event.pull_request.merged == true
@@ -34,7 +34,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🚀 MindboxLogger successfuly released."
+                    "text": "🚀 MindboxLogger tested."
                   }
                 }
               ]
