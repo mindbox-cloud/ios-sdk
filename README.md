@@ -37,7 +37,7 @@ Mindbox SDK aids in handling push notifications. Configuration and usage instruc
 
 ## Troubleshooting
 
-An [Example of integration](https://github.com/mindbox-cloud/ios-sdk/tree/master/Example) is provided in case of any issues.
+An [Example of integration](https://github.com/mindbox-cloud/ios-sdk/tree/develop/Example) is provided in case of any issues.
 
 ## Further Help
 
