@@ -25,7 +25,7 @@ jobs:
           gh pr create \
             --base master \
             --head ${{ github.ref_name }} \
-            --title "Release/${{ env.VERSION }}" \
+            --title "MindboxLogger release/${{ env.VERSION }}" \
             --body "Updates the release version to ${{ env.VERSION }}"
           PR_URL=$(gh pr view --json url --jq '.url')
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV

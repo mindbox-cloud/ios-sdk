@@ -16,8 +16,8 @@ version=$1
 
 # Update version in MindboxLogger.podspec
 logger_podspec_file="MindboxLogger.podspec"
-sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" "$logger_podspec_file"
-echo "$logger_podspec_file version updated to $version."
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*'logger-\).*\('\)$/\1$version\2/" "$logger_podspec_file"
+echo "$logger_podspec_file version updated to logger-$version."
 
 # Update dependency version in Mindbox.podspec
 podspec_file="Mindbox.podspec"
@@ -32,8 +32,11 @@ echo "$notification_podspec_file dependency on MindboxLogger updated to $version
 
 git add $logger_podspec_file $podspec_file $notification_podspec_file
 git commit -m "Update MindboxLogger and dependencies to version $version"
-
+git push origin HEAD
 echo "Version update completed and pushed to repository."
 
+tag="logger-$version"
+git tag $tag
+git push origin $tag
 
-
+echo "Tag $tag pushed to repository."
