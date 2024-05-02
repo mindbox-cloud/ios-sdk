@@ -56,9 +56,9 @@ class DataBaseLoader {
         self.persistentStoreDescriptions = persistentStoreDescriptions
         if let persistentStoreDescriptions = persistentStoreDescriptions {
             persistentContainer.persistentStoreDescriptions = persistentStoreDescriptions
-            persistentContainer.persistentStoreDescriptions.forEach { $0.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey) }
         }
         persistentContainer.persistentStoreDescriptions.forEach {
+            $0.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
             $0.shouldMigrateStoreAutomatically = true
             $0.shouldInferMappingModelAutomatically = true
         }

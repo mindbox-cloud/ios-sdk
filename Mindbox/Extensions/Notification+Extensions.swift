@@ -9,5 +9,5 @@
 import Foundation
 
 extension Notification.Name {
-    static let initializationCompleted = Notification.Name("sdkCoreControllerInitializationCompleted")
+    static let initializationCompleted = Notification.Name("MBNotification-initializationCompleted")
 }

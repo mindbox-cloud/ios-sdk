@@ -39,20 +39,7 @@ final class CoreController {
             self.guaranteedDeliveryManager.canScheduleOperations = true
         }
         
-        DispatchQueue.main.async {
-            let stateDescription: String
-            switch UIApplication.shared.applicationState {
-            case .active:
-                stateDescription = "active"
-            case .inactive:
-                stateDescription = "inactive"
-            case .background:
-                stateDescription = "background"
-            @unknown default:
-                stateDescription = "unknown"
-            }
-            Logger.common(message: "[App State]: \(stateDescription)", level: .info, category: .general)
-        }
+        Logger.common(message: "[App State]: \(UIApplication.shared.appStateDescription)", level: .info, category: .general)
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
         Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
         Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
@@ -275,8 +262,10 @@ final class CoreController {
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive && SessionTemporaryStorage.shared.isInitializationCalled {
                 self?.checkNotificationStatus()
-                self?.userVisitManager.saveUserVisit()
-                self?.inAppMessagesManager.start()
+                self?.controllerQueue.async {
+                    self?.userVisitManager.saveUserVisit()
+                    self?.inAppMessagesManager.start()
+                }
             }
         }
 
