@@ -1,4 +1,4 @@
-name: SDK publish
+name: MindboxLogger SDK publish
 
 on:
   pull_request:
