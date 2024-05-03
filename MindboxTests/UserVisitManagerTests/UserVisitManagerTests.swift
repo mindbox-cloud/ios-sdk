@@ -23,10 +23,8 @@ final class UserVisitManagerTests: XCTestCase {
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
     }
-
+    
     func test_save_first_user_visit_for_first_initialization() throws {
-        persistenceStorageMock.deviceUUID = nil
-        
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 1)
@@ -46,7 +44,8 @@ final class UserVisitManagerTests: XCTestCase {
 
     func test_save_not_first_user_visit_for_first_initialization() throws {
         persistenceStorageMock.userVisitCount = 10
-        persistenceStorageMock.deviceUUID = nil
+        persistenceStorageMock.installationDate = Date()
+        SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = persistenceStorageMock.isInstalled
         
         userVisitManager.saveUserVisit()
         
@@ -54,6 +53,9 @@ final class UserVisitManagerTests: XCTestCase {
     }
     
     func test_save_first_user_visit_for_not_first_initialization() throws {
+        persistenceStorageMock.installationDate = Date()
+        SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = persistenceStorageMock.isInstalled
+        
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)

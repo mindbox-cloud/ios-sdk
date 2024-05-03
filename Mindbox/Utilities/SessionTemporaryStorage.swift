@@ -21,6 +21,7 @@ final class SessionTemporaryStorage {
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
     var sessionShownInApps: Set<String> = []
+    var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
     var isInitializationCalled = false {
         didSet {
             if isInitializationCalled, isInitializationCalled != oldValue {

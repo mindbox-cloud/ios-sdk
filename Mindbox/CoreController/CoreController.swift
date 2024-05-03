@@ -28,7 +28,9 @@ final class CoreController {
     func initialization(configuration: MBConfiguration) {
         
         controllerQueue.async {
+            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
+            
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -37,9 +39,11 @@ final class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
+            
+            let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
+            Logger.common(message: appStateMessage, level: .info, category: .general)
         }
         
-        Logger.common(message: "[App State]: \(UIApplication.shared.appStateDescription)", level: .info, category: .general)
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
         Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
         Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
