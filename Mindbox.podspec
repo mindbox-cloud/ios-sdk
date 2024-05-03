@@ -14,6 +14,6 @@ Pod::Spec.new do |spec|
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld', 'Mindbox/**/*.xcprivacy']
   } 
   spec.swift_version = "5"
-  spec.dependency 'MindboxLogger', '0.0.7'
+  spec.dependency 'MindboxLogger', '0.0.0'
 
 end
