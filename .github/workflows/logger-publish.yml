@@ -1,13 +1,14 @@
 name: MindboxLogger SDK publish
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - 'test-logger-release/*.*.*'
 
 jobs:
   publish:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'asd'
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'asd'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4 
