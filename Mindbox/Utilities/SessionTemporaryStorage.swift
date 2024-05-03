@@ -20,8 +20,15 @@ final class SessionTemporaryStorage {
     var checkProductSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
-    var isInitialiazionCalled = false
     var sessionShownInApps: Set<String> = []
+    var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
+    var isInitializationCalled = false {
+        didSet {
+            if isInitializationCalled, isInitializationCalled != oldValue {
+                NotificationCenter.default.post(name: .initializationCompleted, object: nil)
+            }
+        }
+    }
     
     private init() {
         
