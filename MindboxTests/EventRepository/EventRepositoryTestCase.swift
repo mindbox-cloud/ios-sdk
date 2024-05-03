@@ -92,7 +92,7 @@ class EventRepositoryTestCase: XCTestCase {
     
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
-        controllerQueue.sync { expectation.fulfill() }
+        controllerQueue.async { expectation.fulfill() }
         self.wait(for: [expectation], timeout: 2)
     }
 }
