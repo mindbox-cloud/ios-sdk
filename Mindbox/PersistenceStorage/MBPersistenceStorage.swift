@@ -178,7 +178,7 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
     
-    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: nil)
+    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
     var shownInappsDictionary: [String : Date]?
     
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)

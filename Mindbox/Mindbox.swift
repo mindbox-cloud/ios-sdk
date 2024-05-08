@@ -585,7 +585,7 @@ public class Mindbox: NSObject {
     }
 
     @objc private func resetShownInApps() {
-        persistenceStorage?.shownInappsDictionary = nil
+        persistenceStorage?.shownInappsDictionary = [:]
     }
     
     @objc private func eraseSessionStorage() {
