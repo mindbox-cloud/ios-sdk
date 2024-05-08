@@ -53,7 +53,7 @@ class OnceFrequencyValidator {
                 Logger.common(message: "[Inapp frequency] Current frequency is [once] and kind is [lifetime]. Valid = \(result)",
                               level: .debug, category: .inAppMessages)
                 if let savedTime = shownInappsDictionary[id], Date() < savedTime {
-                    Logger.common(message: "[Inapp frequency] Saved date less than current date. Inapp is invalid.",
+                    Logger.common(message: "[Inapp frequency] Saved date less than current date. Skip this in-app.",
                                   level: .debug, category: .inAppMessages)
                     result = false
                 } else {
@@ -94,7 +94,7 @@ class PeriodicFrequencyValidator {
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)].
             Inapp ID \(id) is never shown before. 
-            Valid for display.
+            Keeping in-app.
             """, level: .info, category: .inAppMessages)
             return true
         }
