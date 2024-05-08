@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "config:recommended",
+    ":disableDependencyDashboard",
+    "group:all"
+  ],
+  "separateMinorPatch": true,
+  "separateMajorMinor": true,
+  "packageRules": [
+    {
+      "description": "Disable patch updates for all dependencies",
+      "matchUpdateTypes": ["patch"],
+      "enabled": false
+    }
+  ],
+  "timezone": "Europe/Moscow",
+  "schedule": ["* * 11 * * 3L"]
+}
