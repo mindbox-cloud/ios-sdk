@@ -32,7 +32,7 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManager
+    var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
 
@@ -123,7 +123,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 

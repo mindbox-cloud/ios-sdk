@@ -66,12 +66,19 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
     private var isConfigurationReady = false
+    private var isInAppManagerLaunched: Bool = false
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
     /// This method called on app start.
     /// The config file will be loaded here or fetched from the cache.
     func start() {
+        guard !isInAppManagerLaunched else {
+            Logger.common(message: "Skip launching InAppManager because it is already launched", level: .info, category: .visit)
+            return
+        }
+        
+        isInAppManagerLaunched = true
         sendEvent(.start)
         configManager.delegate = self
         configManager.prepareConfiguration()
@@ -120,10 +127,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
-                    var shownInappsDictionary = self.persistenceStorage.shownInappsDictionary ?? [:]
-                    shownInappsDictionary[inapp.inAppId] = Date()
-                    self.persistenceStorage.shownInappsDictionary = shownInappsDictionary
-
+                    self.persistenceStorage.shownInappsDictionary?[inapp.inAppId] = Date()
                 }
             },
             onTapAction: { [delegate] url, payload in

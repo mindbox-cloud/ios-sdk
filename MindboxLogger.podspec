@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "MindboxLogger"
-  spec.version      = "logger-0.0.7"
+  spec.version      = "0.0.8"
   spec.summary      = "SDK for utilities to work with Mindbox"
   spec.description  = "-"
   spec.homepage     = "https://github.com/mindbox-cloud/ios-sdk"
