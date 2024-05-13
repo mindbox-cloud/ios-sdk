@@ -5,7 +5,6 @@ on:
     branches:
       - 'master'
       - 'support/*'
-      - 'feature/MBX-3346-MindboxLoggerCI'
     tags-ignore:
       - '**'
 
@@ -34,38 +33,46 @@ jobs:
         run: |
           set -eo pipefail
           pod lib lint --allow-warnings
-          exit 1
+          output=$(pod trunk push Mindbox.podspec --allow-warnings 2>&1)
+          echo "$output"
+          if echo "$output" | grep -q "Unable to accept duplicate entry for: MindboxLogger"; then
+            echo "Обнаружен дубликат версии, пропускаем публикацию."
+            exit 0
+          else
+            echo "Ошибка при публикации, требуется вмешательство."
+            echo "$output"
+            exit 1
+          fi
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-      # - name: Post to a Slack channel
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.26.0
-      #   with:
-      #     channel-id: 'C06RXV161RA'
-      #     payload: |
-      #       {
-      #         "text": "iOS - MindboxLogger release",
-      #         "blocks": [
-      #           {
-      #             "type": "header",
-      #             "text": {
-      #               "type": "plain_text",
-      #               "text": "🚀 MindboxLogger tested."
-      #             }
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C06RXV161RA'
+          payload: |
+            {
+              "text": "iOS - MindboxLogger release",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 MindboxLogger tested."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
     
   publish:
     needs: [logger-publish]
-    if: always()
     runs-on: macos-14
     steps:
     - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
-    # - name: Release generation
-    #   run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
+    - name: Release generation
+      run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
     - name: Update bundler
       run: gem install bundler
     - name: Install bundler dependencies
@@ -80,5 +87,8 @@ jobs:
       run: |
         set -eo pipefail
         pod lib lint --allow-warnings
+        pod trunk push Mindbox.podspec --allow-warnings
+        pod trunk push MindboxNotifications.podspec --allow-warnings
+
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
