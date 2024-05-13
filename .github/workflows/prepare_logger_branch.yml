@@ -3,7 +3,7 @@ name: Preparation for MindboxLogger release
 on:
   push:
     branches:
-      - 'test-logger-release/*.*.*'
+      - 'logger-release/*.*.*'
 
 jobs:
   preparation:
