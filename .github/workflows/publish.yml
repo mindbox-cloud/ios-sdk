@@ -34,29 +34,30 @@ jobs:
         run: |
           set -eo pipefail
           pod lib lint --allow-warnings
-          exit 1
+          exit 0 
+          
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-      # - name: Post to a Slack channel
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.26.0
-      #   with:
-      #     channel-id: 'C06RXV161RA'
-      #     payload: |
-      #       {
-      #         "text": "iOS - MindboxLogger release",
-      #         "blocks": [
-      #           {
-      #             "type": "header",
-      #             "text": {
-      #               "type": "plain_text",
-      #               "text": "🚀 MindboxLogger tested."
-      #             }
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C06RXV161RA'
+          payload: |
+            {
+              "text": "iOS - MindboxLogger release",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 MindboxLogger tested."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
     
   publish:
     needs: [logger-publish]
