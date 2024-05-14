@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "Mindbox"
-  spec.version      = "2.9.0"
+  spec.version      = "2.10.0-rc"
   spec.summary      = "SDK for integration with Mindbox"
   spec.description  = "This library allows you to integrate data transfer to Mindbox Marketing Cloud"
   spec.homepage     = "https://github.com/mindbox-cloud/ios-sdk"
@@ -14,6 +14,6 @@ Pod::Spec.new do |spec|
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld', 'Mindbox/**/*.xcprivacy']
   } 
   spec.swift_version = "5"
-  spec.dependency 'MindboxLogger', '0.0.7'
+  spec.dependency 'MindboxLogger', '0.0.8'
 
 end

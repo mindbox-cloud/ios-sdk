@@ -9,33 +9,17 @@
 import UIKit
 import MindboxLogger
 
-final class MBSessionManager: SessionManager {
-    init(trackVisitManager: TrackVisitManager) {
-        self.trackVisitManager = trackVisitManager
-
-        subscribe()
-    }
-
+final class MBSessionManager {
+    
     var sessionHandler: ((Bool) -> Void)?
     var isActiveNow: Bool { return isActive }
     
-    func trackDirect() {
-        do {
-            try trackVisitManager.trackDirect()
-        } catch {
-            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
-        }
-    }
-
-    func trackForeground() {
-        do {
-            try trackVisitManager.trackForeground()
-        } catch {
-            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
-        }
-    }
-
     private let trackVisitManager: TrackVisitManager
+    
+    init(trackVisitManager: TrackVisitManager) {
+        self.trackVisitManager = trackVisitManager
+        subscribe()
+    }
 
     private var isActive: Bool = false {
         didSet {
@@ -49,16 +33,48 @@ final class MBSessionManager: SessionManager {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: nil) { [weak self] _ in
-            if UIApplication.shared.applicationState == .active {
-                self?.isActive = true
-            }
+            queue: nil
+        ) { [weak self] _ in
+            self?.isActive = true
         }
+        
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
-            queue: nil) { [weak self] _ in
+            queue: nil
+        ) { [weak self] _ in
             self?.isActive = false
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .initializationCompleted,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard let self else { return }
+            if self.isActive {
+                self.sessionHandler?(isActive)
+            }
+        }
+    }
+}
+
+// MARK: - SessionManager
+
+extension MBSessionManager: SessionManager {
+    func trackDirect() {
+        do {
+            try trackVisitManager.trackDirect()
+        } catch {
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
+        }
+    }
+
+    func trackForeground() {
+        do {
+            try trackVisitManager.trackForeground()
+        } catch {
+            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
         }
     }
 }

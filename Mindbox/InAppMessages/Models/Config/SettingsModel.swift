@@ -10,6 +10,7 @@ import Foundation
 
 struct Settings: Decodable, Equatable {
     let operations: SettingsOperations?
+    let ttl: TimeToLive?
     
     struct SettingsOperations: Decodable, Equatable {
         
@@ -19,6 +20,59 @@ struct Settings: Decodable, Equatable {
         
         struct Operation: Decodable, Equatable {
             let systemName: String
+        }
+    }
+    
+    struct TimeToLive: Decodable, Equatable {
+        let inapps: TTLUnit?
+    }
+}
+
+extension Settings.TimeToLive {
+    struct TTLUnit: Decodable, Equatable {
+        let unit: Unit?
+        let value: Int?
+        
+        init(unit: Unit?, value: Int?) {
+            self.unit = unit
+            self.value = value
+        }
+        
+        private enum CodingKeys: String, CodingKey {
+            case unit, value
+        }
+    }
+}
+
+enum Unit: String, Decodable {
+    case seconds = "seconds"
+    case minutes = "minutes"
+    case hours = "hours"
+    case days = "days"
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let decodedString = try container.decode(String.self).lowercased()
+        
+        guard let value = Unit(rawValue: decodedString) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Неизвестная единица времени")
+        }
+        
+        self = value
+    }
+}
+
+extension Unit {
+    var calendarComponent: Calendar.Component {
+        switch self {
+        case .seconds:
+            return .second
+        case .minutes:
+            return .minute
+        case .hours:
+            return .hour
+        case .days:
+            return .day
         }
     }
 }

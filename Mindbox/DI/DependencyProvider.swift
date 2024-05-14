@@ -32,11 +32,14 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManager
+    var userVisitManager: UserVisitManagerProtocol
+    var ttlValidationService: TTLValidationProtocol
+    var frequencyValidator: InappFrequencyValidator
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
+        persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
@@ -78,15 +81,19 @@ final class DependencyProvider: DependencyContainer {
         let positionFilter = ElementsPositionFilterService()
         let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         let contentPositionFilterService = ContentPositionFilterService()
+
         let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
 
+        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator)
+                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 frequencyValidator: frequencyValidator)
         
+        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -101,7 +108,9 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    urlExtractorService: urlExtractorService,
                                                                    dataFacade: inAppConfigurationDataFacade),
-                logsManager: logsManager),
+                logsManager: logsManager,
+            persistenceStorage: persistenceStorage,
+            ttlValidationService: ttlValidationService),
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage
         )
@@ -114,7 +123,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 

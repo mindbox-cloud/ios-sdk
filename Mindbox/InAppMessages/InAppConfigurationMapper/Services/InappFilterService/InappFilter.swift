@@ -12,24 +12,26 @@ import MindboxLogger
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
     var validInapps: [InApp] { get }
-    var shownInAppsIds: Set<String> { get }
+    var shownInAppDictionary: [String: Date] { get }
 }
 
 final class InappsFilterService: InappFilterProtocol {
     
     var validInapps: [InApp] = []
-    var shownInAppsIds: Set<String> = []
+    var shownInAppDictionary: [String: Date] = [:]
     
     private let persistenceStorage: PersistenceStorage
     private let abTestDeviceMixer: ABTestDeviceMixer
     private let variantsFilter: VariantFilterProtocol
     private let sdkVersionValidator: SDKVersionValidator
+    private let frequencyValidator: InappFrequencyValidator
 
-    init(persistenceStorage: PersistenceStorage, abTestDeviceMixer: ABTestDeviceMixer, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator) {
+    init(persistenceStorage: PersistenceStorage, abTestDeviceMixer: ABTestDeviceMixer, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator, frequencyValidator: InappFrequencyValidator) {
         self.persistenceStorage = persistenceStorage
         self.abTestDeviceMixer = abTestDeviceMixer
         self.variantsFilter = variantsFilter
         self.sdkVersionValidator = sdkVersionValidator
+        self.frequencyValidator = frequencyValidator
     }
     
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
@@ -54,10 +56,7 @@ private extension InappsFilterService {
         let inapps = inapps
 
         let filteredInapps = inapps.filter {
-            let minVersionValid = $0.sdkVersion.min.map { $0 <= Constants.Versions.sdkVersionNumeric } ?? false
-            let maxVersionValid = $0.sdkVersion.max.map { $0 >= Constants.Versions.sdkVersionNumeric } ?? true
-            
-            return minVersionValid && maxVersionValid
+            sdkVersionValidator.isValid(item: $0.sdkVersion)
         }
 
         return filteredInapps
@@ -72,7 +71,8 @@ private extension InappsFilterService {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
                                            sdkVersion: inapp.sdkVersion,
-                                           targeting: inapp.targeting,
+                                           targeting: inapp.targeting, 
+                                           frequency: inapp.frequency,
                                            form: formModel)
                     filteredInapps.append(inappModel)
                 }
@@ -155,11 +155,13 @@ private extension InappsFilterService {
     }
     
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppsIds)]", level: .info, category: .inAppMessages)
+        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
-            sdkVersionValidator.isValid(item: $0.sdkVersion)
-            && !shownInAppsIds.contains($0.id)
+            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            let result = self.frequencyValidator.isValid(item: $0)
+            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            return result
         }
 
         return filteredInapps

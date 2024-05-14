@@ -10,7 +10,7 @@ import Foundation
 @testable import Mindbox
 
 class MockPersistenceStorage: PersistenceStorage {
-    
+        
     var onDidChange: (() -> Void)?
     private var _userVisitCount: Int? = 0
     
@@ -79,6 +79,12 @@ class MockPersistenceStorage: PersistenceStorage {
 
     var shownInAppsIds: [String]?
     
+    var shownInappsDictionary: [String : Date]?
+    
+    func migrateShownInAppsIds() {
+        
+    }
+    
     var handledlogRequestIds: [String]?
     
     var imageLoadingMaxTimeInSeconds: Double?
@@ -88,6 +94,12 @@ class MockPersistenceStorage: PersistenceStorage {
         set { _userVisitCount = newValue }
     }
 
+    var configDownloadDate: Date? {
+        didSet { 
+            onDidChange?()
+        }
+    }
+    
     func reset() {
         installationDate = nil
         deviceUUID = nil

@@ -12,7 +12,7 @@ import XCTest
 final class UserVisitManagerTests: XCTestCase {
     
     private var persistenceStorageMock: PersistenceStorage!
-    private var userVisitManager: UserVisitManager!
+    private var userVisitManager: UserVisitManagerProtocol!
     private var sessionManagerMock: MockSessionManager!
     private var container: TestDependencyProvider!
     
@@ -20,58 +20,11 @@ final class UserVisitManagerTests: XCTestCase {
         super.setUp()
         container = try! TestDependencyProvider()
         persistenceStorageMock = MockPersistenceStorage()
-        sessionManagerMock = MockSessionManager()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
-        SessionTemporaryStorage.shared.isInitialiazionCalled = true
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
-        sessionManagerMock._isActiveNow = true
-    }
-
-    func test_save_first_user_visit_no_active() throws {
-        sessionManagerMock._isActiveNow = false
-        
-        userVisitManager.saveUserVisit()
-        
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
     }
     
-    func test_save_not_first_user_visit_no_active() throws {
-        persistenceStorageMock.userVisitCount = 42
-        sessionManagerMock._isActiveNow = false
-        
-        userVisitManager.saveUserVisit()
-        
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
-    }
-    
-    func test_save_first_user_visit_no_init_and_no_active() throws {
-        sessionManagerMock._isActiveNow = false
-        
-        userVisitManager.saveUserVisit()
-        
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
-    }
-    
-    func test_save_first_user_visit_no_init() throws {
-        SessionTemporaryStorage.shared.isInitialiazionCalled = false
-        
-        userVisitManager.saveUserVisit()
-        
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, 0)
-    }
-    
-    func test_save_not_first_user_visit_no_init() throws {
-        persistenceStorageMock.userVisitCount = 42
-        SessionTemporaryStorage.shared.isInitialiazionCalled = false
-        
-        userVisitManager.saveUserVisit()
-        
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, 42)
-    }
-
     func test_save_first_user_visit_for_first_initialization() throws {
-        persistenceStorageMock.deviceUUID = nil
-        
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 1)
@@ -83,7 +36,7 @@ final class UserVisitManagerTests: XCTestCase {
         userVisitManager.saveUserVisit()
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)
         
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock, sessionManager: sessionManagerMock)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 3)
@@ -91,7 +44,8 @@ final class UserVisitManagerTests: XCTestCase {
 
     func test_save_not_first_user_visit_for_first_initialization() throws {
         persistenceStorageMock.userVisitCount = 10
-        persistenceStorageMock.deviceUUID = nil
+        persistenceStorageMock.installationDate = Date()
+        SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = persistenceStorageMock.isInstalled
         
         userVisitManager.saveUserVisit()
         
@@ -99,6 +53,9 @@ final class UserVisitManagerTests: XCTestCase {
     }
     
     func test_save_first_user_visit_for_not_first_initialization() throws {
+        persistenceStorageMock.installationDate = Date()
+        SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = persistenceStorageMock.isInstalled
+        
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)

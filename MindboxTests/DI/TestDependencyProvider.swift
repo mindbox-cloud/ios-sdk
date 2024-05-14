@@ -11,7 +11,6 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-
     var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
@@ -33,12 +32,15 @@ final class TestDependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManager
+    var userVisitManager: UserVisitManagerProtocol
+    var ttlValidationService: TTLValidationProtocol
+    var frequencyValidator: InappFrequencyValidator
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
+        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
@@ -65,6 +67,7 @@ final class TestDependencyProvider: DependencyContainer {
         imageDownloadService = MockImageDownloadService()
         abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
+        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
@@ -86,9 +89,10 @@ final class TestDependencyProvider: DependencyContainer {
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator)
+                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 frequencyValidator: frequencyValidator)
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage, sessionManager: sessionManager)
+        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 

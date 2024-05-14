@@ -36,7 +36,7 @@ class InAppConfigurationAPI {
             let builder = URLRequestBuilder(domain: configuration.domain)
             var urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest)
-            urlRequest.cachePolicy = .useProtocolCachePolicy
+            urlRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
             URLSession.shared.dataTask(with: urlRequest) { [self] data, response, error in
                 completionQueue.async {
                     let result = self.completeDownloadTask(data, response: response, error: error)

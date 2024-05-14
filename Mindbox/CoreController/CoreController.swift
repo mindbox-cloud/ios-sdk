@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-class CoreController {
+final class CoreController {
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
     private let notificationStatusProvider: UNAuthorizationStatusProviding
@@ -19,7 +19,7 @@ class CoreController {
     private let trackVisitManager: TrackVisitManager
     private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
-    private let userVisitManager: UserVisitManager
+    private let userVisitManager: UserVisitManagerProtocol
     private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
 
@@ -28,8 +28,9 @@ class CoreController {
     func initialization(configuration: MBConfiguration) {
         
         controllerQueue.async {
-            SessionTemporaryStorage.shared.isInitialiazionCalled = true
-            self.userVisitManager.saveUserVisit()
+            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
+            SessionTemporaryStorage.shared.isInitializationCalled = true
+            
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -38,7 +39,9 @@ class CoreController {
                 self.repeatInitialization(with: configuration)
             }
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            self.inAppMessagesManager.start()
+            
+            let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
+            Logger.common(message: appStateMessage, level: .info, category: .general)
         }
         
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
@@ -246,7 +249,7 @@ class CoreController {
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
-        userVisitManager: UserVisitManager
+        userVisitManager: UserVisitManagerProtocol
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
@@ -261,9 +264,12 @@ class CoreController {
         self.userVisitManager = userVisitManager
 
         sessionManager.sessionHandler = { [weak self] isActive in
-            if isActive {
+            if isActive && SessionTemporaryStorage.shared.isInitializationCalled {
                 self?.checkNotificationStatus()
-                self?.userVisitManager.saveUserVisit()
+                self?.controllerQueue.async {
+                    self?.userVisitManager.saveUserVisit()
+                    self?.inAppMessagesManager.start()
+                }
             }
         }
 
