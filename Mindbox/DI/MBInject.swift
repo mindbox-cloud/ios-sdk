@@ -40,13 +40,13 @@ enum MBInject {
     fileprivate static func buildDefaulContainer() -> Container {
         let container = Container()
         return container
-            .registerCommonServices()
+            .registerUtilitiesServices()
     }
 
     /// This predefined dep container is used when API is not available, or in testing
     fileprivate static var stubContainer: Container {
         let container = MBInject.buildDefaulContainer()
         return container
-            .registerStubServices()
+            .registerStubUtilitiesServices()
     }
 }

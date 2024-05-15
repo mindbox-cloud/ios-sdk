@@ -1,5 +1,5 @@
 //
-//  MBInjectCommon.swift
+//  MBInjectUtilities.swift
 //  Mindbox
 //
 //  Created by vailence on 16.05.2024.
@@ -9,7 +9,7 @@
 import Foundation
 
 extension Container {
-    func registerCommonServices() -> Self {
+    func registerUtilitiesServices() -> Self {
         register(ABTestDeviceMixer.self) {
             ABTestDeviceMixer()
         }
@@ -17,7 +17,7 @@ extension Container {
         return self
     }
     
-    func registerStubServices() -> Self {
+    func registerStubUtilitiesServices() -> Self {
         register(ABTestDeviceMixer.self) {
             StubABTestDeviceMixer()
         }

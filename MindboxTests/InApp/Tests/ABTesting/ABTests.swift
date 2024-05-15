@@ -45,8 +45,7 @@
 //                                          persistenceStorage: persistenceStorage,
 //                                          sdkVersionValidator: sdkVersionValidator,
 //                                          imageDownloadService: container.imageDownloadService,
-//                                          urlExtractorService: container.urlExtractorService,
-//                                          abTestDeviceMixer: container.abTestDeviceMixer)
+//                                          urlExtractorService: container.urlExtractorService
 //        shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
 //    }
 //
