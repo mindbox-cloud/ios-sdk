@@ -14,6 +14,10 @@ extension Container {
             ABTestDeviceMixer()
         }
         
+        register(TimerManager.self, factory: {
+            TimerManager()
+        }, isSingleton: true)
+        
         return self
     }
     

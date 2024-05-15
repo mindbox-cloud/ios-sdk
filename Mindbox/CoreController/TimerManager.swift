@@ -11,8 +11,6 @@ import MindboxLogger
 
 public final class TimerManager {
     
-    public static let shared = TimerManager()
-    
     internal var didEnterBackgroundApplication: NSObjectProtocol?
     internal var didBecomeActiveApplication: NSObjectProtocol?
     
@@ -23,6 +21,7 @@ public final class TimerManager {
             }
         }
     }
+    
     internal var deadline: TimeInterval? = nil
     
     internal var seconds: TimeInterval = 0 {
@@ -93,11 +92,11 @@ public final class TimerManager {
         }
         self.seconds = 0
         
-        TimerManager.shared.timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+        timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             self?.seconds += 1
         }
         
-        guard let timer = TimerManager.shared.timer else { return }
+        guard let timer = timer else { return }
         
         RunLoop.main.add(timer, forMode: .common)
         Logger.common(message: "The timer is running")
