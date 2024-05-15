@@ -43,10 +43,13 @@ enum MBInject {
             .registerUtilitiesServices()
     }
 
-    /// This predefined dep container is used when API is not available, or in testing
     fileprivate static var stubContainer: Container {
         let container = MBInject.buildDefaulContainer()
         return container
             .registerStubUtilitiesServices()
     }
+}
+
+var container: Container {
+    return MBInject.depContainer
 }

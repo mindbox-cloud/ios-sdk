@@ -21,7 +21,7 @@ final class InappsFilterService: InappFilterProtocol {
     var shownInAppDictionary: [String: Date] = [:]
     
     private let persistenceStorage: PersistenceStorage
-    private let abTestDeviceMixer = MBInject.depContainer.inject(ABTestDeviceMixer.self)!
+    private let abTestDeviceMixer = container.resolveOrFail(ABTestDeviceMixer.self)
     private let variantsFilter: VariantFilterProtocol
     private let sdkVersionValidator: SDKVersionValidator
     private let frequencyValidator: InappFrequencyValidator

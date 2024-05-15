@@ -1183,7 +1183,7 @@
 				843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */,
 				F33934032BF55E210087F7F2 /* MBDependencyContainer.swift */,
 				F33934052BF5653F0087F7F2 /* MBInject.swift */,
-				F33934072BF565F80087F7F2 /* MBInjectUtilities.swift */,
+				F33934092BF572120087F7F2 /* Injections */,
 			);
 			path = DI;
 			sourceTree = "<group>";
@@ -2510,6 +2510,14 @@
 				F331DCF82A83A56500222120 /* CloseButtonElementFactory.swift */,
 			);
 			path = CloseButtonFactory;
+			sourceTree = "<group>";
+		};
+		F33934092BF572120087F7F2 /* Injections */ = {
+			isa = PBXGroup;
+			children = (
+				F33934072BF565F80087F7F2 /* MBInjectUtilities.swift */,
+			);
+			path = Injections;
 			sourceTree = "<group>";
 		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {

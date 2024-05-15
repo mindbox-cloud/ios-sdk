@@ -39,3 +39,12 @@ class Container {
         }
     }
 }
+
+extension Container {
+    func resolveOrFail<T>(_ serviceType: T.Type) -> T {
+        guard let service = self.resolve(serviceType) else {
+            fatalError("Service \(serviceType) not found")
+        }
+        return service
+    }
+}
