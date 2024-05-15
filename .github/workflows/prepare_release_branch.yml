@@ -18,7 +18,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
 
       - name: Bump version
-        run: ./git-release-branch-create.sh "${{ env.VERSION }}"
+        run: ./.github/git-release-branch-create.sh "${{ env.VERSION }}"
 
       - name: Check if sdkVersion matches VERSION
         run: |
