@@ -32,39 +32,39 @@ sdkversionconfig_file="SDKVersionProvider/SDKVersionConfig.xcconfig"
 current_version=$(grep -E '^\s+spec.version\s+=' "$podspec_file" | cut -d'"' -f2)
 
 # Update Mindbox.podspec version
-echo "`Mindbox.podspec` Before updating version:"
+echo "'Mindbox.podspec' Before updating version:"
 grep "spec.version" $podspec_file
 
 sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
 
-echo "`Mindbox.podspec` After updating version:"
+echo "'Mindbox.podspec' After updating version:"
 grep "spec.version" $podspec_file
 
 # Update MindboxNotifications.podspec version
-echo "`MindboxNotifications.podspec` Before updating version:"
+echo "'MindboxNotifications.podspec' Before updating version:"
 grep "spec.version" $notification_podspec_file
 
 sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $notification_podspec_file
 
-echo "`MindboxNotifications.podspec` After updating version:"
+echo "'MindboxNotifications.podspec' After updating version:"
 grep "spec.version" $notification_podspec_file
 
 # Update SDKVersionProvider.swift version
-echo "`SDKVersionProvider.swift` Before updating version:"
+echo "'SDKVersionProvider.swift' Before updating version:"
 grep "sdkVersion" $sdkversionprovider_file
 
 sed -i '' "s/\(public static let sdkVersion = \"\).*\(\"$\)/\1$version\2/" $sdkversionprovider_file
 
-echo "`SDKVersionProvider.swift` After updating version:"
+echo "'SDKVersionProvider.swift' After updating version:"
 grep "sdkVersion" $sdkversionprovider_file
 
-# Update `SDKVersionConfig.xcconfig` version
-echo "`SDKVersionConfig.xcconfig` Before updating version:"
+# Update SDKVersionConfig.xcconfig version
+echo "'SDKVersionConfig.xcconfig' Before updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
 
 sed -i '' "s/\(MARKETING_VERSION = \).*\$/\1$version/" $sdkversionconfig_file
 
-echo "`SDKVersionConfig.xcconfig` After updating version:"
+echo "'SDKVersionConfig.xcconfig' After updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
 
 echo "Bump SDK version from $current_version to $version."
@@ -76,22 +76,22 @@ git add $sdkversionconfig_file
 git commit -m "Bump SDK version from $current_version to $version"
 
 
-# Update `Example/Podfile` version
+# Update Example/Podfile version
 podfile="Example/Podfile"
 
-echo "`Example Podfile` Before updating version:"
+echo "'Example Podfile' Before updating version:"
 grep "pod 'Mindbox'" $podfile
 grep "pod 'MindboxNotifications'" $podfile
 
 sed -i '' "s/\(pod 'Mindbox', '\)[^']*\(\'\)/\1$version\2/g" $podfile
 sed -i '' "s/\(pod 'MindboxNotifications', '\)[^']*\(\'\)/\1$version\2/g" $podfile
 
-echo "`Example Podfile After` updating version:"
+echo "'Example Podfile After' updating version:"
 grep "pod 'Mindbox'" $podfile
 grep "pod 'MindboxNotifications'" $podfile
 
 git add $podfile
-git commit -m "Bump `Example/Podfile` SDK version from $current_version to $version"
+git commit -m "Bump 'Example/Podfile' SDK version from $current_version to $version"
 
 echo "Pushing changes to branch: $current_branch"
 if ! git push origin $current_branch; then
