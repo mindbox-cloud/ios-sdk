@@ -5,7 +5,7 @@ on:
     branches:
       - 'master'
       - 'support/*'
-      - 'feature/MBX-3346-MindboxLoggerCI'
+      # - 'feature/MBX-3346-MindboxLoggerCI'
     tags-ignore:
       - '**'
 
