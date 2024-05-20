@@ -12,12 +12,12 @@ if ! [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
   exit 1
 fi
 
-version=$1
+version="$1-logger"  # Add logger- prefix to version
 
 # Update version in MindboxLogger.podspec
 logger_podspec_file="MindboxLogger.podspec"
-sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*'logger-\).*\('\)$/\1$version\2/" "$logger_podspec_file"
-echo "$logger_podspec_file version updated to logger-$version."
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*'\).*\('\)$/\1$version\2/" "$logger_podspec_file"
+echo "$logger_podspec_file version updated to $version."
 
 # Update dependency version in Mindbox.podspec
 podspec_file="Mindbox.podspec"
@@ -29,14 +29,14 @@ notification_podspec_file="MindboxNotifications.podspec"
 sed -i '' "s/\(spec.dependency 'MindboxLogger', '\)[^']*\(\'\)/\1$version\2/g" "$notification_podspec_file"
 echo "$notification_podspec_file dependency on MindboxLogger updated to $version."
 
-
 git add $logger_podspec_file $podspec_file $notification_podspec_file
 git commit -m "Update MindboxLogger and dependencies to version $version"
 git push origin HEAD
 echo "Version update completed and pushed to repository."
 
-tag="logger-$version"
+tag=$version
 git tag $tag
 git push origin $tag
 
 echo "Tag $tag pushed to repository."
+
