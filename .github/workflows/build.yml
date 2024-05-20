@@ -13,4 +13,4 @@ jobs:
 
     steps:
     - name: Install bundler dependencies
-      run: echo "Pull request was merged."
+      run: echo "Pull request was merged." 
