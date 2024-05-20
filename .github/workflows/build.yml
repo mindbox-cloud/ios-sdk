@@ -1,4 +1,4 @@
-name: Run Script on Merge to Develop
+name: Run Script on Merge to Develop.
 
 on:
   pull_request:
@@ -13,4 +13,4 @@ jobs:
 
     steps:
     - name: Install bundler dependencies
-      run: echo "Pull request was merged." 
+      run: echo "Pull request was merged."
