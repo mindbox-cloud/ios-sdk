@@ -8,7 +8,7 @@ on:
 
 jobs:
   preparation:
-    if: github.event.created
+    # if: github.event.created
     
     runs-on: macos-14
     steps:

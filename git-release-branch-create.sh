@@ -10,7 +10,7 @@ fi
 if ! [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
 echo "The release version number does not match the semver format (X.Y.Z or X.Y.Z-rc)."
 exit 1
-fi
+fi 
 
 #Check the current Git branch
 current_branch=$(git symbolic-ref --short HEAD)
