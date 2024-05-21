@@ -5,21 +5,20 @@ on:
     branches:
       - 'master'
       - 'support/*'
-      - 'feature/MBX-3346-MindboxLoggerCI'
     tags-ignore:
       - '**'
 
 jobs:
-  # unit:
-  #   runs-on: macos-14
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Update bundler
-  #     run: gem install bundler
-  #   - name: Install bundler dependencies
-  #     run: bundle install
-  #   - name: Run unit tests
-  #     run: bundle exec fastlane unitTestLane
+  unit:
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update bundler
+      run: gem install bundler
+    - name: Install bundler dependencies
+      run: bundle install
+    - name: Run unit tests
+      run: bundle exec fastlane unitTestLane
 
   logger-publish:
     runs-on: macos-14
@@ -31,71 +30,56 @@ jobs:
         run: bundle install
       - name: Deploy to Cocoapods MindboxLogger
         run: |
+          set -eo pipefail
           pod lib lint MindboxLogger.podspec --allow-warnings
-          pod trunk push MindboxLogger.podspec --allow-warnings 2>&1 || {
-            if [ $? -eq 0 ]; then
-                echo "Pushed to CocoaPods Trunk successfully."
-            elif pod trunk push MindboxLogger.podspec --allow-warnings 2>&1 | grep -q "[!] Unable to accept duplicate entry for: MindboxLogger (0.0.8)"; then
-                echo "Duplicate entry found, continuing as if successful."
-            else
-                echo "An error occurred."
-                exit 1
-            fi
-          }
-
-          # output=$(pod trunk push MindboxLogger.podspec --allow-warnings 2>&1)
-          # echo "$output"
-          # if echo "$output" | grep -q "Unable to accept duplicate entry for: MindboxLogger"; then
-          #   echo "Обнаружен дубликат версии, пропускаем публикацию."
-          #   exit 0
-          # else
-          #   echo "Ошибка при публикации, требуется вмешательство."
-          #   echo "$output"
-          #   exit 1
-          # fi
+          pod trunk push MindboxLogger.podspec --allow-warnings
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-      # - name: Post to a Slack channel
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.26.0
-      #   with:
-      #     channel-id: 'C06RXV161RA'
-      #     payload: |
-      #       {
-      #         "text": "iOS - release",
-      #         "blocks": [
-      #           {
-      #             "type": "header",
-      #             "text": {
-      #               "type": "plain_text",
-      #               "text": "🚀 MindboxLogger has been successfuly released."
-      #             }
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C06RXV161RA'
+          payload: |
+            {
+              "text": "iOS - release",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 MindboxLogger has been successfuly released."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_MOBILE_NOTIFIER_TOKEN }}
     
-  # publish:
-  #   needs: [logger-publish]
-  #   runs-on: macos-14
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Release generation
-  #     run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
-  #   - name: Update bundler
-  #     run: gem install bundler
-  #   - name: Install bundler dependencies
-  #     run: bundle install
-  #   - name: Select Xcode
-  #     run: sudo xcode-select --switch /Applications/Xcode_14.3.1.app
-  #   - name: Run build
-  #     run: bundle exec fastlane buildLane
-  #     env:
-  #       CI: true
-  #   - name: Deploy to Cocoapods Mindbox/MindboxNotifications
-  #     run: |
-  #       set -eo pipefail
-  #       pod lib lint --allow-warnings
-  #     env:
-  #       COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+  publish:
+    needs: [logger-publish]
+    runs-on: macos-14
+    steps:
+      - name: Delay for 2 minutes
+        run: sleep 120
+      - uses: actions/checkout@v4
+      - name: Release generation
+        run: ./git-release.sh "${{ github.event.head_commit.message }}" "${{secrets.GITHUBACCESSTOKEN}}" "${{secrets.GITHUBUSER}}"
+      - name: Update bundler
+        run: gem install bundler
+      - name: Install bundler dependencies
+        run: bundle install
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_14.3.1.app
+      - name: Run build
+        run: bundle exec fastlane buildLane
+        env:
+          CI: true
+      - name: Deploy to Cocoapods Mindbox/MindboxNotifications
+        run: |
+          set -eo pipefail
+          pod lib lint --allow-warnings
+          pod trunk push Mindbox.podspec --allow-warnings
+          pod trunk push MindboxNotifications.podspec --allow-warnings
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}

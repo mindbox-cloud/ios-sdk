@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'release/*.*.*'
+      - "test-release/*.*.*"
 
 jobs:
   preparation:
@@ -15,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract version from branch name
-        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF#refs/heads/test-release/}" >> $GITHUB_ENV
 
       - name: Bump version
         run: ./git-release-branch-create.sh "${{ env.VERSION }}"

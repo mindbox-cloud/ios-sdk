@@ -16,7 +16,7 @@ fi
 current_branch=$(git symbolic-ref --short HEAD)
 echo "Currently on branch: $current_branch"
 
-if [[ ! $current_branch =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
+if [[ ! $current_branch =~ ^test-release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
 echo "The current Git branch ($current_branch) is not in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
 exit 1
 fi
@@ -28,6 +28,7 @@ podspec_file="Mindbox.podspec"
 notification_podspec_file="MindboxNotifications.podspec"
 sdkversionprovider_file="SDKVersionProvider/SDKVersionProvider.swift"
 sdkversionconfig_file="SDKVersionProvider/SDKVersionConfig.xcconfig"
+logger_podspec_file="MindboxLogger.podspec"
 
 current_version=$(grep -E '^\s+spec.version\s+=' "$podspec_file" | cut -d'"' -f2)
 
@@ -35,8 +36,10 @@ current_version=$(grep -E '^\s+spec.version\s+=' "$podspec_file" | cut -d'"' -f2
 echo "`Mindbox.podspec` Before updating version:"
 grep "spec.version" $podspec_file
 
-sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
+sed -i '' "s/\(spec.dependency 'MindboxLogger', '\)[^']*\(\'\)/\1$version\2/g" "$podspec_file"
+echo "$podspec_file dependency on MindboxLogger updated to $version."
 
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
 echo "`Mindbox.podspec` After updating version:"
 grep "spec.version" $podspec_file
 
@@ -44,8 +47,10 @@ grep "spec.version" $podspec_file
 echo "`MindboxNotifications.podspec` Before updating version:"
 grep "spec.version" $notification_podspec_file
 
-sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $notification_podspec_file
+sed -i '' "s/\(spec.dependency 'MindboxLogger', '\)[^']*\(\'\)/\1$version\2/g" "$notification_podspec_file"
+echo "$notification_podspec_file dependency on MindboxLogger updated to $version."
 
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $notification_podspec_file
 echo "`MindboxNotifications.podspec` After updating version:"
 grep "spec.version" $notification_podspec_file
 
@@ -67,14 +72,23 @@ sed -i '' "s/\(MARKETING_VERSION = \).*\$/\1$version/" $sdkversionconfig_file
 echo "`SDKVersionConfig.xcconfig` After updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
 
+# Update MindboxLogger.podspec version
+echo "`MindboxLogger.podspec` Before updating version:"
+grep "spec.version" $logger_podspec_file
+
+sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $logger_podspec_file
+
+echo "`MindboxLogger.podspec` After updating version:"
+grep "spec.version" $logger_podspec_file
+
 echo "Bump SDK version from $current_version to $version."
 
 git add $podspec_file
 git add $notification_podspec_file
 git add $sdkversionprovider_file
 git add $sdkversionconfig_file
+git add $logger_podspec_file
 git commit -m "Bump SDK version from $current_version to $version"
-
 
 # Update `Example/Podfile` version
 podfile="Example/Podfile"
