@@ -75,12 +75,12 @@ echo "'SDKVersionConfig.xcconfig' After updating version:"
 grep "MARKETING_VERSION" $sdkversionconfig_file
 
 # Update MindboxLogger.podspec version
-echo "`MindboxLogger.podspec` Before updating version:"
+echo "'MindboxLogger.podspec' Before updating version:"
 grep "spec.version" $logger_podspec_file
 
 sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $logger_podspec_file
 
-echo "`MindboxLogger.podspec` After updating version:"
+echo "'MindboxLogger.podspec' After updating version:"
 grep "spec.version" $logger_podspec_file
 
 echo "Bump SDK version from $current_version to $version."
