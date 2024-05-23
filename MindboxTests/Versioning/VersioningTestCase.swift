@@ -12,21 +12,17 @@ import XCTest
 class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
-    var depContainer: DependencyContainer!
-    var timer: TimerManager!
-    
+    var container: DependencyContainer!
+
     override func setUp() {
         super.setUp()
-        depContainer = try! TestDependencyProvider()
-        depContainer.persistenceStorage.reset()
-        try! depContainer.databaseRepository.erase()
-        Mindbox.shared.assembly(with: depContainer)
-        
-        MBInject.mode = .stubbed
-        timer = container.resolveOrFail(TimerManager.self)
-        timer.invalidate()
-        
+        container = try! TestDependencyProvider()
+        container.persistenceStorage.reset()
+        try! container.databaseRepository.erase()
+        Mindbox.shared.assembly(with: container)
+        TimerManager.shared.invalidate()
         queues = []
+        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
     func testInfoUpdateVersioningByAPNSToken() {

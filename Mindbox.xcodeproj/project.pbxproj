@@ -378,9 +378,6 @@
 		F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */; };
 		F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */; };
 		F33608302A8E167100C7C9B7 /* SnackbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082F2A8E167100C7C9B7 /* SnackbarView.swift */; };
-		F33934042BF55E210087F7F2 /* MBDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33934032BF55E210087F7F2 /* MBDependencyContainer.swift */; };
-		F33934062BF5653F0087F7F2 /* MBInject.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33934052BF5653F0087F7F2 /* MBInject.swift */; };
-		F33934082BF565F80087F7F2 /* MBInjectUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33934072BF565F80087F7F2 /* MBInjectUtilities.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -910,9 +907,6 @@
 		F33608272A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnackbarPresentationStrategy.swift; sourceTree = "<group>"; };
 		F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLayerFactory.swift; sourceTree = "<group>"; };
 		F336082F2A8E167100C7C9B7 /* SnackbarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SnackbarView.swift; sourceTree = "<group>"; };
-		F33934032BF55E210087F7F2 /* MBDependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDependencyContainer.swift; sourceTree = "<group>"; };
-		F33934052BF5653F0087F7F2 /* MBInject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBInject.swift; sourceTree = "<group>"; };
-		F33934072BF565F80087F7F2 /* MBInjectUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBInjectUtilities.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1181,9 +1175,6 @@
 			children = (
 				317054C325AEF88E00AE624C /* DependencyProvider.swift */,
 				843DAA5B26087F3D00CAC489 /* DependencyContainer.swift */,
-				F33934032BF55E210087F7F2 /* MBDependencyContainer.swift */,
-				F33934052BF5653F0087F7F2 /* MBInject.swift */,
-				F33934092BF572120087F7F2 /* Injections */,
 			);
 			path = DI;
 			sourceTree = "<group>";
@@ -2512,14 +2503,6 @@
 			path = CloseButtonFactory;
 			sourceTree = "<group>";
 		};
-		F33934092BF572120087F7F2 /* Injections */ = {
-			isa = PBXGroup;
-			children = (
-				F33934072BF565F80087F7F2 /* MBInjectUtilities.swift */,
-			);
-			path = Injections;
-			sourceTree = "<group>";
-		};
 		F3482F142A65DBA0002A41EC /* InappMessagesDelegate */ = {
 			isa = PBXGroup;
 			children = (
@@ -3282,7 +3265,6 @@
 				6FDD144F266F7C7000A50C35 /* UsedResponse.swift in Sources */,
 				330D8CCD26579581005106D5 /* Channel.swift in Sources */,
 				84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */,
-				F33934062BF5653F0087F7F2 /* MBInject.swift in Sources */,
 				847F580F25C88E8C00147A9A /* MBNetworkFetcher.swift in Sources */,
 				F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */,
 				33072F342664C3E1001F1AB2 /* ProductResponse.swift in Sources */,
@@ -3315,7 +3297,6 @@
 				A15D701A29AF8142007131E7 /* SDKLogsManager.swift in Sources */,
 				334F3AF6264C199900A6AC00 /* ProductListRequest.swift in Sources */,
 				F36128492BA3193E000382D9 /* PresentationClickTracker.swift in Sources */,
-				F33934082BF565F80087F7F2 /* MBInjectUtilities.swift in Sources */,
 				84A0CD54260AF8C8004CD91B /* TrackClick.swift in Sources */,
 				A1D017F02976CC8600CD9F99 /* OrTargeting.swift in Sources */,
 				334F3AEA264C199900A6AC00 /* CustomerRequest.swift in Sources */,
@@ -3340,7 +3321,6 @@
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
 				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
-				F33934042BF55E210087F7F2 /* MBDependencyContainer.swift in Sources */,
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
 				F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,

@@ -40,7 +40,8 @@ import XCTest
 //                                          sessionTemporaryStorage: sessionTemporaryStorage,
 //                                          persistenceStorage: persistenceStorage,
 //                                          sdkVersionValidator: container.sdkVersionValidator,
-//                                          imageDownloadService: container.imageDownloadService
+//                                          imageDownloadService: container.imageDownloadService,
+//                                          abTestDeviceMixer: container.abTestDeviceMixer)
 //        shownInAppsIds = Set(persistenceStorage.shownInAppsIds ?? [])
 //    }
 //

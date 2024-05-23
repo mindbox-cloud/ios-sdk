@@ -10,10 +10,6 @@ import CommonCrypto
 import MindboxLogger
 import Foundation
 
-class StubABTestDeviceMixer: ABTestDeviceMixer {
-
-}
-
 class ABTestDeviceMixer {
     private let sha256 = SHA256()
 

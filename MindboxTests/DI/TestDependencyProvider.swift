@@ -27,6 +27,7 @@ final class TestDependencyProvider: DependencyContainer {
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
+    var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
@@ -64,6 +65,7 @@ final class TestDependencyProvider: DependencyContainer {
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
+        abTestDeviceMixer = ABTestDeviceMixer()
         urlExtractorService = VariantImageUrlExtractorService()
         ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
@@ -85,6 +87,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
+                                                 abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
