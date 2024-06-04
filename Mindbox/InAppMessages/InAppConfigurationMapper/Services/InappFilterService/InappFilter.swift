@@ -21,14 +21,14 @@ final class InappsFilterService: InappFilterProtocol {
     var shownInAppDictionary: [String: Date] = [:]
     
     private let persistenceStorage: PersistenceStorage
-    private let abTestDeviceMixer: ABTestDeviceMixer
+    private let abTestDeviceMixer: ABTestDeviceMixer = container.resolveOrFail(ABTestDeviceMixer.self)
     private let variantsFilter: VariantFilterProtocol
     private let sdkVersionValidator: SDKVersionValidator
     private let frequencyValidator: InappFrequencyValidator
 
-    init(persistenceStorage: PersistenceStorage, abTestDeviceMixer: ABTestDeviceMixer, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator, frequencyValidator: InappFrequencyValidator) {
+    init(persistenceStorage: PersistenceStorage/*, abTestDeviceMixer: ABTestDeviceMixer*/, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator, frequencyValidator: InappFrequencyValidator) {
         self.persistenceStorage = persistenceStorage
-        self.abTestDeviceMixer = abTestDeviceMixer
+//        self.abTestDeviceMixer = abTestDeviceMixer
         self.variantsFilter = variantsFilter
         self.sdkVersionValidator = sdkVersionValidator
         self.frequencyValidator = frequencyValidator
