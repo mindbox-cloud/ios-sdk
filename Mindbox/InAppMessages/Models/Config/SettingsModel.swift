@@ -24,23 +24,7 @@ struct Settings: Decodable, Equatable {
     }
     
     struct TimeToLive: Decodable, Equatable {
-        let inapps: TTLUnit?
-    }
-}
-
-extension Settings.TimeToLive {
-    struct TTLUnit: Decodable, Equatable {
-        let unit: Unit?
-        let value: Int?
-        
-        init(unit: Unit?, value: Int?) {
-            self.unit = unit
-            self.value = value
-        }
-        
-        private enum CodingKeys: String, CodingKey {
-            case unit, value
-        }
+        let inapps: String?
     }
 }
 

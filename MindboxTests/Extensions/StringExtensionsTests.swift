@@ -25,6 +25,7 @@ final class StringExtensionsTests: XCTestCase {
     func test_parseTimeSpanToMillis() throws {
         let testPositiveCases: Array = [
             (str: "0:0:0.1234567", result: 123),
+            (str: "0:0:0.4567890", result: 456),
             (str: "0:0:0.1", result: 100),
             (str: "0:0:0.01", result: 10),
             (str: "0:0:0.001", result: 1),
