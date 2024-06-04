@@ -37,8 +37,6 @@ extension String {
         let seconds = secondsRange != nil ? String(self[secondsRange!]) : "0"
         let fraction = fractionRange != nil ? String(self[fractionRange!]) : "0"
 
-        print("sign: \(sign), days: \(days), hours: \(hours), minutes: \(minutes), seconds: \(seconds), fraction: \(fraction)")
-
         let daysCorrected = days.isEmpty ? "0" : days
         let fractionCorrected = fraction.isEmpty ? "0" : fraction
 

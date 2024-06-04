@@ -27,22 +27,23 @@ class TTLValidationService: TTLValidationProtocol {
             return false
         }
         
-        let now = Date()
-        
         guard let ttl = config.settings?.ttl?.inapps,
               let ttlMilliseconds = try? ttl.parseTimeSpanToMillis() else {
             Logger.common(message: "[TTL] Variables are missing or corrupted. Inapps reset will not be performed.")
             return false
         }
         
-        let nowMilliseconds = Int64(Date().timeIntervalSince1970 * 1000)
+        let now = Date()
+        let nowMilliseconds = Int64(now.timeIntervalSince1970 * 1000)
         let configDownloadMilliseconds = configDownloadDate.timeIntervalSince1970 * 1000
-        let expiredTimeTtl = Int64(ttlMilliseconds) + Int64(configDownloadMilliseconds)
-        let isNeedResetInapps = nowMilliseconds > expiredTimeTtl
+        let expiredTimeTtlMilliseconds = Int64(ttlMilliseconds) + Int64(configDownloadMilliseconds)
+        let isNeedResetInapps = nowMilliseconds > expiredTimeTtlMilliseconds
 
+        let expiredTimeTtlDate = Date(timeIntervalSince1970: TimeInterval(expiredTimeTtlMilliseconds) / 1000.0)
+        
         let message = """
-        [TTL] Current date: \(nowMilliseconds).
-        Config with TTL valid until: \(expiredTimeTtl).
+        [TTL] Current date: \(now.asDateTimeWithSeconds).
+        Config with TTL valid until: \(expiredTimeTtlDate.asDateTimeWithSeconds).
         Need to reset inapps: \(isNeedResetInapps).
         """
         
