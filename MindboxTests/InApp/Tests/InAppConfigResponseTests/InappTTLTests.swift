@@ -81,4 +81,22 @@ class InappTTLTests: XCTestCase {
         let result = service.needResetInapps(config: config)
         XCTAssertFalse(result, "Inapps не должны быть сброшены, так как время TTL еще не истекло.")
     }
+    
+    func testNeedResetInapps_WithMinusTTL_NotExceeded() throws {
+        persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
+        let service = TTLValidationService(persistenceStorage: persistenceStorage)
+        let settings = Settings(operations: nil, ttl: .init(inapps: "-2.00:00:00"))
+        let config = ConfigResponse(settings: settings)
+        let result = service.needResetInapps(config: config)
+        XCTAssertFalse(result, "Inapps не должны быть сброшены, так как время TTL еще не истекло.")
+    }
+    
+    func testNeedResetInapps_WithMinusOneDayTTL_NotExceeded() throws {
+        persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+        let service = TTLValidationService(persistenceStorage: persistenceStorage)
+        let settings = Settings(operations: nil, ttl: .init(inapps: "-1.00:00:00"))
+        let config = ConfigResponse(settings: settings)
+        let result = service.needResetInapps(config: config)
+        XCTAssertFalse(result, "Inapps не должны быть сброшены, так как время TTL еще не истекло.")
+    }
 }

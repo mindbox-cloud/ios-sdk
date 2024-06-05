@@ -28,7 +28,8 @@ class TTLValidationService: TTLValidationProtocol {
         }
         
         guard let ttl = config.settings?.ttl?.inapps,
-              let ttlMilliseconds = try? ttl.parseTimeSpanToMillis() else {
+              let ttlMilliseconds = try? ttl.parseTimeSpanToMillis(),
+              ttlMilliseconds >= 0 else {
             Logger.common(message: "[TTL] Variables are missing or corrupted. Inapps reset will not be performed.")
             return false
         }
