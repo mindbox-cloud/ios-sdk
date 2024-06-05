@@ -13,6 +13,7 @@ class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
     var container: DependencyContainer!
+    var timer: TimerManager!
 
     override func setUp() {
         super.setUp()
@@ -20,7 +21,10 @@ class VersioningTestCase: XCTestCase {
         container.persistenceStorage.reset()
         try! container.databaseRepository.erase()
         Mindbox.shared.assembly(with: container)
-        TimerManager.shared.invalidate()
+        
+        timer = testContainer.inject(TimerManager.self)
+        timer.invalidate()
+        
         queues = []
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }

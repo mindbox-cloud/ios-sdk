@@ -11,8 +11,6 @@ import MindboxLogger
 
 public final class TimerManager {
     
-//    public static let shared = TimerManager()
-    
     internal var didEnterBackgroundApplication: NSObjectProtocol?
     internal var didBecomeActiveApplication: NSObjectProtocol?
     

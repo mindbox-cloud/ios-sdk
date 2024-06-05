@@ -273,18 +273,18 @@ final class CoreController {
             }
         }
         
-        if let timerManager = container.inject(TimerManager.self) {
-            timerManager.configurate(trackEvery: Time.twentyMinutesInSeconds) {
-                Logger.common(message: "Scheduled Time tracker started")
-                sessionManager.trackForeground()
-            }
-            
-            timerManager.setupTimer()
+        let timerManager: TimerManager = container.inject(TimerManager.self)
+        timerManager.configurate(trackEvery: Time.minutesInSeconds) {
+            Logger.common(message: "Scheduled Time tracker started")
+            sessionManager.trackForeground()
         }
+        timerManager.setupTimer()
+        
     }
 }
 
 fileprivate enum Time {
     private static let oneMinuteInSeconds: TimeInterval = 60
-    static let twentyMinutesInSeconds: TimeInterval = 20 * oneMinuteInSeconds
+    static let minutesInSeconds: TimeInterval = 20 * oneMinuteInSeconds
+//    static let minutesInSeconds: TimeInterval = 5
 }

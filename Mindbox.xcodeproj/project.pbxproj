@@ -118,6 +118,8 @@
 		478E97BE2C0E25DB00D139CB /* MBDependancyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478E97BD2C0E25DB00D139CB /* MBDependancyContainer.swift */; };
 		478E97C02C0E264B00D139CB /* MBInject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478E97BF2C0E264B00D139CB /* MBInject.swift */; };
 		478E97C32C0E267100D139CB /* MBInjectUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478E97C22C0E267100D139CB /* MBInjectUtilities.swift */; };
+		47A539322C108F2F00156E40 /* SetupDIForTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A539312C108F2F00156E40 /* SetupDIForTesting.swift */; };
+		47A539342C1095A300156E40 /* TestNewDI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A539332C1095A300156E40 /* TestNewDI.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
 		6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */; };
 		6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */; };
@@ -647,6 +649,8 @@
 		478E97BD2C0E25DB00D139CB /* MBDependancyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDependancyContainer.swift; sourceTree = "<group>"; };
 		478E97BF2C0E264B00D139CB /* MBInject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBInject.swift; sourceTree = "<group>"; };
 		478E97C22C0E267100D139CB /* MBInjectUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBInjectUtilities.swift; sourceTree = "<group>"; };
+		47A539312C108F2F00156E40 /* SetupDIForTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupDIForTesting.swift; sourceTree = "<group>"; };
+		47A539332C1095A300156E40 /* TestNewDI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestNewDI.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
 		6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingStatusResponse.swift; sourceTree = "<group>"; };
 		6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemResponse.swift; sourceTree = "<group>"; };
@@ -1144,6 +1148,7 @@
 		313B233D25ADEA0F00A1CB72 /* MindboxTests */ = {
 			isa = PBXGroup;
 			children = (
+				47A539302C108F1600156E40 /* SetUpDependencyInjectionForTesting */,
 				D2F7E2452BADB9EF00B24BB8 /* UserVisitManagerTests */,
 				F3D818B12A3885E00002957C /* ABTests */,
 				F36730192B7B6E5500DD0039 /* PushNotificationTests */,
@@ -1425,6 +1430,14 @@
 			path = Injenctions;
 			sourceTree = "<group>";
 		};
+		47A539302C108F1600156E40 /* SetUpDependencyInjectionForTesting */ = {
+			isa = PBXGroup;
+			children = (
+				47A539312C108F2F00156E40 /* SetupDIForTesting.swift */,
+			);
+			path = SetUpDependencyInjectionForTesting;
+			sourceTree = "<group>";
+		};
 		8400429F2614CDED00CA17C5 /* ClickNotificationManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -1585,6 +1598,7 @@
 			isa = PBXGroup;
 			children = (
 				3132DFF525C2A811007FE358 /* TestDependencyProvider.swift */,
+				47A539332C1095A300156E40 /* TestNewDI.swift */,
 			);
 			path = DI;
 			sourceTree = "<group>";
@@ -3451,6 +3465,7 @@
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */,
 				BBAAC17C2BB2FC9100E1E25E /* MockEvent.swift in Sources */,
+				47A539342C1095A300156E40 /* TestNewDI.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */,
 				A1F3EE4A298BEE4B005FA828 /* OSLogWritterMock.swift in Sources */,
@@ -3480,6 +3495,7 @@
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */,
 				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
+				47A539322C108F2F00156E40 /* SetupDIForTesting.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 				F3A8B99C2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift in Sources */,

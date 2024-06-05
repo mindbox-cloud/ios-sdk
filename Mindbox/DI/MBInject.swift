@@ -8,13 +8,18 @@
 
 import Foundation
 
-protocol ModuleInjecting {
+protocol ModuleInjector {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency?
+    func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency
 }
 
-extension Container: ModuleInjecting {
+extension Container: ModuleInjector {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency? {
-        return self.resolve(serviceType)
+        self.resolve(serviceType)
+    }
+    
+    func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency {
+        self.resolveOrFail(serviceType)
     }
 }
 
@@ -29,6 +34,7 @@ enum MBInject {
             switch mode {
             case .standard:
                 depContainer = MBInject.buildDefaultContainer()
+                
             case .test(let registerTestDependenciesClosure):
                 depContainer = MBInject.buildTestContainer(registerTestDependenciesClosure)
             }
@@ -51,6 +57,6 @@ enum MBInject {
     }
 }
 
-var container: Container {
+var container: ModuleInjector {
     return MBInject.depContainer
 }
