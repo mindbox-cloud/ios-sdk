@@ -27,50 +27,28 @@ class TTLValidationService: TTLValidationProtocol {
             return false
         }
         
-        let now = Date()
-        
         guard let ttl = config.settings?.ttl?.inapps,
-              let downloadConfigDateWithTTL = getDateWithIntervalByType(ttl: ttl, date: configDownloadDate) else {
+              let ttlMilliseconds = try? ttl.parseTimeSpanToMillis(),
+              ttlMilliseconds >= 0 else {
             Logger.common(message: "[TTL] Variables are missing or corrupted. Inapps reset will not be performed.")
             return false
         }
         
-        let calendar = Calendar.current
-        let nowComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now)
-        let ttlComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: downloadConfigDateWithTTL)
-        
-        guard let nowWithoutMilliseconds = calendar.date(from: nowComponents),
-              let downloadConfigDateWithTTLWithoutMilliseconds = calendar.date(from: ttlComponents) else {
-            Logger.common(message: "[TTL] Error in date components. Inapps reset will not be performed.")
-            return false
-        }
+        let now = Date()
+        let nowMilliseconds = Int64(now.timeIntervalSince1970 * 1000)
+        let configDownloadMilliseconds = configDownloadDate.timeIntervalSince1970 * 1000
+        let expiredTimeTtlMilliseconds = Int64(ttlMilliseconds) + Int64(configDownloadMilliseconds)
+        let isNeedResetInapps = nowMilliseconds > expiredTimeTtlMilliseconds
 
+        let expiredTimeTtlDate = Date(timeIntervalSince1970: TimeInterval(expiredTimeTtlMilliseconds) / 1000.0)
+        
         let message = """
-        [TTL] Current date: \(nowWithoutMilliseconds.asDateTimeWithSeconds).
-        Config with TTL valid until: \(downloadConfigDateWithTTLWithoutMilliseconds.asDateTimeWithSeconds).
-        Need to reset inapps: \(nowWithoutMilliseconds > downloadConfigDateWithTTLWithoutMilliseconds).
+        [TTL] Current date: \(now.asDateTimeWithSeconds).
+        Config with TTL valid until: \(expiredTimeTtlDate.asDateTimeWithSeconds).
+        Need to reset inapps: \(isNeedResetInapps).
         """
         
         Logger.common(message: message)
-        return nowWithoutMilliseconds > downloadConfigDateWithTTLWithoutMilliseconds
-    }
-    
-    private func getDateWithIntervalByType(ttl: Settings.TimeToLive.TTLUnit, date: Date) -> Date? {
-        guard let type = ttl.unit, let value = ttl.value else {
-            Logger.common(message: "[TTL] Unable to calculate the date with TTL. The unit or value is missing.")
-            return nil
-        }
-        
-        let calendar = Calendar.current
-        switch type {
-            case .seconds:
-                return calendar.date(byAdding: .second, value: value, to: date)
-            case .minutes:
-                return calendar.date(byAdding: .minute, value: value, to: date)
-            case .hours:
-                return calendar.date(byAdding: .hour, value: value, to: date)
-            case .days:
-                return calendar.date(byAdding: .day, value: value, to: date)
-        }
+        return isNeedResetInapps
     }
 }
