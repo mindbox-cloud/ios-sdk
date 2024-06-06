@@ -20,7 +20,7 @@ class EventRepositoryTestCase: XCTestCase {
         controllerQueue = DispatchQueue(label: "test-core-controller-queue")
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
+//            utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,

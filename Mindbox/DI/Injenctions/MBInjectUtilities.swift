@@ -10,6 +10,10 @@ import Foundation
 
 extension Container {
     func registerUtilitiesServices() -> Self {
+        register(UtilitiesFetcher.self) {
+            MBUtilitiesFetcher()
+        }
+        
         register(ABTestDeviceMixer.self) {
             ABTestDeviceMixer()
         }

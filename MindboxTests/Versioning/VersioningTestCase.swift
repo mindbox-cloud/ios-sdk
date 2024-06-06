@@ -12,15 +12,15 @@ import XCTest
 class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
-    var container: DependencyContainer!
+    var depContainer: DependencyContainer!
     var timer: TimerManager!
 
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        container.persistenceStorage.reset()
-        try! container.databaseRepository.erase()
-        Mindbox.shared.assembly(with: container)
+        depContainer = try! TestDependencyProvider()
+        depContainer.persistenceStorage.reset()
+        try! depContainer.databaseRepository.erase()
+        Mindbox.shared.assembly(with: depContainer)
         
         timer = testContainer.inject(TimerManager.self)
         timer.invalidate()

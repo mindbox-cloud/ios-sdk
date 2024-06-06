@@ -9,7 +9,6 @@
 import Foundation
 
 protocol DependencyContainer {
-    var utilitiesFetcher: UtilitiesFetcher { get }
     var persistenceStorage: PersistenceStorage { get }
     var databaseLoader: DataBaseLoader { get }
     var databaseRepository: MBDatabaseRepository { get }
@@ -25,7 +24,6 @@ protocol DependencyContainer {
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }
-//    var abTestDeviceMixer: ABTestDeviceMixer { get }
     var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
     var pushValidator: MindboxPushValidator { get }

@@ -148,7 +148,9 @@ class MBPersistenceStorage: PersistenceStorage {
     }
     
     
-    init(defaults: UserDefaults) {
+    init(
+        defaults: UserDefaults = UserDefaults(suiteName: container.inject(UtilitiesFetcher.self)?.applicationGroupIdentifier)!
+    ) {
         MBPersistenceStorage.defaults = defaults
     }
 

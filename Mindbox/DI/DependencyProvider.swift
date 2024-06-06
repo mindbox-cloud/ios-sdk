@@ -11,7 +11,6 @@ import Foundation
 import UIKit
 
 final class DependencyProvider: DependencyContainer {
-    let utilitiesFetcher: UtilitiesFetcher
     let persistenceStorage: PersistenceStorage
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
@@ -27,7 +26,6 @@ final class DependencyProvider: DependencyContainer {
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
-//    var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
@@ -37,16 +35,14 @@ final class DependencyProvider: DependencyContainer {
     var frequencyValidator: InappFrequencyValidator
 
     init() throws {
-        utilitiesFetcher = MBUtilitiesFetcher()
-        persistenceStorage = MBPersistenceStorage(defaults: UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!)
+        persistenceStorage = MBPersistenceStorage()
         persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
-        databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+        databaseLoader = try DataBaseLoader()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MBInstanceFactory(
             persistenceStorage: persistenceStorage,
-            utilitiesFetcher: utilitiesFetcher,
             databaseRepository: databaseRepository
         )
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
@@ -134,7 +130,7 @@ class MBInstanceFactory: InstanceFactory {
 
     init(
         persistenceStorage: PersistenceStorage,
-        utilitiesFetcher: UtilitiesFetcher,
+        utilitiesFetcher: UtilitiesFetcher = container.inject(UtilitiesFetcher.self),
         databaseRepository: MBDatabaseRepository
     ) {
         self.persistenceStorage = persistenceStorage

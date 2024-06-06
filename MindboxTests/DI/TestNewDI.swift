@@ -111,6 +111,12 @@ final class TestNewDI: XCTestCase {
         XCTAssertTrue(someObject is MockDI)
         XCTAssertFalse(someObject is TestDI)
     }
+    
+    func testContainerTest() {
+        let someObject: PersistenceStorage? = testContainer.inject(PersistenceStorage.self)
+        XCTAssertTrue(someObject is MockPersistenceStorage)
+        XCTAssertFalse(someObject is MBPersistenceStorage)
+    }
 }
 
 

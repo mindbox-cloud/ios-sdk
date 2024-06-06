@@ -33,7 +33,7 @@ class MindboxTests: XCTestCase {
     func testInitialization() {
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
+            utilitiesFetcher: testContainer.inject(UtilitiesFetcher.self),
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
@@ -77,7 +77,7 @@ class MindboxTests: XCTestCase {
         try! container.databaseRepository.erase()
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
+            utilitiesFetcher: testContainer.inject(UtilitiesFetcher.self),
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,

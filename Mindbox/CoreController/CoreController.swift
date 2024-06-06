@@ -240,7 +240,7 @@ final class CoreController {
 
     init(
         persistenceStorage: PersistenceStorage,
-        utilitiesFetcher: UtilitiesFetcher,
+        utilitiesFetcher: UtilitiesFetcher = container.inject(UtilitiesFetcher.self),
         notificationStatusProvider: UNAuthorizationStatusProviding,
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,

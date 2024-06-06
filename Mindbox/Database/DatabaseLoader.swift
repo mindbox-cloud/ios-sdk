@@ -19,8 +19,10 @@ class DataBaseLoader {
     var loadPersistentStoresError: Error?
     var persistentStoreURL: URL?
     
-    init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
-        MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
+    init(
+        persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil,
+        applicationGroupIdentifier: String? = container.inject(UtilitiesFetcher.self)?.applicationGroupIdentifier
+    ) throws {
         let momdName = Constants.Database.mombName
         var modelURL: URL?
 

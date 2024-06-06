@@ -19,17 +19,10 @@ extension Container {
     }
 }
 
-extension MBInject {
-    static var test: Self.Type {
-        Self.mode = .test{ container in
-            container
-                .registerMocks()
-        }
-        
-        return self
-    }
-}
-
 var testContainer: ModuleInjector {
-    MBInject.test.depContainer
+    MBInject.mode = .test({ container in
+        container.registerMocks()
+    })
+    
+    return MBInject.depContainer
 }

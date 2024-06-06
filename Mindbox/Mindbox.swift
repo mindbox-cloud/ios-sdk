@@ -557,7 +557,6 @@ public class Mindbox: NSObject {
 
     func assembly(with container: DependencyContainer) {
         persistenceStorage = container.persistenceStorage
-        utilitiesFetcher = container.utilitiesFetcher
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
@@ -568,7 +567,6 @@ public class Mindbox: NSObject {
 
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,

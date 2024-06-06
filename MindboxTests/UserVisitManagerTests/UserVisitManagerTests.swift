@@ -14,11 +14,11 @@ final class UserVisitManagerTests: XCTestCase {
     private var persistenceStorageMock: PersistenceStorage!
     private var userVisitManager: UserVisitManagerProtocol!
     private var sessionManagerMock: MockSessionManager!
-    private var container: TestDependencyProvider!
+    private var depContainer: TestDependencyProvider!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
+        depContainer = try! TestDependencyProvider()
         persistenceStorageMock = testContainer.inject(PersistenceStorage.self)
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
