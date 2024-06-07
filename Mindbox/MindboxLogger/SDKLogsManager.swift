@@ -21,8 +21,10 @@ class SDKLogsManager: SDKLogsManagerProtocol {
     private let persistenceStorage: PersistenceStorage
     private let eventRepository: EventRepository
     
-    init(persistenceStorage: PersistenceStorage,
-         eventRepository: EventRepository) {
+    init(
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
+        eventRepository: EventRepository
+    ) {
         self.persistenceStorage = persistenceStorage
         self.eventRepository = eventRepository
     }

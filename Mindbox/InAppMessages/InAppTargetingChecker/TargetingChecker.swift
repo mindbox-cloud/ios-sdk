@@ -45,7 +45,7 @@ protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, Targeti
 
 final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     
-    init(persistenceStorage: PersistenceStorage) {
+    init(persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self)) {
         self.persistenceStorage = persistenceStorage
         setupCheckerMap()
     }

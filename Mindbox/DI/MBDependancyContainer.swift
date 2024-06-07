@@ -49,11 +49,12 @@ extension Container {
         return service
     }
     
-    func resolveOrFailAsync<T>(_ serviceType: T.Type) -> T {
-        var resultService: T
+    func resolveOrFailAsync<T>(_ serviceType: T.Type, completion: @escaping (T) -> Void) {
         self.resolveAsync(serviceType) { service in
-            resultService = service!
+            guard let service else {
+                fatalError("Service \(serviceType) not found")
+            }
+            completion(service)
         }
-        return resultService
     }
 }

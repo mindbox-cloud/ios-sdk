@@ -51,7 +51,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     init(
         configManager: InAppConfigurationManagerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
-        persistenceStorage: PersistenceStorage,
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager

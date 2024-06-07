@@ -16,7 +16,7 @@ protocol ModuleInjector {
 
 extension Container: ModuleInjector {
     func injectAsync<Dependency>(_ serviceType: Dependency.Type, _ completion: @escaping (Dependency?) -> Void) {
-        self.resolveAsync(serviceType, completion: completion)
+        self.resolveOrFailAsync(serviceType, completion: completion)
     }
     
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency? {

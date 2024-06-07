@@ -50,7 +50,7 @@ final class GuaranteedDeliveryManager: NSObject {
     private let fetchLimit: Int
     
     init(
-        persistenceStorage: PersistenceStorage,
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
         databaseRepository: MBDatabaseRepository,
         eventRepository: EventRepository,
         retryDeadline: TimeInterval = 60,

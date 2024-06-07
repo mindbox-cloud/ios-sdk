@@ -41,7 +41,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
         logsManager: SDKLogsManagerProtocol,
-        persistenceStorage: PersistenceStorage,
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
         ttlValidationService: TTLValidationProtocol
     ) {
         self.inAppConfigRepository = inAppConfigRepository

@@ -27,7 +27,7 @@ final class InappsFilterService: InappFilterProtocol {
     private let frequencyValidator: InappFrequencyValidator
 
     init(
-        persistenceStorage: PersistenceStorage,
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
         abTestDeviceMixer: ABTestDeviceMixer = container.inject(ABTestDeviceMixer.self),
         variantsFilter: VariantFilterProtocol,
         sdkVersionValidator: SDKVersionValidator,

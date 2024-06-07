@@ -11,7 +11,8 @@ import Foundation
 import UIKit
 
 final class DependencyProvider: DependencyContainer {
-    let persistenceStorage: PersistenceStorage
+    let persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self)
+    
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
@@ -35,31 +36,30 @@ final class DependencyProvider: DependencyContainer {
     var frequencyValidator: InappFrequencyValidator
 
     init() throws {
-        persistenceStorage = MBPersistenceStorage()
-        persistenceStorage.migrateShownInAppsIds()
-        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
+//        persistenceStorage = MBPersistenceStorage()
+//        persistenceStorage = container.inject(PersistenceStorage.self)
+//        persistenceStorage.migrateShownInAppsIds()
+        inAppTargetingChecker = InAppTargetingChecker()
         databaseLoader = try DataBaseLoader()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MBInstanceFactory(
-            persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository
         )
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
             eventRepository: instanceFactory.makeEventRepository()
         )
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
-        let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
+        let logsManager = SDKLogsManager(eventRepository: instanceFactory.makeEventRepository())
 
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  targetingChecker: inAppTargetingChecker)
-        let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
+        let imageDownloader = URLSessionImageDownloader()
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
 //        abTestDeviceMixer = ABTestDeviceMixer()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
@@ -82,14 +82,12 @@ final class DependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
 
-        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
-        inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-//                                                 abTestDeviceMixer: abTestDeviceMixer,
-                                                 variantsFilter: variantsFilterService,
+        frequencyValidator = InappFrequencyValidator()
+        inappFilterService = InappsFilterService(variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
         
-        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
+        ttlValidationService = TTLValidationService()
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -98,17 +96,15 @@ final class DependencyProvider: DependencyContainer {
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
-                inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
+                inAppConfigAPI: InAppConfigurationAPI(),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    urlExtractorService: urlExtractorService,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager,
-            persistenceStorage: persistenceStorage,
-            ttlValidationService: ttlValidationService),
-            presentationManager: presentationManager,
-            persistenceStorage: persistenceStorage
+                ttlValidationService: ttlValidationService),
+            presentationManager: presentationManager
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
@@ -119,7 +115,7 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
+        userVisitManager = UserVisitManager()
     }
 }
 
@@ -129,7 +125,7 @@ class MBInstanceFactory: InstanceFactory {
     private let databaseRepository: MBDatabaseRepository
 
     init(
-        persistenceStorage: PersistenceStorage,
+        persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self),
         utilitiesFetcher: UtilitiesFetcher = container.inject(UtilitiesFetcher.self),
         databaseRepository: MBDatabaseRepository
     ) {

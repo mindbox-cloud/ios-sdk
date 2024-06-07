@@ -35,7 +35,7 @@ public class Mindbox: NSObject {
 
     // MARK: - Dependencies
 
-    private var persistenceStorage: PersistenceStorage?
+    private var persistenceStorage: PersistenceStorage? = container.inject(PersistenceStorage.self)
     private var utilitiesFetcher: UtilitiesFetcher? = container.inject(UtilitiesFetcher.self)
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
@@ -556,7 +556,7 @@ public class Mindbox: NSObject {
     }
 
     func assembly(with container: DependencyContainer) {
-        persistenceStorage = container.persistenceStorage
+//        persistenceStorage = container.persistenceStorage
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
         notificationStatusProvider = container.authorizationStatusProvider
         databaseRepository = container.databaseRepository
@@ -566,7 +566,7 @@ public class Mindbox: NSObject {
         pushValidator = container.pushValidator
 
         coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
+//            persistenceStorage: container.persistenceStorage,
             notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,

@@ -17,7 +17,7 @@ enum InAppConfigurationAPIResult {
 class InAppConfigurationAPI {
     private let persistenceStorage: PersistenceStorage
 
-    init(persistenceStorage: PersistenceStorage) {
+    init(persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self)) {
         self.persistenceStorage = persistenceStorage
     }
 

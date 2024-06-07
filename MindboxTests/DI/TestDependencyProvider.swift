@@ -36,7 +36,9 @@ final class TestDependencyProvider: DependencyContainer {
     var frequencyValidator: InappFrequencyValidator
     
     init() throws {
+//        utilitiesFetcher = testContainer.inject(UtilitiesFetcher.self)
         utilitiesFetcher = MBUtilitiesFetcher()
+//        persistenceStorage = testContainer.inject(PersistenceStorage.self)
         persistenceStorage = MockPersistenceStorage()
         databaseLoader = try DataBaseLoader()
         frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)

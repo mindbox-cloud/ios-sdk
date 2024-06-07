@@ -17,7 +17,7 @@ final class UserVisitManager {
     private let persistenceStorage: PersistenceStorage
     private var isVisitSaved: Bool = false
     
-    init(persistenceStorage: PersistenceStorage) {
+    init(persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self)) {
         self.persistenceStorage = persistenceStorage
     }
 }
