@@ -149,9 +149,15 @@ class MBPersistenceStorage: PersistenceStorage {
     
     
     init(
-        defaults: UserDefaults = UserDefaults(suiteName: container.inject(UtilitiesFetcher.self)?.applicationGroupIdentifier)!
+        container: ModuleInjector = container
+//        defaults: UserDefaults = UserDefaults(suiteName: container.inject(UtilitiesFetcher.self)?.applicationGroupIdentifier)!
     ) {
-        MBPersistenceStorage.defaults = defaults
+        container.injectAsync(UtilitiesFetcher.self) { fetcher in
+            let defaults = UserDefaults(suiteName: fetcher?.applicationGroupIdentifier)!
+            MBPersistenceStorage.defaults = defaults
+        }
+        
+//        MBPersistenceStorage.defaults = defaults
     }
 
     @UserDefaultsWrapper(key: .deviceUUID, defaultValue: nil)

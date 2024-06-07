@@ -11,9 +11,14 @@ import Foundation
 protocol ModuleInjector {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency?
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency
+    func injectAsync<Dependency>(_ serviceType: Dependency.Type, _ completion: @escaping (Dependency?) -> Void)
 }
 
 extension Container: ModuleInjector {
+    func injectAsync<Dependency>(_ serviceType: Dependency.Type, _ completion: @escaping (Dependency?) -> Void) {
+        self.resolveAsync(serviceType, completion: completion)
+    }
+    
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency? {
         self.resolve(serviceType)
     }

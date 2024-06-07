@@ -14,6 +14,10 @@ extension Container {
             MBUtilitiesFetcher()
         }
         
+        register(PersistenceStorage.self) {
+            MBPersistenceStorage()
+        }
+        
         register(ABTestDeviceMixer.self) {
             ABTestDeviceMixer()
         }

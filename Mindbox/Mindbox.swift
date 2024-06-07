@@ -36,7 +36,7 @@ public class Mindbox: NSObject {
     // MARK: - Dependencies
 
     private var persistenceStorage: PersistenceStorage?
-    private var utilitiesFetcher: UtilitiesFetcher?
+    private var utilitiesFetcher: UtilitiesFetcher? = container.inject(UtilitiesFetcher.self)
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
@@ -48,7 +48,7 @@ public class Mindbox: NSObject {
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
     var coreController: CoreController?
-    var container: DependencyContainer?
+    var depContainer: DependencyContainer?
 
     /**
      A set of methods that sdk uses to notify you of its behavior.
@@ -237,7 +237,7 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
-        guard let container = container else { return }
+        guard let container = depContainer else { return }
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
@@ -320,7 +320,7 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        depContainer?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -349,7 +349,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        depContainer?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -378,7 +378,7 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        depContainer?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -420,7 +420,7 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(response: UNNotificationResponse) {
-        guard let container = container else { return }
+        guard let container = depContainer else { return }
         let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
         do {
             try tracker.track(response: response)
@@ -438,7 +438,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(_ type: TrackVisitType) {
-        guard let container = container else { return }
+        guard let container = depContainer else { return }
         let tracker = container.instanceFactory.makeTrackVisitManager()
         do {
             try tracker.track(type)
@@ -455,7 +455,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(data: TrackVisitData) {
-        guard let container = container else { return }
+        guard let container = depContainer else { return }
         let tracker = container.instanceFactory.makeTrackVisitManager()
         do {
             try tracker.track(data: data)
@@ -544,7 +544,7 @@ public class Mindbox: NSObject {
         queue.sync(flags: .barrier) {
             do {
                 let container = try DependencyProvider()
-                self.container = container
+                self.depContainer = container
                 self.assembly(with: container)
                 Logger.common(message: "Did assembly dependencies with container", level: .info, category: .general)
             } catch {
