@@ -26,6 +26,10 @@ extension Container {
             TimerManager()
         }
         
+        register(UserVisitManagerProtocol.self) {
+            UserVisitManager()
+        }
+        
         return self
     }
 }

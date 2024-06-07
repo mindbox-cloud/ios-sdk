@@ -9,8 +9,6 @@
 import Foundation
 
 protocol DependencyContainer {
-    var persistenceStorage: PersistenceStorage { get }
-    
     var databaseLoader: DataBaseLoader { get }
     var databaseRepository: MBDatabaseRepository { get }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
@@ -29,7 +27,6 @@ protocol DependencyContainer {
     var inappFilterService: InappFilterProtocol { get }
     var pushValidator: MindboxPushValidator { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
-    var userVisitManager: UserVisitManagerProtocol { get }
     var ttlValidationService: TTLValidationProtocol { get }
     var frequencyValidator: InappFrequencyValidator { get }
 }

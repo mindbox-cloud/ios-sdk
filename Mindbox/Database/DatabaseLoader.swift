@@ -21,7 +21,7 @@ class DataBaseLoader {
     
     init(
         persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil,
-        applicationGroupIdentifier: String = container.inject(UtilitiesFetcher.self).applicationGroupIdentifier
+        applicationGroupIdentifier: String? = container.inject(UtilitiesFetcher.self)?.applicationGroupIdentifier
     ) throws {
         let momdName = Constants.Database.mombName
         var modelURL: URL?

@@ -249,7 +249,7 @@ final class CoreController {
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
-        userVisitManager: UserVisitManagerProtocol
+        userVisitManager: UserVisitManagerProtocol = container.inject(UserVisitManagerProtocol.self)
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher

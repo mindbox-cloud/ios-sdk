@@ -11,8 +11,6 @@ import Foundation
 import UIKit
 
 final class DependencyProvider: DependencyContainer {
-    let persistenceStorage: PersistenceStorage = container.inject(PersistenceStorage.self)
-    
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
@@ -31,14 +29,10 @@ final class DependencyProvider: DependencyContainer {
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
 
     init() throws {
-//        persistenceStorage = MBPersistenceStorage()
-//        persistenceStorage = container.inject(PersistenceStorage.self)
-//        persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker()
         databaseLoader = try DataBaseLoader()
         let persistentContainer = try databaseLoader.loadPersistentContainer()
@@ -61,7 +55,6 @@ final class DependencyProvider: DependencyContainer {
                                                  targetingChecker: inAppTargetingChecker)
         let imageDownloader = URLSessionImageDownloader()
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
-//        abTestDeviceMixer = ABTestDeviceMixer()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
         let actionUseCaseFactory = ActionUseCaseFactory(tracker: tracker)
@@ -115,7 +108,6 @@ final class DependencyProvider: DependencyContainer {
         )
         
         pushValidator = MindboxPushValidator()
-        userVisitManager = UserVisitManager()
     }
 }
 

@@ -150,7 +150,7 @@ class MBPersistenceStorage: PersistenceStorage {
     
     init(container: ModuleInjector = container) {
         container.injectAsync(UtilitiesFetcher.self) { fetcher in
-            let defaults = UserDefaults(suiteName: fetcher?.applicationGroupIdentifier)!
+            let defaults = UserDefaults(suiteName: fetcher.applicationGroupIdentifier)!
             Self.defaults = defaults
         }
         
