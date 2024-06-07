@@ -9,7 +9,7 @@ on:
 
 jobs:
   trigger:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
