@@ -24,6 +24,12 @@
 		0AEDBC992BB7058B00EE8722 /* ButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC982BB7058B00EE8722 /* ButtonsView.swift */; };
 		0AEDBC9B2BB70D6E00EE8722 /* SDKDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC9A2BB70D6E00EE8722 /* SDKDataView.swift */; };
 		43E1C73D7E87903545C2ACBC /* Pods_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9AF8ABB9430FE76D72FE17D /* Pods_Example.framework */; };
+		474F37A22C16F5A700F38BB0 /* NotificationCenterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37A12C16F5A700F38BB0 /* NotificationCenterViewModel.swift */; };
+		474F37A42C16F5B000F38BB0 /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */; };
+		474F37AE2C170FB600F38BB0 /* NotificationCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */; };
+		4774807A2C174BAA00580FB2 /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 477480792C174BAA00580FB2 /* Payload.swift */; };
+		4774807D2C174C0A00580FB2 /* Notification.Name+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4774807C2C174C0A00580FB2 /* Notification.Name+Extensions.swift */; };
+		4774807F2C174C2000580FB2 /* MBPushNotification+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4774807E2C174C2000580FB2 /* MBPushNotification+Extensions.swift */; };
 		9E3108F96D4F26745D3B37A4 /* Pods_MindboxNotificationServiceExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */; };
 		D9585975AC05213E1682C760 /* Pods_MindboxNotificationContentExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91EB2315545CE887D05CB505 /* Pods_MindboxNotificationContentExtension.framework */; };
 /* End PBXBuildFile section */
@@ -85,6 +91,12 @@
 		0AEDBC9A2BB70D6E00EE8722 /* SDKDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKDataView.swift; sourceTree = "<group>"; };
 		0AEDBC9C2BB7177A00EE8722 /* Example.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Example.entitlements; sourceTree = "<group>"; };
 		1B29989833584963EC18BDF2 /* Pods-MindboxNotificationContentExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindboxNotificationContentExtension.release.xcconfig"; path = "Target Support Files/Pods-MindboxNotificationContentExtension/Pods-MindboxNotificationContentExtension.release.xcconfig"; sourceTree = "<group>"; };
+		474F37A12C16F5A700F38BB0 /* NotificationCenterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterViewModel.swift; sourceTree = "<group>"; };
+		474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
+		474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCellView.swift; sourceTree = "<group>"; };
+		477480792C174BAA00580FB2 /* Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payload.swift; sourceTree = "<group>"; };
+		4774807C2C174C0A00580FB2 /* Notification.Name+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification.Name+Extensions.swift"; sourceTree = "<group>"; };
+		4774807E2C174C2000580FB2 /* MBPushNotification+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MBPushNotification+Extensions.swift"; sourceTree = "<group>"; };
 		4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C06401BC9C282DDDDADEA9D /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Example.release.xcconfig"; path = "Target Support Files/Pods-Example/Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
 		91EB2315545CE887D05CB505 /* Pods_MindboxNotificationContentExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationContentExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -172,42 +184,80 @@
 			children = (
 				0AEDBC9C2BB7177A00EE8722 /* Example.entitlements */,
 				0AEDBC792BB6F8F200EE8722 /* AppDelegate.swift */,
-				0AD271E32BBAAA8800750279 /* PrivacyInfo.xcprivacy */,
 				0AEDBC7B2BB6F8F200EE8722 /* SceneDelegate.swift */,
+				0AD271E32BBAAA8800750279 /* PrivacyInfo.xcprivacy */,
 				0AEDBC822BB6F8F400EE8722 /* Assets.xcassets */,
 				0A4B68292BBD7D5100639BC5 /* LaunchScreen.storyboard */,
 				0AEDBC872BB6F8F400EE8722 /* Info.plist */,
-				0AEDBC9E2BB71FD700EE8722 /* ViewModel */,
-				0AEDBC9D2BB71FC600EE8722 /* View */,
+				474F37AF2C1710BB00F38BB0 /* Models */,
+				0AEDBC9D2BB71FC600EE8722 /* Views */,
+				0AEDBC9E2BB71FD700EE8722 /* ViewModels */,
+				4774807B2C174BD900580FB2 /* Extensions */,
 			);
 			path = Example;
 			sourceTree = "<group>";
 		};
-		0AEDBC972BB7050F00EE8722 /* CustomVIews */ = {
+		0AEDBC972BB7050F00EE8722 /* CustomViews */ = {
 			isa = PBXGroup;
 			children = (
 				0AEDBC982BB7058B00EE8722 /* ButtonsView.swift */,
 				0AEDBC9A2BB70D6E00EE8722 /* SDKDataView.swift */,
 			);
-			path = CustomVIews;
+			path = CustomViews;
 			sourceTree = "<group>";
 		};
-		0AEDBC9D2BB71FC600EE8722 /* View */ = {
+		0AEDBC9D2BB71FC600EE8722 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				0AEDBC972BB7050F00EE8722 /* CustomVIews */,
+				0AEDBC972BB7050F00EE8722 /* CustomViews */,
+				474F37AC2C170FA600F38BB0 /* NotificationCenterViews */,
 				0AEDBC912BB6FA4800EE8722 /* MainView.swift */,
 			);
-			path = View;
+			path = Views;
 			sourceTree = "<group>";
 		};
-		0AEDBC9E2BB71FD700EE8722 /* ViewModel */ = {
+		0AEDBC9E2BB71FD700EE8722 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				477480842C1760BE00580FB2 /* ChooseInAppMessagesDelegate */,
 				0AEDBC952BB6FE4900EE8722 /* MainViewModel.swift */,
+				474F37A12C16F5A700F38BB0 /* NotificationCenterViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		474F37AC2C170FA600F38BB0 /* NotificationCenterViews */ = {
+			isa = PBXGroup;
+			children = (
+				474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */,
+				474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */,
+			);
+			path = NotificationCenterViews;
+			sourceTree = "<group>";
+		};
+		474F37AF2C1710BB00F38BB0 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				477480792C174BAA00580FB2 /* Payload.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		4774807B2C174BD900580FB2 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				4774807C2C174C0A00580FB2 /* Notification.Name+Extensions.swift */,
+				4774807E2C174C2000580FB2 /* MBPushNotification+Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		477480842C1760BE00580FB2 /* ChooseInAppMessagesDelegate */ = {
+			isa = PBXGroup;
+			children = (
 				0A4B68192BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift */,
 			);
-			path = ViewModel;
+			path = ChooseInAppMessagesDelegate;
 			sourceTree = "<group>";
 		};
 		52C896E46FFA4E326FC946A8 /* Frameworks */ = {
@@ -305,6 +355,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1530;
 				LastUpgradeCheck = 1530;
+				ORGANIZATIONNAME = Mindbox;
 				TargetAttributes = {
 					0A0DE3442BB8455A00812E73 = {
 						CreatedOnToolsVersion = 15.3;
@@ -471,13 +522,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				474F37A22C16F5A700F38BB0 /* NotificationCenterViewModel.swift in Sources */,
 				0AEDBC7A2BB6F8F200EE8722 /* AppDelegate.swift in Sources */,
 				0AEDBC992BB7058B00EE8722 /* ButtonsView.swift in Sources */,
+				474F37A42C16F5B000F38BB0 /* NotificationCenterView.swift in Sources */,
 				0AEDBC922BB6FA4800EE8722 /* MainView.swift in Sources */,
+				474F37AE2C170FB600F38BB0 /* NotificationCellView.swift in Sources */,
+				4774807A2C174BAA00580FB2 /* Payload.swift in Sources */,
 				0AEDBC962BB6FE4900EE8722 /* MainViewModel.swift in Sources */,
 				0AEDBC7C2BB6F8F200EE8722 /* SceneDelegate.swift in Sources */,
 				0AEDBC9B2BB70D6E00EE8722 /* SDKDataView.swift in Sources */,
+				4774807D2C174C0A00580FB2 /* Notification.Name+Extensions.swift in Sources */,
 				0A4B681A2BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift in Sources */,
+				4774807F2C174C2000580FB2 /* MBPushNotification+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

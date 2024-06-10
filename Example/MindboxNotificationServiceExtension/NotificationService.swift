@@ -3,6 +3,7 @@
 //  MindboxNotificationServiceExtension
 //
 //  Created by Дмитрий Ерофеев on 30.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import UserNotifications

@@ -3,6 +3,7 @@
 //  Example
 //
 //  Created by Дмитрий Ерофеев on 29.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import Mindbox
@@ -13,7 +14,10 @@ import UIKit
 class AppDelegate: MindboxAppDelegate {
     
     //https://developers.mindbox.ru/docs/ios-sdk-initialization
-    override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
         
         do {
@@ -35,20 +39,39 @@ class AppDelegate: MindboxAppDelegate {
         return true
     }
 
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
     
     //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
         completionHandler([.list, .badge, .sound, .banner])
-        
+    }
+    
+    //https://developers.mindbox.ru/docs/ios-sdk-handle-tap
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         //https://developers.mindbox.ru/docs/ios-sdk-methods
-        print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo))")
-        print("Notification data: \(String(describing: Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)))")
-        if let uniqueKey = Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo)?.uniqueKey {
+        if let userInfo = Mindbox.shared.getMindboxPushData(userInfo: response.notification.request.content.userInfo),
+           Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo),
+           let uniqueKey = userInfo.uniqueKey {
             Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
+            
+            NotificationCenter.default.post(name: .MindboxPushNotificationExample, object: nil, userInfo: ["pushData": userInfo])
         }
+        
+        super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
     
     //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate

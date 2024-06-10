@@ -3,14 +3,12 @@
 //  Example
 //
 //  Created by Дмитрий Ерофеев on 29.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import Foundation
 import Mindbox
-import UIKit
 
-@Observable
-final class MainViewModel {
+@Observable final class MainViewModel {
     
     var SDKVersion: String = ""
     var deviceUUID: String = ""
