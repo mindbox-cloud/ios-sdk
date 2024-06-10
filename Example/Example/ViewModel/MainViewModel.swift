@@ -9,11 +9,12 @@ import Foundation
 import Mindbox
 import UIKit
 
-class MainViewModel: ObservableObject {
+@Observable
+final class MainViewModel {
     
-    @Published var SDKVersion: String = ""
-    @Published var deviceUUID: String = ""
-    @Published var APNSToken: String = ""
+    var SDKVersion: String = ""
+    var deviceUUID: String = ""
+    var APNSToken: String = ""
     
     //https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
@@ -66,7 +67,3 @@ class MainViewModel: ObservableObject {
         Mindbox.shared.executeAsyncOperation(operationSystemName: "APIMethodForReleaseExampleIos", json: json)
     }
 }
-
-
-
-

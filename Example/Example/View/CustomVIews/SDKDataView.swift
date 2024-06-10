@@ -39,7 +39,7 @@ struct TitleDescrptionView: View {
 
 struct SDKDataView: View {
     
-    @ObservedObject var viewModel: MainViewModel
+    var viewModel: MainViewModel
     
     var body: some View {
         ZStack {

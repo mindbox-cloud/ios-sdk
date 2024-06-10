@@ -31,7 +31,7 @@ struct ButtonsViewline: View {
 
 struct ButtonsView: View {
     
-    @ObservedObject var viewModel: MainViewModel
+    var viewModel: MainViewModel
     
     var body: some View {
         ZStack {

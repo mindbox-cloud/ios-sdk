@@ -10,7 +10,7 @@ import Foundation
 
 struct MainView: View {
     
-    @ObservedObject var viewModel: MainViewModel
+    var viewModel: MainViewModel
     @State private var showingAlert = !UserDefaults.standard.bool(forKey: "ShownAlert")
     
     var body: some View {
