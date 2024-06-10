@@ -41,7 +41,7 @@ class AppDelegate: MindboxAppDelegate {
     
     //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.list, .badge, .sound])
+        completionHandler([.list, .badge, .sound, .banner])
         
         //https://developers.mindbox.ru/docs/ios-sdk-methods
         print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo))")
