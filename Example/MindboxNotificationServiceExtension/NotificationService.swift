@@ -9,11 +9,38 @@
 import UserNotifications
 import MindboxNotifications
 
+import Example
+import Mindbox
+
 class NotificationService: UNNotificationServiceExtension {
     
     lazy var mindboxService = MindboxNotificationService()
     
+    @MainActor
+    private func saveSwiftDataItem(_ pushNotificatoin: MBPushNotification) {
+        let context = SwiftDataManager.shared.container.mainContext
+        
+        //            context.container.deleteAllData()
+        
+        let newItem = Item(timestamp: Date(), pushNotification: pushNotificatoin)
+        
+        context.insert(newItem)
+        do {
+            try context.save()
+        } catch {
+            print("Failed to save context: \(error.localizedDescription)")
+        }
+    }
+    
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        print("HELLO WORLD MOTH")
+        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: request.content.userInfo),
+           Mindbox.shared.isMindboxPush(userInfo: request.content.userInfo) {
+            
+            Task {
+                await saveSwiftDataItem(mindboxPushNotification)
+            }
+        }
         mindboxService.didReceive(request, withContentHandler: contentHandler)
     }
     

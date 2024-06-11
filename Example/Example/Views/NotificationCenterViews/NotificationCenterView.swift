@@ -7,22 +7,38 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct NotificationCenterView: View {
     
     @State var showAlert = false
     var viewModel: NotificationCenterViewModelProtocol
     
+    @Environment(\.modelContext) private var modelContext
+    @Query private var items: [Item]
+    
     var body: some View {
         NavigationStack {
-            List(viewModel.notifications, id: \.uniqueKey) { notification in
-                NotificationCellView(notification: notification)
-                    .onTapGesture {
-                        viewModel.sendOperationNCPushOpen(notification: notification)
-                        showAlert = true
-                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                    }
+            List {
+                ForEach(items) { item in
+                    NotificationCellView(notification: item.mbPushNotification)
+                        .onTapGesture {
+                            viewModel.sendOperationNCPushOpen(notification: item.mbPushNotification)
+                            showAlert = true
+                            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                        }
+                        
+                }
             }
+            
+//            List(viewModel.notifications, id: \.uniqueKey) { notification in
+//                NotificationCellView(notification: notification)
+//                    .onTapGesture {
+//                        viewModel.sendOperationNCPushOpen(notification: notification)
+//                        showAlert = true
+//                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+//                    }
+//            }
         }
         .onAppear {
             viewModel.sendOperationNCOpen()
@@ -40,7 +56,6 @@ struct NotificationCenterView: View {
                 Button("OK", action: {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 })
-                
             }
     }
 }

@@ -24,6 +24,8 @@ protocol NotificationCenterViewModelProtocol: AnyObject {
     var lastTappedNotification: MBPushNotification?
     
     func sendOperationNCPushOpen(notification: MBPushNotification) {
+        print(notification.payload)
+        print(notification.decodedPayload)
         guard let dateTime = notification.decodedPayload?.pushDate,
               let translateName = notification.decodedPayload?.pushName else {
             print("Payload isn't valid for operation")

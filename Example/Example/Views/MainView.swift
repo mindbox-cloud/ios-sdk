@@ -27,6 +27,7 @@ struct MainView: View {
                             .foregroundColor(.mbView)
                         NavigationLink("Open Notification Center") {
                             NotificationCenterView(viewModel: NotificationCenterViewModel())
+                                .modelContainer(SwiftDataManager.shared.container)
                         }
                         .frame(maxWidth: 250)
                         .frame(maxHeight: 50)
