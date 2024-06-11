@@ -38,7 +38,7 @@ struct NotificationCenterView: View {
                         if let errorMessage = viewModel.errorMessage {
                             alertMessage = errorMessage
                         } else {
-                            alertMessage = "Operation NSPushOpen sent to Mindbox"
+                            alertMessage = "Operation NCPushOpen sent to Mindbox"
                         }
                         showAlert = true
                         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
