@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Payload: Codable {
+public struct Payload: Codable {
     var pushName: String
     var pushDate: String
 }

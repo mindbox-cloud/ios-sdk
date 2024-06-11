@@ -9,26 +9,6 @@
 import Mindbox
 import Foundation
 import UIKit
-import SwiftData
-
-public struct SwiftDataManager {
-    public static let shared = SwiftDataManager()
-    public var container: ModelContainer
-    
-    private init() {
-        let schema = Schema([
-            Item.self,
-        ])
-        
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        
-        do {
-            container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }
-}
 
 @main
 class AppDelegate: MindboxAppDelegate {
@@ -74,34 +54,6 @@ class AppDelegate: MindboxAppDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.list, .badge, .sound, .banner])
-        
-        //https://developers.mindbox.ru/docs/ios-sdk-methods
-        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: notification.request.content.userInfo),
-           Mindbox.shared.isMindboxPush(userInfo: notification.request.content.userInfo) {
-            
-            let context = SwiftDataManager.shared.container.mainContext
-            
-//            context.container.deleteAllData()
-            
-            let newItem = Item(timestamp: Date(), pushNotification: mindboxPushNotification)
-            
-            context.insert(newItem)
-            do {
-                try context.save()
-            } catch {
-                print("Failed to save context: \(error.localizedDescription)")
-            }
-            
-//            do {
-//                let result = try context.fetch(FetchDescriptor<Item>())
-//                print(result)
-//            }
-//            catch {
-//                print(error.localizedDescription)
-//            }
-            
-//            NotificationCenter.default.post(name: .MindboxPushNotificationExample, object: nil, userInfo: ["pushData": userInfo])
-        }
     }
     
     //https://developers.mindbox.ru/docs/ios-sdk-handle-tap

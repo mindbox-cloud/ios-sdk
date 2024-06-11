@@ -8,7 +8,7 @@
 
 import Mindbox
 
-extension MBPushNotification {
+public extension MBPushNotification {
     init?(jsonString: String) {
         guard let jsonData = jsonString.data(using: .utf8) else {
             return nil

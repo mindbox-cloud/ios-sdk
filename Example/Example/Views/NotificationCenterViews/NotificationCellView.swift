@@ -23,7 +23,7 @@ struct NotificationCellView: View {
                     ProgressView()
                 }
                 .frame(maxWidth: 64, maxHeight: 64)
-                .clipShape(Capsule())
+                .clipShape(Circle())
             }
             
             VStack(alignment: .leading, content: {
@@ -32,17 +32,10 @@ struct NotificationCellView: View {
                 Text(notification.aps?.alert?.body ?? "Empty")
                     .font(.subheadline)
                     .foregroundStyle(.gray)
-                
-                if let pushLink = notification.clickUrl {
-                    Text(pushLink)
-                        .font(.footnote)
-                        .foregroundStyle(.blue)
-                }
+                Text(notification.clickUrl ?? "Empty")
+                    .font(.footnote)
+                    .foregroundStyle(.blue)
             })
         })
     }
-}
-
-#Preview {
-    NotificationCellView(notification: NotificationCenterViewModel().notifications.first!)
 }

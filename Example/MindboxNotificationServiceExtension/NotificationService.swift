@@ -8,8 +8,6 @@
 
 import UserNotifications
 import MindboxNotifications
-
-import Example
 import Mindbox
 
 class NotificationService: UNNotificationServiceExtension {
@@ -17,11 +15,9 @@ class NotificationService: UNNotificationServiceExtension {
     lazy var mindboxService = MindboxNotificationService()
     
     @MainActor
-    private func saveSwiftDataItem(_ pushNotificatoin: MBPushNotification) {
+    private func saveSwiftDataItem(_ pushNotificatoin: MBPushNotification) async {
         let context = SwiftDataManager.shared.container.mainContext
-        
-        //            context.container.deleteAllData()
-        
+
         let newItem = Item(timestamp: Date(), pushNotification: pushNotificatoin)
         
         context.insert(newItem)
@@ -33,14 +29,12 @@ class NotificationService: UNNotificationServiceExtension {
     }
     
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
-        print("HELLO WORLD MOTH")
-        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: request.content.userInfo),
-           Mindbox.shared.isMindboxPush(userInfo: request.content.userInfo) {
-            
+        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: request.content.userInfo) {
             Task {
                 await saveSwiftDataItem(mindboxPushNotification)
             }
         }
+        
         mindboxService.didReceive(request, withContentHandler: contentHandler)
     }
     
