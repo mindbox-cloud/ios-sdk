@@ -24,6 +24,12 @@ protocol NotificationCenterViewModelProtocol: AnyObject {
     
     func sendOperationNCPushOpen(notification: MBPushNotification) {
         lastTappedNotification = notification
+        
+        /*Assuming payload of push notification has this structure:
+         {
+         "pushName":"<Push name>",
+         "pushDate":"<Push date>"
+         }*/
         guard let dateTime = notification.decodedPayload?.pushDate,
               let translateName = notification.decodedPayload?.pushName else {
             errorMessage = "Payload isn't valid for operation"
@@ -47,6 +53,7 @@ protocol NotificationCenterViewModelProtocol: AnyObject {
         let operationName = "mobileapp.NCPushOpen"
         
         Mindbox.shared.executeAsyncOperation(operationSystemName: operationName, json: json)
+        
         errorMessage = nil
     }
     
