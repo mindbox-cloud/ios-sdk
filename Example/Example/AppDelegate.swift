@@ -63,6 +63,7 @@ class AppDelegate: MindboxAppDelegate {
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         //https://developers.mindbox.ru/docs/ios-sdk-methods
+        print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo))")
         if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: response.notification.request.content.userInfo),
            Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo),
            let uniqueKey = mindboxPushNotification.uniqueKey {
