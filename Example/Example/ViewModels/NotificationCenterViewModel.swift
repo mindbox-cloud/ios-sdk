@@ -7,6 +7,7 @@
 //
 
 import Mindbox
+import Observation
 
 protocol NotificationCenterViewModelProtocol: AnyObject {
     var lastTappedNotification: MBPushNotification? { get }

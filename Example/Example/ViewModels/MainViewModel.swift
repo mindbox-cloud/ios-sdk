@@ -7,6 +7,7 @@
 //
 
 import Mindbox
+import Observation
 
 @Observable final class MainViewModel {
     
