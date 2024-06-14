@@ -3,17 +3,17 @@
 //  Example
 //
 //  Created by Дмитрий Ерофеев on 29.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import Foundation
 import Mindbox
-import UIKit
+import Observation
 
-class MainViewModel: ObservableObject {
+@Observable final class MainViewModel {
     
-    @Published var SDKVersion: String = ""
-    @Published var deviceUUID: String = ""
-    @Published var APNSToken: String = ""
+    var SDKVersion: String = ""
+    var deviceUUID: String = ""
+    var APNSToken: String = ""
     
     //https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
@@ -66,7 +66,3 @@ class MainViewModel: ObservableObject {
         Mindbox.shared.executeAsyncOperation(operationSystemName: "APIMethodForReleaseExampleIos", json: json)
     }
 }
-
-
-
-

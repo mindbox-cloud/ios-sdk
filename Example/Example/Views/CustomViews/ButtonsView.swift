@@ -3,6 +3,7 @@
 //  Example
 //
 //  Created by Дмитрий Ерофеев on 29.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import SwiftUI
@@ -23,7 +24,7 @@ struct ButtonsViewline: View {
             .frame(width: 120)
             .frame(height: 30)
             .background(Color.mbGreen)
-            .cornerRadius(10)
+            .cornerRadius(16)
             .tint(.white)
         }
     }
@@ -31,7 +32,7 @@ struct ButtonsViewline: View {
 
 struct ButtonsView: View {
     
-    @ObservedObject var viewModel: MainViewModel
+    var viewModel: MainViewModel
     
     var body: some View {
         ZStack {
