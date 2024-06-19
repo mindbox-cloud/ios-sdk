@@ -48,9 +48,6 @@ public class MindboxNotificationService: NSObject {
         pushDelivered(request)
 
         Logger.common(message: "Push notification UniqueKey: \(request.identifier)", level: .info, category: .notification)
-        
-        print("didReceive info")
-        print(request.content.userInfo)
 
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
