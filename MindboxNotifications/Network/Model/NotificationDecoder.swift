@@ -31,7 +31,7 @@ struct NotificationDecoder<T: Codable> {
     }
     
     init?(userInfo: [AnyHashable: Any]) {
-        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
             self.userInfo = innerUserInfo
         } else {
             self.userInfo = userInfo

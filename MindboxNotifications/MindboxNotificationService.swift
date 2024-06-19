@@ -48,6 +48,9 @@ public class MindboxNotificationService: NSObject {
         pushDelivered(request)
 
         Logger.common(message: "Push notification UniqueKey: \(request.identifier)", level: .info, category: .notification)
+        
+        print("didReceive info")
+        print(request.content.userInfo)
 
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -197,7 +200,7 @@ public class MindboxNotificationService: NSObject {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
             return nil
         }
-        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
             Logger.common(message: "MindboxNotificationService: userInfo: \(innerUserInfo), userInfo.keys.count: \(userInfo.keys.count), innerUserInfo: \(innerUserInfo)", level: .info, category: .notification)
             return innerUserInfo
         } else {

@@ -34,15 +34,16 @@ struct NotificationDecoder<T: Codable> {
     init(userInfo: [AnyHashable: Any]) throws {
         if let jsonData = try? JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted),
            let jsonString = String(data: jsonData, encoding: .utf8) {
-            Logger.common(message:"NotificationDecoder JSON: \(jsonString)")
+            Logger.common(message: "NotificationDecoder JSON: \(jsonString)")
         } else {
-            Logger.common(message:"NotificationDecoder: Unable to serialize userInfo to JSON", level: .error)
+            Logger.common(message: "NotificationDecoder: Unable to serialize userInfo to JSON", level: .error)
         }
         
-        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
             self.userInfo = innerUserInfo
         } else {
             self.userInfo = userInfo
+            Logger.common(message: "Couldn't find aps key in userInfo")
         }
     }
     
