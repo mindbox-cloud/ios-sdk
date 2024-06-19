@@ -39,11 +39,12 @@ struct NotificationDecoder<T: Codable> {
             Logger.common(message: "NotificationDecoder: Unable to serialize userInfo to JSON", level: .error)
         }
         
-        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any], innerUserInfo["uniqueKey"] != nil {
             self.userInfo = innerUserInfo
+            Logger.common(message: "Old Push Notification format with one big aps object")
         } else {
             self.userInfo = userInfo
-            Logger.common(message: "Couldn't find aps key in userInfo")
+            Logger.common(message: "New Push Notification format with multiple keys")
         }
     }
     
