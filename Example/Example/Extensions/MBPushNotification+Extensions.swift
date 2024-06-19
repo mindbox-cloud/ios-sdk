@@ -7,6 +7,7 @@
 //
 
 import Mindbox
+import Foundation
 
 public extension MBPushNotification {
     init?(jsonString: String) {

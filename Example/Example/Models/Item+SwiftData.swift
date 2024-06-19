@@ -6,6 +6,7 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
+import Foundation
 import Mindbox
 import SwiftData
 
