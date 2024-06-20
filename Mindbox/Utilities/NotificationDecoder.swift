@@ -41,10 +41,10 @@ struct NotificationDecoder<T: Codable> {
         
         if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any], innerUserInfo["uniqueKey"] != nil {
             self.userInfo = innerUserInfo
-            Logger.common(message: "Old Push Notification format with one big aps object")
+            Logger.common(message: "Push Notification format with one big aps object")
         } else {
             self.userInfo = userInfo
-            Logger.common(message: "New Push Notification format with multiple keys")
+            Logger.common(message: "Push Notification format with multiple keys")
         }
     }
     
