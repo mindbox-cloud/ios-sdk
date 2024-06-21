@@ -64,9 +64,6 @@ extension MBContainer {
 //        }
 //        
 //        
-//        register(SDKVersionValidator.self) {
-//            SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
-//        }
 //        
 //        register(GuaranteedDeliveryManager.self, scope: .container) {
 //            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)

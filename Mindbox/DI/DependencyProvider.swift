@@ -21,7 +21,6 @@ final class DependencyProvider: DependencyContainer {
     let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
-    let sdkVersionValidator: SDKVersionValidator
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
@@ -52,7 +51,6 @@ final class DependencyProvider: DependencyContainer {
         sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
 
-        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
@@ -81,7 +79,7 @@ final class DependencyProvider: DependencyContainer {
         frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
                                                  frequencyValidator: frequencyValidator)
         
         ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)

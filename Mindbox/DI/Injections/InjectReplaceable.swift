@@ -23,6 +23,10 @@ extension MBContainer {
             UNAuthorizationStatusProvider()
         }
         
+        register(SDKVersionValidator.self) {
+            SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
+        }
+        
         return self
     }
 }

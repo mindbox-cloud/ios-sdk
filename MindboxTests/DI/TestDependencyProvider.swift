@@ -21,7 +21,6 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     var inappMessageEventSender: InappMessageEventSender
-    let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
@@ -52,7 +51,6 @@ final class TestDependencyProvider: DependencyContainer {
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-        sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 8)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
@@ -79,7 +77,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: sdkVersionValidator, 
+                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
                                                  frequencyValidator: frequencyValidator)
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }

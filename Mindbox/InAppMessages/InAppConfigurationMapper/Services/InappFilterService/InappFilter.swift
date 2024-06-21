@@ -52,7 +52,6 @@ final class InappsFilterService: InappFilterProtocol {
 private extension InappsFilterService {
     func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
         let inapps = inapps
-//        let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
         let filteredInapps = inapps.filter {
             sdkVersionValidator.isValid(item: $0.sdkVersion)
         }
