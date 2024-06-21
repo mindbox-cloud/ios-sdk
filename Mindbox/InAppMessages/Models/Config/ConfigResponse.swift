@@ -25,6 +25,7 @@ struct ConfigResponse: Decodable {
         monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
         settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
         
+//        let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
         if let decodedAbtests: [ABTest] = ConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
            decodedAbtests.allSatisfy({
                ABTestValidator(sdkVersionValidator: SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)).isValid(item: $0)

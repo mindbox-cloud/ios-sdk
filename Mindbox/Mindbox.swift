@@ -517,7 +517,7 @@ public class Mindbox: NSObject {
      - Returns: A Boolean value indicating whether the notification is related to Mindbox.
     */
     public func isMindboxPush(userInfo: [AnyHashable: Any]) -> Bool {
-        let pushValidator = container.injectOrFail(MindboxPushValidator.self)
+        let pushValidator = DI.injectOrFail(MindboxPushValidator.self)
         return pushValidator.isValid(item: userInfo)
     }
     
@@ -571,7 +571,7 @@ public class Mindbox: NSObject {
             trackVisitManager: containerOLD.instanceFactory.makeTrackVisitManager(),
             sessionManager: containerOLD.sessionManager,
             inAppMessagesManager: containerOLD.inAppMessagesManager,
-            uuidDebugService: container.injectOrFail(UUIDDebugService.self),
+            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
             userVisitManager: containerOLD.userVisitManager
         )
     }

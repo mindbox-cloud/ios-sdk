@@ -52,7 +52,7 @@ final class InappsFilterService: InappFilterProtocol {
 private extension InappsFilterService {
     func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
         let inapps = inapps
-
+        let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
         let filteredInapps = inapps.filter {
             sdkVersionValidator.isValid(item: $0.sdkVersion)
         }
@@ -91,7 +91,7 @@ private extension InappsFilterService {
         }
         
         var result: [InApp] = responseInapps
-        let abTestDeviceMixer = container.injectOrFail(ABTestDeviceMixer.self)
+        let abTestDeviceMixer = DI.injectOrFail(ABTestDeviceMixer.self)
         
         for abTest in abTests {
             guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
