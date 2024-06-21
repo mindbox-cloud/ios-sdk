@@ -17,7 +17,7 @@ class MBContainer {
     private var factories: [String: (ObjectScope, () -> Any)] = [:]
     private var singletons: [String: Any] = [:]
     
-    func register<T>(_ type: T.Type, scope: ObjectScope, factory: @escaping () -> T) {
+    func register<T>(_ type: T.Type, scope: ObjectScope = .container, factory: @escaping () -> T) {
         let key = String(describing: type)
         factories[key] = (scope, factory)
     }
