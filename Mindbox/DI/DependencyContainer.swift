@@ -25,7 +25,6 @@ protocol DependencyContainer {
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }
-    var abTestDeviceMixer: ABTestDeviceMixer { get }
     var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
     var pushValidator: MindboxPushValidator { get }

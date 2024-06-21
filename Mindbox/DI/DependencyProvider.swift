@@ -27,7 +27,6 @@ final class DependencyProvider: DependencyContainer {
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
-    var abTestDeviceMixer: ABTestDeviceMixer
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var pushValidator: MindboxPushValidator
@@ -65,7 +64,6 @@ final class DependencyProvider: DependencyContainer {
                                                  targetingChecker: inAppTargetingChecker)
         let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
-        abTestDeviceMixer = ABTestDeviceMixer()
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
         let actionUseCaseFactory = ActionUseCaseFactory(tracker: tracker)
@@ -88,7 +86,6 @@ final class DependencyProvider: DependencyContainer {
 
         frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-                                                 abTestDeviceMixer: abTestDeviceMixer,
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
