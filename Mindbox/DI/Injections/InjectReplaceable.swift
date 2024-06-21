@@ -19,6 +19,10 @@ extension MBContainer {
             )
         }
         
+        register(UNAuthorizationStatusProviding.self, scope: .transient) {
+            UNAuthorizationStatusProvider()
+        }
+        
         return self
     }
 }

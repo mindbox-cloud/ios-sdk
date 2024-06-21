@@ -16,7 +16,6 @@ final class DependencyProvider: DependencyContainer {
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
-    let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     let inAppTargetingChecker: InAppTargetingChecker
@@ -51,7 +50,6 @@ final class DependencyProvider: DependencyContainer {
             databaseRepository: databaseRepository,
             eventRepository: instanceFactory.makeEventRepository()
         )
-        authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
 

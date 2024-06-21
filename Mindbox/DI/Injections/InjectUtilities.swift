@@ -63,9 +63,6 @@ extension MBContainer {
 //            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
 //        }
 //        
-//        register(UNAuthorizationStatusProviding.self) {
-//            UNAuthorizationStatusProvider()
-//        }
 //        
 //        register(SDKVersionValidator.self) {
 //            SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
