@@ -13,11 +13,13 @@ class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
     var containerrrr: DependencyContainer!
+    var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
         super.setUp()
         containerrrr = try! TestDependencyProvider()
-        containerrrr.persistenceStorage.reset()
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.reset()
         try! containerrrr.databaseRepository.erase()
         Mindbox.shared.assembly(with: containerrrr)
         let timer = DI.injectOrFail(TimerManager.self)

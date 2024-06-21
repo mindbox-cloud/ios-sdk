@@ -15,6 +15,7 @@ enum TestConfiguration {
             let container = MBContainer()
             return container
                 .registerUtilitiesServices()
+                .registerABTestUtilities()
                 .registerMocks()
         }
         

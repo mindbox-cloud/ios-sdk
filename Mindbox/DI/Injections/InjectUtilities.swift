@@ -14,12 +14,6 @@ extension MBContainer {
             MBUtilitiesFetcher()
         }
 //
-//        register(PersistenceStorage.self) {
-//            let utilitiesFetcher = container.injectOrFail(UtilitiesFetcher.self)
-//            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
-//            return MBPersistenceStorage(defaults: defaults)
-//        }
-//
         register(TimerManager.self) {
             TimerManager()
         }

@@ -19,7 +19,7 @@ class InappFrequencyTests: XCTestCase {
         super.setUp()
         container = try! TestDependencyProvider()
         validator = container.frequencyValidator
-        persistenceStorage = container.persistenceStorage
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownInappsDictionary = [:]
     }
     

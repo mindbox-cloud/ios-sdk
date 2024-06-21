@@ -16,10 +16,12 @@ class MindboxTests: XCTestCase {
     var container: DependencyContainer!
     var coreController: CoreController!
     var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
+    var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
         container = try! TestDependencyProvider()
-        container.persistenceStorage.reset()
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.reset()
         try! container.databaseRepository.erase()
         Mindbox.shared.assembly(with: container)
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
@@ -32,7 +34,7 @@ class MindboxTests: XCTestCase {
 
     func testInitialization() {
         coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
@@ -50,7 +52,7 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertTrue(persistenceStorage.isInstalled)
         var deviceUUID: String?
         Mindbox.shared.getDeviceUUID { value in
             deviceUUID = value
@@ -63,8 +65,8 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
-        XCTAssertNotNil(container.persistenceStorage.apnsToken)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
         var deviceUUID2: String?
         Mindbox.shared.getDeviceUUID { value in
             deviceUUID2 = value
@@ -72,10 +74,10 @@ class MindboxTests: XCTestCase {
         XCTAssertNotNil(deviceUUID2)
         XCTAssert(deviceUUID == deviceUUID2)
 
-        container.persistenceStorage.reset()
+        persistenceStorage.reset()
         try! container.databaseRepository.erase()
         coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
@@ -95,8 +97,8 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
-        XCTAssertNotNil(container.persistenceStorage.apnsToken)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
     }
 
     func testGetDeviceUUID() {

@@ -17,7 +17,7 @@ class InappTTLTests: XCTestCase {
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        persistenceStorage = container.persistenceStorage
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         service = container.ttlValidationService
     }
     

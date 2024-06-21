@@ -13,13 +13,15 @@ class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
     var container: DependencyContainer!
     var controllerQueue: DispatchQueue!
+    var persistenceStorage: PersistenceStorage!
     
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         controllerQueue = DispatchQueue(label: "test-core-controller-queue")
         coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
@@ -30,7 +32,7 @@ class EventRepositoryTestCase: XCTestCase {
             controllerQueue: controllerQueue,
             userVisitManager: container.userVisitManager
         )
-        container.persistenceStorage.reset()
+        persistenceStorage.reset()
         try! container.databaseRepository.erase()
     }
     
