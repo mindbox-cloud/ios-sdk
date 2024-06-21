@@ -27,7 +27,6 @@ protocol DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol { get }
     var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
-    var pushValidator: MindboxPushValidator { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
     var userVisitManager: UserVisitManagerProtocol { get }
     var ttlValidationService: TTLValidationProtocol { get }
