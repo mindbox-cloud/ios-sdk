@@ -272,11 +272,13 @@ final class CoreController {
                 }
             }
         }
-
-        TimerManager.shared.configurate(trackEvery: 20 * 60) {
+        
+        let timer = container.injectOrFail(TimerManager.self)
+        timer.configurate(trackEvery: 20 * 60) {
             Logger.common(message: "Scheduled Time tracker started")
             sessionManager.trackForeground()
         }
-        TimerManager.shared.setupTimer()
+        
+        timer.setupTimer()
     }
 }
