@@ -14,15 +14,10 @@ enum TestConfiguration {
         MBInject.buildTestContainer = {
             let container = MBContainer()
             return container
+                .registerUtilitiesServices()
                 .registerMocks()
         }
         
         MBInject.mode = .test
-    }
-}
-
-fileprivate extension MBContainer {
-    func registerMocks() -> Self {
-        return self
     }
 }

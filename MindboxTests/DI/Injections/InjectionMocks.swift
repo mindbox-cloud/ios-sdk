@@ -1,5 +1,5 @@
 //
-//  XCTestCase+Extensions.swift
+//  InjectionMocks.swift
 //  MindboxTests
 //
 //  Created by vailence on 21.06.2024.
@@ -7,12 +7,10 @@
 //
 
 import Foundation
-import XCTest
 @testable import Mindbox
 
-extension XCTestCase {
-    open override func setUp() {
-        super.setUp()
-        TestConfiguration.configure()
+extension MBContainer {
+    func registerMocks() -> Self {
+        return self
     }
 }
