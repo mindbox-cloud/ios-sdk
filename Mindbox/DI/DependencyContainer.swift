@@ -14,7 +14,6 @@ protocol DependencyContainer {
     var databaseLoader: DataBaseLoader { get }
     var databaseRepository: MBDatabaseRepository { get }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
-    var authorizationStatusProvider: UNAuthorizationStatusProviding { get }
     var instanceFactory: InstanceFactory { get }
     var sessionManager: SessionManager { get }
     var inAppTargetingChecker: InAppTargetingChecker { get }

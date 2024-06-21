@@ -21,7 +21,6 @@ class EventRepositoryTestCase: XCTestCase {
         coreController = CoreController(
             persistenceStorage: container.persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
-            notificationStatusProvider: container.authorizationStatusProvider,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: container.instanceFactory.makeTrackVisitManager(),

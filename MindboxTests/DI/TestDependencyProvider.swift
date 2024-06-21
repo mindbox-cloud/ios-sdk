@@ -18,7 +18,6 @@ final class TestDependencyProvider: DependencyContainer {
     let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
-    let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     var inappMessageEventSender: InappMessageEventSender
@@ -50,7 +49,6 @@ final class TestDependencyProvider: DependencyContainer {
             databaseRepository: databaseRepository,
             eventRepository: instanceFactory.makeEventRepository()
         )
-        authorizationStatusProvider = MockUNAuthorizationStatusProvider(status: .authorized)
         sessionManager = MockSessionManager()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManagerMock()

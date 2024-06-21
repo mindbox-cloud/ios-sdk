@@ -15,6 +15,10 @@ extension MBContainer {
             MockUUIDDebugService()
         }
         
+        register(UNAuthorizationStatusProviding.self, scope: .transient) {
+            MockUNAuthorizationStatusProvider(status: .authorized)
+        }
+        
         return self
     }
 }

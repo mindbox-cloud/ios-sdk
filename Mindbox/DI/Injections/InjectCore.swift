@@ -15,7 +15,6 @@ extension MBContainer {
 //            return CoreController(
 //                persistenceStorage: container.injectOrFail(PersistenceStorage.self),
 //                utilitiesFetcher: container.injectOrFail(UtilitiesFetcher.self),
-//                notificationStatusProvider: container.injectOrFail(UNAuthorizationStatusProviding.self),
 //                databaseRepository: container.injectOrFail(MBDatabaseRepository.self),
 //                guaranteedDeliveryManager: container.injectOrFail(GuaranteedDeliveryManager.self),
 //                trackVisitManager: instanceFactory.makeTrackVisitManager(),

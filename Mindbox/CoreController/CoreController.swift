@@ -13,7 +13,6 @@ import MindboxLogger
 final class CoreController {
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
-    private let notificationStatusProvider: UNAuthorizationStatusProviding
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
@@ -92,6 +91,7 @@ final class CoreController {
 
     // MARK: - Private
     private func notificationStatus() -> Bool {
+        let notificationStatusProvider = container.injectOrFail(UNAuthorizationStatusProviding.self)
         let lock = DispatchSemaphore(value: 0)
         var isNotificationsEnabled = false
         notificationStatusProvider.getStatus {
@@ -240,7 +240,6 @@ final class CoreController {
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
-        notificationStatusProvider: UNAuthorizationStatusProviding,
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         trackVisitManager: TrackVisitManager,
@@ -252,7 +251,6 @@ final class CoreController {
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
-        self.notificationStatusProvider = notificationStatusProvider
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager

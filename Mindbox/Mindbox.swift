@@ -38,7 +38,6 @@ public class Mindbox: NSObject {
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
-    private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
@@ -559,7 +558,6 @@ public class Mindbox: NSObject {
         persistenceStorage = containerOLD.persistenceStorage
         utilitiesFetcher = containerOLD.utilitiesFetcher
         guaranteedDeliveryManager = containerOLD.guaranteedDeliveryManager
-        notificationStatusProvider = containerOLD.authorizationStatusProvider
         databaseRepository = containerOLD.databaseRepository
         inAppMessagesManager = containerOLD.inAppMessagesManager
         inAppMessagesDelegate = self
@@ -568,7 +566,6 @@ public class Mindbox: NSObject {
         coreController = CoreController(
             persistenceStorage: containerOLD.persistenceStorage,
             utilitiesFetcher: containerOLD.utilitiesFetcher,
-            notificationStatusProvider: containerOLD.authorizationStatusProvider,
             databaseRepository: containerOLD.databaseRepository,
             guaranteedDeliveryManager: containerOLD.guaranteedDeliveryManager,
             trackVisitManager: containerOLD.instanceFactory.makeTrackVisitManager(),
