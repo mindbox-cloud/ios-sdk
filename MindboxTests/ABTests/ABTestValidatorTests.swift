@@ -11,7 +11,6 @@ import XCTest
 
 class ABTestValidatorTests: XCTestCase {
     
-    var sdkVersionValidator: SDKVersionValidator!
     var validator: ABTestValidator!
     
     struct TestCase {
@@ -23,8 +22,7 @@ class ABTestValidatorTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
-        validator = ABTestValidator(sdkVersionValidator: sdkVersionValidator)
+        validator = DI.injectOrFail(ABTestValidator.self)
         
         let modulus = ABTest.ABTestVariant.Modulus(lower: 0, upper: 100)
         let abObject = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
@@ -113,7 +111,6 @@ class ABTestValidatorTests: XCTestCase {
     }
     
     override func tearDown() {
-        sdkVersionValidator = nil
         validator = nil
         testCases = []
         super.tearDown()
