@@ -19,7 +19,6 @@ protocol DependencyContainer {
     var inAppTargetingChecker: InAppTargetingChecker { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
-    var sdkVersionValidator: SDKVersionValidator { get }
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }

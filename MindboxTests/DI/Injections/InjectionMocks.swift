@@ -19,6 +19,10 @@ extension MBContainer {
             MockUNAuthorizationStatusProvider(status: .authorized)
         }
         
+        register(SDKVersionValidator.self) {
+            SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
+        }
+        
         return self
     }
 }
