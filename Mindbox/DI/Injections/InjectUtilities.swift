@@ -19,15 +19,6 @@ extension MBContainer {
 //            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
 //            return MBPersistenceStorage(defaults: defaults)
 //        }
-
-        register(ABTestDeviceMixer.self, scope: .transient) {
-            ABTestDeviceMixer()
-        }
-        
-        register(ABTestValidator.self, scope: .transient) {
-            let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
-            return ABTestValidator(sdkVersionValidator: sdkVersionValidator)
-        }
 //
         register(TimerManager.self) {
             TimerManager()
