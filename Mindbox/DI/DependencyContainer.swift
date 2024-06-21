@@ -23,7 +23,6 @@ protocol DependencyContainer {
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
     var imageDownloadService: ImageDownloadServiceProtocol { get }
-    var urlExtractorService: VariantImageUrlExtractorService { get }
     var inappFilterService: InappFilterProtocol { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
     var userVisitManager: UserVisitManagerProtocol { get }

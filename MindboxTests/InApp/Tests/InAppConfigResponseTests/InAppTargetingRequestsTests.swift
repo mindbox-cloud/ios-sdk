@@ -34,7 +34,6 @@ class InAppTargetingRequestsTests: XCTestCase {
 
         mapper = InAppConfigutationMapper(inappFilterService: container.inappFilterService,
                                           targetingChecker: targetingChecker,
-                                          urlExtractorService: container.urlExtractorService,
                                           dataFacade: mockDataFacade)
     }
     
