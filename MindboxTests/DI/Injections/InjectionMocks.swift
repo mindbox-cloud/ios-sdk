@@ -11,6 +11,10 @@ import Foundation
 
 extension MBContainer {
     func registerMocks() -> Self {
+        register(UUIDDebugService.self) {
+            MockUUIDDebugService()
+        }
+        
         return self
     }
 }

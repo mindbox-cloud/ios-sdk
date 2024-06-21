@@ -574,7 +574,7 @@ public class Mindbox: NSObject {
             trackVisitManager: containerOLD.instanceFactory.makeTrackVisitManager(),
             sessionManager: containerOLD.sessionManager,
             inAppMessagesManager: containerOLD.inAppMessagesManager,
-            uuidDebugService: containerOLD.uuidDebugService,
+            uuidDebugService: container.injectOrFail(UUIDDebugService.self),
             userVisitManager: containerOLD.userVisitManager
         )
     }
