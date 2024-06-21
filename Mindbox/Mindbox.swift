@@ -555,7 +555,7 @@ public class Mindbox: NSObject {
     }
 
     func assembly(with containerOLD: DependencyContainer) {
-        persistenceStorage = containerOLD.persistenceStorage
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         utilitiesFetcher = containerOLD.utilitiesFetcher
         guaranteedDeliveryManager = containerOLD.guaranteedDeliveryManager
         databaseRepository = containerOLD.databaseRepository
@@ -564,7 +564,7 @@ public class Mindbox: NSObject {
         inappMessageEventSender = containerOLD.inappMessageEventSender
 
         coreController = CoreController(
-            persistenceStorage: containerOLD.persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             utilitiesFetcher: containerOLD.utilitiesFetcher,
             databaseRepository: containerOLD.databaseRepository,
             guaranteedDeliveryManager: containerOLD.guaranteedDeliveryManager,

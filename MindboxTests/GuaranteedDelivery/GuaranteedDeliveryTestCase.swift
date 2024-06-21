@@ -26,7 +26,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         container = try! TestDependencyProvider()
         databaseRepository = container.databaseRepository
         guaranteedDeliveryManager = container.guaranteedDeliveryManager
-        persistenceStorage = container.persistenceStorage
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
         isDelivering = guaranteedDeliveryManager.state.isDelivering
         
@@ -57,7 +57,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     func testDeliverMultipleEvents() {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
             eventRepository: container.instanceFactory.makeEventRepository(),
             retryDeadline: retryDeadline
@@ -109,7 +109,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     func testScheduleByTimer() {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
             eventRepository: container.instanceFactory.makeEventRepository(),
             retryDeadline: retryDeadline
@@ -155,7 +155,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: container.persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
             eventRepository: container.instanceFactory.makeEventRepository(),
             retryDeadline: retryDeadline

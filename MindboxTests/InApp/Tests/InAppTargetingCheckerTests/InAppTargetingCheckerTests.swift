@@ -20,7 +20,7 @@ final class InAppTargetingCheckerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        storage = container.persistenceStorage
+        storage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = container.inAppTargetingChecker
         targetingChecker.geoModels = InAppGeoResponse(city: 123, region: 456, country: 789)
     }

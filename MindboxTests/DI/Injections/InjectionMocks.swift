@@ -23,6 +23,10 @@ extension MBContainer {
             SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         }
         
+        register(PersistenceStorage.self) {
+            MockPersistenceStorage()
+        }
+        
         return self
     }
 }

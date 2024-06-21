@@ -27,6 +27,12 @@ extension MBContainer {
             SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
         }
         
+        register(PersistenceStorage.self) {
+            let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
+            return MBPersistenceStorage(defaults: defaults)
+        }
+        
         return self
     }
 }
