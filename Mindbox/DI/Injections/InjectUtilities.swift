@@ -32,9 +32,9 @@ extension MBContainer {
 //            UserVisitManager(persistenceStorage: container.inject(PersistenceStorage.self)!)
 //        }
 //        
-//        register(MindboxPushValidator.self) {
-//            MindboxPushValidator()
-//        }
+        register(MindboxPushValidator.self, scope: .transient) {
+            MindboxPushValidator()
+        }
 //        
 //        register(UUIDDebugService.self, scope: .container) {
 //            PasteboardUUIDDebugService(

@@ -29,7 +29,6 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
-    var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
@@ -88,7 +87,6 @@ final class TestDependencyProvider: DependencyContainer {
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: sdkVersionValidator, 
                                                  frequencyValidator: frequencyValidator)
-        pushValidator = MindboxPushValidator()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }

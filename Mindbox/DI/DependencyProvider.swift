@@ -29,7 +29,6 @@ final class DependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
-    var pushValidator: MindboxPushValidator
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
@@ -119,7 +118,6 @@ final class DependencyProvider: DependencyContainer {
             pasteboard: UIPasteboard.general
         )
         
-        pushValidator = MindboxPushValidator()
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
