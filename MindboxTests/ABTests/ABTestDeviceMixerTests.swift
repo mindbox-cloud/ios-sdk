@@ -15,7 +15,7 @@ final class ABTestDeviceMixerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        sut = ABTestDeviceMixer()
+        sut = container.injectOrFail(ABTestDeviceMixer.self)
     }
 
     override func tearDown() {
