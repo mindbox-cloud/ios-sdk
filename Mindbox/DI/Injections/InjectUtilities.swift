@@ -24,9 +24,9 @@ extension MBContainer {
             ABTestDeviceMixer()
         }
 //
-//        register(TimerManager.self) {
-//            TimerManager()
-//        }
+        register(TimerManager.self) {
+            TimerManager()
+        }
 //
 //        register(UserVisitManagerProtocol.self, scope: .container) {
 //            UserVisitManager(persistenceStorage: container.inject(PersistenceStorage.self)!)
