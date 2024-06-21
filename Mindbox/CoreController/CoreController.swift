@@ -147,7 +147,6 @@ final class CoreController {
 
     private func startUUIDDebugServiceIfNeeded(deviceUUID: String, configuration: MBConfiguration) {
         guard configuration.uuidDebugEnabled else { return }
-
         uuidDebugService.start(with: deviceUUID)
     }
 

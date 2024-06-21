@@ -496,6 +496,7 @@
 		F3FEEAA42C25B765000E9D0F /* InjectUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEAA32C25B765000E9D0F /* InjectUtilities.swift */; };
 		F3FEEAA62C25CB2E000E9D0F /* XCTestCase+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEAA52C25CB2E000E9D0F /* XCTestCase+Extensions.swift */; };
 		F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEAA82C25CC9F000E9D0F /* InjectionMocks.swift */; };
+		F3FEEAAB2C25D874000E9D0F /* InjectReplaceable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEAAA2C25D874000E9D0F /* InjectReplaceable.swift */; };
 		F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */; };
 /* End PBXBuildFile section */
 
@@ -1034,6 +1035,7 @@
 		F3FEEAA32C25B765000E9D0F /* InjectUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectUtilities.swift; sourceTree = "<group>"; };
 		F3FEEAA52C25CB2E000E9D0F /* XCTestCase+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTestCase+Extensions.swift"; sourceTree = "<group>"; };
 		F3FEEAA82C25CC9F000E9D0F /* InjectionMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionMocks.swift; sourceTree = "<group>"; };
+		F3FEEAAA2C25D874000E9D0F /* InjectReplaceable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectReplaceable.swift; sourceTree = "<group>"; };
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -2804,6 +2806,7 @@
 			children = (
 				F3FEEAA12C25B55C000E9D0F /* InjectCore.swift */,
 				F3FEEAA32C25B765000E9D0F /* InjectUtilities.swift */,
+				F3FEEAAA2C25D874000E9D0F /* InjectReplaceable.swift */,
 			);
 			path = Injections;
 			sourceTree = "<group>";
@@ -3276,6 +3279,7 @@
 				334F3AF5264C199900A6AC00 /* CodableDictionary.swift in Sources */,
 				F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */,
 				334F3AF3264C199900A6AC00 /* AreaRequest.swift in Sources */,
+				F3FEEAAB2C25D874000E9D0F /* InjectReplaceable.swift in Sources */,
 				33B1C976265B910F00E293F8 /* SwiftyJSON.swift in Sources */,
 				F397EEAD2A4456C300D48CEC /* ProtocolError.swift in Sources */,
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,

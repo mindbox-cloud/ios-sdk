@@ -21,7 +21,6 @@ final class DependencyProvider: DependencyContainer {
     let instanceFactory: InstanceFactory
     let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
-    let uuidDebugService: UUIDDebugService
     var inappMessageEventSender: InappMessageEventSender
     let sdkVersionValidator: SDKVersionValidator
     let geoService: GeoServiceProtocol
@@ -111,12 +110,6 @@ final class DependencyProvider: DependencyContainer {
             persistenceStorage: persistenceStorage
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-
-        uuidDebugService = PasteboardUUIDDebugService(
-            notificationCenter: NotificationCenter.default,
-            currentDateProvider: { return Date() },
-            pasteboard: UIPasteboard.general
-        )
         
         userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }

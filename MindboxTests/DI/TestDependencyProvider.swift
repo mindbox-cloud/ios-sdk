@@ -21,7 +21,6 @@ final class TestDependencyProvider: DependencyContainer {
     let authorizationStatusProvider: UNAuthorizationStatusProviding
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
-    let uuidDebugService: UUIDDebugService
     var inappMessageEventSender: InappMessageEventSender
     let sdkVersionValidator: SDKVersionValidator
     var geoService: GeoServiceProtocol
@@ -55,7 +54,6 @@ final class TestDependencyProvider: DependencyContainer {
         sessionManager = MockSessionManager()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManagerMock()
-        uuidDebugService = MockUUIDDebugService()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
         sdkVersionValidator = SDKVersionValidator(sdkVersionNumeric: 8)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),

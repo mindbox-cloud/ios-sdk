@@ -36,13 +36,6 @@ extension MBContainer {
             MindboxPushValidator()
         }
 //        
-//        register(UUIDDebugService.self, scope: .container) {
-//            PasteboardUUIDDebugService(
-//                notificationCenter: NotificationCenter.default,
-//                currentDateProvider: { return Date() },
-//                pasteboard: UIPasteboard.general
-//            )
-//        }
 //        
 //        register(TTLValidationProtocol.self) {
 //            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
