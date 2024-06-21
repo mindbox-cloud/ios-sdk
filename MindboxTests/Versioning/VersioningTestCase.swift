@@ -20,7 +20,7 @@ class VersioningTestCase: XCTestCase {
         containerrrr.persistenceStorage.reset()
         try! containerrrr.databaseRepository.erase()
         Mindbox.shared.assembly(with: containerrrr)
-        let timer = container.injectOrFail(TimerManager.self)
+        let timer = DI.injectOrFail(TimerManager.self)
         timer.invalidate()
         queues = []
         // Put setup code here. This method is called before the invocation of each test method in the class.

@@ -91,7 +91,7 @@ final class CoreController {
 
     // MARK: - Private
     private func notificationStatus() -> Bool {
-        let notificationStatusProvider = container.injectOrFail(UNAuthorizationStatusProviding.self)
+        let notificationStatusProvider = DI.injectOrFail(UNAuthorizationStatusProviding.self)
         let lock = DispatchSemaphore(value: 0)
         var isNotificationsEnabled = false
         notificationStatusProvider.getStatus {
@@ -270,7 +270,7 @@ final class CoreController {
             }
         }
         
-        let timer = container.injectOrFail(TimerManager.self)
+        let timer = DI.injectOrFail(TimerManager.self)
         timer.configurate(trackEvery: 20 * 60) {
             Logger.common(message: "Scheduled Time tracker started")
             sessionManager.trackForeground()

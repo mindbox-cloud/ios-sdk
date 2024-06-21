@@ -55,6 +55,6 @@ enum MBInject {
     }
 }
 
-var container: ModuleInjecting {
+var DI: ModuleInjecting {
     return MBInject.container
 }

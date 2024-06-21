@@ -15,7 +15,7 @@ final class MindboxPushValidatorTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        validator = container.injectOrFail(MindboxPushValidator.self)
+        validator = DI.injectOrFail(MindboxPushValidator.self)
     }
     
     override func tearDown() {
