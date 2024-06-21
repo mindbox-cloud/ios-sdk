@@ -13,12 +13,12 @@ extension MBContainer {
         register(UtilitiesFetcher.self) {
             MBUtilitiesFetcher()
         }
-
-        register(PersistenceStorage.self) {
-            let utilitiesFetcher = container.injectOrFail(UtilitiesFetcher.self)
-            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
-            return MBPersistenceStorage(defaults: defaults)
-        }
+//
+//        register(PersistenceStorage.self) {
+//            let utilitiesFetcher = container.injectOrFail(UtilitiesFetcher.self)
+//            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
+//            return MBPersistenceStorage(defaults: defaults)
+//        }
 
         register(ABTestDeviceMixer.self, scope: .transient) {
             ABTestDeviceMixer()
