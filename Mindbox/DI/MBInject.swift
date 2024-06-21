@@ -46,6 +46,7 @@ enum MBInject {
         let container = MBContainer()
         return container
             .registerUtilitiesServices()
+            .registerABTestUtilities()
             .registerReplaceableUtilities()
     }
     
