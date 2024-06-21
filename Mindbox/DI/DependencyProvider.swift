@@ -25,7 +25,6 @@ final class DependencyProvider: DependencyContainer {
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
-    var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManagerProtocol
@@ -66,7 +65,6 @@ final class DependencyProvider: DependencyContainer {
         let actionHandler = InAppActionHandler(actionUseCaseFactory: actionUseCaseFactory)
         let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
                                                            displayUseCase: displayUseCase)
-        urlExtractorService = VariantImageUrlExtractorService()
         let actionFilter = LayerActionFilterService()
         let sourceFilter = LayersSourceFilterService()
         let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
@@ -99,7 +97,6 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   urlExtractorService: urlExtractorService,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager,
             persistenceStorage: persistenceStorage,

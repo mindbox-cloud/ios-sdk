@@ -25,7 +25,6 @@ final class TestDependencyProvider: DependencyContainer {
     var geoService: GeoServiceProtocol
     var segmentationSevice: SegmentationServiceProtocol
     var imageDownloadService: ImageDownloadServiceProtocol
-    var urlExtractorService: VariantImageUrlExtractorService
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     var userVisitManager: UserVisitManagerProtocol
@@ -59,7 +58,6 @@ final class TestDependencyProvider: DependencyContainer {
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
-        urlExtractorService = VariantImageUrlExtractorService()
         ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,

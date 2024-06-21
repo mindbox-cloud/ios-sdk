@@ -82,9 +82,9 @@ extension MBContainer {
 //            return MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
 //        }
 //        
-//        register(VariantImageUrlExtractorServiceProtocol.self, scope: .container) {
-//            VariantImageUrlExtractorService()
-//        }
+        register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
+            VariantImageUrlExtractorService()
+        }
 //        
 //        register(ImageDownloader.self, scope: .container) {
 //            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
