@@ -25,7 +25,6 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
     
@@ -78,7 +77,6 @@ final class TestDependencyProvider: DependencyContainer {
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
                                                  frequencyValidator: frequencyValidator)
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
     }
 }
 

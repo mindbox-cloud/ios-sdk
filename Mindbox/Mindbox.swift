@@ -572,7 +572,7 @@ public class Mindbox: NSObject {
             sessionManager: containerOLD.sessionManager,
             inAppMessagesManager: containerOLD.inAppMessagesManager,
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
-            userVisitManager: containerOLD.userVisitManager
+            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
     }
 

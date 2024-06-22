@@ -30,7 +30,7 @@ class EventRepositoryTestCase: XCTestCase {
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue,
-            userVisitManager: container.userVisitManager
+            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
         persistenceStorage.reset()
         try! container.databaseRepository.erase()

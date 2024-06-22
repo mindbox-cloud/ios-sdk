@@ -13,15 +13,16 @@ extension MBContainer {
         register(UtilitiesFetcher.self) {
             MBUtilitiesFetcher()
         }
-//
+
         register(TimerManager.self) {
             TimerManager()
         }
-//
-//        register(UserVisitManagerProtocol.self, scope: .container) {
-//            UserVisitManager(persistenceStorage: container.inject(PersistenceStorage.self)!)
-//        }
-//        
+
+        register(UserVisitManagerProtocol.self, scope: .transient) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return UserVisitManager(persistenceStorage: persistenceStorage)
+        }
+        
         register(MindboxPushValidator.self, scope: .transient) {
             MindboxPushValidator()
         }
