@@ -23,7 +23,6 @@ protocol DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol { get }
     var inappFilterService: InappFilterProtocol { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
-    var userVisitManager: UserVisitManagerProtocol { get }
     var ttlValidationService: TTLValidationProtocol { get }
     var frequencyValidator: InappFrequencyValidator { get }
 }

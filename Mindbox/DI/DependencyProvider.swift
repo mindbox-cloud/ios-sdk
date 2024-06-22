@@ -25,7 +25,6 @@ final class DependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var userVisitManager: UserVisitManagerProtocol
     var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
 
@@ -102,9 +101,7 @@ final class DependencyProvider: DependencyContainer {
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage
         )
-        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-        
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorage)
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)        
     }
 }
 

@@ -43,7 +43,7 @@ class MindboxTests: XCTestCase {
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue, 
-            userVisitManager: container.userVisitManager
+            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
@@ -86,7 +86,7 @@ class MindboxTests: XCTestCase {
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue,
-            userVisitManager: container.userVisitManager
+            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
 
         //        //        //        //        //        //        //        //        //        //        //        //
