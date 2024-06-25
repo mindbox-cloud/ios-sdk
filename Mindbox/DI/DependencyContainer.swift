@@ -23,7 +23,6 @@ protocol DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol { get }
     var inappFilterService: InappFilterProtocol { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
-    var frequencyValidator: InappFrequencyValidator { get }
 }
 
 protocol InstanceFactory {

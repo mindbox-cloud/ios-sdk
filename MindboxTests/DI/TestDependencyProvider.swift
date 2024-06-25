@@ -25,13 +25,11 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var frequencyValidator: InappFrequencyValidator
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         databaseLoader = try DataBaseLoader()
-        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
@@ -73,8 +71,7 @@ final class TestDependencyProvider: DependencyContainer {
                                                          contentPositionFilter: contentPositionFilterService)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
-                                                 frequencyValidator: frequencyValidator)
+                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
     }
 }
 

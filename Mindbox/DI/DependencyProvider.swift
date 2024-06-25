@@ -25,7 +25,6 @@ final class DependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var frequencyValidator: InappFrequencyValidator
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -74,11 +73,9 @@ final class DependencyProvider: DependencyContainer {
                                                          elementsFilter: elementsFilterService,
                                                          contentPositionFilter: contentPositionFilterService)
 
-        frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: variantsFilterService,
-                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
-                                                 frequencyValidator: frequencyValidator)
+                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
         
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
