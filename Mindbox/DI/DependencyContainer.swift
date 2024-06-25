@@ -10,7 +10,6 @@ import Foundation
 
 protocol DependencyContainer {
     var utilitiesFetcher: UtilitiesFetcher { get }
-    var databaseLoader: DataBaseLoader { get }
     var databaseRepository: MBDatabaseRepository { get }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
     var instanceFactory: InstanceFactory { get }

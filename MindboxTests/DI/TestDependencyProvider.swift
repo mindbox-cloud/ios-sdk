@@ -14,7 +14,6 @@ final class TestDependencyProvider: DependencyContainer {
     var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
-    let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let sessionManager: SessionManager
@@ -29,7 +28,7 @@ final class TestDependencyProvider: DependencyContainer {
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        databaseLoader = try DataBaseLoader()
+        let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MockInstanceFactory(
