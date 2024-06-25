@@ -34,22 +34,19 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigAPI: InAppConfigurationAPI
     private let logsManager: SDKLogsManagerProtocol
     private let persistenceStorage: PersistenceStorage
-    private let ttlValidationService: TTLValidationProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
         logsManager: SDKLogsManagerProtocol,
-        persistenceStorage: PersistenceStorage,
-        ttlValidationService: TTLValidationProtocol
+        persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.logsManager = logsManager
         self.persistenceStorage = persistenceStorage
-        self.ttlValidationService = ttlValidationService
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -120,6 +117,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             return
         }
         
+        let ttlValidationService = createTTLValidationService()
         if ttlValidationService.needResetInapps(config: cachedConfig) {
             cachedConfig.inapps = nil
             Logger.common(message: "[TTL] Resetting in-app due to the expiration of the current configuration.")
@@ -172,5 +170,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewProduct = settings.operations?.viewProduct {
             SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
         }
+    }
+    
+    private func createTTLValidationService() -> TTLValidationProtocol {
+        return TTLValidationService(persistenceStorage: self.persistenceStorage)
     }
 }

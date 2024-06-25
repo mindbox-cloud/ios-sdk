@@ -27,12 +27,6 @@ extension MBContainer {
             MindboxPushValidator()
         }
 //        
-//        
-//        register(TTLValidationProtocol.self) {
-//            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
-//            return TTLValidationService(persistenceStorage: persistenceStorage)
-//        }
-//        
 //        register(InappFrequencyValidator.self, scope: .container) {
 //            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
 //            return InappFrequencyValidator(persistenceStorage: persistenceStorage)

@@ -25,7 +25,6 @@ final class TestDependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
     
     init() throws {
@@ -54,7 +53,6 @@ final class TestDependencyProvider: DependencyContainer {
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  targetingChecker: inAppTargetingChecker)
         imageDownloadService = MockImageDownloadService()
-        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,

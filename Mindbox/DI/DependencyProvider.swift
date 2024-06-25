@@ -25,7 +25,6 @@ final class DependencyProvider: DependencyContainer {
     var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
-    var ttlValidationService: TTLValidationProtocol
     var frequencyValidator: InappFrequencyValidator
 
     init() throws {
@@ -81,7 +80,6 @@ final class DependencyProvider: DependencyContainer {
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self), 
                                                  frequencyValidator: frequencyValidator)
         
-        ttlValidationService = TTLValidationService(persistenceStorage: persistenceStorage)
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
                                                                     segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
@@ -96,8 +94,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager,
-            persistenceStorage: persistenceStorage,
-            ttlValidationService: ttlValidationService),
+            persistenceStorage: persistenceStorage),
             presentationManager: presentationManager,
             persistenceStorage: persistenceStorage
         )
