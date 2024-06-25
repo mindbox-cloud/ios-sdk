@@ -33,6 +33,12 @@ extension MBContainer {
             return MBPersistenceStorage(defaults: defaults)
         }
         
+        register(MBDatabaseRepository.self) {
+            let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
+            let persistentContainer = try! databaseLoader.loadPersistentContainer()
+            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
+        }
+        
         return self
     }
 }

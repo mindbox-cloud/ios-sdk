@@ -27,27 +27,14 @@ extension MBContainer {
             MindboxPushValidator()
         }
 //        
-//        register(InappFrequencyValidator.self, scope: .container) {
-//            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
-//            return InappFrequencyValidator(persistenceStorage: persistenceStorage)
-//        }
-//        
 //        register(InAppTargetingCheckerProtocol.self, scope: .container) {
 //            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
 //            return InAppTargetingChecker(persistenceStorage: persistenceStorage)
 //        }
 //        
-//        register(DataBaseLoader.self, scope: .container) {
-//            let utilitiesFetcher = MBContainer.injectOrFail(UtilitiesFetcher.self)
-//            return try! DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
-//        }
-//        
-//        register(MBDatabaseRepository.self, scope: .container) {
-//            let databaseLoader = MBContainer.injectOrFail(DataBaseLoader.self)
-//            let persistentContainer = try! databaseLoader.loadPersistentContainer()
-//            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
-//        }
-//        
+        register(DataBaseLoader.self) {
+            return try! DataBaseLoader()
+        }        
 //        
 //        
 //        register(GuaranteedDeliveryManager.self, scope: .container) {

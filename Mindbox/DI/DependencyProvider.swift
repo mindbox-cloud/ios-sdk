@@ -12,7 +12,6 @@ import UIKit
 
 final class DependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
-    let databaseLoader: DataBaseLoader
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let sessionManager: SessionManager
@@ -32,7 +31,7 @@ final class DependencyProvider: DependencyContainer {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.migrateShownInAppsIds()
         inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
-        databaseLoader = try DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+        let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
         instanceFactory = MBInstanceFactory(
