@@ -48,4 +48,67 @@ struct ProductCategory: Codable, Equatable, Hashable {
     init(ids: [String: String]) {
         self.ids = ids
     }
+    
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawIds = try container.decode([String: CodableValue].self, forKey: .ids)
+        
+        var convertedIds = [String: String]()
+        
+        for (key, value) in rawIds {
+            switch value {
+            case .string(let stringValue):
+                convertedIds[key] = stringValue
+            case .int(let intValue):
+                convertedIds[key] = String(intValue)
+            case .double(let doubleValue):
+                convertedIds[key] = String(doubleValue)
+            }
+        }
+        
+        self.ids = convertedIds
+    }
+    
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+    }
+}
+
+enum CodableValue: Codable {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        if let stringValue = try? container.decode(String.self) {
+            self = .string(stringValue)
+        } else if let intValue = try? container.decode(Int.self) {
+            self = .int(intValue)
+        } else if let doubleValue = try? container.decode(Double.self) {
+            self = .double(doubleValue)
+        } else {
+            throw DecodingError.typeMismatch(
+                CodableValue.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Unsupported type"
+                )
+            )
+        }
+    }
+    
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let stringValue):
+            try container.encode(stringValue)
+        case .int(let intValue):
+            try container.encode(intValue)
+        case .double(let doubleValue):
+            try container.encode(doubleValue)
+        }
+    }
 }
