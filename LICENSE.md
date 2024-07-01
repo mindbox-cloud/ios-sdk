@@ -10,8 +10,8 @@
 - **Company** – Mindbox KZ LLC or the rights holder of Mindbox / Maestra service (software) or any Mindbox / Maestra company which is authorized to sell Mindbox / Maestra service (software) by the rights holder of Mindbox / Maestra service (software);
 - **Software (Source code)** – the Mindbox / Maestra SDK software for transferring data from the mobile application to CDP Mindbox / Maestra;
 - **Parties / Party** – the Company and/or the User;
-- **Non-Commercial Use** – Use of the Program without the purpose of making a profit.
-- **Commercial Use** – Use of the Program for the purpose of making a profit.
+- **Non-Commercial Use** – Use of the Software without the purpose of making a profit.
+- **Commercial Use** – Use of the Software for the purpose of making a profit.
 
 ## 2. Subject of the Agreement
 
@@ -55,7 +55,7 @@ By sending a request to merge the proposed code into "production ready" through 
 
 ## 4. Limitation of Liability of the Company
 
-4.1 Since the rights to Use Software (Source code) are provided to the User free of charge and on an "as is" basis, the Company shall not be liable for losses caused to the User and third parties as a result of the Use or inability to Use the Program, including if the Company does not work error-free, uninterrupted, or does not meet the User’s purposes and expectations.
+4.1 Since the rights to Use Software (Source code) are provided to the User free of charge and on an "as is" basis, the Company shall not be liable for losses caused to the User and third parties as a result of the Use or inability to Use the Software, including if the Company does not work error-free, uninterrupted, or does not meet the User’s purposes and expectations.
 
 4.2 The Company does not reimburse the User for indirect, indirect losses or lost profits. The total maximum liability of the Company under the Agreement is limited to 1 (one) USD (United States Dollar) or its equivalent in other currencies.
 
