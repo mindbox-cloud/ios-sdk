@@ -21,4 +21,11 @@ protocol NetworkFetcher {
         route: Route,
         completion: @escaping ((Result<Void, MindboxError>) -> Void)
     )
+    
+    func requestTest<T>(
+        type: T.Type,
+        route: Route,
+        needBaseResponse: Bool,
+        completion: @escaping (Result<T, MindboxError>) -> Void
+    ) -> Cancelable? where T: Decodable
 }
