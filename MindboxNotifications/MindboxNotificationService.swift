@@ -197,7 +197,8 @@ public class MindboxNotificationService: NSObject {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
             return nil
         }
-        if userInfo.keys.count == 1, let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any] {
+        
+        if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any], innerUserInfo["uniqueKey"] != nil {
             Logger.common(message: "MindboxNotificationService: userInfo: \(innerUserInfo), userInfo.keys.count: \(userInfo.keys.count), innerUserInfo: \(innerUserInfo)", level: .info, category: .notification)
             return innerUserInfo
         } else {

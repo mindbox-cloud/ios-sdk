@@ -3,6 +3,7 @@
 //  Example
 //
 //  Created by Дмитрий Ерофеев on 29.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import SwiftUI
@@ -39,7 +40,7 @@ struct TitleDescrptionView: View {
 
 struct SDKDataView: View {
     
-    @ObservedObject var viewModel: MainViewModel
+    var viewModel: MainViewModel
     
     var body: some View {
         ZStack {

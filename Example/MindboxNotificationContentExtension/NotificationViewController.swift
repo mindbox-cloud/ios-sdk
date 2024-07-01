@@ -3,6 +3,7 @@
 //  MindboxNotificationContentExtension
 //
 //  Created by Дмитрий Ерофеев on 31.03.2024.
+//  Copyright © 2024 Mindbox. All rights reserved.
 //
 
 import UIKit
