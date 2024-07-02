@@ -78,6 +78,63 @@ class MBNetworkFetcher: NetworkFetcher {
             completion(.failure(error))
         }
     }
+    
+    func requestTest<T>(
+        type: T.Type,
+        route: Route,
+        needBaseResponse: Bool = true,
+        completion: @escaping (Result<T, MindboxError>) -> Void
+    ) -> Cancelable? where T: Decodable {
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            Logger.error(error.asLoggerError())
+            completion(.failure(error))
+            return nil
+        }
+        
+        let builder = URLRequestBuilder(domain: configuration.domain)
+        let cancelable = MBCancelable()
+        do {
+            let urlRequest = try builder.asURLRequest(route: route)
+            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
+            // Starting data task
+            let task = session.dataTask(with: urlRequest) { data, response, error in
+                if cancelable.checkIfCanceled() {
+                    Logger.common(message: "Request was canceled", level: .info, category: .network)
+                    return
+                }
+                
+                self.handleResponse(data, response, error, needBaseResponse: needBaseResponse) { result in
+                    switch result {
+                    case let .success(response):
+                        do {
+                            let decoder = JSONDecoder()
+                            let object = try decoder.decode(type, from: response)
+                            completion(.success(object))
+                        } catch {
+                            let errorModel: MindboxError = .internalError(.init(errorKey: .parsing, rawError: error))
+                            Logger.error(errorModel.asLoggerError())
+                            completion(.failure(errorModel))
+                        }
+                    case let .failure(error):
+                        Logger.error(error.asLoggerError())
+                        completion(.failure(error))
+                    }
+                }
+            }
+            cancelable.setTask(task)
+            task.resume()
+        } catch let error {
+            let error = MindboxError.unknown(error)
+            Logger.error(error.asLoggerError())
+            completion(.failure(error))
+        }
+        
+        return cancelable
+    }
 
     func request(
         route: Route,

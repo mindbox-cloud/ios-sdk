@@ -353,6 +353,28 @@ public class Mindbox: NSObject {
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
+    
+    public func executeSyncOperationTest(
+        operationSystemName: String,
+        json: String,
+        completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
+    ) -> Cancelable? {
+        guard operationSystemName.operationNameIsValid else {
+            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+            return nil
+        }
+        guard let jsonData = json.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+            Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
+            return nil
+        }
+        let customEvent = CustomEvent(name: operationSystemName, payload: json)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        let cancelable = container?.instanceFactory.makeEventRepository().sendTest(type: OperationResponse.self, event: event, completion: completion)
+        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
+        Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
+        return cancelable
+    }
 
     /**
      Method for executing an operation synchronously.

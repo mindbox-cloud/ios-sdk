@@ -79,6 +79,41 @@ class MBEventRepository: EventRepository {
             }
         })
     }
+    
+    func sendTest<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) -> Cancelable? where T: Decodable {
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            completion(.failure(error))
+            return nil
+        }
+        guard let deviceUUID = persistenceStorage.deviceUUID else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "DeviceUUID is not set"
+            ))
+            completion(.failure(error))
+            return nil
+        }
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+        let route = makeRoute(wrapper: wrapper)
+        return fetcher.requestTest(type: type, route: route, needBaseResponse: true) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case let .failure(error):
+                    completion(.failure(error))
+                case let .success(response):
+                    completion(.success(response))
+                }
+            }
+        }
+    }
 
     private func makeRoute(wrapper: EventWrapper) -> Route {
         switch wrapper.event.type {
