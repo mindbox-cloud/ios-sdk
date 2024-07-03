@@ -19,7 +19,6 @@ protocol DependencyContainer {
     var inappMessageEventSender: InappMessageEventSender { get }
     var geoService: GeoServiceProtocol { get }
     var segmentationSevice: SegmentationServiceProtocol { get }
-    var imageDownloadService: ImageDownloadServiceProtocol { get }
     var inappFilterService: InappFilterProtocol { get }
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
 }

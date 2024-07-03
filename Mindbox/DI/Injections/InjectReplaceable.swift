@@ -39,6 +39,12 @@ extension MBContainer {
             return try! MBDatabaseRepository(persistentContainer: persistentContainer)
         }
         
+        register(ImageDownloadServiceProtocol.self, scope: .container) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
+            return ImageDownloadService(imageDownloader: imageDownloader)
+        }
+        
         return self
     }
 }

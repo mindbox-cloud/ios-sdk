@@ -25,11 +25,12 @@ class InAppTargetingRequestsTests: XCTestCase {
         SessionTemporaryStorage.shared.erase()
         targetingChecker = container.inAppTargetingChecker
         try! container.databaseRepository.erase()
+        let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
         mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
                                                               segmentationService: container.segmentationSevice,
                                                               targetingChecker: targetingChecker, 
-                                                              imageService: container.imageDownloadService,
+                                                              imageService: imageService,
                                                               tracker: tracker)
         mockDataFacade.clean()
 

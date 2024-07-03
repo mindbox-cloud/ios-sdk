@@ -54,16 +54,6 @@ extension MBContainer {
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }
-//        
-//        register(ImageDownloader.self, scope: .container) {
-//            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
-//            return URLSessionImageDownloader(persistenceStorage: persistenceStorage)
-//        }
-//        
-//        register(ImageDownloadServiceProtocol.self, scope: .container) {
-//            let imageDownloader = MBContainer.injectOrFail(ImageDownloader.self)
-//            return ImageDownloadService(imageDownloader: imageDownloader)
-//        }
 //
 //        register(GeoServiceProtocol.self, scope: .container) {
 //            let instanceFactory = MBContainer.injectOrFail(InstanceFactory.self)

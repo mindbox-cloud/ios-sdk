@@ -21,7 +21,6 @@ final class DependencyProvider: DependencyContainer {
     var inappMessageEventSender: InappMessageEventSender
     let geoService: GeoServiceProtocol
     let segmentationSevice: SegmentationServiceProtocol
-    var imageDownloadService: ImageDownloadServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
 
@@ -51,8 +50,7 @@ final class DependencyProvider: DependencyContainer {
                                 targetingChecker: inAppTargetingChecker)
         segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
                                                  targetingChecker: inAppTargetingChecker)
-        let imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
-        imageDownloadService = ImageDownloadService(imageDownloader: imageDownloader)
+        let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
         let actionUseCaseFactory = ActionUseCaseFactory(tracker: tracker)
