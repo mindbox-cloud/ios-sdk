@@ -67,8 +67,8 @@ jobs:
     needs: [logger-publish]
     runs-on: macos-latest
     steps:
-    - name: Delay for 2 minutes
-      run: sleep 120
+    - name: Delay for 5 minutes
+      run: sleep 300
     - uses: actions/checkout@v4
     - uses: actions/checkout@v4
     - uses: maxim-lobanov/setup-xcode@v1
@@ -96,6 +96,7 @@ jobs:
         CI: true
     - name: Deploy to Cocoapods Mindbox/MindboxNotifications
       run: |
+        pod repo update
         set -eo pipefail
         pod lib lint --allow-warnings
         pod trunk push Mindbox.podspec --allow-warnings
