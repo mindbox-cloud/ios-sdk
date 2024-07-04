@@ -62,11 +62,11 @@ extension MBContainer {
 //                              targetingChecker: targetingChecker)
 //        }
 //        
-//        register(SegmentationServiceProtocol.self, scope: .container) {
-//            let inAppTargetingChecker = MBContainer.injectOrFail(InAppTargetingCheckerProtocol.self)
-//            return SegmentationService(customerSegmentsAPI: .live,
-//                                       targetingChecker: inAppTargetingChecker)
-//        }
+        register(SegmentationServiceProtocol.self) {
+            let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            return SegmentationService(customerSegmentsAPI: .live,
+                                       targetingChecker: inAppTargetingChecker)
+        }
 //        
 //        return self
 //    }

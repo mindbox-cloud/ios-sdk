@@ -19,7 +19,6 @@ final class DependencyProvider: DependencyContainer {
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
     let geoService: GeoServiceProtocol
-    let segmentationSevice: SegmentationServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
 
@@ -47,8 +46,7 @@ final class DependencyProvider: DependencyContainer {
 
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
                                 targetingChecker: inAppTargetingChecker)
-        segmentationSevice = SegmentationService(customerSegmentsAPI: .live,
-                                                 targetingChecker: inAppTargetingChecker)
+        let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
         let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
         let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
