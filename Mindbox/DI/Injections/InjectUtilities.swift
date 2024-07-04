@@ -54,14 +54,14 @@ extension MBContainer {
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }
-//
-//        register(GeoServiceProtocol.self, scope: .container) {
-//            let instanceFactory = MBContainer.injectOrFail(InstanceFactory.self)
-//            let targetingChecker = MBContainer.injectOrFail(InAppTargetingCheckerProtocol.self)
-//            return GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
-//                              targetingChecker: targetingChecker)
-//        }
-//        
+
+        register(GeoServiceProtocol.self, scope: .transient) {
+            let networkFetcher = DI.injectOrFail(NetworkFetcher.self)
+            let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            return GeoService(fetcher: networkFetcher,
+                              targetingChecker: targetingChecker)
+        }
+        
         register(SegmentationServiceProtocol.self) {
             let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             return SegmentationService(customerSegmentsAPI: .live,

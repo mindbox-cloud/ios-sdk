@@ -18,7 +18,6 @@ final class DependencyProvider: DependencyContainer {
     let instanceFactory: InstanceFactory
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
-    let geoService: GeoServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
 
@@ -43,9 +42,6 @@ final class DependencyProvider: DependencyContainer {
         )
         sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
-
-        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
-                                targetingChecker: inAppTargetingChecker)
         let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
         let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
@@ -71,8 +67,7 @@ final class DependencyProvider: DependencyContainer {
                                                  variantsFilter: variantsFilterService,
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
         
-        inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
-                                                                    segmentationService: segmentationSevice,
+        inAppConfigurationDataFacade = InAppConfigurationDataFacade(segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService, 
                                                                     tracker: tracker)

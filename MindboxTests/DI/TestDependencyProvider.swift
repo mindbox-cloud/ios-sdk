@@ -18,7 +18,6 @@ final class TestDependencyProvider: DependencyContainer {
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
     var inappMessageEventSender: InappMessageEventSender
-    var geoService: GeoServiceProtocol
     var inappFilterService: InappFilterProtocol
     var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     
@@ -42,13 +41,10 @@ final class TestDependencyProvider: DependencyContainer {
         let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-        geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),
-                                targetingChecker: inAppTargetingChecker)
         let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
         let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        inAppConfigurationDataFacade = InAppConfigurationDataFacade(geoService: geoService,
-                                                                    segmentationService: segmentationSevice,
+        inAppConfigurationDataFacade = InAppConfigurationDataFacade(segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService,
                                                                     tracker: tracker)

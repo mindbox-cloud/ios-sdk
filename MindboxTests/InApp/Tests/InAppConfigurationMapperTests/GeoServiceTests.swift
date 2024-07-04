@@ -19,10 +19,9 @@ final class GeoServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        networkFetcher = MockNetworkFetcher()
+        networkFetcher = DI.injectOrFail(NetworkFetcher.self) as? MockNetworkFetcher
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
-        sut = GeoService(fetcher: networkFetcher,
-                         targetingChecker: targetingChecker)
+        sut = DI.injectOrFail(GeoServiceProtocol.self)
     }
     
     override func tearDown() {
