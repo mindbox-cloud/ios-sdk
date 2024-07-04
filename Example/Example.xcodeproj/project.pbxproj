@@ -30,6 +30,7 @@
 		474F37AE2C170FB600F38BB0 /* NotificationCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */; };
 		4774807A2C174BAA00580FB2 /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 477480792C174BAA00580FB2 /* Payload.swift */; };
 		4774807F2C174C2000580FB2 /* MBPushNotification+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4774807E2C174C2000580FB2 /* MBPushNotification+Extensions.swift */; };
+		47D63E2D2C2EAD220055E7D8 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */; };
 		47FFE2232C187B650007E2F6 /* Item+SwiftData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472423982C185B8400B2A9BC /* Item+SwiftData.swift */; };
 		47FFE2262C187D3C0007E2F6 /* SwiftDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */; };
 		47FFE2282C187D5C0007E2F6 /* SwiftDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */; };
@@ -102,6 +103,7 @@
 		474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCellView.swift; sourceTree = "<group>"; };
 		477480792C174BAA00580FB2 /* Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payload.swift; sourceTree = "<group>"; };
 		4774807E2C174C2000580FB2 /* MBPushNotification+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MBPushNotification+Extensions.swift"; sourceTree = "<group>"; };
+		47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataManager.swift; sourceTree = "<group>"; };
 		4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C06401BC9C282DDDDADEA9D /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Example.release.xcconfig"; path = "Target Support Files/Pods-Example/Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				47D63E2D2C2EAD220055E7D8 /* Mindbox.framework in Frameworks */,
 				9E3108F96D4F26745D3B37A4 /* Pods_MindboxNotificationServiceExtension.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -278,6 +281,7 @@
 		52C896E46FFA4E326FC946A8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */,
 				0AD271CF2BB9D81D00750279 /* UserNotifications.framework */,
 				0AD271D12BB9D81E00750279 /* UserNotificationsUI.framework */,
 				D9AF8ABB9430FE76D72FE17D /* Pods_Example.framework */,
