@@ -18,7 +18,7 @@ final class SegmentationServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
-        targetingChecker = container.inAppTargetingChecker
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         sut = SegmentationService(customerSegmentsAPI: .init(fetchSegments: { segmentationCheckRequest, completion in
             completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
                                                                              segment: .init(ids: .init(externalId: "2")))]))

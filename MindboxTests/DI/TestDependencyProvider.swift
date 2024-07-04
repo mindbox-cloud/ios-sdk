@@ -11,7 +11,6 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-    var inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
@@ -41,7 +40,7 @@ final class TestDependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         sessionManager = MockSessionManager()
-        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
+        let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
         geoService = GeoService(fetcher: instanceFactory.makeNetworkFetcher(),

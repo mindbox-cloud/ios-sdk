@@ -23,7 +23,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         super.setUp()
         container = try! TestDependencyProvider()
         SessionTemporaryStorage.shared.erase()
-        targetingChecker = container.inAppTargetingChecker
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         try! container.databaseRepository.erase()
         let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)

@@ -26,12 +26,12 @@ extension MBContainer {
         register(MindboxPushValidator.self, scope: .transient) {
             MindboxPushValidator()
         }
-//        
-//        register(InAppTargetingCheckerProtocol.self, scope: .container) {
-//            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
-//            return InAppTargetingChecker(persistenceStorage: persistenceStorage)
-//        }
-//        
+        
+        register(InAppTargetingCheckerProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppTargetingChecker(persistenceStorage: persistenceStorage)
+        }
+        
         register(DataBaseLoader.self) {
             return try! DataBaseLoader()
         }        

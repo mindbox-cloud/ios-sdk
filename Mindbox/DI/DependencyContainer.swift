@@ -14,7 +14,6 @@ protocol DependencyContainer {
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
     var instanceFactory: InstanceFactory { get }
     var sessionManager: SessionManager { get }
-    var inAppTargetingChecker: InAppTargetingChecker { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
     var geoService: GeoServiceProtocol { get }
