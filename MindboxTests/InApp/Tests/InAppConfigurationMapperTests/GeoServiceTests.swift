@@ -20,7 +20,7 @@ final class GeoServiceTests: XCTestCase {
         super.setUp()
         container = try! TestDependencyProvider()
         networkFetcher = MockNetworkFetcher()
-        targetingChecker = container.inAppTargetingChecker
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         sut = GeoService(fetcher: networkFetcher,
                          targetingChecker: targetingChecker)
     }

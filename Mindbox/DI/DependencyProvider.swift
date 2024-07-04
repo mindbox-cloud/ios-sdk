@@ -16,7 +16,6 @@ final class DependencyProvider: DependencyContainer {
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let sessionManager: SessionManager
     let instanceFactory: InstanceFactory
-    let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
     let geoService: GeoServiceProtocol
@@ -29,7 +28,7 @@ final class DependencyProvider: DependencyContainer {
         
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.migrateShownInAppsIds()
-        inAppTargetingChecker = InAppTargetingChecker(persistenceStorage: persistenceStorage)
+        let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)

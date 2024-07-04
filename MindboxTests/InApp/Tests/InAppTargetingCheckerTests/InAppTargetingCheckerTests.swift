@@ -14,14 +14,14 @@ final class InAppTargetingCheckerTests: XCTestCase {
     var container: TestDependencyProvider!
     let inAppStub = InAppStub()
     let trueTargeting: Targeting = .true(TrueTargeting())
-    var targetingChecker: InAppTargetingChecker!
+    var targetingChecker: InAppTargetingCheckerProtocol!
     var storage: PersistenceStorage!
     
     override func setUp() {
         super.setUp()
         container = try! TestDependencyProvider()
         storage = DI.injectOrFail(PersistenceStorage.self)
-        targetingChecker = container.inAppTargetingChecker
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         targetingChecker.geoModels = InAppGeoResponse(city: 123, region: 456, country: 789)
     }
     
