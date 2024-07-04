@@ -45,6 +45,12 @@ extension MBContainer {
             return ImageDownloadService(imageDownloader: imageDownloader)
         }
         
+        register(NetworkFetcher.self) {
+            let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return MBNetworkFetcher(utilitiesFetcher: utilitiesFetcher, persistenceStorage: persistenceStorage)
+        }
+        
         return self
     }
 }

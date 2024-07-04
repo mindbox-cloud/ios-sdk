@@ -33,9 +33,12 @@ extension MBContainer {
             return try! MockDatabaseRepository(persistentContainer: persistentContainer)
         }
         
-        
         register(ImageDownloadServiceProtocol.self, scope: .container) {
             MockImageDownloadService()
+        }
+        
+        register(NetworkFetcher.self) {
+            MockNetworkFetcher()
         }
         
         return self
