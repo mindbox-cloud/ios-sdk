@@ -33,8 +33,9 @@ extension MBContainer {
         }
         
         register(DataBaseLoader.self) {
-            return try! DataBaseLoader()
-        }        
+            let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+            return try! DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+        }
 //        
 //        
 //        register(GuaranteedDeliveryManager.self, scope: .container) {

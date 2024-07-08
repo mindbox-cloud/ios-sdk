@@ -27,7 +27,7 @@ extension MBContainer {
             MockPersistenceStorage()
         }
         
-        register(MBDatabaseRepository.self, scope: .container) {
+        register(MBDatabaseRepository.self) {
             let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
             let persistentContainer = try! databaseLoader.loadPersistentContainer()
             return try! MockDatabaseRepository(persistentContainer: persistentContainer)
