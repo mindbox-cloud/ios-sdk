@@ -35,12 +35,8 @@ final class TestDependencyProvider: DependencyContainer {
             eventRepository: instanceFactory.makeEventRepository()
         )
         sessionManager = MockSessionManager()
-        let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-        let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
-        let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
-        let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
 
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
