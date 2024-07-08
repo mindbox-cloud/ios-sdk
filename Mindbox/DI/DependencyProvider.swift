@@ -42,33 +42,15 @@ final class DependencyProvider: DependencyContainer {
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
         let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
         let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
-        let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        let displayUseCase = PresentationDisplayUseCase(tracker: tracker)
-        let actionUseCaseFactory = ActionUseCaseFactory(tracker: tracker)
-        let actionHandler = InAppActionHandler(actionUseCaseFactory: actionUseCaseFactory)
-        let presentationManager = InAppPresentationManager(actionHandler: actionHandler,
-                                                           displayUseCase: displayUseCase)
-        let actionFilter = LayerActionFilterService()
-        let sourceFilter = LayersSourceFilterService()
-        let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
-        let sizeFilter = ElementSizeFilterService()
-        let colorFilter = ElementsColorFilterService()
-        let positionFilter = ElementsPositionFilterService()
-        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
-        let contentPositionFilterService = ContentPositionFilterService()
-
-        let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
-                                                         elementsFilter: elementsFilterService,
-                                                         contentPositionFilter: contentPositionFilterService)
-
+        
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-                                                 variantsFilter: variantsFilterService,
+                                                 variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
         
         inAppConfigurationDataFacade = InAppConfigurationDataFacade(segmentationService: segmentationSevice,
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService, 
-                                                                    tracker: tracker)
+                                                                    tracker: DI.injectOrFail(InAppMessagesTracker.self))
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
@@ -79,7 +61,7 @@ final class DependencyProvider: DependencyContainer {
                                                                    dataFacade: inAppConfigurationDataFacade),
                 logsManager: logsManager,
             persistenceStorage: persistenceStorage),
-            presentationManager: presentationManager,
+            presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
             persistenceStorage: persistenceStorage
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)        
