@@ -19,7 +19,6 @@ final class TestDependencyProvider: DependencyContainer {
     let instanceFactory: InstanceFactory
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
-    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -42,11 +41,7 @@ final class TestDependencyProvider: DependencyContainer {
         let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
         let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         let tracker = InAppMessagesTracker(databaseRepository: databaseRepository)
-        inAppConfigurationDataFacade = InAppConfigurationDataFacade(segmentationService: segmentationSevice,
-                                                                    targetingChecker: inAppTargetingChecker,
-                                                                    imageService: imageDownloadService,
-                                                                    tracker: tracker)
-        
+
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))

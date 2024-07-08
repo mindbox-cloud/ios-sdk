@@ -41,6 +41,17 @@ extension MBContainer {
             MockNetworkFetcher()
         }
         
+        register(InAppConfigurationDataFacadeProtocol.self) {
+            let segmentationService = DI.injectOrFail(SegmentationServiceProtocol.self)
+            let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
+            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+            return MockInAppConfigurationDataFacade(segmentationService: segmentationService,
+                                                    targetingChecker: targetingChecker,
+                                                    imageService: imageService,
+                                                    tracker: tracker)
+        }
+        
         return self
     }
 }

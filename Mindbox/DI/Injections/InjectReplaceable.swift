@@ -51,6 +51,18 @@ extension MBContainer {
             return MBNetworkFetcher(utilitiesFetcher: utilitiesFetcher, persistenceStorage: persistenceStorage)
         }
         
+        register(InAppConfigurationDataFacadeProtocol.self) {
+            let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
+            let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
+            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+
+            return InAppConfigurationDataFacade(segmentationService: segmentationSevice,
+                                                targetingChecker: targetingChecker,
+                                                imageService: imageService,
+                                                tracker: tracker)
+        }
+        
         return self
     }
 }
