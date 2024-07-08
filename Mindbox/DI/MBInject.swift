@@ -48,6 +48,8 @@ enum MBInject {
             .registerUtilitiesServices()
             .registerABTestUtilities()
             .registerReplaceableUtilities()
+            .registerInappTools()
+            .registerInappPresentation()
     }
     
     public static var buildTestContainer: () -> MBContainer = {

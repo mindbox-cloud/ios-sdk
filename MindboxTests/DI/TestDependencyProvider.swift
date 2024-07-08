@@ -46,20 +46,9 @@ final class TestDependencyProvider: DependencyContainer {
                                                                     targetingChecker: inAppTargetingChecker,
                                                                     imageService: imageDownloadService,
                                                                     tracker: tracker)
-
-        let actionFilter = LayerActionFilterService()
-        let sourceFilter = LayersSourceFilterService()
-        let layersFilterService = LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
-        let sizeFilter = ElementSizeFilterService()
-        let colorFilter = ElementsColorFilterService()
-        let positionFilter = ElementsPositionFilterService()
-        let elementsFilterService = ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
-        let contentPositionFilterService = ContentPositionFilterService()
-        let variantsFilterService = VariantFilterService(layersFilter: layersFilterService,
-                                                         elementsFilter: elementsFilterService,
-                                                         contentPositionFilter: contentPositionFilterService)
+        
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-                                                 variantsFilter: variantsFilterService,
+                                                 variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
     }
 }

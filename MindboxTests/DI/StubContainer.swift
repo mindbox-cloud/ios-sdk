@@ -16,6 +16,8 @@ enum TestConfiguration {
             return container
                 .registerUtilitiesServices()
                 .registerABTestUtilities()
+                .registerInappTools()
+                .registerInappPresentation()
                 .registerMocks()
         }
         
