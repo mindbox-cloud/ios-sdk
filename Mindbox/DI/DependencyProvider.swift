@@ -27,9 +27,7 @@ final class DependencyProvider: DependencyContainer {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.migrateShownInAppsIds()
         let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
-        let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
-        let persistentContainer = try databaseLoader.loadPersistentContainer()
-        databaseRepository = try MBDatabaseRepository(persistentContainer: persistentContainer)
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         instanceFactory = MBInstanceFactory(
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: utilitiesFetcher,

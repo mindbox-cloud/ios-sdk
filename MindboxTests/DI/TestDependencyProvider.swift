@@ -24,9 +24,7 @@ final class TestDependencyProvider: DependencyContainer {
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
-        let persistentContainer = try databaseLoader.loadPersistentContainer()
-        databaseRepository = try MockDatabaseRepository(persistentContainer: persistentContainer)
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         instanceFactory = MockInstanceFactory(
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: utilitiesFetcher,
