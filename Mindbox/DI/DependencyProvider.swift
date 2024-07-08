@@ -39,8 +39,6 @@ final class DependencyProvider: DependencyContainer {
         )
         sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
-        let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
-        let imageDownloadService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
         
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
