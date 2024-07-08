@@ -17,7 +17,6 @@ protocol DependencyContainer {
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
     var inappFilterService: InappFilterProtocol { get }
-    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol { get }
 }
 
 protocol InstanceFactory {

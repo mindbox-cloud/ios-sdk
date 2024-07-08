@@ -19,7 +19,6 @@ final class DependencyProvider: DependencyContainer {
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
-    var inAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -47,18 +46,13 @@ final class DependencyProvider: DependencyContainer {
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
         
-        inAppConfigurationDataFacade = InAppConfigurationDataFacade(segmentationService: segmentationSevice,
-                                                                    targetingChecker: inAppTargetingChecker,
-                                                                    imageService: imageDownloadService, 
-                                                                    tracker: DI.injectOrFail(InAppMessagesTracker.self))
-        
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   dataFacade: inAppConfigurationDataFacade),
+                                                                   dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
                 logsManager: logsManager,
             persistenceStorage: persistenceStorage),
             presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
