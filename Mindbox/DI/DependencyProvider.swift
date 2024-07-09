@@ -15,7 +15,6 @@ final class DependencyProvider: DependencyContainer {
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let sessionManager: SessionManager
-    let instanceFactory: InstanceFactory
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
@@ -27,18 +26,17 @@ final class DependencyProvider: DependencyContainer {
         persistenceStorage.migrateShownInAppsIds()
         let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
-        instanceFactory = MBInstanceFactory(
-            persistenceStorage: persistenceStorage,
-            utilitiesFetcher: utilitiesFetcher,
-            databaseRepository: databaseRepository
-        )
+
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
+        
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
-            eventRepository: instanceFactory.makeEventRepository()
+            eventRepository: eventRepository
         )
-        sessionManager = MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
-        let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
+        sessionManager = MBSessionManager(trackVisitManager: trackVisitManager)
+        let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
         
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
@@ -57,39 +55,5 @@ final class DependencyProvider: DependencyContainer {
             persistenceStorage: persistenceStorage
         )
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)        
-    }
-}
-
-class MBInstanceFactory: InstanceFactory {
-    private let persistenceStorage: PersistenceStorage
-    private let utilitiesFetcher: UtilitiesFetcher
-    private let databaseRepository: MBDatabaseRepository
-
-    init(
-        persistenceStorage: PersistenceStorage,
-        utilitiesFetcher: UtilitiesFetcher,
-        databaseRepository: MBDatabaseRepository
-    ) {
-        self.persistenceStorage = persistenceStorage
-        self.utilitiesFetcher = utilitiesFetcher
-        self.databaseRepository = databaseRepository
-    }
-
-    func makeNetworkFetcher() -> NetworkFetcher {
-        return MBNetworkFetcher(
-            utilitiesFetcher: utilitiesFetcher,
-            persistenceStorage: persistenceStorage
-        )
-    }
-
-    func makeEventRepository() -> EventRepository {
-        return MBEventRepository(
-            fetcher: makeNetworkFetcher(),
-            persistenceStorage: persistenceStorage
-        )
-    }
-
-    func makeTrackVisitManager() -> TrackVisitManager {
-        return TrackVisitManager(databaseRepository: databaseRepository)
     }
 }

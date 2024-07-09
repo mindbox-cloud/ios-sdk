@@ -35,7 +35,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
         persistenceStorage.deviceUUID = "0593B5CC-1479-4E45-A7D3-F0E8F9B40898"
         try! databaseRepository.erase()
-        updateInstanceFactory(withFailureNetworkFetcher: false)
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
@@ -50,16 +49,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         super.tearDown()
     }
 
-    private func updateInstanceFactory(withFailureNetworkFetcher: Bool) {
-        (container.instanceFactory as! MockInstanceFactory).isFailureNetworkFetcher = withFailureNetworkFetcher
-    }
-
     func testDeliverMultipleEvents() {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
+            eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
         let events = eventGenerator.generateEvents(count: 10)
@@ -107,11 +102,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testScheduleByTimer() {
+        // Может понадобиться MockFailureNetworkFetcher (Check later)
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
+            eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
         let simpleCase: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
@@ -152,12 +148,11 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testFailureScheduleByTimer() {
-        updateInstanceFactory(withFailureNetworkFetcher: true)
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: container.databaseRepository,
-            eventRepository: container.instanceFactory.makeEventRepository(),
+            eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
         let errorCase: [GuaranteedDeliveryManager.State] = [

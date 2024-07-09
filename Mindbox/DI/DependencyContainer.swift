@@ -12,15 +12,8 @@ protocol DependencyContainer {
     var utilitiesFetcher: UtilitiesFetcher { get }
     var databaseRepository: MBDatabaseRepository { get }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
-    var instanceFactory: InstanceFactory { get }
     var sessionManager: SessionManager { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
     var inappFilterService: InappFilterProtocol { get }
-}
-
-protocol InstanceFactory {
-    func makeNetworkFetcher() -> NetworkFetcher
-    func makeEventRepository() -> EventRepository
-    func makeTrackVisitManager() -> TrackVisitManager
 }

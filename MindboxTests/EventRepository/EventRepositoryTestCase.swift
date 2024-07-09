@@ -25,7 +25,7 @@ class EventRepositoryTestCase: XCTestCase {
             utilitiesFetcher: container.utilitiesFetcher,
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
+            trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
             sessionManager: container.sessionManager,
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
@@ -48,7 +48,7 @@ class EventRepositoryTestCase: XCTestCase {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
-        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let repository = DI.injectOrFail(EventRepository.self)
         let event = Event(
             type: .installed,
             body: ""
@@ -69,7 +69,7 @@ class EventRepositoryTestCase: XCTestCase {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
-        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let repository = DI.injectOrFail(EventRepository.self)
         let event = Event(type: .syncEvent, body: "")
         let expectation = self.expectation(description: "send event")
         repository.send(type: SuccessCase.self, event: event) { result in
