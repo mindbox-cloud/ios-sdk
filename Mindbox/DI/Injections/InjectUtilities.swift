@@ -68,17 +68,18 @@ extension MBContainer {
             return SegmentationService(customerSegmentsAPI: .live,
                                        targetingChecker: inAppTargetingChecker)
         }
-//        
-//        return self
-//    }
-//    
-//    func registerInstanceFactory() -> Self {
-//        register(InstanceFactory.self) {
-//            return MBInstanceFactory(persistenceStorage: MBContainer.injectOrFail(PersistenceStorage.self),
-//                                     utilitiesFetcher: MBContainer.injectOrFail(UtilitiesFetcher.self),
-//                                     databaseRepository: MBContainer.injectOrFail(MBDatabaseRepository.self))
-//        }
-//        
+        
+        register(EventRepository.self) {
+            let networkFetcher = DI.injectOrFail(NetworkFetcher.self)
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return MBEventRepository(fetcher: networkFetcher, persistenceStorage: persistenceStorage)
+        }
+        
+        register(TrackVisitManager.self) {
+            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            return TrackVisitManager(databaseRepository: databaseRepository)
+        }
+
         return self
     }
 }

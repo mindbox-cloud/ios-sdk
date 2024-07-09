@@ -318,7 +318,8 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        containerOLD?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -347,7 +348,8 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        containerOLD?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -376,7 +378,8 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        containerOLD?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: P.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -436,8 +439,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(_ type: TrackVisitType) {
-        guard let containerOLD = containerOLD else { return }
-        let tracker = containerOLD.instanceFactory.makeTrackVisitManager()
+        let tracker = DI.injectOrFail(TrackVisitManager.self)
         do {
             try tracker.track(type)
         } catch {
@@ -453,8 +455,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(data: TrackVisitData) {
-        guard let containerOLD = containerOLD else { return }
-        let tracker = containerOLD.instanceFactory.makeTrackVisitManager()
+        let tracker = DI.injectOrFail(TrackVisitManager.self)
         do {
             try tracker.track(data: data)
         } catch {
@@ -568,7 +569,7 @@ public class Mindbox: NSObject {
             utilitiesFetcher: containerOLD.utilitiesFetcher,
             databaseRepository: containerOLD.databaseRepository,
             guaranteedDeliveryManager: containerOLD.guaranteedDeliveryManager,
-            trackVisitManager: containerOLD.instanceFactory.makeTrackVisitManager(),
+            trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
             sessionManager: containerOLD.sessionManager,
             inAppMessagesManager: containerOLD.inAppMessagesManager,
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),

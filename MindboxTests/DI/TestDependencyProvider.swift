@@ -16,7 +16,6 @@ final class TestDependencyProvider: DependencyContainer {
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
     let sessionManager: SessionManager
-    let instanceFactory: InstanceFactory
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
     
@@ -24,15 +23,12 @@ final class TestDependencyProvider: DependencyContainer {
         utilitiesFetcher = MBUtilitiesFetcher()
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
-        instanceFactory = MockInstanceFactory(
-            persistenceStorage: persistenceStorage,
-            utilitiesFetcher: utilitiesFetcher,
-            databaseRepository: databaseRepository
-        )
+
+        let eventRepository = DI.injectOrFail(EventRepository.self)
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
-            eventRepository: instanceFactory.makeEventRepository()
+            eventRepository: eventRepository
         )
         sessionManager = MockSessionManager()
         inAppMessagesManager = InAppCoreManagerMock()
@@ -41,36 +37,6 @@ final class TestDependencyProvider: DependencyContainer {
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
                                                  sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
-    }
-}
-
-class MockInstanceFactory: InstanceFactory {
-    
-    private let persistenceStorage: PersistenceStorage
-    private let utilitiesFetcher: UtilitiesFetcher
-    private let databaseRepository: MBDatabaseRepository
-    
-    var isFailureNetworkFetcher: Bool = false
-
-    init(persistenceStorage: PersistenceStorage, utilitiesFetcher: UtilitiesFetcher, databaseRepository: MBDatabaseRepository) {
-        self.persistenceStorage = persistenceStorage
-        self.utilitiesFetcher = utilitiesFetcher
-        self.databaseRepository = databaseRepository
-    }
-
-    func makeNetworkFetcher() -> NetworkFetcher {
-        return isFailureNetworkFetcher ? MockFailureNetworkFetcher() : MockNetworkFetcher()
-    }
-
-    func makeEventRepository() -> EventRepository {
-        return MBEventRepository(
-            fetcher: makeNetworkFetcher(),
-            persistenceStorage: persistenceStorage
-        )
-    }
-    
-    func makeTrackVisitManager() -> TrackVisitManager {
-        return TrackVisitManager(databaseRepository: databaseRepository)
     }
 }
 
