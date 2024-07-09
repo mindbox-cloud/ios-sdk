@@ -558,7 +558,7 @@ public class Mindbox: NSObject {
     func assembly(with containerOLD: DependencyContainer) {
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         utilitiesFetcher = containerOLD.utilitiesFetcher
-        guaranteedDeliveryManager = containerOLD.guaranteedDeliveryManager
+        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         databaseRepository = containerOLD.databaseRepository
         inAppMessagesManager = containerOLD.inAppMessagesManager
         inAppMessagesDelegate = self
@@ -568,7 +568,7 @@ public class Mindbox: NSObject {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             utilitiesFetcher: containerOLD.utilitiesFetcher,
             databaseRepository: containerOLD.databaseRepository,
-            guaranteedDeliveryManager: containerOLD.guaranteedDeliveryManager,
+            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
             trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
             sessionManager: DI.injectOrFail(SessionManager.self),
             inAppMessagesManager: containerOLD.inAppMessagesManager,

@@ -14,6 +14,7 @@ enum TestConfiguration {
         MBInject.buildTestContainer = {
             let container = MBContainer()
             return container
+                .registerCore()
                 .registerUtilitiesServices()
                 .registerABTestUtilities()
                 .registerInappTools()

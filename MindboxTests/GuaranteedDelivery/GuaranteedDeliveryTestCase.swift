@@ -25,7 +25,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         
         container = try! TestDependencyProvider()
         databaseRepository = container.databaseRepository
-        guaranteedDeliveryManager = container.guaranteedDeliveryManager
+        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
         isDelivering = guaranteedDeliveryManager.state.isDelivering

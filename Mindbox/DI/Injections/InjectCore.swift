@@ -9,7 +9,7 @@
 import Foundation
 
 extension MBContainer {
-//    func registerCore() -> Self {
+    func registerCore() -> Self {
 //        register(CoreController.self, scope: .container) {
 //            let instanceFactory = container.injectOrFail(InstanceFactory.self)
 //            return CoreController(
@@ -23,7 +23,18 @@ extension MBContainer {
 //                uuidDebugService: container.injectOrFail(UUIDDebugService.self),
 //                userVisitManager: container.injectOrFail(UserVisitManagerProtocol.self))
 //        }
-//        
-//        return self
-//    }
+        
+        register(GuaranteedDeliveryManager.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let eventRepository = DI.injectOrFail(EventRepository.self)
+            return GuaranteedDeliveryManager(
+                persistenceStorage: persistenceStorage,
+                databaseRepository: databaseRepository,
+                eventRepository: eventRepository
+            )
+        }
+        
+        return self
+    }
 }

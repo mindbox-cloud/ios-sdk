@@ -24,7 +24,7 @@ class EventRepositoryTestCase: XCTestCase {
             persistenceStorage: persistenceStorage,
             utilitiesFetcher: container.utilitiesFetcher,
             databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
+            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
             trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
             sessionManager: DI.injectOrFail(SessionManager.self),
             inAppMessagesManager: InAppCoreManagerMock(),
