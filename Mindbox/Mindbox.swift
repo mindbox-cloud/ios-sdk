@@ -570,7 +570,7 @@ public class Mindbox: NSObject {
             databaseRepository: containerOLD.databaseRepository,
             guaranteedDeliveryManager: containerOLD.guaranteedDeliveryManager,
             trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
-            sessionManager: containerOLD.sessionManager,
+            sessionManager: DI.injectOrFail(SessionManager.self),
             inAppMessagesManager: containerOLD.inAppMessagesManager,
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
             userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)

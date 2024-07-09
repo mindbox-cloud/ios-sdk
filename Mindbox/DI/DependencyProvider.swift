@@ -14,7 +14,6 @@ final class DependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
-    let sessionManager: SessionManager
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
@@ -28,14 +27,12 @@ final class DependencyProvider: DependencyContainer {
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
 
         let eventRepository = DI.injectOrFail(EventRepository.self)
-        let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
         
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository,
             eventRepository: eventRepository
         )
-        sessionManager = MBSessionManager(trackVisitManager: trackVisitManager)
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
         
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
