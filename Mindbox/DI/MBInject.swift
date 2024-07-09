@@ -45,6 +45,7 @@ enum MBInject {
     fileprivate static func buildDefaulContainer() -> MBContainer {
         let container = MBContainer()
         return container
+            .registerCore()
             .registerUtilitiesServices()
             .registerABTestUtilities()
             .registerReplaceableUtilities()

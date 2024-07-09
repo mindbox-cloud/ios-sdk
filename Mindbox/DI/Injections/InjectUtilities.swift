@@ -36,16 +36,7 @@ extension MBContainer {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             return try! DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
         }
-//        
-//        
-//        register(GuaranteedDeliveryManager.self, scope: .container) {
-//            let persistenceStorage = MBContainer.injectOrFail(PersistenceStorage.self)
-//            let databaseRepository = MBContainer.injectOrFail(MBDatabaseRepository.self)
-//            let instanceFactory = MBContainer.injectOrFail(InstanceFactory.self)
-//            return GuaranteedDeliveryManager(persistenceStorage: persistenceStorage,
-//                                             databaseRepository: databaseRepository,
-//                                             eventRepository: instanceFactory.makeEventRepository())
-//        }
+
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }

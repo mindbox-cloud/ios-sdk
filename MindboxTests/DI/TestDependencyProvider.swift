@@ -14,7 +14,6 @@ final class TestDependencyProvider: DependencyContainer {
     let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
-    let guaranteedDeliveryManager: GuaranteedDeliveryManager
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
     
@@ -23,12 +22,6 @@ final class TestDependencyProvider: DependencyContainer {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
 
-        let eventRepository = DI.injectOrFail(EventRepository.self)
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
-            persistenceStorage: persistenceStorage,
-            databaseRepository: databaseRepository,
-            eventRepository: eventRepository
-        )
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
