@@ -46,12 +46,6 @@ extension MBContainer {
 //                                             databaseRepository: databaseRepository,
 //                                             eventRepository: instanceFactory.makeEventRepository())
 //        }
-//        
-//        register(MBSessionManager.self, scope: .container) {
-//            let instanceFactory = MBContainer.injectOrFail(InstanceFactory.self)
-//            return MBSessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
-//        }
-//        
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }

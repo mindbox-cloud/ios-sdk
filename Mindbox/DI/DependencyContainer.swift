@@ -12,7 +12,6 @@ protocol DependencyContainer {
     var utilitiesFetcher: UtilitiesFetcher { get }
     var databaseRepository: MBDatabaseRepository { get }
     var guaranteedDeliveryManager: GuaranteedDeliveryManager { get }
-    var sessionManager: SessionManager { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
     var inappFilterService: InappFilterProtocol { get }

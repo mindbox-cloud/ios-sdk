@@ -26,7 +26,7 @@ class EventRepositoryTestCase: XCTestCase {
             databaseRepository: container.databaseRepository,
             guaranteedDeliveryManager: container.guaranteedDeliveryManager,
             trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
-            sessionManager: container.sessionManager,
+            sessionManager: DI.injectOrFail(SessionManager.self),
             inAppMessagesManager: InAppCoreManagerMock(),
             uuidDebugService: MockUUIDDebugService(),
             controllerQueue: controllerQueue,

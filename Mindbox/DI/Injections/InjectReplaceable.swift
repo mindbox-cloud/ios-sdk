@@ -63,6 +63,11 @@ extension MBContainer {
                                                 tracker: tracker)
         }
         
+        register(SessionManager.self) {
+            let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
+            return MBSessionManager(trackVisitManager: trackVisitManager)
+        }
+        
         return self
     }
 }

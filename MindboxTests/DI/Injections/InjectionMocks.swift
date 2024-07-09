@@ -52,6 +52,10 @@ extension MBContainer {
                                                     tracker: tracker)
         }
         
+        register(SessionManager.self) {
+            MockSessionManager()
+        }
+        
         return self
     }
 }

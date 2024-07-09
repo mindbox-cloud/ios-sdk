@@ -15,7 +15,6 @@ final class TestDependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
     let guaranteedDeliveryManager: GuaranteedDeliveryManager
-    let sessionManager: SessionManager
     var inappMessageEventSender: InappMessageEventSender
     var inappFilterService: InappFilterProtocol
     
@@ -30,7 +29,6 @@ final class TestDependencyProvider: DependencyContainer {
             databaseRepository: databaseRepository,
             eventRepository: eventRepository
         )
-        sessionManager = MockSessionManager()
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
