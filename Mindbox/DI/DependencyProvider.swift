@@ -24,11 +24,7 @@ final class DependencyProvider: DependencyContainer {
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         
         inAppMessagesManager = InAppCoreManager(
-            configManager: InAppConfigurationManager(
-                inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
-                inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
-            persistenceStorage: persistenceStorage),
+            configManager: DI.injectOrFail(InAppConfigurationManagerProtocol.self),
             presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
             persistenceStorage: persistenceStorage
         )
