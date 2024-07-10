@@ -11,18 +11,12 @@ import XCTest
 @testable import Mindbox
 
 final class TestDependencyProvider: DependencyContainer {
-    let inAppMessagesManager: InAppCoreManagerProtocol
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
-    var inappMessageEventSender: InappMessageEventSender
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
-
-        inAppMessagesManager = InAppCoreManagerMock()
-        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
-
     }
 }
 

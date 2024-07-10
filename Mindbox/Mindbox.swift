@@ -41,7 +41,6 @@ public class Mindbox: NSObject {
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
-    private var inappMessageEventSender: InappMessageEventSender?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -556,13 +555,13 @@ public class Mindbox: NSObject {
     }
 
     func assembly(with containerOLD: DependencyContainer) {
+        let inappMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         utilitiesFetcher = containerOLD.utilitiesFetcher
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         databaseRepository = containerOLD.databaseRepository
-        inAppMessagesManager = containerOLD.inAppMessagesManager
+        inAppMessagesManager = inappMessagesManager
         inAppMessagesDelegate = self
-        inappMessageEventSender = containerOLD.inappMessageEventSender
 
         coreController = CoreController(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
@@ -571,14 +570,18 @@ public class Mindbox: NSObject {
             guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
             trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
             sessionManager: DI.injectOrFail(SessionManager.self),
-            inAppMessagesManager: containerOLD.inAppMessagesManager,
+            inAppMessagesManager: inappMessagesManager,
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
             userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
     }
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
-        inappMessageEventSender?.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
+        guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
+            return
+        }
+        
+        inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
     @objc private func resetShownInApps() {

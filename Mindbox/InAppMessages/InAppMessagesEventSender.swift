@@ -14,6 +14,11 @@ class InappMessageEventSender {
 
     init(inAppMessagesManager: InAppCoreManagerProtocol?) {
         self.inAppMessagesManager = inAppMessagesManager
+        print("🟢")
+    }
+    
+    deinit {
+        print("🔴")
     }
 
     func sendEventIfEnabled(_ operatingSystemName: String, jsonString: String?) {
