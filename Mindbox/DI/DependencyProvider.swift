@@ -26,8 +26,6 @@ final class DependencyProvider: DependencyContainer {
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
 
         let eventRepository = DI.injectOrFail(EventRepository.self)
-
-        let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
         
         inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
                                                  variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
@@ -40,7 +38,6 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
-                logsManager: logsManager,
             persistenceStorage: persistenceStorage),
             presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
             persistenceStorage: persistenceStorage

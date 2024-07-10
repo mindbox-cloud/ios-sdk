@@ -32,20 +32,17 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
-    private let logsManager: SDKLogsManagerProtocol
     private let persistenceStorage: PersistenceStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
-        logsManager: SDKLogsManagerProtocol,
         persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
-        self.logsManager = logsManager
         self.persistenceStorage = persistenceStorage
     }
 
@@ -92,7 +89,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 saveConfigToCache(data)
                 setConfigPrepared(config)
                 setupSettingsFromConfig(config.settings)
-                if let monitoring = config.monitoring {
+                if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
                     logsManager.sendLogs(logs: monitoring.logs)
                 }
             } catch {
