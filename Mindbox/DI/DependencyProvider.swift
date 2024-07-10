@@ -21,16 +21,13 @@ final class DependencyProvider: DependencyContainer {
         
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.migrateShownInAppsIds()
-        let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-                                                                   targetingChecker: inAppTargetingChecker,
-                                                                   dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
+                inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
             persistenceStorage: persistenceStorage),
             presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
             persistenceStorage: persistenceStorage

@@ -25,18 +25,10 @@ class InAppTargetingRequestsTests: XCTestCase {
         SessionTemporaryStorage.shared.erase()
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         try! container.databaseRepository.erase()
-        let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
-        let tracker = DI.injectOrFail(InAppMessagesTracker.self)
-        let segmentationService = DI.injectOrFail(SegmentationServiceProtocol.self)
-        mockDataFacade = MockInAppConfigurationDataFacade(segmentationService: segmentationService,
-                                                              targetingChecker: targetingChecker, 
-                                                              imageService: imageService,
-                                                              tracker: tracker)
+        mockDataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade
         mockDataFacade.clean()
 
-        mapper = InAppConfigutationMapper(inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-                                          targetingChecker: targetingChecker,
-                                          dataFacade: mockDataFacade)
+        mapper = DI.injectOrFail(InAppConfigurationMapperProtocol.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
     }
     

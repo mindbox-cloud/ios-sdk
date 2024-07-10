@@ -30,14 +30,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var inapp: InAppFormData?
     private var rawConfigurationResponse: ConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
-    private let inAppConfigurationMapper: InAppConfigutationMapper
+    private let inAppConfigurationMapper: InAppConfigurationMapperProtocol
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inAppConfigurationMapper: InAppConfigutationMapper,
+        inAppConfigurationMapper: InAppConfigurationMapperProtocol,
         persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
