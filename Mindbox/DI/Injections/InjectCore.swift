@@ -43,6 +43,15 @@ extension MBContainer {
                                             targetingChecker: targetingChecker,
                                             dataFacade: dataFacade)
         }
+        
+        register(InAppConfigurationManagerProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppConfigurationManager(
+                inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
+                inAppConfigRepository: InAppConfigurationRepository(),
+                inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
+                persistenceStorage: persistenceStorage)
+        }
                                             
         return self
     }
