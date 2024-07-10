@@ -15,19 +15,14 @@ final class TestDependencyProvider: DependencyContainer {
     let utilitiesFetcher: UtilitiesFetcher
     let databaseRepository: MBDatabaseRepository
     var inappMessageEventSender: InappMessageEventSender
-    var inappFilterService: InappFilterProtocol
     
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
-        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
 
         inAppMessagesManager = InAppCoreManagerMock()
         inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
 
-        inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-                                                 variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
-                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
     }
 }
 

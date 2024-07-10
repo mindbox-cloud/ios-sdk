@@ -34,7 +34,7 @@ class InAppTargetingRequestsTests: XCTestCase {
                                                               tracker: tracker)
         mockDataFacade.clean()
 
-        mapper = InAppConfigutationMapper(inappFilterService: container.inappFilterService,
+        mapper = InAppConfigutationMapper(inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
                                           targetingChecker: targetingChecker,
                                           dataFacade: mockDataFacade)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)

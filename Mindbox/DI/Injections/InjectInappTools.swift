@@ -57,6 +57,15 @@ extension MBContainer {
             return VariantFilterService(layersFilter: layersFilter, elementsFilter: elementsFilter, contentPositionFilter: contentPositionFilter)
         }
         
+        register(InappFilterProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let variantsFilter = DI.injectOrFail(VariantFilterProtocol.self)
+            let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
+            return InappsFilterService(persistenceStorage: persistenceStorage,
+                                       variantsFilter: variantsFilter,
+                                       sdkVersionValidator: sdkVersionValidator)
+        }
+        
         return self
     }
     
