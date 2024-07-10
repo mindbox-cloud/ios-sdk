@@ -13,5 +13,4 @@ protocol DependencyContainer {
     var databaseRepository: MBDatabaseRepository { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var inappMessageEventSender: InappMessageEventSender { get }
-    var inappFilterService: InappFilterProtocol { get }
 }

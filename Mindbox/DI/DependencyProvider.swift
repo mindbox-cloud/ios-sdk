@@ -15,7 +15,6 @@ final class DependencyProvider: DependencyContainer {
     let databaseRepository: MBDatabaseRepository
     let inAppMessagesManager: InAppCoreManagerProtocol
     var inappMessageEventSender: InappMessageEventSender
-    var inappFilterService: InappFilterProtocol
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -24,18 +23,12 @@ final class DependencyProvider: DependencyContainer {
         persistenceStorage.migrateShownInAppsIds()
         let inAppTargetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
-
-        let eventRepository = DI.injectOrFail(EventRepository.self)
-        
-        inappFilterService = InappsFilterService(persistenceStorage: persistenceStorage,
-                                                 variantsFilter: DI.injectOrFail(VariantFilterProtocol.self),
-                                                 sdkVersionValidator: DI.injectOrFail(SDKVersionValidator.self))
         
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: inappFilterService,
+                inAppConfigurationMapper: InAppConfigutationMapper(inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
                                                                    targetingChecker: inAppTargetingChecker,
                                                                    dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
             persistenceStorage: persistenceStorage),
