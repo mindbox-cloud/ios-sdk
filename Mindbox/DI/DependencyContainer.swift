@@ -11,6 +11,4 @@ import Foundation
 protocol DependencyContainer {
     var utilitiesFetcher: UtilitiesFetcher { get }
     var databaseRepository: MBDatabaseRepository { get }
-    var inAppMessagesManager: InAppCoreManagerProtocol { get }
-    var inappMessageEventSender: InappMessageEventSender { get }
 }

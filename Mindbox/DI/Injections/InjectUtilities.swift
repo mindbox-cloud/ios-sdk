@@ -64,6 +64,11 @@ extension MBContainer {
             let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
             return TrackVisitManager(databaseRepository: databaseRepository)
         }
+        
+        register(InappMessageEventSender.self, scope: .transient) {
+            let inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
+            return InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
+        }
 
         return self
     }

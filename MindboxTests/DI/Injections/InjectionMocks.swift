@@ -66,6 +66,10 @@ extension MBContainer {
             return SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
         }
         
+        register(InAppCoreManagerProtocol.self) {
+            InAppCoreManagerMock()
+        }
+        
         return self
     }
 }

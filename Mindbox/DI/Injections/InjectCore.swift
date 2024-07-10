@@ -52,6 +52,15 @@ extension MBContainer {
                 inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
                 persistenceStorage: persistenceStorage)
         }
+        
+        register(InAppCoreManagerProtocol.self) {
+            let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
+            let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppCoreManager(configManager: configManager,
+                                    presentationManager: presentationManager,
+                                    persistenceStorage: persistenceStorage)
+        }
                                             
         return self
     }
