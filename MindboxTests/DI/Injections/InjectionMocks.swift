@@ -56,6 +56,16 @@ extension MBContainer {
             MockSessionManager()
         }
         
+        register(EventRepositoryMock.self) {
+            EventRepositoryMock()
+        }
+        
+        register(SDKLogsManagerProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let eventRepository = DI.injectOrFail(EventRepositoryMock.self)
+            return SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
+        }
+        
         return self
     }
 }

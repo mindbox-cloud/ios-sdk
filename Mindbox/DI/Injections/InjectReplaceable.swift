@@ -68,6 +68,12 @@ extension MBContainer {
             return MBSessionManager(trackVisitManager: trackVisitManager)
         }
         
+        register(SDKLogsManagerProtocol.self, scope: .transient) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let eventRepository = DI.injectOrFail(EventRepository.self)
+            return SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
+        }
+        
         return self
     }
 }
