@@ -563,17 +563,7 @@ public class Mindbox: NSObject {
         inAppMessagesManager = inappMessagesManager
         inAppMessagesDelegate = self
 
-        coreController = CoreController(
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            utilitiesFetcher: containerOLD.utilitiesFetcher,
-            databaseRepository: containerOLD.databaseRepository,
-            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
-            trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
-            sessionManager: DI.injectOrFail(SessionManager.self),
-            inAppMessagesManager: inappMessagesManager,
-            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
-            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
-        )
+        coreController = DI.injectOrFail(CoreController.self)
     }
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
