@@ -11,13 +11,11 @@ import XCTest
 
 final class SegmentationServiceTests: XCTestCase {
     
-    var container: TestDependencyProvider!
     var sut: SegmentationService!
     var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         
         sut = DI.injectOrFail(SegmentationServiceProtocol.self) as? SegmentationService
@@ -34,7 +32,6 @@ final class SegmentationServiceTests: XCTestCase {
     }
     
     override func tearDown() {
-        container = nil
         SessionTemporaryStorage.shared.erase()
         targetingChecker = nil
         sut = nil

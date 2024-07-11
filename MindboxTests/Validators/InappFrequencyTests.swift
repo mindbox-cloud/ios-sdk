@@ -11,13 +11,11 @@ import XCTest
 
 class InappFrequencyTests: XCTestCase {
 
-    var container: DependencyContainer!
     var validator: InappFrequencyValidator!
     var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownInappsDictionary = [:]
         validator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
@@ -26,7 +24,6 @@ class InappFrequencyTests: XCTestCase {
     override func tearDown() {
         validator = nil
         persistenceStorage = nil
-        container = nil
         super.tearDown()
     }
     

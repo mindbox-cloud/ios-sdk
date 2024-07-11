@@ -11,35 +11,22 @@ import XCTest
 
 class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
-    var container: DependencyContainer!
     var controllerQueue: DispatchQueue!
     var persistenceStorage: PersistenceStorage!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        controllerQueue = DispatchQueue(label: "test-core-controller-queue")
-        coreController = CoreController(
-            persistenceStorage: persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
-            databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
-            trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
-            sessionManager: DI.injectOrFail(SessionManager.self),
-            inAppMessagesManager: InAppCoreManagerMock(),
-            uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue,
-            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
-        )
+        coreController = DI.injectOrFail(CoreController.self)
+        controllerQueue = coreController.controllerQueue
         persistenceStorage.reset()
-        try! container.databaseRepository.erase()
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
     }
     
     override func tearDown() {
         
         coreController = nil
-        container = nil
         controllerQueue = nil
         super.tearDown()
     }

@@ -12,7 +12,6 @@ import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
     
-    var container: TestDependencyProvider!
     var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     var persistenceStorage: PersistenceStorage!
@@ -23,8 +22,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         super.setUp()
         Mindbox.logger.logLevel = .none
         
-        container = try! TestDependencyProvider()
-        databaseRepository = container.databaseRepository
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
@@ -39,8 +37,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     override func tearDown() {
-        
-        container = nil
         databaseRepository = nil
         guaranteedDeliveryManager = nil
         persistenceStorage = nil
@@ -53,7 +49,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: container.databaseRepository,
+            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
@@ -106,7 +102,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: container.databaseRepository,
+            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
@@ -151,7 +147,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: container.databaseRepository,
+            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )

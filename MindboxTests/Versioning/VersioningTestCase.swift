@@ -12,16 +12,15 @@ import XCTest
 class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
-    var containerrrr: DependencyContainer!
     var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
         super.setUp()
-        containerrrr = try! TestDependencyProvider()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
-        try! containerrrr.databaseRepository.erase()
-        Mindbox.shared.assembly(with: containerrrr)
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
+        Mindbox.shared.assembly()
         let timer = DI.injectOrFail(TimerManager.self)
         timer.invalidate()
         queues = []

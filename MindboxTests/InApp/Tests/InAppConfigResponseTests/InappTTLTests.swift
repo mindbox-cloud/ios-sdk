@@ -10,19 +10,16 @@ import XCTest
 @testable import Mindbox
 
 class InappTTLTests: XCTestCase {
-    var container: TestDependencyProvider!
     var persistenceStorage: PersistenceStorage!
     var service: TTLValidationProtocol!
 
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         service = TTLValidationService(persistenceStorage: persistenceStorage)
     }
     
     override func tearDown() {
-        container = nil
         persistenceStorage = nil
         service = nil
         super.tearDown()

@@ -16,7 +16,7 @@ extension MBContainer {
                            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
                            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
                            trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
-                           sessionManager: DI.injectOrFail(MBSessionManager.self),
+                           sessionManager: DI.injectOrFail(SessionManager.self),
                            inAppMessagesManager: DI.injectOrFail(InAppCoreManagerProtocol.self),
                            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
                            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
@@ -49,16 +49,7 @@ extension MBContainer {
                 inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
                 persistenceStorage: persistenceStorage)
         }
-        
-        register(InAppCoreManagerProtocol.self) {
-            let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
-            let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return InAppCoreManager(configManager: configManager,
-                                    presentationManager: presentationManager,
-                                    persistenceStorage: persistenceStorage)
-        }
-                                            
+                                                    
         return self
     }
 }

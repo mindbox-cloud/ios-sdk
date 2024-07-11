@@ -69,6 +69,11 @@ extension MBContainer {
             let inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
             return InappMessageEventSender(inAppMessagesManager: inAppMessagesManager)
         }
+        
+        register(ClickNotificationManager.self) {
+            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            return ClickNotificationManager(databaseRepository: databaseRepository)
+        }
 
         return self
     }
