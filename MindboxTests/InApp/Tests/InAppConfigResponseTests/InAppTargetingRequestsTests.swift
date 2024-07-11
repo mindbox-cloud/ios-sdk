@@ -11,8 +11,6 @@ import XCTest
 
 class InAppTargetingRequestsTests: XCTestCase {
 
-    var container: TestDependencyProvider!
-
     private var mockDataFacade: MockInAppConfigurationDataFacade!
     private var mapper: InAppConfigurationMapperProtocol!
     private var persistenceStorage: PersistenceStorage!
@@ -21,10 +19,10 @@ class InAppTargetingRequestsTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         SessionTemporaryStorage.shared.erase()
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
-        try! container.databaseRepository.erase()
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
         mockDataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade
         mockDataFacade.clean()
 
@@ -33,7 +31,6 @@ class InAppTargetingRequestsTests: XCTestCase {
     }
     
     override func tearDown() {
-        container = nil
         mockDataFacade = nil
         targetingChecker = nil
         mapper = nil

@@ -14,11 +14,9 @@ final class GeoServiceTests: XCTestCase {
     var sut: GeoServiceProtocol!
     var networkFetcher: MockNetworkFetcher!
     var targetingChecker: InAppTargetingCheckerProtocol!
-    var container: TestDependencyProvider!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         networkFetcher = DI.injectOrFail(NetworkFetcher.self) as? MockNetworkFetcher
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         sut = DI.injectOrFail(GeoServiceProtocol.self)
@@ -29,7 +27,6 @@ final class GeoServiceTests: XCTestCase {
         networkFetcher = nil
         targetingChecker = nil
         SessionTemporaryStorage.shared.erase()
-        container = nil
         super.tearDown()
     }
     

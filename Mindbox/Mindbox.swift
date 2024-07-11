@@ -45,7 +45,6 @@ public class Mindbox: NSObject {
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
     var coreController: CoreController?
-    var containerOLD: DependencyContainer?
 
     /**
      A set of methods that sdk uses to notify you of its behavior.
@@ -234,8 +233,10 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
-        guard let containerOLD = containerOLD else { return }
-        let tracker = ClickNotificationManager(databaseRepository: containerOLD.databaseRepository)
+        guard let tracker = DI.inject(ClickNotificationManager.self) else {
+            return
+        }
+        
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
             Logger.common(message: "Track Click", level: .info, category: .notification)
@@ -420,8 +421,9 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(response: UNNotificationResponse) {
-        guard let containerOLD = containerOLD else { return }
-        let tracker = ClickNotificationManager(databaseRepository: containerOLD.databaseRepository)
+        guard let tracker = DI.inject(ClickNotificationManager.self) else {
+            return
+        }
         do {
             try tracker.track(response: response)
             Logger.common(message: "Track Click", level: .info, category: .notification)
@@ -540,29 +542,17 @@ public class Mindbox: NSObject {
 
     private override init() {
         super.init()
-        queue.sync(flags: .barrier) {
-            do {
-                let containerOLD = try DependencyProvider()
-                self.containerOLD = containerOLD
-                self.assembly(with: containerOLD)
-                Logger.common(message: "Did assembly dependencies with containerOLD", level: .info, category: .general)
-            } catch {
-                Logger.common(message: "Did fail to assembly dependencies with containerOLD with error: \(error.localizedDescription)", level: .fault, category: .general)
-                self.initError = error
-            }
-            self.persistenceStorage?.storeToFileBackgroundExecution()            
-        }
+        self.assembly()
+        self.persistenceStorage?.storeToFileBackgroundExecution()            
     }
 
-    func assembly(with containerOLD: DependencyContainer) {
-        let inappMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
+    func assembly() {
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        utilitiesFetcher = containerOLD.utilitiesFetcher
+        utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
-        databaseRepository = containerOLD.databaseRepository
-        inAppMessagesManager = inappMessagesManager
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
         inAppMessagesDelegate = self
-
         coreController = DI.injectOrFail(CoreController.self)
     }
 
