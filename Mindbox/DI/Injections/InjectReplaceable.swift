@@ -30,7 +30,9 @@ extension MBContainer {
         register(PersistenceStorage.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
-            return MBPersistenceStorage(defaults: defaults)
+            let storage = MBPersistenceStorage(defaults: defaults)
+            storage.migrateShownInAppsIds()
+            return storage
         }
         
         register(MBDatabaseRepository.self) {
