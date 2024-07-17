@@ -121,6 +121,9 @@ public class MindboxNotificationService: NSObject {
 
         if let attachment = notification.request.content.attachments.first,
            attachment.url.startAccessingSecurityScopedResource() {
+            defer {
+                attachment.url.stopAccessingSecurityScopedResource()
+            }
             createImageView(with: attachment.url.path, view: viewController?.view)
         }
         createActions(with: payload, context: context)
@@ -166,7 +169,7 @@ public class MindboxNotificationService: NSObject {
         let imageHeight = image?.size.height ?? 0
         let imageWidth = image?.size.width ?? 0
         
-        let imageRatio = imageHeight / imageWidth
+        let imageRatio = (imageWidth > 0) ? imageHeight / imageWidth : 0
         let imageViewHeight = view.bounds.width * imageRatio
         
         NSLayoutConstraint.activate([
