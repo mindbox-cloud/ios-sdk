@@ -9,6 +9,5 @@
 import Foundation
 
 protocol UNAuthorizationStatusProviding {
-    
     func getStatus(result: @escaping (Bool) -> Void)
 }

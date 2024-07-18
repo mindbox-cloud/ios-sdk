@@ -11,6 +11,65 @@ import Foundation
 
 extension MBContainer {
     func registerMocks() -> Self {
+        register(UUIDDebugService.self) {
+            MockUUIDDebugService()
+        }
+        
+        register(UNAuthorizationStatusProviding.self, scope: .transient) {
+            MockUNAuthorizationStatusProvider(status: .authorized)
+        }
+        
+        register(SDKVersionValidator.self) {
+            SDKVersionValidator(sdkVersionNumeric: Constants.Versions.sdkVersionNumeric)
+        }
+        
+        register(PersistenceStorage.self) {
+            MockPersistenceStorage()
+        }
+        
+        register(MBDatabaseRepository.self) {
+            let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
+            let persistentContainer = try! databaseLoader.loadPersistentContainer()
+            return try! MockDatabaseRepository(persistentContainer: persistentContainer)
+        }
+        
+        register(ImageDownloadServiceProtocol.self, scope: .container) {
+            MockImageDownloadService()
+        }
+        
+        register(NetworkFetcher.self) {
+            MockNetworkFetcher()
+        }
+        
+        register(InAppConfigurationDataFacadeProtocol.self) {
+            let segmentationService = DI.injectOrFail(SegmentationServiceProtocol.self)
+            let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
+            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+            return MockInAppConfigurationDataFacade(segmentationService: segmentationService,
+                                                    targetingChecker: targetingChecker,
+                                                    imageService: imageService,
+                                                    tracker: tracker)
+        }
+        
+        register(SessionManager.self) {
+            MockSessionManager()
+        }
+        
+        register(EventRepositoryMock.self) {
+            EventRepositoryMock()
+        }
+        
+        register(SDKLogsManagerProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let eventRepository = DI.injectOrFail(EventRepositoryMock.self)
+            return SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: eventRepository)
+        }
+        
+        register(InAppCoreManagerProtocol.self) {
+            InAppCoreManagerMock()
+        }
+        
         return self
     }
 }

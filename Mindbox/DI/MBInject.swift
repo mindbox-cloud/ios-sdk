@@ -45,6 +45,12 @@ enum MBInject {
     fileprivate static func buildDefaulContainer() -> MBContainer {
         let container = MBContainer()
         return container
+            .registerCore()
+            .registerUtilitiesServices()
+            .registerABTestUtilities()
+            .registerReplaceableUtilities()
+            .registerInappTools()
+            .registerInappPresentation()
     }
     
     public static var buildTestContainer: () -> MBContainer = {
@@ -53,6 +59,6 @@ enum MBInject {
     }
 }
 
-var container: ModuleInjecting {
+var DI: ModuleInjecting {
     return MBInject.container
 }
