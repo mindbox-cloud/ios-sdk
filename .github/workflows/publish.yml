@@ -9,7 +9,7 @@ on:
       - '**'
 
 jobs:
-  unit:
+  unit-tests:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -20,18 +20,29 @@ jobs:
       run: gem install bundler
     - name: Install bundler dependencies
       run: bundle install
-    - name: Install yeetd
-      run: |
-          wget https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
-          sudo installer -pkg yeetd-normal.pkg -target /
-          yeetd &
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
 
+  set-tag:
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract SDK version
+        run: |
+            SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
+            echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
+            echo "Extracted SDK version: $SDK_VERSION"
+      - name: Create tag
+        run: |
+            git tag ${{ env.SDK_VERSION }}
+            git push origin ${{ env.SDK_VERSION }}
+
   logger-publish:
+    needs: [set-tag]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
       - name: Update bundler
         run: gem install bundler
       - name: Install bundler dependencies
@@ -42,63 +53,126 @@ jobs:
           pod trunk push MindboxLogger.podspec --allow-warnings
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-    
-  publish:
+          
+  delay:
     needs: [logger-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delay for 20 minutes
+        run: sleep 1200
+      
+  check-podspecs-with-retry:
+    needs: [delay]
     runs-on: macos-latest
     steps:
-    - name: Delay for 5 minutes
-      run: sleep 300
-    - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
-    - uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-        
-    - name: Release generation
-      run: ./.github/git-release.sh
-      env:
-        GH_TOKEN: ${{ github.token }}
-        
-    - name: Update bundler
-      run: gem install bundler
-    - name: Install bundler dependencies
-      run: bundle install
-    - name: Install yeetd
-      run: |
-          wget https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
-          sudo installer -pkg yeetd-normal.pkg -target /
-          yeetd &
+      - uses: actions/checkout@v4
+      - name: Update bundler
+        run: gem install bundler
+      - name: Install bundler dependencies
+        run: bundle install
+      - uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 20
+          command: |
+              pod repo update
+              pod lib lint --allow-warnings
+          retry_on: error
+          retry_wait_seconds: 120
+    
+  publish:
+    needs: [check-podspecs-with-retry]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Update bundler
+        run: gem install bundler
+      - name: Install bundler dependencies
+        run: bundle install
+      - name: Run build
+        run: bundle exec fastlane buildLane
+        env:
+          CI: true
+      - name: Deploy to Cocoapods Mindbox/MindboxNotifications
+        run: |
+            pod repo update
+            set -eo pipefail
+            pod lib lint --allow-warnings
+            pod trunk push Mindbox.podspec --allow-warnings
+            pod trunk push MindboxNotifications.podspec --allow-warnings
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
 
-    - name: Run build
-      run: bundle exec fastlane buildLane
-      env:
-        CI: true
-    - name: Deploy to Cocoapods Mindbox/MindboxNotifications
-      run: |
-        pod repo update
-        set -eo pipefail
-        pod lib lint --allow-warnings
-        pod trunk push Mindbox.podspec --allow-warnings
-        pod trunk push MindboxNotifications.podspec --allow-warnings
-      env:
-        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+  release-github:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release generation
+        run: ./.github/git-release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   merge:
     needs: [publish]
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout develop branch
-      uses: actions/checkout@v4
-      with:
-        ref: develop
-    - name: Create Pull Request
-      run: gh pr create --base develop --head master --title "Merge 'master' into 'develop' after release" --body "Automated Pull Request to merge 'master' into 'develop' after release"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Merge Pull Request
-      run: |
-        pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
-        gh pr merge $pr_number --merge
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+      - name: Create Pull Request
+        run: gh pr create --base develop --head master --title "Merge 'master' into 'develop' after release" --body "Automated Pull Request to merge 'master' into 'develop' after release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge Pull Request
+        run: |
+          pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
+          gh pr merge $pr_number --merge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-on-error:
+    needs: [unit-tests, set-tag, logger-publish, delay, check-podspecs-with-retry, publish, release-github, merge]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Determine failed job
+        id: get-failed-job
+        run: |
+          FAILED_JOB="None"
+          if [[ "${{ needs.unit-tests.result }}" == "failure" ]]; then
+            FAILED_JOB="unit-tests"
+          elif [[ "${{ needs.set-tag.result }}" == "failure" ]]; then
+            FAILED_JOB="set-tag"
+          elif [[ "${{ needs.logger-publish.result }}" == "failure" ]]; then
+            FAILED_JOB="logger-publish"
+          elif [[ "${{ needs.delay.result }}" == "failure" ]]; then
+            FAILED_JOB="delay"
+          elif [[ "${{ needs.check-podspecs-with-retry.result }}" == "failure" ]]; then
+            FAILED_JOB="check-podspecs-with-retry"
+          elif [[ "${{ needs.publish.result }}" == "failure" ]]; then
+            FAILED_JOB="publish"
+          elif [[ "${{ needs.release-github.result }}" == "failure" ]]; then
+            FAILED_JOB="release-github"
+          elif [[ "${{ needs.merge.result }}" == "failure" ]]; then
+            FAILED_JOB="merge"
+          fi
+          echo "FAILED_JOB=$FAILED_JOB" >> $GITHUB_ENV
+      - name: Send message to LOOP
+        env:
+            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
+            VERSION: ${{ github.ref_name }}
+            FAILED_JOB: ${{ env.FAILED_JOB }}
+        run: |
+            MESSAGE=$(cat <<EOF
+            {
+            "text": "**❌ iOS test Release failed**\n\nJob \"$FAILED_JOB\" failed in the pipeline\nSomething went wrong"
+            }
+            EOF)
+            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
+                -H "Content-Type: application/json" \
+                -d "$MESSAGE"
