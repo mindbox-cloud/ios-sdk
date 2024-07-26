@@ -115,3 +115,4 @@ if ! git push origin $current_branch; then
     echo "Failed to push changes to the origin $current_branch"
     exit 1
 fi
+
