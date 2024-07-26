@@ -115,8 +115,3 @@ if ! git push origin $current_branch; then
     echo "Failed to push changes to the origin $current_branch"
     exit 1
 fi
-
-git tag $version
-git push origin $version
-
-echo "Changes have been committed and tagged as $version on branch $current_branch."
