@@ -236,6 +236,13 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
+    @UserDefaultsWrapper(key: .versionCodeForMigration, defaultValue: 0)
+    var versionCodeForMigration: Int? {
+        didSet {
+            onDidChange?()
+        }
+    }
+    
     @UserDefaultsWrapper(key: .configDownloadDate, defaultValue: nil)
     private var configDownloadDateString: String? {
         didSet {
@@ -311,6 +318,7 @@ extension MBPersistenceStorage {
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
             case userVisitCount = "MBPersistenceStorage-userVisitCount"
             case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
+            case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
         }
         
         private let key: Key

@@ -37,6 +37,9 @@ final class CoreController {
             } else {
                 self.repeatInitialization(with: configuration)
             }
+            
+            DI.injectOrFail(MigrationManagerProtocol.self).migrate()
+            
             self.guaranteedDeliveryManager.canScheduleOperations = true
             
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"

@@ -93,6 +93,13 @@ class MockPersistenceStorage: PersistenceStorage {
         get { return _userVisitCount }
         set { _userVisitCount = newValue }
     }
+    
+    private var _versionCodeForMigration: Int? = 0
+    
+    var versionCodeForMigration: Int? {
+        get { return _versionCodeForMigration }
+        set { _versionCodeForMigration = newValue }
+    }
 
     var configDownloadDate: Date? {
         didSet { 
