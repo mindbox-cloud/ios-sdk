@@ -14,7 +14,7 @@ protocol MigrationManagerProtocol {
 }
 
 enum MigrationConstants {
-    static var sdkVersionCode = 3
+    static var sdkVersionCode = 2
 }
 
 // https://github.com/mindbox-cloud/ios-sdk/compare/develop...feature/MBX-3411-sdk-version-migration
@@ -31,7 +31,7 @@ final class MigrationManager {
         self.migrations = [
             Migration1(),
             Migration2(),
-            Migration4()
+//            Migration4()
         ]
     }
     /// Convenience init for testing - overwrite all existing migrations and local migration contant
