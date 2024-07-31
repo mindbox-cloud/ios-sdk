@@ -11,7 +11,11 @@ import MindboxLogger
 
 protocol MigrationProtocol {
     var description: String { get }
+    
+    // Constant + isNeeded == problem or only isNeeded == problem
     var isNeeded: Bool { get }
+    
+    /// Version for sorting
     var version: Int { get }
     
     func run() throws

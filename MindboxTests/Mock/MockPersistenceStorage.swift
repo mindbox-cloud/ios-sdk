@@ -12,7 +12,7 @@ import Foundation
 class MockPersistenceStorage: PersistenceStorage {
         
     var onDidChange: (() -> Void)?
-    private var _userVisitCount: Int? = 0
+    
     
     init() {
 
@@ -88,6 +88,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var handledlogRequestIds: [String]?
     
     var imageLoadingMaxTimeInSeconds: Double?
+    
+    private var _userVisitCount: Int? = 0
     
     var userVisitCount: Int? {
         get { return _userVisitCount }

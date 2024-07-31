@@ -11,11 +11,10 @@ import MindboxLogger
 
 protocol MigrationManagerProtocol {
     func migrate()
-    func migrate(migrationConstant: Int)
 }
 
 enum MigrationConstants {
-    static var sdkVersionCode = 2
+    static var sdkVersionCode = 3
 }
 
 // https://github.com/mindbox-cloud/ios-sdk/compare/develop...feature/MBX-3411-sdk-version-migration
@@ -23,38 +22,37 @@ enum MigrationConstants {
 final class MigrationManager {
     
     private var migrations: [MigrationProtocol]
+    private var localVersionCode: Int
     private var persistenceStorage: PersistenceStorage
     
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
+        self.localVersionCode = MigrationConstants.sdkVersionCode
         self.migrations = [
             Migration1(),
-            Migration2()
+            Migration2(),
+            Migration4()
         ]
     }
-    
-    /// Convenience init for testing - overwrite all existing migrations
+    /// Convenience init for testing - overwrite all existing migrations and local migration contant
     /// - Parameters:
     ///   - persistenceStorage: Persistence storage -> UserDefaults
-    ///   - migrations: New migrations
-    convenience init(persistenceStorage: PersistenceStorage, migrations: [MigrationProtocol]) {
+    ///   - migrations: Array of new migrations
+    ///   - localVersionCode: version for comparison with persistenceStorage.versionCodeForMigration after all migrations have been performed
+    convenience init(persistenceStorage: PersistenceStorage, migrations: [MigrationProtocol], localVersionCode: Int) {
         self.init(persistenceStorage: persistenceStorage)
+        self.localVersionCode = localVersionCode
         self.migrations = migrations
-        print(migrations)
-        print(migrations.count)
     }
 }
 
 // MARK: - MigrationManagerProtocol
 extension MigrationManager: MigrationManagerProtocol {
     func migrate() {
-        migrate(migrationConstant: MigrationConstants.sdkVersionCode)
-    }
-    
-    func migrate(migrationConstant: Int = MigrationConstants.sdkVersionCode) {
         migrations
-            .sorted { $0.version < $1.version }
+            .lazy
             .filter { $0.isNeeded }
+            .sorted { $0.version < $1.version }
             .forEach { migration in
                 do {
                     try migration.run()
@@ -72,10 +70,10 @@ extension MigrationManager: MigrationManagerProtocol {
                 }
             }
         
-        if persistenceStorage.versionCodeForMigration != migrationConstant {
+        if persistenceStorage.versionCodeForMigration != localVersionCode {
             Logger.common(message: "[Migrations] Migrations failed, reset memory", level: .info, category: .migration)
             persistenceStorage.reset()
-            persistenceStorage.versionCodeForMigration = migrationConstant
+            persistenceStorage.versionCodeForMigration = localVersionCode
             return
         }
         

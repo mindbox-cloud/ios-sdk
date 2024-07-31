@@ -36,12 +36,33 @@ final class Migration2: BaseMigration {
     }
     
     override var isNeeded: Bool {
-        let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-        return versionCode < MigrationConstants.sdkVersionCode
+//        let versionCode = persistenceStorage.versionCodeForMigration ?? 0
+//        return versionCode < MigrationConstants.sdkVersionCode
+        return false
     }
     
     override var version: Int {
         return 2
+    }
+    
+    override func performMigration() throws {
+        print("Performing migration")
+    }
+}
+
+final class Migration4: BaseMigration {
+    
+    override var description: String {
+        "Fourth migration"
+    }
+    
+    override var isNeeded: Bool {
+        let versionCode = persistenceStorage.versionCodeForMigration ?? 0
+        return versionCode < MigrationConstants.sdkVersionCode && persistenceStorage.deviceUUID == "0"
+    }
+    
+    override var version: Int {
+        return 4
     }
     
     override func performMigration() throws {

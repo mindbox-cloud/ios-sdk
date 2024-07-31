@@ -237,11 +237,7 @@ class MBPersistenceStorage: PersistenceStorage {
     }
     
     @UserDefaultsWrapper(key: .versionCodeForMigration, defaultValue: 0)
-    var versionCodeForMigration: Int? {
-        didSet {
-            onDidChange?()
-        }
-    }
+    var versionCodeForMigration: Int?
     
     @UserDefaultsWrapper(key: .configDownloadDate, defaultValue: nil)
     private var configDownloadDateString: String? {

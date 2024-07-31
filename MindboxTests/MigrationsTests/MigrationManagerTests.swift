@@ -23,7 +23,7 @@ final class MigrationManagerTests: XCTestCase {
             TestMigration1()
         ]
         
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations)
+        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations, localVersionCode: 1)
     }
     
     override func tearDown() {
@@ -41,7 +41,7 @@ final class MigrationManagerTests: XCTestCase {
 
     func testPerformOneTestMigration() {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
-        migrationManager.migrate(migrationConstant: 1)
+        migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
     }
     
@@ -51,10 +51,10 @@ final class MigrationManagerTests: XCTestCase {
             TestMigration2()
         ]
         
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations)
+        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations, localVersionCode: 2)
         
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
-        migrationManager.migrate(migrationConstant: 2)
+        migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
     }
     
@@ -68,10 +68,10 @@ final class MigrationManagerTests: XCTestCase {
         
         let expectedCountSucceededMigrations = 2
         
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations)
+        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations, localVersionCode: 2)
         
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
-        migrationManager.migrate(migrationConstant: 2)
+        migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
     }
     
@@ -82,10 +82,10 @@ final class MigrationManagerTests: XCTestCase {
             TestMigration1(),
         ]
         
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations)
+        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations, localVersionCode: 2)
         
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
-        migrationManager.migrate(migrationConstant: 2)
+        migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
     }
     
@@ -97,10 +97,10 @@ final class MigrationManagerTests: XCTestCase {
             TestMigration4_WithPerfomError(),
         ]
         
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations)
+        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock, migrations: testMigrations, localVersionCode: 3)
         
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
-        migrationManager.migrate(migrationConstant: 3)
+        migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 3)
         XCTAssertNil(persistenceStorageMock.deviceUUID, "Must reset() persistenceStorage")
     }
