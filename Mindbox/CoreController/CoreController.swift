@@ -30,6 +30,8 @@ final class CoreController {
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
             
+            DI.injectOrFail(MigrationManagerProtocol.self).migrate()
+            
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -37,8 +39,6 @@ final class CoreController {
             } else {
                 self.repeatInitialization(with: configuration)
             }
-            
-            DI.injectOrFail(MigrationManagerProtocol.self).migrate()
             
             self.guaranteedDeliveryManager.canScheduleOperations = true
             

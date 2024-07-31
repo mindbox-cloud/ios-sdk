@@ -49,6 +49,23 @@ final class MigrationManager {
 // MARK: - MigrationManagerProtocol
 extension MigrationManager: MigrationManagerProtocol {
     func migrate() {
+        guard persistenceStorage.versionCodeForMigration != localVersionCode else {
+            Logger.common(message: "[Migrations] UserDefaults.versionCodeForMigration is equal to constantForMigrations",
+                          level: .info,
+                          category: .migration)
+            return
+        }
+        
+        guard persistenceStorage.isInstalled else {
+            Logger.common(message: "[Migrations] The first installation. Migrations will not be performed.", 
+                          level: .info,
+                          category: .migration)
+            persistenceStorage.versionCodeForMigration = MigrationConstants.sdkVersionCode
+            return
+        }
+        print("versionCodeForMigration: \(persistenceStorage.versionCodeForMigration)")
+        print(migrations.filter { $0.isNeeded })
+        
         migrations
             .lazy
             .filter { $0.isNeeded }
@@ -56,17 +73,13 @@ extension MigrationManager: MigrationManagerProtocol {
             .forEach { migration in
                 do {
                     try migration.run()
-                    Logger.common(
-                        message: "[Migration] Run migration: \(migration.description), version: \(migration.version)",
-                        level: .info,
-                        category: .migration
-                    )
+                    Logger.common(message: "[Migration] Run migration: \(migration.description), version: \(migration.version)",
+                                  level: .info,
+                                  category: .migration)
                 } catch {
-                    Logger.common(
-                        message: "[Migration] Migration \(migration.description) failed. Error: \(error.localizedDescription)",
-                        level: .error,
-                        category: .migration
-                    )
+                    Logger.common(message: "[Migration] Migration \(migration.description) failed. Error: \(error.localizedDescription)",
+                                  level: .error,
+                                  category: .migration)
                 }
             }
         
@@ -77,6 +90,6 @@ extension MigrationManager: MigrationManagerProtocol {
             return
         }
         
-        Logger.common(message: "[Migrations] Migrations were successful")
+        Logger.common(message: "[Migrations] Migrations were successful", level: .info, category: .migration)
     }
 }

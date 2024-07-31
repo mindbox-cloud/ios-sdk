@@ -16,7 +16,8 @@ final class Migration1: BaseMigration {
     
     override var isNeeded: Bool {
         let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-        return versionCode < MigrationConstants.sdkVersionCode
+//        return versionCode < MigrationConstants.sdkVersionCode
+        return versionCode < version
     }
     
     override var version: Int {
@@ -37,7 +38,8 @@ final class Migration2: BaseMigration {
     
     override var isNeeded: Bool {
         let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-        return versionCode < MigrationConstants.sdkVersionCode
+//        return versionCode < MigrationConstants.sdkVersionCode
+        return versionCode < version
     }
     
     override var version: Int {

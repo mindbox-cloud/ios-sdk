@@ -18,6 +18,7 @@ final class MigrationManagerTests: XCTestCase {
         super.setUp()
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
+        persistenceStorageMock.installationDate = Date()
         
         let testMigrations: [MigrationProtocol] = [
             TestMigration1()
