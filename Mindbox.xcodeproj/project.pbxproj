@@ -113,8 +113,9 @@
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
 		33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */; };
-		472A5F002C57F726003DC57E /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472A5EFF2C57F726003DC57E /* Migrations.swift */; };
+		472A5F002C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472A5EFF2C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift */; };
 		475558C32C59300400CDA026 /* MigrationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475558C22C59300400CDA026 /* MigrationManagerTests.swift */; };
+		47638DBB2C5C1CCE00CFADBE /* MigrationsImplementingTheProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47638DBA2C5C1CCE00CFADBE /* MigrationsImplementingTheProtocol.swift */; };
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
 		47BD5BFE2C578FB400F965C0 /* BaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
@@ -658,8 +659,9 @@
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
-		472A5EFF2C57F726003DC57E /* Migrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrations.swift; sourceTree = "<group>"; };
+		472A5EFF2C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationsInheritedFromBaseMigration.swift; sourceTree = "<group>"; };
 		475558C22C59300400CDA026 /* MigrationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerTests.swift; sourceTree = "<group>"; };
+		47638DBA2C5C1CCE00CFADBE /* MigrationsImplementingTheProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationsImplementingTheProtocol.swift; sourceTree = "<group>"; };
 		47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
 		47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseMigration.swift; sourceTree = "<group>"; };
 		47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerProtocol.swift; sourceTree = "<group>"; };
@@ -1461,7 +1463,7 @@
 			isa = PBXGroup;
 			children = (
 				47FDF0C12C5C16B40051F08C /* ImplementationOfMigrations */,
-				47BD5BFC2C578FAD00F965C0 /* Migration */,
+				47BD5BFC2C578FAD00F965C0 /* MigrationAbstractions */,
 				47BD5BF92C578ADE00F965C0 /* MigrationManager */,
 			);
 			path = Migrations;
@@ -1476,19 +1478,20 @@
 			path = MigrationManager;
 			sourceTree = "<group>";
 		};
-		47BD5BFC2C578FAD00F965C0 /* Migration */ = {
+		47BD5BFC2C578FAD00F965C0 /* MigrationAbstractions */ = {
 			isa = PBXGroup;
 			children = (
 				47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */,
 				47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */,
 			);
-			path = Migration;
+			path = MigrationAbstractions;
 			sourceTree = "<group>";
 		};
 		47FDF0C12C5C16B40051F08C /* ImplementationOfMigrations */ = {
 			isa = PBXGroup;
 			children = (
-				472A5EFF2C57F726003DC57E /* Migrations.swift */,
+				472A5EFF2C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift */,
+				47638DBA2C5C1CCE00CFADBE /* MigrationsImplementingTheProtocol.swift */,
 			);
 			path = ImplementationOfMigrations;
 			sourceTree = "<group>";
@@ -3396,12 +3399,13 @@
 				33072F342664C3E1001F1AB2 /* ProductResponse.swift in Sources */,
 				33072F3E2664C7B5001F1AB2 /* DiscountCardResponse.swift in Sources */,
 				F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */,
+				47638DBB2C5C1CCE00CFADBE /* MigrationsImplementingTheProtocol.swift in Sources */,
 				F331DD292A84C4BC00222120 /* InappActionHandler.swift in Sources */,
 				F331DD0A2A83A56500222120 /* InAppImageOnlyView.swift in Sources */,
 				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,
 				A1D017F22976CC9400CD9F99 /* SegmentTargeting.swift in Sources */,
 				F331DD072A83A56500222120 /* CloseButtonElementFactory.swift in Sources */,
-				472A5F002C57F726003DC57E /* Migrations.swift in Sources */,
+				472A5F002C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift in Sources */,
 				9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */,
 				F39117032AA9B79100852298 /* ElementsSizeFilter.swift in Sources */,
 				F397EEB32A44572400D48CEC /* ValidationError.swift in Sources */,

@@ -1,5 +1,5 @@
 //
-//  Migrations.swift
+//  MigrationsInheritedFromBaseMigration.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 7/29/24.
