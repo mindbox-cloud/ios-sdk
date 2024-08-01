@@ -43,6 +43,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == MigrationConstants.sdkVersionCode)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
@@ -57,7 +58,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
-        XCTAssertNotNil(persistenceStorageMock.configuration)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     // MARK: - Base Migrations
@@ -65,6 +66,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformTwoTestBaseMigrations() {
@@ -79,6 +81,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformThreeTestBaseMigrationsWithOneIsNeededEqualFalse() {
@@ -97,9 +100,10 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
-    func test_sort_PerformThreeTestMigrationsThatAreDecalredInARandomOrder() {
+    func testSortPerformThreeTestMigrationsThatAreDecalredInARandomOrder() {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_2(),
             TestBaseMigration_3_IsNeeded_False(),
@@ -112,6 +116,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 2)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformTestBaseMigrationsWhenOneThrowError() {
@@ -131,6 +136,7 @@ final class MigrationManagerTests: XCTestCase {
     }
     
     // MARK: - Protocol Migrations
+    
     func testPerformOneTestProtocolMigration() {
         let testMigrations: [MigrationProtocol] = [
             TestProtocolMigration_1()
@@ -142,6 +148,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformTwoTestProtocolMigrations() {
@@ -156,6 +163,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
     
     func testPerformThreeTestProtocolMigrations() {
@@ -196,7 +204,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == expectedSdkVersionCodeAfterMigrations)
-        XCTAssertNotNil(persistenceStorageMock.configuration)
+        XCTAssertNotNil(persistenceStorageMock.configuration, "Must not `softReset()` `persistenceStorage`")
     }
 }
 
