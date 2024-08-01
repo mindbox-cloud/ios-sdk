@@ -13,7 +13,7 @@ import MindboxLogger
 enum MigrationConstants {
     
     /// The current SDK version code used for comparison in migrations.
-    static var sdkVersionCode = 2
+    static var sdkVersionCode = 0
 }
 
 /// A class responsible for managing and executing migrations.
@@ -58,9 +58,7 @@ final class MigrationManager {
         self.localSdkVersionCode = MigrationConstants.sdkVersionCode
         
         self.migrations = [
-            Migration1(),
-            Migration2(),
-//            Migration4(),
+            
         ]
     }
 }
@@ -69,22 +67,15 @@ final class MigrationManager {
 
 extension MigrationManager: MigrationManagerProtocol {
     
-    /// Performs any necessary migrations. If migrations have already been performed up to the current version,
-    /// no action is taken. If this is the first installation, it sets the migration version code without performing migrations.
+    /// Performs any necessary migrations. If this is the first installation, it sets the migration version code without performing migrations.
     /// If any migration that involves `MigrationConstants.sdkVersionCode` and `persistenceStorage.versionCodeForMigration` fails,
     /// a soft reset is performed on the persistence storage to ensure that the system remains in a consistent state.
     func migrate() {
-        guard persistenceStorage.versionCodeForMigration != localSdkVersionCode else {
-            let message = "[Migrations] Migrations will not be perfromed. PersistenceStorage.versionCodeForMigrations is equal to constantForMigrations"
-            Logger.common(message: message, level: .info, category: .migration)
-            return
-        }
         
         guard persistenceStorage.isInstalled else {
-            Logger.common(message: "[Migrations] The first installation. Migrations will not be performed.", 
-                          level: .info,
-                          category: .migration)
-            persistenceStorage.versionCodeForMigration = MigrationConstants.sdkVersionCode
+            let firstInstallationMessage = "[Migrations] The first installation. Migrations will not be performed."
+            Logger.common(message: firstInstallationMessage, level: .info, category: .migration)
+            persistenceStorage.versionCodeForMigration = localSdkVersionCode
             return
         }
         
@@ -95,13 +86,11 @@ extension MigrationManager: MigrationManagerProtocol {
             .forEach { migration in
                 do {
                     try migration.run()
-                    Logger.common(message: "[Migration] Run migration: \(migration.description), version: \(migration.version)",
-                                  level: .info,
-                                  category: .migration)
+                    let message = "[Migration] Run migration: \(migration.description), version: \(migration.version)"
+                    Logger.common(message: message, level: .info, category: .migration)
                 } catch {
-                    Logger.common(message: "[Migration] Migration \(migration.description) failed. Error: \(error.localizedDescription)",
-                                  level: .error,
-                                  category: .migration)
+                    let errorMessage = "[Migration] Migration \(migration.version) failed. Description: \(migrations.description). Error: \(error.localizedDescription)"
+                    Logger.common(message: errorMessage, level: .error, category: .migration)
                 }
             }
         

@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class Migration1: BaseMigration {
+final class Migration0_1: BaseMigration {
     
     override var description: String {
         "Some description. First migration"
@@ -16,7 +16,6 @@ final class Migration1: BaseMigration {
     
     override var isNeeded: Bool {
         let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-//        return versionCode < MigrationConstants.sdkVersionCode
         return versionCode < version
     }
     
@@ -30,7 +29,7 @@ final class Migration1: BaseMigration {
 }
 
 
-final class Migration2: BaseMigration {
+final class Migration1_2: BaseMigration {
     
     override var description: String {
         "Second migration"
@@ -38,32 +37,11 @@ final class Migration2: BaseMigration {
     
     override var isNeeded: Bool {
         let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-//        return versionCode < MigrationConstants.sdkVersionCode
         return versionCode < version
     }
     
     override var version: Int {
         return 2
-    }
-    
-    override func performMigration() throws {
-        print("Performing migration")
-    }
-}
-
-final class Migration4: BaseMigration {
-    
-    override var description: String {
-        "Fourth migration"
-    }
-    
-    override var isNeeded: Bool {
-        let versionCode = persistenceStorage.versionCodeForMigration ?? 0
-        return versionCode < MigrationConstants.sdkVersionCode && persistenceStorage.deviceUUID == "0"
-    }
-    
-    override var version: Int {
-        return 4
     }
     
     override func performMigration() throws {

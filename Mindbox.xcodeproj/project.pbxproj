@@ -1460,6 +1460,7 @@
 		47BD5BF82C578AD700F965C0 /* Migrations */ = {
 			isa = PBXGroup;
 			children = (
+				47FDF0C12C5C16B40051F08C /* ImplementationOfMigrations */,
 				47BD5BFC2C578FAD00F965C0 /* Migration */,
 				47BD5BF92C578ADE00F965C0 /* MigrationManager */,
 			);
@@ -1480,9 +1481,16 @@
 			children = (
 				47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */,
 				47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */,
-				472A5EFF2C57F726003DC57E /* Migrations.swift */,
 			);
 			path = Migration;
+			sourceTree = "<group>";
+		};
+		47FDF0C12C5C16B40051F08C /* ImplementationOfMigrations */ = {
+			isa = PBXGroup;
+			children = (
+				472A5EFF2C57F726003DC57E /* Migrations.swift */,
+			);
+			path = ImplementationOfMigrations;
 			sourceTree = "<group>";
 		};
 		8400429F2614CDED00CA17C5 /* ClickNotificationManager */ = {

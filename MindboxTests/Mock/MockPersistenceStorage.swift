@@ -121,6 +121,17 @@ class MockPersistenceStorage: PersistenceStorage {
         resetBackgroundExecutions()
     }
     
+    func softReset() {
+        configuration = nil
+        
+        configDownloadDate = nil
+        
+        shownInAppsIds = nil // Deprecated
+        shownInappsDictionary = nil
+        
+        userVisitCount = 0
+        resetBackgroundExecutions()
+    }
     
     func setBackgroundExecution(_ value: BackgroudExecution) {
         backgroundExecutions.append(value)

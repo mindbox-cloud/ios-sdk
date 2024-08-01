@@ -259,7 +259,6 @@ class MBPersistenceStorage: PersistenceStorage {
      */
     func softReset() {
         configuration = nil
-        configurationData = nil
         
         configDownloadDate = nil
         
