@@ -40,8 +40,6 @@ protocol PersistenceStorage: AnyObject {
 
     func setBackgroundExecution(_ value: BackgroudExecution)
 
-    func reset()
-
     func resetBackgroundExecutions()
 
     func storeToFileBackgroundExecution()
@@ -65,4 +63,10 @@ protocol PersistenceStorage: AnyObject {
     
     /// Clears certain parts of the persistence storage to revert the system to a stable state.
     func softReset()
+    
+    
+    // MARK: - Functions for testing
+    
+    /// Clears most parts of the persistence storage. It is used in unit tests.
+    func reset()
 }

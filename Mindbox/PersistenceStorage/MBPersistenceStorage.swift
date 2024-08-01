@@ -268,19 +268,6 @@ class MBPersistenceStorage: PersistenceStorage {
         userVisitCount = 0
         resetBackgroundExecutions()
     }
-
-    func reset() {
-        installationDate = nil
-        deviceUUID = nil
-        installationId = nil
-        apnsToken = nil
-        apnsTokenSaveDate = nil
-        deprecatedEventsRemoveDate = nil
-        configuration = nil
-        isNotificationsEnabled = nil
-        configDownloadDate = nil
-        resetBackgroundExecutions()
-    }
     
     func resetBackgroundExecutions() {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
@@ -300,6 +287,24 @@ class MBPersistenceStorage: PersistenceStorage {
             shownInAppsIds = nil
             Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
         }
+    }
+}
+
+// MARK: - Functions for unit testing
+
+extension MBPersistenceStorage {
+    
+    func reset() {
+        installationDate = nil
+        deviceUUID = nil
+        installationId = nil
+        apnsToken = nil
+        apnsTokenSaveDate = nil
+        deprecatedEventsRemoveDate = nil
+        configuration = nil
+        isNotificationsEnabled = nil
+        configDownloadDate = nil
+        resetBackgroundExecutions()
     }
 }
 
