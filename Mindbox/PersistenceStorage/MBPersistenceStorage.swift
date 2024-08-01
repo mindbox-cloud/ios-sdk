@@ -236,23 +236,36 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
+    @UserDefaultsWrapper(key: .versionCodeForMigration, defaultValue: 0)
+    var versionCodeForMigration: Int?
+    
     @UserDefaultsWrapper(key: .configDownloadDate, defaultValue: nil)
     private var configDownloadDateString: String? {
         didSet {
             onDidChange?()
         }
     }
-
-    func reset() {
-        installationDate = nil
-        deviceUUID = nil
-        installationId = nil
-        apnsToken = nil
-        apnsTokenSaveDate = nil
-        deprecatedEventsRemoveDate = nil
+    
+    /*Android softReset
+     
+        inAppConfig = ""
+        shownInAppIds = ""
+        inAppGeo = ""
+        logsRequestIds = ""
+        userVisitCount = 0
+        requestPermissionCount = 0
+        shownInApps = ""
+        inAppConfigUpdatedTime = 0
+     */
+    func softReset() {
         configuration = nil
-        isNotificationsEnabled = nil
+        
         configDownloadDate = nil
+        
+        shownInAppsIds = nil // Deprecated
+        shownInappsDictionary = nil
+        
+        userVisitCount = 0
         resetBackgroundExecutions()
     }
     
@@ -274,6 +287,24 @@ class MBPersistenceStorage: PersistenceStorage {
             shownInAppsIds = nil
             Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
         }
+    }
+}
+
+// MARK: - Functions for unit testing
+
+extension MBPersistenceStorage {
+    
+    func reset() {
+        installationDate = nil
+        deviceUUID = nil
+        installationId = nil
+        apnsToken = nil
+        apnsTokenSaveDate = nil
+        deprecatedEventsRemoveDate = nil
+        configuration = nil
+        isNotificationsEnabled = nil
+        configDownloadDate = nil
+        resetBackgroundExecutions()
     }
 }
 
@@ -311,6 +342,7 @@ extension MBPersistenceStorage {
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
             case userVisitCount = "MBPersistenceStorage-userVisitCount"
             case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
+            case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
         }
         
         private let key: Key

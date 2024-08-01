@@ -17,6 +17,7 @@ public enum LogCategory: String, CaseIterable {
     case background
     case notification
     case visit
+    case migration
     case inAppMessages
     
     var emoji: String {
@@ -35,6 +36,8 @@ public enum LogCategory: String, CaseIterable {
             return "✉️"
         case .visit:
             return "👁"
+        case .migration:
+            return "✈️"
         case .inAppMessages:
             return "🖼️"
         }

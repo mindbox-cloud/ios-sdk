@@ -23,24 +23,22 @@ protocol PersistenceStorage: AnyObject {
 
     var deprecatedEventsRemoveDate: Date? { get set }
 
-    var configuration: MBConfiguration? { get set }
+    var configuration: MBConfiguration? { get set } //!
 
     var backgroundExecutions: [BackgroudExecution] { get }
 
     var isNotificationsEnabled: Bool? { get set }
 
     @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
-    var shownInAppsIds: [String]? { get set }
+    var shownInAppsIds: [String]? { get set } //!
     
-    var shownInappsDictionary: [String: Date]? { get set }
+    var shownInappsDictionary: [String: Date]? { get set } //!
     
     var handledlogRequestIds: [String]? { get set }
     
     var imageLoadingMaxTimeInSeconds: Double? { get set }
 
     func setBackgroundExecution(_ value: BackgroudExecution)
-
-    func reset()
 
     func resetBackgroundExecutions()
 
@@ -52,7 +50,23 @@ protocol PersistenceStorage: AnyObject {
     
     var needUpdateInfoOnce: Bool? { get set }
 
-    var userVisitCount: Int? { get set }
+    var userVisitCount: Int? { get set } //!
     
-    var configDownloadDate: Date? { get set }
+    var configDownloadDate: Date? { get set } //!
+    
+    /// The version code used to track the current state of migrations.
+    /// This value is compared to `MigrationConstants.sdkVersionCode` to determine
+    /// if migrations need to be performed. If a migration fails, and the `versionCodeForMigration`
+    /// does not match the `MigrationConstants.sdkVersionCode`, a `softReset()` is performed to
+    /// ensure that the system remains in a consistent state.
+    var versionCodeForMigration: Int? { get set }
+    
+    /// Clears certain parts of the persistence storage to revert the system to a stable state.
+    func softReset()
+    
+    
+    // MARK: - Functions for testing
+    
+    /// Clears most parts of the persistence storage. It is used in unit tests.
+    func reset()
 }

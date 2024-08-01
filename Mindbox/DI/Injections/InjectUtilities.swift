@@ -17,6 +17,11 @@ extension MBContainer {
         register(TimerManager.self) {
             TimerManager()
         }
+        
+        register(MigrationManagerProtocol.self, scope: .transient) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return MigrationManager(persistenceStorage: persistenceStorage)
+        }
 
         register(UserVisitManagerProtocol.self, scope: .transient) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
