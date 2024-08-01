@@ -245,6 +245,30 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    /*Android softReset
+     
+        inAppConfig = ""
+        shownInAppIds = ""
+        inAppGeo = ""
+        logsRequestIds = ""
+        userVisitCount = 0
+        requestPermissionCount = 0
+        shownInApps = ""
+        inAppConfigUpdatedTime = 0
+     */
+    func softReset() {
+        configuration = nil
+        configurationData = nil
+        
+        configDownloadDate = nil
+        
+        shownInAppsIds = nil // Deprecated
+        shownInappsDictionary = nil
+        
+        userVisitCount = 0
+        resetBackgroundExecutions()
+    }
 
     func reset() {
         installationDate = nil
