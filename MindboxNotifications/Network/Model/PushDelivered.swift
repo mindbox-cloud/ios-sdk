@@ -8,12 +8,12 @@
 
 import Foundation
 
-struct PushDelivered: Codable {
-    
-    let uniqKey: String
-    
-    init(uniqKey: String) {
-        self.uniqKey = uniqKey
-    }
-
-}
+//struct PushDelivered: Codable {
+//    
+//    let uniqKey: String
+//    
+//    init(uniqKey: String) {
+//        self.uniqKey = uniqKey
+//    }
+//
+//}

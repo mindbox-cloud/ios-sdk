@@ -8,16 +8,16 @@
 
 import Foundation
 
-protocol Route {
-            
-    var method: HTTPMethod { get }
-    
-    var path: String { get }
-    
-    var headers: HTTPHeaders? { get }
-    
-    var queryParameters: QueryParameters { get }
-    
-    var body: Data? { get }
-    
-}
+//protocol Route {
+//            
+//    var method: HTTPMethod { get }
+//    
+//    var path: String { get }
+//    
+//    var headers: HTTPHeaders? { get }
+//    
+//    var queryParameters: QueryParameters { get }
+//    
+//    var body: Data? { get }
+//    
+//}

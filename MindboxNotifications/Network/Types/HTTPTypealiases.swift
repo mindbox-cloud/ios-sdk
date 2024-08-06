@@ -8,6 +8,6 @@
 
 import Foundation
 
-typealias HTTPHeaders = [String: String]
-
-typealias QueryParameters = [String: CustomStringConvertible]
+//typealias HTTPHeaders = [String: String]
+//
+//typealias QueryParameters = [String: CustomStringConvertible]

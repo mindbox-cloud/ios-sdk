@@ -12,30 +12,52 @@ import UserNotificationsUI
 import os
 import MindboxLogger
 
+public protocol MindboxNotificationServiceProtocol {
+    func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void)
+    func serviceExtensionTimeWillExpire()
+    
+    @available(*, deprecated, message: "")
+    func pushDelivered(_ request: UNNotificationRequest)
+}
+
+public protocol MindboxNotificationContentProtocol {
+    func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?)
+}
+
+fileprivate enum Constants {
+    
+    /// For `OSLog(subsystem:, category:)`
+    static var subsystem = "cloud.Mindbox"
+    static var category = "Notifications"
+    
+    /// For `bestAttemptContent.categoryIdentifier`
+    static var categoryIdentifier = "MindBoxCategoryIdentifier"
+}
+
 @objcMembers
 public class MindboxNotificationService: NSObject {
-    // Public
+    
+    // Public properties
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
 
-    // Private
+    // Private properties
     private var context: NSExtensionContext?
     private var viewController: UIViewController?
-    private let log = OSLog(subsystem: "cloud.Mindbox", category: "Notifications")
+    private let log = OSLog(subsystem: Constants.subsystem, category: Constants.category)
 
-    /// Mindbox proxy for NotificationsService and NotificationViewController
+    /// Mindbox proxy for `NotificationsService` and `NotificationViewController`
     public override init() {
         super.init()
     }
+}
 
-    /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
-    public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
-        context = extensionContext
-        self.viewController = viewController
+// MARK: - MindboxNotificationService
 
-        createContent(for: notification, extensionContext: extensionContext)
-    }
-
+extension MindboxNotificationService: MindboxNotificationServiceProtocol {
+    
+    // MARK: Public methods
+    
     /// Call this method in `didReceive(_ request, withContentHandler)` of `NotificationService`
     public func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
@@ -45,10 +67,10 @@ public class MindboxNotificationService: NSObject {
             return
         }
 
-        pushDelivered(request)
+//        pushDelivered(request)
 
         Logger.common(message: "Push notification UniqueKey: \(request.identifier)", level: .info, category: .notification)
-
+        
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: allowedUrl) {
@@ -60,27 +82,38 @@ public class MindboxNotificationService: NSObject {
             proceedFinalStage(bestAttemptContent)
         }
     }
-
-    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService. This is necessary as an indicator that the push notification has been delivered to Mindbox services.
-    public func pushDelivered(_ request: UNNotificationRequest) {
-        let utilities = MBUtilitiesFetcher()
-        guard let configuration = utilities.configuration else {
-            Logger.common(message: "MindboxNotificationService: Failed to get configuration", level: .error, category: .notification)
-            return
-        }
-        Logger.common(message: "MindboxNotificationService: Successfully received configuration. configuration: \(configuration)", level: .info, category: .notification)
-        
-        let networkService = NetworkService(utilitiesFetcher: utilities, configuration: configuration)
-        let deliveryService = DeliveryService(utilitiesFetcher: utilities, networkService: networkService)
-
-        do {
-            try deliveryService.track(request: request)
-            Logger.common(message: "MindboxNotificationService: Successfully tracked. request: \(request)", level: .info, category: .notification)
-        } catch {
-            Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
+    
+    /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
+    public func serviceExtensionTimeWillExpire() {
+        if let bestAttemptContent = bestAttemptContent {
+            Logger.common(message: "MindboxNotificationService: Failed to get bestAttemptContent. bestAttemptContent: \(bestAttemptContent)", level: .error, category: .notification)
+            proceedFinalStage(bestAttemptContent)
         }
     }
-
+    
+    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService. This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    @available(*, deprecated, message: "")
+    public func pushDelivered(_ request: UNNotificationRequest) {
+//        let utilities = MBUtilitiesFetcher()
+//        guard let configuration = utilities.configuration else {
+//            Logger.common(message: "MindboxNotificationService: Failed to get configuration", level: .error, category: .notification)
+//            return
+//        }
+//        Logger.common(message: "MindboxNotificationService: Successfully received configuration. configuration: \(configuration)", level: .info, category: .notification)
+//        
+//        let networkService = NetworkService(utilitiesFetcher: utilities, configuration: configuration)
+//        let deliveryService = DeliveryService(utilitiesFetcher: utilities, networkService: networkService)
+//
+//        do {
+//            try deliveryService.track(request: request)
+//            Logger.common(message: "MindboxNotificationService: Successfully tracked. request: \(request)", level: .info, category: .notification)
+//        } catch {
+//            Logger.error(.init(errorType: .unknown, description: error.localizedDescription))
+//        }
+    }
+    
+    // MARK: Private methods
+    
     private func downloadImage(with url: URL, completion: @escaping () -> Void) {
         Logger.common(message: "Image loading. [URL]: \(url)", level: .info, category: .notification)
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
@@ -98,20 +131,47 @@ public class MindboxNotificationService: NSObject {
             }
         }.resume()
     }
-
-    private func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
-        bestAttemptContent.categoryIdentifier = "MindBoxCategoryIdentifier"
-        contentHandler?(bestAttemptContent)
-    }
-
-    /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
-    public func serviceExtensionTimeWillExpire() {
-        if let bestAttemptContent = bestAttemptContent {
-            Logger.common(message: "MindboxNotificationService: Failed to get bestAttemptContent. bestAttemptContent: \(bestAttemptContent)", level: .error, category: .notification)
-            proceedFinalStage(bestAttemptContent)
+    
+    private func saveImage(_ data: Data) -> UNNotificationAttachment? {
+        let name = UUID().uuidString
+        guard let format = ImageFormat(data) else {
+            Logger.common(message: "MindboxNotificationService: Image load failed, data: \(data)", level: .error, category: .notification)
+            return nil
+        }
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+        let directory = url.appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
+            let fileURL = directory.appendingPathComponent(name, isDirectory: true).appendingPathExtension(format.extension)
+            try data.write(to: fileURL, options: .atomic)
+            return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
+        } catch {
+            Logger.common(message: "MindboxNotificationService: Failed to save image. data: \(data), name: \(name), url: \(url), directory: \(directory)", level: .error, category: .notification)
+            return nil
         }
     }
+    
+    private func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
+        bestAttemptContent.categoryIdentifier = Constants.categoryIdentifier
+        contentHandler?(bestAttemptContent)
+    }
+}
 
+
+// MARK: - MindboxNotificationContent
+
+extension MindboxNotificationService: MindboxNotificationContentProtocol {
+    
+    /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
+    public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
+        context = extensionContext
+        self.viewController = viewController
+
+        createContent(for: notification, extensionContext: extensionContext)
+    }
+    
+    // MARK: Private methods
+    
     private func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
@@ -180,8 +240,12 @@ public class MindboxNotificationService: NSObject {
             imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight),
         ])
     }
+}
 
-    private func parse(request: UNNotificationRequest) -> Payload? {
+// MARK: - Shared private methods
+
+private extension MindboxNotificationService {
+    func parse(request: UNNotificationRequest) -> Payload? {
         guard let userInfo = getUserInfo(from: request) else {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
             return nil
@@ -201,8 +265,8 @@ public class MindboxNotificationService: NSObject {
         
         return payload
     }
-
-    private func getUserInfo(from request: UNNotificationRequest) -> [AnyHashable: Any]? {
+    
+    func getUserInfo(from request: UNNotificationRequest) -> [AnyHashable: Any]? {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
             return nil
@@ -216,27 +280,4 @@ public class MindboxNotificationService: NSObject {
             return userInfo
         }
     }
-
-    private func saveImage(_ data: Data) -> UNNotificationAttachment? {
-        let name = UUID().uuidString
-        guard let format = ImageFormat(data) else {
-            Logger.common(message: "MindboxNotificationService: Image load failed, data: \(data)", level: .error, category: .notification)
-            return nil
-        }
-        let url = URL(fileURLWithPath: NSTemporaryDirectory())
-        let directory = url.appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString, isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-            let fileURL = directory.appendingPathComponent(name, isDirectory: true).appendingPathExtension(format.extension)
-            try data.write(to: fileURL, options: .atomic)
-            return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
-        } catch {
-            Logger.common(message: "MindboxNotificationService: Failed to save image. data: \(data), name: \(name), url: \(url), directory: \(directory)", level: .error, category: .notification)
-            return nil
-        }
-    }
 }
-
-
-
-

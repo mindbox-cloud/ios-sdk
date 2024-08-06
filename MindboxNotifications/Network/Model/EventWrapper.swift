@@ -8,12 +8,12 @@
 
 import Foundation
 
-struct EventWrapper {
-    
-    let event: Event
-    
-    let endpoint: String
-    
-    let deviceUUID: String
-    
-}
+//struct EventWrapper {
+//    
+//    let event: Event
+//    
+//    let endpoint: String
+//    
+//    let deviceUUID: String
+//    
+//}

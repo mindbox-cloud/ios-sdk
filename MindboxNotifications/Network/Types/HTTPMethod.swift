@@ -8,8 +8,8 @@
 
 import Foundation
 
-enum HTTPMethod: String {
-    
-    case get, post
-    
-}
+//enum HTTPMethod: String {
+//    
+//    case get, post
+//    
+//}

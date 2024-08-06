@@ -8,35 +8,35 @@
 
 import Foundation
 
-struct Event {
-    
-    enum Operation: String {
-        case pushDelivered = ""
-    }
-    
-    let transactionId: String
-    
-    var dateTimeOffset: Int64 {
-        let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
-        let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
-        return Int64(ms)
-    }
-    
-    // The time of adding is persistent to the event queue
-    let enqueueTimeStamp: Double
-    
-    let serialNumber: String?
-    
-    let type: Operation
-    
-    // Data according to Operation
-    let body: String
-    
-    init(type: Operation, body: String) {
-        self.transactionId = UUID().uuidString
-        self.enqueueTimeStamp = Date().timeIntervalSince1970
-        self.type = type
-        self.body = body
-        self.serialNumber = nil
-    }
-}
+//struct Event {
+//    
+//    enum Operation: String {
+//        case pushDelivered = ""
+//    }
+//    
+//    let transactionId: String
+//    
+//    var dateTimeOffset: Int64 {
+//        let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
+//        let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
+//        return Int64(ms)
+//    }
+//    
+//    // The time of adding is persistent to the event queue
+//    let enqueueTimeStamp: Double
+//    
+//    let serialNumber: String?
+//    
+//    let type: Operation
+//    
+//    // Data according to Operation
+//    let body: String
+//    
+//    init(type: Operation, body: String) {
+//        self.transactionId = UUID().uuidString
+//        self.enqueueTimeStamp = Date().timeIntervalSince1970
+//        self.type = type
+//        self.body = body
+//        self.serialNumber = nil
+//    }
+//}
