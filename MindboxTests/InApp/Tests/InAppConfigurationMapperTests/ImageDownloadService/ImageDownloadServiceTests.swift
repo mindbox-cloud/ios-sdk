@@ -14,7 +14,7 @@ class ImageDownloadServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        sut = MockImageDownloadService()
+        sut = DI.injectOrFail(ImageDownloadServiceProtocol.self)
     }
 
     override func tearDown() {

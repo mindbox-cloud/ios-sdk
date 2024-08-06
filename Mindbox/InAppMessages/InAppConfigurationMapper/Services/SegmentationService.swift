@@ -15,7 +15,7 @@ protocol SegmentationServiceProtocol {
 }
 
 class SegmentationService: SegmentationServiceProtocol {
-    let customerSegmentsAPI: CustomerSegmentsAPI
+    var customerSegmentsAPI: CustomerSegmentsAPI
     var targetingChecker: InAppTargetingCheckerProtocol
 
     init(customerSegmentsAPI: CustomerSegmentsAPI,

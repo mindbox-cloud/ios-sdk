@@ -19,9 +19,9 @@ protocol InAppActionHandlerProtocol {
 
 final class InAppActionHandler: InAppActionHandlerProtocol {
     
-    private let actionUseCaseFactory: ActionUseCaseFactory
+    private let actionUseCaseFactory: UseCaseFactoryProtocol
     
-    init(actionUseCaseFactory: ActionUseCaseFactory) {
+    init(actionUseCaseFactory: UseCaseFactoryProtocol) {
         self.actionUseCaseFactory = actionUseCaseFactory
     }
 

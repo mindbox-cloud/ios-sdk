@@ -15,7 +15,7 @@ class MindboxPushValidator: Validator {
     typealias T = [AnyHashable: Any]
     
     func isValid(item: [AnyHashable : Any]) -> Bool {
-        guard let pushModel = NotificationFormatter.formatNotification(item) else {
+        guard NotificationFormatter.formatNotification(item) != nil else {
             Logger.common(message: "MindboxPushValidator: Failed to convert item to Mindbox push model. Validation failed.", level: .error, category: .notification)
             return false
         }

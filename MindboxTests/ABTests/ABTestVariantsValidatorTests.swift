@@ -21,6 +21,7 @@ class ABTestVariantsValidatorTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
+        variantValidator = DI.injectOrFail(ABTestVariantsValidator.self)
         
         // TODO: - Divide to few different unit tests.
         
@@ -38,7 +39,7 @@ class ABTestVariantsValidatorTests: XCTestCase {
             TestCase(variant: nil, isValid: false) // variant is nil
         ]
         
-        variantValidator = ABTestVariantsValidator()
+
     }
     
     override func tearDown() {

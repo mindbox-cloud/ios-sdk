@@ -12,7 +12,6 @@ import UIKit
 
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     
-    let geoService: GeoServiceProtocol
     let segmentationService: SegmentationServiceProtocol
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
@@ -21,12 +20,10 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     public var showArray: [String] = []
     public var targetingArray: [String] = []
     
-    init(geoService: GeoServiceProtocol,
-         segmentationService: SegmentationServiceProtocol,
+    init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
          tracker: InappTargetingTrackProtocol) {
-        self.geoService = geoService
         self.segmentationService = segmentationService
         self.targetingChecker = targetingChecker
         self.imageService = imageService

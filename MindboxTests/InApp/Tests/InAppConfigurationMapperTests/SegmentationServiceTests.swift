@@ -11,26 +11,27 @@ import XCTest
 
 final class SegmentationServiceTests: XCTestCase {
     
-    var container: TestDependencyProvider!
-    var sut: SegmentationServiceProtocol!
+    var sut: SegmentationService!
     var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        targetingChecker = container.inAppTargetingChecker
-        sut = SegmentationService(customerSegmentsAPI: .init(fetchSegments: { segmentationCheckRequest, completion in
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        
+        sut = DI.injectOrFail(SegmentationServiceProtocol.self) as? SegmentationService
+        let customerSegmentAPI = CustomerSegmentsAPI { segmentationCheckRequest, completion in
             completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
                                                                              segment: .init(ids: .init(externalId: "2")))]))
-        }, fetchProductSegments: { segmentationCheckRequest, completion in
+        } fetchProductSegments: { segmentationCheckRequest, completion in
             completion(.init(status: .success, products: [.init(ids: ["Hello": "World"],
                                                                 segmentations: [.init(ids: .init(externalId: "123"),
                                                                                       segment: .init(ids: .init(externalId: "456")))])]))
-        }), targetingChecker: targetingChecker)
+        }
+        
+        sut.customerSegmentsAPI = customerSegmentAPI
     }
     
     override func tearDown() {
-        container = nil
         SessionTemporaryStorage.shared.erase()
         targetingChecker = nil
         sut = nil

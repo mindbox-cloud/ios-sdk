@@ -11,35 +11,26 @@ import XCTest
 
 class InAppTargetingRequestsTests: XCTestCase {
 
-    var container: TestDependencyProvider!
-
     private var mockDataFacade: MockInAppConfigurationDataFacade!
     private var mapper: InAppConfigurationMapperProtocol!
+    private var persistenceStorage: PersistenceStorage!
     
     private var targetingChecker: InAppTargetingCheckerProtocol!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
         SessionTemporaryStorage.shared.erase()
-        targetingChecker = container.inAppTargetingChecker
-        try! container.databaseRepository.erase()
-        let tracker = InAppMessagesTracker(databaseRepository: container.databaseRepository)
-        mockDataFacade = MockInAppConfigurationDataFacade(geoService: container.geoService,
-                                                              segmentationService: container.segmentationSevice,
-                                                              targetingChecker: targetingChecker, 
-                                                              imageService: container.imageDownloadService,
-                                                              tracker: tracker)
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
+        mockDataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade
         mockDataFacade.clean()
 
-        mapper = InAppConfigutationMapper(inappFilterService: container.inappFilterService,
-                                          targetingChecker: targetingChecker,
-                                          urlExtractorService: container.urlExtractorService,
-                                          dataFacade: mockDataFacade)
+        mapper = DI.injectOrFail(InAppConfigurationMapperProtocol.self)
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
     }
     
     override func tearDown() {
-        container = nil
         mockDataFacade = nil
         targetingChecker = nil
         mapper = nil
@@ -65,7 +56,7 @@ class InAppTargetingRequestsTests: XCTestCase {
 
     func test_TwoInappsTrue_FirstShownBefore() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        container.persistenceStorage.shownInAppsIds = ["1"]
+        persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
@@ -124,7 +115,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
         let expectationForMapConfigResponse = XCTestExpectation(description: "Waiting for mapConfigResponse to complete")
             
-        container.persistenceStorage.shownInAppsIds = ["1"]
+        persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "9-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
@@ -194,7 +185,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         let expectationTest = XCTestExpectation(description: "Operation test")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
             
-        container.persistenceStorage.shownInAppsIds = ["1"]
+        persistenceStorage.shownInAppsIds = ["1"]
         
         do {
             let config = try getConfig(name: "16-17-TargetingRequests")
@@ -257,7 +248,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "31-TargetingRequests")
             
-            container.persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
+            persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
             
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
             SessionTemporaryStorage.shared.geoRequestCompleted = true
@@ -300,7 +291,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         
         do {
             let config = try getConfig(name: "31-TargetingRequests")
-            container.persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
+            persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
             SessionTemporaryStorage.shared.geoRequestCompleted = true
             
@@ -343,7 +334,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         do {
             let config = try getConfig(name: "31-TargetingRequests")
             
-            container.persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
+            persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
             
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
             SessionTemporaryStorage.shared.geoRequestCompleted = true

@@ -11,34 +11,22 @@ import XCTest
 
 class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
-    var container: DependencyContainer!
     var controllerQueue: DispatchQueue!
+    var persistenceStorage: PersistenceStorage!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        controllerQueue = DispatchQueue(label: "test-core-controller-queue")
-        coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
-            notificationStatusProvider: container.authorizationStatusProvider,
-            databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager,
-            inAppMessagesManager: InAppCoreManagerMock(),
-            uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue,
-            userVisitManager: container.userVisitManager
-        )
-        container.persistenceStorage.reset()
-        try! container.databaseRepository.erase()
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        coreController = DI.injectOrFail(CoreController.self)
+        controllerQueue = coreController.controllerQueue
+        persistenceStorage.reset()
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
     }
     
     override func tearDown() {
         
         coreController = nil
-        container = nil
         controllerQueue = nil
         super.tearDown()
     }
@@ -47,7 +35,7 @@ class EventRepositoryTestCase: XCTestCase {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
-        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let repository = DI.injectOrFail(EventRepository.self)
         let event = Event(
             type: .installed,
             body: ""
@@ -68,7 +56,7 @@ class EventRepositoryTestCase: XCTestCase {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
-        let repository: EventRepository = container.instanceFactory.makeEventRepository()
+        let repository = DI.injectOrFail(EventRepository.self)
         let event = Event(type: .syncEvent, body: "")
         let expectation = self.expectation(description: "send event")
         repository.send(type: SuccessCase.self, event: event) { result in

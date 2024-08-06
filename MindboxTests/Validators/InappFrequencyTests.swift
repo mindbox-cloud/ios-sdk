@@ -11,28 +11,25 @@ import XCTest
 
 class InappFrequencyTests: XCTestCase {
 
-    var container: DependencyContainer!
     var validator: InappFrequencyValidator!
     var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        validator = container.frequencyValidator
-        persistenceStorage = container.persistenceStorage
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownInappsDictionary = [:]
+        validator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
     
     override func tearDown() {
         validator = nil
         persistenceStorage = nil
-        container = nil
         super.tearDown()
     }
     
     func test_once_lifetime_firstTime_shown() throws {
         let onceFrequency = OnceFrequency(kind: .lifetime)
-        let inappFrequency: InappFrequency = .once(.init(kind: .lifetime))
+        let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp = getInapp(frequency: inappFrequency)
         XCTAssertTrue(validator.isValid(item: inapp))
     }

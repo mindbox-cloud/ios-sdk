@@ -14,13 +14,11 @@ final class UserVisitManagerTests: XCTestCase {
     private var persistenceStorageMock: PersistenceStorage!
     private var userVisitManager: UserVisitManagerProtocol!
     private var sessionManagerMock: MockSessionManager!
-    private var container: TestDependencyProvider!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        persistenceStorageMock = MockPersistenceStorage()
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
+        persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
+        userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
     }
     
@@ -36,7 +34,7 @@ final class UserVisitManagerTests: XCTestCase {
         userVisitManager.saveUserVisit()
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)
         
-        userVisitManager = UserVisitManager(persistenceStorage: persistenceStorageMock)
+        userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
         userVisitManager.saveUserVisit()
         
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 3)

@@ -14,14 +14,14 @@ final class SDKLogManagerTests: XCTestCase {
 
     var eventRepositoryMock: EventRepositoryMock!
     var logsManager: SDKLogsManager!
-    var persistenceStorageMock: MockPersistenceStorage!
+    var persistenceStorageMock: PersistenceStorage!
 
     override func setUp() {
         super.setUp()
-        persistenceStorageMock = MockPersistenceStorage()
+        persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "2"
-        eventRepositoryMock = EventRepositoryMock()
-        logsManager = SDKLogsManager(persistenceStorage: persistenceStorageMock, eventRepository: eventRepositoryMock)
+        eventRepositoryMock = DI.injectOrFail(EventRepositoryMock.self)
+        logsManager = DI.injectOrFail(SDKLogsManagerProtocol.self) as? SDKLogsManager
     }
 
     override func tearDown() {

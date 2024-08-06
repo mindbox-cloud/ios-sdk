@@ -38,17 +38,13 @@ public class Mindbox: NSObject {
     private var persistenceStorage: PersistenceStorage?
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
-    private var notificationStatusProvider: UNAuthorizationStatusProviding?
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
-    private var inappMessageEventSender: InappMessageEventSender?
-    private var pushValidator: MindboxPushValidator?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
     var coreController: CoreController?
-    var container: DependencyContainer?
 
     /**
      A set of methods that sdk uses to notify you of its behavior.
@@ -237,8 +233,10 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
-        guard let container = container else { return }
-        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
+        guard let tracker = DI.inject(ClickNotificationManager.self) else {
+            return
+        }
+        
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
             Logger.common(message: "Track Click", level: .info, category: .notification)
@@ -320,7 +318,8 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -349,7 +348,8 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: OperationResponse.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -378,7 +378,8 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        container?.instanceFactory.makeEventRepository().send(type: P.self, event: event, completion: completion)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventRepository.send(type: P.self, event: event, completion: completion)
         sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
@@ -420,8 +421,9 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(response: UNNotificationResponse) {
-        guard let container = container else { return }
-        let tracker = ClickNotificationManager(databaseRepository: container.databaseRepository)
+        guard let tracker = DI.inject(ClickNotificationManager.self) else {
+            return
+        }
         do {
             try tracker.track(response: response)
             Logger.common(message: "Track Click", level: .info, category: .notification)
@@ -438,8 +440,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(_ type: TrackVisitType) {
-        guard let container = container else { return }
-        let tracker = container.instanceFactory.makeTrackVisitManager()
+        let tracker = DI.injectOrFail(TrackVisitManager.self)
         do {
             try tracker.track(type)
         } catch {
@@ -455,8 +456,7 @@ public class Mindbox: NSObject {
 
      */
     public func track(data: TrackVisitData) {
-        guard let container = container else { return }
-        let tracker = container.instanceFactory.makeTrackVisitManager()
+        let tracker = DI.injectOrFail(TrackVisitManager.self)
         do {
             try tracker.track(data: data)
         } catch {
@@ -519,7 +519,8 @@ public class Mindbox: NSObject {
      - Returns: A Boolean value indicating whether the notification is related to Mindbox.
     */
     public func isMindboxPush(userInfo: [AnyHashable: Any]) -> Bool {
-        return pushValidator?.isValid(item: userInfo) ?? false
+        let pushValidator = DI.injectOrFail(MindboxPushValidator.self)
+        return pushValidator.isValid(item: userInfo)
     }
     
     /**
@@ -541,47 +542,26 @@ public class Mindbox: NSObject {
 
     private override init() {
         super.init()
-        queue.sync(flags: .barrier) {
-            do {
-                let container = try DependencyProvider()
-                self.container = container
-                self.assembly(with: container)
-                Logger.common(message: "Did assembly dependencies with container", level: .info, category: .general)
-            } catch {
-                Logger.common(message: "Did fail to assembly dependencies with container with error: \(error.localizedDescription)", level: .fault, category: .general)
-                self.initError = error
-            }
-            self.persistenceStorage?.storeToFileBackgroundExecution()            
-        }
+        self.assembly()
+        self.persistenceStorage?.storeToFileBackgroundExecution()            
     }
 
-    func assembly(with container: DependencyContainer) {
-        persistenceStorage = container.persistenceStorage
-        utilitiesFetcher = container.utilitiesFetcher
-        guaranteedDeliveryManager = container.guaranteedDeliveryManager
-        notificationStatusProvider = container.authorizationStatusProvider
-        databaseRepository = container.databaseRepository
-        inAppMessagesManager = container.inAppMessagesManager
+    func assembly() {
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
         inAppMessagesDelegate = self
-        inappMessageEventSender = container.inappMessageEventSender
-        pushValidator = container.pushValidator
-
-        coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
-            notificationStatusProvider: container.authorizationStatusProvider,
-            databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager,
-            inAppMessagesManager: container.inAppMessagesManager,
-            uuidDebugService: container.uuidDebugService,
-            userVisitManager: container.userVisitManager
-        )
+        coreController = DI.injectOrFail(CoreController.self)
     }
 
     private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
-        inappMessageEventSender?.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
+        guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
+            return
+        }
+        
+        inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
     @objc private func resetShownInApps() {
