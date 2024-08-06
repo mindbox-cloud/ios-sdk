@@ -116,7 +116,3 @@ if ! git push origin $current_branch; then
     exit 1
 fi
 
-git tag $version
-git push origin $version
-
-echo "Changes have been committed and tagged as $version on branch $current_branch."
