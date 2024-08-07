@@ -29,7 +29,17 @@ enum Constants {
         
     }
     
+    /// InApp configuration sdkVersion
     enum Versions {
+        
         static let sdkVersionNumeric = 9
+        
+    }
+    
+    /// Constants used for migration management.
+    enum Migration {
+        
+        /// The current SDK version code used for comparison in migrations.
+        static let sdkVersionCode = 0
     }
 }

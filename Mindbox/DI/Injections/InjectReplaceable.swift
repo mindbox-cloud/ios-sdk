@@ -31,7 +31,6 @@ extension MBContainer {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
             let storage = MBPersistenceStorage(defaults: defaults)
-            storage.migrateShownInAppsIds()
             return storage
         }
         

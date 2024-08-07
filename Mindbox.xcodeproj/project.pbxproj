@@ -116,6 +116,8 @@
 		472A5F002C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472A5EFF2C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift */; };
 		475558C32C59300400CDA026 /* MigrationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475558C22C59300400CDA026 /* MigrationManagerTests.swift */; };
 		47638DBB2C5C1CCE00CFADBE /* MigrationsThatImplementTheProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47638DBA2C5C1CCE00CFADBE /* MigrationsThatImplementTheProtocol.swift */; };
+		47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */; };
+		47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */; };
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
 		47BD5BFE2C578FB400F965C0 /* BaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
@@ -662,6 +664,8 @@
 		472A5EFF2C57F726003DC57E /* MigrationsInheritedFromBaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationsInheritedFromBaseMigration.swift; sourceTree = "<group>"; };
 		475558C22C59300400CDA026 /* MigrationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerTests.swift; sourceTree = "<group>"; };
 		47638DBA2C5C1CCE00CFADBE /* MigrationsThatImplementTheProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationsThatImplementTheProtocol.swift; sourceTree = "<group>"; };
+		47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestBaseMigrations.swift; sourceTree = "<group>"; };
+		47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestProtocolMigrations.swift; sourceTree = "<group>"; };
 		47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
 		47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseMigration.swift; sourceTree = "<group>"; };
 		47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerProtocol.swift; sourceTree = "<group>"; };
@@ -1454,9 +1458,19 @@
 		475558C12C592FDE00CDA026 /* MigrationsTests */ = {
 			isa = PBXGroup;
 			children = (
+				47B90E2D2C625F8A00BD93E7 /* TestMigrations */,
 				475558C22C59300400CDA026 /* MigrationManagerTests.swift */,
 			);
 			path = MigrationsTests;
+			sourceTree = "<group>";
+		};
+		47B90E2D2C625F8A00BD93E7 /* TestMigrations */ = {
+			isa = PBXGroup;
+			children = (
+				47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */,
+				47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */,
+			);
+			path = TestMigrations;
 			sourceTree = "<group>";
 		};
 		47BD5BF82C578AD700F965C0 /* Migrations */ = {
@@ -3574,6 +3588,7 @@
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
 				D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */,
 				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
+				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
@@ -3592,6 +3607,7 @@
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingCheckerTests.swift in Sources */,
 				F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */,
+				47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				475558C32C59300400CDA026 /* MigrationManagerTests.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,

@@ -9,13 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// Constants used for migration management.
-enum MigrationConstants {
-    
-    /// The current SDK version code used for comparison in migrations.
-    static var sdkVersionCode = 0
-}
-
 /// A class responsible for managing and executing migrations.
 /// It keeps a list of migrations, checks if they are needed, and runs them in the correct order.
 final class MigrationManager {
@@ -24,7 +17,7 @@ final class MigrationManager {
     private var migrations: [MigrationProtocol]
     
     /// The local sdk version code used to determine whether migrations need to be performed.
-    /// By default, it is set to `MigrationConstants.sdkVersionCode`.
+    /// By default, it is set to `Constants.Migration.sdkVersionCode`.
     /// Changing this value in `convenience init` is used when writing tests.
     private var localSdkVersionCode: Int
     
@@ -55,10 +48,10 @@ final class MigrationManager {
     /// ```
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
-        self.localSdkVersionCode = MigrationConstants.sdkVersionCode
+        self.localSdkVersionCode = Constants.Migration.sdkVersionCode
         
         self.migrations = [
-            
+            MigrationShownInAppIds(),
         ]
     }
 }
@@ -68,7 +61,7 @@ final class MigrationManager {
 extension MigrationManager: MigrationManagerProtocol {
     
     /// Performs any necessary migrations. If this is the first installation, it sets the migration version code without performing migrations.
-    /// If any migration that involves `MigrationConstants.sdkVersionCode` and `persistenceStorage.versionCodeForMigration` fails,
+    /// If any migration that involves `Constants.Migration.sdkVersionCode` and `persistenceStorage.versionCodeForMigration` fails,
     /// a soft reset is performed on the persistence storage to ensure that the system remains in a consistent state.
     func migrate() {
         
@@ -117,7 +110,7 @@ extension MigrationManager {
     ///                         including migration state and other critical data. It provides methods
     ///                         for performing resets and managing configurations.
     ///   - migrations: Array of new migrations.
-    ///   - sdkVersionCode: version for comparison with persistenceStorage.versionCodeForMigration after all migrations have been performed.
+    ///   - sdkVersionCode: version for comparison with `persistenceStorage.versionCodeForMigration` after all migrations have been performed.
     convenience init(
         persistenceStorage: PersistenceStorage,
         migrations: [MigrationProtocol],

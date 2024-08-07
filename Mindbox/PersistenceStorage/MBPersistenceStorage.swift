@@ -246,25 +246,10 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
     
-    /*Android softReset
-     
-        inAppConfig = ""
-        shownInAppIds = ""
-        inAppGeo = ""
-        logsRequestIds = ""
-        userVisitCount = 0
-        requestPermissionCount = 0
-        shownInApps = ""
-        inAppConfigUpdatedTime = 0
-     */
     func softReset() {
-        configuration = nil
-        
         configDownloadDate = nil
-        
-        shownInAppsIds = nil // Deprecated
         shownInappsDictionary = nil
-        
+        handledlogRequestIds = nil
         userVisitCount = 0
         resetBackgroundExecutions()
     }
@@ -274,20 +259,20 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.synchronize()
     }
     
-    func migrateShownInAppsIds() {
-        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
-            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
-            let migrationTimestamp = Date(timeIntervalSince1970: 0)
-            var newFormat: [String: Date] = [:]
-
-            for id in oldIds {
-                newFormat[id] = migrationTimestamp
-            }
-            shownInappsDictionary = newFormat
-            shownInAppsIds = nil
-            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
-        }
-    }
+//    func migrateShownInAppsIds() {
+//        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
+//            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
+//            let migrationTimestamp = Date(timeIntervalSince1970: 0)
+//            var newFormat: [String: Date] = [:]
+//
+//            for id in oldIds {
+//                newFormat[id] = migrationTimestamp
+//            }
+//            shownInappsDictionary = newFormat
+//            shownInAppsIds = nil
+//            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
+//        }
+//    }
 }
 
 // MARK: - Functions for unit testing

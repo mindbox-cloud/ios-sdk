@@ -122,13 +122,9 @@ class MockPersistenceStorage: PersistenceStorage {
     }
     
     func softReset() {
-        configuration = nil
-        
         configDownloadDate = nil
-        
-        shownInAppsIds = nil // Deprecated
         shownInappsDictionary = nil
-        
+        handledlogRequestIds = nil
         userVisitCount = 0
         resetBackgroundExecutions()
     }
