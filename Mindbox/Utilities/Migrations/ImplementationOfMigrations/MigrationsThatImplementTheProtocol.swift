@@ -33,11 +33,13 @@ final class MigrationShownInAppIds: MigrationProtocol {
     }
     
     var isNeeded: Bool {
-        if let oldShownInAppsIds = persistenceStorage.shownInAppsIds, !oldShownInAppsIds.isEmpty {
-            return true
-        } else {
-            return false
-        }
+//        if let oldShownInAppsIds = persistenceStorage.shownInAppsIds, !oldShownInAppsIds.isEmpty {
+//            return true
+//        } else {
+//            return false
+//        }
+        
+        return persistenceStorage.shownInAppsIds?.isEmpty == false
     }
     
     var version: Int {

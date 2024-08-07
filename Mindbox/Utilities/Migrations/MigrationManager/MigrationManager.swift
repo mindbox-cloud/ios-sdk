@@ -72,11 +72,14 @@ extension MigrationManager: MigrationManagerProtocol {
             return
         }
         
+        var migrationsStarted: Bool = false
+        
         migrations
             .lazy
             .filter { $0.isNeeded }
             .sorted { $0.version < $1.version }
             .forEach { migration in
+                migrationsStarted = true
                 do {
                     try migration.run()
                     let message = "[Migration] Run migration: \(migration.description), version: \(migration.version)"
@@ -94,7 +97,9 @@ extension MigrationManager: MigrationManagerProtocol {
             return
         }
         
-        Logger.common(message: "[Migrations] Migrations were successful", level: .info, category: .migration)
+        let message = migrationsStarted ? "[Migrations] Migrations have been successful" : "[Migrations] Migrations have been skipped"
+        
+        Logger.common(message: message, level: .info, category: .migration)
     }
 }
 

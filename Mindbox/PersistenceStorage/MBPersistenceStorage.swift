@@ -259,20 +259,20 @@ class MBPersistenceStorage: PersistenceStorage {
         MBPersistenceStorage.defaults.synchronize()
     }
     
-//    func migrateShownInAppsIds() {
-//        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
-//            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
-//            let migrationTimestamp = Date(timeIntervalSince1970: 0)
-//            var newFormat: [String: Date] = [:]
-//
-//            for id in oldIds {
-//                newFormat[id] = migrationTimestamp
-//            }
-//            shownInappsDictionary = newFormat
-//            shownInAppsIds = nil
-//            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
-//        }
-//    }
+    func migrateShownInAppsIds() {
+        if let oldIds = shownInAppsIds, !oldIds.isEmpty {
+            Logger.common(message: "Starting migration of shownInAppsIds. Total IDs to migrate: \(oldIds.count)", level: .debug, category: .inAppMessages)
+            let migrationTimestamp = Date(timeIntervalSince1970: 0)
+            var newFormat: [String: Date] = [:]
+
+            for id in oldIds {
+                newFormat[id] = migrationTimestamp
+            }
+            shownInappsDictionary = newFormat
+            shownInAppsIds = nil
+            Logger.common(message: "Migration completed successfully. All IDs are migrated and old IDs list is cleared.", level: .debug, category: .inAppMessages)
+        }
+    }
 }
 
 // MARK: - Functions for unit testing

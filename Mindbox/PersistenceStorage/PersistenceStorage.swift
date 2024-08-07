@@ -44,7 +44,7 @@ protocol PersistenceStorage: AnyObject {
 
     func storeToFileBackgroundExecution()
     
-//    func migrateShownInAppsIds()
+    func migrateShownInAppsIds()
 
     var onDidChange: (() -> Void)? { get set }
     
@@ -52,7 +52,8 @@ protocol PersistenceStorage: AnyObject {
 
     var userVisitCount: Int? { get set }
     
-    /// InApps configuration download date
+    /// The date when the InApps configuration was last downloaded.
+    /// It is optional and can be set to `nil` if the configuration has not yet been downloaded yet or reset.
     var configDownloadDate: Date? { get set }
     
     /// The version code used to track the current state of migrations.
