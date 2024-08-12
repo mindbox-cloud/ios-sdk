@@ -29,7 +29,7 @@ enum Constants {
         
     }
     
-    /// InApp configuration sdkVersion
+    /// Mobile configuration sdkVersion.
     enum Versions {
         
         static let sdkVersionNumeric = 9
