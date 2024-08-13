@@ -104,7 +104,7 @@ final class MindboxNotificationContentTests: XCTestCase {
 }
 
 @available(iOS 12.0, *)
-class MockExtensionContext: NSExtensionContext {
+fileprivate class MockExtensionContext: NSExtensionContext {
     var actions: [UNNotificationAction] = []
     
     override var notificationActions: [UNNotificationAction] {
