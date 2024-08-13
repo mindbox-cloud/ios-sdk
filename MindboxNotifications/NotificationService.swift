@@ -23,7 +23,9 @@ public protocol MindboxNotificationServiceProtocol {
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     func serviceExtensionTimeWillExpire()
     
-    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of `NotificationService`. This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of `NotificationService`. 
+    /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// At the moment, this method only writes a push delivery log.
     func pushDelivered(_ request: UNNotificationRequest)
 }
 
@@ -64,7 +66,9 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
         }
     }
     
-    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService. This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService.
+    /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// At the moment, this method only writes a push delivery log.
     public func pushDelivered(_ request: UNNotificationRequest) {
         let message = "[NotificationService]: \(#function), request id: \(request.identifier)"
         Logger.common(message: message, level: .info, category: .notification)
