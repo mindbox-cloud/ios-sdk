@@ -12,7 +12,7 @@ import Foundation
 class MockPersistenceStorage: PersistenceStorage {
         
     var onDidChange: (() -> Void)?
-    private var _userVisitCount: Int? = 0
+    
     
     init() {
 
@@ -89,9 +89,18 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var imageLoadingMaxTimeInSeconds: Double?
     
+    private var _userVisitCount: Int? = 0
+    
     var userVisitCount: Int? {
         get { return _userVisitCount }
         set { _userVisitCount = newValue }
+    }
+    
+    private var _versionCodeForMigration: Int? = 0
+    
+    var versionCodeForMigration: Int? {
+        get { return _versionCodeForMigration }
+        set { _versionCodeForMigration = newValue }
     }
 
     var configDownloadDate: Date? {
@@ -112,6 +121,13 @@ class MockPersistenceStorage: PersistenceStorage {
         resetBackgroundExecutions()
     }
     
+    func softReset() {
+        configDownloadDate = nil
+        shownInappsDictionary = nil
+        handledlogRequestIds = nil
+        userVisitCount = 0
+        resetBackgroundExecutions()
+    }
     
     func setBackgroundExecution(_ value: BackgroudExecution) {
         backgroundExecutions.append(value)

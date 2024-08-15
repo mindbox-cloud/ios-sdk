@@ -81,7 +81,7 @@ private extension InAppConfigurationDataFacade {
     }
 
     private func fetchGeoIfNeeded() {
-        if targetingChecker.context.isNeedGeoRequest
+        if !targetingChecker.context.isNeedGeoRequest
             && !SessionTemporaryStorage.shared.geoRequestCompleted {
             dispatchGroup.enter()
             geoService = DI.injectOrFail(GeoServiceProtocol.self)

@@ -247,4 +247,10 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         let manager: InAppPresentationManagerProtocol? = DI.inject(InAppPresentationManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
+    
+    func testMigrationManagerIsRegistered() {
+        let manager: MigrationManagerProtocol? = DI.inject(MigrationManagerProtocol.self)
+        XCTAssertNotNil(manager)
+        XCTAssert(manager is MigrationManager)
+    }
 }
