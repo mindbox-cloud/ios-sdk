@@ -41,3 +41,17 @@ jobs:
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send message to LOOP
+        env:
+          LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          MESSAGE=$(cat <<EOF
+          {
+            "text": "**🚀 iOS Release Branch Created**\n\n*Branch Name:* \`release/$VERSION\`\n*Build number:* $BUILD_NUMBER"
+          }
+          EOF)
+          curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "$MESSAGE"

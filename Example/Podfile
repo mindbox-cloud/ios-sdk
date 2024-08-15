@@ -1,13 +1,13 @@
 use_frameworks!
 
 target 'Example' do
-  pod 'Mindbox', '2.10.2'
+  pod 'Mindbox', '2.10.3-rc'
 end
 
 target 'MindboxNotificationServiceExtension' do
-   pod 'MindboxNotifications', '2.10.2'
+   pod 'MindboxNotifications', '2.10.3-rc'
 end
 
 target 'MindboxNotificationContentExtension' do
-   pod 'MindboxNotifications', '2.10.2'
+   pod 'MindboxNotifications', '2.10.3-rc'
 end
