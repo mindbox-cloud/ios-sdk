@@ -14,10 +14,11 @@ class ABTestValidator: Validator {
     typealias T = ABTest?
     
     private let sdkVersionValidator: SDKVersionValidator
-    private lazy var variantsValidator = ABTestVariantsValidator()
+    private let variantsValidator: ABTestVariantsValidator
     
-    init(sdkVersionValidator: SDKVersionValidator) {
+    init(sdkVersionValidator: SDKVersionValidator, variantsValidator: ABTestVariantsValidator) {
         self.sdkVersionValidator = sdkVersionValidator
+        self.variantsValidator = variantsValidator
     }
 
     func isValid(item: ABTest?) -> Bool {

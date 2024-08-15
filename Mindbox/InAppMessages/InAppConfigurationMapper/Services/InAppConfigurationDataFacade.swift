@@ -19,18 +19,16 @@ protocol InAppConfigurationDataFacadeProtocol {
 
 class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     
-    let geoService: GeoServiceProtocol
+    var geoService: GeoServiceProtocol?
     let segmentationService: SegmentationServiceProtocol
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
     
-    init(geoService: GeoServiceProtocol, 
-         segmentationService: SegmentationServiceProtocol,
+    init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
          tracker: InappTargetingTrackProtocol) {
-        self.geoService = geoService
         self.segmentationService = segmentationService
         self.targetingChecker = targetingChecker
         self.imageService = imageService
@@ -86,9 +84,11 @@ private extension InAppConfigurationDataFacade {
         if targetingChecker.context.isNeedGeoRequest
             && !SessionTemporaryStorage.shared.geoRequestCompleted {
             dispatchGroup.enter()
-            geoService.geoRequest { model in
+            geoService = DI.injectOrFail(GeoServiceProtocol.self)
+            geoService?.geoRequest { model in
                 self.targetingChecker.geoModels = model
                 self.dispatchGroup.leave()
+                self.geoService = nil
             }
         }
     }
