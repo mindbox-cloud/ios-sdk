@@ -10,10 +10,10 @@ import Mindbox
 import Observation
 
 protocol NotificationCenterViewModelProtocol: AnyObject {
-    var lastTappedNotification: MBPushNotification? { get }
+    var lastTappedNotification: PushNotification? { get }
     var errorMessage: String? { get }
     
-    func sendOperationNCPushOpen(notification: MBPushNotification)
+    func sendOperationNCPushOpen(notification: PushNotification)
     func sendOperationNCOpen()
 }
 
@@ -21,9 +21,9 @@ protocol NotificationCenterViewModelProtocol: AnyObject {
     
     // MARK: - NotificationCenterViewModelProtocol
     var errorMessage: String?
-    var lastTappedNotification: MBPushNotification?
+    var lastTappedNotification: PushNotification?
     
-    func sendOperationNCPushOpen(notification: MBPushNotification) {
+    func sendOperationNCPushOpen(notification: PushNotification) {
         lastTappedNotification = notification
         
         /*Assuming payload of push notification has this structure:

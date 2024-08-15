@@ -8,14 +8,16 @@
 
 import UserNotifications
 import MindboxNotifications
-import Mindbox
+//import Mindbox
 
 class NotificationService: UNNotificationServiceExtension {
     
     lazy var mindboxService = MindboxNotificationService()
     
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
-        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: request.content.userInfo) {
+        let userInfo = request.content.userInfo
+        
+        if mindboxService.isMindboxPush(userInfo: userInfo), let mindboxPushNotification = mindboxService.getMindboxPushData(userInfo: userInfo) {
             Task {
                 await saveSwiftDataItem(mindboxPushNotification)
             }
@@ -31,10 +33,16 @@ class NotificationService: UNNotificationServiceExtension {
     }
     
     @MainActor
-    private func saveSwiftDataItem(_ pushNotification: MBPushNotification) async {
+    private func saveSwiftDataItem(_ mindboxPushNotification: MBPushNotification) async {
         let context = SwiftDataManager.shared.container.mainContext
 
-        let newItem = Item(timestamp: Date(), pushNotification: pushNotification)
+        let push = PushNotification(title: mindboxPushNotification.aps?.alert?.title, 
+                                    body: mindboxPushNotification.aps?.alert?.body,
+                                    clickUrl: mindboxPushNotification.clickUrl,
+                                    imageUrl: mindboxPushNotification.imageUrl,
+                                    payload: mindboxPushNotification.payload,
+                                    uniqueKey: mindboxPushNotification.uniqueKey)
+        let newItem = Item(timestamp: Date(), pushNotification: push)
         
         context.insert(newItem)
         do {

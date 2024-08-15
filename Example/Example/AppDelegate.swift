@@ -18,6 +18,7 @@ class AppDelegate: MindboxAppDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        Mindbox.logger.logLevel = .debug
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
         
         do {
