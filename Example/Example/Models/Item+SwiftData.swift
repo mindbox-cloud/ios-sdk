@@ -7,7 +7,6 @@
 //
 
 import Foundation
-//import Mindbox
 import SwiftData
 
 @Model
@@ -34,19 +33,3 @@ public struct PushNotification: Codable {
         return try? JSONDecoder().decode(Payload.self, from: payloadData)
     }
 }
-//
-//extension PushNotification {
-//    init?(jsonString: String) {
-//        guard let jsonData = jsonString.data(using: .utf8) else {
-//            return nil
-//        }
-//        
-//        do {
-//            let decoder = JSONDecoder()
-//            self = try decoder.decode(Self.self, from: jsonData)
-//        } catch {
-//            print(error.localizedDescription)
-//            return nil
-//        }
-//    }
-//}

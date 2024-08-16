@@ -8,7 +8,6 @@
 
 import UserNotifications
 import MindboxNotifications
-//import Mindbox
 
 class NotificationService: UNNotificationServiceExtension {
     
