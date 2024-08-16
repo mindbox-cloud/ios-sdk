@@ -11,6 +11,18 @@ import XCTest
 
 final class MindboxPushValidatorTests: XCTestCase {
     
+    var validator: MindboxPushValidator!
+    
+    override func setUp() {
+        super.setUp()
+        validator = DI.injectOrFail(MindboxPushValidator.self)
+    }
+    
+    override func tearDown() {
+        super.tearDown()
+        validator = nil
+    }
+    
     func testValidatorWithValidNotification() {
         let validNotification: [AnyHashable: Any] = [
             "aps": [
@@ -34,8 +46,6 @@ final class MindboxPushValidatorTests: XCTestCase {
             ],
             "uniqueKey": "guid-for-message"
         ]
-
-        let validator = MindboxPushValidator()
         
         XCTAssertTrue(validator.isValid(item: validNotification), "Validator should return true for a valid notification")
     }
@@ -62,8 +72,6 @@ final class MindboxPushValidatorTests: XCTestCase {
             ],
             "uniqueKey": "guid-for-message"
         ]
-
-        let validator = MindboxPushValidator()
         
         XCTAssertFalse(validator.isValid(item: invalidNotification), "Validator should return false for an invalid notification")
     }
@@ -90,8 +98,6 @@ final class MindboxPushValidatorTests: XCTestCase {
             ],
             "uniqueKey": "guid-for-message"
         ]
-
-        let validator = MindboxPushValidator()
         
         XCTAssertFalse(validator.isValid(item: invalidNotification), "Validator should return false for an invalid notification")
     }

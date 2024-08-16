@@ -24,19 +24,15 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     let dataFacade: InAppConfigurationDataFacadeProtocol
     
     private let inappFilterService: InappFilterProtocol
-    private let urlExtractorService: VariantImageUrlExtractorServiceProtocol
-    
     private var validInapps: [InApp] = []
     private var savedEventForTargeting: ApplicationEvent?
     private var shownInnapId = ""
 
     init(inappFilterService: InappFilterProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
-         urlExtractorService: VariantImageUrlExtractorServiceProtocol,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.inappFilterService = inappFilterService
         self.targetingChecker = targetingChecker
-        self.urlExtractorService = urlExtractorService
         self.dataFacade = dataFacade
     }
 
@@ -183,7 +179,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                     continue
                 }
                 
-                let imageValues = self.urlExtractorService.extractImageURL(from: inapp.content)
+                let urlExtractorService = DI.injectOrFail(VariantImageUrlExtractorServiceProtocol.self)
+                let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
                 
                 Logger.common(message: "Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 for imageValue in imageValues {

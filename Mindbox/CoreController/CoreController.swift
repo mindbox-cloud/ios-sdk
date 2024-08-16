@@ -13,7 +13,6 @@ import MindboxLogger
 final class CoreController {
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
-    private let notificationStatusProvider: UNAuthorizationStatusProviding
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let trackVisitManager: TrackVisitManager
@@ -31,6 +30,8 @@ final class CoreController {
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
             
+            DI.injectOrFail(MigrationManagerProtocol.self).migrate()
+            
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -38,6 +39,7 @@ final class CoreController {
             } else {
                 self.repeatInitialization(with: configuration)
             }
+            
             self.guaranteedDeliveryManager.canScheduleOperations = true
             
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
@@ -92,6 +94,7 @@ final class CoreController {
 
     // MARK: - Private
     private func notificationStatus() -> Bool {
+        let notificationStatusProvider = DI.injectOrFail(UNAuthorizationStatusProviding.self)
         let lock = DispatchSemaphore(value: 0)
         var isNotificationsEnabled = false
         notificationStatusProvider.getStatus {
@@ -147,7 +150,6 @@ final class CoreController {
 
     private func startUUIDDebugServiceIfNeeded(deviceUUID: String, configuration: MBConfiguration) {
         guard configuration.uuidDebugEnabled else { return }
-
         uuidDebugService.start(with: deviceUUID)
     }
 
@@ -241,7 +243,6 @@ final class CoreController {
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
-        notificationStatusProvider: UNAuthorizationStatusProviding,
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         trackVisitManager: TrackVisitManager,
@@ -253,7 +254,6 @@ final class CoreController {
     ) {
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
-        self.notificationStatusProvider = notificationStatusProvider
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.trackVisitManager = trackVisitManager
@@ -272,11 +272,13 @@ final class CoreController {
                 }
             }
         }
-
-        TimerManager.shared.configurate(trackEvery: 20 * 60) {
+        
+        let timer = DI.injectOrFail(TimerManager.self)
+        timer.configurate(trackEvery: 20 * 60) {
             Logger.common(message: "Scheduled Time tracker started")
             sessionManager.trackForeground()
         }
-        TimerManager.shared.setupTimer()
+        
+        timer.setupTimer()
     }
 }
