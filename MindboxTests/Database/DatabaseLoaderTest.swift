@@ -12,26 +12,25 @@ import CoreData
 
 class DatabaseLoaderTest: XCTestCase {
     
-    var persistentContainer: NSPersistentContainer {
-        container.databaseRepository.persistentContainer
-    }
-    
-    var container: TestDependencyProvider!
+    var persistentContainer: NSPersistentContainer!
+    var databaseLoader: DataBaseLoader!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
+        databaseLoader = DI.injectOrFail(DataBaseLoader.self)
+        persistentContainer = DI.injectOrFail(MBDatabaseRepository.self).persistentContainer
     }
     
     override func tearDown() {
-        
-        container = nil
+        databaseLoader = nil
+        persistentContainer = nil
         super.tearDown()
     }
     
     func testDestroyDatabase() {
-        XCTAssertNotNil(persistentContainer.persistentStoreCoordinator.persistentStore(for: container.databaseLoader.persistentStoreURL!))
-        try! container.databaseLoader.destroy()
-        XCTAssertNil(persistentContainer.persistentStoreCoordinator.persistentStore(for: container.databaseLoader.persistentStoreURL!))
+        let persistentStoreURL = databaseLoader.persistentStoreURL!
+        XCTAssertNotNil(persistentContainer.persistentStoreCoordinator.persistentStore(for: persistentStoreURL))
+        try! databaseLoader.destroy()
+        XCTAssertNil(persistentContainer.persistentStoreCoordinator.persistentStore(for: persistentStoreURL))
     }
 }

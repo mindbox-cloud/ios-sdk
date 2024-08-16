@@ -13,15 +13,16 @@ class MindboxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
 
-    var container: DependencyContainer!
     var coreController: CoreController!
     var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
+    var persistenceStorage: PersistenceStorage!
 
     override func setUp() {
-        container = try! TestDependencyProvider()
-        container.persistenceStorage.reset()
-        try! container.databaseRepository.erase()
-        Mindbox.shared.assembly(with: container)
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.reset()
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
+        Mindbox.shared.assembly()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -31,19 +32,7 @@ class MindboxTests: XCTestCase {
     }
 
     func testInitialization() {
-        coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
-            notificationStatusProvider: container.authorizationStatusProvider,
-            databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager,
-            inAppMessagesManager: InAppCoreManagerMock(),
-            uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue, 
-            userVisitManager: container.userVisitManager
-        )
+        coreController = DI.injectOrFail(CoreController.self)
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
@@ -51,7 +40,7 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
+        XCTAssertTrue(persistenceStorage.isInstalled)
         var deviceUUID: String?
         Mindbox.shared.getDeviceUUID { value in
             deviceUUID = value
@@ -64,8 +53,8 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
-        XCTAssertNotNil(container.persistenceStorage.apnsToken)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
         var deviceUUID2: String?
         Mindbox.shared.getDeviceUUID { value in
             deviceUUID2 = value
@@ -73,21 +62,10 @@ class MindboxTests: XCTestCase {
         XCTAssertNotNil(deviceUUID2)
         XCTAssert(deviceUUID == deviceUUID2)
 
-        container.persistenceStorage.reset()
-        try! container.databaseRepository.erase()
-        coreController = CoreController(
-            persistenceStorage: container.persistenceStorage,
-            utilitiesFetcher: container.utilitiesFetcher,
-            notificationStatusProvider: container.authorizationStatusProvider,
-            databaseRepository: container.databaseRepository,
-            guaranteedDeliveryManager: container.guaranteedDeliveryManager,
-            trackVisitManager: container.instanceFactory.makeTrackVisitManager(),
-            sessionManager: container.sessionManager,
-            inAppMessagesManager: InAppCoreManagerMock(),
-            uuidDebugService: MockUUIDDebugService(),
-            controllerQueue: controllerQueue,
-            userVisitManager: container.userVisitManager
-        )
+        persistenceStorage.reset()
+        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        try! databaseRepository.erase()
+        coreController = DI.injectOrFail(CoreController.self)
 
         //        //        //        //        //        //        //        //        //        //        //        //
 
@@ -97,8 +75,8 @@ class MindboxTests: XCTestCase {
 
         waitForInitializationFinished()
 
-        XCTAssertTrue(container.persistenceStorage.isInstalled)
-        XCTAssertNotNil(container.persistenceStorage.apnsToken)
+        XCTAssertTrue(persistenceStorage.isInstalled)
+        XCTAssertNotNil(persistenceStorage.apnsToken)
     }
 
     func testGetDeviceUUID() {

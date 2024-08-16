@@ -11,24 +11,21 @@ import XCTest
 
 final class InAppTargetingCheckerTests: XCTestCase {
     
-    var container: TestDependencyProvider!
     let inAppStub = InAppStub()
     let trueTargeting: Targeting = .true(TrueTargeting())
-    var targetingChecker: InAppTargetingChecker!
+    var targetingChecker: InAppTargetingCheckerProtocol!
     var storage: PersistenceStorage!
     
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        storage = container.persistenceStorage
-        targetingChecker = container.inAppTargetingChecker
+        storage = DI.injectOrFail(PersistenceStorage.self)
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         targetingChecker.geoModels = InAppGeoResponse(city: 123, region: 456, country: 789)
     }
     
     override func tearDown() {
         targetingChecker = nil
         storage = nil
-        container = nil
         super.tearDown()
     }
     
