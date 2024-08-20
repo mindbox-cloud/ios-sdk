@@ -12,7 +12,7 @@ import UserNotifications
 import UserNotificationsUI
 import MindboxLogger
 
-public protocol MindboxNotificationContentProtocol {
+public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProtocol {
     
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     func didReceive(

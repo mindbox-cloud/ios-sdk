@@ -19,15 +19,18 @@ public class MindboxNotificationService: NSObject {
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
 
-    // MARK:  Internal properties
+    // MARK: Internal properties
     
     var context: NSExtensionContext?
     var viewController: UIViewController?
+    
+    var pushValidator: PushValidator?
 
     // MARK: Public initializer
     
     /// Mindbox proxy for `NotificationsService` and `NotificationViewController`
     public override init() {
         super.init()
+        pushValidator = MindboxPushValidator()
     }
 }

@@ -10,7 +10,8 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
-public protocol MindboxNotificationServiceProtocol {
+public protocol MindboxNotificationServiceProtocol: MindboxPushNotificationProtocol {
+    
     var contentHandler: ((UNNotificationContent) -> Void)? { get set }
     var bestAttemptContent: UNMutableNotificationContent? { get set }
     

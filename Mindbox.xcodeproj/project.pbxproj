@@ -94,6 +94,12 @@
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
 		33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */; };
+		472F549E2C6E272A0008C465 /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F549D2C6E272A0008C465 /* MBPushNotification.swift */; };
+		472F54A32C6E27C80008C465 /* NotificationFormatStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A22C6E27C80008C465 /* NotificationFormatStrategy.swift */; };
+		472F54A52C6E27DD0008C465 /* NotificationStrategyFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A42C6E27DD0008C465 /* NotificationStrategyFactory.swift */; };
+		472F54A72C6E28030008C465 /* NotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A62C6E28030008C465 /* NotificationFormatter.swift */; };
+		472F54AA2C6E294F0008C465 /* PushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A92C6E294F0008C465 /* PushValidator.swift */; };
+		472F54AC2C6E29E50008C465 /* MindboxPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54AB2C6E29E50008C465 /* MindboxPushNotification.swift */; };
 		4747708B2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */; };
 		4747708F2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */; };
 		474770912C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */; };
@@ -631,6 +637,12 @@
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
+		472F549D2C6E272A0008C465 /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
+		472F54A22C6E27C80008C465 /* NotificationFormatStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatStrategy.swift; sourceTree = "<group>"; };
+		472F54A42C6E27DD0008C465 /* NotificationStrategyFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationStrategyFactory.swift; sourceTree = "<group>"; };
+		472F54A62C6E28030008C465 /* NotificationFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatter.swift; sourceTree = "<group>"; };
+		472F54A92C6E294F0008C465 /* PushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushValidator.swift; sourceTree = "<group>"; };
+		472F54AB2C6E29E50008C465 /* MindboxPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushNotification.swift; sourceTree = "<group>"; };
 		4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInternalMethodsTests.swift; sourceTree = "<group>"; };
 		4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationServiceTests.swift; sourceTree = "<group>"; };
 		474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationContentTests.swift; sourceTree = "<group>"; };
@@ -1230,9 +1242,11 @@
 		3333C1992681D3CF00B60D84 /* MindboxNotifications */ = {
 			isa = PBXGroup;
 			children = (
+				472F549F2C6E27770008C465 /* PushNotifications */,
 				474770892C6B813700C36FC8 /* Utilities */,
 				3333C1BE2681DE6C00B60D84 /* Models */,
 				337EDF332636DA3F0089559F /* MindboxNotificationService.swift */,
+				472F54AB2C6E29E50008C465 /* MindboxPushNotification.swift */,
 				474851C02C6A622E0026C38E /* NotificationService.swift */,
 				474851C42C6A62AE0026C38E /* NotificationContent.swift */,
 				474851C62C6A63C30026C38E /* SharedInternalMethods.swift */,
@@ -1257,6 +1271,7 @@
 		3333C1BE2681DE6C00B60D84 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				472F549D2C6E272A0008C465 /* MBPushNotification.swift */,
 				3333C1B12681D42000B60D84 /* Payload.swift */,
 				3333C1B32681D43C00B60D84 /* ImageFormat.swift */,
 			);
@@ -1390,6 +1405,25 @@
 				D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */,
 			);
 			path = SessionManager;
+			sourceTree = "<group>";
+		};
+		472F549F2C6E27770008C465 /* PushNotifications */ = {
+			isa = PBXGroup;
+			children = (
+				472F54A12C6E27BC0008C465 /* PushNotificationFormatStrategies */,
+				472F54A62C6E28030008C465 /* NotificationFormatter.swift */,
+				472F54A92C6E294F0008C465 /* PushValidator.swift */,
+			);
+			path = PushNotifications;
+			sourceTree = "<group>";
+		};
+		472F54A12C6E27BC0008C465 /* PushNotificationFormatStrategies */ = {
+			isa = PBXGroup;
+			children = (
+				472F54A22C6E27C80008C465 /* NotificationFormatStrategy.swift */,
+				472F54A42C6E27DD0008C465 /* NotificationStrategyFactory.swift */,
+			);
+			path = PushNotificationFormatStrategies;
 			sourceTree = "<group>";
 		};
 		474770892C6B813700C36FC8 /* Utilities */ = {
@@ -3569,11 +3603,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				474851C72C6A63C30026C38E /* SharedInternalMethods.swift in Sources */,
+				472F54A52C6E27DD0008C465 /* NotificationStrategyFactory.swift in Sources */,
+				472F549E2C6E272A0008C465 /* MBPushNotification.swift in Sources */,
 				3333C1B42681D43C00B60D84 /* ImageFormat.swift in Sources */,
+				472F54AA2C6E294F0008C465 /* PushValidator.swift in Sources */,
 				3333C1B22681D42000B60D84 /* Payload.swift in Sources */,
+				472F54A32C6E27C80008C465 /* NotificationFormatStrategy.swift in Sources */,
 				3333C1AF2681D3DB00B60D84 /* MindboxNotificationService.swift in Sources */,
+				472F54AC2C6E29E50008C465 /* MindboxPushNotification.swift in Sources */,
 				474851C12C6A622E0026C38E /* NotificationService.swift in Sources */,
 				474851C52C6A62AE0026C38E /* NotificationContent.swift in Sources */,
+				472F54A72C6E28030008C465 /* NotificationFormatter.swift in Sources */,
 				9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */,
 				474851C32C6A627F0026C38E /* Constants.swift in Sources */,
 			);
