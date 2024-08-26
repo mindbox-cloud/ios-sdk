@@ -83,11 +83,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
             
             if UIApplication.shared.canOpenURL(settingsUrl) {
-                if #available(iOS 10.0, *) {
-                    UIApplication.shared.open(settingsUrl)
-                } else {
-                    UIApplication.shared.openURL(settingsUrl)
-                }
+                UIApplication.shared.open(settingsUrl)
                 
                 Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
             }
