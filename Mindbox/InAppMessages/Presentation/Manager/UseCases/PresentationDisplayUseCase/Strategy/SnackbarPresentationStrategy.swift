@@ -97,12 +97,11 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
 private extension SnackbarPresentationStrategy {
     func getSafeAreaInset(gravity: GravityVerticalType) -> CGFloat {
         var safeAreaInset: CGFloat = 0
-        if #available(iOS 11, *) {
-            if gravity == .bottom {
-                safeAreaInset = window?.safeAreaInsets.bottom ?? 0
-            } else if gravity == .top {
-                safeAreaInset = window?.safeAreaInsets.top ?? 0
-            }
+        
+        if gravity == .bottom {
+            safeAreaInset = window?.safeAreaInsets.bottom ?? 0
+        } else if gravity == .top {
+            safeAreaInset = window?.safeAreaInsets.top ?? 0
         }
 
         return safeAreaInset
