@@ -13,7 +13,7 @@ final class MigrationShownInAppsIds: MigrationProtocol {
     private var persistenceStorage: PersistenceStorage = DI.injectOrFail(PersistenceStorage.self)
     
     var description: String {
-        "Migration shownInAppsIds to shownInappsDictionary. Starting with SDK 2.10.0"
+        "Migration shownInAppsIds to shownInappsDictionary. Starting with SDK 2.10.0."
     }
     
     var isNeeded: Bool {
