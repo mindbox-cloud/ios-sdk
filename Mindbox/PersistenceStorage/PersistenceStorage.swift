@@ -43,8 +43,6 @@ protocol PersistenceStorage: AnyObject {
     func resetBackgroundExecutions()
 
     func storeToFileBackgroundExecution()
-    
-//    func migrateShownInAppsIds()
 
     var onDidChange: (() -> Void)? { get set }
     

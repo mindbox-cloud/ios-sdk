@@ -81,10 +81,6 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var shownInappsDictionary: [String : Date]?
     
-    func migrateShownInAppsIds() {
-        
-    }
-    
     var handledlogRequestIds: [String]?
     
     var imageLoadingMaxTimeInSeconds: Double?

@@ -115,7 +115,9 @@ extension MigrationManager {
     ///                         including migration state and other critical data. It provides methods
     ///                         for performing resets and managing configurations.
     ///   - migrations: Array of new migrations.
-    ///   - sdkVersionCode: version for comparison with `persistenceStorage.versionCodeForMigration` after all migrations have been performed.
+    ///   - sdkVersionCode: version for comparison with `persistenceStorage.versionCodeForMigration` 
+    ///                     after all migrations have been performed.
+    ///                     Used instead of `Constants.Migration.sdkVersionCode`
     convenience init(
         persistenceStorage: PersistenceStorage,
         migrations: [MigrationProtocol],
