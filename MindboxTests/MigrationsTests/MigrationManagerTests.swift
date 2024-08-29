@@ -93,8 +93,8 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT softReset() persistenceStorage")
         XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "Must NOT softReset() persistenceStorage")
         XCTAssertNotNil(persistenceStorageMock.handledlogRequestIds, "Must NOT softReset() persistenceStorage")
-        let expectedUserVisitCountAfterSoftReset = 1
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCountAfterSoftReset, "Must NOT softReset() persistenceStorage")
+        let expectedUserVisitCount = 1
+        XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCount, "Must NOT softReset() persistenceStorage")
     }
     
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
