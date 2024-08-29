@@ -94,6 +94,7 @@
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
 		33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */; };
+		472179A72C80755A00C15E7F /* ShownInAppsIdsMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472179A62C80755A00C15E7F /* ShownInAppsIdsMigration.swift */; };
 		472F549E2C6E272A0008C465 /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F549D2C6E272A0008C465 /* MBPushNotification.swift */; };
 		472F54A32C6E27C80008C465 /* NotificationFormatStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A22C6E27C80008C465 /* NotificationFormatStrategy.swift */; };
 		472F54A52C6E27DD0008C465 /* NotificationStrategyFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A42C6E27DD0008C465 /* NotificationStrategyFactory.swift */; };
@@ -637,6 +638,7 @@
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
+		472179A62C80755A00C15E7F /* ShownInAppsIdsMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIdsMigration.swift; sourceTree = "<group>"; };
 		472F549D2C6E272A0008C465 /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		472F54A22C6E27C80008C465 /* NotificationFormatStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatStrategy.swift; sourceTree = "<group>"; };
 		472F54A42C6E27DD0008C465 /* NotificationStrategyFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationStrategyFactory.swift; sourceTree = "<group>"; };
@@ -1406,6 +1408,14 @@
 			path = SessionManager;
 			sourceTree = "<group>";
 		};
+		472179A52C80751F00C15E7F /* ImplementationOfMigrations */ = {
+			isa = PBXGroup;
+			children = (
+				472179A62C80755A00C15E7F /* ShownInAppsIdsMigration.swift */,
+			);
+			path = ImplementationOfMigrations;
+			sourceTree = "<group>";
+		};
 		472F549F2C6E27770008C465 /* PushNotifications */ = {
 			isa = PBXGroup;
 			children = (
@@ -1454,6 +1464,7 @@
 		47BD5BF82C578AD700F965C0 /* Migrations */ = {
 			isa = PBXGroup;
 			children = (
+				472179A52C80751F00C15E7F /* ImplementationOfMigrations */,
 				47BD5BFC2C578FAD00F965C0 /* MigrationAbstractions */,
 				47BD5BF92C578ADE00F965C0 /* MigrationManager */,
 			);
@@ -3221,6 +3232,7 @@
 				F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */,
 				A17958792978AEC600609E91 /* GeoTargetingChecker.swift in Sources */,
 				33BEE80D2681EB7700993720 /* NotificationDecoder.swift in Sources */,
+				472179A72C80755A00C15E7F /* ShownInAppsIdsMigration.swift in Sources */,
 				840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */,
 				9B24FABD28C757A700F10B5D /* InAppResponse.swift in Sources */,
 				334F3AED264C199900A6AC00 /* SubscriptionRequest.swift in Sources */,
