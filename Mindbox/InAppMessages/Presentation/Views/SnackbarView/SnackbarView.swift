@@ -20,14 +20,10 @@ class SnackbarView: UIView {
     private let animationTime: TimeInterval
     
     private var safeAreaInset: (top: CGFloat, bottom: CGFloat) {
-        if #available(iOS 11.0, *) {
-            return (
-                window?.safeAreaInsets.top ?? Constants.defaultSafeAreaTopInset,
-                window?.safeAreaInsets.bottom ?? Constants.defaultSafeAreaBottomInset
-            )
-        } else {
-            return (top: Constants.defaultSafeAreaTopInset, bottom: Constants.defaultSafeAreaBottomInset)
-        }
+        (
+            top: window?.safeAreaInsets.top ?? Constants.defaultSafeAreaTopInset,
+            bottom: window?.safeAreaInsets.bottom ?? Constants.defaultSafeAreaBottomInset
+        )
     }
     
     private enum Constants {
