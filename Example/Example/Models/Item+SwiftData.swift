@@ -7,16 +7,29 @@
 //
 
 import Foundation
-import Mindbox
 import SwiftData
 
 @Model
 public final class Item {
     public var timestamp: Date
-    public var mbPushNotification: MBPushNotification
+    public var mbPushNotification: PushNotification
     
-    public init(timestamp: Date, pushNotification: MBPushNotification) {
+    public init(timestamp: Date, pushNotification: PushNotification) {
         self.timestamp = timestamp
         self.mbPushNotification = pushNotification
+    }
+}
+
+public struct PushNotification: Codable {
+    public let title: String?
+    public let body: String?
+    public let clickUrl: String?
+    public let imageUrl: String?
+    public let payload: String?
+    public let uniqueKey: String?
+    
+    var decodedPayload: Payload? {
+        guard let payloadData = payload?.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(Payload.self, from: payloadData)
     }
 }
