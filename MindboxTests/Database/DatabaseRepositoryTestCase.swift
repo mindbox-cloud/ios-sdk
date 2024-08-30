@@ -12,16 +12,12 @@ import CoreData
 
 class DatabaseRepositoryTestCase: XCTestCase {
     
-    var container: DependencyContainer!
     var databaseRepository: MBDatabaseRepository!
     var eventGenerator: EventGenerator!
     
-
-    
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        databaseRepository = container.databaseRepository
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         eventGenerator = EventGenerator()
         
         try! databaseRepository.erase()
@@ -31,8 +27,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     override func tearDown() {
-        
-        container = nil
         databaseRepository = nil
         eventGenerator = nil
         super.tearDown()

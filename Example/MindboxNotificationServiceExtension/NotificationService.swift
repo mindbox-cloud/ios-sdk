@@ -15,6 +15,7 @@ class NotificationService: UNNotificationServiceExtension {
     lazy var mindboxService = MindboxNotificationService()
     
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        
         if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: request.content.userInfo) {
             Task {
                 await saveSwiftDataItem(mindboxPushNotification)

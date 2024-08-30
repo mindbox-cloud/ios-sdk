@@ -21,17 +21,13 @@ final class InappsFilterService: InappFilterProtocol {
     var shownInAppDictionary: [String: Date] = [:]
     
     private let persistenceStorage: PersistenceStorage
-    private let abTestDeviceMixer: ABTestDeviceMixer
     private let variantsFilter: VariantFilterProtocol
     private let sdkVersionValidator: SDKVersionValidator
-    private let frequencyValidator: InappFrequencyValidator
 
-    init(persistenceStorage: PersistenceStorage, abTestDeviceMixer: ABTestDeviceMixer, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator, frequencyValidator: InappFrequencyValidator) {
+    init(persistenceStorage: PersistenceStorage, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator) {
         self.persistenceStorage = persistenceStorage
-        self.abTestDeviceMixer = abTestDeviceMixer
         self.variantsFilter = variantsFilter
         self.sdkVersionValidator = sdkVersionValidator
-        self.frequencyValidator = frequencyValidator
     }
     
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
@@ -54,7 +50,6 @@ final class InappsFilterService: InappFilterProtocol {
 private extension InappsFilterService {
     func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
         let inapps = inapps
-
         let filteredInapps = inapps.filter {
             sdkVersionValidator.isValid(item: $0.sdkVersion)
         }
@@ -93,6 +88,7 @@ private extension InappsFilterService {
         }
         
         var result: [InApp] = responseInapps
+        let abTestDeviceMixer = DI.injectOrFail(ABTestDeviceMixer.self)
         
         for abTest in abTests {
             guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
@@ -159,11 +155,16 @@ private extension InappsFilterService {
         Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
             Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
-            let result = self.frequencyValidator.isValid(item: $0)
+            let frequencyValidator = self.createFrequencyValidator()
+            let result = frequencyValidator.isValid(item: $0)
             Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
             return result
         }
 
         return filteredInapps
+    }
+    
+    private func createFrequencyValidator() -> InappFrequencyValidator {
+        InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
 }

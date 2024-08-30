@@ -48,7 +48,6 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         static let screenPart: CGFloat = 3.0
         static let oneThirdScreenHeight: CGFloat = UIScreen.main.bounds.height / Constants.screenPart
         static let defaultEdgeConstraint: CGFloat = .zero
-        static let initialSafeAreaOffset: CGFloat = .zero
         static let noTopOffset: CGFloat = .zero
         static let noSize: CGSize = .zero
     }
@@ -202,21 +201,11 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupLayoutConstraints(with height: CGFloat) {
-        if #available(iOS 11.0, *) {
-            Logger.common(message: "SnackbarViewController setupLayoutConstraints iOS 11+.")
-            NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                snackbarView.heightAnchor.constraint(equalToConstant: height),
-            ])
-        } else {
-            Logger.common(message: "SnackbarViewController setupLayoutConstraints iOS 10.")
-            NSLayoutConstraint.activate([
-                snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                snackbarView.heightAnchor.constraint(equalToConstant: height),
-            ])
-        }
+        NSLayoutConstraint.activate([
+            snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            snackbarView.heightAnchor.constraint(equalToConstant: height),
+        ])
     }
 }
 
@@ -253,10 +242,7 @@ class TopSnackbarViewController: SnackbarViewController {
     }
 
     override func setViewFrame(with height: CGFloat) {
-        var safeAreaTopOffset: CGFloat = Constants.initialSafeAreaOffset
-        if #available(iOS 11.0, *) {
-            safeAreaTopOffset = view.safeAreaInsets.top
-        }
+        let safeAreaTopOffset: CGFloat = view.safeAreaInsets.top
 
         let finalHeight = height + safeAreaTopOffset
 
@@ -266,12 +252,7 @@ class TopSnackbarViewController: SnackbarViewController {
     }
 
     override func setupEdgeConstraint(with height: CGFloat) {
-        if #available(iOS 11.0, *) {
-            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
-        } else {
-            edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
-        }
-        
+        edgeConstraint = snackbarView.topAnchor.constraint(equalTo: view.topAnchor, constant: -height)
         edgeConstraint?.isActive = true
     }
 }
@@ -284,10 +265,7 @@ class BottomSnackbarViewController: SnackbarViewController {
     
     override func setViewFrame(with height: CGFloat) {
         let screenHeight = UIScreen.main.bounds.height
-        var safeAreaBottomOffset: CGFloat = Constants.initialSafeAreaOffset
-        if #available(iOS 11.0, *) {
-            safeAreaBottomOffset = view.safeAreaInsets.bottom
-        }
+        let safeAreaBottomOffset: CGFloat = view.safeAreaInsets.bottom
         
         let finalHeight = height + safeAreaBottomOffset
 
@@ -298,14 +276,7 @@ class BottomSnackbarViewController: SnackbarViewController {
     }
 
     override func setupEdgeConstraint(with height: CGFloat) {
-        if #available(iOS 11.0, *) {
-            Logger.common(message: "SnackbarViewController setupEdgeConstraint iOS 11+.")
-            edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
-        } else {
-            Logger.common(message: "SnackbarViewController setupEdgeConstraint iOS 10.")
-            edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: height)
-        }
-        
+        edgeConstraint = snackbarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: height)
         edgeConstraint?.isActive = true
     }
 }

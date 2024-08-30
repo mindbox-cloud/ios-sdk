@@ -10,19 +10,16 @@ import XCTest
 @testable import Mindbox
 
 class InappTTLTests: XCTestCase {
-    var container: TestDependencyProvider!
     var persistenceStorage: PersistenceStorage!
     var service: TTLValidationProtocol!
 
     override func setUp() {
         super.setUp()
-        container = try! TestDependencyProvider()
-        persistenceStorage = container.persistenceStorage
-        service = container.ttlValidationService
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        service = TTLValidationService(persistenceStorage: persistenceStorage)
     }
     
     override func tearDown() {
-        container = nil
         persistenceStorage = nil
         service = nil
         super.tearDown()
@@ -30,7 +27,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithTTL_Exceeds() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .hour, value: -2, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "01:00:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -39,7 +35,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithTTL_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .second, value: -1, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "00:00:02"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -48,7 +43,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithoutTTL() throws {
         persistenceStorage.configDownloadDate = Date()
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: nil)
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -57,7 +51,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithTTLHalfHourAgo_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .minute, value: -30, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "01:00:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -66,7 +59,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithTTLHalfMinutesAgo_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .second, value: -30, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "00:01:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -75,7 +67,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithTTLOneDayAgo_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .day, value: -1, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "2.00:00:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -84,7 +75,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithMinusTTL_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "-2.00:00:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
@@ -93,7 +83,6 @@ class InappTTLTests: XCTestCase {
     
     func testNeedResetInapps_WithMinusOneDayTTL_NotExceeded() throws {
         persistenceStorage.configDownloadDate = Calendar.current.date(byAdding: .day, value: -2, to: Date())
-        let service = TTLValidationService(persistenceStorage: persistenceStorage)
         let settings = Settings(operations: nil, ttl: .init(inapps: "-1.00:00:00"))
         let config = ConfigResponse(settings: settings)
         let result = service.needResetInapps(config: config)
