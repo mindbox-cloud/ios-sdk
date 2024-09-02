@@ -10,7 +10,7 @@ import SwiftUI
 import Mindbox
 
 struct NotificationCellView: View {
-    var notification: MBPushNotification
+    var notification: PushNotification
     
     var body: some View {
         HStack(alignment: .center, content: {
@@ -27,9 +27,9 @@ struct NotificationCellView: View {
             }
             
             VStack(alignment: .leading, content: {
-                Text(notification.aps?.alert?.title ?? "Empty")
+                Text(notification.title ?? "Empty")
                     .font(.headline)
-                Text(notification.aps?.alert?.body ?? "Empty")
+                Text(notification.body ?? "Empty")
                     .font(.subheadline)
                     .foregroundStyle(.gray)
                 Text(notification.clickUrl ?? "Empty")
