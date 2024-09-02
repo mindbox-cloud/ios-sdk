@@ -55,48 +55,6 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
     }
     
-    func testShowInAppsIdsMigration() {
-        let testMigrations: [MigrationProtocol] = [
-            MigrationShownInAppsIds()
-        ]
-        
-        let shownInAppsIdsBeforeReset: [String] = [
-            "36920d7e-3c42-4194-9a11-b0b5c550460c",
-            "37bed734-aa34-4c10-918b-873f67505d46"
-        ]
-        
-        persistenceStorageMock.shownInappsDictionary = nil
-        persistenceStorageMock.shownInAppsIds = shownInAppsIdsBeforeReset
-        
-        migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock,
-                                            migrations: testMigrations, sdkVersionCode: 0)
-        migrationManager.migrate()
-        
-        XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
-        XCTAssertEqual(shownInAppsIdsBeforeReset.count, persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
-        
-        for shownInAppsIdBeforeReset in shownInAppsIdsBeforeReset {
-            XCTContext.runActivity(named: "Check shownInAppsId \(shownInAppsIdBeforeReset) is in shownInappsDictionary") { test in
-                let contains = persistenceStorageMock.shownInappsDictionary?.keys.contains(shownInAppsIdBeforeReset) ?? false
-                XCTAssertTrue(contains, "The shownInAppsId \(shownInAppsIdBeforeReset) should be in shownInappsDictionary")
-            }
-        }
-        
-        let defaultSetDate = Date(timeIntervalSince1970: 0)
-        
-        for (_, value) in persistenceStorageMock.shownInappsDictionary! {
-            XCTAssertEqual(value, defaultSetDate)
-            
-        }
-        
-        XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT softReset() persistenceStorage")
-        XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "Must NOT softReset() persistenceStorage")
-        XCTAssertNotNil(persistenceStorageMock.handledlogRequestIds, "Must NOT softReset() persistenceStorage")
-        let expectedUserVisitCount = 1
-        XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCount, "Must NOT softReset() persistenceStorage")
-    }
-    
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1()
