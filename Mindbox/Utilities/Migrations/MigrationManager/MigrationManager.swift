@@ -51,7 +51,7 @@ final class MigrationManager {
         self.localSdkVersionCode = Constants.Migration.sdkVersionCode
         
         self.migrations = [
-            
+            MigrationShownInAppsIds(),
         ]
     }
 }
@@ -82,7 +82,7 @@ extension MigrationManager: MigrationManagerProtocol {
                 migrationsStarted = true
                 do {
                     try migration.run()
-                    let message = "[Migration] Run migration: \(migration.description), version: \(migration.version)"
+                    let message = "[Migration] Run migration: '\(migration.description)', version: \(migration.version)"
                     Logger.common(message: message, level: .info, category: .migration)
                 } catch {
                     let errorMessage = "[Migration] Migration \(migration.version) failed. Description: \(migrations.description). Error: \(error.localizedDescription)"
@@ -115,7 +115,9 @@ extension MigrationManager {
     ///                         including migration state and other critical data. It provides methods
     ///                         for performing resets and managing configurations.
     ///   - migrations: Array of new migrations.
-    ///   - sdkVersionCode: version for comparison with `persistenceStorage.versionCodeForMigration` after all migrations have been performed.
+    ///   - sdkVersionCode: version for comparison with `persistenceStorage.versionCodeForMigration` 
+    ///                     after all migrations have been performed.
+    ///                     Used instead of `Constants.Migration.sdkVersionCode`
     convenience init(
         persistenceStorage: PersistenceStorage,
         migrations: [MigrationProtocol],
