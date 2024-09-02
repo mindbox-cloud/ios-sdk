@@ -78,7 +78,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
     
-    func testShownInAppsIdsMigrationNotNeeded() {
+    func testMigrationNotNeeded() {
         let testMigrations: [MigrationProtocol] = [
             shownInAppsIdsMigration
         ]
@@ -109,7 +109,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
     
-    func testMigrationWhenDoubleCall() {
+    func testDoubleCallMigration() {
         migrationManager.migrate()
         var lastLog = try! mbLoggerCDManager.getLastLog()?.message
         var expectedLogMessage = "[Migrations] Migrations have been successful\n"
