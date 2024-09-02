@@ -54,7 +54,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         super.tearDown()
     }
 
-    func testShownInAppsIdsMigration() {
+    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() {
         migrationManager.migrate()
         
         XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
@@ -78,7 +78,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
     
-    func testMigrationNotNeeded() {
+    func test_ShownInAppsIdsMigration_withIsNeededFalse_shouldHaveBeenSkipped() {
         let testMigrations: [MigrationProtocol] = [
             shownInAppsIdsMigration
         ]
@@ -109,7 +109,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
     
-    func testDoubleCallMigration() {
+    func test_ShownInAppsIdsMigration_withDoubleCall_shouldBePerformedOnlyTheFirstTime() {
         migrationManager.migrate()
         var lastLog = try! mbLoggerCDManager.getLastLog()?.message
         var expectedLogMessage = "[Migrations] Migrations have been successful\n"
