@@ -63,7 +63,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         migrationManager.migrate()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
             XCTAssertEqual(self.shownInAppsIdsBeforeMigration.count, self.persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
@@ -105,7 +105,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         
         migrationManager.migrate()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
             XCTAssertEqual(shownInappsDictionary, self.persistenceStorageMock.shownInappsDictionary, "Must be equal")

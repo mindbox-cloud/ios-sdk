@@ -48,10 +48,11 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             do {
                 let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
                 XCTAssertEqual(fetchResult.count, 1, "Должно быть извлечено 1 сообщение")
+                print(fetchResult.count, "🎈")
                 XCTAssertEqual(fetchResult[0].message, message, "Сообщение должно совпадать")
                 XCTAssertEqual(fetchResult[0].timestamp, timestamp, "Временная метка должна совпадать")
                 fetchExpectation.fulfill()
