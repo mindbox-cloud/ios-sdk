@@ -60,10 +60,11 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     }
     
     func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() throws {
+        try mbLoggerCDManager.deleteAll()
+        
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         migrationManager.migrate()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
             XCTAssertEqual(self.shownInAppsIdsBeforeMigration.count, self.persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
@@ -86,6 +87,8 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     }
     
     func test_ShownInAppsIdsMigration_withIsNeededFalse_shouldHaveBeenSkipped() throws {
+        try mbLoggerCDManager.deleteAll()
+        
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         
         let testMigrations: [MigrationProtocol] = [
@@ -105,7 +108,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         
         migrationManager.migrate()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
             XCTAssertEqual(shownInappsDictionary, self.persistenceStorageMock.shownInappsDictionary, "Must be equal")
@@ -125,10 +128,12 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog?.message, expectedLogMessage)
     }
     
-    func test_ShownInAppsIdsMigration_withDoubleCall_shouldBePerformedOnlyTheFirstTime() {
+    func test_ShownInAppsIdsMigration_withDoubleCall_shouldBePerformedOnlyTheFirstTime() throws {
+        try mbLoggerCDManager.deleteAll()
+        
         migrationManager.migrate()
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             migrationExpectation.fulfill()
         }
         
@@ -141,7 +146,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         migrationManager.migrate()
         
         let migrationExpectationTwo = XCTestExpectation(description: "Migration 2 completed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             migrationExpectationTwo.fulfill()
         }
         

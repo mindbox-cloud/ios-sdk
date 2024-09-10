@@ -74,7 +74,7 @@ public class MBLoggerCoreDataManager {
     }()
     
     // MARK: - CRUD Operations
-    public func create(message: String, timestamp: Date) {
+    public func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
         queue.async {
             do {
                 let isTimeToDelete = self.writeCount == 0
@@ -88,6 +88,8 @@ public class MBLoggerCoreDataManager {
                     entity.message = message
                     entity.timestamp = timestamp
                     try self.saveEvent(withContext: self.context)
+                    
+                    completion?()
                 }
             } catch {
                 
@@ -170,7 +172,6 @@ public class MBLoggerCoreDataManager {
             results.compactMap { $0 as? NSManagedObject }.forEach {
                 context.delete($0)
             }
-            try saveEvent(withContext: context)
         }
     }
 }
