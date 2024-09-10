@@ -47,38 +47,47 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     }
     
     override func tearDown() {
-        shownInAppsIdsMigration = nil
-        mbLoggerCDManager = nil
-        migrationManager = nil
-        persistenceStorageMock = nil
-        super.tearDown()
-    }
-
-    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() {
-        migrationManager.migrate()
-        
-        XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
-        XCTAssertEqual(shownInAppsIdsBeforeMigration.count, persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
-        
-        for shownInAppsIdBeforeMigration in shownInAppsIdsBeforeMigration {
-            XCTContext.runActivity(named: "Check shownInAppsId \(shownInAppsIdBeforeMigration) is in shownInappsDictionary") { test in
-                let contains = persistenceStorageMock.shownInappsDictionary?.keys.contains(shownInAppsIdBeforeMigration) ?? false
-                XCTAssertTrue(contains, "The shownInAppsId \(shownInAppsIdBeforeMigration) should be in shownInappsDictionary")
-            }
+        do {
+            try mbLoggerCDManager.deleteAll()
+            shownInAppsIdsMigration = nil
+            mbLoggerCDManager = nil
+            migrationManager = nil
+            persistenceStorageMock = nil
+            super.tearDown()
+        } catch {
+            
         }
-        
-        let defaultSetDate = Date(timeIntervalSince1970: 0)
-        for (_, value) in persistenceStorageMock.shownInappsDictionary! {
-            XCTAssertEqual(value, defaultSetDate)
-        }
-        
-        let lastLog = try! mbLoggerCDManager.getLastLog()?.message
-        let expectedLogMessage = "[Migrations] Migrations have been successful\n"
-        XCTAssertEqual(lastLog, expectedLogMessage)
     }
     
-    func test_ShownInAppsIdsMigration_withIsNeededFalse_shouldHaveBeenSkipped() {
+    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() throws {
+        let migrationExpectation = XCTestExpectation(description: "Migration completed")
+        migrationManager.migrate()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
+            XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
+            XCTAssertEqual(self.shownInAppsIdsBeforeMigration.count, self.persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
+            
+            for shownInAppsIdBeforeMigration in self.shownInAppsIdsBeforeMigration {
+                XCTContext.runActivity(named: "Check shownInAppsId \(shownInAppsIdBeforeMigration) is in shownInappsDictionary") { test in
+                    let contains = self.persistenceStorageMock.shownInappsDictionary?.keys.contains(shownInAppsIdBeforeMigration) ?? false
+                    XCTAssertTrue(contains, "The shownInAppsId \(shownInAppsIdBeforeMigration) should be in shownInappsDictionary")
+                }
+            }
+            
+            migrationExpectation.fulfill()
+        }
+        
+        wait(for: [migrationExpectation], timeout: 5)
+        
+        let lastLog = try mbLoggerCDManager.getLastLog()
+        let expectedLogMessage = "[Migrations] Migrations have been successful\n"
+        XCTAssertEqual(lastLog?.message, expectedLogMessage)
+    }
+    
+    func test_ShownInAppsIdsMigration_withIsNeededFalse_shouldHaveBeenSkipped() throws {
+        let migrationExpectation = XCTestExpectation(description: "Migration completed")
+        
         let testMigrations: [MigrationProtocol] = [
             shownInAppsIdsMigration
         ]
@@ -95,29 +104,51 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
                                             migrations: testMigrations, sdkVersionCode: 0)
         
         migrationManager.migrate()
-        XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
-        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
-        XCTAssertEqual(shownInappsDictionary, persistenceStorageMock.shownInappsDictionary, "Must be equal")
         
-        let defaultSetDateAfterMigration = Date(timeIntervalSince1970: 0)
-        for (_, value) in persistenceStorageMock.shownInappsDictionary! {
-            XCTAssertNotEqual(value, defaultSetDateAfterMigration)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
+            XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
+            XCTAssertEqual(shownInappsDictionary, self.persistenceStorageMock.shownInappsDictionary, "Must be equal")
+            
+            let defaultSetDateAfterMigration = Date(timeIntervalSince1970: 0)
+            for (_, value) in self.persistenceStorageMock.shownInappsDictionary! {
+                XCTAssertNotEqual(value, defaultSetDateAfterMigration)
+            }
+            
+            migrationExpectation.fulfill()
         }
         
-        let lastLog = try! mbLoggerCDManager.getLastLog()?.message
+        wait(for: [migrationExpectation], timeout: 5)
+        
+        let lastLog = try mbLoggerCDManager.getLastLog()
         let expectedLogMessage = "[Migrations] Migrations have been skipped\n"
-        XCTAssertEqual(lastLog, expectedLogMessage)
+        XCTAssertEqual(lastLog?.message, expectedLogMessage)
     }
     
     func test_ShownInAppsIdsMigration_withDoubleCall_shouldBePerformedOnlyTheFirstTime() {
         migrationManager.migrate()
+        let migrationExpectation = XCTestExpectation(description: "Migration completed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            migrationExpectation.fulfill()
+        }
+        
+        wait(for: [migrationExpectation], timeout: 5)
+        
         var lastLog = try! mbLoggerCDManager.getLastLog()?.message
         var expectedLogMessage = "[Migrations] Migrations have been successful\n"
         XCTAssertEqual(lastLog, expectedLogMessage)
         
         migrationManager.migrate()
+        
+        let migrationExpectationTwo = XCTestExpectation(description: "Migration 2 completed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            migrationExpectationTwo.fulfill()
+        }
+        
+        wait(for: [migrationExpectationTwo], timeout: 5)
         lastLog = try! mbLoggerCDManager.getLastLog()?.message
         expectedLogMessage = "[Migrations] Migrations have been skipped\n"
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
 }
+

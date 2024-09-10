@@ -19,22 +19,36 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     override func tearDown() {
-        do {
-            try manager.deleteAll()
-            manager = nil
-            super.tearDown()
-        } catch { }
+        manager = nil
+        super.tearDown()
     }
 
     func testCreate() throws {
         let message = "Test message"
         let timestamp = Date()
-        
+
+        // Ожидание удаления всех логов
+        let deleteExpectation = XCTestExpectation(description: "Delete all logs")
+
+        // Удаляем все логи перед тестом
+        DispatchQueue.global().async {
+            do {
+                try self.manager.deleteAll()
+                DispatchQueue.main.async {
+                    deleteExpectation.fulfill()
+                }
+            } catch {
+                XCTFail("Ошибка при удалении данных: \(error)")
+                deleteExpectation.fulfill()
+            }
+        }
+
+        wait(for: [deleteExpectation], timeout: 5.0)
         manager.create(message: message, timestamp: timestamp)
-        
+
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             do {
                 let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
                 XCTAssertEqual(fetchResult.count, 1, "Должно быть извлечено 1 сообщение")
@@ -42,14 +56,31 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                 XCTAssertEqual(fetchResult[0].timestamp, timestamp, "Временная метка должна совпадать")
                 fetchExpectation.fulfill()
             } catch {
-                
+                XCTFail("Ошибка при извлечении данных: \(error)")
             }
         }
-        
+
         wait(for: [fetchExpectation], timeout: 5.0)
     }
 
     func testFetchFirstLog() throws {
+        let deleteExpectation = XCTestExpectation(description: "Delete all logs")
+
+        // Удаляем все логи перед тестом
+        DispatchQueue.global().async {
+            do {
+                try self.manager.deleteAll()
+                DispatchQueue.main.async {
+                    deleteExpectation.fulfill()
+                }
+            } catch {
+                XCTFail("Ошибка при удалении данных: \(error)")
+                deleteExpectation.fulfill()
+            }
+        }
+
+        wait(for: [deleteExpectation], timeout: 5.0)
+        
         let message1 = "Test message 1"
         let message2 = "Test message 2"
         let message3 = "Test message 3"
@@ -78,6 +109,23 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testFetchLastLog() throws {
+        let deleteExpectation = XCTestExpectation(description: "Delete all logs")
+
+        // Удаляем все логи перед тестом
+        DispatchQueue.global().async {
+            do {
+                try self.manager.deleteAll()
+                DispatchQueue.main.async {
+                    deleteExpectation.fulfill()
+                }
+            } catch {
+                XCTFail("Ошибка при удалении данных: \(error)")
+                deleteExpectation.fulfill()
+            }
+        }
+
+        wait(for: [deleteExpectation], timeout: 5.0)
+        
         let message1 = "Test message 1"
         let message2 = "Test message 2"
         let message3 = "Test message 3"
@@ -108,8 +156,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let message1 = "Test message 1"
         let message2 = "Test message 2"
         let message3 = "Test message 3"
-        let timestamp1 = Date().addingTimeInterval(-60)
-        let timestamp2 = Date().addingTimeInterval(-30)
+        let timestamp1 = Date().addingTimeInterval(-3600)
+        let timestamp2 = Date().addingTimeInterval(-1800)
         let timestamp3 = Date()
         manager.create(message: message1, timestamp: timestamp1)
         manager.create(message: message2, timestamp: timestamp2)
