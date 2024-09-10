@@ -50,3 +50,10 @@ struct Settings: Decodable, Equatable {
         let inapps: String?
     }
 }
+
+extension Settings {
+    init(operations: SettingsOperations? = nil, ttl: TimeToLive?) {
+        self.operations = operations
+        self.ttl = ttl
+    }
+}

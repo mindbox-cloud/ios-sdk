@@ -46,7 +46,9 @@ struct ConfigResponse: Decodable {
             return nil
         }
     }
-    
+}
+
+extension ConfigResponse {
     init(inapps: FailableDecodableArray<InAppDTO>? = nil, monitoring: Monitoring? = nil, settings: Settings? = nil, abtests: [ABTest]? = nil) {
         self.inapps = inapps
         self.monitoring = monitoring
