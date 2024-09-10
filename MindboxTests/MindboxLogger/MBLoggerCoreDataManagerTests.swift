@@ -21,20 +21,32 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     override func tearDown() {
         do {
             try manager.deleteAll()
+            manager = nil
+            super.tearDown()
         } catch { }
-        manager = nil
-        super.tearDown()
     }
 
     func testCreate() throws {
         let message = "Test message"
         let timestamp = Date()
-        try manager.create(message: message, timestamp: timestamp)
-
-        let fetchResult = try manager.fetchPeriod(timestamp, timestamp)
-        XCTAssertEqual(fetchResult.count, 1)
-        XCTAssertEqual(fetchResult[0].message, message)
-        XCTAssertEqual(fetchResult[0].timestamp, timestamp)
+        
+        manager.create(message: message, timestamp: timestamp)
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch created log")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            do {
+                let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
+                XCTAssertEqual(fetchResult.count, 1, "Должно быть извлечено 1 сообщение")
+                XCTAssertEqual(fetchResult[0].message, message, "Сообщение должно совпадать")
+                XCTAssertEqual(fetchResult[0].timestamp, timestamp, "Временная метка должна совпадать")
+                fetchExpectation.fulfill()
+            } catch {
+                
+            }
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
     }
 
     func testFetchFirstLog() throws {
@@ -44,14 +56,25 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let timestamp1 = Date().addingTimeInterval(-60)
         let timestamp2 = Date().addingTimeInterval(-30)
         let timestamp3 = Date()
-        try manager.create(message: message1, timestamp: timestamp1)
-        try manager.create(message: message2, timestamp: timestamp2)
-        try manager.create(message: message3, timestamp: timestamp3)
-
-        let fetchResult = try manager.getFirstLog()
-        XCTAssertNotNil(fetchResult)
-        XCTAssertEqual(fetchResult!.message, message1)
-        XCTAssertEqual(fetchResult!.timestamp, timestamp1)
+        manager.create(message: message1, timestamp: timestamp1)
+        manager.create(message: message2, timestamp: timestamp2)
+        manager.create(message: message3, timestamp: timestamp3)
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch first log")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            do {
+                let fetchResult = try self.manager.getFirstLog()
+                XCTAssertNotNil(fetchResult)
+                XCTAssertEqual(fetchResult!.message, message1)
+                XCTAssertEqual(fetchResult!.timestamp, timestamp1)
+                fetchExpectation.fulfill()
+            } catch {
+                
+            }
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
     }
 
     func testFetchLastLog() throws {
@@ -61,13 +84,24 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let timestamp1 = Date().addingTimeInterval(-60)
         let timestamp2 = Date().addingTimeInterval(-30)
         let timestamp3 = Date()
-        try manager.create(message: message1, timestamp: timestamp1)
-        try manager.create(message: message2, timestamp: timestamp2)
-        try manager.create(message: message3, timestamp: timestamp3)
-
-        let fetchResult = try manager.getLastLog()
-        XCTAssertEqual(fetchResult!.message, message3)
-        XCTAssertEqual(fetchResult!.timestamp, timestamp3)
+        manager.create(message: message1, timestamp: timestamp1)
+        manager.create(message: message2, timestamp: timestamp2)
+        manager.create(message: message3, timestamp: timestamp3)
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch last log")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            do {
+                let fetchResult = try self.manager.getLastLog()
+                XCTAssertEqual(fetchResult!.message, message3)
+                XCTAssertEqual(fetchResult!.timestamp, timestamp3)
+                fetchExpectation.fulfill()
+            } catch {
+                
+            }
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
     }
 
     func testFetchPeriod() throws {
@@ -77,27 +111,30 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let timestamp1 = Date().addingTimeInterval(-60)
         let timestamp2 = Date().addingTimeInterval(-30)
         let timestamp3 = Date()
-        try manager.create(message: message1, timestamp: timestamp1)
-        try manager.create(message: message2, timestamp: timestamp2)
-        try manager.create(message: message3, timestamp: timestamp3)
+        manager.create(message: message1, timestamp: timestamp1)
+        manager.create(message: message2, timestamp: timestamp2)
+        manager.create(message: message3, timestamp: timestamp3)
 
-        let fetchResult = try manager.fetchPeriod(timestamp1, timestamp2)
-        XCTAssertEqual(fetchResult.count, 2)
-        XCTAssertEqual(fetchResult[0].message, message1)
-        XCTAssertEqual(fetchResult[0].timestamp, timestamp1)
-        XCTAssertEqual(fetchResult[1].message, message2)
-        XCTAssertEqual(fetchResult[1].timestamp, timestamp2)
+        let fetchExpectation = XCTestExpectation(description: "Fetch logs for period")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            do {
+                let fetchResult = try self.manager.fetchPeriod(timestamp1, timestamp2)
+                XCTAssertEqual(fetchResult.count, 2)
+                XCTAssertEqual(fetchResult[0].message, message1)
+                XCTAssertEqual(fetchResult[0].timestamp, timestamp1)
+                XCTAssertEqual(fetchResult[1].message, message2)
+                XCTAssertEqual(fetchResult[1].timestamp, timestamp2)
+                fetchExpectation.fulfill()
+            } catch {
+                
+            }
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
     }
 
     func testDelete_10_percents() throws {
-        let expectation = XCTestExpectation(description: "Waiting for testDelete_10_percents to complete")
-        try manager.deleteAll()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
-            expectation.fulfill()
-        })
-        
-        wait(for: [expectation], timeout: 3)
-        
         let message = "testDelete_10_percents"
 
         let calendar = Calendar.current
@@ -113,11 +150,23 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let specificDate = calendar.date(from: dateComponents)!
         
         for _ in 0..<10 {
-            try manager.create(message: message, timestamp: specificDate)
+            manager.create(message: message, timestamp: specificDate)
         }
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch logs for period")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            do {
+                let fetchResult = try self.manager.fetchPeriod(specificDate, specificDate)
+                XCTAssertEqual(fetchResult.count, 10)
+                fetchExpectation.fulfill()
+            } catch {
+                fatalError()
+            }
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
 
-        let fetchResult = try manager.fetchPeriod(specificDate, specificDate)
-        XCTAssertEqual(fetchResult.count, 10)
         try manager.delete()
         
         let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60), specificDate)
