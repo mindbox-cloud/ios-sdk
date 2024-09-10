@@ -32,29 +32,34 @@ public class MBLoggerCoreDataManager {
         MBPersistentContainer.applicationGroupIdentifier = MBLoggerUtilitiesFetcher().applicationGroupIdentifier
         
         #if SWIFT_PACKAGE
-        let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd")
-        let mom = NSManagedObjectModel(contentsOf: bundleURL!)
-        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
+        guard let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd"),
+              let mom = NSManagedObjectModel(contentsOf: bundleURL) else {
+            fatalError("Failed to initialize NSManagedObjectModel for \(Constants.model)")
+        }
+        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom)
         #else
         let podBundle = Bundle(for: MBLoggerCoreDataManager.self)
         let container: MBPersistentContainer
-        if let url = podBundle.url(forResource: "MindboxLogger", withExtension: "bundle") {
-            let bundle = Bundle(url: url)
-            let modelURL = bundle?.url(forResource: Constants.model, withExtension: "momd")
-            let mom = NSManagedObjectModel(contentsOf: modelURL!)
-            container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom!)
+        if let url = podBundle.url(forResource: "MindboxLogger", withExtension: "bundle"),
+           let bundle = Bundle(url: url),
+           let modelURL = bundle.url(forResource: Constants.model, withExtension: "momd"),
+           let mom = NSManagedObjectModel(contentsOf: modelURL) {
+            container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom)
         } else {
             container = MBPersistentContainer(name: Constants.model)
         }
         #endif
         
         let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
+        
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
-        container.loadPersistentStores {
-            (storeDescription, error) in
+        container.loadPersistentStores { (storeDescription, error) in
+            if let error = error {
+                fatalError("Failed to load persistent stores: \(error)")
+            }
         }
 
         return container
@@ -69,18 +74,24 @@ public class MBLoggerCoreDataManager {
     }()
     
     // MARK: - CRUD Operations
-    public func create(message: String, timestamp: Date) throws {
-        let isTimeToDelete = writeCount == 0
-        writeCount += 1
-        if isTimeToDelete && getDBFileSize() > Constants.dbSizeLimitKB {
-            try delete()
-        }
-        
-        try self.context.mindboxPerformAndWait {
-            let entity = CDLogMessage(context: self.context)
-            entity.message = message
-            entity.timestamp = timestamp
-            try self.saveEvent(withContext: self.context)
+    public func create(message: String, timestamp: Date) {
+        queue.async {
+            do {
+                let isTimeToDelete = self.writeCount == 0
+                self.writeCount += 1
+                if isTimeToDelete && self.getDBFileSize() > Constants.dbSizeLimitKB {
+                    try self.delete()
+                }
+
+                try self.context.mindboxPerformAndWait {
+                    let entity = CDLogMessage(context: self.context)
+                    entity.message = message
+                    entity.timestamp = timestamp
+                    try self.saveEvent(withContext: self.context)
+                }
+            } catch {
+                
+            }
         }
     }
     
@@ -147,9 +158,6 @@ public class MBLoggerCoreDataManager {
 
             try saveEvent(withContext: context)
             Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
-//            queue.async {
-//                Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
-//            }
         }
     }
     
