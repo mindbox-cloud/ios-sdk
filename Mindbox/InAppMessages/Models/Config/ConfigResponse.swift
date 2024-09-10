@@ -21,18 +21,18 @@ struct ConfigResponse: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        inapps = try? container.decodeIfPresent(FailableDecodableArray<InAppDTO>.self, forKey: .inapps)
-        monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
-        settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
+        self.inapps = try? container.decodeIfPresent(FailableDecodableArray<InAppDTO>.self, forKey: .inapps)
+        self.monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
+        self.settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
         
         let abTestValidator = DI.injectOrFail(ABTestValidator.self)
         if let decodedAbtests: [ABTest] = ConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
            decodedAbtests.allSatisfy({
                abTestValidator.isValid(item: $0)
            }) {
-            abtests = decodedAbtests
+            self.abtests = decodedAbtests
         } else {
-            abtests = nil
+            self.abtests = nil
         }
     }
     
