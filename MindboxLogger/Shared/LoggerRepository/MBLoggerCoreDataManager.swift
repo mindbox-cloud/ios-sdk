@@ -82,8 +82,8 @@ public class MBLoggerCoreDataManager {
                 if isTimeToDelete && self.getDBFileSize() > Constants.dbSizeLimitKB {
                     try self.delete()
                 }
-
-                try self.context.mindboxPerformAndWait {
+                
+                try self.context.executePerformAndWait {
                     let entity = CDLogMessage(context: self.context)
                     entity.message = message
                     entity.timestamp = timestamp
@@ -96,55 +96,56 @@ public class MBLoggerCoreDataManager {
     }
     
     public func getFirstLog() throws -> LogMessage? {
-        try context.mindboxPerformAndWait {
+        var fetchedLogMessage: LogMessage? = nil
+        try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
             fetchRequest.fetchLimit = 1
             let results = try context.fetch(fetchRequest)
-            var logMessage: LogMessage?
-            if let first = results.first {
-                logMessage = LogMessage(timestamp: first.timestamp, message: first.message)
-            }
             
-            return logMessage
+            if let first = results.first {
+                fetchedLogMessage = LogMessage(timestamp: first.timestamp, message: first.message)
+            }
         }
+        
+        return fetchedLogMessage
     }
 
     public func getLastLog() throws -> LogMessage? {
-        try context.mindboxPerformAndWait {
+        var fetchedLogMessage: LogMessage? = nil
+        try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
             fetchRequest.fetchLimit = 1
             let results = try context.fetch(fetchRequest)
-            var logMessage: LogMessage?
-            if let last = results.last {
-                logMessage = LogMessage(timestamp: last.timestamp, message: last.message)
-            }
             
-            return logMessage
+            if let last = results.last {
+                fetchedLogMessage = LogMessage(timestamp: last.timestamp, message: last.message)
+            }
         }
+        
+        return fetchedLogMessage
     }
     
     public func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
-        try context.mindboxPerformAndWait {
+        var fetchedLogs: [LogMessage] = []
+        
+        try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate,
                                                  to as NSDate)
             let logs = try context.fetch(fetchRequest)
-            var fetchedLogs: [LogMessage] = []
-            logs.forEach {
-                fetchedLogs.append(LogMessage(timestamp: $0.timestamp, message: $0.message))
-            }
-
-            return fetchedLogs
+            fetchedLogs = logs.map { LogMessage(timestamp: $0.timestamp, message: $0.message) }
         }
+        
+        return fetchedLogs
     }
     
     public func delete() throws {
-        try context.mindboxPerformAndWait {
+        try context.executePerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             let count = try context.count(for: request)
             let limit: Double = (Double(count) * 0.1).rounded() // 10% percent of all records should be removed
@@ -162,7 +163,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func deleteAll() throws {
-        try context.mindboxPerformAndWait {
+        try context.executePerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             request.includesPropertyValues = false
             let results = try context.fetch(request)
@@ -200,5 +201,15 @@ private extension MBLoggerCoreDataManager {
         }
         let size = url.fileSize / 1024 // Bytes to Kilobytes
         return Int(size)
+    }
+}
+
+private extension NSManagedObjectContext {
+    func executePerformAndWait(_ block: () throws -> Void) rethrows {
+        if #available(iOS 15, *) {
+            try self.performAndWait(block)
+        } else {
+            try mindboxPerformAndWait(block)
+        }
     }
 }
