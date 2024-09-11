@@ -1,0 +1,16 @@
+{
+  "operations": {
+    "viewProduct": {
+      "systemName": "ViewProduct"
+    },
+    "viewCategory": {
+      "systemNameTest": "ViewCategory"
+    },
+    "setCart": {
+      "systemNameTest": "SetCart"
+    }
+  },
+  "ttl": {
+    "inapps": "1.00:00:00"
+  }
+}

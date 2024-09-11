@@ -1,0 +1,10 @@
+{
+  "operations": {
+    "viewProduct": 1,
+    "viewCategory": 2,
+    "setCart": 2
+  },
+  "ttl": {
+    "inapps": "1.00:00:00"
+  }
+}
