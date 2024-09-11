@@ -60,7 +60,7 @@ final class SettingsConfigParsingTests: XCTestCase {
     
     // MARK: - Operations
     
-    func test_SettingsConfig_withOperationsError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsError_shouldSetOperationsToNil() {
         let config = try! SettingsConfig.settingsOperationsError.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if the key `operations` is not found")
         XCTAssertNil(config.operations?.viewProduct)
@@ -71,7 +71,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsTypeError_shouldSetOperationsToNil() {
         let config = try! SettingsConfig.settingsOperationsTypeError.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if the type of `operations` is not a `SettingsOperations`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -82,7 +82,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewProductError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewProductError_shouldSetViewProductToNil() {
         let config = try! SettingsConfig.settingsOperationsViewProductError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the key `viewProduct` is not found")
@@ -93,7 +93,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewProductTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewProductTypeError_shouldSetViewProductToNil() {
         let config = try! SettingsConfig.settingsOperationsViewProductTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the type of `viewProduct` is not an `Operation`")
@@ -104,7 +104,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewProductSystemNameError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewProductSystemNameError_shouldSetViewProductToNil() {
         let config = try! SettingsConfig.settingsOperationsViewProductSystemNameError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the key `systemName` is not found")
@@ -115,7 +115,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewProductSystemNameTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewProductSystemNameTypeError_shouldSetViewProductToNil() {
         let config = try! SettingsConfig.settingsOperationsViewProductSystemNameTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the type of `systemName` is not a `String`")
@@ -126,7 +126,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withAllOperationsWithErrors_shouldParseSuccessfully() {
+    func test_SettingsConfig_withAllOperationsWithErrors_shouldSetOperationsToNil() {
         let config = try! SettingsConfig.settingsAllOperationsWithErrors.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if all three operations are `nil`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -137,7 +137,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withAllOperationsWithTypeErrors_shouldParseSuccessfully() {
+    func test_SettingsConfig_withAllOperationsWithTypeErrors_shouldSetOperationsToNil() {
         let config = try! SettingsConfig.settingsAllOperationsWithTypeErrors.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if all three operations are `nil`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -148,7 +148,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewCategoryAndSetCartError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewCategoryAndSetCartError_shouldSetViewCategoryAndSetCartToNil() {
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -159,7 +159,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewCategoryAndSetCartTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewCategoryAndSetCartTypeError_shouldSetViewCategoryAndSetCartToNil() {
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -170,7 +170,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameError_shouldSetViewCategoryAndSetCartToNil() {
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -181,7 +181,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameTypeError_shouldSetViewCategoryAndSetCartToNil() {
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -192,7 +192,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
     }
     
-    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameMixedError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameMixedError_shouldSetViewCategoryAndSetCartToNil() {
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameMixedError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -205,7 +205,7 @@ final class SettingsConfigParsingTests: XCTestCase {
     
     // MARK: - TTL
     
-    func test_SettingsConfig_withTtlError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withTtlError_shouldSetTtlToNil() {
         let config = try! SettingsConfig.ttlError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -216,7 +216,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
     }
     
-    func test_SettingsConfig_withTtlTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withTtlTypeError_shouldSetTtlToNil() {
         let config = try! SettingsConfig.ttlTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -227,7 +227,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
     }
     
-    func test_SettingsConfig_withTtlInappsError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withTtlInappsError_shouldSetTtlToNil() {
         let config = try! SettingsConfig.ttlInappsError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -238,7 +238,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
     }
     
-    func test_SettingsConfig_withTtlInappsTypeError_shouldParseSuccessfully() {
+    func test_SettingsConfig_withTtlInappsTypeError_shouldSetTtlToNil() {
         let config = try! SettingsConfig.ttlInappsTypeError.getConfig()
         XCTAssertNotNil(config.operations)
         XCTAssertNotNil(config.operations?.viewProduct)
