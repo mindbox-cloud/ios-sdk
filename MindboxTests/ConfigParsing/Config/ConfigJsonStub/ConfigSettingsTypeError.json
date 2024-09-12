@@ -1,0 +1,394 @@
+{
+  
+  
+  "settings": 1,
+  
+  
+  "inapps": [
+    {
+      "id": "12345678-c777-4ac9-86b3-722c3e998cb6",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "Some payload test",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://www.akusherstvo.ru/images/uploadfoto/events/in-app/in-app-app300-2.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "right": 0,
+                  "left": 0,
+                  "bottom": 0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "bottom"
+                }
+              },
+              "elements": [
+                {
+                  "color": "#000000",
+                  "lineWidth": 1,
+                  "size": {
+                    "kind": "dp",
+                    "width": 30,
+                    "height": 30
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.05,
+                      "right": 0.025,
+                      "left": 0,
+                      "bottom": 0
+                    }
+                  },
+                  "$type": "closeButton"
+                }
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    },
+    {
+      "id": "283d926e-7609-493b-8d1d-67e9a909847e",
+      "sdkVersion": {
+        "min": 9,
+        "max": null
+      },
+      "frequency": {
+        "kind": "session",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "value": false,
+            "$type": "pushEnabled"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "Ñ‚ÐµÑÑ‚Ð¾Ð²Ñ‹Ð¹ Ð¿ÐµÐ¹Ð»Ð¾Ð°Ð´",
+                      "$type": "pushPermission"
+                    },
+                    "source": {
+                      "value": "https://inapps-stable.mindbox.ru/media/default-push-modal-ru.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "elements": [
+                {
+                  "color": "#000000",
+                  "lineWidth": 1,
+                  "size": {
+                    "kind": "dp",
+                    "width": 18,
+                    "height": 18
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.215,
+                      "right": 0.0665,
+                      "left": 0,
+                      "bottom": 0
+                    }
+                  },
+                  "$type": "closeButton"
+                }
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "modal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "4c7ee36b-e439-452a-b76a-3908f30766db",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "",
+                      "value": "https://www.forrestgerke.com/shop/apple-3x4-linoleum-block-print",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://images.squarespace-cdn.com/content/v1/524cb77be4b0bf732ffea906/1597867591991-JG1UEAX03TOY6EK76MEG/Apple+-+Product+Image.jpg",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "right": 0,
+                  "left": 0,
+                  "bottom": 0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                }
+              },
+              "elements": []
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    },
+    {
+      "id": "c68d2f2a-d3f6-40ef-b300-4597cced3453",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "Some payload test",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://mobpush-images.mindbox.ru/Mpush-test/223/c41cd63a-fffb-49f9-afcf-58e213ddd677.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "right": 0,
+                  "left": 0,
+                  "bottom": 0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "top"
+                }
+              },
+              "elements": [
+                {
+                  "color": "#9E3535",
+                  "lineWidth": 5,
+                  "size": {
+                    "kind": "dp",
+                    "width": 40,
+                    "height": 40
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.7,
+                      "right": 0,
+                      "left": 0,
+                      "bottom": 0
+                    }
+                  },
+                  "$type": "closeButton"
+                }
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    }
+  ],
+  "monitoring": {
+    "logs": [
+      {
+        "requestId": "bb978cd7-ce4c-4239-a5d2-4b7e5d4fb5b9",
+        "deviceUUID": "216e6225-3170-4089-a6f0-3d1ed8f64153",
+        "from": "2024-02-12T10:00:00",
+        "to": "2024-02-14T20:30:00"
+      },
+      {
+        "requestId": "8e829a63-a5c3-4e1c-a772-41fd61f8f331",
+        "deviceUUID": "126e6225-3170-4089-a6f0-3d1ed8f64153",
+        "from": "2023-02-10T00:00:00",
+        "to": "2023-03-01T20:30:00"
+      }
+    ]
+  },
+  "abtests": [
+    {
+      "id": "94CD824A-59AA-4937-9E0E-089895A0DB6F",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "7D4154FD-A6D4-4BBD-B058-7150FAC18AE1",
+      "variants": [
+        {
+          "id": "80FD90DA-D5EB-47C0-82E0-2683EF4CB9C1",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["210adb81-c777-4ac9-86b3-722c3e998cb6"],
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "9B15D2FC-3C18-44E7-B804-18AA0248706A",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["c68d2f2a-d3f6-40ef-b300-4597cced3453"],
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ACD8FF4F-25A7-41F5-9322-A7AC9F2B4CFE",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "00A8B15F-AA68-4545-A425-42238055460B",
+      "variants": [
+        {
+          "id": "93719D17-8C46-482F-A220-2FA02647079D",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "AA7131D5-D77D-4847-AC77-676C224CD902",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

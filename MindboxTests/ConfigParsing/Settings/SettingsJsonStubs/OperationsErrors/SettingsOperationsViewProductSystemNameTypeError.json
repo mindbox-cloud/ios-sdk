@@ -1,7 +1,11 @@
 {
   "operations": {
     "viewProduct": {
+      
+      
       "systemName": 123
+      
+      
     },
     "viewCategory": {
       "systemName": "ViewCategory"

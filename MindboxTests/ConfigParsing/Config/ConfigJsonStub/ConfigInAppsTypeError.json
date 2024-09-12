@@ -1,0 +1,117 @@
+{
+    
+    
+  "inapps": 1,
+  
+  
+  "monitoring": {
+    "logs": [
+      {
+        "requestId": "bb978cd7-ce4c-4239-a5d2-4b7e5d4fb5b9",
+        "deviceUUID": "216e6225-3170-4089-a6f0-3d1ed8f64153",
+        "from": "2024-02-12T10:00:00",
+        "to": "2024-02-14T20:30:00"
+      },
+      {
+        "requestId": "8e829a63-a5c3-4e1c-a772-41fd61f8f331",
+        "deviceUUID": "126e6225-3170-4089-a6f0-3d1ed8f64153",
+        "from": "2023-02-10T00:00:00",
+        "to": "2023-03-01T20:30:00"
+      }
+    ]
+  },
+  "settings": {
+    "operations": {
+      "viewProduct": {
+        "systemName": "ViewProduct"
+      },
+      "viewCategory": {
+        "systemName": "ViewCategory"
+      },
+      "setCart": {
+        "systemName": "SetCart"
+      }
+    },
+    "ttl": {
+      "inapps": "1.00:00:00"
+    }
+  },
+  "abtests": [
+    {
+      "id": "94CD824A-59AA-4937-9E0E-089895A0DB6F",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "7D4154FD-A6D4-4BBD-B058-7150FAC18AE1",
+      "variants": [
+        {
+          "id": "80FD90DA-D5EB-47C0-82E0-2683EF4CB9C1",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["210adb81-c777-4ac9-86b3-722c3e998cb6"],
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "9B15D2FC-3C18-44E7-B804-18AA0248706A",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["c68d2f2a-d3f6-40ef-b300-4597cced3453"],
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ACD8FF4F-25A7-41F5-9322-A7AC9F2B4CFE",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "00A8B15F-AA68-4545-A425-42238055460B",
+      "variants": [
+        {
+          "id": "93719D17-8C46-482F-A220-2FA02647079D",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "AA7131D5-D77D-4847-AC77-676C224CD902",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

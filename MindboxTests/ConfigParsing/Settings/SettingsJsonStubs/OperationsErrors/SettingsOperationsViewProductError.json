@@ -1,6 +1,10 @@
 {
   "operations": {
+      
+       
     "viewProductTest": {
+        
+        
       "systemName": "ViewProduct"
     },
     "viewCategory": {
