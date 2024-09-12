@@ -19,6 +19,7 @@ extension Configurable {
     }
 }
 
+// TODO: Replace the implementation in all places with Generic (Commented tests)
 private func decodeConfig<T: Decodable>(name: String) throws -> T {
     let bundle = Bundle(for: MindboxTests.self)
     guard let fileURL = bundle.url(forResource: name, withExtension: "json") else {

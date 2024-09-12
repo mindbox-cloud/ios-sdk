@@ -141,6 +141,8 @@
 		474851C72C6A63C30026C38E /* SharedInternalMethods.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C62C6A63C30026C38E /* SharedInternalMethods.swift */; };
 		475558C32C59300400CDA026 /* MigrationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475558C22C59300400CDA026 /* MigrationManagerTests.swift */; };
 		476689C72C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476689C62C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift */; };
+		4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */; };
+		4766A8962C92FF3A002D15A4 /* TimeToLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */; };
 		47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */; };
 		47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */; };
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
@@ -716,6 +718,8 @@
 		474851C62C6A63C30026C38E /* SharedInternalMethods.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInternalMethods.swift; sourceTree = "<group>"; };
 		475558C22C59300400CDA026 /* MigrationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerTests.swift; sourceTree = "<group>"; };
 		476689C62C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIdsMigrationTests.swift; sourceTree = "<group>"; };
+		4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOperationsModel.swift; sourceTree = "<group>"; };
+		4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeToLiveModel.swift; sourceTree = "<group>"; };
 		47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestBaseMigrations.swift; sourceTree = "<group>"; };
 		47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestProtocolMigrations.swift; sourceTree = "<group>"; };
 		47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
@@ -2978,6 +2982,8 @@
 				F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */,
 				F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */,
 				F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */,
+				4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */,
+				4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */,
 				F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */,
 			);
 			path = Config;
@@ -3448,6 +3454,7 @@
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
+				4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */,
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
 				F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */,
@@ -3499,6 +3506,7 @@
 				6FDD1459266F7CB700A50C35 /* ContentResponse.swift in Sources */,
 				F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */,
 				F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */,
+				4766A8962C92FF3A002D15A4 /* TimeToLiveModel.swift in Sources */,
 				F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */,
 				334F3AE2264C199900A6AC00 /* CouponRequest.swift in Sources */,
 				F3A8B9942A3A409C00E9C055 /* Validator.swift in Sources */,

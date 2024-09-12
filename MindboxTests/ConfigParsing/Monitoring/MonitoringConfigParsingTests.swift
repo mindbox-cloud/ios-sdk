@@ -54,7 +54,7 @@ final class MonitoringConfigParsingTests: XCTestCase {
         let config = try? MonitoringConfig.monitoringLogsOneElementError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully")
         
-        XCTAssertTrue(config?.logs.elements.count == 1)
+        XCTAssertEqual(config?.logs.elements.count, 1)
         
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { test in
@@ -70,7 +70,7 @@ final class MonitoringConfigParsingTests: XCTestCase {
         let config = try? MonitoringConfig.monitoringLogsOneElementTypeError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully")
         
-        XCTAssertTrue(config?.logs.elements.count == 1)
+        XCTAssertEqual(config?.logs.elements.count, 1)
         
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { test in
@@ -86,20 +86,20 @@ final class MonitoringConfigParsingTests: XCTestCase {
         let config = try? MonitoringConfig.monitoringLogsTwoElementsError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully")
         
-        XCTAssertTrue(config?.logs.elements.count == 0)
+        XCTAssertEqual(config?.logs.elements.count, 0)
     }
     
     func test_MonitoringConfig_withLogsTwoElementsTypeError_shouldParseSuccessfullyRemainsElements() {
         let config = try? MonitoringConfig.monitoringLogsTwoElementsTypeError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully, but with empty array")
         
-        XCTAssertTrue(config?.logs.elements.count == 0)
+        XCTAssertEqual(config?.logs.elements.count, 0)
     }
     
     func test_MonitoringConfig_withLogsTwoElementsMixedError_shouldParseSuccessfullyRemainsElements() {
         let config = try? MonitoringConfig.monitoringLogsElementsMixedError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully, but with empty array")
         
-        XCTAssertTrue(config?.logs.elements.count == 0)
+        XCTAssertEqual(config?.logs.elements.count, 0)
     }
 }
