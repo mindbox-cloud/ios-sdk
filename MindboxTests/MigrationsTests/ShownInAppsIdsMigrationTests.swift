@@ -47,16 +47,11 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     }
     
     override func tearDown() {
-        do {
-            try mbLoggerCDManager.deleteAll()
-            shownInAppsIdsMigration = nil
-            mbLoggerCDManager = nil
-            migrationManager = nil
-            persistenceStorageMock = nil
-            super.tearDown()
-        } catch {
-            
-        }
+        shownInAppsIdsMigration = nil
+        mbLoggerCDManager = nil
+        migrationManager = nil
+        persistenceStorageMock = nil
+        super.tearDown()
     }
     
     func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() throws {

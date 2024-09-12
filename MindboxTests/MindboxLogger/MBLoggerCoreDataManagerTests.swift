@@ -22,6 +22,37 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         manager = nil
         super.tearDown()
     }
+    
+    func test_measure_create() throws {
+        try manager.deleteAll()
+        measure {
+            let fetchExpectation = XCTestExpectation(description: "Fetch created log")
+            let message = "Test message"
+            let timestamp = Date()
+            manager.create(message: message, timestamp: timestamp) {
+                fetchExpectation.fulfill()
+            }
+            wait(for: [fetchExpectation], timeout: 2.0)
+        }
+    }
+    
+    func test_measure_create_10_000() throws {
+        try manager.deleteAll()
+        measure {
+            let logsCount = 10_000
+            let fetchExpectation = XCTestExpectation(description: "Fetch created log")
+            fetchExpectation.expectedFulfillmentCount = logsCount
+            let message = "Test message"
+            let timestamp = Date()
+            for i in 0..<logsCount {
+                manager.create(message: message, timestamp: timestamp) {
+                    fetchExpectation.fulfill()
+                }
+            }
+            
+            wait(for: [fetchExpectation], timeout: 100.0)
+        }
+    }
 
     func testCreate() throws {
         try manager.deleteAll()

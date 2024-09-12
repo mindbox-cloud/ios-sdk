@@ -205,12 +205,4 @@ private extension MBLoggerCoreDataManager {
     }
 }
 
-private extension NSManagedObjectContext {
-    func executePerformAndWait(_ block: () throws -> Void) rethrows {
-        if #available(iOS 15, *) {
-            try self.performAndWait(block)
-        } else {
-            try mindboxPerformAndWait(block)
-        }
-    }
-}
+
