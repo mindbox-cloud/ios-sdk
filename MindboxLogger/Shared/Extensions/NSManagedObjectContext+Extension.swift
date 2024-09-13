@@ -10,6 +10,15 @@ import Foundation
 import CoreData
 
 public extension NSManagedObjectContext {
+    
+    func executePerformAndWait(_ block: () throws -> Void) rethrows {
+        if #available(iOS 15, *) {
+            try self.performAndWait(block)
+        } else {
+            try mindboxPerformAndWait(block)
+        }
+    }
+    
     func mindboxPerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
         return try _performAndWaitHelper(
             fn: performAndWait, execute: block, rescue: { throw $0 }
