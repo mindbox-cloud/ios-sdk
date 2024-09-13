@@ -9,8 +9,8 @@
 import Foundation
 
 struct Monitoring: Decodable, Equatable {
-    let logs: [Logs]
-    
+    let logs: FailableDecodableArray<Logs>
+
     struct Logs: Decodable, Equatable {
         let requestId: String
         let deviceUUID: String
