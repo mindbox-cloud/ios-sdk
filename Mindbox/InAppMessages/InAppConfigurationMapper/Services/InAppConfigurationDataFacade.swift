@@ -110,9 +110,7 @@ private extension InAppConfigurationDataFacade {
         
         dispatchGroup.enter()
         segmentationService.checkProductSegmentationRequest(products: products) { response in
-            productIds.forEach { key, value in
-                self.fetchedProductIdsCache[key] = value
-            }
+            self.fetchedProductIdsCache = productIds
             self.targetingChecker.checkedProductSegmentations = response
             self.dispatchGroup.leave()
         }
