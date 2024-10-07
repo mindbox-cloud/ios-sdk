@@ -39,14 +39,6 @@ final class AppDelegate: MindboxAppDelegate {
         
         return true
     }
-
-    func application(
-        _ application: UIApplication,
-        configurationForConnecting connectingSceneSession: UISceneSession,
-        options: UIScene.ConnectionOptions
-    ) -> UISceneConfiguration {
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-    }
     
     // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(
