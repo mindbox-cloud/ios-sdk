@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import Mindbox
 import SwiftData
 import SwiftUI
 
@@ -48,12 +47,8 @@ public struct SwiftDataManager {
     private func saveMockData() {
         let context = SwiftDataManager.shared.container.mainContext
         
-        testNotifications.forEach { notification in
-            guard let pushNotification = MBPushNotification(jsonString: notification) else {
-                print("Failed to create MBPushNotification")
-                return
-            }
-            let newItem = Item(timestamp: Date(), pushNotification: pushNotification)
+        mockNotifications.forEach { notification in
+            let newItem = Item(timestamp: Date(), pushNotification: notification)
             
             context.insert(newItem)
             
@@ -67,64 +62,34 @@ public struct SwiftDataManager {
 }
 
 private extension SwiftDataManager {
-    var testNotifications: [String] {
+    var mockNotifications: [PushNotification] {
         [
-            """
-            {
-                "aps": {
-                    "alert": {
-                        "title": "First notification title",
-                        "body": "First notification body"
-                    },
-                    "sound": "default",
-                    "mutable-content": 1,
-                    "content-available": 1
-                },
-                "uniqueKey": "Push unique key: 1",
-                "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/307be696-77e6-4d83-b7eb-c94be85f7a03.png",
-                "payload": "{\\"pushName\\": \\"<Push name>\\", \\"pushDate\\": \\"<Push date>\\"}",
-                "buttons": [],
-                "clickUrl": "https://mindbox.ru/"
-            }
-            """,
+            PushNotification(
+                title: "First notification title",
+                body: "First notification body",
+                clickUrl: "https://mindbox.ru/",
+                imageUrl: "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/307be696-77e6-4d83-b7eb-c94be85f7a03.png",
+                payload: "{\"pushName\": \"<Push name>\", \"pushDate\": \"<Push date>\"}",
+                uniqueKey: "Push unique key: 1"
+            ),
             
-            """
-            {
-                "aps": {
-                    "alert": {
-                        "title": "Second notification title",
-                        "body": "Second notification body"
-                    },
-                    "sound": "default",
-                    "mutable-content": 1,
-                    "content-available": 1
-                },
-                "uniqueKey": "Push unique key: 2",
-                "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/2397fea9-383d-49bf-a6a0-181a267faa94.png",
-                "payload": "{\\"pushName\\": \\"<Push name>\\", \\"pushDate\\": \\"<Push date>\\"}",
-                "buttons": [],
-                "clickUrl": "https://mindbox.ru/"
-            }
-            """,
+            PushNotification(
+                title: "Second notification title",
+                body: "Second notification body",
+                clickUrl: "https://mindbox.ru/",
+                imageUrl: "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/2397fea9-383d-49bf-a6a0-181a267faa94.png",
+                payload: "{\"pushName\": \"<Push name>\", \"pushDate\": \"<Push date>\"}",
+                uniqueKey: "Push unique key: 2"
+            ),
             
-            """
-            {
-                "aps": {
-                    "alert": {
-                        "title": "Third notification title",
-                        "body": "Third notification body"
-                    },
-                    "sound": "default",
-                    "mutable-content": 1,
-                    "content-available": 1
-                },
-                "uniqueKey": "Push unique key: 3",
-                "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/bd4250b1-a7ac-4b8a-b91b-481b3b5c565c.png",
-                "payload": "{\\"pushName\\": \\"<Push name>\\", \\"pushDate\\": \\"<Push date>\\"}",
-                "buttons": [],
-                "clickUrl": "https://mindbox.ru/"
-            }
-            """
+            PushNotification(
+                title: "Third notification title",
+                body: "Third notification body",
+                clickUrl: "https://mindbox.ru/",
+                imageUrl: "https://mobpush-images.mindbox.ru/Mpush-test/1a73ebaa-3e5f-49f4-ae6c-462c9b64d34c/bd4250b1-a7ac-4b8a-b91b-481b3b5c565c.png",
+                payload: "{\"pushName\": \"<Push name>\", \"pushDate\": \"<Push date>\"}",
+                uniqueKey: "Push unique key: 3"
+            ),
         ]
     }
 }

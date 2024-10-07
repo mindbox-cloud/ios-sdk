@@ -28,6 +28,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
     }
     
     func sendLogs(logs: [Monitoring.Logs]) {
+        guard !logs.isEmpty else { return }
         var handledLogsRequestIds = persistenceStorage.handledlogRequestIds ?? []
         for log in logs {
             if !handledLogsRequestIds.contains(log.requestId) && persistenceStorage.deviceUUID == log.deviceUUID.uppercased() {

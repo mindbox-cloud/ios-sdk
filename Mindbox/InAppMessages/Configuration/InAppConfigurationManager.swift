@@ -28,7 +28,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var inapp: InAppFormData?
-    private var rawConfigurationResponse: ConfigResponse!
+    private var rawConfigurationResponse: ConfigResponse?
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigurationMapperProtocol
     private let inAppConfigAPI: InAppConfigurationAPI
@@ -90,7 +90,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 setConfigPrepared(config)
                 setupSettingsFromConfig(config.settings)
                 if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
-                    logsManager.sendLogs(logs: monitoring.logs)
+                    logsManager.sendLogs(logs: monitoring.logs.elements)
                 }
             } catch {
                 applyConfigFromCache()

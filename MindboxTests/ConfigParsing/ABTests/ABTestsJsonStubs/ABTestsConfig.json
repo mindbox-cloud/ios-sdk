@@ -1,0 +1,79 @@
+[
+    {
+      "id": "94CD824A-59AA-4937-9E0E-089895A0DB6F",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "7D4154FD-A6D4-4BBD-B058-7150FAC18AE1",
+      "variants": [
+        {
+          "id": "80FD90DA-D5EB-47C0-82E0-2683EF4CB9C1",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["210adb81-c777-4ac9-86b3-722c3e998cb6"],
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "9B15D2FC-3C18-44E7-B804-18AA0248706A",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "concrete",
+              "inapps": ["c68d2f2a-d3f6-40ef-b300-4597cced3453"],
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    },
+    
+    {
+      "id": "ACD8FF4F-25A7-41F5-9322-A7AC9F2B4CFE",
+      "sdkVersion": {
+        "min": 7,
+        "max": null
+      },
+      "salt": "00A8B15F-AA68-4545-A425-42238055460B",
+      "variants": [
+        {
+          "id": "93719D17-8C46-482F-A220-2FA02647079D",
+          "modulus": {
+            "lower": 0,
+            "upper": 50
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        },
+        {
+          "id": "AA7131D5-D77D-4847-AC77-676C224CD902",
+          "modulus": {
+            "lower": 50,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "kind": "all",
+              "inapps": null,
+              "$type": "inapps"
+            }
+          ]
+        }
+      ]
+    }
+]

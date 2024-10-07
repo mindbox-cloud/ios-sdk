@@ -22,9 +22,16 @@ final class UserVisitManagerTests: XCTestCase {
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
     }
     
+    override func tearDown() {
+        persistenceStorageMock.reset()
+        persistenceStorageMock = nil
+        userVisitManager = nil
+        sessionManagerMock = nil
+        super.tearDown()
+    }
+    
     func test_save_first_user_visit_for_first_initialization() throws {
         userVisitManager.saveUserVisit()
-        
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 1)
     }
     
