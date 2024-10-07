@@ -7,8 +7,11 @@
 //
 
 import Mindbox
-import Foundation
 import UIKit
+
+import AppTrackingTransparency
+import AdSupport
+import SwiftUI
 
 @main
 class AppDelegate: MindboxAppDelegate {
@@ -19,26 +22,45 @@ class AppDelegate: MindboxAppDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
+        print(#function)
+        if ATTrackingManager.trackingAuthorizationStatus != .notDetermined {
+            initializeMindbox()
+        }
         
+        //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+        registerForRemoteNotifications()
+        
+        return true
+    }
+    
+    func initializeMindbox() {
+        print(#function)
         do {
             let mindboxSdkConfig = try MBConfiguration(
-                //To run the application on a physical device you need to change the endpoint
-                //You should also change the application bundle ID in all targets, more details in the readme
-                //You can still run the application on the simulator to see In-Apps
                 endpoint: "Mpush-test.ReleaseExample.IosApp",
                 domain: "api.mindbox.ru",
                 subscribeCustomerIfCreated: true,
                 shouldCreateCustomer: true
             )
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
-        } catch  {
-            print(error)
+        } catch {
+            print(error.localizedDescription)
         }
-        //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
-        registerForRemoteNotifications()
-        return true
     }
+    
+//    override func applicationDidBecomeActive(_ application: UIApplication) {
+//        print(#function)
+//        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+//            DispatchQueue.main.async {
+//                ATTrackingManager.requestTrackingAuthorization { status in
+//                    print("Inside AppDelegate ATTrackingManager.requestTrackingAuthorization")
+//                    self.initializeMindbox()
+//                }
+//            }
+//        }
+//    }
 
+    // https://developer.apple.com/documentation/uikit/uiapplicationdelegate/3197905-application
     func application(
         _ application: UIApplication,
         configurationForConnecting connectingSceneSession: UISceneSession,
