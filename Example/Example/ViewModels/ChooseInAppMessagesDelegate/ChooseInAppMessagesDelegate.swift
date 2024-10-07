@@ -12,7 +12,7 @@ import Mindbox
 class ChooseInAppMessagesDelegate: InAppMessagesDelegate {
     
     private init() {}
-    static var shared = ChooseInAppMessagesDelegate()
+    static let shared = ChooseInAppMessagesDelegate()
     
     //https://developers.mindbox.ru/docs/in-app
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
