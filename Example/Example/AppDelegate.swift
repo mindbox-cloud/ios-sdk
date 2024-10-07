@@ -9,41 +9,20 @@
 import Mindbox
 import UIKit
 
-import AppTrackingTransparency
-import AdSupport
-import SwiftUI
-
 @main
-class AppDelegate: MindboxAppDelegate {
+final class AppDelegate: MindboxAppDelegate {
     
-    var window: UIWindow?
-    
-    //https://developers.mindbox.ru/docs/ios-sdk-initialization
+    // https://developers.mindbox.ru/docs/ios-sdk-initialization
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
-        print(#function)
-        if ATTrackingManager.trackingAuthorizationStatus != .notDetermined {
-            initializeMindbox()
-        }
-        
-        //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
-        registerForRemoteNotifications()
-        
-        window = UIWindow(frame: UIScreen.main.bounds)
-        
-        let viewModel = MainViewModel()
-        window?.rootViewController = UIHostingController(rootView: MainView(viewModel: viewModel))
-        window?.makeKeyAndVisible()
-        
-        return true
-    }
-    
-    func initializeMindbox() {
-        print(#function)
+
         do {
+            // To run the application on a physical device you need to change the endpoint
+            // You should also change the application bundle ID in all targets, more details in the readme
+            // You can still run the application on the simulator to see In-Apps
             let mindboxSdkConfig = try MBConfiguration(
                 endpoint: "Mpush-test.ReleaseExample.IosApp",
                 domain: "api.mindbox.ru",
@@ -54,30 +33,22 @@ class AppDelegate: MindboxAppDelegate {
         } catch {
             print(error.localizedDescription)
         }
-    }
-    
-    override func applicationDidBecomeActive(_ application: UIApplication) {
-        print(#function)
-        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
-            DispatchQueue.main.async {
-                ATTrackingManager.requestTrackingAuthorization { status in
-                    print("Inside AppDelegate ATTrackingManager.requestTrackingAuthorization")
-                    self.initializeMindbox()
-                }
-            }
-        }
+        
+        // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+        registerForRemoteNotifications()
+        
+        return true
     }
 
-    // https://developer.apple.com/documentation/uikit/uiapplicationdelegate/3197905-application
-//    func application(
-//        _ application: UIApplication,
-//        configurationForConnecting connectingSceneSession: UISceneSession,
-//        options: UIScene.ConnectionOptions
-//    ) -> UISceneConfiguration {
-//        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-//    }
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    }
     
-    //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+    // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -86,13 +57,13 @@ class AppDelegate: MindboxAppDelegate {
         completionHandler([.list, .badge, .sound, .banner])
     }
     
-    //https://developers.mindbox.ru/docs/ios-sdk-handle-tap
+    // https://developers.mindbox.ru/docs/ios-sdk-handle-tap
     override func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        //https://developers.mindbox.ru/docs/ios-sdk-methods
+        // https://developers.mindbox.ru/docs/ios-sdk-methods
         print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo))")
         if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: response.notification.request.content.userInfo),
            Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo),
@@ -103,13 +74,13 @@ class AppDelegate: MindboxAppDelegate {
         super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
     
-    //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+    // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func registerForRemoteNotifications() {
         UNUserNotificationCenter.current().delegate = self
         DispatchQueue.main.async {
             UIApplication.shared.registerForRemoteNotifications()
             UNUserNotificationCenter.current().requestAuthorization(options: [ .alert, .sound, .badge]) { granted, error in
-                print("Permission granted: \(granted)")
+                print("Permission granted to allow local and remote notifications for your app: \(granted)")
                 if let error = error {
                     print("NotificationsRequestAuthorization failed with error: \(error.localizedDescription)")
                 }

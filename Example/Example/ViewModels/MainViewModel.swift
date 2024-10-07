@@ -16,9 +16,7 @@ import Observation
     var deviceUUID: String = ""
     var APNSToken: String = ""
     
-    private var timer: Timer?
-    
-    //https://developers.mindbox.ru/docs/ios-sdk-methods
+    // https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
         self.SDKVersion = Mindbox.shared.sdkVersion
         Mindbox.shared.getDeviceUUID { deviceUUID in
@@ -26,7 +24,6 @@ import Observation
                 self.deviceUUID = deviceUUID
             }
         }
-        startDeviceUUIDChecking()
         Mindbox.shared.getAPNSToken { APNSToken in
             DispatchQueue.main.async {
                 self.APNSToken = APNSToken
@@ -35,28 +32,7 @@ import Observation
         ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
     }
     
-    private func startDeviceUUIDChecking() {
-        guard self.deviceUUID.isEmpty else { return }
-        
-        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Mindbox.shared.getDeviceUUID { deviceUUID in
-                DispatchQueue.main.async {
-                    if !deviceUUID.isEmpty {
-                        self.deviceUUID = deviceUUID
-                        self.stopDeviceUUIDChecking()
-                    }
-                }
-            }
-        }
-    }
-    
-    private func stopDeviceUUIDChecking() {
-        timer?.invalidate()
-        timer = nil
-    }
-    
-    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
+    // https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteSyncOperation () {
         let json = """
         { "viewProduct":
@@ -77,7 +53,7 @@ import Observation
         }
     }
     
-    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
+    // https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteAsyncOperation () {
         let json = """
         { "viewProduct":

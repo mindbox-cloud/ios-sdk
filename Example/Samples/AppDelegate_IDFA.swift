@@ -12,7 +12,7 @@ import AppTrackingTransparency
 
 // This is only one use case. It is necessary to adapt the approach to your specific use case.
 
-@UIApplicationMain
+@main
 class AppDelegate_IDFA: MindboxAppDelegate {
     
     //https://developers.mindbox.ru/docs/ios-sdk-initialization
@@ -49,9 +49,9 @@ class AppDelegate_IDFA: MindboxAppDelegate {
     
     func initializeMindbox() {
         do {
-            //To run the application on a physical device you need to change the endpoint
-            //You should also change the application bundle ID in all targets, more details in the readme
-            //You can still run the application on the simulator to see In-Apps
+            // To run the application on a physical device you need to change the endpoint
+            // You should also change the application bundle ID in all targets, more details in the readme
+            // You can still run the application on the simulator to see In-Apps
             let mindboxSdkConfig = try MBConfiguration(
                 endpoint: "Mpush-test.ReleaseExample.IosApp",
                 domain: "api.mindbox.ru",
