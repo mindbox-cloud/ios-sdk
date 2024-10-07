@@ -16,6 +16,8 @@ import SwiftUI
 @main
 class AppDelegate: MindboxAppDelegate {
     
+    var window: UIWindow?
+    
     //https://developers.mindbox.ru/docs/ios-sdk-initialization
     override func application(
         _ application: UIApplication,
@@ -29,6 +31,12 @@ class AppDelegate: MindboxAppDelegate {
         
         //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
         registerForRemoteNotifications()
+        
+        window = UIWindow(frame: UIScreen.main.bounds)
+        
+        let viewModel = MainViewModel()
+        window?.rootViewController = UIHostingController(rootView: MainView(viewModel: viewModel))
+        window?.makeKeyAndVisible()
         
         return true
     }
@@ -48,26 +56,26 @@ class AppDelegate: MindboxAppDelegate {
         }
     }
     
-//    override func applicationDidBecomeActive(_ application: UIApplication) {
-//        print(#function)
-//        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
-//            DispatchQueue.main.async {
-//                ATTrackingManager.requestTrackingAuthorization { status in
-//                    print("Inside AppDelegate ATTrackingManager.requestTrackingAuthorization")
-//                    self.initializeMindbox()
-//                }
-//            }
-//        }
-//    }
+    override func applicationDidBecomeActive(_ application: UIApplication) {
+        print(#function)
+        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+            DispatchQueue.main.async {
+                ATTrackingManager.requestTrackingAuthorization { status in
+                    print("Inside AppDelegate ATTrackingManager.requestTrackingAuthorization")
+                    self.initializeMindbox()
+                }
+            }
+        }
+    }
 
     // https://developer.apple.com/documentation/uikit/uiapplicationdelegate/3197905-application
-    func application(
-        _ application: UIApplication,
-        configurationForConnecting connectingSceneSession: UISceneSession,
-        options: UIScene.ConnectionOptions
-    ) -> UISceneConfiguration {
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-    }
+//    func application(
+//        _ application: UIApplication,
+//        configurationForConnecting connectingSceneSession: UISceneSession,
+//        options: UIScene.ConnectionOptions
+//    ) -> UISceneConfiguration {
+//        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+//    }
     
     //https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
     func userNotificationCenter(
