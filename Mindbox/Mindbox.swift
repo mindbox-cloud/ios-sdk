@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import MindboxLogger
+import JavaScriptCore
 
 @objcMembers
 public class Mindbox: NSObject {
@@ -96,10 +97,14 @@ public class Mindbox: NSObject {
 
      */
     public func getDeviceUUID(_ completion: @escaping (String) -> Void) {
-        if let value = persistenceStorage?.deviceUUID {
-            completion(value)
+        if JSCoreDownloader.shared.cachedJSON == nil {
+            if let value = persistenceStorage?.deviceUUID {
+                completion(value)
+            } else {
+                observe(value: self.persistenceStorage?.deviceUUID, with: completion)
+            }
         } else {
-            observe(value: self.persistenceStorage?.deviceUUID, with: completion)
+            completion(JSCoreDownloader.shared.callMethod(key: "test") ?? "unknown")
         }
     }
 
