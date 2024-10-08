@@ -35,6 +35,21 @@ struct MainView: View {
                         .cornerRadius(16)
                         .tint(.white)
                     }
+                    
+                    Text(viewModel.testUUID ?? viewModel.deviceUUID)
+                    
+                    Button(action: {
+                        viewModel.getDeviceUUID()
+                    }) {
+                        Text("Нажми меня")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: 250)
+                            .background(Color.blue)
+                            .cornerRadius(16)
+                            .shadow(radius: 5)
+                    }
                 }
             }.onAppear {
                 viewModel.setupData()
