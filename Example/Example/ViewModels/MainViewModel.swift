@@ -16,7 +16,7 @@ import Observation
     var deviceUUID: String = ""
     var APNSToken: String = ""
     
-    //https://developers.mindbox.ru/docs/ios-sdk-methods
+    // https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
         self.SDKVersion = Mindbox.shared.sdkVersion
         Mindbox.shared.getDeviceUUID { deviceUUID in
@@ -32,7 +32,7 @@ import Observation
         ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
     }
     
-    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
+    // https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteSyncOperation () {
         let json = """
         { "viewProduct":
@@ -53,7 +53,7 @@ import Observation
         }
     }
     
-    //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
+    // https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation
     func showInAppWithExecuteAsyncOperation () {
         let json = """
         { "viewProduct":

@@ -19,6 +19,8 @@ public struct SwiftDataManager {
     }
     
     private init() {
+        SwiftDataManager.createDirectoryForSwiftData()
+        
         let schema = Schema([
             Item.self,
         ])
@@ -57,6 +59,26 @@ public struct SwiftDataManager {
             } catch {
                 print("Failed to save context: \(error.localizedDescription)")
             }
+        }
+    }
+    
+    private static func createDirectoryForSwiftData() {
+        let fileManager = FileManager.default
+        let appGroupIdentifier = "group.cloud.Mindbox.cloud.Mindbox.ReleaseExampleIos"
+        if let appGroupURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
+            let applicationSupportURL = appGroupURL.appendingPathComponent("Library/Application Support")
+            
+            if !fileManager.fileExists(atPath: applicationSupportURL.path) {
+                do {
+                    try fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true, attributes: nil)
+                } catch {
+                    print("Failed to create Application Support directory: \(error)")
+                }
+            } else {
+                print("Application Support directory already exists at \(applicationSupportURL.path)")
+            }
+        } else {
+            fatalError("Could not find App Group container URL.")
         }
     }
 }

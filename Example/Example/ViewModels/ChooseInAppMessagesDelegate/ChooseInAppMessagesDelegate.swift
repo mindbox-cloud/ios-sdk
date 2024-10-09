@@ -12,22 +12,22 @@ import Mindbox
 class ChooseInAppMessagesDelegate: InAppMessagesDelegate {
     
     private init() {}
-    static var shared = ChooseInAppMessagesDelegate()
+    static let shared = ChooseInAppMessagesDelegate()
     
-    //https://developers.mindbox.ru/docs/in-app
+    // https://developers.mindbox.ru/docs/in-app
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
         //Here you can add your custom logic
         print("inAppMessageTapAction")
-        print(id)
-        print(url ?? "")
-        print(payload)
+        print("InApp ID: \(id)")
+        print("InApp URL: \(String(describing: url))")
+        print("InApp Payload: \(payload)")
     }
     
-    //https://developers.mindbox.ru/docs/in-app
+    // https://developers.mindbox.ru/docs/in-app
     func inAppMessageDismissed(id: String) {
         //Here you can add your custom logic
         print("inAppMessageDismissed")
-        print(id)
+        print("InApp ID: \(id)")
     }
     
     func select(chooseInappMessageDelegate: ChooseInappMessageDelegate) {

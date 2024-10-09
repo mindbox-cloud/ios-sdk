@@ -9,7 +9,7 @@
 import UIKit
 import SwiftUI
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
@@ -26,4 +26,3 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
     }
 }
-
