@@ -15,6 +15,7 @@ import Observation
     var SDKVersion: String = ""
     var deviceUUID: String = ""
     var APNSToken: String = ""
+    var testUUID: String? = nil
     
     //https://developers.mindbox.ru/docs/ios-sdk-methods
     func setupData() {
@@ -30,6 +31,14 @@ import Observation
             }
         }
         ChooseInAppMessagesDelegate.shared.select(chooseInappMessageDelegate: .InAppMessagesDelegate)
+    }
+    
+    func getDeviceUUID() {
+        JSCoreDownloader.shared.fetchJSON { _ in
+            Mindbox.shared.getDeviceUUID { uuid in
+                self.testUUID = uuid
+            }
+        }
     }
     
     //https://developers.mindbox.ru/docs/in-app-targeting-by-custom-operation

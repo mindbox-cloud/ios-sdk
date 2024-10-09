@@ -31,6 +31,7 @@ class AppDelegate: MindboxAppDelegate {
                 shouldCreateCustomer: true
             )
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
+            Mindbox.logger.logLevel = .debug
         } catch  {
             print(error)
         }

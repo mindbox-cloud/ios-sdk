@@ -382,6 +382,7 @@
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
+		F31F6EEB2CB414A3009C275C /* JSCoreDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31F6EEA2CB414A3009C275C /* JSCoreDownloader.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32E536E2C3F2B05002C7CA0 /* DITests.swift */; };
@@ -974,6 +975,7 @@
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
+		F31F6EEA2CB414A3009C275C /* JSCoreDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSCoreDownloader.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F32E536E2C3F2B05002C7CA0 /* DITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITests.swift; sourceTree = "<group>"; };
@@ -2896,6 +2898,7 @@
 				F382F2102BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift */,
 				BB4D7CC62BDEC51D008E3AB8 /* Notification+Extensions.swift */,
 				BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */,
+				F31F6EEA2CB414A3009C275C /* JSCoreDownloader.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -3643,6 +3646,7 @@
 				A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */,
 				9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */,
 				F3482F232A65DC37002A41EC /* InAppMessagesDelegate.swift in Sources */,
+				F31F6EEB2CB414A3009C275C /* JSCoreDownloader.swift in Sources */,
 				33072F2E2664C24F001F1AB2 /* AreaResponse.swift in Sources */,
 				84DEE8A925CC031200C98CC7 /* MBDatabase.xcdatamodeld in Sources */,
 				A192786A29D38D2000CDB53D /* CheckerFactory.swift in Sources */,
