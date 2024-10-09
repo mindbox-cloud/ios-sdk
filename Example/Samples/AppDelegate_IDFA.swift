@@ -22,11 +22,7 @@ class AppDelegate_IDFA: MindboxAppDelegate {
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
         
-        if #available(iOS 14, *) {
-            if ATTrackingManager.trackingAuthorizationStatus != .notDetermined {
-                initializeMindbox()
-            }
-        } else {
+        if ATTrackingManager.trackingAuthorizationStatus != .notDetermined {
             initializeMindbox()
         }
         
@@ -36,12 +32,10 @@ class AppDelegate_IDFA: MindboxAppDelegate {
     
     // If you're using scenes (iOS 13.0+), UIKit will not call this method. Use `sceneDidBecomeActive(_:)` instead.
     override func applicationDidBecomeActive(_ application: UIApplication) {
-        if #available(iOS 14, *) {
-            if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
-                DispatchQueue.main.async {
-                    ATTrackingManager.requestTrackingAuthorization { status in
-                        self.initializeMindbox()
-                    }
+        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+            DispatchQueue.main.async {
+                ATTrackingManager.requestTrackingAuthorization { status in
+                    self.initializeMindbox()
                 }
             }
         }
