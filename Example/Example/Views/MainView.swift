@@ -41,7 +41,7 @@ struct MainView: View {
                     Button(action: {
                         viewModel.getDeviceUUID()
                     }) {
-                        Text("Нажми меня")
+                        Text("Press me")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
