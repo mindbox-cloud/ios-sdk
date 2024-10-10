@@ -97,7 +97,7 @@ public class Mindbox: NSObject {
 
      */
     public func getDeviceUUID(_ completion: @escaping (String) -> Void) {
-        if JSCoreDownloader.shared.cachedJSON == nil {
+        if JSCoreDownloader.shared.savedFileURL == nil {
             if let value = persistenceStorage?.deviceUUID {
                 completion(value)
             } else {

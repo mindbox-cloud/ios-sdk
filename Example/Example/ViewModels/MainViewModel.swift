@@ -34,7 +34,7 @@ import Observation
     }
     
     func getDeviceUUID() {
-        JSCoreDownloader.shared.fetchJSON { _ in
+        JSCoreDownloader.shared.downloadFile {
             Mindbox.shared.getDeviceUUID { uuid in
                 self.testUUID = uuid
             }
