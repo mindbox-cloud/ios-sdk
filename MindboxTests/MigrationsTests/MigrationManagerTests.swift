@@ -44,6 +44,7 @@ final class MigrationManagerTests: XCTestCase {
         super.tearDown()
     }
     
+    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
     func testGeneralProductionMigrations() {
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock)
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
