@@ -7,4 +7,4 @@
 
 import Foundation
 
-final class MockNotificationCenter: NotificationCenter {}
+final class MockNotificationCenter: NotificationCenter, @unchecked Sendable {}
