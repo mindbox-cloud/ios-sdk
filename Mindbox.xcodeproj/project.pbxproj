@@ -164,6 +164,7 @@
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
 		47BD5BFE2C578FB400F965C0 /* BaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
+		47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* SegmentationCheckResponse.swift */; };
 		47FDF0BA2C5BDAB80051F08C /* MigrationManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */; };
 		47FDF0BC2C5BE8BB0051F08C /* MigrationProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
@@ -253,7 +254,6 @@
 		9B24FABD28C757A700F10B5D /* InAppResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B24FABC28C757A700F10B5D /* InAppResponse.swift */; };
 		9B2F5F752902975B00F28A96 /* InAppMessagesTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2F5F742902975B00F28A96 /* InAppMessagesTracker.swift */; };
 		9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B33F3CC28D0986900A3FFF9 /* CustomerSegmentsAPI.swift */; };
-		9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* SegmentationCheckResponse.swift */; };
 		9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */; };
 		9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */; };
 		9B4F9DF828D088A9002C9CF0 /* InAppConfigutationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF528D088A8002C9CF0 /* InAppConfigutationMapper.swift */; };
@@ -3505,6 +3505,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */,
 				F331DD062A83A56500222120 /* ModalViewController.swift in Sources */,
 				F331DCC12A80993600222120 /* ContentElement.swift in Sources */,
 				847F581725C8981F00147A9A /* HTTPURLResponseStatusCodeValidator.swift in Sources */,
@@ -3741,8 +3742,6 @@
 				F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */,
 				337A474026553938000DC613 /* Sex.swift in Sources */,
 				F3A8B9922A3A408C00E9C055 /* SDKVersionValidator.swift in Sources */,
-				9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */,
-				9B4F9DEF28D08897002C9CF0 /* SegmentationCheckResponse.swift in Sources */,
 				F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */,
 				F3482F212A65DC2C002A41EC /* URLInappMessageDelegate.swift in Sources */,
 				BB6563102BE3BA430090C473 /* UIApplication+Extensions.swift in Sources */,
