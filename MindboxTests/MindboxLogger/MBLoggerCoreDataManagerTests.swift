@@ -44,7 +44,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.expectedFulfillmentCount = logsCount
             let message = "Test message"
             let timestamp = Date()
-            for i in 0..<logsCount {
+            for _ in 0..<logsCount {
                 manager.create(message: message, timestamp: timestamp) {
                     fetchExpectation.fulfill()
                 }
