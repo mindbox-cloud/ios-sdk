@@ -9,6 +9,8 @@
 import XCTest
 @testable import MindboxNotifications
 
+// swiftlint:disable force_unwrapping
+
 final class MindboxNotificationServiceTests: XCTestCase {
 
     var service: MindboxNotificationServiceProtocol!

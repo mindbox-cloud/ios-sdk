@@ -9,6 +9,8 @@
 import XCTest
 @testable import MindboxNotifications
 
+// swiftlint:disable force_unwrapping force_try
+
 @available(iOS 13.0, *)
 final class MindboxNotificationContentTests: XCTestCase {
 
@@ -116,7 +118,6 @@ fileprivate class MockExtensionContext: NSExtensionContext {
         }
     }
 }
-
 
 @available(iOS 12.0, *)
 fileprivate class MockUNNotification: UNNotification {

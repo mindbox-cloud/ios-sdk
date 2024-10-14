@@ -124,7 +124,6 @@ final class SharedInternalMethodsTests: XCTestCase {
         XCTAssertEqual(result?["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
         XCTAssertEqual(result?["clickUrl"] as? String, "https://mindbox.ru/")
         
-
         XCTAssertEqual(result?["mutable-content"] as? Int, 1)
         XCTAssertEqual(result?["content-available"] as? Int, 1)
         XCTAssertEqual(result?["sound"] as? String, "default")
