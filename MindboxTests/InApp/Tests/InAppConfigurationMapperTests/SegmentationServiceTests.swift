@@ -19,10 +19,10 @@ final class SegmentationServiceTests: XCTestCase {
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         
         sut = DI.injectOrFail(SegmentationServiceProtocol.self) as? SegmentationService
-        let customerSegmentAPI = CustomerSegmentsAPI { segmentationCheckRequest, completion in
+        let customerSegmentAPI = CustomerSegmentsAPI { _, completion in
             completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
                                                                              segment: .init(ids: .init(externalId: "2")))]))
-        } fetchProductSegments: { segmentationCheckRequest, completion in
+        } fetchProductSegments: { _, completion in
             completion(.init(status: .success, products: [.init(ids: ["Hello": "World"],
                                                                 segmentations: [.init(ids: .init(externalId: "123"),
                                                                                       segment: .init(ids: .init(externalId: "456")))])]))

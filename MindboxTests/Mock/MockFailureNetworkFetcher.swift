@@ -9,6 +9,8 @@
 import Foundation
 @testable import Mindbox
 
+// swiftlint:disable force_try force_unwrapping
+
 class MockFailureNetworkFetcher: NetworkFetcher {
     
     init() {
@@ -30,7 +32,6 @@ class MockFailureNetworkFetcher: NetworkFetcher {
         
         routesCount += 1
         return nil
-        
     }
 
     func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
@@ -41,7 +42,7 @@ class MockFailureNetworkFetcher: NetworkFetcher {
         }
     }
 
-    func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T : Decodable {
+    func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T: Decodable {
         if let error = errorForRoute() {
             completion(.failure(error))
         } else {
@@ -53,7 +54,7 @@ class MockFailureNetworkFetcher: NetworkFetcher {
                 let decoded = try JSONDecoder().decode(type, from: data)
                 completion(Result.success(decoded))
             } catch let decodeError {
-                let error: MindboxError = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
+                let error = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
                 completion(Result.failure(error))
             }
         }

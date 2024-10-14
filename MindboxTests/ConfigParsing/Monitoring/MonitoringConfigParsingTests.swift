@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try force_unwrapping
+
 fileprivate enum MonitoringConfig: String, Configurable {
     typealias DecodeType = Monitoring
     
@@ -34,7 +36,7 @@ final class MonitoringConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.logs.elements.count, 2)
         
         for log in config.logs.elements {
-            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { test in
+            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
                 XCTAssertNotNil(log.deviceUUID)
                 XCTAssertNotNil(log.requestId)
                 XCTAssertNotNil(log.from)
@@ -65,7 +67,7 @@ final class MonitoringConfigParsingTests: XCTestCase {
         XCTAssertEqual(config?.logs.elements.count, 1)
         
         for log in config!.logs.elements {
-            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { test in
+            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
                 XCTAssertNotNil(log.deviceUUID)
                 XCTAssertNotNil(log.requestId)
                 XCTAssertNotNil(log.from)
@@ -82,7 +84,7 @@ final class MonitoringConfigParsingTests: XCTestCase {
         XCTAssertEqual(config?.logs.elements.count, 1)
         
         for log in config!.logs.elements {
-            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { test in
+            XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
                 XCTAssertNotNil(log.deviceUUID)
                 XCTAssertNotNil(log.requestId)
                 XCTAssertNotNil(log.from)

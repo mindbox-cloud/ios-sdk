@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try force_unwrapping
+
 class InAppTargetingRequestsTests: XCTestCase {
 
     private var mockDataFacade: MockInAppConfigurationDataFacade!
@@ -105,7 +107,6 @@ class InAppTargetingRequestsTests: XCTestCase {
             wait(for: [expectation], timeout: 1)
             targetingContains("1", expectedToShow: true)
             targetingContains("2")
-            
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -231,7 +232,6 @@ class InAppTargetingRequestsTests: XCTestCase {
             }
             wait(for: [expectation], timeout: 1)
             targetingEqual(["3"])
-            
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -275,7 +275,6 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             wait(for: [expectationTestAgain], timeout: 3)
             targetingEqual(["4"])
-            
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -317,7 +316,6 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             wait(for: [expectationTestAgain], timeout: 3)
             targetingEqual(["4"])
-            
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -361,7 +359,6 @@ class InAppTargetingRequestsTests: XCTestCase {
             
             wait(for: [expectationTestAgain], timeout: 2)
             targetingEqual(["4"])
-            
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -374,7 +371,7 @@ class InAppTargetingRequestsTests: XCTestCase {
         return try JSONDecoder().decode(ConfigResponse.self, from: data)
     }
 
-    func targetingContains(_ id: String, expectedToShow: Bool = false){
+    func targetingContains(_ id: String, expectedToShow: Bool = false) {
         XCTAssertTrue(mockDataFacade.targetingArray.contains(id), "ID \(id) is expected to be in targeting list")
         if expectedToShow {
             XCTAssertTrue(mockDataFacade.showArray.contains(id), "ID \(id) is expected to be shown")

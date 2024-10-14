@@ -9,6 +9,8 @@
 @testable import Mindbox
 import XCTest
 
+// swiftlint:disable force_try
+
 class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
     var controllerQueue: DispatchQueue!

@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 final class ABTestDeviceMixerTests: XCTestCase {
     
     var sut: ABTestDeviceMixer!

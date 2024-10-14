@@ -18,5 +18,4 @@ class MockDataBaseLoader: DataBaseLoader {
         inMemoryDescription.type = NSInMemoryStoreType
         try super.init(persistentStoreDescriptions: [inMemoryDescription])
     }
-    
 }

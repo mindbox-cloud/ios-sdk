@@ -10,6 +10,8 @@ import XCTest
 import MindboxLogger
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 final class MBLoggerCoreDataManagerTests: XCTestCase {
     var manager: MBLoggerCoreDataManager!
 
@@ -124,9 +126,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                 XCTAssertEqual(fetchResult!.message, message3)
                 XCTAssertEqual(fetchResult!.timestamp, timestamp3)
                 fetchExpectation.fulfill()
-            } catch {
-                
-            }
+            } catch {}
         }
         
         wait(for: [fetchExpectation], timeout: 5.0)

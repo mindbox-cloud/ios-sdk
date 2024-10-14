@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try line_length
+
 fileprivate enum SettingsConfig: String, Configurable {
     typealias DecodeType = Settings
     

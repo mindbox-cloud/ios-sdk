@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try
+
 final class GeoServiceTests: XCTestCase {
     
     var sut: GeoServiceProtocol!

@@ -24,7 +24,7 @@ class EventRepositoryMock: EventRepository {
         return
     }
     
-    func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T : Decodable {
+    func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
         return
     }
 }

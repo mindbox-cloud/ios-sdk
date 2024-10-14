@@ -10,6 +10,8 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
+// swiftlint:disable force_try force_unwrapping
+
 class DatabaseLoaderTest: XCTestCase {
     
     var persistentContainer: NSPersistentContainer!

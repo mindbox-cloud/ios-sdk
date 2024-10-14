@@ -16,11 +16,9 @@ class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
         result(status.rawValue == UNAuthorizationStatus.authorized.rawValue)
     }
     
-    
     private let status: UNAuthorizationStatus
 
     init(status: UNAuthorizationStatus) {
         self.status = status
-    }
-    
+    }  
 }

@@ -7,8 +7,6 @@
 //
 
 import Foundation
-
-
 import XCTest
 @testable import Mindbox
 
@@ -49,7 +47,7 @@ final class StringExtensionsTests: XCTestCase {
         ]
         
         for (str, result) in testPositiveCases {
-            XCTContext.runActivity(named: "string(\(str)) parse to \(String(describing: result))") { activity in
+            XCTContext.runActivity(named: "string(\(str)) parse to \(String(describing: result))") { _ in
                 do {
                     let milliseconds = try String(str).parseTimeSpanToMillis()
                     XCTAssertEqual(milliseconds, Int64(result))
@@ -89,12 +87,11 @@ final class StringExtensionsTests: XCTestCase {
         ]
         
         for str in testCases {
-            try XCTContext.runActivity(named: "string(\(str)) parse with error") { activity in
+            try XCTContext.runActivity(named: "string(\(str)) parse with error") { _ in
                 XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in
                     XCTAssertEqual((error as NSError).domain, "Invalid timeSpan format")
                 }
             }
         }
-        
     }
 }

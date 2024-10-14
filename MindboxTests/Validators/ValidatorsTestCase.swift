@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable line_length
+
 class ValidatorsTestCase: XCTestCase {
     
     func testURLValidator() {

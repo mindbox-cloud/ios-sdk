@@ -10,6 +10,8 @@ import XCTest
 @testable import Mindbox
 @testable import MindboxLogger
 
+// swiftlint:disable force_try force_unwrapping
+
 final class ShownInAppsIdsMigrationTests: XCTestCase {
 
     private var shownInAppsIdsMigration: MigrationProtocol!
@@ -67,7 +69,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
             XCTAssertEqual(self.shownInAppsIdsBeforeMigration.count, self.persistenceStorageMock.shownInappsDictionary?.count, "Count must be equal")
             
             for shownInAppsIdBeforeMigration in self.shownInAppsIdsBeforeMigration {
-                XCTContext.runActivity(named: "Check shownInAppsId \(shownInAppsIdBeforeMigration) is in shownInappsDictionary") { test in
+                XCTContext.runActivity(named: "Check shownInAppsId \(shownInAppsIdBeforeMigration) is in shownInappsDictionary") { _ in
                     let contains = self.persistenceStorageMock.shownInappsDictionary?.keys.contains(shownInAppsIdBeforeMigration) ?? false
                     XCTAssertTrue(contains, "The shownInAppsId \(shownInAppsIdBeforeMigration) should be in shownInappsDictionary")
                 }
@@ -154,4 +156,3 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
     }
 }
-

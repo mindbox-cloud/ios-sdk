@@ -9,6 +9,8 @@
 import Foundation
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 final class TestProtocolMigration_1: MigrationProtocol {
     var description: String {
         "TestProtocolMigration number 1 with migration version 5"

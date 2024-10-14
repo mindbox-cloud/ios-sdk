@@ -68,7 +68,6 @@ final class NotificationFormatTests: XCTestCase {
                 "uniqueKey": "uniqueNotificationKey"
             ]
         ]
-
         
         XCTAssertNil(NotificationFormatter.formatNotification(userInfo))
     }
@@ -96,7 +95,6 @@ final class NotificationFormatTests: XCTestCase {
             ]
         ]
 
-        
         XCTAssertNil(NotificationFormatter.formatNotification(userInfo))
     }
     

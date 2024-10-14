@@ -13,10 +13,7 @@ class MockPersistenceStorage: PersistenceStorage {
         
     var onDidChange: (() -> Void)?
     
-    
-    init() {
-
-    }
+    init() {}
     
     var deviceUUID: String? {
         didSet {
@@ -79,7 +76,7 @@ class MockPersistenceStorage: PersistenceStorage {
 
     var shownInAppsIds: [String]?
     
-    var shownInappsDictionary: [String : Date]?
+    var shownInappsDictionary: [String: Date]?
     
     var handledlogRequestIds: [String]?
     
@@ -133,14 +130,11 @@ class MockPersistenceStorage: PersistenceStorage {
         backgroundExecutions = []
     }
     
-    func storeToFileBackgroundExecution() {
-        
-    }
+    func storeToFileBackgroundExecution() {}
     
     var needUpdateInfoOnce: Bool? {
         didSet {
             onDidChange?()
         }
     }
-
 }

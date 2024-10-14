@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 class InappFrequencyTests: XCTestCase {
 
     var validator: InappFrequencyValidator!

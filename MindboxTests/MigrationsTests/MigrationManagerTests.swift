@@ -247,5 +247,3 @@ extension MigrationManagerTests {
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
     }
 }
-
-

@@ -63,7 +63,6 @@ class ABTestValidatorTests: XCTestCase {
                 createVariant(lower: 50, upper: 100, objects: [abObject])
             ]), isValid: false),
             
-            
             // Invalid cases: Incorrect modulus values
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [
                 createVariant(lower: 50, upper: 98, objects: [abObject]),

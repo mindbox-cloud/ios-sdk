@@ -38,8 +38,6 @@ class ABTestVariantsValidatorTests: XCTestCase {
             TestCase(variant: createVariant(objects: [object1, object2]), isValid: false), // more than one object
             TestCase(variant: nil, isValid: false) // variant is nil
         ]
-        
-
     }
     
     override func tearDown() {

@@ -10,6 +10,8 @@ import CoreData
 @testable import Mindbox
 import XCTest
 
+// swiftlint:disable force_try
+
 class GuaranteedDeliveryTestCase: XCTestCase {
     
     var databaseRepository: MBDatabaseRepository!

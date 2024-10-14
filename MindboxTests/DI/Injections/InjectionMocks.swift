@@ -9,6 +9,8 @@
 import Foundation
 @testable import Mindbox
 
+// swiftlint:disable force_try
+
 extension MBContainer {
     func registerMocks() -> Self {
         register(UUIDDebugService.self) {

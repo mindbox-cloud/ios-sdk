@@ -6,9 +6,10 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import Foundation
 import UIKit
 @testable import Mindbox
+
+// swiftlint:disable force_unwrapping
 
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     

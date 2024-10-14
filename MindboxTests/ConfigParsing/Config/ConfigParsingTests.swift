@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try
+
 fileprivate enum Config: String, Configurable {
     typealias DecodeType = ConfigResponse
     

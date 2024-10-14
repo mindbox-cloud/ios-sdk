@@ -14,10 +14,9 @@ class MockSessionManager: SessionManager {
     public var _isActiveNow: Bool = false
     var isActiveNow: Bool { return _isActiveNow }
     
-    var sessionHandler: ((Bool) -> Void)? = { isActive in }
+    var sessionHandler: ((Bool) -> Void)? = { _ in }
     
     func trackDirect() {}
     
     func trackForeground() { }
-
 }

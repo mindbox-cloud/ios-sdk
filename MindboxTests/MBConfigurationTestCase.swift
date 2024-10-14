@@ -27,7 +27,7 @@ class MBConfigurationTestCase: XCTestCase {
         try [
             emptyUUIDFile,
             emptyIDDomainFile
-        ].forEach { (file) in
+        ].forEach { file in
             XCTAssertNoThrow(try MBConfiguration(plistName: file), "")
         }
     }
@@ -36,8 +36,8 @@ class MBConfigurationTestCase: XCTestCase {
         try [
             emptyDomainFile,
             emptyEndpointFile,
-        ].forEach { (file) in
-            XCTAssertThrowsError(try MBConfiguration(plistName: file), "") { (error) in
+        ].forEach { file in
+            XCTAssertThrowsError(try MBConfiguration(plistName: file), "") { error in
                 if let localizedError = error as? LocalizedError {
                     XCTAssertNotNil(localizedError.errorDescription)
                     XCTAssertNotNil(localizedError.failureReason)

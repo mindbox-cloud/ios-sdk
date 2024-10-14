@@ -29,7 +29,7 @@ final class ABTestsConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.count, 2)
         
         for abTest in config {
-            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { test in
+            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { _ in
                 XCTAssertNotNil(abTest.salt)
                 XCTAssertNotNil(abTest.sdkVersion)
                 XCTAssertNotNil(abTest.variants)
@@ -78,7 +78,7 @@ final class ABTestsConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.count, 2)
         
         for abTest in config {
-            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { test in
+            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { _ in
                 if abTest.id == "94CD824A-59AA-4937-9E0E-089895A0DB6F" {
                     XCTAssertNil(abTest.sdkVersion)
                 } else {
