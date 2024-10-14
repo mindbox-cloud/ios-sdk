@@ -1,0 +1,85 @@
+# Directory and file filters
+included: # paths to include during linting. `--path` is ignored if present.
+  #- Mindbox
+  - MindboxLogger
+  #- MindboxNotifications
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+  - Example
+
+only_rules:
+  - closure_spacing
+  - closing_brace
+  - closure_body_length
+  - closure_parameter_position
+  - colon
+  - comma
+  - control_statement
+  - deployment_target
+  - discouraged_object_literal
+  - empty_count
+  - empty_string
+  - empty_enum_arguments
+  - fatal_error_message
+  - file_length
+  - for_where
+  - force_try
+  - force_unwrapping
+  - function_body_length
+  - function_parameter_count
+  - implicit_getter
+  - large_tuple
+  - legacy_cggeometry_functions
+  - legacy_constant
+  - legacy_constructor
+  - legacy_nsgeometry_functions
+  - mark
+  - operator_usage_whitespace
+  - opening_brace
+  - private_outlet
+  - protocol_property_accessors_order
+  - redundant_type_annotation
+  - redundant_void_return
+  - return_arrow_whitespace
+  - statement_position
+  #- switch_case_on_newline
+  - syntactic_sugar
+  - trailing_newline
+  - trailing_semicolon
+  - unused_closure_parameter
+  - unused_optional_binding
+  - unneeded_parentheses_in_closure_argument
+  - vertical_whitespace
+  - vertical_parameter_alignment
+  - vertical_whitespace_closing_braces
+  - void_return
+  - weak_delegate
+  - toggle_bool
+  - unneeded_break_in_switch
+  - first_where
+  - line_length
+
+line_length:
+  warning: 220
+  error: 300
+  ignores_comments: true
+  ignores_function_declarations: true
+
+closure_body_length:
+  warning: 30
+  error: 50
+
+file_length:
+  warning: 400
+  error: 800
+
+function_body_length:
+  warning: 150
+  error: 250
+
+function_parameter_count:
+  warning: 5
+  error: 6
+
+large_tuple:
+  warning: 3
+  error: 4
