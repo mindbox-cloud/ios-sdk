@@ -58,7 +58,8 @@ private extension MindboxNotificationService {
 
     func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
-            Logger.common(message: "MindboxNotificationService: Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))", level: .error, category: .notification)
+            let message = "Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))"
+            Logger.common(message: message, level: .error, category: .notification)
             return
         }
         let actions = buttons.map { button in
