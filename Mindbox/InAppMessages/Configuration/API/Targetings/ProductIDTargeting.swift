@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct ProductIDTargeting: ITargeting, Decodable  {
+struct ProductIDTargeting: ITargeting, Decodable {
     let kind: ProductKind
     let value: String
     

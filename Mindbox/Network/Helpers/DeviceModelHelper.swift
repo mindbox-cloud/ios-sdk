@@ -24,5 +24,4 @@ struct DeviceModelHelper {
         }
         return identifier
     }()
-    
 }

@@ -10,6 +10,5 @@ import Foundation
 
 enum HTTPMethod: String {
     
-    case get, post
-    
+    case get, post 
 }

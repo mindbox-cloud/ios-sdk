@@ -15,5 +15,4 @@ struct EventWrapper {
     let endpoint: String
     
     let deviceUUID: String
-    
 }

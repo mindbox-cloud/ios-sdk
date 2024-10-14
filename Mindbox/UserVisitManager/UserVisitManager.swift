@@ -37,7 +37,7 @@ extension UserVisitManager: UserVisitManagerProtocol {
         
         // Handling the first launch when SDK version has been updated to 2.9.0 or higher from versions below 2.9.0
         let isInstalled = SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK
-        if (isInstalled && previousUserVisitCount == UVMConstants.noAppVisits) {
+        if isInstalled && previousUserVisitCount == UVMConstants.noAppVisits {
             previousUserVisitCount = UVMConstants.appVisitsWhenSDKHasBeenUpdated
         }
         

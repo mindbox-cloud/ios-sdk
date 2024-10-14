@@ -11,9 +11,7 @@ import Foundation
 final class CategoryIDInChecker: InternalTargetingChecker<CategoryIDInTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
     
-    override func prepareInternal(targeting: CategoryIDInTargeting, context: inout PreparationContext) {
-        
-    }
+    override func prepareInternal(targeting: CategoryIDInTargeting, context: inout PreparationContext) {}
     
     override func checkInternal(targeting: CategoryIDInTargeting) -> Bool {
         guard let checker = checker,
@@ -23,14 +21,12 @@ final class CategoryIDInChecker: InternalTargetingChecker<CategoryIDInTargeting>
             return false
         }
         
-        for i in targeting.values {
-            if ids.contains(where: { $0.key.lowercased() == i.name.lowercased() && $0.value.lowercased() == i.id.lowercased() }) {
-                switch targeting.kind {
-                case .any:
-                    return true
-                case .none:
-                    return false
-                }
+        for i in targeting.values where ids.contains(where: { $0.key.lowercased() == i.name.lowercased() && $0.value.lowercased() == i.id.lowercased() }) {
+            switch targeting.kind {
+            case .any:
+                return true
+            case .none:
+                return false
             }
         }
         

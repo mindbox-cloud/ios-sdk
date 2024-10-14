@@ -113,19 +113,17 @@ class MBPersistenceStorage: PersistenceStorage {
     }
     
     var backgroundExecutions: [BackgroudExecution] {
-        get {
-            if let data = MBPersistenceStorage.defaults.value(forKey:"backgroundExecution") as? Data {
-                return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
-            } else {
-                return []
-            }
+        if let data = MBPersistenceStorage.defaults.value(forKey: "backgroundExecution") as? Data {
+            return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
+        } else {
+            return []
         }
     }
     
     func setBackgroundExecution(_ value: BackgroudExecution) {
         var tasks = backgroundExecutions
         tasks.append(value)
-        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey:"backgroundExecution")
+        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
         onDidChange?()
     }
@@ -146,7 +144,6 @@ class MBPersistenceStorage: PersistenceStorage {
             Logger.common(message: "StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
         }
     }
-    
     
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
@@ -179,7 +176,7 @@ class MBPersistenceStorage: PersistenceStorage {
     var shownInAppsIds: [String]?
     
     @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
-    var shownInappsDictionary: [String : Date]?
+    var shownInappsDictionary: [String: Date]?
     
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
@@ -287,7 +284,6 @@ struct BackgroudExecution: Codable {
     let dateString: String
     
     let info: String
-    
 }
 
 extension MBPersistenceStorage {
@@ -336,9 +332,7 @@ extension MBPersistenceStorage {
                 MBPersistenceStorage.defaults.synchronize()
             }
         }
-        
     }
-    
 }
 
 fileprivate extension UserDefaults {
@@ -346,5 +340,4 @@ fileprivate extension UserDefaults {
     func isValueExists(forKey key: String) -> Bool {
         return object(forKey: key) != nil
     }
-
 }

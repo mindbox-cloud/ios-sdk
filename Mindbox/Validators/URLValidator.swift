@@ -8,6 +8,9 @@
 
 import Foundation
 
+// FIXME: Rewrite this struct in the future
+// swiftlint:disable line_length force_try
+
 struct URLValidator {
     
     let url: URL
@@ -18,7 +21,7 @@ struct URLValidator {
         return matches(string: url.absoluteString, pattern: urlPattern)
     }
     
-    private func matches(string: String ,pattern: String) -> Bool {
+    private func matches(string: String, pattern: String) -> Bool {
         let regex = try! NSRegularExpression(
             pattern: pattern,
             options: [.caseInsensitive])
@@ -27,5 +30,4 @@ struct URLValidator {
             options: [],
             range: NSRange(location: 0, length: string.utf16.count)) != nil
     }
-    
 }

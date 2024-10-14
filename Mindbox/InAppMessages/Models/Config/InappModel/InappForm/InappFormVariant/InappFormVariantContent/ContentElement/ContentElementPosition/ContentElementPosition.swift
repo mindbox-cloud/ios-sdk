@@ -12,7 +12,6 @@ struct ContentElementPositionDTO: Decodable, Equatable {
     let margin: ContentElementPositionMarginDTO?
 }
 
-
 struct ContentElementPosition: Decodable, Equatable {
     let margin: ContentElementPositionMargin
 }

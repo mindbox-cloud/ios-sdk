@@ -29,9 +29,7 @@ final class SessionTemporaryStorage {
         }
     }
     
-    private init() {
-        
-    }
+    private init() {}
     
     var customOperations: Set<String> {
         return observedCustomOperations.union(operationsFromSettings)

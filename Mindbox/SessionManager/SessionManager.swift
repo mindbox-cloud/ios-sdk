@@ -16,5 +16,4 @@ protocol SessionManager: AnyObject {
     func trackDirect()
     
     func trackForeground()
-    
 }

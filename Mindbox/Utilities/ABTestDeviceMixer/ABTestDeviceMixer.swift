@@ -43,8 +43,8 @@ class ABTestDeviceMixer {
 struct SHA256 {
     func hash(data: Data) -> Data {
         var hashData = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-        data.withUnsafeBytes { (messageBytes) in
-            hashData.withUnsafeMutableBytes { (hashBytes) in
+        data.withUnsafeBytes { messageBytes in
+            hashData.withUnsafeMutableBytes { hashBytes in
                 _ = CC_SHA256(messageBytes.baseAddress, CC_LONG(data.count), hashBytes.bindMemory(to: UInt8.self).baseAddress)
             }
         }

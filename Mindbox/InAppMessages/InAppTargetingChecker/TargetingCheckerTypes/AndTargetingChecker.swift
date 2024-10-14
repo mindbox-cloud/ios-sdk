@@ -10,7 +10,7 @@ import Foundation
 final class AndTargetingChecker: InternalTargetingChecker<AndTargeting> {
     weak var checker: InAppTargetingCheckerProtocol?
     
-    override func prepareInternal(targeting: AndTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: AndTargeting, context: inout PreparationContext) {
         for node in targeting.nodes {
             guard let checker = checker,
                     let target = checker.checkerMap[node] else {

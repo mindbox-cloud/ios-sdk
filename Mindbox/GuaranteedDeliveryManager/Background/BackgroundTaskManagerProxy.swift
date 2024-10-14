@@ -31,14 +31,14 @@ class BackgroundTaskManagerProxy {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
+            queue: nil) { [weak self] _ in
                 Logger.common(message: "UIApplication.didEnterBackgroundNotification", level: .info, category: .general)
                 self?.taskManagers.forEach { $0.applicationDidEnterBackground() }
         }
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
+            queue: nil) { [weak self] _ in
             self?.taskManagers.forEach { $0.applicationDidBecomeActive() }
         }
         if #available(iOS 13, *) {
@@ -82,6 +82,5 @@ class BackgroundTaskManagerProxy {
         taskManagers.forEach {
             $0.application(application, performFetchWithCompletionHandler: completionHandler)
         }
-    }
-    
+    } 
 }

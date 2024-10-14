@@ -17,7 +17,6 @@ enum NotificationsPayloads {
         var debugDescription: String {
             "uniqueKey: \(uniqueKey)"
         }
-       
     }
     
     struct Click: Codable {
@@ -26,7 +25,6 @@ enum NotificationsPayloads {
             
             let text: String
             let uniqueKey: String
-            
         }
         
         let uniqueKey: String
@@ -36,8 +34,5 @@ enum NotificationsPayloads {
         var debugDescription: String {
             "uniqueKey: \(uniqueKey)"
         }
-        
     }
-    
 }
-

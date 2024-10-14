@@ -103,7 +103,6 @@ extension MigrationManager: MigrationManagerProtocol {
     }
 }
 
-
 // MARK: - Convenience initializer for testing purposes
 
 extension MigrationManager {

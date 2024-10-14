@@ -53,5 +53,4 @@ struct MobileApplicationInstalled: Codable {
         self.notificationProvider = notificationProvider
         self.ianaTimeZone = ianaTimeZone
     }
-
 }

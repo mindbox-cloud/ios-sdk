@@ -70,5 +70,4 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
 
         pasteboard.string = id
     }
-
 }

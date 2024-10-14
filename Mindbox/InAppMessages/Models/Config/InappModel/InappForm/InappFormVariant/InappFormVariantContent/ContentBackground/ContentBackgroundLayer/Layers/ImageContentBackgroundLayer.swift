@@ -13,7 +13,6 @@ struct ImageContentBackgroundLayerDTO: ContentBackgroundLayerProtocol {
     let source: ContentBackgroundLayerSourceDTO?
 }
 
-
 struct ImageContentBackgroundLayer: ContentBackgroundLayerProtocol {
     let action: ContentBackgroundLayerAction
     let source: ContentBackgroundLayerSource

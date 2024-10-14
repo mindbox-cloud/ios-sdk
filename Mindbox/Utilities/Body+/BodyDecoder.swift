@@ -23,5 +23,4 @@ struct BodyDecoder<T: Decodable> {
             return nil
         }
     }
-    
 }

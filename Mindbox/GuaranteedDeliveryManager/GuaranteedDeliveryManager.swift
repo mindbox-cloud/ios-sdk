@@ -72,7 +72,7 @@ final class GuaranteedDeliveryManager: NSObject {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
+            queue: nil) { [weak self] _ in
             self?.performScheduleIfNeeded()
         }
     }
@@ -83,14 +83,14 @@ final class GuaranteedDeliveryManager: NSObject {
         guard canScheduleOperations else {
             return
         }
-        guard let count = try? databaseRepository.countEvents() else {
+        guard let events = try? databaseRepository.countEvents() else {
             return
         }
-        guard count != 0 else {
+        guard events != 0 else {
             backgroundTaskManager.endBackgroundTask(success: true)
             return
         }
-        scheduleOperations(fetchLimit: count <= fetchLimit ? count : fetchLimit)
+        scheduleOperations(fetchLimit: events <= fetchLimit ? events : fetchLimit)
     }
     
     private func scheduleOperations(fetchLimit: Int) {
@@ -140,7 +140,6 @@ final class GuaranteedDeliveryManager: NSObject {
     func cancelAllOperations() {
         queue.cancelAllOperations()
     }
-    
 }
 
 class AsyncOperation: Operation, @unchecked Sendable {

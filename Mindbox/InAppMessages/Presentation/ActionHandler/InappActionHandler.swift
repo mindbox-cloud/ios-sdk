@@ -14,7 +14,7 @@ protocol InAppActionHandlerProtocol {
         for id: String,
         onTap: @escaping InAppMessageTapAction,
         close: @escaping () -> Void
-    ) -> Void
+    )
 }
 
 final class InAppActionHandler: InAppActionHandlerProtocol {

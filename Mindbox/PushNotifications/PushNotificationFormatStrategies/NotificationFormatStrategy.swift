@@ -54,7 +54,7 @@ class LegacyFormatStrategy: NotificationFormatStrategy {
 }
 
 class CurrentFormatStrategy: NotificationFormatStrategy {
-    func handle(userInfo: [AnyHashable : Any]) -> MBPushNotification? {
+    func handle(userInfo: [AnyHashable: Any]) -> MBPushNotification? {
         guard let data = try? JSONSerialization.data(withJSONObject: userInfo),
               let notificationModel = try? JSONDecoder().decode(MBPushNotification.self, from: data),
               notificationModel.clickUrl != nil,

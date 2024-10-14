@@ -39,7 +39,11 @@ extension MBContainer {
         
         register(DataBaseLoader.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-            return try! DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+            
+            guard let dbLoader = try? DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
+                fatalError("Failed to create DataBaseLoader")
+            }
+            return dbLoader
         }
 
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {

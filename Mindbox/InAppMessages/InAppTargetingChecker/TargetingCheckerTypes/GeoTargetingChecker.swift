@@ -10,7 +10,7 @@ import Foundation
 final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
     
-    override func prepareInternal(targeting: CityTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: CityTargeting, context: inout PreparationContext) {
         context.isNeedGeoRequest = true
     }
     
@@ -39,7 +39,7 @@ final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
 final class RegionTargetingChecker: InternalTargetingChecker<RegionTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
     
-    override func prepareInternal(targeting: RegionTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: RegionTargeting, context: inout PreparationContext) {
         context.isNeedGeoRequest = true
     }
     
@@ -68,7 +68,7 @@ final class RegionTargetingChecker: InternalTargetingChecker<RegionTargeting> {
 final class CountryTargetingChecker: InternalTargetingChecker<CountryTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
     
-    override func prepareInternal(targeting: CountryTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: CountryTargeting, context: inout PreparationContext) {
         context.isNeedGeoRequest = true
     }
     
@@ -93,4 +93,3 @@ final class CountryTargetingChecker: InternalTargetingChecker<CountryTargeting> 
         }
     }
 }
-

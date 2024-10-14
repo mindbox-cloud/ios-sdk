@@ -29,7 +29,5 @@ extension GuaranteedDeliveryManager {
         var description: String {
             rawValue
         }
-        
     }
-    
 }

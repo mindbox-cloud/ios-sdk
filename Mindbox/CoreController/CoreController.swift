@@ -107,7 +107,7 @@ final class CoreController {
 
     private func generateDeviceUUID() -> String {
         let lock = DispatchSemaphore(value: 0)
-        var deviceUUID: String?
+        var deviceUUID = String()
         let start = CFAbsoluteTimeGetCurrent()
         utilitiesFetcher.getDeviceUUID {
             deviceUUID = $0
@@ -115,7 +115,7 @@ final class CoreController {
         }
         lock.wait()
         Logger.common(message: "It took \(CFAbsoluteTimeGetCurrent() - start) seconds to generate deviceUUID", level: .debug, category: .general)
-        return deviceUUID!
+        return deviceUUID
     }
 
     private func primaryInitialization(with configutaion: MBConfiguration) {

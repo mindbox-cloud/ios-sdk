@@ -76,7 +76,7 @@ class DataBaseLoader {
     }
     
     private func loadPersistentStores() throws -> NSPersistentContainer {
-        persistentContainer.loadPersistentStores { [weak self] (persistentStoreDescription, error) in
+        persistentContainer.loadPersistentStores { [weak self] persistentStoreDescription, error in
             if let url = persistentStoreDescription.url {
                 Logger.common(message: "Persistent store url: \(url.description)", level: .info, category: .database)
             } else {
@@ -112,6 +112,5 @@ class DataBaseLoader {
             Logger.common(message: "Removed database failed with error: \(error.localizedDescription)", level: .error, category: .database)
             throw error
         }
-    }
-    
+    } 
 }

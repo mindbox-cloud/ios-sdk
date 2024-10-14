@@ -19,5 +19,4 @@ struct BodyEncoder<T: Encodable> {
             body = ""
         }
     }
-    
 }

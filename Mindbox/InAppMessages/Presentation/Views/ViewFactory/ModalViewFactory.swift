@@ -9,26 +9,21 @@
 import UIKit
 
 class ModalViewFactory: ViewFactoryProtocol {
+    
     weak var myViewController: UIViewController?
     
-    func create(model: MindboxFormVariant,
-                id: String,
-                imagesDict: [String: UIImage],
-                firstImageValue: String,
-                onPresented: @escaping () -> Void,
-                onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
-                onClose: @escaping () -> Void) -> UIViewController? {
-        if case .modal(let modalFormVariant) = model {
+    func create(with params: ViewFactoryParameters) -> UIViewController? {
+        if case .modal(let modalFormVariant) = params.model {
             let viewController = ModalViewController(model: modalFormVariant,
-                                                     id: id,
-                                                     imagesDict: imagesDict,
-                                                     onPresented: onPresented,
-                                                     onTapAction: onTapAction,
-                                                     onClose: onClose)
+                                                     id: params.id,
+                                                     imagesDict: params.imagesDict,
+                                                     onPresented: params.onPresented,
+                                                     onTapAction: params.onTapAction,
+                                                     onClose: params.onClose)
             myViewController = viewController
             return viewController
         }
-         
+        
         return nil
     }
 }

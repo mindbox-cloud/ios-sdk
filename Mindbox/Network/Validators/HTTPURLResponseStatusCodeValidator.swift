@@ -43,7 +43,6 @@ struct HTTPURLResponseStatusCodeValidator {
                 return nil
             }
         }
-        
     }
     
     var isClientError: Bool {
@@ -57,5 +56,4 @@ struct HTTPURLResponseStatusCodeValidator {
         let evaluateCodes: [StatusCodes] = [.success, .redirection]
         return evaluateCodes.contains(statusCode)
     }
-    
 }

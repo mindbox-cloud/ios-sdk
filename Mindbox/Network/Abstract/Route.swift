@@ -19,5 +19,4 @@ protocol Route {
     var queryParameters: QueryParameters { get }
     
     var body: Data? { get }
-    
 }

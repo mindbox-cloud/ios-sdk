@@ -9,12 +9,16 @@
 import UIKit
 import Foundation
 
+struct ViewFactoryParameters {
+    let model: MindboxFormVariant
+    let id: String
+    let imagesDict: [String: UIImage]
+    let firstImageValue: String
+    let onPresented: () -> Void
+    let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    let onClose: () -> Void
+}
+
 protocol ViewFactoryProtocol {
-    func create(model: MindboxFormVariant,
-                id: String,
-                imagesDict: [String: UIImage],
-                firstImageValue: String,
-                onPresented: @escaping () -> Void,
-                onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
-                onClose: @escaping () -> Void) -> UIViewController?
+    func create(with params: ViewFactoryParameters) -> UIViewController?
 }

@@ -18,5 +18,4 @@ struct UDIDValidator {
             .replacingOccurrences(of: "-", with: "")
             .isEmpty
     }
-
 }

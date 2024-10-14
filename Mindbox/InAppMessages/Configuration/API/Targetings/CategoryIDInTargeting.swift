@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct CategoryIDInTargeting: ITargeting, Decodable  {
+struct CategoryIDInTargeting: ITargeting, Decodable {
     let kind: CategoryKind
     let values: [CategoryIDInValue]
     

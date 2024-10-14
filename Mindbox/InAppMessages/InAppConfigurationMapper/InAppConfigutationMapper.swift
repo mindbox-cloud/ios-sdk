@@ -10,7 +10,7 @@ import MindboxLogger
 import UIKit
 
 protocol InAppConfigurationMapperProtocol {
-    func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse,_ completion: @escaping (InAppFormData?) -> Void) -> Void
+    func mapConfigResponse(_ event: ApplicationEvent?, _ response: ConfigResponse, _ completion: @escaping (InAppFormData?) -> Void)
     var targetingChecker: InAppTargetingCheckerProtocol { get set }
     func sendRemainingInappsTargeting()
 }
@@ -97,9 +97,13 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             """
             Logger.common(message: logMessage, level: .debug, category: .inAppMessages)
 
-            let targetedEventKey: InAppMessageTriggerEvent = self.savedEventForTargeting != nil
-            ? .applicationEvent(self.savedEventForTargeting!)
-            : .start
+            var targetedEventKey: InAppMessageTriggerEvent
+            
+            if let savedEventForTargeting = self.savedEventForTargeting {
+                targetedEventKey = .applicationEvent(savedEventForTargeting)
+            } else {
+                targetedEventKey = .start
+            }
             
             guard let inappsByEvent = self.filteredInappsByEventForTargeting[targetedEventKey] else {
                 return
@@ -165,6 +169,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         let group = DispatchGroup()
         let imageDictQueue = DispatchQueue(label: "com.mindbox.imagedict.queue", attributes: .concurrent)
 
+        // FIXME: Rewrite this closure in the future
+        // swiftlint:disable:next closure_body_length
         DispatchQueue.global().async {
             for inapp in inapps {
                 
@@ -175,7 +181,7 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
                 var imageDict: [String: UIImage] = [:]
                 var gotError = false
                 
-                if let _ = self.inappFilterService.shownInAppDictionary[inapp.inAppId] {
+                if self.inappFilterService.shownInAppDictionary[inapp.inAppId] != nil {
                     continue
                 }
                 

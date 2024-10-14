@@ -39,7 +39,6 @@ final class LayersFilterService: LayersFilterProtocol {
                     filteredLayers.append(newLayer)
                 case .unknown:
                     Logger.common(message: "Unknown type of layer. Layer will be skipped.", level: .debug, category: .inAppMessages)
-                    break
             }
         }
         

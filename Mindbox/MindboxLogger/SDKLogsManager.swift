@@ -42,9 +42,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
                     let body = try getBody(from: from, to: to, requestID: log.requestId)
                     let event = Event(type: .sdkLogs, body: BodyEncoder(encodable: body).body)
                     eventRepository.send(event: event) { _ in }
-                } catch {
-                    
-                }
+                } catch {}
             }
         }
         
@@ -72,7 +70,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
             return .elderLog(date: firstLog.timestamp.toString(withFormat: .utc))
         } else if let lastLog = lastLog, lastLog.timestamp < from {
             return .latestLog(date: lastLog.timestamp.toString(withFormat: .utc))
-        } else if getLogsSize(logs) > Constants.logsSizeLimit  {
+        } else if getLogsSize(logs) > Constants.logsSizeLimit {
             return .largeSize
         } else if logs.isEmpty {
             return .noData

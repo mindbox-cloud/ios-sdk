@@ -34,5 +34,4 @@ struct MobileApplicationInfoUpdated: Codable {
         self.instanceId = instanceId
         self.notificationProvider = notificationProvider
     }
-
 }

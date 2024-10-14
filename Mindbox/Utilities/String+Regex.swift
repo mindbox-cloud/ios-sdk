@@ -8,6 +8,8 @@
 
 import Foundation
 
+// swiftlint:disable force_unwrapping
+
 extension String {
     var operationNameIsValid: Bool {
         let range = NSRange(location: 0, length: self.utf16.count)

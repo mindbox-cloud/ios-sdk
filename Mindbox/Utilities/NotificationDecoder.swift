@@ -65,5 +65,4 @@ struct NotificationDecoder<T: Codable> {
             throw error
         }
     }
-    
 }

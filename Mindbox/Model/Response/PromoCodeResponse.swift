@@ -25,5 +25,3 @@ public enum IssueStatusResponse: String, UnknownCodable {
     case issued = "Issued"
     case unknown
 }
-
-

@@ -47,9 +47,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         return identifier
     }
     
-    init() {
-        
-    }
+    init() {}
     
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
@@ -62,7 +60,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     }
     
     var appVerson: String? {
-        appBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+        appBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
     
     var sdkVersion: String? {
@@ -79,7 +77,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             completion(uuid.uuidString)
         } else {
             Logger.common(message: "IDFAFetcher fail", level: .default, category: .general)
-            IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+            IDFVFetcher().fetch(tryCount: 3) { uuid in
                 if let uuid = uuid {
                     Logger.common(message: "IDFVFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
                     completion(uuid.uuidString)

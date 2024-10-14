@@ -118,7 +118,7 @@ class MBDatabaseRepository {
         }
     }
     
-    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws ->  [Event] {
+    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws -> [Event] {
         try context.mindboxPerformAndWait {
             Logger.common(message: "Quering events with fetchLimit: \(fetchLimit)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
@@ -136,7 +136,7 @@ class MBDatabaseRepository {
         }
     }
     
-    func query(by request: NSFetchRequest<CDEvent>) throws ->  [CDEvent] {
+    func query(by request: NSFetchRequest<CDEvent>) throws -> [CDEvent] {
         try context.fetch(request)
     }
     
@@ -225,12 +225,9 @@ class MBDatabaseRepository {
     private func findEvent(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
         try context.registeredObjects
             .compactMap { $0 as? CDEvent }
-            .filter { !$0.isFault }
-            .filter { request.predicate?.evaluate(with: $0) ?? false }
-            .first
+            .first(where: { !$0.isFault && request.predicate?.evaluate(with: $0) ?? false })
         ?? context.fetch(request).first
     }
-
 }
 
 // MARK: - ManagedObjectContext save processing
@@ -259,7 +256,6 @@ private extension MBDatabaseRepository {
             throw error
         }
     }
-
 }
 
 // MARK: - Metadata processing
@@ -282,5 +278,4 @@ private extension MBDatabaseRepository {
             Logger.common(message: "Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
-
 }

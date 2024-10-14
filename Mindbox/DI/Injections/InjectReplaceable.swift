@@ -29,14 +29,20 @@ extension MBContainer {
         
         register(PersistenceStorage.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-            let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier)!
+            guard let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier) else {
+                fatalError("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier)")
+            }
             return MBPersistenceStorage(defaults: defaults)
         }
         
         register(MBDatabaseRepository.self) {
             let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
-            let persistentContainer = try! databaseLoader.loadPersistentContainer()
-            return try! MBDatabaseRepository(persistentContainer: persistentContainer)
+            
+            guard let persistentContainer = try? databaseLoader.loadPersistentContainer(),
+                    let dbRepository = try? MBDatabaseRepository(persistentContainer: persistentContainer) else {
+                fatalError("Failed to create MBDatabaseRepository")
+            }
+            return dbRepository
         }
         
         register(ImageDownloadServiceProtocol.self, scope: .container) {

@@ -13,7 +13,7 @@ import Foundation
 public struct IDS: Codable {
     public typealias DictionaryType = [String: String]
 
-    private var value: Dictionary<String, String> = [:]
+    private var value: [String: String] = [:]
 
     public init(_ value: [String: String]? = nil, mindboxId: Int? = nil) {
         self.value = value ?? [:]

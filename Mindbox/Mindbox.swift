@@ -56,7 +56,6 @@ public class Mindbox: NSObject {
         }
     }
     
-    
     /**
      A delegate for handling in-app messages.
 
@@ -283,7 +282,7 @@ public class Mindbox: NSObject {
             return
         }
         guard let jsonData = json.data(using: .utf8),
-              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
             Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
             return
         }
@@ -342,7 +341,7 @@ public class Mindbox: NSObject {
             return
         }
         guard let jsonData = json.data(using: .utf8),
-              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
             Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
             return
         }
@@ -573,6 +572,4 @@ public class Mindbox: NSObject {
     }
 }
 
-extension Mindbox: DefaultInappMessageDelegate {
-    
-}
+extension Mindbox: DefaultInappMessageDelegate {}

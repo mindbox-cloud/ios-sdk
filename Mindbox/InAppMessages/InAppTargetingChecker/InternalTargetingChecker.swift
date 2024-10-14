@@ -16,7 +16,7 @@ struct PreparationContext {
 }
 
 protocol ITargetingChecker: AnyObject {
-    func prepare(targeting: ITargeting, context: inout PreparationContext) -> Void
+    func prepare(targeting: ITargeting, context: inout PreparationContext)
     func check(targeting: ITargeting) -> Bool
 }
 
@@ -25,7 +25,7 @@ class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
         prepareInternal(targeting: targeting as! T, context: &context)
     }
     
-    func prepareInternal(targeting: T, context: inout PreparationContext) -> Void {
+    func prepareInternal(targeting: T, context: inout PreparationContext) {
         return
     }
     

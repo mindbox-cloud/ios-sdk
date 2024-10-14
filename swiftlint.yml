@@ -1,6 +1,6 @@
 # Directory and file filters
 included: # paths to include during linting. `--path` is ignored if present.
-  #- Mindbox
+  - Mindbox
   - MindboxLogger
   - MindboxNotifications
 excluded: # paths to ignore during linting. Takes precedence over `included`.
@@ -71,6 +71,7 @@ closure_body_length:
 file_length:
   warning: 400
   error: 800
+  ignore_comment_only_lines: true
 
 function_body_length:
   warning: 150

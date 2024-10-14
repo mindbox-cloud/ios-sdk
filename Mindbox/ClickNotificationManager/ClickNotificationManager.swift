@@ -41,6 +41,5 @@ final class ClickNotificationManager {
         let decoder = try NotificationDecoder<NotificationsPayloads.Click>(response: response)
         let payload = try decoder.decode()
         try track(uniqueKey: payload.uniqueKey, buttonUniqueKey: response.actionIdentifier)
-    }
-    
+    } 
 }

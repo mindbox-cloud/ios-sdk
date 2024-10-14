@@ -20,20 +20,17 @@ enum Constants {
     enum Database {
         
         static let mombName = "MBDatabase"
-        
     }
     
     enum Notification {
         
         static let mindBoxIdentifireKey = "uniqueKey"
-        
     }
     
     /// Mobile configuration sdkVersion.
     enum Versions {
         
         static let sdkVersionNumeric = 9
-        
     }
     
     /// Constants used for migration management.

@@ -16,8 +16,7 @@ protocol ElementsPositionFilterProtocol {
 final class ElementsPositionFilterService: ElementsPositionFilterProtocol {
     
     enum Constants {
-        static let defaultMargin = ContentElementPositionMargin(kind: .proportion, top: 0.02, right: 0.02, left: 0.02, bottom: 0.02)
-        
+        static let defaultMargin = ContentElementPositionMargin(kind: .proportion, top: 0.02, right: 0.02, left: 0.02, bottom: 0.02)   
     }
     
     func filter(_ position: ContentElementPositionDTO?) throws -> ContentElementPosition {

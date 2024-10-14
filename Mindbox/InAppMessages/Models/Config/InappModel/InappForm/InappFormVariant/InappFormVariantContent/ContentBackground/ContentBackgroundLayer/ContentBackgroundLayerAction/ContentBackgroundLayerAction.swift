@@ -84,7 +84,6 @@ extension ContentBackgroundLayerActionDTO {
     }
 }
 
-
 // MARK: - Real model
 enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
     case pushPermission(PushPermissionLayerAction)

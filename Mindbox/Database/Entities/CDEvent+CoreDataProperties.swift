@@ -10,7 +10,6 @@
 import Foundation
 import CoreData
 
-
 extension CDEvent {
     
     public class func fetchRequestForDelete(lifeLimitDate: Date? = nil) -> NSFetchRequest<CDEvent> {
@@ -88,5 +87,4 @@ extension CDEvent {
     @NSManaged public var transactionId: String?
     @NSManaged public var type: String?
     @NSManaged public var retryTimestamp: Double
-    
 }

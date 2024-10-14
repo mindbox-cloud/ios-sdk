@@ -141,7 +141,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     }
     
     private func delivering(taskID: String, completionHandler: @escaping CompletionHandler) {
-        observationToken = gdManager?.observe(\.stateObserver, options: [.new]) { [weak self] (observed, change) in
+        observationToken = gdManager?.observe(\.stateObserver, options: [.new]) { [weak self] _, change in
             Logger.common(message: "change.newValue \(String(describing: change.newValue))", level: .info, category: .background)
             let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
             if change.newValue == idleString {
@@ -171,5 +171,4 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         persistenceStorage.setBackgroundExecution(backgroudExecution)
         completionHandler(.newData)
     }
-    
 }

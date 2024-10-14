@@ -11,7 +11,6 @@ import UIKit
 import BackgroundTasks
 import MindboxLogger
 
-
 @available(iOS 13.0, *)
 class BGTaskManager: BackgroundTaskManagerType {
     
@@ -146,7 +145,6 @@ class BGTaskManager: BackgroundTaskManagerType {
             #else
             Logger.common(message: "Could not schedule app processing task with error: \(error.localizedDescription)", level: .info, category: .background)
             #endif
-            
         }
     }
     
@@ -240,5 +238,4 @@ class BGTaskManager: BackgroundTaskManagerType {
         Mindbox.shared.coreController?.checkNotificationStatus()
         Logger.common(message: "removeDeprecatedEventsProcessing task started", level: .info, category: .background)
     }
-
 }

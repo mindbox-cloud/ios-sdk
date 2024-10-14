@@ -150,7 +150,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     private func handleQueuedEvents() {
         Logger.common(message: "Start handling waiting events. Count: \(unhandledEvents.count)", level: .debug, category: .inAppMessages)
-        while unhandledEvents.count > 0 {
+        while !unhandledEvents.isEmpty {
             let event = unhandledEvents.removeFirst()
             handleEvent(event)
         }

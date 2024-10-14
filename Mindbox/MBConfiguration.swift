@@ -200,5 +200,4 @@ struct ConfigValidation {
             changedState = .none
         }
     }
-
 }

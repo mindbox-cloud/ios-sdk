@@ -15,5 +15,4 @@ extension DispatchSemaphore {
         defer { signal() }
         return try task()
     }
-    
 }

@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 protocol ContentBackgroundLayerSourceProtocol: Decodable, Equatable { }
 
 enum ContentBackgroundLayerSourceType: String, Decodable {
