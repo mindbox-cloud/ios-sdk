@@ -42,5 +42,4 @@ public enum LogCategory: String, CaseIterable {
             return "🖼️"
         }
     }
-    
 }

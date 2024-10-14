@@ -44,5 +44,4 @@ fileprivate extension LogLevel {
             return .fault
         }
     }
-    
 }

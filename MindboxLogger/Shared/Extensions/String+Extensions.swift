@@ -16,7 +16,6 @@ public enum DateFormat: String {
     }
 }
 
-
 public extension String {
     func toDate(withFormat format: DateFormat) -> Date? {
         let dateFormatterGet = DateFormatter()

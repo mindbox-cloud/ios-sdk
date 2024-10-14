@@ -56,7 +56,7 @@ public class MBLoggerCoreDataManager {
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
-        container.loadPersistentStores { (storeDescription, error) in
+        container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Failed to load persistent stores: \(error)")
             }
@@ -65,7 +65,6 @@ public class MBLoggerCoreDataManager {
         return container
     }()
 
-    
     private lazy var context: NSManagedObjectContext = {
         let context = persistentContainer.newBackgroundContext()
         context.automaticallyMergesChangesFromParent = true
@@ -91,9 +90,7 @@ public class MBLoggerCoreDataManager {
                     
                     completion?()
                 }
-            } catch {
-                
-            }
+            } catch {}
         }
     }
     
@@ -204,5 +201,3 @@ private extension MBLoggerCoreDataManager {
         return Int(size)
     }
 }
-
-

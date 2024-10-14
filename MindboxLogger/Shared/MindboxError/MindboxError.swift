@@ -182,7 +182,6 @@ public extension MindboxError {
                                     errorMessage: error.localizedDescription).convertToString()
         }
     }
-
 }
 
 public struct InternalError: CustomStringConvertible {

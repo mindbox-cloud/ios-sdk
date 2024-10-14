@@ -18,6 +18,5 @@ public class MBPersistentContainer: NSPersistentContainer, @unchecked Sendable {
             return super.defaultDirectoryURL()
         }
         return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroupIdentifier) ?? super.defaultDirectoryURL()
-    }
-    
+    } 
 }

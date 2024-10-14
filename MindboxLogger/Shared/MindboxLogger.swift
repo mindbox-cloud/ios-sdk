@@ -64,11 +64,11 @@ public class Logger {
     
     @available(*, deprecated, message: "Method deprecated. Use error(_ error: LoggerErrorModel:) instead")
     public static func error(_ error: MindboxError,
-                      level: LogLevel = .error,
-                      category: LogCategory = .network,
-                      fileName: String = #file,
-                      line: Int = #line,
-                      funcName: String = #function
+                             level: LogLevel = .error,
+                             category: LogCategory = .network,
+                             fileName: String = #file,
+                             line: Int = #line,
+                             funcName: String = #function
     ) {
         var logMessage: String = ""
 
@@ -105,15 +105,15 @@ public class Logger {
     }
     
     public static func network(request: URLRequest,
-                        httpAdditionalHeaders: [AnyHashable: Any]? = nil,
-                        fileName: String = #file,
-                        line: Int = #line,
-                        funcName: String = #function) {
+                               httpAdditionalHeaders: [AnyHashable: Any]? = nil,
+                               fileName: String = #file,
+                               line: Int = #line,
+                               funcName: String = #function) {
         
         let urlString = request.url?.absoluteString ?? ""
         let components = NSURLComponents(string: urlString)
 
-        let method = request.httpMethod != nil ? "\(request.httpMethod!)" : ""
+        let method = "\(request.httpMethod ?? "")"
         let path = "\(components?.path ?? "")"
         let query = "\(components?.query ?? "")"
         let host = "\(components?.host ?? "")"
@@ -145,11 +145,11 @@ public class Logger {
     }
     
     public static func response(data: Data?,
-                         response: URLResponse?,
-                         error: Error?,
-                         fileName: String = #file,
-                         line: Int = #line,
-                         funcName: String = #function) {
+                                response: URLResponse?,
+                                error: Error?,
+                                fileName: String = #file,
+                                line: Int = #line,
+                                funcName: String = #function) {
         let urlString = response?.url?.absoluteString
         let components = NSURLComponents(string: urlString ?? "")
 
@@ -195,12 +195,12 @@ public class Logger {
     }
     
     public static func common(message: String,
-                       level: LogLevel = .debug,
-                       category: LogCategory = .general,
-                       subsystem: String? = nil,
-                       fileName: String = #file,
-                       line: Int = #line,
-                       funcName: String = #function) {
+                              level: LogLevel = .debug,
+                              category: LogCategory = .general,
+                              subsystem: String? = nil,
+                              fileName: String = #file,
+                              line: Int = #line,
+                              funcName: String = #function) {
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("", "\n")
         log(message: message, level: level, category: category, meta: meta, borders: borders, subsystem: subsystem)
@@ -215,6 +215,6 @@ private extension Logger {
     /// - Returns: File Name with extension
     static func sourceFileName(filePath: String) -> String {
         let components = filePath.components(separatedBy: "/")
-        return components.isEmpty ? "" : components.last!
+        return components.last ?? ""
     }
 }

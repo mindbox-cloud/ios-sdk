@@ -34,9 +34,7 @@ class MBLoggerUtilitiesFetcher {
         return identifier
     }
     
-    init() {
-        
-    }
+    init() {}
     
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
