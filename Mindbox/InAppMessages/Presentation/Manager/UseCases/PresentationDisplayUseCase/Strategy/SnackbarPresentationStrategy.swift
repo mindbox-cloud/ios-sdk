@@ -86,6 +86,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
                     let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
                     let safeAreaInset = getSafeAreaInset(gravity: gravity)
                     let y = getYPosition(gravity: gravity, finalHeight: finalHeight, safeAreaInset: safeAreaInset)
+
                     self.window?.frame = CGRect(x: leftOffset, y: y, width: width, height: finalHeight)
                 }
             default:

@@ -22,6 +22,7 @@ final class ProductIDChecker: InternalTargetingChecker<ProductIDTargeting> {
         }
 
         for i in ids {
+            
             let lowercaseValue = i.value.lowercased()
             let lowercaseName = targeting.name.lowercased()
             switch targeting.kind {

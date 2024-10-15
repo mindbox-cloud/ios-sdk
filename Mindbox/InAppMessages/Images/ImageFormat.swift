@@ -48,6 +48,7 @@ extension ImageFormat {
         var gifDuration = 0.0
         
         for i in 0..<frameCount {
+            
             guard let cgImage = CGImageSourceCreateImageAtIndex(source, i, nil) else { continue }
             
             if let properties = CGImageSourceCopyPropertiesAtIndex(source, i, nil),
