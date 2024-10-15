@@ -8,7 +8,6 @@ included: # paths to include during linting. `--path` is ignored if present.
 excluded: # paths to ignore during linting. Takes precedence over `included`.
 
 only_rules: # default rules
-  - identifier_name
   - closing_brace
   - closure_parameter_position
   - colon
