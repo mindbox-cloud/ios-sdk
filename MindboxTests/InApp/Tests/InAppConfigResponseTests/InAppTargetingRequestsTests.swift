@@ -56,7 +56,6 @@ class InAppTargetingRequestsTests: XCTestCase {
 
     func test_TwoInappsTrue_FirstShownBefore() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-//        persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
