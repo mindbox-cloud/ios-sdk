@@ -31,7 +31,7 @@ final class VariantFilterService: VariantFilterProtocol {
             throw CustomDecodingError.unknownType("VariantFilterService validation not passed.")
         }
         
-        variantsLoop: for variant in variants {
+        for variant in variants {
             switch variant {
                 case .modal(let modalFormVariantDTO):
                     guard let content = modalFormVariantDTO.content,

@@ -83,7 +83,7 @@ final class StringExtensionsTests: XCTestCase {
             "000:00:00",
             "00:00:000",
             "+0:0:0",
-            "12345678901234567890.00:00:00.00",
+            "12345678901234567890.00:00:00.00"
         ]
         
         for str in testCases {

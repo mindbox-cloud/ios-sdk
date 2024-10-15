@@ -68,7 +68,8 @@ class SnackbarView: UIView {
         self.addGestureRecognizer(panGesture)
     }
 
-    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+    @objc
+    private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: self)
         switch gesture.state {
         case .changed:
@@ -104,9 +105,9 @@ class SnackbarView: UIView {
 
     private func animateHide(completion: @escaping () -> Void, animated: Bool) {
         if animated {
-            UIView.animate(withDuration: animationTime, animations: {
+            UIView.animate(withDuration: animationTime) {
                 self.setHiddenTransform()
-            }) { _ in
+            } completion: { _ in
                 completion()
             }
         } else {

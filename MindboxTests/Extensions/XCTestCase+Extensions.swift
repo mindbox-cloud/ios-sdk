@@ -11,7 +11,7 @@ import XCTest
 @testable import Mindbox
 
 extension XCTestCase {
-    open override func setUp() {
+    override open func setUp() {
         super.setUp()
         TestConfiguration.configure()
     }

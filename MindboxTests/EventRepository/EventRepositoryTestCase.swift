@@ -48,7 +48,7 @@ class EventRepositoryTestCase: XCTestCase {
                 case .success:
                     expectation.fulfill()
                 case .failure:
-                    XCTFail()
+                    XCTFail("Expectations must be met and result must be success")
             }
         }
         waitForExpectations(timeout: 2, handler: nil)
@@ -67,10 +67,10 @@ class EventRepositoryTestCase: XCTestCase {
                     if data.status == "Success" {
                         expectation.fulfill()
                     } else {
-                        XCTFail()
+                        XCTFail("Expectations must be met")
                     }
                 case .failure:
-                    XCTFail()
+                    XCTFail("Expectations must be met and result must be success")
             }
         }
         waitForExpectations(timeout: 2, handler: nil)

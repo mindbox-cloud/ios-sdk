@@ -13,10 +13,10 @@ struct PeriodicFrequency: Decodable, Equatable {
     let value: Int
     
     enum Unit: String, Decodable {
-        case seconds = "seconds"
-        case minutes = "minutes"
-        case hours = "hours"
-        case days = "days"
+        case seconds
+        case minutes
+        case hours
+        case days
 
         init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()

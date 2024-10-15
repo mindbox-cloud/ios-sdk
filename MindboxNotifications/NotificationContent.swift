@@ -105,7 +105,7 @@ private extension MindboxNotificationService {
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight),
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight)
         ])
     }
 }

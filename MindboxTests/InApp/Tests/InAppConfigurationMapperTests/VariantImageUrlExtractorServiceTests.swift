@@ -117,7 +117,7 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
         let extractedUrls = sut.extractImageURL(from: formVariant)
         let expectedUrls = [
             "https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg",
-            "https://mindbox-pushok.umbrellait.tech:444/?image=mindbox.png&broken=true&error=wait&speed=20",
+            "https://mindbox-pushok.umbrellait.tech:444/?image=mindbox.png&broken=true&error=wait&speed=20"
         ]
         
         XCTAssertEqual(extractedUrls, expectedUrls)
@@ -205,7 +205,7 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
         let extractedUrls = sut.extractImageURL(from: formVariant)
         let expectedUrls = [
             "https://www.getmailbird.com/setup/assets/imgs/logos/gmail.com.webp",
-            "https://images.pexels.com/photos/1402787/pexels-photo-1402787.jpeg?auto=compress&cs=tinysrgb&w=6000&h=4000&dpr=2",
+            "https://images.pexels.com/photos/1402787/pexels-photo-1402787.jpeg?auto=compress&cs=tinysrgb&w=6000&h=4000&dpr=2"
         ]
         
         XCTAssertEqual(extractedUrls, expectedUrls)

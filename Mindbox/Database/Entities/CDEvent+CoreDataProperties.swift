@@ -21,7 +21,7 @@ extension CDEvent {
             )
         }
         request.sortDescriptors = [
-            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
+            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true)
         ]
         return request
     }
@@ -52,7 +52,7 @@ extension CDEvent {
         request.predicate = NSCompoundPredicate(type: .or, subpredicates: subpredicates)
         request.sortDescriptors = [
             NSSortDescriptor(key: #keyPath(CDEvent.retryTimestamp), ascending: true),
-            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true),
+            NSSortDescriptor(key: #keyPath(CDEvent.timestamp), ascending: true)
         ]
         return request
     }

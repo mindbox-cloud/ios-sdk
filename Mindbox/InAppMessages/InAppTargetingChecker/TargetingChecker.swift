@@ -51,8 +51,8 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     }
     
     var context = PreparationContext()
-    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? = nil
-    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]? = nil
+    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
+    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]?
     var geoModels: InAppGeoResponse?
     var event: ApplicationEvent?
     var persistenceStorage: PersistenceStorage

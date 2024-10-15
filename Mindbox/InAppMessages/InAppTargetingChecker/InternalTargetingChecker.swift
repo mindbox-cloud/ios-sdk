@@ -22,7 +22,10 @@ protocol ITargetingChecker: AnyObject {
 
 class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
     func prepare(targeting: ITargeting, context: inout PreparationContext) {
-        prepareInternal(targeting: targeting as! T, context: &context)
+        guard let specificTargeting = targeting as? T else {
+            fatalError("Failed to cast targeting to type \(T.self)")
+        }
+        prepareInternal(targeting: specificTargeting, context: &context)
     }
     
     func prepareInternal(targeting: T, context: inout PreparationContext) {
@@ -30,7 +33,11 @@ class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
     }
     
     func check(targeting: ITargeting) -> Bool {
-        return checkInternal(targeting: targeting as! T)
+        guard let specificTargeting = targeting as? T else {
+            fatalError("Failed to cast targeting to type \(T.self)")
+        }
+        
+        return checkInternal(targeting: specificTargeting)
     }
     
     func checkInternal(targeting: T) -> Bool {

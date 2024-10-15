@@ -125,7 +125,7 @@ extension MigrationManagerTests {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_2(),
             TestBaseMigration_3_IsNeeded_False(),
-            TestBaseMigration_1(),
+            TestBaseMigration_1()
         ]
         
         let expectedSdkVersionCodeAfterMigrations = 2
@@ -143,7 +143,7 @@ extension MigrationManagerTests {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_2(),
             TestBaseMigration_1(),
-            TestBaseMigration_4_WithPerfomError(),
+            TestBaseMigration_4_WithPerfomError()
         ]
         
         let expectedSdkVersionCodeAfterMigrations = 3
@@ -233,7 +233,7 @@ extension MigrationManagerTests {
             TestBaseMigration_1(), // Auto Increment sdkVersionCode
             TestBaseMigration_2(), // Auto Increment sdkVersionCode
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock), // Used increment sdkVersionCode into `run`
+            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock) // Used increment sdkVersionCode into `run`
         ]
         
         let expectedSdkVersionCodeAfterMigrations = 3

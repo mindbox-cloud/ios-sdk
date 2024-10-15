@@ -109,7 +109,7 @@ final class SharedInternalMethodsTests: XCTestCase {
                         "text": "Documentation",
                         "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
                     ]
-                ],
+                ]
             ]
         ]
         

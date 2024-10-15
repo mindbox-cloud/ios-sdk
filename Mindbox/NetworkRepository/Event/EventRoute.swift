@@ -101,11 +101,6 @@ enum EventRoute: Route {
 fileprivate struct TrackVisitBodyProxy: Codable {
     let ianaTimeZone: String
     let endpointId: String
-
-    init(ianaTimeZone: String, endpointId: String) {
-        self.ianaTimeZone = ianaTimeZone
-        self.endpointId = endpointId
-    }
 }
 
 fileprivate extension QueryParameters {

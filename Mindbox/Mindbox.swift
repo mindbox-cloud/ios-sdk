@@ -539,7 +539,7 @@ public class Mindbox: NSObject {
 
     private var initError: Error?
 
-    private override init() {
+    override private init() {
         super.init()
         self.assembly()
         self.persistenceStorage?.storeToFileBackgroundExecution()            
@@ -563,11 +563,13 @@ public class Mindbox: NSObject {
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
-    @objc private func resetShownInApps() {
+    @objc
+    private func resetShownInApps() {
         persistenceStorage?.shownInappsDictionary = [:]
     }
     
-    @objc private func eraseSessionStorage() {
+    @objc
+    private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()
     }
 }

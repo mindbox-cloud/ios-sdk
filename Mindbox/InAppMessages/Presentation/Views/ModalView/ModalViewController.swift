@@ -15,9 +15,14 @@ protocol InappViewControllerProtocol {
     var layersFactories: [ContentBackgroundLayerType: LayerFactory] { get }
 }
 
-@objc protocol GestureHandler {
-    @objc func imageTapped(_ sender: UITapGestureRecognizer)
-    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer)
+@objc
+protocol GestureHandler {
+    
+    @objc
+    func imageTapped(_ sender: UITapGestureRecognizer)
+    
+    @objc
+    func onCloseButton(_ gesture: UILongPressGestureRecognizer)
 }
 
 final class ModalViewController: UIViewController, InappViewControllerProtocol {
@@ -112,7 +117,8 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: Private methods
 
-    @objc private func onTapDimmedView() {
+    @objc
+    private func onTapDimmedView() {
         onClose()
     }
     
@@ -156,7 +162,8 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
 // MARK: - GestureHandler
 
 extension ModalViewController: GestureHandler {
-    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
+    @objc
+    func imageTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? InAppImageOnlyView else {
             return
         }
@@ -165,7 +172,8 @@ extension ModalViewController: GestureHandler {
         onTapAction(action)
     }
     
-    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
+    @objc
+    func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
         guard let crossView = gesture.view else {
             return
         }

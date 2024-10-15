@@ -11,9 +11,9 @@ import CoreData
 
 public class MBPersistentContainer: NSPersistentContainer, @unchecked Sendable {
     
-    public static var applicationGroupIdentifier: String? = nil
+    public static var applicationGroupIdentifier: String?
         
-    public override class func defaultDirectoryURL() -> URL {
+    override public class func defaultDirectoryURL() -> URL {
         guard let applicationGroupIdentifier = applicationGroupIdentifier else {
             return super.defaultDirectoryURL()
         }

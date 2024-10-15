@@ -273,7 +273,8 @@ private extension MBDatabaseRepository {
         do {
             try context.mindboxPerformAndWait {
                 try saveContext(context)
-                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)            }
+                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)
+            }
         } catch {
             Logger.common(message: "Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }

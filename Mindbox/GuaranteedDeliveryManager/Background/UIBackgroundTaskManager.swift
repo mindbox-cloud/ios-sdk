@@ -37,9 +37,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     private var removingDeprecatedEventsInProgress = false
     
     func applicationDidEnterBackground() {
-        if #available(iOS 13.0, *) {
-            // Do nothing cause BGProcessingTask will be called
-        } else {
+        if #unavailable(iOS 13.0) {
             beginBackgroundTask()
         }
     }

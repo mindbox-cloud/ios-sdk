@@ -27,7 +27,7 @@ class ValidatorsTestCase: XCTestCase {
         [
             "",
             "https://www google com/",
-            "www.google.com",
+            "www.google.com"
         ]
             .compactMap { URL(string: $0) }
             .forEach {

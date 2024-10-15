@@ -204,7 +204,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         NSLayoutConstraint.activate([
             snackbarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            snackbarView.heightAnchor.constraint(equalToConstant: height),
+            snackbarView.heightAnchor.constraint(equalToConstant: height)
         ])
     }
 }
@@ -212,7 +212,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
 // MARK: - GestureHandler
 
 extension SnackbarViewController: GestureHandler {
-    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
+    @objc
+    func imageTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? InAppImageOnlyView else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
@@ -222,7 +223,8 @@ extension SnackbarViewController: GestureHandler {
         onTapAction(action)
     }
     
-    @objc func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
+    @objc
+    func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
         guard let crossView = gesture.view else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return

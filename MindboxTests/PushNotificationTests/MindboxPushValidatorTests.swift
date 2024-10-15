@@ -54,7 +54,7 @@ final class MindboxPushValidatorTests: XCTestCase {
         let invalidNotification: [AnyHashable: Any] = [
             "aps": [
                 "alert": [
-                    "title": "Sample Message Title",
+                    "title": "Sample Message Title"
                 ],
                 "sound": "default",
                 "mutable-content": 1,

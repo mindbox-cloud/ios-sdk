@@ -29,7 +29,8 @@ final class TrackVisitManager {
         }
     }
 
-    @objc func track(data: TrackVisitData) throws {
+    @objc
+    func track(data: TrackVisitData) throws {
         if let userActivity = data.universalLink {
             try handleUniversalLink(userActivity)
         } else if let response = data.push {

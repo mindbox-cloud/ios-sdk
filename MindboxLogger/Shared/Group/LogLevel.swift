@@ -19,7 +19,8 @@ import Foundation
  4. fault ⚠️
  5. none
  */
-@objc public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
+@objc
+public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
     case debug = 0
     case info = 1
     case `default` = 2

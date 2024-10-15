@@ -13,10 +13,6 @@ struct URLRequestBuilder {
     
     let domain: String
     
-    init(domain: String) {
-        self.domain = domain
-    }
-    
     func asURLRequest(route: Route) throws -> URLRequest {
         let components = makeURLComponents(for: route)
 

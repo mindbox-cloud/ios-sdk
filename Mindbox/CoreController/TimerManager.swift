@@ -22,7 +22,7 @@ public final class TimerManager {
         }
     }
     
-    internal var deadline: TimeInterval? = nil
+    internal var deadline: TimeInterval?
     
     internal var seconds: TimeInterval = 0 {
         didSet {

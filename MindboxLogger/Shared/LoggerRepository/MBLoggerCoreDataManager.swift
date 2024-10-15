@@ -95,7 +95,7 @@ public class MBLoggerCoreDataManager {
     }
     
     public func getFirstLog() throws -> LogMessage? {
-        var fetchedLogMessage: LogMessage? = nil
+        var fetchedLogMessage: LogMessage?
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)
@@ -112,7 +112,7 @@ public class MBLoggerCoreDataManager {
     }
 
     public func getLastLog() throws -> LogMessage? {
-        var fetchedLogMessage: LogMessage? = nil
+        var fetchedLogMessage: LogMessage?
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(value: true)

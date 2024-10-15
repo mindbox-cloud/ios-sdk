@@ -5,7 +5,9 @@
 ////  Created by vailence on 19.06.2023.
 ////  Copyright © 2023 Mindbox. All rights reserved.
 ////
-//
+
+// swiftlint:disable comment_spacing
+
 //import Foundation
 //import XCTest
 //@testable import Mindbox

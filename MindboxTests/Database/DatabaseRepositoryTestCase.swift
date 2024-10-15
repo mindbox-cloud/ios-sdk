@@ -35,7 +35,11 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
     
     private func updateDatabaseRepositoryWith(createsDeprecated: Bool) {
-        (databaseRepository as! MockDatabaseRepository).createsDeprecated = createsDeprecated
+        guard let mockDatabaseRepository = databaseRepository as? MockDatabaseRepository else {
+            fatalError("Failed to cast databaseRepository to MockDatabaseRepository")
+        }
+        
+        mockDatabaseRepository.createsDeprecated = createsDeprecated
     }
     
     func testCreateDatabaseRepository() {

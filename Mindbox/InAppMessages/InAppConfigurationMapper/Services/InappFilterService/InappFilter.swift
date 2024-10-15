@@ -81,6 +81,8 @@ private extension InappsFilterService {
         return filteredInapps
     }
     
+    // FIXME: Rewrite this func in the future
+    // swiftlint:disable:next cyclomatic_complexity
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
         let responseInapps = responseInapps ?? []
         guard let abTests = abTests, !abTests.isEmpty else {

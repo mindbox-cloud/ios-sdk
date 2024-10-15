@@ -44,13 +44,13 @@ public class Logger {
                              line: Int = #line,
                              funcName: String = #function) {
         var logMessage: String = ""
-        logMessage = logMessage + "\n[\(error.errorType.rawValue) error: \(error.description ?? "No description")]"
+        logMessage += "\n[\(error.errorType.rawValue) error: \(error.description ?? "No description")]"
         if let status = error.status {
-            logMessage = logMessage + "\n[status: \(status)]"
+            logMessage += "\n[status: \(status)]"
         }
         
         if let statusCode = error.statusCode {
-            logMessage = logMessage + "\n[httpStatusCode: \(statusCode)]"
+            logMessage += "\n[httpStatusCode: \(statusCode)]"
         }
         
         if logMessage.isEmpty { return }
@@ -74,25 +74,25 @@ public class Logger {
 
         switch error {
         case .validationError:
-            logMessage = logMessage + "\n[validationError: \(error.errorDescription ?? "No description")]"
+            logMessage += "\n[validationError: \(error.errorDescription ?? "No description")]"
         case let .protocolError(e):
-            logMessage = logMessage + "\n[status: \(e.status)]"
-            logMessage = logMessage + "\n[responseError: \(error.errorDescription ?? "No description")]"
-            logMessage = logMessage + "\n[httpStatusCode: \(e.httpStatusCode)]"
+            logMessage += "\n[status: \(e.status)]"
+            logMessage += "\n[responseError: \(error.errorDescription ?? "No description")]"
+            logMessage += "\n[httpStatusCode: \(e.httpStatusCode)]"
         case let .serverError(e):
-            logMessage = logMessage + "\n\(e.description)"
+            logMessage += "\n\(e.description)"
         case let .internalError(e):
-            logMessage = logMessage + "\n[key: \(e.errorKey)]"
+            logMessage += "\n[key: \(e.errorKey)]"
             if let rawError = e.rawError {
-                logMessage = logMessage + "\n[message: \(rawError.localizedDescription)]"
+                logMessage += "\n[message: \(rawError.localizedDescription)]"
             }
         case let .invalidResponse(e):
             guard let e = e else { return }
-            logMessage = logMessage + "\n[response: \(String(describing: e))]"
+            logMessage += "\n[response: \(String(describing: e))]"
         case .connectionError:
-            logMessage = logMessage + "\n[connectionError]"
+            logMessage += "\n[connectionError]"
         case let .unknown(e):
-            logMessage = logMessage + "\n[error: \(e.localizedDescription)]"
+            logMessage += "\n[error: \(e.localizedDescription)]"
         }
 
         if logMessage.isEmpty { return }

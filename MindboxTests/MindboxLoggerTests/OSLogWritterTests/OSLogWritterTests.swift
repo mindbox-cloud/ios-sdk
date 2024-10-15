@@ -7,6 +7,9 @@
 //
 
 import XCTest
+
+// swiftlint:disable comment_spacing
+
 //
 //final class OSLogWritterTests: XCTestCase {
 //

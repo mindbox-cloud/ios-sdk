@@ -29,7 +29,7 @@ public class MindboxNotificationService: NSObject {
     // MARK: Public initializer
     
     /// Mindbox proxy for `NotificationsService` and `NotificationViewController`
-    public override init() {
+    override public init() {
         super.init()
         pushValidator = MindboxPushValidator()
     }
