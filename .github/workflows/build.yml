@@ -12,12 +12,11 @@ on:
       - '**'
 jobs:
   SwiftLint:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: cirruslabs/swiftlint-action@v1
-      with:
-        version: latest
+    - name: GitHub Action for SwiftLint
+      uses: norio-nomura/action-swiftlint@3.2.1
 
   build:
     runs-on: macos-latest
