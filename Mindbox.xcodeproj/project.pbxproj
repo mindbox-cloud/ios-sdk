@@ -3517,7 +3517,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/zsh;
-			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nif which swiftlint >/dev/null; then\n    CONFIG_FILE=\"${SRCROOT}/swiftlint.yml\"\n    if [ -f $CONFIG_FILE ]; then\n        swiftlint --config $CONFIG_FILE\n    else\n        echo \"warning: SwiftLint configuration file not found at ${CONFIG_FILE}\"\n        swiftlint\n    fi\nelse\n    echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nif which swiftlint >/dev/null; then\n    CONFIG_FILE=\"${SRCROOT}/.swiftlint.yml\"\n    if [ -f $CONFIG_FILE ]; then\n        swiftlint --config $CONFIG_FILE\n    else\n        echo \"warning: SwiftLint configuration file not found at ${CONFIG_FILE}\"\n        swiftlint\n    fi\nelse\n    echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
