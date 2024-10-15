@@ -22,7 +22,6 @@ final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
         }
 
         for i in ids {
-            
             let lowercaseValue = i.value.lowercased()
             let lowercaseName = targeting.name.lowercased()
             switch targeting.kind {
