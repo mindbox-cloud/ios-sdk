@@ -9,28 +9,28 @@ import Foundation
 
 final class OrTargetingChecker: InternalTargetingChecker<OrTargeting> {
     weak var checker: InAppTargetingCheckerProtocol?
-    
+
     override func prepareInternal(targeting: OrTargeting, context: inout PreparationContext) {
         for node in targeting.nodes {
             guard let checker = checker,
                     let target = checker.checkerMap[node] else {
                 return
             }
-            
+
             target(node).prepare(&context)
         }
     }
-    
+
     override func checkInternal(targeting: OrTargeting) -> Bool {
         guard let checker = checker else {
             return false
         }
-        
+
         for node in targeting.nodes {
             if node == .unknown {
                 return false
             }
-            
+
             guard let target = checker.checkerMap[node] else {
                 return false
             }
@@ -38,7 +38,7 @@ final class OrTargetingChecker: InternalTargetingChecker<OrTargeting> {
                 return true
             }
         }
-        
+
         return false
     }
 }

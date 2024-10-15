@@ -9,13 +9,13 @@
 import Foundation
 
 struct HTTPURLResponseStatusCodeValidator {
-    
+
     let statusCode: Int
-    
+
     enum StatusCodes {
-        
+
         case success, redirection, clientError, serverError
-        
+
         var range: ClosedRange<Int> {
             switch self {
             case .success:
@@ -28,7 +28,7 @@ struct HTTPURLResponseStatusCodeValidator {
                 return 500...599
             }
         }
-        
+
         init?(statusCode: Int) {
             switch statusCode {
             case StatusCodes.success.range:
@@ -44,11 +44,11 @@ struct HTTPURLResponseStatusCodeValidator {
             }
         }
     }
-    
+
     var isClientError: Bool {
         return StatusCodes(statusCode: statusCode) == .clientError
     }
-    
+
     func evaluate() -> Bool {
         guard let statusCode = StatusCodes(statusCode: statusCode) else {
             return false

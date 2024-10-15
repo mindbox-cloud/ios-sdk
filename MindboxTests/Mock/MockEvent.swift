@@ -11,7 +11,7 @@ import Foundation
 
 struct MockEvent: EventProtocol {
     let transactionId: String
-    
+
     var dateTimeOffset: Int64 {
         guard isRetry else {
             return 0
@@ -20,17 +20,17 @@ struct MockEvent: EventProtocol {
         let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
         return Int64(ms)
     }
-    
+
     let enqueueTimeStamp: Double
-    
+
     let serialNumber: String?
-    
+
     let type: Event.Operation
-    
+
     let isRetry: Bool
-    
+
     let body: String
-    
+
     init(type: Event.Operation, body: String) {
         self.transactionId = UUID().uuidString
         self.enqueueTimeStamp = Date().timeIntervalSince1970
@@ -39,7 +39,7 @@ struct MockEvent: EventProtocol {
         self.serialNumber = nil
         self.isRetry = false
     }
-    
+
     init?(_ event: CDEvent) {
         guard let transactionId = event.transactionId else {
             return nil

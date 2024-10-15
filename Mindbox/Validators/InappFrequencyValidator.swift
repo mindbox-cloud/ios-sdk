@@ -11,18 +11,18 @@ import MindboxLogger
 
 class InappFrequencyValidator: Validator {
     typealias T = InApp
-    
+
     let persistenceStorage: PersistenceStorage
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
-    
+
     func isValid(item: InApp) -> Bool {
         guard let frequency = item.frequency else {
             return false
         }
-        
+
         switch frequency {
             case .periodic(let periodicFrequency):
                 let validator = PeriodicFrequencyValidator(persistenceStorage: persistenceStorage)
@@ -38,11 +38,11 @@ class InappFrequencyValidator: Validator {
 
 class OnceFrequencyValidator {
     let persistenceStorage: PersistenceStorage
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
-    
+
     func isValid(item: OnceFrequency, id: String) -> Bool {
         let shownInappsDictionary = persistenceStorage.shownInappsDictionary ?? [:]
         var result = false
@@ -60,7 +60,7 @@ class OnceFrequencyValidator {
                     result = true
                 }
         }
-        
+
         Logger.common(message: "[Inapp frequency] Current frequency is [once] and kind is [\(item.kind.rawValue)]. Valid = \(result)",
                       level: .debug, category: .inAppMessages)
         return result
@@ -69,15 +69,15 @@ class OnceFrequencyValidator {
 
 class PeriodicFrequencyValidator {
     let persistenceStorage: PersistenceStorage
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
-    
+
     func isValid(item: PeriodicFrequency, id: String) -> Bool {
         guard item.value > 0 else {
             Logger.common(message: """
-            [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)]. 
+            [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)].
             Value (\(item.value)) is zero or negative.
             Inapp is not valid.
             """, level: .info, category: .inAppMessages)
@@ -89,16 +89,16 @@ class PeriodicFrequencyValidator {
             Logger.common(message: "shownInappsDictionary not exists. Inapp is not valid.", level: .error, category: .inAppMessages)
             return false
         }
-        
+
         guard let shownDate = inappsDict[id] else {
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)].
-            Inapp ID \(id) is never shown before. 
+            Inapp ID \(id) is never shown before.
             Keeping in-app.
             """, level: .info, category: .inAppMessages)
             return true
         }
-        
+
         let calendar = Calendar.current
         let component = item.unit.calendarComponent
         if let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: shownDate) {

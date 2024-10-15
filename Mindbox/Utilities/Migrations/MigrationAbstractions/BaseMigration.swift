@@ -20,38 +20,38 @@ import Foundation
 /// - Note: When creating a migration based on `BaseMigration` (with auto-increment of `versionCodeForMigration`),
 ///         make sure that you also increment the `MigrationConstant.sdkVersionCode`.
 class BaseMigration: MigrationProtocol {
-    
+
     /// The persistence storage used to manage the migration state.
     var persistenceStorage: PersistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-    
+
     /// Performs the specific migration logic. 
     /// Subclasses must implement this method to define the actual migration steps.
     /// - Throws: An error if the migration fails.
     func performMigration() throws {
         fatalError("Subclasses must implement the `performMigration` method without calling super.")
     }
-    
+
     // MARK: MigrationProtocol
-    
+
     /// A textual description of the migration. 
     /// Subclasses must override this property.
     var description: String {
         fatalError("Subclasses must implement the `description` property.")
     }
-    
+
     /// A condition that determines whether the migration is required.
     /// Subclasses must override this property.
     var isNeeded: Bool {
         fatalError("Subclasses must implement the `isNeeded` property.")
     }
-    
+
     /// The version number of the migration, which can be used to sort and determine
     /// whether to apply the migration. 
     /// Subclasses must override this property.
     var version: Int {
         fatalError("Subclasses must implement the `version` property.")
     }
-    
+
     /// Executes the migration by calling the `performMigration` method. If the migration is
     /// successful, it increments the version in the `persistenceStorage`. 
     /// This method is `final` and cannot be overridden by subclasses.

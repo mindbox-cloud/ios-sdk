@@ -10,13 +10,13 @@ import UIKit
 import MindboxLogger
 
 final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
-    
+
     enum Constants {
         static let oneThirdScreenHeight: CGFloat = UIScreen.main.bounds.height / 3.0
     }
-    
+
     var window: UIWindow?
-    
+
     func getWindow() -> UIWindow? {
         let window: UIWindow
         let screenBounds = UIScreen.main.bounds
@@ -31,7 +31,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
-        
+
         window.frame = windowFrame
         window.backgroundColor = .clear
         window.windowLevel = .normal + 3
@@ -52,7 +52,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
             viewController.view.frame = topController.view.frame
             topController.addChild(viewController)
             topController.view.addSubview(viewController.view)
-            
+
             viewController.view.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
                 viewController.view.topAnchor.constraint(equalTo: topController.view.topAnchor),
@@ -60,7 +60,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
                 viewController.view.leadingAnchor.constraint(equalTo: topController.view.leadingAnchor),
                 viewController.view.trailingAnchor.constraint(equalTo: topController.view.trailingAnchor)
             ])
-            
+
             viewController.didMove(toParent: topController)
             Logger.common(message: "In-app snackbar with id \(id) presented", level: .info, category: .inAppMessages)
         } else {
@@ -73,7 +73,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         viewController.removeFromParent()
         Logger.common(message: "In-app snackbar presentation dismissed", level: .debug, category: .inAppMessages)
     }
-    
+
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
         switch model {
             case .snackbar(let snackbarFormVariant):
@@ -97,7 +97,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
 private extension SnackbarPresentationStrategy {
     func getSafeAreaInset(gravity: GravityVerticalType) -> CGFloat {
         var safeAreaInset: CGFloat = 0
-        
+
         if gravity == .bottom {
             safeAreaInset = window?.safeAreaInsets.bottom ?? 0
         } else if gravity == .top {
@@ -106,7 +106,7 @@ private extension SnackbarPresentationStrategy {
 
         return safeAreaInset
     }
-    
+
     func getYPosition(gravity: GravityVerticalType, finalHeight: CGFloat, safeAreaInset: CGFloat) -> CGFloat {
         var y = UIScreen.main.bounds.height - finalHeight
         if gravity == .bottom {
@@ -114,7 +114,7 @@ private extension SnackbarPresentationStrategy {
         } else if gravity == .top {
             y = safeAreaInset
         }
-        
+
         return y
     }
 }

@@ -13,11 +13,11 @@ class MockImageDownloader: ImageDownloader {
     var expectedLocalURL: URL?
     var expectedResponse: HTTPURLResponse?
     var expectedError: Error?
-    
+
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
         completion(expectedLocalURL, expectedResponse, expectedError)
     }
-    
+
     func cancel() {
     }
 }

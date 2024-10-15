@@ -12,20 +12,20 @@ import MindboxLogger
 /// A class responsible for managing and executing migrations.
 /// It keeps a list of migrations, checks if they are needed, and runs them in the correct order.
 final class MigrationManager {
-    
+
     /// The list of migration objects that conform to `MigrationProtocol`.
     private var migrations: [MigrationProtocol]
-    
+
     /// The local sdk version code used to determine whether migrations need to be performed.
     /// By default, it is set to `Constants.Migration.sdkVersionCode`.
     /// Changing this value in `convenience init` is used when writing tests.
     private var localSdkVersionCode: Int
-    
+
     /// The persistence storage used for managing various application states,
     /// including migration state and other critical data. It provides methods
     /// for performing resets and managing configurations.
     private var persistenceStorage: PersistenceStorage
-    
+
     /// Initializes the migration manager with the provided persistence storage.
     /// - Parameter persistenceStorage: The persistence storage used for managing various application states,
     ///                                 including migration state and other critical data. It provides methods
@@ -49,7 +49,7 @@ final class MigrationManager {
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
         self.localSdkVersionCode = Constants.Migration.sdkVersionCode
-        
+
         self.migrations = [
             MigrationShownInAppsIds()
         ]
@@ -59,21 +59,21 @@ final class MigrationManager {
 // MARK: - MigrationManagerProtocol
 
 extension MigrationManager: MigrationManagerProtocol {
-    
+
     /// Performs any necessary migrations. If this is the first installation, it sets the migration version code without performing migrations.
     /// If any migration that involves `Constants.Migration.sdkVersionCode` and `persistenceStorage.versionCodeForMigration` fails,
     /// a soft reset is performed on the persistence storage to ensure that the system remains in a consistent state.
     func migrate() {
-        
+
         guard persistenceStorage.isInstalled else {
             let firstInstallationMessage = "[Migrations] The first installation. Migrations will not be performed."
             Logger.common(message: firstInstallationMessage, level: .info, category: .migration)
             persistenceStorage.versionCodeForMigration = localSdkVersionCode
             return
         }
-        
+
         var migrationsStarted: Bool = false
-        
+
         migrations
             .lazy
             .filter { $0.isNeeded }
@@ -89,16 +89,16 @@ extension MigrationManager: MigrationManagerProtocol {
                     Logger.common(message: errorMessage, level: .error, category: .migration)
                 }
             }
-        
+
         if persistenceStorage.versionCodeForMigration != localSdkVersionCode {
             Logger.common(message: "[Migrations] Migrations failed, soft reset memory", level: .info, category: .migration)
             persistenceStorage.softReset()
             persistenceStorage.versionCodeForMigration = localSdkVersionCode
             return
         }
-        
+
         let message = migrationsStarted ? "[Migrations] Migrations have been successful" : "[Migrations] Migrations have been skipped"
-        
+
         Logger.common(message: message, level: .info, category: .migration)
     }
 }
@@ -106,7 +106,7 @@ extension MigrationManager: MigrationManagerProtocol {
 // MARK: - Convenience initializer for testing purposes
 
 extension MigrationManager {
-    
+
     /// Convenience initializer for testing purposes. This initializer allows for the overwriting of
     /// all existing migrations and the local migration version.
     /// - Parameters:

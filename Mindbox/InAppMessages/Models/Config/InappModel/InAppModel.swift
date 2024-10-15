@@ -14,7 +14,7 @@ struct InAppDTO: Decodable, Equatable {
     var frequency: InappFrequency?
     let targeting: Targeting
     let form: InAppFormDTO
-    
+
     enum CodingKeys: CodingKey {
         case id
         case sdkVersion
@@ -22,21 +22,21 @@ struct InAppDTO: Decodable, Equatable {
         case targeting
         case form
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
-        
+
         if frequency == .unknown {
             throw CustomDecodingError.unknownType("Frequency has unknown type. Inapp will be ignored.")
         }
-        
+
         if frequency == nil {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
-        
+
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
     }

@@ -22,12 +22,12 @@ final class LegacyFormatStrategy: NotificationFormatStrategy {
             Logger.common(message: "LegacyFormatStrategy: Failed to parse legacy notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
-    
+
         let title = alertData["title"] as? String
         let sound = apsData["sound"] as? String
         let mutableContent = apsData["mutable-content"] as? Int
         let contentAvailable = apsData["content-available"] as? Int
-        
+
         let buttons = (apsData["buttons"] as? [[String: Any]])?.compactMap { dict -> MBPushNotificationButton? in
             guard let text = dict["text"] as? String,
                   let url = dict["url"] as? String,
@@ -37,7 +37,7 @@ final class LegacyFormatStrategy: NotificationFormatStrategy {
             }
             return MBPushNotificationButton(text: text, url: url, uniqueKey: uniqueKey)
         }
-        
+
         Logger.common(message: "LegacyFormatStrategy: Successfully parsed legacy notification format.", level: .info, category: .notification)
         return MBPushNotification(
             aps: MBAps(alert: MBApsAlert(title: title, body: body),
@@ -63,7 +63,7 @@ final class CurrentFormatStrategy: NotificationFormatStrategy {
             Logger.common(message: "CurrentFormatStrategy: Failed to parse current notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
-        
+
         Logger.common(message: "CurrentFormatStrategy: Successfully parsed current notification format.", level: .info, category: .notification)
         return notificationModel
     }

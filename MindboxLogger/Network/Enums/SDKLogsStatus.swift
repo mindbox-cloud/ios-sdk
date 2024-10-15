@@ -13,7 +13,7 @@ public enum SDKLogsStatus: Equatable {
     case elderLog(date: String)
     case latestLog(date: String)
     case largeSize
-    
+
     public var value: String {
         switch self {
         case .ok:

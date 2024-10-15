@@ -21,7 +21,7 @@ extension MBContainer {
                            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
                            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
         }
-        
+
         register(GuaranteedDeliveryManager.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
@@ -31,7 +31,7 @@ extension MBContainer {
                 databaseRepository: databaseRepository,
                 eventRepository: eventRepository)
         }
-        
+
         register(InAppConfigurationMapperProtocol.self) {
             let inappFilterService = DI.injectOrFail(InappFilterProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
@@ -40,7 +40,7 @@ extension MBContainer {
                                             targetingChecker: targetingChecker,
                                             dataFacade: dataFacade)
         }
-        
+
         register(InAppConfigurationManagerProtocol.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppConfigurationManager(
@@ -49,7 +49,7 @@ extension MBContainer {
                 inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
                 persistenceStorage: persistenceStorage)
         }
-                                                    
+
         return self
     }
 }

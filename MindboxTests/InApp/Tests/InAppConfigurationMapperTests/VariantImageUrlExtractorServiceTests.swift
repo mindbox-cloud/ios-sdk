@@ -10,9 +10,9 @@ import XCTest
 @testable import Mindbox
 
 final class VariantImageUrlExtractorServiceTests: XCTestCase {
-    
+
     var sut: VariantImageUrlExtractorServiceProtocol!
-    
+
     override func setUp() {
         super.setUp()
         sut = VariantImageUrlExtractorService()
@@ -22,7 +22,7 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
         sut = nil
         super.tearDown()
     }
-    
+
     func decodeJSON<T: Decodable>(_ json: String, to type: T.Type) -> T? {
             guard let data = json.data(using: .utf8) else { return nil }
             let decoder = JSONDecoder()
@@ -34,7 +34,7 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
                 return nil
             }
         }
-        
+
     func testExtractUrls_modal_all_valid() {
         let formVariantJSON = """
         {
@@ -108,21 +108,21 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
             "$type": "modal"
         }
         """
-        
+
         guard let formVariant: MindboxFormVariant = decodeJSON(formVariantJSON, to: MindboxFormVariant.self) else {
             XCTFail("Could not decode MindboxFormVariant from JSON")
             return
         }
-        
+
         let extractedUrls = sut.extractImageURL(from: formVariant)
         let expectedUrls = [
             "https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg",
             "https://mindbox-pushok.umbrellait.tech:444/?image=mindbox.png&broken=true&error=wait&speed=20"
         ]
-        
+
         XCTAssertEqual(extractedUrls, expectedUrls)
     }
-    
+
     func testExtractUrls_snackbar_all_valid() {
         let formVariantJSON = """
         {
@@ -196,18 +196,18 @@ final class VariantImageUrlExtractorServiceTests: XCTestCase {
             "$type": "snackbar"
         }
         """
-        
+
         guard let formVariant: MindboxFormVariant = decodeJSON(formVariantJSON, to: MindboxFormVariant.self) else {
             XCTFail("Could not decode MindboxFormVariant from JSON")
             return
         }
-        
+
         let extractedUrls = sut.extractImageURL(from: formVariant)
         let expectedUrls = [
             "https://www.getmailbird.com/setup/assets/imgs/logos/gmail.com.webp",
             "https://images.pexels.com/photos/1402787/pexels-photo-1402787.jpeg?auto=compress&cs=tinysrgb&w=6000&h=4000&dpr=2"
         ]
-        
+
         XCTAssertEqual(extractedUrls, expectedUrls)
     }
 }

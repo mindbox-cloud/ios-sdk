@@ -18,9 +18,9 @@ protocol InAppActionHandlerProtocol {
 }
 
 final class InAppActionHandler: InAppActionHandlerProtocol {
-    
+
     private let actionUseCaseFactory: UseCaseFactoryProtocol
-    
+
     init(actionUseCaseFactory: UseCaseFactoryProtocol) {
         self.actionUseCaseFactory = actionUseCaseFactory
     }
@@ -29,11 +29,11 @@ final class InAppActionHandler: InAppActionHandlerProtocol {
                       for id: String,
                       onTap: @escaping InAppMessageTapAction,
                       close: @escaping () -> Void) {
-        
+
         guard let action = actionUseCaseFactory.createUseCase(action: action) else {
-            return 
+            return
         }
-        
+
         action.onTapAction(id: id, onTap: onTap, close: close)
     }
 }

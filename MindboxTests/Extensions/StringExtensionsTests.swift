@@ -11,7 +11,7 @@ import XCTest
 @testable import Mindbox
 
 final class StringExtensionsTests: XCTestCase {
-    
+
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -45,7 +45,7 @@ final class StringExtensionsTests: XCTestCase {
             (str: "10675199.02:48:05.4775807", result: 922337203685477),
             (str: "-10675199.02:48:05.4775808", result: -922337203685477)
         ]
-        
+
         for (str, result) in testPositiveCases {
             XCTContext.runActivity(named: "string(\(str)) parse to \(String(describing: result))") { _ in
                 do {
@@ -57,7 +57,7 @@ final class StringExtensionsTests: XCTestCase {
             }
         }
     }
-    
+
     func test_parseTimeSpanToMillisNegative() throws {
         let testCases: Array = [
             "6",
@@ -85,7 +85,7 @@ final class StringExtensionsTests: XCTestCase {
             "+0:0:0",
             "12345678901234567890.00:00:00.00"
         ]
-        
+
         for str in testCases {
             try XCTContext.runActivity(named: "string(\(str)) parse with error") { _ in
                 XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in

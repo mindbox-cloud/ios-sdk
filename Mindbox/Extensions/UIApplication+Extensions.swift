@@ -18,7 +18,7 @@ extension UIApplication {
             }
         }
     }
-    
+
     private var describeApplicationState: String {
         switch applicationState {
         case .active:

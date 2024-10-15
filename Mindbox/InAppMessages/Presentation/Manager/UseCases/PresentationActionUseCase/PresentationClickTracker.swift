@@ -20,15 +20,15 @@ protocol PresentationActionUseCaseProtocol {
 class PresentationClickTracker {
     private let tracker: InAppMessagesTrackerProtocol
     private var clickTracked = false
-    
+
     init(tracker: InAppMessagesTrackerProtocol) {
         self.tracker = tracker
     }
-    
+
     func trackClick(id: String) {
         Logger.common(message: "Presentation completed", level: .debug, category: .inAppMessages)
         guard !clickTracked else { return }
-        
+
         do {
             try tracker.trackClick(id: id)
             clickTracked = true

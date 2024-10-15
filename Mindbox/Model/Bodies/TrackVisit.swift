@@ -16,7 +16,7 @@ struct TrackVisit: Codable {
     let requestUrl: URL?
 
     let source: TrackVisitSource?
-    
+
     let sdkVersionNumeric: Int
 
     init(url: URL? = nil, source: TrackVisitSource? = nil) {

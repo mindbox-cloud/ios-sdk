@@ -11,19 +11,19 @@ import UserNotifications
 import MindboxLogger
 
 public protocol MindboxNotificationServiceProtocol: MindboxPushNotificationProtocol {
-    
+
     var contentHandler: ((UNNotificationContent) -> Void)? { get set }
     var bestAttemptContent: UNMutableNotificationContent? { get set }
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of `NotificationService`
     func didReceive(
         _ request: UNNotificationRequest,
         withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     )
-    
+
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     func serviceExtensionTimeWillExpire()
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of `NotificationService`. 
     /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
     /// At the moment, this method only writes a push delivery log.
@@ -33,7 +33,7 @@ public protocol MindboxNotificationServiceProtocol: MindboxPushNotificationProto
 // MARK: - MindboxNotificationServiceProtocol
 
 extension MindboxNotificationService: MindboxNotificationServiceProtocol {
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of `NotificationService`
     public func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
@@ -44,7 +44,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
         }
 
         pushDelivered(request)
-        
+
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: allowedUrl) {
@@ -56,7 +56,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
             proceedFinalStage(bestAttemptContent)
         }
     }
-    
+
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     public func serviceExtensionTimeWillExpire() {
         if let bestAttemptContent = bestAttemptContent {
@@ -64,7 +64,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
             proceedFinalStage(bestAttemptContent)
         }
     }
-    
+
     /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService.
     /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
     /// At the moment, this method only writes a push delivery log.
@@ -88,13 +88,13 @@ private extension MindboxNotificationService {
             }
 
             Logger.response(data: data, response: response, error: error)
-            
+
             if let attachment = self.saveImage(data) {
                 self.bestAttemptContent?.attachments = [attachment]
             }
         }.resume()
     }
-    
+
     func saveImage(_ data: Data) -> UNNotificationAttachment? {
         let name = UUID().uuidString
         guard let format = ImageFormat(data) else {
@@ -113,7 +113,7 @@ private extension MindboxNotificationService {
             return nil
         }
     }
-    
+
     func proceedFinalStage(_ bestAttemptContent: UNMutableNotificationContent) {
         bestAttemptContent.categoryIdentifier = Constants.categoryIdentifier
         contentHandler?(bestAttemptContent)

@@ -14,23 +14,23 @@ protocol VariantFilterProtocol {
 }
 
 final class VariantFilterService: VariantFilterProtocol {
-    
+
     private let layersFilter: LayersFilterProtocol
     private let elementsFilter: ElementsFilterProtocol
     private let contentPositionFilter: ContentPositionFilterProtocol
-    
+
     init(layersFilter: LayersFilterProtocol, elementsFilter: ElementsFilterProtocol, contentPositionFilter: ContentPositionFilterProtocol) {
         self.layersFilter = layersFilter
         self.elementsFilter = elementsFilter
         self.contentPositionFilter = contentPositionFilter
     }
-    
+
     func filter(_ variants: [MindboxFormVariantDTO]?) throws -> [MindboxFormVariant] {
         var resultVariants: [MindboxFormVariant] = []
         guard let variants = variants else {
             throw CustomDecodingError.unknownType("VariantFilterService validation not passed.")
         }
-        
+
         for variant in variants {
             switch variant {
                 case .modal(let modalFormVariantDTO):
@@ -38,10 +38,10 @@ final class VariantFilterService: VariantFilterProtocol {
                           let background = content.background else {
                         throw CustomDecodingError.unknownType("VariantFilterService validation not passed.")
                     }
-                    
+
                     let filteredLayers = try layersFilter.filter(background.layers)
                     let fileterdElements = try elementsFilter.filter(content.elements)
-                    
+
                     let backgroundModel = ContentBackground(layers: filteredLayers)
 
                     let contentModel = InappFormVariantContent(background: backgroundModel, elements: fileterdElements)
@@ -53,11 +53,11 @@ final class VariantFilterService: VariantFilterProtocol {
                           let background = content.background else {
                         throw CustomDecodingError.unknownType("VariantFilterService validation not passed.")
                     }
-                    
+
                     let filteredLayers = try layersFilter.filter(background.layers)
                     let filteredElements = try elementsFilter.filter(content.elements)
                     let contentPosition = try contentPositionFilter.filter(content.position)
-                    
+
                     let backgroundModel = ContentBackground(layers: filteredLayers)
                     let contentModel = SnackbarFormVariantContent(background: backgroundModel,
                                                                    position: contentPosition,
@@ -70,7 +70,7 @@ final class VariantFilterService: VariantFilterProtocol {
                     continue
             }
         }
-        
+
         return resultVariants
     }
 }

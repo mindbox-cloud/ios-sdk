@@ -9,11 +9,11 @@
 import Foundation
 
 protocol SessionManager: AnyObject {
-    
+
     var isActiveNow: Bool { get }
     var sessionHandler: ((Bool) -> Void)? { get set }
-    
+
     func trackDirect()
-    
+
     func trackForeground()
 }

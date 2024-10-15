@@ -19,7 +19,7 @@ final class MindboxPushValidator: PushValidator {
             Logger.common(message: "MindboxPushValidator: Failed to convert item to Mindbox push model. Validation failed.", level: .error, category: .notification)
             return false
         }
-        
+
         Logger.common(message: "MindboxPushValidator: Successfully validated Mindbox push model.", level: .info, category: .notification)
         return true
     }

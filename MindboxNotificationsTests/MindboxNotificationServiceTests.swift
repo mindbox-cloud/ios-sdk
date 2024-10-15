@@ -19,7 +19,7 @@ final class MindboxNotificationServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         service = MindboxNotificationService()
-        
+
         let aps: [AnyHashable: Any] = [
             "mutable-content": 1,
             "alert": [
@@ -29,7 +29,7 @@ final class MindboxNotificationServiceTests: XCTestCase {
             "content-available": 1,
             "sound": "default"
         ]
-        
+
         let userInfo: [AnyHashable: Any] = [
             "clickUrl": "https://mindbox.ru/",
             "payload": "{\n  \"payload\": \"data\"\n}",
@@ -49,14 +49,14 @@ final class MindboxNotificationServiceTests: XCTestCase {
             ],
             "aps": aps
         ]
-        
+
         let content = UNMutableNotificationContent()
         content.userInfo = userInfo
         content.title = "Test title"
         content.body = "Test description"
         mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
     }
-    
+
     override func tearDown() {
         service = nil
         mockNotificationRequest = nil
@@ -66,18 +66,18 @@ final class MindboxNotificationServiceTests: XCTestCase {
     func testDidReceiveWithContentHandler() {
         let expectation = self.expectation(description: "Content Handler Called")
         var receivedContent: UNNotificationContent?
-        
+
         service.didReceive(mockNotificationRequest) { content in
             receivedContent = content
             expectation.fulfill()
         }
-        
+
         waitForExpectations(timeout: 1, handler: nil)
         XCTAssertNotNil(service.contentHandler)
         XCTAssertNotNil(service.bestAttemptContent)
         XCTAssertEqual(service.bestAttemptContent?.userInfo["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
         XCTAssertNotNil(receivedContent)
-        
+
         XCTAssertEqual(service.bestAttemptContent?.title, "Test title")
         XCTAssertEqual(service.bestAttemptContent?.body, "Test description")
         XCTAssertFalse(service.bestAttemptContent!.attachments.isEmpty)

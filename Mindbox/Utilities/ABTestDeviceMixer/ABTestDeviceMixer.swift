@@ -17,13 +17,13 @@ class ABTestDeviceMixer {
         return try stringModulusHash(identifier: identifier.uuidString.uppercased(),
                                  saltUpper: salt.uppercased())
     }
-    
+
     private func stringModulusHash(identifier: String, saltUpper: String) throws -> Int {
         let saltedId = identifier + saltUpper
         guard let saltedData = saltedId.data(using: .utf8) else {
             throw MindboxError.internalError(.init(errorKey: .general, reason: "SaltedData failed."))
         }
-        
+
         let hash = sha256.hash(data: saltedData)
         guard hash.count >= 32 else {
             throw MindboxError.internalError(.init(errorKey: .general, reason: "Hash count failed."))
@@ -34,7 +34,7 @@ class ABTestDeviceMixer {
             | (Int(hash[29]) << 16)
             | (Int(hash[30]) << 8)
             | Int(hash[31])
-        
+
         let unsigned = UInt(bitPattern: bigEndianLastBytesAsInt)
         return Int(unsigned % 100)
     }

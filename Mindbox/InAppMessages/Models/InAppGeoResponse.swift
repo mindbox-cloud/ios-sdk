@@ -20,7 +20,7 @@ struct InAppGeoResponse: Codable, Equatable {
 }
 
 struct FetchInAppGeoRoute: Route {
-    
+
     var method: HTTPMethod { .get }
 
     var path: String { "/geo" }

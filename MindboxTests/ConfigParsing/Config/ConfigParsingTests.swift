@@ -13,27 +13,27 @@ import XCTest
 
 fileprivate enum Config: String, Configurable {
     typealias DecodeType = ConfigResponse
-    
+
     case configWithSettingsABTestsMonitoringInapps = "ConfigWithSettingsABTestsMonitoringInapps" // Correct config
-    
+
     case configSettingsError = "ConfigSettingsError" // Key is `settingsTest` instead of `settings`
     case configSettingsTypeError = "ConfigSettingsTypeError" // Type of `settings` is Int instead of Settings
-    
+
     case configMonitoringError = "ConfigMonitoringError" // Key is `monitoringTest` instead of `monitoring`
     case configMonitoringTypeError = "ConfigMonitoringTypeError" // Type of `monitoring` is Int instead of Monitoring
-    
+
     case configABTestsError = "ConfigABTestsError" // Key is `abtestsTest` instead of `abtests`
     case configABTestsTypeError = "ConfigABTestsTypeError" // Type of `abtests` is Int instead of [ABTest]
-    
+
     case configInAppsError = "ConfigInAppsError" // Key is `inappsTest` instead of `inapps`
     case configInAppsTypeError = "ConfigInAppsTypeError" // Type of `inapps` is Int instead of FailableDecodableArray<InAppDTO>
-    
+
     case configABTestsOneElementError = "ConfigABTestsOneElementError" // Key is `saltTest` instead of `salt`
     case configABTestsOneElementTypeError = "ConfigABTestsOneElementTypeError" // Type of `variants` is Int instead of [ABTestVariant]
 }
 
 final class ConfigParsingTests: XCTestCase {
-    
+
     func test_Config_shouldParseSuccessfully() throws {
         // Correct config
         let config = try! Config.configWithSettingsABTestsMonitoringInapps.getConfig()
@@ -42,7 +42,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.settings, "Must NOT be nil")
         XCTAssertNotNil(config.monitoring, "Must NOT be nil")
     }
-    
+
     func test_Config_withSettingsError_shouldSetSettingsToNil() {
         // Key is `settingsTest` instead of `settings`
         let config = try! Config.configSettingsError.getConfig()
@@ -51,7 +51,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.abtests)
         XCTAssertNotNil(config.monitoring)
     }
-    
+
     func test_Config_withSettingsTypeError_shouldSetSettingsToNil() {
         // Type of `settings` is Int instead of Settings
         let config = try! Config.configSettingsTypeError.getConfig()
@@ -60,7 +60,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.abtests)
         XCTAssertNotNil(config.monitoring)
     }
-    
+
     func test_Config_withMonitoringError_shouldSetMonitoringToNil() {
         // Key is `monitoringTest` instead of `monitoring`
         let config = try! Config.configMonitoringError.getConfig()
@@ -69,7 +69,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.inapps)
         XCTAssertNotNil(config.abtests)
     }
-    
+
     func test_Config_withMonitoringTypeError_shouldSetMonitoringToNil() {
         // Type of `monitoring` is Int instead of Monitoring
         let config = try! Config.configMonitoringTypeError.getConfig()
@@ -78,7 +78,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.inapps)
         XCTAssertNotNil(config.abtests)
     }
-    
+
     func test_Config_withABTestsError_shouldSetABTestsToNil() {
         // Key is `abtestsTest` instead of `abtests`
         let config = try! Config.configABTestsError.getConfig()
@@ -87,7 +87,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.settings)
         XCTAssertNotNil(config.inapps)
     }
-    
+
     func test_Config_withABTestsTypeError_shouldSetABTestsToNil() {
         // Type of `abtests` is Int instead of [ABTest]
         let config = try! Config.configABTestsTypeError.getConfig()
@@ -96,7 +96,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.settings)
         XCTAssertNotNil(config.inapps)
     }
-    
+
     func test_Config_withInAppsError_shouldSetInAppsToNil() {
         // Key is `inappsTest` instead of `inapps`
         let config = try! Config.configInAppsError.getConfig()
@@ -105,7 +105,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.monitoring)
         XCTAssertNotNil(config.settings)
     }
-    
+
     func test_Config_withInAppsTypeError_shouldSetInAppsToNil() {
         // Type of `inapps` is Int instead of FailableDecodableArray<InAppDTO>
         let config = try! Config.configInAppsTypeError.getConfig()
@@ -114,7 +114,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.monitoring)
         XCTAssertNotNil(config.settings)
     }
-    
+
     func test_Config_withABTestsOneElementError_shouldSetABTestsToNil() {
         // Key is `saltTest` instead of `salt`
         let config = try! Config.configABTestsOneElementError.getConfig()
@@ -123,7 +123,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.settings)
         XCTAssertNotNil(config.inapps)
     }
-    
+
     func test_Config_withABTestsOneElementTypeError_shouldSetABTestsToNil() {
         // Type of `variants` is Int instead of [ABTestVariant]
         let config = try! Config.configABTestsOneElementTypeError.getConfig()

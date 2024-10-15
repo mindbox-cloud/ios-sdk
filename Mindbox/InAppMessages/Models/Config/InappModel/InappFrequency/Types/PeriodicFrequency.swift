@@ -11,7 +11,7 @@ import Foundation
 struct PeriodicFrequency: Decodable, Equatable {
     let unit: Unit
     let value: Int
-    
+
     enum Unit: String, Decodable {
         case seconds
         case minutes
@@ -21,11 +21,11 @@ struct PeriodicFrequency: Decodable, Equatable {
         init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             let decodedString = try container.decode(String.self).lowercased()
-            
+
             guard let value = Unit(rawValue: decodedString) else {
                 throw DecodingError.dataCorruptedError(in: container, debugDescription: "Неизвестная единица времени")
             }
-            
+
             self = value
         }
     }

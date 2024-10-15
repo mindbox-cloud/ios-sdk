@@ -27,7 +27,7 @@ public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
     case error = 3
     case fault = 4
     case none = 5
-    
+
     var emoji: String {
         switch self {
         case .none:
@@ -44,7 +44,7 @@ public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
             return "[⚠️]"
         }
     }
-    
+
     public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
         lhs.rawValue < rhs.rawValue
     }

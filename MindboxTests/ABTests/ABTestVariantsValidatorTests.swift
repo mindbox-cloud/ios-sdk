@@ -11,20 +11,20 @@ import XCTest
 
 class ABTestVariantsValidatorTests: XCTestCase {
     var variantValidator: ABTestVariantsValidator!
-    
+
     struct TestCase {
         let variant: ABTest.ABTestVariant?
         let isValid: Bool
     }
-    
+
     var testCases: [TestCase] = []
-    
+
     override func setUp() {
         super.setUp()
         variantValidator = DI.injectOrFail(ABTestVariantsValidator.self)
-        
+
         // TODO: - Divide to few different unit tests.
-        
+
         let object1 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
         let object2 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp2"])
         testCases = [
@@ -39,20 +39,20 @@ class ABTestVariantsValidatorTests: XCTestCase {
             TestCase(variant: nil, isValid: false) // variant is nil
         ]
     }
-    
+
     override func tearDown() {
         variantValidator = nil
         testCases = []
         super.tearDown()
     }
-    
+
     func testVariantIsValid() {
         for testCase in testCases {
             let result = variantValidator.isValid(item: testCase.variant)
             XCTAssertEqual(result, testCase.isValid, "Expected \(testCase.isValid) for variant \(String(describing: testCase.variant)), but got \(result)")
         }
     }
-    
+
     private func createVariant(id: String = "Test",
                                lower: Int = 0,
                                upper: Int = 100,

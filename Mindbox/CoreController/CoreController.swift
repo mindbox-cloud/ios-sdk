@@ -25,13 +25,13 @@ final class CoreController {
     var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
-        
+
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
-            
+
             DI.injectOrFail(MigrationManagerProtocol.self).migrate()
-            
+
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
@@ -39,13 +39,13 @@ final class CoreController {
             } else {
                 self.repeatInitialization(with: configuration)
             }
-            
+
             self.guaranteedDeliveryManager.canScheduleOperations = true
-            
+
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
             Logger.common(message: appStateMessage, level: .info, category: .general)
         }
-        
+
         Logger.common(message: "[Configuration]: \(configuration)", level: .info, category: .general)
         Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
         Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
@@ -55,7 +55,7 @@ final class CoreController {
     func apnsTokenDidUpdate(token: String) {
         controllerQueue.async {
             let isNotificationsEnabled = self.notificationStatus()
-            
+
             if self.persistenceStorage.needUpdateInfoOnce ?? true {
                 self.updateInfo(apnsToken: token, isNotificationsEnabled: isNotificationsEnabled)
                 self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
@@ -63,7 +63,7 @@ final class CoreController {
                 self.persistenceStorage.needUpdateInfoOnce = false
                 return
             }
-            
+
             if self.persistenceStorage.isInstalled {
                 self.updateInfo(
                     apnsToken: token,
@@ -133,7 +133,7 @@ final class CoreController {
             Logger.common(message: "Unable to find deviceUUID in persistenceStorage", level: .error, category: .general)
             return
         }
-        
+
         if configValidation.changedState != .none {
             Logger.common(message: "Mindbox Configuration changed", level: .info, category: .general)
             install(
@@ -272,13 +272,13 @@ final class CoreController {
                 }
             }
         }
-        
+
         let timer = DI.injectOrFail(TimerManager.self)
         timer.configurate(trackEvery: 20 * 60) {
             Logger.common(message: "Scheduled Time tracker started")
             sessionManager.trackForeground()
         }
-        
+
         timer.setupTimer()
     }
 }

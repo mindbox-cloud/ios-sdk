@@ -10,12 +10,12 @@ import Foundation
 import MindboxLogger
 
 class ABTestValidator: Validator {
-    
+
     typealias T = ABTest?
-    
+
     private let sdkVersionValidator: SDKVersionValidator
     private let variantsValidator: ABTestVariantsValidator
-    
+
     init(sdkVersionValidator: SDKVersionValidator, variantsValidator: ABTestVariantsValidator) {
         self.sdkVersionValidator = sdkVersionValidator
         self.variantsValidator = variantsValidator
@@ -26,7 +26,7 @@ class ABTestValidator: Validator {
             Logger.common(message: "The element in abtests block cannot be null. All abtests will not be used.")
             return false
         }
-        
+
         if item.id.isEmpty {
             Logger.common(message: "The field 'id' in abtests block cannot be null. All abtests will not be used.")
             return false
@@ -56,13 +56,13 @@ class ABTestValidator: Validator {
         let sortedVariants = variants.sorted {
             ($0.modulus?.lower ?? 0) < ($1.modulus?.lower ?? 0)
         }
-        
+
         for variant in sortedVariants {
             guard let modulus = variant.modulus, let upper = modulus.upper else {
                 Logger.common(message: "In abtest \(item.id) 'variants' field contains a variant with a nil modulus. All abtests will not be used.")
                 return false
             }
-            
+
             if modulus.lower == start {
                 start = upper
             } else {
@@ -70,12 +70,12 @@ class ABTestValidator: Validator {
                 return false
             }
         }
-        
+
         if !(99...100).contains(start) {
             Logger.common(message: "In abtest \(item.id) 'variants' field does not have full cover. All abtests will not be used.")
             return false
         }
-        
+
         return true
     }
 }

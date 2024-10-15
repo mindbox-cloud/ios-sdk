@@ -11,7 +11,7 @@ import UIKit
 import MindboxLogger
 
 class BackgroundTaskManagerProxy {
-    
+
     weak var gdManager: GuaranteedDeliveryManager? {
         didSet {
             taskManagers.forEach {
@@ -19,12 +19,12 @@ class BackgroundTaskManagerProxy {
             }
         }
     }
-        
+
     private var taskManagers: [BackgroundTaskManagerType] = []
-    
+
     private let persistenceStorage: PersistenceStorage
     private let databaseRepository: MBDatabaseRepository
-    
+
     init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
@@ -59,11 +59,11 @@ class BackgroundTaskManagerProxy {
             ]
         }
     }
-    
+
     func endBackgroundTask(success: Bool) {
         taskManagers.forEach { $0.endBackgroundTask(success: success) }
     }
-    
+
     func registerBGTasks(
         appGDRefreshIdentifier: String,
         appGDProcessingIdentifier: String,
@@ -77,10 +77,10 @@ class BackgroundTaskManagerProxy {
             )
         }
     }
-    
+
     func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         taskManagers.forEach {
             $0.application(application, performFetchWithCompletionHandler: completionHandler)
         }
-    } 
+    }
 }

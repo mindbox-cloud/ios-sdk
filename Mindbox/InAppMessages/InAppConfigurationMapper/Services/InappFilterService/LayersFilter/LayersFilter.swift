@@ -16,19 +16,19 @@ protocol LayersFilterProtocol {
 final class LayersFilterService: LayersFilterProtocol {
     private let actionFilter: LayerActionFilterProtocol
     private let sourceFilter: LayersSourceFilterProtocol
-    
+
     init(actionFilter: LayerActionFilterProtocol, sourceFilter: LayersSourceFilterProtocol) {
         self.actionFilter = actionFilter
         self.sourceFilter = sourceFilter
     }
-    
+
     func filter(_ layers: [ContentBackgroundLayerDTO]?) throws -> [ContentBackgroundLayer] {
         var filteredLayers: [ContentBackgroundLayer] = []
-        
+
         guard let layers = layers else {
             throw CustomDecodingError.unknownType("LayersFilterService validation not passed.")
         }
-        
+
         for layer in layers {
             switch layer {
                 case .image(let imageContentBackgroundLayerDTO):
@@ -41,11 +41,11 @@ final class LayersFilterService: LayersFilterProtocol {
                     Logger.common(message: "Unknown type of layer. Layer will be skipped.", level: .debug, category: .inAppMessages)
             }
         }
-        
+
         if filteredLayers.isEmpty {
             throw CustomDecodingError.unknownType("Layers cannot be empty. In-app will be skipped.")
         }
-        
+
         return filteredLayers.filter { $0.layerType != .unknown }
     }
 }

@@ -9,7 +9,7 @@
 import Foundation
 
 extension DispatchSemaphore {
-    
+
     func lock<T>(execute task: () throws -> T) rethrows -> T {
         wait()
         defer { signal() }

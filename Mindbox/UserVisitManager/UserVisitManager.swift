@@ -16,7 +16,7 @@ protocol UserVisitManagerProtocol {
 final class UserVisitManager {
     private let persistenceStorage: PersistenceStorage
     private var isVisitSaved: Bool = false
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
@@ -30,21 +30,21 @@ extension UserVisitManager: UserVisitManagerProtocol {
             Logger.common(message: "Skip changing userVisit because it is already saved", level: .info, category: .visit)
             return
         }
-        
+
         isVisitSaved = true
-        
+
         var previousUserVisitCount = persistenceStorage.userVisitCount ?? UVMConstants.noAppVisits
-        
+
         // Handling the first launch when SDK version has been updated to 2.9.0 or higher from versions below 2.9.0
         let isInstalled = SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK
         if isInstalled && previousUserVisitCount == UVMConstants.noAppVisits {
             previousUserVisitCount = UVMConstants.appVisitsWhenSDKHasBeenUpdated
         }
-        
+
         let userVisitCount = previousUserVisitCount + 1
-      
+
         persistenceStorage.userVisitCount = userVisitCount
-        
+
         let message = "UserVisit has been changed from \(previousUserVisitCount) to \(userVisitCount)"
         Logger.common(message: message, level: .info, category: .visit)
     }

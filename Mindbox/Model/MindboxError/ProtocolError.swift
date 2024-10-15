@@ -35,7 +35,7 @@ public struct ProtocolError: Codable, CustomStringConvertible {
         self.httpStatusCode = httpStatusCode
         self.errorId = errorId
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Keys.self)
         httpStatusCode = try container.decode(Int.self, forKey: .httpStatusCode)

@@ -13,17 +13,17 @@ struct ABTest: Decodable, Equatable {
     let sdkVersion: SdkVersion?
     let salt: String?
     let variants: [ABTestVariant]?
-    
+
     struct ABTestVariant: Decodable, Equatable {
         let id: String
         let modulus: Modulus?
         let objects: [ABTestObject]?
-        
+
         struct Modulus: Decodable, Equatable {
             let lower: Int
             let upper: Int?
         }
-        
+
         struct ABTestObject: Decodable, Equatable {
             let type: ABTestType
             let kind: ABTestKind
@@ -58,7 +58,7 @@ struct ABTest: Decodable, Equatable {
                 kind = try container.decode(ABTestKind.self, forKey: .kind)
                 inapps = try container.decodeIfPresent([String].self, forKey: .inapps)
             }
-            
+
             init(type: ABTestType, kind: ABTestKind, inapps: [String]? = nil) {
                  self.type = type
                  self.kind = kind

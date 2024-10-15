@@ -13,12 +13,12 @@ import BackgroundTasks
 import MindboxLogger
 
 final class GuaranteedDeliveryManager: NSObject {
-    
+
     private let databaseRepository: MBDatabaseRepository
     private let eventRepository: EventRepository
-    
+
     let backgroundTaskManager: BackgroundTaskManagerProxy
-    
+
     private let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .utility
@@ -26,29 +26,29 @@ final class GuaranteedDeliveryManager: NSObject {
         queue.name = "Mindbox-GuaranteedDeliveryQueue"
         return queue
     }()
-    
+
     private let semaphore = DispatchSemaphore(value: 1)
-    
+
     var onCompletedEvent: ((_ event: Event, _ error: MindboxError?) -> Void)?
-    
+
     @objc dynamic var stateObserver: NSString
-    
+
     private(set) var state: State = .idle {
         didSet {
             stateObserver = NSString(string: state.rawValue)
             Logger.common(message: "State didSet to value: \(state.description)", level: .info, category: .delivery)
         }
     }
-    
+
     var canScheduleOperations = false {
         didSet {
             Logger.common(message: "canScheduleOperation didSet to value: \(canScheduleOperations)", level: .info, category: .delivery)
             performScheduleIfNeeded()
         }
     }
-    
+
     private let fetchLimit: Int
-    
+
     init(
         persistenceStorage: PersistenceStorage,
         databaseRepository: MBDatabaseRepository,
@@ -76,9 +76,9 @@ final class GuaranteedDeliveryManager: NSObject {
             self?.performScheduleIfNeeded()
         }
     }
-    
+
     private let retryDeadline: TimeInterval
-    
+
     func performScheduleIfNeeded() {
         guard canScheduleOperations else {
             return
@@ -92,7 +92,7 @@ final class GuaranteedDeliveryManager: NSObject {
         }
         scheduleOperations(fetchLimit: events <= fetchLimit ? events : fetchLimit)
     }
-    
+
     private func scheduleOperations(fetchLimit: Int) {
         semaphore.wait()
         guard !state.isDelivering else {
@@ -135,7 +135,7 @@ final class GuaranteedDeliveryManager: NSObject {
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
     }
-    
+
     /// Cancels all queued and executing operations
     func cancelAllOperations() {
         queue.cancelAllOperations()
@@ -144,11 +144,11 @@ final class GuaranteedDeliveryManager: NSObject {
 
 class AsyncOperation: Operation, @unchecked Sendable {
     private let lockQueue = DispatchQueue(label: "com.mindbox.asyncoperation", attributes: .concurrent)
-        
+
     override var isAsynchronous: Bool {
         return true
     }
-    
+
     private var _isExecuting: Bool = false
     override private(set) var isExecuting: Bool {
         get {
@@ -172,7 +172,7 @@ class AsyncOperation: Operation, @unchecked Sendable {
             }
         }
     }
-    
+
     private var _isFinished: Bool = false
     override private(set) var isFinished: Bool {
         get {
@@ -196,19 +196,19 @@ class AsyncOperation: Operation, @unchecked Sendable {
             }
         }
     }
-    
+
     override func start() {
         guard !isCancelled else { return finish() }
-        
+
         isFinished = false
         isExecuting = true
         main()
     }
-    
+
     override func main() {
         fatalError("Subclasses must implement `main` without overriding super.")
     }
-    
+
     func finish() {
         isExecuting = false
         isFinished = true

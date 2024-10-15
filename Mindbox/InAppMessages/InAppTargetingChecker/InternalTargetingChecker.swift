@@ -27,19 +27,19 @@ class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
         }
         prepareInternal(targeting: specificTargeting, context: &context)
     }
-    
+
     func prepareInternal(targeting: T, context: inout PreparationContext) {
         return
     }
-    
+
     func check(targeting: ITargeting) -> Bool {
         guard let specificTargeting = targeting as? T else {
             fatalError("Failed to cast targeting to type \(T.self)")
         }
-        
+
         return checkInternal(targeting: specificTargeting)
     }
-    
+
     func checkInternal(targeting: T) -> Bool {
         assertionFailure("This method must be overridden")
         return false

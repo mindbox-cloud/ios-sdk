@@ -13,7 +13,7 @@ import MindboxLogger
 class SnackbarViewFactory: ViewFactoryProtocol {
 
     weak var viewController: UIViewController?
-    
+
     func create(with params: ViewFactoryParameters) -> UIViewController? {
         if case .snackbar(let snackbarFormVariant) = params.model {
             if let gravity = snackbarFormVariant.content.position.gravity?.vertical {
@@ -38,13 +38,13 @@ class SnackbarViewFactory: ViewFactoryProtocol {
                         Logger.common(message: "SnackbarViewFactory controller is nil.")
                         return nil
                 }
-                
+
                 self.viewController = snackbarViewController
-                
+
                 return viewController
             }
         }
-        
+
         Logger.common(message: "SnackbarViewFactory create returns nil.")
         return nil
     }

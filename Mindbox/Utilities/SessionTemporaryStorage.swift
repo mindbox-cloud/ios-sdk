@@ -10,9 +10,9 @@ import Foundation
 import UserNotifications
 
 final class SessionTemporaryStorage {
-    
+
     public static let shared = SessionTemporaryStorage()
-    
+
     var observedCustomOperations: Set<String> = []
     var operationsFromSettings: Set<String> = []
     var geoRequestCompleted = false
@@ -28,13 +28,13 @@ final class SessionTemporaryStorage {
             }
         }
     }
-    
+
     private init() {}
-    
+
     var customOperations: Set<String> {
         return observedCustomOperations.union(operationsFromSettings)
     }
-    
+
     func erase() {
         observedCustomOperations = []
         operationsFromSettings = []

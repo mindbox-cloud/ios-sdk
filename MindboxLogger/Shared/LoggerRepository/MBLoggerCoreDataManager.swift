@@ -11,13 +11,13 @@ import CoreData
 
 public class MBLoggerCoreDataManager {
     public static let shared = MBLoggerCoreDataManager()
-    
+
     private enum Constants {
         static let model = "CDLogMessage"
         static let dbSizeLimitKB: Int = 10_000
         static let operationLimitBeforeNeedToDelete = 20
     }
-    
+
     private let queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
     private var persistentStoreDescription: NSPersistentStoreDescription?
     private var writeCount = 0 {
@@ -30,7 +30,7 @@ public class MBLoggerCoreDataManager {
 
     lazy var persistentContainer: MBPersistentContainer = {
         MBPersistentContainer.applicationGroupIdentifier = MBLoggerUtilitiesFetcher().applicationGroupIdentifier
-        
+
         #if SWIFT_PACKAGE
         guard let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd"),
               let mom = NSManagedObjectModel(contentsOf: bundleURL) else {
@@ -49,9 +49,9 @@ public class MBLoggerCoreDataManager {
             container = MBPersistentContainer(name: Constants.model)
         }
         #endif
-        
+
         let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
-        
+
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
         storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
@@ -71,7 +71,7 @@ public class MBLoggerCoreDataManager {
         context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
         return context
     }()
-    
+
     // MARK: - CRUD Operations
     public func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
         queue.async {
@@ -81,19 +81,19 @@ public class MBLoggerCoreDataManager {
                 if isTimeToDelete && self.getDBFileSize() > Constants.dbSizeLimitKB {
                     try self.delete()
                 }
-                
+
                 try self.context.executePerformAndWait {
                     let entity = CDLogMessage(context: self.context)
                     entity.message = message
                     entity.timestamp = timestamp
                     try self.saveEvent(withContext: self.context)
-                    
+
                     completion?()
                 }
             } catch {}
         }
     }
-    
+
     public func getFirstLog() throws -> LogMessage? {
         var fetchedLogMessage: LogMessage?
         try context.executePerformAndWait {
@@ -102,12 +102,12 @@ public class MBLoggerCoreDataManager {
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
             fetchRequest.fetchLimit = 1
             let results = try context.fetch(fetchRequest)
-            
+
             if let first = results.first {
                 fetchedLogMessage = LogMessage(timestamp: first.timestamp, message: first.message)
             }
         }
-        
+
         return fetchedLogMessage
     }
 
@@ -119,18 +119,18 @@ public class MBLoggerCoreDataManager {
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
             fetchRequest.fetchLimit = 1
             let results = try context.fetch(fetchRequest)
-            
+
             if let last = results.last {
                 fetchedLogMessage = LogMessage(timestamp: last.timestamp, message: last.message)
             }
         }
-        
+
         return fetchedLogMessage
     }
-    
+
     public func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
         var fetchedLogs: [LogMessage] = []
-        
+
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
@@ -139,10 +139,10 @@ public class MBLoggerCoreDataManager {
             let logs = try context.fetch(fetchRequest)
             fetchedLogs = logs.map { LogMessage(timestamp: $0.timestamp, message: $0.message) }
         }
-        
+
         return fetchedLogs
     }
-    
+
     public func delete() throws {
         try context.executePerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
@@ -160,7 +160,7 @@ public class MBLoggerCoreDataManager {
             Logger.common(message: "10%  logs has been deleted", level: .debug, category: .general)
         }
     }
-    
+
     public func deleteAll() throws {
         try context.executePerformAndWait {
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
@@ -178,7 +178,7 @@ private extension MBLoggerCoreDataManager {
         guard context.hasChanges else { return }
         try saveContext(context)
     }
-    
+
     private func saveContext(_ context: NSManagedObjectContext) throws {
         do {
             try context.save()
@@ -192,7 +192,7 @@ private extension MBLoggerCoreDataManager {
             throw error
         }
     }
-    
+
     private func getDBFileSize() -> Int {
         guard let url = context.persistentStoreCoordinator?.persistentStores.first?.url else {
             return 0

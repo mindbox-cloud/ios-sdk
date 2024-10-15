@@ -40,12 +40,12 @@ final class NotificationFormatTests: XCTestCase {
             XCTFail("MBPushNotification is nil")
             return
         }
-        
+
         XCTAssertEqual(model.clickUrl, "https://example.com/click")
         XCTAssertEqual(model.aps?.alert?.body, "Текст уведомления")
         XCTAssertEqual(model.uniqueKey, "uniqueNotificationKey")
     }
-    
+
     func test_legacy_format_no_clickURL_return_nil() {
         let userInfo: [AnyHashable: Any] = [
             "aps": [
@@ -68,7 +68,7 @@ final class NotificationFormatTests: XCTestCase {
                 "uniqueKey": "uniqueNotificationKey"
             ]
         ]
-        
+
         XCTAssertNil(NotificationFormatter.formatNotification(userInfo))
     }
 
@@ -97,7 +97,7 @@ final class NotificationFormatTests: XCTestCase {
 
         XCTAssertNil(NotificationFormatter.formatNotification(userInfo))
     }
-    
+
     // MARK: - Current format
     func test_current_format_return_model() {
         let userInfo: [AnyHashable: Any] = [
@@ -122,12 +122,12 @@ final class NotificationFormatTests: XCTestCase {
             ],
             "uniqueKey": "uniqueNotificationKey"
         ]
-        
+
         guard let model = NotificationFormatter.formatNotification(userInfo) else {
             XCTFail("MBPushNotification is nil")
             return
         }
-        
+
         XCTAssertEqual(model.clickUrl, "https://example.com/click")
         XCTAssertEqual(model.aps?.alert?.body, "Текст уведомления")
         XCTAssertEqual(model.uniqueKey, "uniqueNotificationKey")

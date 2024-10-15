@@ -13,21 +13,21 @@ import UserNotificationsUI
 
 @objcMembers
 public class MindboxNotificationService: NSObject {
-    
+
     // MARK: MindboxNotificationServiceProtocol
-    
+
     public var contentHandler: ((UNNotificationContent) -> Void)?
     public var bestAttemptContent: UNMutableNotificationContent?
 
     // MARK: Internal properties
-    
+
     var context: NSExtensionContext?
     var viewController: UIViewController?
-    
+
     var pushValidator: PushValidator?
 
     // MARK: Public initializer
-    
+
     /// Mindbox proxy for `NotificationsService` and `NotificationViewController`
     override public init() {
         super.init()

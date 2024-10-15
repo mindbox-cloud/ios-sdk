@@ -17,7 +17,7 @@ extension MBContainer: ModuleInjecting {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency? {
         return self.resolve(serviceType)
     }
-    
+
     func injectOrFail<Dependency>(_ serviceType: Dependency.Type) -> Dependency {
         return self.resolveOrFail(serviceType)
     }
@@ -28,9 +28,9 @@ enum MBInject {
         case standard
         case test
     }
-    
+
     static var container: MBContainer = MBInject.buildDefaulContainer()
-    
+
     static var mode: InjectionMode = .standard {
         didSet {
             switch mode {
@@ -41,7 +41,7 @@ enum MBInject {
             }
         }
     }
-    
+
     fileprivate static func buildDefaulContainer() -> MBContainer {
         let container = MBContainer()
         return container
@@ -52,7 +52,7 @@ enum MBInject {
             .registerInappTools()
             .registerInappPresentation()
     }
-    
+
     public static var buildTestContainer: () -> MBContainer = {
         let container = MBContainer()
         return container

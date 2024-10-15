@@ -14,7 +14,7 @@ import Foundation
 class MockNetworkFetcher: NetworkFetcher {
     var data: Data?
     var error: MindboxError?
-    
+
     init() {
         let bundle = Bundle(for: MockNetworkFetcher.self)
         let path = bundle.path(forResource: "SuccessResponse", ofType: "json")!
