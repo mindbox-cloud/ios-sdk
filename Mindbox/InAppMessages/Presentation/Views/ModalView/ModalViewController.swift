@@ -17,40 +17,40 @@ protocol InappViewControllerProtocol {
 
 @objc
 protocol GestureHandler {
-    
+
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer)
-    
+
     @objc
     func onCloseButton(_ gesture: UILongPressGestureRecognizer)
 }
 
 final class ModalViewController: UIViewController, InappViewControllerProtocol {
-    
+
     // MARK: InappViewControllerProtocol
-    
+
     var layers = [UIView]()
     var elements = [UIView]()
     let elementFactories: [ContentElementType: ElementFactory] = [
         .closeButton: CloseButtonElementFactory()
     ]
-    
+
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
-    
+
     // MARK: Private properties
-    
+
     private let model: ModalFormVariant
     private let id: String
     private let imagesDict: [String: UIImage]
-    
+
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
-    
+
     private var viewWillAppearWasCalled = false
-    
+
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.2
     }
@@ -89,13 +89,13 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         )
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
-        
+
         setupLayers()
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
+
         if let inappView = layers.first(where: { $0 is InAppImageOnlyView }) {
             Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
             Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
@@ -104,7 +104,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         elements.forEach({
             $0.removeFromSuperview()
         })
-        
+
         setupElements()
     }
 
@@ -121,7 +121,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     private func onTapDimmedView() {
         onClose()
     }
-    
+
     private func setupLayers() {
         let layers = model.content.background.layers
         for layer in layers {
@@ -139,7 +139,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
             }
         }
     }
-    
+
     private func setupElements() {
         guard let elements = model.content.elements,
               let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
@@ -167,17 +167,17 @@ extension ModalViewController: GestureHandler {
         guard let imageView = sender.view as? InAppImageOnlyView else {
             return
         }
-        
+
         let action = imageView.action
         onTapAction(action)
     }
-    
+
     @objc
     func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
         guard let crossView = gesture.view else {
             return
         }
-        
+
         let location = gesture.location(in: crossView)
         let isInsideCrossView = crossView.bounds.contains(location)
         if gesture.state == .ended && isInsideCrossView {

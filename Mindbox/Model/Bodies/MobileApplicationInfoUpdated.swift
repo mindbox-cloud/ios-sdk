@@ -13,15 +13,15 @@ struct MobileApplicationInfoUpdated: Codable {
     let notificationProvider: String
 
     let token: String
-    
+
     var isTokenAvailable: Bool
-    
+
     let isNotificationsEnabled: Bool
-    
+
     let version: Int
-    
+
     let instanceId: String
-    
+
     init(token: String?,
          isNotificationsEnabled: Bool,
          version: Int,

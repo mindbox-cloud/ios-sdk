@@ -9,9 +9,9 @@
 import Foundation
 
 struct UDIDValidator {
-    
+
     let udid: String
-    
+
     func evaluate() -> Bool {
         return !udid
             .replacingOccurrences(of: "0", with: "")

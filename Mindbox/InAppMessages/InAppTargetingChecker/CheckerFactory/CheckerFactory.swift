@@ -245,7 +245,7 @@ final class VisitTargetingFactory: CheckerFactory {
         guard case let .visit(targeting) = targetType else {
             return checkerFunctions
         }
-        
+
         let visitChecker = VisitTargetingChecker()
         visitChecker.checker = checker
         return CheckerFunctions(

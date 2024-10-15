@@ -16,7 +16,7 @@ extension String {
         let regex = try? NSRegularExpression(pattern: "^[A-Za-z0-9\\-\\.]+$")
         return regex?.firstMatch(in: self, options: [], range: range) != nil
     }
-    
+
     func parseTimeSpanToMillis() throws -> Int64 {
         let regex = try NSRegularExpression(pattern: "^(-)?((\\d+)\\.)?([01]?\\d|2[0-3]):([0-5]?\\d):([0-5]?\\d)(\\.(\\d{1,7}))?$")
         let matches = regex.matches(in: self, range: NSRange(self.startIndex..., in: self))

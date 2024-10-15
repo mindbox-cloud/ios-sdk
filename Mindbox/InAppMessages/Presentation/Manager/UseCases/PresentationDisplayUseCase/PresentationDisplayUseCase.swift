@@ -22,21 +22,21 @@ final class PresentationDisplayUseCase {
     }
 
     func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) {
-        
+
         changeType(model: model.content)
-        
+
         guard let window = presentationStrategy?.getWindow() else {
             Logger.common(message: "In-app window creating failed")
             return
         }
-        
+
         Logger.common(message: "PresentationDisplayUseCase window: \(window)")
-        
+
         guard let factory = self.factory else {
             Logger.common(message: "Factory does not exists.", level: .error, category: .general)
             return
         }
-        
+
         let parameters = ViewFactoryParameters(model: model.content,
                                                id: model.inAppId,
                                                imagesDict: model.imagesDict,
@@ -44,17 +44,17 @@ final class PresentationDisplayUseCase {
                                                onPresented: onPresented,
                                                onTapAction: onTapAction,
                                                onClose: onClose)
-        
+
         guard let viewController = factory.create(with: parameters) else {
             return
         }
-        
+
         presentedVC = viewController
-        
+
         if let image = model.imagesDict[model.firstImageValue] {
             presentationStrategy?.setupWindowFrame(model: model.content, imageSize: image.size)
         }
-        
+
         presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)
     }
 
@@ -69,7 +69,7 @@ final class PresentationDisplayUseCase {
         self.presentationStrategy = nil
         self.factory = nil
     }
-    
+
     func onPresented(id: String, _ completion: @escaping () -> Void) {
         do {
             try tracker.trackView(id: id)
@@ -79,7 +79,7 @@ final class PresentationDisplayUseCase {
         }
         completion()
     }
-    
+
     private func changeType(model: MindboxFormVariant) {
         switch model {
             case .modal:

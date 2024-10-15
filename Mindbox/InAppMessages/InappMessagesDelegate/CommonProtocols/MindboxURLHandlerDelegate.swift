@@ -20,7 +20,7 @@ public extension MindboxURLHandlerDelegate {
             Logger.common(message: "The URL does not exist or is invalid.", category: .inAppMessages)
             return
         }
-        
+
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 }

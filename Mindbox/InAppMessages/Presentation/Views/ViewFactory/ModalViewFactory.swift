@@ -9,9 +9,9 @@
 import UIKit
 
 class ModalViewFactory: ViewFactoryProtocol {
-    
+
     weak var myViewController: UIViewController?
-    
+
     func create(with params: ViewFactoryParameters) -> UIViewController? {
         if case .modal(let modalFormVariant) = params.model {
             let viewController = ModalViewController(model: modalFormVariant,
@@ -23,7 +23,7 @@ class ModalViewFactory: ViewFactoryProtocol {
             myViewController = viewController
             return viewController
         }
-        
+
         return nil
     }
 }

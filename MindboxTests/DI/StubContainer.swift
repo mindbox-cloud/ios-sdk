@@ -21,7 +21,7 @@ enum TestConfiguration {
                 .registerInappPresentation()
                 .registerMocks()
         }
-        
+
         MBInject.mode = .test
     }
 }

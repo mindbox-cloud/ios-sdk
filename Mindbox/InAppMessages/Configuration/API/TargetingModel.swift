@@ -30,7 +30,7 @@ enum InAppTargetingType: String, Decodable {
     case visit
     case pushEnabled
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
         let type: String = try container.decode(String.self)
@@ -54,11 +54,11 @@ enum Targeting: Decodable, Hashable, Equatable {
     case visit(VisitTargeting)
     case pushEnabled(PushEnabledTargeting)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: Targeting, rhs: Targeting) -> Bool {
         switch (lhs, rhs) {
             case (.true, .true): return true
@@ -79,7 +79,7 @@ enum Targeting: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .true: hasher.combine("true")
@@ -99,7 +99,7 @@ enum Targeting: Decodable, Hashable, Equatable {
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<Targeting.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
@@ -107,9 +107,9 @@ enum Targeting: Decodable, Hashable, Equatable {
             self = .unknown
             return
         }
-        
+
         let targetingContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .true:
                 let trueTargeting = try targetingContainer.decode(TrueTargeting.self)

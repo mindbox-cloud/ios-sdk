@@ -13,7 +13,7 @@ import UserNotificationsUI
 import MindboxLogger
 
 public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProtocol {
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     func didReceive(
         notification: UNNotification,
@@ -25,7 +25,7 @@ public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProto
 // MARK: - MindboxNotificationContentProtocol
 
 extension MindboxNotificationService: MindboxNotificationContentProtocol {
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
         context = extensionContext
@@ -38,7 +38,7 @@ extension MindboxNotificationService: MindboxNotificationContentProtocol {
 // MARK: Private methods for MindboxNotificationContentProtocol
 
 private extension MindboxNotificationService {
-    
+
     func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
@@ -93,13 +93,13 @@ private extension MindboxNotificationService {
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(imageView)
-        
+
         let imageHeight = image?.size.height ?? 0
         let imageWidth = image?.size.width ?? 0
-        
+
         let imageRatio = (imageWidth > 0) ? imageHeight / imageWidth : 0
         let imageViewHeight = view.bounds.width * imageRatio
-        
+
         NSLayoutConstraint.activate([
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),

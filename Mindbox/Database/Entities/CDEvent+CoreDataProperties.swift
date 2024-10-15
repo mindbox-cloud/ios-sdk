@@ -11,7 +11,7 @@ import Foundation
 import CoreData
 
 extension CDEvent {
-    
+
     public class func fetchRequestForDelete(lifeLimitDate: Date? = nil) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
@@ -25,7 +25,7 @@ extension CDEvent {
         ]
         return request
     }
-    
+
     public class func fetchRequestForSend(lifeLimitDate: Date?, retryDeadLine: TimeInterval = 60) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         var subpredicates: [NSPredicate] = []
@@ -56,13 +56,13 @@ extension CDEvent {
         ]
         return request
     }
-    
+
     public class func fetchRequest(by transactionId: String) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         request.predicate = NSPredicate(format: "%K == %@", argumentArray: [#keyPath(CDEvent.transactionId), transactionId])
         return request
     }
-    
+
     public class func countEventsFetchRequest(lifeLimitDate: Date? = nil) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
@@ -73,7 +73,7 @@ extension CDEvent {
         }
         return request
     }
-    
+
     public class func deprecatedEventsFetchRequest(lifeLimitDate: Date?) -> NSFetchRequest<CDEvent> {
         let request = NSFetchRequest<CDEvent>(entityName: "CDEvent")
         if let monthLimitDateStamp = lifeLimitDate?.timeIntervalSince1970 {
@@ -81,7 +81,7 @@ extension CDEvent {
         }
         return request
     }
-    
+
     @NSManaged public var body: String?
     @NSManaged public var timestamp: Double
     @NSManaged public var transactionId: String?

@@ -12,24 +12,24 @@ import Foundation
 // swiftlint:disable force_try force_unwrapping
 
 class MockFailureNetworkFetcher: NetworkFetcher {
-    
+
     init() {
     }
 
     private var routesCount: Int = 0
-    
+
     var failableRouteIndex = Int.random(in: 0...9)
-    
+
     private func errorForRoute() -> MindboxError? {
         if routesCount >= 9 {
             let error: MindboxError = .internalError(.init(
                 errorKey: .parsing,
                 rawError: nil
             ))
-            
+
             return error
         }
-        
+
         routesCount += 1
         return nil
     }

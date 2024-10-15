@@ -13,7 +13,7 @@ protocol ContentElementProtocol: Decodable, Equatable { }
 enum ContentElementType: String, Decodable {
     case closeButton
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
         let type: String = try container.decode(String.self)
@@ -24,11 +24,11 @@ enum ContentElementType: String, Decodable {
 enum ContentElementDTO: Decodable, Hashable, Equatable {
     case closeButton(CloseButtonElementDTO)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentElementDTO, rhs: ContentElementDTO) -> Bool {
         switch (lhs, rhs) {
             case (.closeButton, .closeButton): return true
@@ -36,23 +36,23 @@ enum ContentElementDTO: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .closeButton: hasher.combine("closeButton")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentElementDTO.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentElementType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
         }
-        
+
         let elementContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .closeButton:
                 let closeButtonElement = try elementContainer.decode(CloseButtonElementDTO.self)
@@ -77,11 +77,11 @@ extension ContentElementDTO {
 enum ContentElement: Decodable, Hashable, Equatable {
     case closeButton(CloseButtonElement)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentElement, rhs: ContentElement) -> Bool {
         switch (lhs, rhs) {
             case (.closeButton, .closeButton): return true
@@ -89,23 +89,23 @@ enum ContentElement: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .closeButton: hasher.combine("closeButton")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentElement.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentElementType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
         }
-        
+
         let elementContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .closeButton:
                 let closeButtonElement = try elementContainer.decode(CloseButtonElement.self)

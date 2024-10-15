@@ -11,19 +11,19 @@ import UIKit
 import MindboxLogger
 
 class UIBackgroundTaskManager: BackgroundTaskManagerType {
-    
+
     weak var gdManager: GuaranteedDeliveryManager?
-    
+
     private let persistenceStorage: PersistenceStorage
     private let databaseRepository: MBDatabaseRepository
-    
+
     init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
     }
-    
+
     private var observationToken: NSKeyValueObservation?
-    
+
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid {
         didSet {
             if backgroundTaskID != .invalid {
@@ -33,19 +33,19 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             }
         }
     }
-    
+
     private var removingDeprecatedEventsInProgress = false
-    
+
     func applicationDidEnterBackground() {
         if #unavailable(iOS 13.0) {
             beginBackgroundTask()
         }
     }
-    
+
     func applicationDidBecomeActive() {
         endBackgroundTask(success: false)
     }
-    
+
     private func beginBackgroundTask() {
         guard backgroundTaskID == .invalid else {
             Logger.common(message: "BackgroundTask already in progress. Skip call of beginBackgroundTask", level: .info, category: .background)
@@ -65,7 +65,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
 
         removeDeprecatedEventsIfNeeded()
     }
-    
+
     private func removeDeprecatedEventsIfNeeded() {
         let deprecatedEventsRemoveDate = persistenceStorage.deprecatedEventsRemoveDate ?? .distantPast
         guard !removingDeprecatedEventsInProgress,
@@ -91,7 +91,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         queue.addOperation(operation)
         Logger.common(message: "removeDeprecatedEventsProcessing task started", level: .info, category: .background)
     }
-    
+
     func endBackgroundTask(success: Bool) {
         guard backgroundTaskID != .invalid else { return }
         guard !removingDeprecatedEventsInProgress else { return }
@@ -99,9 +99,9 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
         self.backgroundTaskID = .invalid
     }
-    
+
     private typealias CompletionHandler = (UIBackgroundFetchResult) -> Void
-    
+
     func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         Mindbox.shared.coreController?.checkNotificationStatus()
         guard let gdManager = gdManager else {
@@ -125,7 +125,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             waitingForRetry(taskID: taskID, completionHandler: completionHandler)
         }
     }
-    
+
     private func idle(taskID: String, completionHandler: @escaping CompletionHandler) {
         Logger.common(message: "completionHandler(.noData): idle", level: .info, category: .background)
         let backgroudExecution = BackgroudExecution(
@@ -137,7 +137,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
         persistenceStorage.setBackgroundExecution(backgroudExecution)
         completionHandler(.noData)
     }
-    
+
     private func delivering(taskID: String, completionHandler: @escaping CompletionHandler) {
         observationToken = gdManager?.observe(\.stateObserver, options: [.new]) { [weak self] _, change in
             Logger.common(message: "change.newValue \(String(describing: change.newValue))", level: .info, category: .background)
@@ -157,7 +157,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             }
         }
     }
-    
+
     private func waitingForRetry(taskID: String, completionHandler: @escaping CompletionHandler) {
         Logger.common(message: "completionHandler(.newData): waitingForRetry", level: .info, category: .background)
         let backgroudExecution = BackgroudExecution(

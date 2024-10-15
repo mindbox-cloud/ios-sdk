@@ -13,7 +13,7 @@ import XCTest
 // swiftlint:disable force_try
 
 class GuaranteedDeliveryTestCase: XCTestCase {
-    
+
     var databaseRepository: MBDatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     var persistenceStorage: PersistenceStorage!
@@ -23,13 +23,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     override func setUp() {
         super.setUp()
         Mindbox.logger.logLevel = .none
-        
+
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
         isDelivering = guaranteedDeliveryManager.state.isDelivering
-        
+
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         persistenceStorage.configuration = configuration
         persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
@@ -37,7 +37,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         try! databaseRepository.erase()
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
-    
+
     override func tearDown() {
         databaseRepository = nil
         guaranteedDeliveryManager = nil
@@ -71,17 +71,17 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     var state: NSString {
         NSString(string: guaranteedDeliveryManager.state.rawValue)
     }
-    
+
     func testEventEqualsMockEvent() {
         let type: Event.Operation = .installed
         let body = UUID().uuidString
-        
+
         let event: EventProtocol = Event(type: type, body: body)
         let mockEvent: EventProtocol = MockEvent(type: type, body: body)
-        
+
         XCTAssertEqual(!event.transactionId.isEmpty, !mockEvent.transactionId.isEmpty, "Transaction Ids should not be empty")
         XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.001, "Enqueue timestamps should match with some accuracy")
-        
+
         XCTAssertEqual(event.serialNumber, mockEvent.serialNumber, "Serial numbers should be equal")
         XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
         XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
@@ -170,7 +170,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
                 return
             }
-            
+
             if newState == errorCase[iterator] {
                 errorExpectations[iterator].fulfill()
             }

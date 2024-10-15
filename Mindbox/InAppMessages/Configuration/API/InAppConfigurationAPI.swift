@@ -58,7 +58,7 @@ class InAppConfigurationAPI {
             Logger.error(error.asLoggerError())
             return .error(error)
         }
-        
+
         Logger.response(data: data, response: response, error: error)
 
         if httpResponse.statusCode == 404 {

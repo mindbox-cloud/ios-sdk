@@ -17,13 +17,13 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
     enum Constants {
         static let defaultSize = ContentElementSize(kind: .dp, width: 24, height: 24)
     }
-    
+
     func filter(_ size: ContentElementSizeDTO?) throws -> ContentElementSize {
         guard let size = size else {
             Logger.common(message: "Size is invalid or missing. Default value set: [\(Constants.defaultSize)].", level: .debug, category: .inAppMessages)
             return Constants.defaultSize
         }
-        
+
         switch size.kind {
             case .dp:
                 if let height = size.height,
@@ -36,7 +36,7 @@ final class ElementSizeFilterService: ElementsSizeFilterProtocol {
                 Logger.common(message: "Unknown type of ContentElementSize. Default value set: [\(Constants.defaultSize)].", level: .debug, category: .inAppMessages)
                 return Constants.defaultSize
         }
-        
+
         throw CustomDecodingError.unknownType("ElementSizeFilterService validation not passed. In-app will be ignored.")
     }
 }

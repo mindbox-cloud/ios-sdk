@@ -10,39 +10,39 @@ import UIKit
 import MindboxLogger
 
 class SnackbarViewController: UIViewController, InappViewControllerProtocol {
-    
+
     // MARK: InappViewControllerProtocol
-    
+
     var layers = [UIView]()
     var elements = [UIView]()
-    
+
     let elementFactories: [ContentElementType: ElementFactory] = [
         .closeButton: CloseButtonElementFactory()
     ]
-    
+
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
         .image: ImageLayerFactory()
     ]
-    
+
     // MARK: Internal properties
 
     var edgeConstraint: NSLayoutConstraint?
-    
+
     let snackbarView: SnackbarView
     let model: SnackbarFormVariant
-    
+
     var leftOffset: CGFloat {
         return model.content.position.margin.left
     }
-    
+
     var rightOffset: CGFloat {
         return model.content.position.margin.right
     }
-    
+
     var swipeDirection: UISwipeGestureRecognizer.Direction {
         return .down
     }
-    
+
     enum Constants {
         static let animationDuration: TimeInterval = 0.5
         static let screenPart: CGFloat = 3.0
@@ -51,15 +51,15 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         static let noTopOffset: CGFloat = .zero
         static let noSize: CGSize = .zero
     }
-    
+
     // MARK: Private properties
 
     private let imagesDict: [String: UIImage]
     private let firstImageValue: String
-    
+
     private let onPresented: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
-    
+
     private var hasSetupLayers = false
     private var hasSetupElements = false
 
@@ -87,7 +87,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         Logger.common(message: "SnackbarViewController init(coder:) has not been implemented.")
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     // MARK: Life cycle
 
     override func viewDidLoad() {
@@ -97,10 +97,10 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         snackbarView.translatesAutoresizingMaskIntoConstraints = false
         snackbarView.isUserInteractionEnabled = true
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
+
         if !hasSetupLayers {
             hasSetupLayers = true
             setupConstraints()
@@ -120,28 +120,28 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             }
         }
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         animateConstraints(withDuration: Constants.animationDuration)
         onPresented()
     }
-    
+
     // MARK: Internal methods
-    
+
     func setViewFrame(with height: CGFloat) {
         Logger.common(message: "Method setViewFrame must be overridden in subclass.")
     }
-    
+
     func setupEdgeConstraint(with height: CGFloat) {
         Logger.common(message: "Method setupEdgeConstraint must be overridden in subclass.")
     }
-    
+
     // MARK: Private methods
 
     private func setupLayers() {
         let layers = model.content.background.layers
-    
+
         for layer in layers {
             if let factory = layersFactories[layer.layerType] {
                 if case .image(let imageContentBackgroundLayer) = layer {
@@ -157,8 +157,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             }
         }
     }
-    
-    private func setupElements() {        
+
+    private func setupElements() {
         for element in model.content.elements {
             if let factory = elementFactories[element.elementType] {
                 let elementView = factory.create(from: element, with: self)
@@ -170,32 +170,32 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             }
         }
     }
-    
+
     private func animateConstraints(withDuration duration: TimeInterval) {
         view.layoutIfNeeded()
-        
+
         UIView.animate(withDuration: duration) {
             self.edgeConstraint?.constant = Constants.defaultEdgeConstraint
             self.view.layoutIfNeeded()
         }
     }
-    
+
     private func setupConstraints() {
         guard let image = imagesDict[firstImageValue] else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
-        
+
         let width = view.layer.frame.width
         let heightMultiplier = width / image.size.width
         let imageHeight = image.size.height * heightMultiplier
         let finalHeight = (imageHeight < Constants.oneThirdScreenHeight) ? imageHeight : Constants.oneThirdScreenHeight
-        
+
         setViewFrame(with: finalHeight)
-        
+
         snackbarView.swipeDirection = swipeDirection
         snackbarView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         setupLayoutConstraints(with: finalHeight)
         setupEdgeConstraint(with: finalHeight)
     }
@@ -218,18 +218,18 @@ extension SnackbarViewController: GestureHandler {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
-        
+
         let action = imageView.action
         onTapAction(action)
     }
-    
+
     @objc
     func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
         guard let crossView = gesture.view else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
-        
+
         let location = gesture.location(in: crossView)
         let isInsideCrossView = crossView.bounds.contains(location)
         if gesture.state == .ended && isInsideCrossView {
@@ -264,11 +264,11 @@ class BottomSnackbarViewController: SnackbarViewController {
     override var swipeDirection: UISwipeGestureRecognizer.Direction {
         return .down
     }
-    
+
     override func setViewFrame(with height: CGFloat) {
         let screenHeight = UIScreen.main.bounds.height
         let safeAreaBottomOffset: CGFloat = view.safeAreaInsets.bottom
-        
+
         let finalHeight = height + safeAreaBottomOffset
 
         self.view.frame = CGRect(x: leftOffset, y: screenHeight - finalHeight,

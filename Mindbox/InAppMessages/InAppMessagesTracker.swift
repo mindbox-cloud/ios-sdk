@@ -40,7 +40,7 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackPro
         let event = Event(type: .inAppClickEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
-    
+
     func trackTargeting(id: String) throws {
         let encodable = InAppBody(inappId: id)
         let event = Event(type: .inAppTargetingEvent, body: BodyEncoder(encodable: encodable).body)

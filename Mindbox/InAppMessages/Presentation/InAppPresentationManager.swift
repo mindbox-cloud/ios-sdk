@@ -39,16 +39,16 @@ enum InAppPresentationError {
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
-    
+
     private let actionHandler: InAppActionHandlerProtocol
     private let displayUseCase: PresentationDisplayUseCase
-    
+
     init(actionHandler: InAppActionHandlerProtocol,
          displayUseCase: PresentationDisplayUseCase) {
         self.actionHandler = actionHandler
         self.displayUseCase = displayUseCase
     }
-    
+
     func present(
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
@@ -61,7 +61,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 onError(.failed("Self guard not passed."))
                 return
             }
-            
+
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
@@ -70,7 +70,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                       let action = action else {
                     return
                 }
-                
+
                 self.actionHandler.handleAction(action, for: inAppFormData.inAppId, onTap: onTapAction, close: {
                     self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
                 })

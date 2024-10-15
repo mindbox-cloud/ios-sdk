@@ -85,18 +85,18 @@ final class InAppResponseModelTests: XCTestCase {
         XCTAssertEqual(config.ids.count, 3)
         XCTAssertEqual(config.ids[0], 1)
     }
-    
+
     func test_visit_vargeting_valid() {
         guard let config: VisitTargeting = getConfig(resourceName: "VisitTargetingModelValid") else {
             assertionFailure("config is Nil")
             return
         }
-        
+
         XCTAssertNotNil(config)
         XCTAssertEqual(config.kind, .lte)
         XCTAssertEqual(config.value, 1)
     }
-    
+
     func test_visit_targeting_invalid() {
         let config: VisitTargeting? = getConfig(resourceName: "SegmentTargetingModelValid")
         XCTAssertNil(config)

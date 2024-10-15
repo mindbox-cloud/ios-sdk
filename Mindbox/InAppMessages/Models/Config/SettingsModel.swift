@@ -11,7 +11,7 @@ import Foundation
 struct Settings: Decodable, Equatable {
     let operations: SettingsOperations?
     let ttl: TimeToLive?
-    
+
     enum CodingKeys: CodingKey {
         case operations, ttl
     }

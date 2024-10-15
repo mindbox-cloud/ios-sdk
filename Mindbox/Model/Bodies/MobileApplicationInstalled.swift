@@ -13,24 +13,24 @@ struct MobileApplicationInstalled: Codable {
     let notificationProvider: String
 
     let token: String
-    
+
     var isTokenAvailable: Bool
-    
+
     let isNotificationsEnabled: Bool
-    
+
     let installationId: String
-    
+
     let subscribe: Bool
-    
+
     let externalDeviceUUID: String?
-    
+
     let version: Int
-    
+
     let instanceId: String
 
     /// ID текущая таймзона устройства в формате IANA, например "Asia/Krasnoyarsk", null если недоступно
     let ianaTimeZone: String?
-    
+
     init(
         token: String? = nil,
         isNotificationsEnabled: Bool,

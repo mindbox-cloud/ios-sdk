@@ -10,12 +10,12 @@ import UIKit
 import MindboxLogger
 
 final class MBSessionManager {
-    
+
     var sessionHandler: ((Bool) -> Void)?
     var isActiveNow: Bool { return isActive }
-    
+
     private let trackVisitManager: TrackVisitManager
-    
+
     init(trackVisitManager: TrackVisitManager) {
         self.trackVisitManager = trackVisitManager
         subscribe()
@@ -37,7 +37,7 @@ final class MBSessionManager {
         ) { [weak self] _ in
             self?.isActive = true
         }
-        
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
@@ -45,7 +45,7 @@ final class MBSessionManager {
         ) { [weak self] _ in
             self?.isActive = false
         }
-        
+
         NotificationCenter.default.addObserver(
             forName: .initializationCompleted,
             object: nil,

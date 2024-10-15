@@ -13,7 +13,7 @@ final class PushEnabledTargetingChecker: InternalTargetingChecker<PushEnabledTar
     override func checkInternal(targeting: PushEnabledTargeting) -> Bool {
         let lock = DispatchSemaphore(value: 0)
         var isNotificationsEnabled = true
-        
+
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             switch settings.authorizationStatus {
                 case .notDetermined, .denied:
@@ -25,7 +25,7 @@ final class PushEnabledTargetingChecker: InternalTargetingChecker<PushEnabledTar
             }
             lock.signal()
         }
-        
+
         lock.wait()
         return targeting.value == isNotificationsEnabled
     }

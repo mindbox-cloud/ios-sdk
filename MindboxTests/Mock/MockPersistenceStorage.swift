@@ -10,11 +10,11 @@ import Foundation
 @testable import Mindbox
 
 class MockPersistenceStorage: PersistenceStorage {
-        
+
     var onDidChange: (() -> Void)?
-    
+
     init() {}
-    
+
     var deviceUUID: String? {
         didSet {
             configuration?.previousDeviceUUID = deviceUUID
@@ -43,13 +43,13 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-    
+
     var deprecatedEventsRemoveDate: Date? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     var configuration: MBConfiguration? {
         didSet {
             onDidChange?()
@@ -61,13 +61,13 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-    
+
     var isNotificationsEnabled: Bool? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     var installationDate: Date? {
         didSet {
             onDidChange?()
@@ -75,33 +75,33 @@ class MockPersistenceStorage: PersistenceStorage {
     }
 
     var shownInAppsIds: [String]?
-    
+
     var shownInappsDictionary: [String: Date]?
-    
+
     var handledlogRequestIds: [String]?
-    
+
     var imageLoadingMaxTimeInSeconds: Double?
-    
+
     private var _userVisitCount: Int? = 0
-    
+
     var userVisitCount: Int? {
         get { return _userVisitCount }
         set { _userVisitCount = newValue }
     }
-    
+
     private var _versionCodeForMigration: Int? = 0
-    
+
     var versionCodeForMigration: Int? {
         get { return _versionCodeForMigration }
         set { _versionCodeForMigration = newValue }
     }
 
     var configDownloadDate: Date? {
-        didSet { 
+        didSet {
             onDidChange?()
         }
     }
-    
+
     func reset() {
         installationDate = nil
         deviceUUID = nil
@@ -113,7 +113,7 @@ class MockPersistenceStorage: PersistenceStorage {
         isNotificationsEnabled = nil
         resetBackgroundExecutions()
     }
-    
+
     func softReset() {
         configDownloadDate = nil
         shownInappsDictionary = nil
@@ -121,17 +121,17 @@ class MockPersistenceStorage: PersistenceStorage {
         userVisitCount = 0
         resetBackgroundExecutions()
     }
-    
+
     func setBackgroundExecution(_ value: BackgroudExecution) {
         backgroundExecutions.append(value)
     }
-    
+
     func resetBackgroundExecutions() {
         backgroundExecutions = []
     }
-    
+
     func storeToFileBackgroundExecution() {}
-    
+
     var needUpdateInfoOnce: Bool? {
         didSet {
             onDidChange?()

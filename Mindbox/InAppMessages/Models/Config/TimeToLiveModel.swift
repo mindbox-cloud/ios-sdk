@@ -11,7 +11,7 @@ import Foundation
 extension Settings {
     struct TimeToLive: Decodable, Equatable {
         let inapps: String?
-        
+
         enum CodingKeys: CodingKey {
             case inapps
         }

@@ -69,19 +69,19 @@ open class MindboxAppDelegate: NSObject, UNUserNotificationCenterDelegate, UIApp
     ) {
         Mindbox.shared.application(application, performFetchWithCompletionHandler: completionHandler)
     }
-    
+
     open func applicationWillEnterForeground(_ application: UIApplication) {
         Logger.common(message: "Enter foreground", level: .info, category: .general)
     }
-    
+
     open func applicationDidEnterBackground(_ application: UIApplication) {
         Logger.common(message: "Enter background", level: .info, category: .general)
     }
-    
+
     open func applicationWillTerminate(_ application: UIApplication) {
         Logger.common(message: "App is closed", level: .info, category: .general)
     }
-    
+
     open func applicationDidBecomeActive(_ application: UIApplication) {
         Logger.common(message: "App is active", level: .info, category: .general)
     }

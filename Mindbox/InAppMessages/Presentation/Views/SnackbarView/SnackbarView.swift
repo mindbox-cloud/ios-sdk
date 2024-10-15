@@ -18,14 +18,14 @@ class SnackbarView: UIView {
 
     private let onClose: () -> Void
     private let animationTime: TimeInterval
-    
+
     private var safeAreaInset: (top: CGFloat, bottom: CGFloat) {
         (
             top: window?.safeAreaInsets.top ?? Constants.defaultSafeAreaTopInset,
             bottom: window?.safeAreaInsets.bottom ?? Constants.defaultSafeAreaBottomInset
         )
     }
-    
+
     private enum Constants {
         static let defaultAnimationTime: TimeInterval = 0.3
         static let swipeThresholdFraction: CGFloat = 0.5
@@ -46,14 +46,14 @@ class SnackbarView: UIView {
         Logger.common(message: "SnackbarView inited.")
         setupPanGesture()
     }
-    
+
     required init?(coder: NSCoder) {
         Logger.common(message: "SnackbarView init(coder:) has not been implemented.")
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     // MARK: Public methods
-    
+
     public func hide(animated: Bool = true, completion: (() -> Void)? = nil) {
         animateHide(completion: {
             self.onClose()
@@ -91,7 +91,7 @@ class SnackbarView: UIView {
     private func finalizeGesture(translation: CGPoint) {
         let threshold = frame.height * Constants.swipeThresholdFraction +
         (swipeDirection == .up ? safeAreaInset.top : safeAreaInset.bottom)
-        
+
         if ((swipeDirection == .up && translation.y < Constants.verticalMovementThreshold) ||
             (swipeDirection == .down && translation.y > Constants.verticalMovementThreshold)
         ) && abs(translation.y) > threshold {
@@ -118,7 +118,7 @@ class SnackbarView: UIView {
 
     private func setHiddenTransform() {
         let yOffset: CGFloat
-        
+
         switch swipeDirection {
         case .up:
             yOffset = -(frame.height + safeAreaInset.top)
@@ -127,7 +127,7 @@ class SnackbarView: UIView {
         default:
             yOffset = Constants.noVerticalTranslation
         }
-        
+
         self.transform = CGAffineTransform(translationX: Constants.noHorizontalTranslation, y: yOffset)
     }
 }

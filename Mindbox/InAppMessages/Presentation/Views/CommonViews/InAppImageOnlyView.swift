@@ -33,9 +33,9 @@ final class InAppImageOnlyView: UIView {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
             return
         }
-        
+
         Logger.common(message: "InAppImageOnlyView custom init started.")
-        
+
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
 

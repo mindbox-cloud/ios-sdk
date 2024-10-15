@@ -15,21 +15,21 @@ protocol ImageDownloader {
 }
 
 class URLSessionImageDownloader: ImageDownloader {
-    
+
     private let persistenceStorage: PersistenceStorage
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
-    
+
     private var task: URLSessionDownloadTask?
-    
+
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
         guard let url = URL(string: imageUrl) else {
             completion(nil, nil, NSError(domain: "Invalid URL", code: -1, userInfo: nil))
             return
         }
-        
+
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForResource = persistenceStorage.imageLoadingMaxTimeInSeconds ?? 3
         let session = URLSession(configuration: configuration)
@@ -37,11 +37,11 @@ class URLSessionImageDownloader: ImageDownloader {
         let downloadTask = session.downloadTask(with: url) { localURL, response, error in
             completion(localURL, response as? HTTPURLResponse, error)
         }
-        
+
         task = downloadTask
         downloadTask.resume()
     }
-    
+
     func cancel() {
         task?.cancel()
     }

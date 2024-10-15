@@ -16,15 +16,15 @@ enum ObjectScope {
 class MBContainer {
     private var factories: [String: (ObjectScope, () -> Any)] = [:]
     private var singletons: [String: Any] = [:]
-    
+
     func register<T>(_ type: T.Type, scope: ObjectScope = .container, factory: @escaping () -> T) {
         let key = String(describing: type)
         factories[key] = (scope, factory)
     }
-    
+
     func resolve<T>(_ type: T.Type) -> T? {
         let key = String(describing: type)
-        
+
         if let (scope, factory) = factories[key] {
             switch scope {
             case .container:
@@ -40,7 +40,7 @@ class MBContainer {
         }
         return nil
     }
-    
+
     func resolveOrFail<T>(_ serviceType: T.Type) -> T {
         guard let service = self.resolve(serviceType) else {
             fatalError("Service \(serviceType) not found")

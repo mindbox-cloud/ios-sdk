@@ -19,7 +19,7 @@ struct SDKLogsRoute: Route {
     var headers: HTTPHeaders? { nil }
     var queryParameters: QueryParameters { .init() }
     var body: Data?
-    
+
     func makeBasicQueryParameters(with wrapper: EventWrapper) -> QueryParameters {
         ["transactionId": wrapper.event.transactionId,
          "deviceUUID": wrapper.deviceUUID,

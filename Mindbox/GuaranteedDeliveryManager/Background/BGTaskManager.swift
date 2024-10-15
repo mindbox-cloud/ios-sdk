@@ -13,7 +13,7 @@ import MindboxLogger
 
 @available(iOS 13.0, *)
 class BGTaskManager: BackgroundTaskManagerType {
-    
+
     weak var gdManager: GuaranteedDeliveryManager?
 
     private var appGDRefreshIdentifier: String?
@@ -25,12 +25,12 @@ class BGTaskManager: BackgroundTaskManagerType {
 
     private let persistenceStorage: PersistenceStorage
     private let databaseRepository: MBDatabaseRepository
-    
+
     init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
     }
-    
+
     func registerBGTasks(
         appGDRefreshIdentifier: String,
         appGDProcessingIdentifier: String,
@@ -39,7 +39,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         self.appGDRefreshIdentifier = appGDRefreshIdentifier
         self.appGDProcessingIdentifier = appGDProcessingIdentifier
         self.appDBCleanProcessingIdentifire = appDBCleanProcessingIdentifire
-        
+
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: appGDRefreshIdentifier,
             using: nil,
@@ -56,28 +56,28 @@ class BGTaskManager: BackgroundTaskManagerType {
             launchHandler: appDBCleanProcessingHandler
         )
     }
-    
+
     func endBackgroundTask(success: Bool) {
         guard appGDRefreshTask != nil, appGDProcessingTask != nil else {
             return
         }
-        
+
         Logger.common(message: "Did call EndBackgroundTask", level: .info, category: .background)
         appGDRefreshTask?.setTaskCompleted(success: success)
         appGDProcessingTask?.setTaskCompleted(success: success)
     }
-    
+
     func applicationDidEnterBackground() {
         scheduleAppGDRefreshTask()
         scheduleAppGDProcessingTask()
         scheduleAppDBCleanProcessingTaskIfNeeded()
     }
-    
+
     func applicationDidBecomeActive() {
         appGDRefreshTask?.setTaskCompleted(success: false)
         appGDProcessingTask?.setTaskCompleted(success: false)
     }
-    
+
     // MARK: - Shedulers
     private func scheduleAppGDRefreshTask() {
         guard let identifier = appGDRefreshIdentifier else {
@@ -97,7 +97,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             #endif
         }
     }
-    
+
     private func scheduleAppGDProcessingTask() {
         guard let identifier = appGDProcessingIdentifier else {
             Logger.common(message: "appGDProcessingIdentifier is nil", level: .error, category: .background)
@@ -117,7 +117,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             #endif
         }
     }
-    
+
     private func scheduleAppDBCleanProcessingTaskIfNeeded() {
         guard let identifier = appDBCleanProcessingIdentifire else {
             Logger.common(message: "appDBCleanProcessingIdentifire is nil", level: .error, category: .background)
@@ -147,7 +147,7 @@ class BGTaskManager: BackgroundTaskManagerType {
             #endif
         }
     }
-    
+
     // MARK: - Handlers
     private func appGDRefreshHandler(task: BGTask) {
         Logger.common(message: "Invoked appGDRefreshHandler", level: .info, category: .background)
@@ -181,7 +181,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         Mindbox.shared.coreController?.checkNotificationStatus()
         Logger.common(message: "GDAppRefresh task started", level: .info, category: .background)
     }
-    
+
     private func appGDProcessingHandler(task: BGTask) {
         Logger.common(message: "Invoked appGDAppProcessingHandler", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {
@@ -213,7 +213,7 @@ class BGTaskManager: BackgroundTaskManagerType {
         Mindbox.shared.coreController?.checkNotificationStatus()
         Logger.common(message: "GDAppProcessing task started", level: .info, category: .background)
     }
-    
+
     private func appDBCleanProcessingHandler(task: BGTask) {
         Logger.common(message: "Invoked removeDeprecatedEventsProcessing", level: .info, category: .background)
         guard let task = task as? BGProcessingTask else {

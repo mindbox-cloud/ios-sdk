@@ -13,7 +13,7 @@ protocol ContentBackgroundLayerSourceProtocol: Decodable, Equatable { }
 enum ContentBackgroundLayerSourceType: String, Decodable {
     case url
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
         let type: String = try container.decode(String.self)
@@ -24,11 +24,11 @@ enum ContentBackgroundLayerSourceType: String, Decodable {
 enum ContentBackgroundLayerSourceDTO: Decodable, Hashable, Equatable {
     case url(UrlLayerSourceDTO)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayerSourceDTO, rhs: ContentBackgroundLayerSourceDTO) -> Bool {
         switch (lhs, rhs) {
             case (.url, .url): return true
@@ -36,23 +36,23 @@ enum ContentBackgroundLayerSourceDTO: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .url: hasher.combine("url")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayerSourceDTO.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerSourceType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The source type could not be decoded. The source will be ignored.")
         }
-        
+
         let sourceContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .url:
                 let urlSource = try sourceContainer.decode(UrlLayerSourceDTO.self)
@@ -77,11 +77,11 @@ extension ContentBackgroundLayerSourceDTO {
 enum ContentBackgroundLayerSource: Decodable, Hashable, Equatable {
     case url(UrlLayerSource)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayerSource, rhs: ContentBackgroundLayerSource) -> Bool {
         switch (lhs, rhs) {
             case (.url, .url): return true
@@ -89,23 +89,23 @@ enum ContentBackgroundLayerSource: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .url: hasher.combine("url")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayerSource.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerSourceType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The source type could not be decoded. The source will be ignored.")
         }
-        
+
         let sourceContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .url:
                 let urlSource = try sourceContainer.decode(UrlLayerSource.self)

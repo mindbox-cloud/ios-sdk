@@ -44,36 +44,36 @@ class CheckerFunctions {
 protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap, TargetingCheckerPersistenceStorageProtocol { }
 
 final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
-    
+
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
         setupCheckerMap()
     }
-    
+
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
     var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]?
     var geoModels: InAppGeoResponse?
     var event: ApplicationEvent?
     var persistenceStorage: PersistenceStorage
-    
+
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
-    
+
     func prepare(targeting: Targeting) {
         guard let target = checkerMap[targeting] else {
             Logger.common(message: "target not exist in checkerMap. Targeting: \(targeting)", level: .error, category: .inAppMessages)
             return
         }
-        
+
         target(targeting).prepare(&context)
     }
-    
+
     func check(targeting: Targeting) -> Bool {
         guard let target = checkerMap[targeting] else {
             Logger.common(message: "target not exist in checkerMap. Targeting: \(targeting)", level: .error, category: .inAppMessages)
             return false
         }
-        
+
         return target(targeting).check()
     }
 
@@ -136,11 +136,11 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
                                                               segmentExternalId: "")
         let productSegmentTargetingFactory = ProductSegmentTargetingFactory(checker: self)
         checkerMap[.viewProductSegment(productSegmentTargeting)] = productSegmentTargetingFactory.makeChecker(for:)
-        
+
         let visitTargeting = VisitTargeting(kind: .equals, value: 1)
         let visitTargetingFactory = VisitTargetingFactory(checker: self)
         checkerMap[.visit(visitTargeting)] = visitTargetingFactory.makeChecker(for:)
-        
+
         let pushEnabledTargeting = PushEnabledTargeting(value: false)
         let pushEnabledFactory = PushEnabledTargetingFactory()
         checkerMap[.pushEnabled(pushEnabledTargeting)] = pushEnabledFactory.makeChecker(for:)
