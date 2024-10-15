@@ -36,10 +36,10 @@ struct MainView: View {
                         .tint(.white)
                     }
                     
-                    Text(viewModel.testUUID ?? viewModel.deviceUUID)
+                    Text(viewModel.updatedSdkVersion ?? viewModel.SDKVersion)
                     
                     Button(action: {
-                        viewModel.getDeviceUUID()
+                        viewModel.getUpdatedSDKVersion()
                     }) {
                         Text("Press me")
                             .font(.headline)

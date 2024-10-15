@@ -26,7 +26,7 @@ public class JSCoreDownloader {
             return
         }
         
-        let fileURL = URL(string: "https://gist.githubusercontent.com/Vailence/16276f8d8f845528109b27ba7f270511/raw/gistfile1.txt")!
+        let fileURL = URL(string: "https://gist.githubusercontent.com/Vailence/16276f8d8f845528109b27ba7f270511/raw")!
         let task = session.downloadTask(with: fileURL) { [weak self] tempLocalURL, response, error in
             
             guard let tempLocalURL = tempLocalURL else {

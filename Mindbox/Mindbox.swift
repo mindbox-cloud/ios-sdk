@@ -97,14 +97,10 @@ public class Mindbox: NSObject {
 
      */
     public func getDeviceUUID(_ completion: @escaping (String) -> Void) {
-        if JSCoreDownloader.shared.savedFileURL == nil {
-            if let value = persistenceStorage?.deviceUUID {
-                completion(value)
-            } else {
-                observe(value: self.persistenceStorage?.deviceUUID, with: completion)
-            }
+        if let value = persistenceStorage?.deviceUUID {
+            completion(value)
         } else {
-            completion(JSCoreDownloader.shared.callMethod(key: "test") ?? "unknown")
+            observe(value: self.persistenceStorage?.deviceUUID, with: completion)
         }
     }
 
@@ -153,6 +149,15 @@ public class Mindbox: NSObject {
      If sdk can't initialize its dependencies, will return unknown
 
      */
+    
+    public func getSdkVersion(completion: (String) -> Void) {
+        if JSCoreDownloader.shared.savedFileURL == nil {
+            completion(utilitiesFetcher?.sdkVersion ?? "unknown")
+        } else {
+            completion(JSCoreDownloader.shared.callMethod(key: "test") ?? "unknown")
+        }
+    }
+    
     public var sdkVersion: String {
         utilitiesFetcher?.sdkVersion ?? "unknown"
     }
