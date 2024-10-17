@@ -51,7 +51,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                     fetchExpectation.fulfill()
                 }
             }
-            
+
             wait(for: [fetchExpectation], timeout: 100.0)
         }
     }
