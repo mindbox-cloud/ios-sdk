@@ -56,7 +56,6 @@ class InAppTargetingRequestsTests: XCTestCase {
 
     func test_TwoInappsTrue_FirstShownBefore() {
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
             mapper.mapConfigResponse(nil, config) { _ in
@@ -115,7 +114,6 @@ class InAppTargetingRequestsTests: XCTestCase {
         let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
         let expectationForMapConfigResponse = XCTestExpectation(description: "Waiting for mapConfigResponse to complete")
             
-        persistenceStorage.shownInAppsIds = ["1"]
         do {
             let config = try getConfig(name: "9-TargetingRequests")
             targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
@@ -184,8 +182,6 @@ class InAppTargetingRequestsTests: XCTestCase {
         let expectationTrue = XCTestExpectation(description: "True")
         let expectationTest = XCTestExpectation(description: "Operation test")
         let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-            
-        persistenceStorage.shownInAppsIds = ["1"]
         
         do {
             let config = try getConfig(name: "16-17-TargetingRequests")

@@ -23,6 +23,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         "37bed734-aa34-4c10-918b-873f67505d46"
     ]
     
+    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
     override func setUp() {
         super.setUp()
         shownInAppsIdsMigration = MigrationShownInAppsIds()
@@ -54,6 +55,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         super.tearDown()
     }
     
+    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
     func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() throws {
         try mbLoggerCDManager.deleteAll()
         
@@ -81,6 +83,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog?.message, expectedLogMessage)
     }
     
+    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
     func test_ShownInAppsIdsMigration_withIsNeededFalse_shouldHaveBeenSkipped() throws {
         try mbLoggerCDManager.deleteAll()
         

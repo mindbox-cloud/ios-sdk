@@ -116,10 +116,6 @@ private extension MBLogger {
     }
     
     private func writeToCD(message: String, timestamp: Date = Date()) {
-        do {
-            try MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
-        } catch {
-            
-        }
+        MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
     }
 }

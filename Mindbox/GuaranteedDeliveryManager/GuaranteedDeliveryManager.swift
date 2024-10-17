@@ -143,7 +143,7 @@ final class GuaranteedDeliveryManager: NSObject {
     
 }
 
-class AsyncOperation: Operation {
+class AsyncOperation: Operation, @unchecked Sendable {
     private let lockQueue = DispatchQueue(label: "com.mindbox.asyncoperation", attributes: .concurrent)
         
     override var isAsynchronous: Bool {

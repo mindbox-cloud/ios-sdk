@@ -89,12 +89,9 @@ final class StringExtensionsTests: XCTestCase {
         ]
         
         for str in testCases {
-            XCTContext.runActivity(named: "string(\(str)) parse with error") { activity in
-                do {
-                    XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in
-                        XCTAssertEqual((error as NSError).domain, "Invalid timeSpan format")
-                    }
-                } catch {
+            try XCTContext.runActivity(named: "string(\(str)) parse with error") { activity in
+                XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in
+                    XCTAssertEqual((error as NSError).domain, "Invalid timeSpan format")
                 }
             }
         }

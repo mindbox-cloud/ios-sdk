@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 
-public class MBPersistentContainer: NSPersistentContainer {
+public class MBPersistentContainer: NSPersistentContainer, @unchecked Sendable {
     
     public static var applicationGroupIdentifier: String? = nil
         

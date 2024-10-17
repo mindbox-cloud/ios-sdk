@@ -57,9 +57,9 @@ class CurrentFormatStrategy: NotificationFormatStrategy {
     func handle(userInfo: [AnyHashable : Any]) -> MBPushNotification? {
         guard let data = try? JSONSerialization.data(withJSONObject: userInfo),
               let notificationModel = try? JSONDecoder().decode(MBPushNotification.self, from: data),
-              let clickUrl = notificationModel.clickUrl,
+              notificationModel.clickUrl != nil,
               let alert = notificationModel.aps?.alert,
-              let body = alert.body else {
+              alert.body != nil else {
             Logger.common(message: "CurrentFormatStrategy: Failed to parse current notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
