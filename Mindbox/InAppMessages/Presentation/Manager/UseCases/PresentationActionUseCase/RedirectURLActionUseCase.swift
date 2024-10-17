@@ -18,7 +18,7 @@ final class RedirectURLActionUseCase: PresentationActionUseCaseProtocol {
         self.tracker = tracker
         self.model = model
     }
-    
+
     func onTapAction(
         id: String,
         onTap: @escaping InAppMessageTapAction,

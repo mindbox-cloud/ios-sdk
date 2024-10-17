@@ -22,7 +22,7 @@ class ImageLayerFactory: LayerFactory {
         Logger.common(message: "ImageLayerFactory return nil.")
         return nil
     }
-    
+
     func setupConstraints(for view: UIView, in parentView: UIView) {
         view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -32,7 +32,7 @@ class ImageLayerFactory: LayerFactory {
             view.widthAnchor.constraint(equalTo: view.heightAnchor, multiplier: 3 / 4)
         ])
     }
-    
+
     func setupConstraintsSnackbar(for view: UIView, in parentView: UIView) {
         view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([

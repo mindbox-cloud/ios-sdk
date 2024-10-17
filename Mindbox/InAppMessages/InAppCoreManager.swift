@@ -21,7 +21,7 @@ enum InAppMessageTriggerEvent: Hashable {
             return false
         }
     }
-    
+
     /// Application start event. Fires after SDK configurated
     case start // All inapps by now is Start
     /// Any other event sent to SDK
@@ -31,7 +31,7 @@ enum InAppMessageTriggerEvent: Hashable {
 struct ApplicationEvent: Hashable, Equatable {
     let name: String
     let model: InappOperationJSONModel?
-    
+
     init(name: String, model: InappOperationJSONModel?) {
         self.name = name.lowercased()
         self.model = model
@@ -77,7 +77,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             Logger.common(message: "Skip launching InAppManager because it is already launched", level: .info, category: .visit)
             return
         }
-        
+
         isInAppManagerLaunched = true
         sendEvent(.start)
         configManager.delegate = self
@@ -90,13 +90,13 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             isConfigurationReady = false
             configManager.recalculateInapps(with: event)
         }
-        
+
         serialQueue.async {
             guard self.isConfigurationReady else {
                 self.unhandledEvents.append(event)
                 return
             }
-            
+
             Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             self.handleEvent(event)
         }
@@ -109,7 +109,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
             return
         }
-        
+
         onReceivedInAppResponse()
     }
 
@@ -150,7 +150,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     private func handleQueuedEvents() {
         Logger.common(message: "Start handling waiting events. Count: \(unhandledEvents.count)", level: .debug, category: .inAppMessages)
-        while unhandledEvents.count > 0 {
+        while !unhandledEvents.isEmpty {
             let event = unhandledEvents.removeFirst()
             handleEvent(event)
         }

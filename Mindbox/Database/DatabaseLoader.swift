@@ -11,14 +11,14 @@ import CoreData
 import MindboxLogger
 
 class DataBaseLoader {
-    
+
     private let persistentStoreDescriptions: [NSPersistentStoreDescription]?
     private let persistentContainer: NSPersistentContainer
     var persistentStoreDescription: NSPersistentStoreDescription?
-    
+
     var loadPersistentStoresError: Error?
     var persistentStoreURL: URL?
-    
+
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
         let momdName = Constants.Database.mombName
@@ -38,7 +38,7 @@ class DataBaseLoader {
         }
 
         #endif
-        
+
         guard let modelURL = modelURL else {
             Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
@@ -52,7 +52,7 @@ class DataBaseLoader {
             name: momdName,
             managedObjectModel: managedObjectModel
         )
-        
+
         self.persistentStoreDescriptions = persistentStoreDescriptions
         if let persistentStoreDescriptions = persistentStoreDescriptions {
             persistentContainer.persistentStoreDescriptions = persistentStoreDescriptions
@@ -63,7 +63,7 @@ class DataBaseLoader {
             $0.shouldInferMappingModelAutomatically = true
         }
     }
-    
+
     func loadPersistentContainer() throws -> NSPersistentContainer {
         do {
             return try loadPersistentStores()
@@ -74,9 +74,9 @@ class DataBaseLoader {
             }
         }
     }
-    
+
     private func loadPersistentStores() throws -> NSPersistentContainer {
-        persistentContainer.loadPersistentStores { [weak self] (persistentStoreDescription, error) in
+        persistentContainer.loadPersistentStores { [weak self] persistentStoreDescription, error in
             if let url = persistentStoreDescription.url {
                 Logger.common(message: "Persistent store url: \(url.description)", level: .info, category: .database)
             } else {
@@ -92,7 +92,7 @@ class DataBaseLoader {
         }
         return persistentContainer
     }
-    
+
     func destroy() throws {
         guard let persistentStoreURL = persistentStoreURL else {
             Logger.common(message: MBDatabaseError.persistentStoreURLNotFound.errorDescription, level: .error, category: .database)
@@ -100,7 +100,7 @@ class DataBaseLoader {
         }
 
         Logger.common(message: "Removing database at url: \(persistentStoreURL.absoluteString)", level: .info, category: .database)
-        
+
         guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
             Logger.common(message: MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path).errorDescription, level: .error, category: .database)
             throw MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path)
@@ -113,5 +113,4 @@ class DataBaseLoader {
             throw error
         }
     }
-    
 }

@@ -11,6 +11,4 @@ import Foundation
 import CoreData
 
 @objc(CDEvent)
-public class CDEvent: NSManagedObject {
-
-}
+public class CDEvent: NSManagedObject {}

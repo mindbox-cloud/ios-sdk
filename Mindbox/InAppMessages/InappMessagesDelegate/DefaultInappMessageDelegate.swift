@@ -27,6 +27,6 @@ public extension DefaultInappMessageDelegate {
         openURL(url)
         copyPayload(payload)
     }
-    
+
     func inAppMessageDismissed(id: String) { }
 }

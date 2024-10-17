@@ -23,7 +23,7 @@ public extension UnknownDecodable where Self: RawRepresentable, Self.RawValue ==
                 self = value
             } else if let unknownCase = unknownCase {
                 self = unknownCase
-                
+
                 let error = MindboxError(InternalError(errorKey: .parsing, reason: "No match with value \(parsed). Set to .unknown", suggestion: "Add an .\(parsed) case"))
                 Logger.error(error.asLoggerError())
             } else {

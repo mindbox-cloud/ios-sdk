@@ -27,7 +27,7 @@ struct ContentPositionMargin: Decodable, Equatable {
 enum ContentPositionMarginKind: String, Decodable, Equatable {
     case dp
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(RawValue.self)

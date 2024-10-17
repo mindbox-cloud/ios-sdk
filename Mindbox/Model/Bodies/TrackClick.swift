@@ -9,14 +9,13 @@
 import Foundation
 
 struct TrackClick: Codable {
-    
+
     let messageUniqueKey: String
-    
+
     let buttonUniqueKey: String?
-    
+
     init(messageUniqueKey: String, buttonUniqueKey: String? = nil) {
         self.messageUniqueKey = messageUniqueKey
         self.buttonUniqueKey = buttonUniqueKey
     }
-    
 }

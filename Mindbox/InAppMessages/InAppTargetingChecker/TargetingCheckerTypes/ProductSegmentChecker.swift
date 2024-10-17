@@ -12,7 +12,7 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
 
     weak var checker: TargetingCheckerContextProtocol?
 
-    override func prepareInternal(targeting: ProductSegmentTargeting, context: inout PreparationContext) -> Void {
+    override func prepareInternal(targeting: ProductSegmentTargeting, context: inout PreparationContext) {
         context.productSegments.append(targeting.segmentationExternalId)
     }
 

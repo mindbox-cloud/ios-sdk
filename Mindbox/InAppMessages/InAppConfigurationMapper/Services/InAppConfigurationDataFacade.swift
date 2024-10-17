@@ -18,13 +18,13 @@ protocol InAppConfigurationDataFacadeProtocol {
 }
 
 class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
-    
+
     var geoService: GeoServiceProtocol?
     let segmentationService: SegmentationServiceProtocol
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
-    
+
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
@@ -34,30 +34,30 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         self.imageService = imageService
         self.tracker = tracker
     }
-    
+
     private let dispatchGroup = DispatchGroup()
     private var fetchedProductIdsCache: [String: String] = [:]
-    
+
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
         fetchSegmentationIfNeeded()
         fetchGeoIfNeeded()
         fetchProductSegmentationIfNeeded(products: model?.viewProduct?.product)
-        
+
         dispatchGroup.notify(queue: .main) {
             completion()
         }
     }
-    
+
     func setObservedOperation() {
         SessionTemporaryStorage.shared.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
-    
+
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             completion(result)
         }
     }
-    
+
     func trackTargeting(id: String?) {
         if let id = id {
             do {
@@ -93,21 +93,21 @@ private extension InAppConfigurationDataFacade {
             }
         }
     }
-    
+
     private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
         guard let products = products else {
             return
         }
-        
+
         let productIds = products.ids
         let allMatch = productIds.allSatisfy { key, value in
             fetchedProductIdsCache[key] == value
         }
-        
+
         if allMatch {
             return
         }
-        
+
         dispatchGroup.enter()
         segmentationService.checkProductSegmentationRequest(products: products) { response in
             self.fetchedProductIdsCache = productIds

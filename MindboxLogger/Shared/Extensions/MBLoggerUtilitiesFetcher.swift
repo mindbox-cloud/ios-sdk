@@ -9,13 +9,13 @@
 import Foundation
 
 class MBLoggerUtilitiesFetcher {
-    
+
     let appBundle: Bundle = {
         var bundle: Bundle = .main
         prepareBundle(&bundle)
         return bundle
     }()
-    
+
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
             fatalError("CFBundleShortVersionString not found for host app")
@@ -30,14 +30,12 @@ class MBLoggerUtilitiesFetcher {
             fatalError(message)
             #endif
         }
-        
+
         return identifier
     }
-    
-    init() {
-        
-    }
-    
+
+    init() {}
+
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
             // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
@@ -47,7 +45,7 @@ class MBLoggerUtilitiesFetcher {
             }
         }
     }
-    
+
     var hostApplicationName: String? {
         appBundle.bundleIdentifier
     }

@@ -48,7 +48,8 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
         started = true
     }
 
-    @objc private func didReceiveNotification() {
+    @objc
+    private func didReceiveNotification() {
         let now = currentDateProvider()
 
         if now.timeIntervalSince(lastReceivedDate ?? now) < Self.triggerNotificationInterval {
@@ -70,5 +71,4 @@ internal final class PasteboardUUIDDebugService: UUIDDebugService {
 
         pasteboard.string = id
     }
-
 }

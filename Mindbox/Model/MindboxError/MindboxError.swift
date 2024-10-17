@@ -25,7 +25,7 @@ public enum MindboxError: LocalizedError {
     case connectionError
     /// Unhandled errors
     case unknown(Error)
-    
+
     /// Return a formatted error message
     public var errorDescription: String? {
         switch self {
@@ -46,7 +46,7 @@ public enum MindboxError: LocalizedError {
             return "No response received from the server, please check your internet connection."
         }
     }
-    
+
     public var failureReason: String? {
         switch self {
         case let .serverError(error):
@@ -65,7 +65,7 @@ public enum MindboxError: LocalizedError {
             return "Connection error"
         }
     }
-    
+
     public var errorKey: String? {
         switch self {
         case let .internalError(error):
@@ -74,7 +74,7 @@ public enum MindboxError: LocalizedError {
             return nil
         }
     }
-    
+
     public init(_ error: InternalError) {
         self = .internalError(error)
     }
@@ -183,7 +183,6 @@ public extension MindboxError {
                                     errorMessage: error.localizedDescription).convertToString()
         }
     }
-
 }
 
 public struct InternalError: CustomStringConvertible {
@@ -202,7 +201,7 @@ public struct InternalError: CustomStringConvertible {
         self.rawError = rawError
         self.statusCode = statusCode
     }
-    
+
     public init(
         errorKey: ErrorKey,
         rawError: Error? = nil,
@@ -212,7 +211,7 @@ public struct InternalError: CustomStringConvertible {
         self.rawError = rawError
         self.statusCode = statusCode
     }
-    
+
     public init(
         errorKey: ErrorKey,
         reason: String? = nil,
@@ -222,12 +221,12 @@ public struct InternalError: CustomStringConvertible {
         self.reason = reason
         self.suggestion = suggestion
     }
-    
+
     public var description: String {
         var string: String = ""
-        
+
         string += "\nError Key: \(errorKey)"
-        
+
         if let rawError = rawError {
             if let rawError = rawError as? DecodingError {
                 switch rawError {
@@ -248,19 +247,19 @@ public struct InternalError: CustomStringConvertible {
                 string += "\nError description: \(rawError.localizedDescription)"
             }
         }
-        
+
         if let statusCode = statusCode {
             string += "\nStatus code: \(statusCode)"
         }
-        
+
         if let reason = reason {
             string += "\nReason: \(reason)"
         }
-        
+
         if let suggestion = suggestion {
             string += "\nSuggestion: \(suggestion)"
         }
-        
+
         return string
     }
 }

@@ -9,11 +9,13 @@
 @testable import Mindbox
 import XCTest
 
+// swiftlint:disable force_try
+
 class EventRepositoryTestCase: XCTestCase {
     var coreController: CoreController!
     var controllerQueue: DispatchQueue!
     var persistenceStorage: PersistenceStorage!
-    
+
     override func setUp() {
         super.setUp()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -23,14 +25,14 @@ class EventRepositoryTestCase: XCTestCase {
         let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         try! databaseRepository.erase()
     }
-    
+
     override func tearDown() {
-        
+
         coreController = nil
         controllerQueue = nil
         super.tearDown()
     }
-    
+
     func testSendEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
@@ -46,12 +48,12 @@ class EventRepositoryTestCase: XCTestCase {
                 case .success:
                     expectation.fulfill()
                 case .failure:
-                    XCTFail()
+                    XCTFail("Expectations must be met and result must be success")
             }
         }
         waitForExpectations(timeout: 2, handler: nil)
     }
-    
+
     func testSendDecodableEvent() {
         let configuration = try! MBConfiguration(plistName: "TestEventConfig")
         coreController.initialization(configuration: configuration)
@@ -65,19 +67,19 @@ class EventRepositoryTestCase: XCTestCase {
                     if data.status == "Success" {
                         expectation.fulfill()
                     } else {
-                        XCTFail()
+                        XCTFail("Expectations must be met")
                     }
                 case .failure:
-                    XCTFail()
+                    XCTFail("Expectations must be met and result must be success")
             }
         }
         waitForExpectations(timeout: 2, handler: nil)
     }
-    
+
     private struct SuccessCase: Decodable {
         let status: String
     }
-    
+
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
         controllerQueue.async { expectation.fulfill() }

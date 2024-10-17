@@ -24,6 +24,6 @@ public extension CopyInappMessageDelegate {
         Logger.common(message: "CopyInappMessageDelegte inAppMessageTapAction called.")
         copyPayload(payload)
     }
-    
+
     func inAppMessageDismissed(id: String) { }
 }

@@ -44,5 +44,4 @@ class DeliveryOperation: AsyncOperation, @unchecked Sendable {
             self.finish()
         }
     }
-
 }

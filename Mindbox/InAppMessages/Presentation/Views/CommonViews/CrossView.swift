@@ -9,7 +9,7 @@
 import UIKit
 
 class CrossView: UIView {
-    
+
     var lineColor: UIColor = .black
     var lineWidth: CGFloat = 1.0
     var padding: CGFloat = 2.0
@@ -18,21 +18,21 @@ class CrossView: UIView {
         super.init(frame: frame)
         setupDefaults()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupDefaults()
     }
-    
+
     convenience init(lineColorHex: String?, lineWidth: Int?) {
         self.init()
         setupView(lineColorHex: lineColorHex, lineWidth: lineWidth)
     }
-    
+
     private func setupDefaults() {
         backgroundColor = .clear
     }
-    
+
     private func setupView(lineColorHex: String?, lineWidth: Int?) {
         let color = lineColorHex ?? "#000000"
         let width = lineWidth ?? 1
@@ -44,7 +44,7 @@ class CrossView: UIView {
         let path = drawCross(in: rect)
         strokePath(path)
     }
-    
+
     private func drawCross(in rect: CGRect) -> UIBezierPath {
         let path = UIBezierPath()
         path.lineWidth = lineWidth
@@ -64,16 +64,16 @@ class CrossView: UIView {
         path.addLine(to: rightBottom)
         path.move(to: rightTop)
         path.addLine(to: leftBottom)
-        
+
         return path
     }
-    
+
     private func strokePath(_ path: UIBezierPath) {
         lineColor.setStroke()
         path.stroke()
         addShapeLayer(for: path)
     }
-    
+
     private func addShapeLayer(for path: UIBezierPath) {
         let shapeLayer = CAShapeLayer()
         shapeLayer.path = path.cgPath

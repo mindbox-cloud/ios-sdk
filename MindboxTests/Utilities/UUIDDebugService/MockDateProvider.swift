@@ -10,5 +10,4 @@ import Foundation
 final class MockDateProvider {
 
     var date: Date!
-
 }

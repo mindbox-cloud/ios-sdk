@@ -15,19 +15,19 @@ import Foundation
 /// is required, and a version number that is used for sorting and comparison. The migration itself
 /// is performed by the `run` method, which may throw errors if the migration fails.
 protocol MigrationProtocol {
-    
+
     /// A textual description of the migration.
     var description: String { get }
-    
+
     /// A condition that determines whether the migration is required.
     /// - Note: Make sure that `isNeeded` returns `true` in cases where the migration is based on `MigrationConstant`.
     ///         If this is not the case, and the migration fails, performing a `softReset` is considered acceptable.
     var isNeeded: Bool { get }
-    
+
     /// The version number of the migration, which can be used to sort and determine
     /// whether to apply the migration.
     var version: Int { get }
-    
+
     /// Performs the migration. If the migration fails, an error is thrown.
     /// - Throws: An error if the migration fails.
     func run() throws

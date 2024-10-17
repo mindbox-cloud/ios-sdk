@@ -13,18 +13,18 @@ struct ConfigResponse: Decodable {
     let monitoring: Monitoring?
     let settings: Settings?
     let abtests: [ABTest]?
-    
+
     enum CodingKeys: String, CodingKey {
         case inapps, monitoring, settings, abtests
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+
         self.inapps = try? container.decodeIfPresent(FailableDecodableArray<InAppDTO>.self, forKey: .inapps)
         self.monitoring = ConfigResponse.decodeIfPresent(container, forKey: .monitoring, errorDesc: "Cannot decode Monitoring")
         self.settings = ConfigResponse.decodeIfPresent(container, forKey: .settings, errorDesc: "Cannot decode Settings")
-        
+
         let abTestValidator = DI.injectOrFail(ABTestValidator.self)
         if let decodedAbtests: [ABTest] = ConfigResponse.decodeIfPresent(container, forKey: .abtests, errorDesc: "Cannot decode ABTests"),
            decodedAbtests.allSatisfy({
@@ -35,7 +35,7 @@ struct ConfigResponse: Decodable {
             self.abtests = nil
         }
     }
-    
+
     private static func decodeIfPresent<T>(_ container: KeyedDecodingContainer<CodingKeys>,
                                            forKey key: CodingKeys,
                                            errorDesc: String) -> T? where T: Decodable {

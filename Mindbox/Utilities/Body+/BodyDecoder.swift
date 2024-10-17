@@ -9,9 +9,9 @@
 import Foundation
 
 struct BodyDecoder<T: Decodable> {
-    
+
     let body: T
-    
+
     init?(decodable: String) {
         if let data = decodable.data(using: .utf8) {
             if let body = try? JSONDecoder().decode(T.self, from: data) {
@@ -23,5 +23,4 @@ struct BodyDecoder<T: Decodable> {
             return nil
         }
     }
-    
 }

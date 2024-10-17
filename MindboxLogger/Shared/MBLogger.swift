@@ -11,9 +11,9 @@ import os
 import CoreData
 
 public class MBLogger {
-    
+
     public static let shared = MBLogger()
-    
+
     /**
      ### Levels:
      0. debug - 🪲
@@ -26,14 +26,14 @@ public class MBLogger {
      - Note: `.error` by default; `.none` for disable logging
      */
     public var logLevel: LogLevel = .error
-        
+
     private enum ExecutionMethod {
         case sync(lock: NSRecursiveLock)
         case async(queue: DispatchQueue)
     }
-    
+
     private let executionMethod: ExecutionMethod
-    
+
     private init() {
         #if DEBUG
             executionMethod = .sync(lock: NSRecursiveLock())
@@ -62,7 +62,7 @@ public class MBLogger {
             return
         }
         let writer = makeWriter(subsystem: subsystem, category: category)
-        
+
         switch executionMethod {
         case let .async(queue: queue):
             queue.async {
@@ -73,7 +73,7 @@ public class MBLogger {
             writer.writeMessage(message, logLevel: level)
         }
     }
-    
+
     /**
      Method to write log in Xcode debug output as well in Console.app.
      
@@ -114,7 +114,7 @@ private extension MBLogger {
     private func makeWriter(subsystem: String, category: LogCategory) -> LogWriter {
         return OSLogWriter(subsystem: subsystem, category: category.rawValue.capitalized)
     }
-    
+
     private func writeToCD(message: String, timestamp: Date = Date()) {
         MBLoggerCoreDataManager.shared.create(message: message, timestamp: timestamp)
     }

@@ -9,6 +9,8 @@
 @testable import Mindbox
 import XCTest
 
+// swiftlint:disable force_try
+
 class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 

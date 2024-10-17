@@ -22,7 +22,7 @@ class MBNetworkFetcher: NetworkFetcher {
         let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
         let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
         sessionConfiguration.httpAdditionalHeaders = [
-            
+
             "Mindbox-Integration": "iOS-SDK",
             "Mindbox-Integration-Version": sdkVersion,
             "User-Agent": userAgent,
@@ -47,7 +47,7 @@ class MBNetworkFetcher: NetworkFetcher {
             completion(.failure(error))
             return
         }
-        
+
         let builder = URLRequestBuilder(domain: configuration.domain)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
@@ -124,7 +124,7 @@ class MBNetworkFetcher: NetworkFetcher {
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         Logger.response(data: data, response: response, error: error)
-        
+
         // Check if we have any response at all
         guard let response = response else {
             completion(.failure(.connectionError))

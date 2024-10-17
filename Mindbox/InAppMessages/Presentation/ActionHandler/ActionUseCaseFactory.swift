@@ -14,11 +14,11 @@ protocol UseCaseFactoryProtocol {
 
 class ActionUseCaseFactory: UseCaseFactoryProtocol {
     private let clickTracker: PresentationClickTracker
-    
+
     init(tracker: InAppMessagesTrackerProtocol) {
         clickTracker = PresentationClickTracker(tracker: tracker)
     }
-    
+
     func createUseCase(action: ContentBackgroundLayerAction) -> PresentationActionUseCaseProtocol? {
         switch action {
             case .pushPermission(let pushPermissionModel):

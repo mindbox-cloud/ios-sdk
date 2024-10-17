@@ -9,6 +9,8 @@
 import XCTest
 @testable import MindboxNotifications
 
+// swiftlint:disable force_unwrapping force_try
+
 @available(iOS 13.0, *)
 final class MindboxNotificationContentTests: XCTestCase {
 
@@ -16,13 +18,13 @@ final class MindboxNotificationContentTests: XCTestCase {
     var mockViewController: UIViewController!
     var mockExtensionContext: NSExtensionContext!
     var mockNotificationRequest: UNNotificationRequest!
-    
+
     override func setUp() {
         super.setUp()
         service = MindboxNotificationService()
         mockViewController = UIViewController()
         mockExtensionContext = MockExtensionContext()
-        
+
         let aps: [AnyHashable: Any] = [
             "mutable-content": 1,
             "alert": [
@@ -32,7 +34,7 @@ final class MindboxNotificationContentTests: XCTestCase {
             "content-available": 1,
             "sound": "default"
         ]
-        
+
         let userInfo: [AnyHashable: Any] = [
             "clickUrl": "https://mindbox.ru/",
             "payload": "{\n  \"payload\": \"data\"\n}",
@@ -52,25 +54,25 @@ final class MindboxNotificationContentTests: XCTestCase {
             ],
             "aps": aps
         ]
-        
+
         let content = UNMutableNotificationContent()
         content.userInfo = userInfo
         content.title = "Test title"
         content.body = "Test description"
-        
+
         let image = UIImage(systemName: "star")!
         let imageData = image.pngData()!
         let tempDirectory = FileManager.default.temporaryDirectory
         let imageFileURL = tempDirectory.appendingPathComponent("testImage.png")
-        
+
         try! imageData.write(to: imageFileURL)
         let notificationAttachment = try! UNNotificationAttachment(identifier: "identifier", url: imageFileURL, options: nil)
-        
+
         content.attachments.append(notificationAttachment)
-        
+
         mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
     }
-    
+
     override func tearDown() {
         service = nil
         mockViewController = nil
@@ -81,23 +83,23 @@ final class MindboxNotificationContentTests: XCTestCase {
 
     func testDidReceiveFromMindboxNotificationContentProtocol() {
         let mockNotification = MockUNNotification(request: mockNotificationRequest)
-        
+
         XCTAssertFalse(mockNotification.request.content.attachments.isEmpty)
-        
-        service.didReceive(notification: mockNotification, 
+
+        service.didReceive(notification: mockNotification,
                            viewController: mockViewController,
                            extensionContext: mockExtensionContext)
-        
+
         XCTAssertEqual(service.viewController, mockViewController)
         XCTAssertEqual(service.context, mockExtensionContext)
-        
+
         XCTAssertFalse(service.context!.notificationActions.isEmpty)
         XCTAssertEqual(service.context!.notificationActions.count, 2)
-        
+
         let actionTitles = service.context!.notificationActions.map { $0.title }
         XCTAssertTrue(actionTitles.contains("Documentation"))
         XCTAssertTrue(actionTitles.contains("Button #1"))
-        
+
         let imageView = mockViewController.view.subviews.first { $0 is UIImageView } as? UIImageView
         XCTAssertNotNil(imageView, "The UIImageView should be added to the ViewController")
     }
@@ -106,7 +108,7 @@ final class MindboxNotificationContentTests: XCTestCase {
 @available(iOS 12.0, *)
 fileprivate class MockExtensionContext: NSExtensionContext {
     var actions: [UNNotificationAction] = []
-    
+
     override var notificationActions: [UNNotificationAction] {
         get {
             return actions
@@ -117,25 +119,24 @@ fileprivate class MockExtensionContext: NSExtensionContext {
     }
 }
 
-
 @available(iOS 12.0, *)
 fileprivate class MockUNNotification: UNNotification {
     private let mockRequest: UNNotificationRequest
-    
+
     init(request: UNNotificationRequest) {
         self.mockRequest = request
-        
+
         let data = try! NSKeyedArchiver.archivedData(withRootObject: request, requiringSecureCoding: true)
-        
+
         let coder = try! NSKeyedUnarchiver(forReadingFrom: data)
-        
+
         super.init(coder: coder)!
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override var request: UNNotificationRequest {
         return mockRequest
     }

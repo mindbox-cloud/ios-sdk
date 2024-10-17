@@ -12,11 +12,10 @@ import CoreData
 @testable import Mindbox
 
 class MockDataBaseLoader: DataBaseLoader {
-    
+
     init() throws {
         let inMemoryDescription = NSPersistentStoreDescription()
         inMemoryDescription.type = NSInMemoryStoreType
         try super.init(persistentStoreDescriptions: [inMemoryDescription])
     }
-    
 }

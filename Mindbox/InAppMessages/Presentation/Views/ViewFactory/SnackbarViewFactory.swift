@@ -13,28 +13,38 @@ import MindboxLogger
 class SnackbarViewFactory: ViewFactoryProtocol {
 
     weak var viewController: UIViewController?
-    
-    func create(model: MindboxFormVariant, id: String, imagesDict: [String: UIImage], firstImageValue: String, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) -> UIViewController? {
-        if case .snackbar(let snackbarFormVariant) = model {
+
+    func create(with params: ViewFactoryParameters) -> UIViewController? {
+        if case .snackbar(let snackbarFormVariant) = params.model {
             if let gravity = snackbarFormVariant.content.position.gravity?.vertical {
                 var snackbarViewController: UIViewController?
-                let snackbarView = SnackbarView(onClose: onClose)
+                let snackbarView = SnackbarView(onClose: params.onClose)
                 switch gravity {
                     case .top:
-                        snackbarViewController = TopSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
+                    snackbarViewController = TopSnackbarViewController(model: snackbarFormVariant,
+                                                                       imagesDict: params.imagesDict,
+                                                                       snackbarView: snackbarView,
+                                                                       firstImageValue: params.firstImageValue,
+                                                                       onPresented: params.onPresented,
+                                                                       onTapAction: params.onTapAction)
                     case .bottom:
-                        snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant, imagesDict: imagesDict, snackbarView: snackbarView, firstImageValue: firstImageValue, onPresented: onPresented, onTapAction: onTapAction)
+                    snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant,
+                                                                          imagesDict: params.imagesDict,
+                                                                          snackbarView: snackbarView,
+                                                                          firstImageValue: params.firstImageValue,
+                                                                          onPresented: params.onPresented,
+                                                                          onTapAction: params.onTapAction)
                     default:
                         Logger.common(message: "SnackbarViewFactory controller is nil.")
                         return nil
                 }
-                
+
                 self.viewController = snackbarViewController
-                
+
                 return viewController
             }
         }
-        
+
         Logger.common(message: "SnackbarViewFactory create returns nil.")
         return nil
     }

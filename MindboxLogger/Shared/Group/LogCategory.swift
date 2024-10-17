@@ -9,7 +9,7 @@
 import Foundation
 
 public enum LogCategory: String, CaseIterable {
-    
+
     case general
     case network
     case database
@@ -19,7 +19,7 @@ public enum LogCategory: String, CaseIterable {
     case visit
     case migration
     case inAppMessages
-    
+
     var emoji: String {
         switch self {
         case .general:
@@ -42,5 +42,4 @@ public enum LogCategory: String, CaseIterable {
             return "🖼️"
         }
     }
-    
 }

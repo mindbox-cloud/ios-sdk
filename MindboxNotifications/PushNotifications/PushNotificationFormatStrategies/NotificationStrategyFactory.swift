@@ -15,7 +15,7 @@ final class NotificationStrategyFactory {
             Logger.common(message: "NotificationStrategyFactory: Selected LegacyFormatStrategy for processing push notification.", level: .info, category: .notification)
             return LegacyFormatStrategy()
         }
-        
+
         Logger.common(message: "NotificationStrategyFactory: Selected CurrentFormatStrategy for processing push notification.", level: .info, category: .notification)
         return CurrentFormatStrategy()
     }

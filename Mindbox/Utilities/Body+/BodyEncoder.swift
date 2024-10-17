@@ -9,9 +9,9 @@
 import Foundation
 
 struct BodyEncoder<T: Encodable> {
-    
+
     let body: String
-    
+
     init(encodable: T) {
         if let encodedBody = try? JSONEncoder().encode(encodable) {
             body = String(data: encodedBody, encoding: .utf8) ?? ""
@@ -19,5 +19,4 @@ struct BodyEncoder<T: Encodable> {
             body = ""
         }
     }
-    
 }

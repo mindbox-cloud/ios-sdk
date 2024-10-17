@@ -9,7 +9,7 @@
 import Foundation
 
 public enum MBDatabaseError: LocalizedError {
-    
+
     case unableCreateDatabaseModel
     case unableCreateManagedObjectModel(with: URL)
     case unableToLoadPeristentStore(localizedDescription: String)

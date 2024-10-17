@@ -10,6 +10,8 @@ import Foundation
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable comment_spacing
+
 //class InAppConfigResponseTests: XCTestCase {
 //
 //    var container = try! TestDependencyProvider()

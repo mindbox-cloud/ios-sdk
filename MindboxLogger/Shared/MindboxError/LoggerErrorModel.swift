@@ -16,7 +16,7 @@ public struct LoggerErrorModel {
         self.statusCode = statusCode
         self.errorKey = errorKey
     }
-    
+
     let errorType: LoggerErrorType
     let description: String?
     let status: String?

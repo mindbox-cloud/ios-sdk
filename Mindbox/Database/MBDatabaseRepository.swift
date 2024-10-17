@@ -17,18 +17,18 @@ class MBDatabaseRepository {
         case infoUpdate = "ApplicationInfoUpdatedVersion"
         case instanceId = "ApplicationInstanceId"
     }
-    
+
     let persistentContainer: NSPersistentContainer
     private let context: NSManagedObjectContext
     private let store: NSPersistentStore
-    
+
     var limit: Int {
         return 10000
     }
     let deprecatedLimit = 500
-    
+
     var onObjectsDidChange: (() -> Void)?
-    
+
     var lifeLimitDate: Date? {
         let calendar: Calendar = .current
         guard let monthLimitDate = calendar.date(byAdding: .month, value: -6, to: Date()) else {
@@ -78,7 +78,7 @@ class MBDatabaseRepository {
             try saveEvent(withContext: context)
         }
     }
-    
+
     func read(by transactionId: String) throws -> CDEvent? {
         try context.mindboxPerformAndWait {
             Logger.common(message: "Reading event with transactionId: \(transactionId)", level: .info, category: .database)
@@ -91,7 +91,7 @@ class MBDatabaseRepository {
             return entity
         }
     }
-    
+
     func update(event: Event) throws {
         try context.mindboxPerformAndWait {
             Logger.common(message: "Updating event with transactionId: \(event.transactionId)", level: .info, category: .database)
@@ -104,7 +104,7 @@ class MBDatabaseRepository {
             try saveEvent(withContext: context)
         }
     }
-    
+
     func delete(event: Event) throws {
         try context.mindboxPerformAndWait {
             Logger.common(message: "Deleting event with transactionId: \(event.transactionId)", level: .info, category: .database)
@@ -117,8 +117,8 @@ class MBDatabaseRepository {
             try saveEvent(withContext: context)
         }
     }
-    
-    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws ->  [Event] {
+
+    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws -> [Event] {
         try context.mindboxPerformAndWait {
             Logger.common(message: "Quering events with fetchLimit: \(fetchLimit)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
@@ -135,17 +135,17 @@ class MBDatabaseRepository {
             }
         }
     }
-    
-    func query(by request: NSFetchRequest<CDEvent>) throws ->  [CDEvent] {
+
+    func query(by request: NSFetchRequest<CDEvent>) throws -> [CDEvent] {
         try context.fetch(request)
     }
-    
+
     func removeDeprecatedEventsIfNeeded() throws {
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         let context = persistentContainer.newBackgroundContext()
         try delete(by: request, withContext: context)
     }
-    
+
     func countDeprecatedEvents() throws -> Int {
         let context = persistentContainer.newBackgroundContext()
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
@@ -161,7 +161,7 @@ class MBDatabaseRepository {
             }
         }
     }
-    
+
     func erase() throws {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CDEvent")
         let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -173,7 +173,7 @@ class MBDatabaseRepository {
             try countEvents()
         }
     }
-    
+
     @discardableResult
     func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
@@ -191,7 +191,7 @@ class MBDatabaseRepository {
             }
         }
     }
-    
+
     private func cleanUp(count: Int) {
         let fetchLimit = count - limit
         guard fetchLimit > .zero else { return }
@@ -225,12 +225,9 @@ class MBDatabaseRepository {
     private func findEvent(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
         try context.registeredObjects
             .compactMap { $0 as? CDEvent }
-            .filter { !$0.isFault }
-            .filter { request.predicate?.evaluate(with: $0) ?? false }
-            .first
+            .first(where: { !$0.isFault && request.predicate?.evaluate(with: $0) ?? false })
         ?? context.fetch(request).first
     }
-
 }
 
 // MARK: - ManagedObjectContext save processing
@@ -259,7 +256,6 @@ private extension MBDatabaseRepository {
             throw error
         }
     }
-
 }
 
 // MARK: - Metadata processing
@@ -277,10 +273,10 @@ private extension MBDatabaseRepository {
         do {
             try context.mindboxPerformAndWait {
                 try saveContext(context)
-                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)            }
+                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)
+            }
         } catch {
             Logger.common(message: "Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
-
 }

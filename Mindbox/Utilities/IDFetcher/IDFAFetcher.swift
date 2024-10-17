@@ -26,7 +26,7 @@ struct IDFAFetcher {
             return extract()
         }
     }
-    
+
     private func extract() -> UUID? {
         let udid = ASIdentifierManager.shared().advertisingIdentifier
         guard isValid(udid: udid.uuidString) else {
@@ -34,7 +34,7 @@ struct IDFAFetcher {
         }
         return udid
     }
-    
+
     private func isValid(udid: String) -> Bool {
         return UDIDValidator(udid: udid).evaluate()
     }

@@ -27,7 +27,7 @@ public extension CompositeInappMessageDelegate {
             $0.inAppMessageTapAction(id: id, url: url, payload: payload)
         }
     }
-    
+
     func inAppMessageDismissed(id: String) {
         Logger.common(message: "CompositeInappMessageDelegate inAppMessageDismissed called.")
         delegates.forEach {

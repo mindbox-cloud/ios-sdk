@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct MBPushNotification: Codable {
     public let aps: MBAps?
     public let clickUrl: String?

@@ -18,7 +18,7 @@ final class LayerActionFilterService: LayerActionFilterProtocol {
               action.actionType != .unknown else {
             throw CustomDecodingError.unknownType("LayerActionFilterService validation not passed.")
         }
-        
+
         switch action {
             case .pushPermission(let pushPermissionAction):
                 if let payload = pushPermissionAction.intentPayload {
@@ -33,7 +33,7 @@ final class LayerActionFilterService: LayerActionFilterProtocol {
             case .unknown:
                 break
         }
-        
+
         throw CustomDecodingError.unknownType("LayerActionFilterService validation not passed.")
     }
 }

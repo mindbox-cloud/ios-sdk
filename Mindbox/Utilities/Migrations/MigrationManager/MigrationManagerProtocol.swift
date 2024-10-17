@@ -12,7 +12,7 @@ import Foundation
 /// The migration manager is responsible for performing a series of migrations
 /// to update the application data to a new version.
 protocol MigrationManagerProtocol {
-    
+
     /// Attempts to perform all necessary migrations. If a migration fails,
     /// a `softReset()` is performed on the persistence storage to ensure
     /// that the system remains in a consistent state.

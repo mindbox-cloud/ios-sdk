@@ -75,7 +75,7 @@ public struct MBConfiguration: Codable {
                 self.previousDeviceUUID = ""
             }
         }
-        
+
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
         self.shouldCreateCustomer = shouldCreateCustomer
         self.imageLoadingMaxTimeInSeconds = imageLoadingMaxTimeInSeconds
@@ -200,5 +200,4 @@ struct ConfigValidation {
             changedState = .none
         }
     }
-
 }

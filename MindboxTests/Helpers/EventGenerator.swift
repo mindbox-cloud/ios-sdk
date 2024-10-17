@@ -10,14 +10,14 @@ import Foundation
 @testable import Mindbox
 
 struct EventGenerator {
-    
+
     func generateEvent() -> Event {
         Event(
             type: .installed,
             body: UUID().uuidString
         )
     }
-        
+
     func generateEvents(count: Int) -> [Event] {
         return (1...count).map { _ in
             return Event(

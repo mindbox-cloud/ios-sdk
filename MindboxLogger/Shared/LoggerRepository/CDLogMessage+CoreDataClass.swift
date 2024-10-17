@@ -9,9 +9,7 @@
 import Foundation
 import CoreData
 
-public class CDLogMessage: NSManagedObject {
-
-}
+public class CDLogMessage: NSManagedObject {}
 
 extension CDLogMessage {
     @NSManaged public var timestamp: Date
