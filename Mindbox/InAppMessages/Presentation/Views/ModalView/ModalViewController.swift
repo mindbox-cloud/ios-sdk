@@ -54,7 +54,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.2
     }
-    
+
     private var transparentWebView: TransparentWebView?
 
     // MARK: Init
@@ -79,18 +79,18 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     private func setupWebView() {
         let webView = TransparentWebView()
         view.addSubview(webView)
 
         setupConstraints(for: webView, in: view)
-        
+
         webView.load()
 
         self.transparentWebView = webView
     }
-    
+
     private func setupConstraints(for view: UIView, in parentView: UIView) {
         view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -113,7 +113,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
         setupWebView()
-//        setupLayers()
+        //        setupLayers()
     }
 
     override func viewDidLayoutSubviews() {
