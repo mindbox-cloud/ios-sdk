@@ -25,6 +25,17 @@ protocol GestureHandler {
     func onCloseButton(_ gesture: UILongPressGestureRecognizer)
 }
 
+protocol ModalVCDelegate: AnyObject {
+    func closeVC()
+}
+
+extension ModalViewController: ModalVCDelegate {
+    func closeVC() {
+        print(#function)
+        onClose()
+    }
+}
+
 final class ModalViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: InappViewControllerProtocol
@@ -80,13 +91,19 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        print("DEINIT ModalVC")
+        transparentWebView?.cleanUp()
+    }
+
     private func setupWebView() {
         let webView = TransparentWebView()
         view.addSubview(webView)
 
         setupConstraints(for: webView, in: view)
 
-        webView.load()
+        webView.delegate = self
+        webView.loadHTMLPage()
 
         self.transparentWebView = webView
     }
