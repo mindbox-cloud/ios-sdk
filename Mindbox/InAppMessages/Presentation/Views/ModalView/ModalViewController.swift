@@ -25,6 +25,17 @@ protocol GestureHandler {
     func onCloseButton(_ gesture: UILongPressGestureRecognizer)
 }
 
+protocol ModalVCDelegate: AnyObject {
+    func closeVC()
+}
+
+extension ModalViewController: ModalVCDelegate {
+    func closeVC() {
+        print(#function)
+        onClose()
+    }
+}
+
 final class ModalViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: InappViewControllerProtocol
@@ -55,6 +66,8 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         static let defaultAlphaBackgroundColor: CGFloat = 0.2
     }
 
+    private var transparentWebView: TransparentWebView?
+
     // MARK: Init
 
     init(
@@ -78,6 +91,33 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        print("DEINIT ModalVC")
+        transparentWebView?.cleanUp()
+    }
+
+    private func setupWebView() {
+        let webView = TransparentWebView()
+        view.addSubview(webView)
+
+        setupConstraints(for: webView, in: view)
+
+        webView.delegate = self
+        webView.loadHTMLPage()
+
+        self.transparentWebView = webView
+    }
+
+    private func setupConstraints(for view: UIView, in parentView: UIView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 20),
+            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -20),
+            view.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
+            view.widthAnchor.constraint(equalTo: view.heightAnchor, multiplier: 3 / 4)
+        ])
+    }
+
     // MARK: Life cycle
 
     override func viewDidLoad() {
@@ -89,8 +129,8 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         )
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
-
-        setupLayers()
+        setupWebView()
+        //        setupLayers()
     }
 
     override func viewDidLayoutSubviews() {
