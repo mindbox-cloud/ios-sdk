@@ -137,6 +137,11 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     func filterByInappsEvents(inapps: [InApp], filteredInAppsByEvent: inout [InAppMessageTriggerEvent: [InAppTransitionData]]) {
         for inapp in inapps {
             var triggerEvent: InAppMessageTriggerEvent = .start
+            if let savedEventForTargeting = self.savedEventForTargeting {
+                triggerEvent = .applicationEvent(savedEventForTargeting)
+            } else {
+                triggerEvent = .start
+            }
 
             let inAppAlreadyAddedForEvent = filteredInAppsByEvent[triggerEvent]?.contains(where: { $0.inAppId == inapp.id }) ?? false
 
