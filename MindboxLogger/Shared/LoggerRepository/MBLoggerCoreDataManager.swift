@@ -103,10 +103,14 @@ public class MBLoggerCoreDataManager {
     deinit {
         removeAllNotificationCenterObservers()
     }
+}
 
-    // MARK: - CRUD Operations
+// MARK: - CRUD Operations
+
+public extension MBLoggerCoreDataManager {
+    // MARK: Create
     
-    public func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
+    func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
         queue.async {
             let newLogMessage = LogMessage(timestamp: timestamp, message: message)
             self.logBuffer.append(newLogMessage)
@@ -149,11 +153,13 @@ public class MBLoggerCoreDataManager {
         }
     }
     
-    public func getFirstLog() throws -> LogMessage? {
+    // MARK: Read
+    
+    func getFirstLog() throws -> LogMessage? {
         return try fetchSingleLog(ascending: true)
     }
 
-    public func getLastLog() throws -> LogMessage? {
+    func getLastLog() throws -> LogMessage? {
         return try fetchSingleLog(ascending: false)
     }
     
@@ -170,7 +176,7 @@ public class MBLoggerCoreDataManager {
         return fetchedLogMessage
     }
     
-    public func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
+    func fetchPeriod(_ from: Date, _ to: Date) throws -> [LogMessage] {
         var fetchedLogs: [LogMessage] = []
         
         try context.executePerformAndWait {
@@ -187,7 +193,9 @@ public class MBLoggerCoreDataManager {
         return fetchedLogs
     }
     
-    public func deleteTenPercentOfAllOldRecords() throws {
+    // MARK: Delete
+    
+    func deleteTenPercentOfAllOldRecords() throws {
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             
@@ -209,12 +217,22 @@ public class MBLoggerCoreDataManager {
             Logger.common(message: "\(limit) logs have been deleted", level: .debug, category: .general)
         }
     }
-}
-
-// MARK: - CRUD Operations
-
-public extension MBLoggerCoreDataManager {
-
+    
+    func deleteAll() throws {
+        self.logBuffer.removeAll()
+        try context.executePerformAndWait {
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            deleteRequest.resultType = .resultTypeObjectIDs
+            
+            let batchDeleteResult = try context.execute(deleteRequest) as? NSBatchDeleteResult
+            
+            if let objectIDs = batchDeleteResult?.result as? [NSManagedObjectID] {
+                let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: objectIDs]
+                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
+            }
+        }
+    }
 }
 
 // MARK: - NotificationCenter observers setup
@@ -325,19 +343,9 @@ extension MBLoggerCoreDataManager {
         return Constants.batchSize
     }
     
-    func deleteAll() throws {
-        self.logBuffer.removeAll()
-        try context.executePerformAndWait {
-            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            deleteRequest.resultType = .resultTypeObjectIDs
-            
-            let batchDeleteResult = try context.execute(deleteRequest) as? NSBatchDeleteResult
-            
-            if let objectIDs = batchDeleteResult?.result as? [NSManagedObjectID] {
-                let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: objectIDs]
-                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
-            }
+    func debugFlushBuffer() {
+        queue.async {
+            self.flushBuffer()
         }
     }
 }

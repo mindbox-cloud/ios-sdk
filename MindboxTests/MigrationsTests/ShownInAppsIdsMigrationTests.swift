@@ -58,12 +58,12 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     }
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
-    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerfromSuccessfully() throws {
+    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerformSuccessfully() throws {
         try mbLoggerCDManager.deleteAll()
 
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         migrationManager.migrate()
-        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        mbLoggerCDManager.debugFlushBuffer()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
@@ -109,7 +109,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
                                             migrations: testMigrations, sdkVersionCode: 0)
 
         migrationManager.migrate()
-        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        mbLoggerCDManager.debugFlushBuffer()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
@@ -135,7 +135,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         try mbLoggerCDManager.deleteAll()
 
         migrationManager.migrate()
-        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        mbLoggerCDManager.debugFlushBuffer()
         
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -149,7 +149,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
 
         migrationManager.migrate()
-        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        mbLoggerCDManager.debugFlushBuffer()
 
         let migrationExpectationTwo = XCTestExpectation(description: "Migration 2 completed")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {

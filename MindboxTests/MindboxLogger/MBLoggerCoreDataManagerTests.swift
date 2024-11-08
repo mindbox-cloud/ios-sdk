@@ -29,26 +29,20 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         super.tearDown()
     }
 
-    func test_measure_create() throws {
-        try manager.deleteAll()
+    func test_measure_create_one_batch() throws {
         measure {
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             let message = "Test message"
             let timestamp = Date()
-            manager.create(message: message, timestamp: timestamp) {
-                fetchExpectation.fulfill()
+            for i in 1...batchSizeConstant {
+                manager.create(message: message, timestamp: timestamp) {
+                    fetchExpectation.fulfill()
+                }
             }
             wait(for: [fetchExpectation], timeout: 2.0)
         }
     }
 
-    // bufferSize - time
-    //  5 - 1.948
-    // 10 - 0.956
-    // 15 - 0.654
-    // 20 - 0.479
-    // 25 - 0.380
-    // 50 - 0.183
     func test_measure_create_10_000() throws {
         let logsCount = 10_000
         measure {
@@ -62,7 +56,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             }
 
             wait(for: [fetchExpectation], timeout: 100.0)
-            NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+            manager.debugFlushBuffer()
         }
         
         let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
