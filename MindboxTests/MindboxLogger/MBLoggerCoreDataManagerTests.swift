@@ -7,17 +7,21 @@
 //
 
 import XCTest
-import MindboxLogger
+@testable import MindboxLogger
 @testable import Mindbox
 
 // swiftlint:disable force_unwrapping
 
 final class MBLoggerCoreDataManagerTests: XCTestCase {
+    
+    private var batchSizeConstant = MBLoggerCoreDataManager.shared.debugBatchSize
+    
     var manager: MBLoggerCoreDataManager!
 
     override func setUp() {
         super.setUp()
         manager = MBLoggerCoreDataManager.shared
+        try? manager.deleteAll()
     }
 
     override func tearDown() {
@@ -38,27 +42,43 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         }
     }
 
+    // bufferSize - time
+    //  5 - 1.948
+    // 10 - 0.956
+    // 15 - 0.654
+    // 20 - 0.479
+    // 25 - 0.380
+    // 50 - 0.183
     func test_measure_create_10_000() throws {
-        try manager.deleteAll()
+        let logsCount = 10_000
         measure {
-            let logsCount = 10_000
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             fetchExpectation.expectedFulfillmentCount = logsCount
-            let message = "Test message"
-            let timestamp = Date()
-            for _ in 0..<logsCount {
-                manager.create(message: message, timestamp: timestamp) {
+            let message = "Test message "
+            for i in 0..<logsCount {
+                manager.create(message: message + i.description, timestamp: Date().addingTimeInterval(Double(i))) {
                     fetchExpectation.fulfill()
                 }
             }
 
             wait(for: [fetchExpectation], timeout: 100.0)
+            NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
         }
+        
+        let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
+        XCTAssertEqual(remainingLogs.count, logsCount * 10)
+        
+        let fetchExpectationLast = XCTestExpectation(description: "Fetch last log")
+        
+        do {
+            let fetchResult = try self.manager.getLastLog()
+            XCTAssertEqual(fetchResult!.message, "Test message 9999")
+            fetchExpectationLast.fulfill()
+        } catch {}
+        wait(for: [fetchExpectationLast], timeout: 5.0)
     }
 
-    func testCreate() throws {
-        try manager.deleteAll()
-
+    func testCreateWithBatch() throws {
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
         let message = "Test message"
         let timestamp = Date()
@@ -66,17 +86,24 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
+        for i in 1...batchSizeConstant - 1 {
+            print(i)
+            manager.create(message: i.description, timestamp: Date()) {
+                fetchExpectation.fulfill()
+            }
+        }
+        
         wait(for: [fetchExpectation], timeout: 3.0)
-
+        
         let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
-        XCTAssertEqual(fetchResult.count, 1, "Должно быть извлечено 1 сообщение")
-        XCTAssertEqual(fetchResult[0].message, message, "Сообщение должно совпадать")
-        XCTAssertEqual(fetchResult[0].timestamp, timestamp, "Временная метка должна совпадать")
+        XCTAssertEqual(fetchResult.count, 1, "1 message should be extracted")
+        XCTAssertEqual(fetchResult.first?.message, message, "The message must match")
+        XCTAssertEqual(fetchResult.first?.timestamp, timestamp, "The timestamp must match")
     }
 
     func testFetchFirstLog() throws {
-        try manager.deleteAll()
-
+        let countOfManuallyCreatedMessages = 3
+        
         let message1 = "Test message 1"
         let message2 = "Test message 2"
         let message3 = "Test message 3"
@@ -85,7 +112,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let timestamp3 = Date()
 
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
-        fetchExpectation.expectedFulfillmentCount = 3
+        fetchExpectation.expectedFulfillmentCount = batchSizeConstant
 
         manager.create(message: message1, timestamp: timestamp1) {
             fetchExpectation.fulfill()
@@ -95,6 +122,12 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         }
         manager.create(message: message3, timestamp: timestamp3) {
             fetchExpectation.fulfill()
+        }
+        
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date()) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
@@ -106,34 +139,44 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testFetchLastLog() throws {
-        try manager.deleteAll()
-
+        let countOfManuallyCreatedMessages = 3
+        
         let message1 = "Test message 1"
         let message2 = "Test message 2"
         let message3 = "Test message 3"
         let timestamp1 = Date().addingTimeInterval(-60)
         let timestamp2 = Date().addingTimeInterval(-30)
         let timestamp3 = Date()
-        manager.create(message: message1, timestamp: timestamp1)
-        manager.create(message: message2, timestamp: timestamp2)
-        manager.create(message: message3, timestamp: timestamp3)
-
-        let fetchExpectation = XCTestExpectation(description: "Fetch last log")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            do {
-                let fetchResult = try self.manager.getLastLog()
-                XCTAssertEqual(fetchResult!.message, message3)
-                XCTAssertEqual(fetchResult!.timestamp, timestamp3)
-                fetchExpectation.fulfill()
-            } catch {}
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch created log")
+        fetchExpectation.expectedFulfillmentCount = batchSizeConstant
+        
+        manager.create(message: message1, timestamp: timestamp1) {
+            fetchExpectation.fulfill()
         }
-
+        manager.create(message: message2, timestamp: timestamp2) {
+            fetchExpectation.fulfill()
+        }
+        
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(-i))) {
+                fetchExpectation.fulfill()
+            }
+        }
+        
+        manager.create(message: message3, timestamp: timestamp3) {
+            fetchExpectation.fulfill()
+        }
+        
         wait(for: [fetchExpectation], timeout: 5.0)
+        
+        let fetchResult = try self.manager.getLastLog()
+        XCTAssertEqual(fetchResult!.message, message3)
+        XCTAssertEqual(fetchResult!.timestamp, timestamp3)
     }
 
     func testFetchPeriod() throws {
-        try manager.deleteAll()
+        let countOfManuallyCreatedMessages = 3
 
         let message1 = "Test message 1"
         let message2 = "Test message 2"
@@ -143,7 +186,13 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let timestamp3 = Date()
 
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
-        fetchExpectation.expectedFulfillmentCount = 3
+        fetchExpectation.expectedFulfillmentCount = batchSizeConstant * 2
+        
+        for i in 1...batchSizeConstant {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i) * -100)) {
+                fetchExpectation.fulfill()
+            }
+        }
 
         manager.create(message: message1, timestamp: timestamp1) {
             fetchExpectation.fulfill()
@@ -153,6 +202,12 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         }
         manager.create(message: message3, timestamp: timestamp3) {
             fetchExpectation.fulfill()
+        }
+        
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i))) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
@@ -165,9 +220,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         XCTAssertEqual(fetchResult[1].timestamp, timestamp2)
     }
 
-    func testDelete_10_percents() throws {
-        try manager.deleteAll()
-
+    func testDeleteTenPercentOfAllOldRecords() throws {
         let message = "testDelete_10_percents"
 
         let calendar = Calendar.current
@@ -182,7 +235,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let specificDate = calendar.date(from: dateComponents)!
 
-        let cycleCount = 10
+        let cycleCount = batchSizeConstant * 2
         let fetchExpectation = XCTestExpectation(description: "Fetch logs for period")
         fetchExpectation.expectedFulfillmentCount = cycleCount
 
@@ -195,13 +248,74 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         wait(for: [fetchExpectation], timeout: 5.0)
 
         let fetchResult = try self.manager.fetchPeriod(specificDate, specificDate)
-        XCTAssertEqual(fetchResult.count, 10)
+        XCTAssertEqual(fetchResult.count, cycleCount, "Initial count should be 'cycleCount' logs.")
 
-        try manager.delete()
+        try manager.deleteTenPercentOfAllOldRecords()
 
-        let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60), specificDate)
+        let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60),
+                                                               specificDate)
+        let expectedRemainingCount = Int(Double(cycleCount) * 0.9)
+        XCTAssertEqual(fetchResultAfterDeletion.count,
+                       expectedRemainingCount,
+                       "After deleting 10%, there should be \(expectedRemainingCount) logs left.")
+
         fetchResultAfterDeletion.forEach {
-            XCTAssertEqual($0.message, "testDelete_10_percents")
+            XCTAssertEqual($0.message,
+                           "testDelete_10_percents",
+                           "Remaining log messages should match the expected message.")
         }
+    }
+
+
+    func testFlushBufferWhenApplicationDidEnterBackground() throws {
+        let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
+        
+        for i in 1...batchSizeConstant / 2 {
+            manager.create(message: "Log: \(i)", timestamp: Date().addingTimeInterval(Double(i) * 10)) {
+                fetchExpectationExtraLast.fulfill()
+            }
+        }
+        
+        wait(for: [fetchExpectationExtraLast], timeout: 5.0)
+        
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch last log after didEnterBackgroundNotification")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+            do {
+                let fetchResult = try self.manager.getLastLog()
+                XCTAssertEqual(fetchResult!.message, "Log: \(self.batchSizeConstant / 2)")
+                fetchExpectation.fulfill()
+            } catch {}
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
+    }
+    
+    func testFlushBufferWhenApplicationWillTerminate() throws {
+        let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
+        
+        for i in 1...batchSizeConstant / 2 {
+            manager.create(message: "Log: \(i)", timestamp: Date().addingTimeInterval(Double(i) * 10)) {
+                fetchExpectationExtraLast.fulfill()
+            }
+        }
+        
+        wait(for: [fetchExpectationExtraLast], timeout: 5.0)
+        
+        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch last log after willTerminateNotification")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+            do {
+                let fetchResult = try self.manager.getLastLog()
+                XCTAssertEqual(fetchResult!.message, "Log: \(self.batchSizeConstant / 2)")
+                fetchExpectation.fulfill()
+            } catch {}
+        }
+        
+        wait(for: [fetchExpectation], timeout: 5.0)
     }
 }

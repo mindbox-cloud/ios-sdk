@@ -30,7 +30,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         super.setUp()
         shownInAppsIdsMigration = MigrationShownInAppsIds()
 
-        mbLoggerCDManager = MBLoggerCoreDataManager()
+        mbLoggerCDManager = MBLoggerCoreDataManager.shared
 
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
@@ -63,6 +63,8 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
 
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         migrationManager.migrate()
+        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
@@ -107,6 +109,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
                                             migrations: testMigrations, sdkVersionCode: 0)
 
         migrationManager.migrate()
+        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
@@ -132,6 +135,8 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         try mbLoggerCDManager.deleteAll()
 
         migrationManager.migrate()
+        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+        
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             migrationExpectation.fulfill()
@@ -144,6 +149,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         XCTAssertEqual(lastLog, expectedLogMessage)
 
         migrationManager.migrate()
+        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
 
         let migrationExpectationTwo = XCTestExpectation(description: "Migration 2 completed")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
