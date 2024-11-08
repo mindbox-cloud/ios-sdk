@@ -135,14 +135,9 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
     }
 
     func filterByInappsEvents(inapps: [InApp], filteredInAppsByEvent: inout [InAppMessageTriggerEvent: [InAppTransitionData]]) {
-        for inapp in inapps {
-            var triggerEvent: InAppMessageTriggerEvent = .start
-            if let savedEventForTargeting = self.savedEventForTargeting {
-                triggerEvent = .applicationEvent(savedEventForTargeting)
-            } else {
-                triggerEvent = .start
-            }
+        var triggerEvent: InAppMessageTriggerEvent = savedEventForTargeting.map { .applicationEvent($0) } ?? .start
 
+        for inapp in inapps {
             let inAppAlreadyAddedForEvent = filteredInAppsByEvent[triggerEvent]?.contains(where: { $0.inAppId == inapp.id }) ?? false
 
             // If the in-app message has already been added, continue to the next message
@@ -152,10 +147,6 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
             guard targetingChecker.check(targeting: inapp.targeting) else {
                 continue
-            }
-
-            if let event = targetingChecker.event {
-                triggerEvent = .applicationEvent(event)
             }
 
             var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
