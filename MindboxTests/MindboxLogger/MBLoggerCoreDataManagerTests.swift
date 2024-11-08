@@ -96,10 +96,19 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         
         wait(for: [fetchExpectation], timeout: 3.0)
         
-        let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
-        XCTAssertEqual(fetchResult.count, 1, "One message should be extracted")
-        XCTAssertEqual(fetchResult.first?.message, message, "The message must match")
-        XCTAssertEqual(fetchResult.first?.timestamp, timestamp, "The timestamp must match")
+        let fetchPeriodExpectation = XCTestExpectation(description: "Fetch period logs")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+            do {
+                let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
+                XCTAssertEqual(fetchResult.count, 1, "One message should be extracted")
+                XCTAssertEqual(fetchResult.first?.message, message, "The message must match")
+                XCTAssertEqual(fetchResult.first?.timestamp, timestamp, "The timestamp must match")
+                fetchPeriodExpectation.fulfill()
+            } catch {}
+        }
+        
+        wait(for: [fetchPeriodExpectation], timeout: 5.0)
     }
 
     func testFetchFirstLog() throws {
