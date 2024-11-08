@@ -79,6 +79,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testCreateWithBatch() throws {
+        let countOfManuallyCreatedMessages = 1
+        
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
         let message = "Test message"
         let timestamp = Date()
@@ -86,9 +88,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        for i in 1...batchSizeConstant - 1 {
-            print(i)
-            manager.create(message: i.description, timestamp: Date()) {
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i) * 10)) {
                 fetchExpectation.fulfill()
             }
         }
@@ -96,7 +97,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         wait(for: [fetchExpectation], timeout: 3.0)
         
         let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
-        XCTAssertEqual(fetchResult.count, 1, "1 message should be extracted")
+        XCTAssertEqual(fetchResult.count, 1, "One message should be extracted")
         XCTAssertEqual(fetchResult.first?.message, message, "The message must match")
         XCTAssertEqual(fetchResult.first?.timestamp, timestamp, "The timestamp must match")
     }
