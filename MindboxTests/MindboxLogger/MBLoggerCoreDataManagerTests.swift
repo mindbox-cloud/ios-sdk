@@ -325,7 +325,13 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         fetchExpectation.expectedFulfillmentCount = maxCountOfLogs
 
         for i in 1...maxCountOfLogs {
-            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i))) {
+            let message = i.description
+            let timestamp = Date().addingTimeInterval(Double(i))
+            manager.create(message: message, timestamp: timestamp) {
+                let lastLog = try? self.manager.getLastLog()
+                XCTAssertEqual(lastLog?.timestamp, timestamp)
+                XCTAssertEqual(lastLog?.message, message)
+
                 fetchExpectation.fulfill()
             }
         }
