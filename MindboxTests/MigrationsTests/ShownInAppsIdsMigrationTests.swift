@@ -64,7 +64,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         migrationManager.migrate()
         mbLoggerCDManager.debugFlushBuffer()
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
@@ -136,7 +136,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
 
         migrationManager.migrate()
         mbLoggerCDManager.debugFlushBuffer()
-        
+
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             migrationExpectation.fulfill()
