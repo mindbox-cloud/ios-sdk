@@ -31,10 +31,13 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         measure {
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             fetchExpectation.expectedFulfillmentCount = batchSizeConstant
-            createMessages(range: 1...batchSizeConstant) { _, _ in
-                fetchExpectation.fulfill()
+            let message = "Test message"
+            let timestamp = Date()
+            for _ in 1...batchSizeConstant {
+                manager.create(message: message, timestamp: timestamp) {
+                    fetchExpectation.fulfill()
+                }
             }
-
             wait(for: [fetchExpectation], timeout: 2.0)
         }
     }
@@ -45,8 +48,11 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             fetchExpectation.expectedFulfillmentCount = logsCount
 
-            createMessages(range: 0..<logsCount, timeStrategy: .sequentialDefault) { _, _ in
-                fetchExpectation.fulfill()
+            let message = "Test message "
+            for i in 0..<logsCount {
+                manager.create(message: message + i.description, timestamp: Date().addingTimeInterval(Double(i))) {
+                    fetchExpectation.fulfill()
+                }
             }
 
             wait(for: [fetchExpectation], timeout: 30.0)
@@ -55,7 +61,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
         XCTAssertEqual(remainingLogs.count, logsCount * 10)
-        XCTAssertEqual(remainingLogs.last?.message, "Log: 9999")
+        XCTAssertEqual(remainingLogs.last?.message, "Test message 9999")
     }
 
     func testCreateWithBatch() throws {
@@ -70,10 +76,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        createRemainingMessages(basedOn: countOfManuallyCreatedMessages,
-                                timeStrategy: .sequential(interval: 10)
-        ) { _, _ in
-            fetchExpectation.fulfill()
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i) * 10)) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 3.0)
@@ -116,8 +122,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        createRemainingMessages(basedOn: countOfManuallyCreatedMessages) { _, _ in
-            fetchExpectation.fulfill()
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date()) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
@@ -148,10 +156,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        createRemainingMessages(basedOn: countOfManuallyCreatedMessages,
-                                timeStrategy: .reverseDefault
-        ) { _, _ in
-            fetchExpectation.fulfill()
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(-i))) {
+                fetchExpectation.fulfill()
+            }
         }
 
         manager.create(message: message3, timestamp: timestamp3) {
@@ -178,8 +186,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
         fetchExpectation.expectedFulfillmentCount = batchSizeConstant * 2
 
-        createRemainingMessages(timeStrategy: .reverse(interval: 100)) { _, _ in
-            fetchExpectation.fulfill()
+        for i in 1...batchSizeConstant {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i) * -100)) {
+                fetchExpectation.fulfill()
+            }
         }
 
         manager.create(message: message1, timestamp: timestamp1) {
@@ -192,10 +202,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        createRemainingMessages(basedOn: countOfManuallyCreatedMessages,
-                                timeStrategy: .sequentialDefault
-        ) { _, _ in
-            fetchExpectation.fulfill()
+        for i in 1...batchSizeConstant - countOfManuallyCreatedMessages {
+            manager.create(message: i.description, timestamp: Date().addingTimeInterval(Double(i))) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
@@ -229,11 +239,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let fetchExpectation = XCTestExpectation(description: "Fetch logs for period")
         fetchExpectation.expectedFulfillmentCount = cycleCount
 
-        createMessages(message: message,
-                       range: 0..<cycleCount,
-                       timeStrategy: .custom(date: specificDate, interval: 0)
-        ) { _, _ in
-            fetchExpectation.fulfill()
+        for _ in 0..<cycleCount {
+            manager.create(message: message, timestamp: specificDate) {
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
@@ -260,8 +269,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     func testFlushBufferWhenApplicationDidEnterBackground() throws {
         let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
 
-        createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
-            fetchExpectationExtraLast.fulfill()
+        for i in 1...batchSizeConstant / 2 {
+            manager.create(message: "Log: \(i)", timestamp: Date().addingTimeInterval(Double(i) * 10)) {
+                fetchExpectationExtraLast.fulfill()
+            }
         }
 
         wait(for: [fetchExpectationExtraLast], timeout: 5.0)
@@ -284,8 +295,10 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     func testFlushBufferWhenApplicationWillTerminate() throws {
         let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
 
-        createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
-            fetchExpectationExtraLast.fulfill()
+        for i in 1...batchSizeConstant / 2 {
+            manager.create(message: "Log: \(i)", timestamp: Date().addingTimeInterval(Double(i) * 10)) {
+                fetchExpectationExtraLast.fulfill()
+            }
         }
 
         wait(for: [fetchExpectationExtraLast], timeout: 5.0)
@@ -313,96 +326,100 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let fetchExpectation = XCTestExpectation(description: "Fetch created log")
         fetchExpectation.expectedFulfillmentCount = maxCountOfLogs
 
-        createMessages(range: 1...maxCountOfLogs, timeStrategy: .sequentialDefault) { index, timestamp in
-            let lastLog = try? self.manager.getLastLog()
-            XCTAssertEqual(lastLog?.timestamp, timestamp)
-            XCTAssertEqual(lastLog?.message, "Log: \(index.description)")
+        for i in 1...maxCountOfLogs {
+            let message = i.description
+            let timestamp = Date().addingTimeInterval(Double(i))
+            manager.create(message: message, timestamp: timestamp) {
+                let lastLog = try? self.manager.getLastLog()
+                XCTAssertEqual(lastLog?.timestamp, timestamp)
+                XCTAssertEqual(lastLog?.message, message)
 
-            fetchExpectation.fulfill()
+                fetchExpectation.fulfill()
+            }
         }
 
         wait(for: [fetchExpectation], timeout: 5.0)
 
         let fetchResult = try self.manager.getLastLog()
-        XCTAssertEqual(fetchResult?.message, "Log: \(maxCountOfLogs.description)")
+        XCTAssertEqual(fetchResult?.message, maxCountOfLogs.description)
 
         let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
         XCTAssertEqual(remainingLogs.count, maxCountOfLogs)
     }
 }
 
-private extension MBLoggerCoreDataManagerTests {
-
-    enum TimeStrategy {
-        case none
-        case sequential(interval: TimeInterval) // adds a sequential interval to the time (for example, 10 seconds, 20 seconds, etc.)
-        case reverse(interval: TimeInterval) // adds a reverse interval (-10 seconds, -20 seconds, etc.)
-        case custom(date: Date, interval: TimeInterval) // arbitrary date and interval
-
-        static let sequentialDefault = TimeStrategy.sequential(interval: 1)
-        static let reverseDefault = TimeStrategy.reverse(interval: 1)
-    }
-
-    func createMessageWithIndex(
-        index: Int,
-        message: String? = nil,
-        baseDate: Date,
-        timeStrategy: TimeStrategy,
-        completion: ((Int, Date) -> Void)?
-    ) {
-        let timestamp: Date
-
-        switch timeStrategy {
-        case .none:
-            timestamp = baseDate
-        case .sequential(let interval):
-            timestamp = baseDate.addingTimeInterval(Double(index) * interval)
-        case .reverse(let interval):
-            timestamp = baseDate.addingTimeInterval(Double(index) * -interval)
-        case .custom(let date, let interval):
-            timestamp = date.addingTimeInterval(Double(index) * interval)
-        }
-
-        let message = message ?? "Log: \(index)"
-        manager.create(message: message, timestamp: timestamp) {
-            completion?(index, timestamp)
-        }
-    }
-
-    func createRemainingMessages(
-        basedOn countOfManuallyCreatedMessages: Int = 0,
-        timeStrategy: TimeStrategy = .none,
-        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
-    ) {
-        let remainsBatchSize = batchSizeConstant - countOfManuallyCreatedMessages
-        let baseDate = Date()
-
-        for i in 1...remainsBatchSize {
-            createMessageWithIndex(index: i,
-                                   baseDate: baseDate,
-                                   timeStrategy: timeStrategy,
-                                   completion: completion)
-        }
-    }
-
-    func createMessages<R: RangeExpression>(
-        message: String? = nil,
-        range: R,
-        timeStrategy: TimeStrategy = .none,
-        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
-    ) where R.Bound == Int {
-        let baseDate = Date()
-
-        let resolvedRange = range.relative(to: 0..<Int.max)
-
-        for i in resolvedRange {
-            createMessageWithIndex(
-                index: i,
-                message: message,
-                baseDate: baseDate,
-                timeStrategy: timeStrategy,
-                completion: completion
-            )
-        }
-    }
-}
+//private extension MBLoggerCoreDataManagerTests {
+//
+//    enum TimeStrategy {
+//        case none
+//        case sequential(interval: TimeInterval) // adds a sequential interval to the time (for example, 10 seconds, 20 seconds, etc.)
+//        case reverse(interval: TimeInterval) // adds a reverse interval (-10 seconds, -20 seconds, etc.)
+//        case custom(date: Date, interval: TimeInterval) // arbitrary date and interval
+//
+//        static let sequentialDefault = TimeStrategy.sequential(interval: 1)
+//        static let reverseDefault = TimeStrategy.reverse(interval: 1)
+//    }
+//
+//    func createMessageWithIndex(
+//        index: Int,
+//        message: String? = nil,
+//        baseDate: Date,
+//        timeStrategy: TimeStrategy,
+//        completion: ((Int, Date) -> Void)?
+//    ) {
+//        let timestamp: Date
+//
+//        switch timeStrategy {
+//        case .none:
+//            timestamp = baseDate
+//        case .sequential(let interval):
+//            timestamp = baseDate.addingTimeInterval(Double(index) * interval)
+//        case .reverse(let interval):
+//            timestamp = baseDate.addingTimeInterval(Double(index) * -interval)
+//        case .custom(let date, let interval):
+//            timestamp = date.addingTimeInterval(Double(index) * interval)
+//        }
+//
+//        let message = message ?? "Log: \(index)"
+//        manager.create(message: message, timestamp: timestamp) {
+//            completion?(index, timestamp)
+//        }
+//    }
+//
+//    func createRemainingMessages(
+//        basedOn countOfManuallyCreatedMessages: Int = 0,
+//        timeStrategy: TimeStrategy = .none,
+//        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
+//    ) {
+//        let remainsBatchSize = batchSizeConstant - countOfManuallyCreatedMessages
+//        let baseDate = Date()
+//
+//        for i in 1...remainsBatchSize {
+//            createMessageWithIndex(index: i,
+//                                   baseDate: baseDate,
+//                                   timeStrategy: timeStrategy,
+//                                   completion: completion)
+//        }
+//    }
+//
+//    func createMessages<R: RangeExpression>(
+//        message: String? = nil,
+//        range: R,
+//        timeStrategy: TimeStrategy = .none,
+//        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
+//    ) where R.Bound == Int {
+//        let baseDate = Date()
+//
+//        let resolvedRange = range.relative(to: 0..<Int.max)
+//
+//        for i in resolvedRange {
+//            createMessageWithIndex(
+//                index: i,
+//                message: message,
+//                baseDate: baseDate,
+//                timeStrategy: timeStrategy,
+//                completion: completion
+//            )
+//        }
+//    }
+//}
