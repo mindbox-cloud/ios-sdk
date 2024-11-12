@@ -17,24 +17,7 @@ public class MBLoggerCoreDataManager {
         static let model = "CDLogMessage"
         static let dbSizeLimitKB: Int = 10_000
         static let batchSize = 15
-
-        /// batch size | operationBatchLimitBeforeNeedToDelete
-        ///       1  |  20
-        ///       2  |  14
-        ///       3  |  11
-        ///       4  |  10
-        ///     5-6   |  8
-        ///     7 -8  |  7
-        ///     9-11 |  6
-        ///    12-16 |  5
-        ///    17-25 |  4
-        ///    26-44 |  3
-        ///   45-100 |  2
-        ///    101+  |  1
-        ///
-        static var operationBatchLimitBeforeNeedToDelete: Int = {
-            return max(1, Int(20 / pow(Double(batchSize), 0.5)))
-        }()
+        static let operationBatchLimitBeforeNeedToDelete = 5
     }
 
     private var logBuffer: [LogMessage]
@@ -50,16 +33,16 @@ public class MBLoggerCoreDataManager {
         }
     }
 
-    private lazy var flushStrategy: () -> Void = {
+    private lazy var bufferPersistenceStrategy: () -> Void = {
         if isAppExtension {
             return { [weak self] in
-                self?.flushBuffer()
+                self?.writeBufferToCoreData()
             }
         } else {
             return { [weak self] in
                 guard let self = self else { return }
                 if self.logBuffer.count >= Constants.batchSize {
-                    self.flushBuffer()
+                    self.writeBufferToCoreData()
                 }
             }
         }
@@ -111,7 +94,7 @@ public class MBLoggerCoreDataManager {
         return context
     }()
 
-    // MARK: Initializers and deinitializer
+    // MARK: Initializer
 
     private init(isAppExtension: Bool = Bundle.main.bundlePath.hasSuffix(".appex")) {
         self.isAppExtension = isAppExtension
@@ -120,15 +103,12 @@ public class MBLoggerCoreDataManager {
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
         setupNotificationCenterObservers()
     }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
 }
 
 // MARK: - CRUD Operations
 
 public extension MBLoggerCoreDataManager {
+
     // MARK: Create
 
     func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
@@ -136,13 +116,13 @@ public extension MBLoggerCoreDataManager {
             let newLogMessage = LogMessage(timestamp: timestamp, message: message)
             self.logBuffer.append(newLogMessage)
 
-            self.flushStrategy()
+            self.bufferPersistenceStrategy()
 
             completion?()
         }
     }
 
-    private func flushBuffer() {
+    private func writeBufferToCoreData() {
         guard !logBuffer.isEmpty else { return }
 
         if #available(iOS 13.0, *) {
@@ -175,11 +155,11 @@ public extension MBLoggerCoreDataManager {
     // MARK: Read
 
     func getFirstLog() throws -> LogMessage? {
-        return try fetchSingleLog(ascending: true)
+        try fetchSingleLog(ascending: true)
     }
 
     func getLastLog() throws -> LogMessage? {
-        return try fetchSingleLog(ascending: false)
+        try fetchSingleLog(ascending: false)
     }
 
     private func fetchSingleLog(ascending: Bool) throws -> LogMessage? {
@@ -280,14 +260,14 @@ private extension MBLoggerCoreDataManager {
     @objc
     func applicationDidEnterBackground() {
         queue.async { [weak self] in
-            self?.flushBuffer()
+            self?.writeBufferToCoreData()
         }
     }
 
     @objc
     func applicationWillTerminate() {
         queue.async { [weak self] in
-            self?.flushBuffer()
+            self?.writeBufferToCoreData()
         }
     }
 }
@@ -366,9 +346,9 @@ extension MBLoggerCoreDataManager {
         return Constants.batchSize
     }
 
-    func debugFlushBuffer() {
+    func debugWriteBufferToCD() {
         queue.async {
-            self.flushBuffer()
+            self.writeBufferToCoreData()
         }
     }
 
