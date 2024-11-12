@@ -28,13 +28,21 @@ enum InAppMessageTriggerEvent: Hashable {
     case applicationEvent(ApplicationEvent)
 }
 
-struct ApplicationEvent: Hashable, Equatable {
+class ApplicationEvent: Hashable {
     let name: String
     let model: InappOperationJSONModel?
 
     init(name: String, model: InappOperationJSONModel?) {
         self.name = name.lowercased()
         self.model = model
+    }
+
+    static func == (lhs: ApplicationEvent, rhs: ApplicationEvent) -> Bool {
+        return lhs === rhs
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(self))
     }
 }
 
