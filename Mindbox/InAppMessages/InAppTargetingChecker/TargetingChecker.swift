@@ -25,15 +25,15 @@ protocol TargetingCheckerPersistenceStorageProtocol: AnyObject {
 }
 
 protocol TargetingCheckerActionProtocol: AnyObject {
-    func prepare(targeting: Targeting)
+    func prepare(id: String, targeting: Targeting)
     func check(targeting: Targeting) -> Bool
 }
 
 class CheckerFunctions {
-    var prepare: (inout PreparationContext) -> Void = { _ in }
+    var prepare: (_ id: String, inout PreparationContext) -> Void = { id, _ in }
     var check: () -> Bool = { false }
 
-    init(prepare: @escaping (inout PreparationContext) -> Void, check: @escaping () -> Bool) {
+    init(prepare: @escaping (_ id: String, inout PreparationContext) -> Void, check: @escaping () -> Bool) {
         self.prepare = prepare
         self.check = check
     }
@@ -59,13 +59,13 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
 
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]
 
-    func prepare(targeting: Targeting) {
+    func prepare(id: String, targeting: Targeting) {
         guard let target = checkerMap[targeting] else {
             Logger.common(message: "target not exist in checkerMap. Targeting: \(targeting)", level: .error, category: .inAppMessages)
             return
         }
 
-        target(targeting).prepare(&context)
+        target(targeting).prepare(id, &context)
     }
 
     func check(targeting: Targeting) -> Bool {

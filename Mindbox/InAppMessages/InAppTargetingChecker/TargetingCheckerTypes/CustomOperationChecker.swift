@@ -11,8 +11,11 @@ import Foundation
 final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
 
-    override func prepareInternal(targeting: CustomOperationTargeting, context: inout PreparationContext) {
+    override func prepareInternal(id: String, targeting: CustomOperationTargeting, context: inout PreparationContext) {
         context.operationsName.append(targeting.systemName.lowercased())
+
+        let key = targeting.systemName.lowercased()
+        context.operationInapps[key, default: []].append(id)
     }
 
     override func checkInternal(targeting: CustomOperationTargeting) -> Bool {

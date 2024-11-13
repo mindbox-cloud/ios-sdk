@@ -49,14 +49,16 @@ class InAppTargetingRequestsTests: XCTestCase {
             }
 
             wait(for: [expectation], timeout: 1)
-            targetingContains("1", expectedToShow: true)
-            targetingContains("2")
+
+            targetingContains(id: "1")
+            targetingContains(id: "2")
         } catch {
             XCTFail("Some error: \(error)")
         }
     }
 
     func test_TwoInappsTrue_FirstShownBefore() {
+        persistenceStorage.shownInappsDictionary = ["1": Date()]
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
         do {
             let config = try getConfig(name: "3-4-5-TargetingRequests")
@@ -66,8 +68,8 @@ class InAppTargetingRequestsTests: XCTestCase {
             }
 
             wait(for: [expectation], timeout: 1)
-            targetingContains("2")
-            targetingContains("1")
+            targetingShow(id: "2")
+            targetingContains(id: "1")
         } catch {
             XCTFail("Some error: \(error)")
         }
@@ -86,7 +88,7 @@ class InAppTargetingRequestsTests: XCTestCase {
             }
 
             wait(for: [expectation], timeout: 1)
-            targetingContains("1", expectedToShow: true)
+            targetingShow(id: "1")
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -104,8 +106,8 @@ class InAppTargetingRequestsTests: XCTestCase {
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1)
-            targetingContains("1", expectedToShow: true)
-            targetingContains("2")
+            targetingShow(id: "1")
+            targetingContains(id: "2")
         } catch {
             print("Произошла ошибка: \(error)")
         }
@@ -114,6 +116,7 @@ class InAppTargetingRequestsTests: XCTestCase {
     func test_TrueShown_OperationTest_TrueNotShown_Geo_Segment() {
         let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
         let expectationForMapConfigResponse = XCTestExpectation(description: "Waiting for mapConfigResponse to complete")
+        persistenceStorage.shownInappsDictionary = ["1": Date()]
 
         do {
             let config = try getConfig(name: "9-TargetingRequests")
@@ -129,10 +132,11 @@ class InAppTargetingRequestsTests: XCTestCase {
             }
 
             wait(for: [expectationForsendRemainingInappsTargeting], timeout: 1)
-            targetingContains("3")
-            targetingContains("1")
-            targetingContains("4")
-            targetingContains("5")
+
+            targetingShow(id: "3")
+            targetingContains(id: "1")
+            targetingContains(id: "4")
+            targetingContains(id: "5")
 
             mockDataFacade.clean()
 
@@ -368,6 +372,15 @@ class InAppTargetingRequestsTests: XCTestCase {
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
         return try JSONDecoder().decode(ConfigResponse.self, from: data)
+    }
+
+    func targetingContains(id: String) {
+        XCTAssertTrue(mockDataFacade.targetingArray.contains(id), "ID \(id) is expected to be in targeting list")
+    }
+
+    func targetingShow(id: String) {
+        XCTAssertTrue(mockDataFacade.targetingArray.contains(id), "ID \(id) is expected to be in targeting list")
+        XCTAssertTrue(mockDataFacade.showArray.contains(id), "ID \(id) is expected to be shown")
     }
 
     func targetingContains(_ id: String, expectedToShow: Bool = false) {

@@ -18,15 +18,14 @@ protocol InAppConfigurationMapperProtocol {
 final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     var targetingChecker: InAppTargetingCheckerProtocol
-    var filteredInAppsByEvent: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
-    var filteredInappsByEventForTargeting: [InAppMessageTriggerEvent: [InAppTransitionData]] = [:]
+
+    var shownInAppIdsWithEvents: [String: Int] = [:]
 
     let dataFacade: InAppConfigurationDataFacadeProtocol
 
     private let inappFilterService: InappFilterProtocol
     private var validInapps: [InApp] = []
     private var savedEventForTargeting: ApplicationEvent?
-    private var shownInnapId = ""
 
     init(inappFilterService: InappFilterProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -60,22 +59,20 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
         }
 
         dataFacade.fetchDependencies(model: event?.model) {
-            self.filterByInappsEvents(inapps: filteredInapps, filteredInAppsByEvent: &self.filteredInAppsByEvent)
-            if let event = event {
-                if let inappsByEvent = self.filteredInAppsByEvent[.applicationEvent(event)] {
-                    self.buildInAppByEvent(inapps: inappsByEvent) { formData in
-                        completion(formData)
-                    }
-                } else {
-                    Logger.common(message: "filteredInAppsByEvent is empty")
-                    completion(nil)
-                }
-            } else if let inappsByEvent = self.filteredInAppsByEvent[.start] {
-                self.buildInAppByEvent(inapps: inappsByEvent) { formData in
-                    completion(formData)
-                }
+            var suitableInapps: [InAppTransitionData] = []
+            if let event = self.savedEventForTargeting {
+                suitableInapps = self.filterByInappsEvents(inapps: self.getOperationInappsByEvent())
             } else {
+                suitableInapps = self.filterByInappsEvents(inapps: filteredInapps)
+            }
+
+            if suitableInapps.isEmpty {
                 completion(nil)
+                return
+            }
+
+            self.buildInAppByEvent(inapps: suitableInapps) { formData in
+                completion(formData)
             }
         }
     }
@@ -87,8 +84,12 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
 
     func sendRemainingInappsTargeting() {
         self.dataFacade.fetchDependencies(model: savedEventForTargeting?.model) {
-            self.filterByInappsEvents(inapps: self.validInapps,
-                                      filteredInAppsByEvent: &self.filteredInappsByEventForTargeting)
+            var suitableInapps = [InAppTransitionData]()
+            if let event = self.savedEventForTargeting {
+                suitableInapps = self.filterByInappsEvents(inapps: self.getOperationInappsByEvent())
+            } else {
+                suitableInapps = self.filterByInappsEvents(inapps: self.validInapps)
+            }
 
             let logMessage = """
             TR | Initiating processing of remaining in-app targeting requests.
@@ -97,70 +98,76 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             """
             Logger.common(message: logMessage, level: .debug, category: .inAppMessages)
 
-            var targetedEventKey: InAppMessageTriggerEvent
-
-            if let savedEventForTargeting = self.savedEventForTargeting {
-                targetedEventKey = .applicationEvent(savedEventForTargeting)
-            } else {
-                targetedEventKey = .start
-            }
-
-            guard let inappsByEvent = self.filteredInappsByEventForTargeting[targetedEventKey] else {
-                return
-            }
-
-            let preparedForTrackTargetingInapps: Set<String> = Set(self.validInapps.compactMap { inapp -> String? in
-                guard inapp.id != self.shownInnapId,
-                      inappsByEvent.contains(where: { $0.inAppId == inapp.id }),
-                      self.targetingChecker.check(targeting: inapp.targeting) else {
-                    return nil
+            var hashValue = self.savedEventForTargeting?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
+            let targetedEventKey: InAppMessageTriggerEvent = .start
+            for inapp in suitableInapps {
+                if self.shownInAppIdsWithEvents[inapp.inAppId] != hashValue,
+                   let inapp = self.validInapps.first(where: { $0.id == inapp.inAppId }),
+                    self.targetingChecker.check(targeting: inapp.targeting) {
+                       self.dataFacade.trackTargeting(id: inapp.id)
                 }
-                return inapp.id
-            })
-
-            Logger.common(message: "TR | In-apps selected for targeting requests: \(preparedForTrackTargetingInapps)", level: .debug, category: .inAppMessages)
-
-            preparedForTrackTargetingInapps.forEach { id in
-                self.dataFacade.trackTargeting(id: id)
             }
-
-            self.shownInnapId = ""
+//
+//
+//            var targetedEventKey: InAppMessageTriggerEvent
+//
+//            if let savedEventForTargeting = self.savedEventForTargeting {
+//                targetedEventKey = .applicationEvent(savedEventForTargeting)
+//            } else {
+//                targetedEventKey = .start
+//            }
+//
+//            guard let inappsByEvent = self.filteredInappsByEventForTargeting[targetedEventKey] else {
+//                return
+//            }
+//
+//            let preparedForTrackTargetingInapps: Set<String> = Set(self.validInapps.compactMap { inapp -> String? in
+//                guard inappsByEvent.contains(where: { $0.inAppId == inapp.id }),
+//                      self.targetingChecker.check(targeting: inapp.targeting) else {
+//                    return nil
+//                }
+//                return inapp.id
+//            })
+//
+//            Logger.common(message: "TR | In-apps selected for targeting requests: \(preparedForTrackTargetingInapps)", level: .debug, category: .inAppMessages)
+//
+//            preparedForTrackTargetingInapps.forEach { id in
+//                self.dataFacade.trackTargeting(id: id)
+//            }
         }
     }
 
     private func prepareTargetingChecker(for inapps: [InApp]) {
         inapps.forEach({
-            targetingChecker.prepare(targeting: $0.targeting)
+            targetingChecker.prepare(id: $0.id, targeting: $0.targeting)
         })
     }
 
-    func filterByInappsEvents(inapps: [InApp], filteredInAppsByEvent: inout [InAppMessageTriggerEvent: [InAppTransitionData]]) {
+    func getOperationInappsByEvent() -> [InApp] {
+        if let event = targetingChecker.event, let inappIDS = targetingChecker.context.operationInapps[event.name] {
+            return validInapps.filter { inappIDS.contains($0.id) }
+        }
+
+        return []
+    }
+
+    func filterByInappsEvents(inapps: [InApp]) -> [InAppTransitionData] {
+        var filteredInAppsByEvent: [InAppTransitionData] = []
+
         for inapp in inapps {
-            var triggerEvent: InAppMessageTriggerEvent = .start
-
-            let inAppAlreadyAddedForEvent = filteredInAppsByEvent[triggerEvent]?.contains(where: { $0.inAppId == inapp.id }) ?? false
-
-            // If the in-app message has already been added, continue to the next message
-            guard !inAppAlreadyAddedForEvent else {
-                continue
-            }
 
             guard targetingChecker.check(targeting: inapp.targeting) else {
                 continue
             }
 
-            if let event = targetingChecker.event {
-                triggerEvent = .applicationEvent(event)
-            }
-
-            var inAppsForEvent = filteredInAppsByEvent[triggerEvent] ?? [InAppTransitionData]()
             if let inAppFormVariants = inapp.form.variants.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    content: inAppFormVariants)
-                inAppsForEvent.append(formData)
-                filteredInAppsByEvent[triggerEvent] = inAppsForEvent
+                filteredInAppsByEvent.append(formData)
             }
         }
+
+        return filteredInAppsByEvent
     }
 
     private func buildInAppByEvent(inapps: [InAppTransitionData],
@@ -221,8 +228,8 @@ final class InAppConfigutationMapper: InAppConfigurationMapperProtocol {
             group.notify(queue: .main) {
                 DispatchQueue.main.async { [weak self] in
                     if !SessionTemporaryStorage.shared.isPresentingInAppMessage {
-                        self?.shownInnapId = formData?.inAppId ?? ""
                         self?.dataFacade.trackTargeting(id: formData?.inAppId)
+                        self?.shownInAppIdsWithEvents[formData!.inAppId] = self?.savedEventForTargeting?.hashValue ?? InAppMessageTriggerEvent.start.hashValue // MARK: - Check force unwrap
                     }
 
                     completion(formData)
