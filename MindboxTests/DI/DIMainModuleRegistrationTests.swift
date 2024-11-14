@@ -27,7 +27,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testInAppConfigurationMapperIsRegistered() {
-        let mapper: InAppConfigurationMapperProtocol? = DI.inject(InAppConfigurationMapperProtocol.self)
+        let mapper: InappMapperProtocol? = DI.inject(InappMapperProtocol.self)
         XCTAssertNotNil(mapper)
     }
 

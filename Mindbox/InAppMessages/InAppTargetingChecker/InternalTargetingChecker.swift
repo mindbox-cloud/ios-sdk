@@ -11,7 +11,6 @@ import Foundation
 struct PreparationContext {
     var segments: [String] = []
     var isNeedGeoRequest: Bool = false
-    var operationsName: [String] = []
     var productSegments: [String] = []
     var operationInapps: [String: [String]] = [:]
 }

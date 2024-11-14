@@ -12,7 +12,8 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
     weak var checker: TargetingCheckerContextProtocol?
 
     override func prepareInternal(id: String, targeting: CustomOperationTargeting, context: inout PreparationContext) {
-        context.operationsName.append(targeting.systemName.lowercased())
+        let operationName = targeting.systemName.lowercased()
+        SessionTemporaryStorage.shared.observedCustomOperations.insert(operationName)
 
         let key = targeting.systemName.lowercased()
         context.operationInapps[key, default: []].append(id)
