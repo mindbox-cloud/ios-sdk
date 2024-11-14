@@ -50,7 +50,7 @@ class InappMapper: InappMapperProtocol {
     private func setupEnvironment(event: ApplicationEvent?) {
         Logger.common(message: "Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
         applicationEvent = event
-        targetingChecker.event = nil
+        targetingChecker.event = event
     }
 
     private func getFilteredInapps(inappsDTO: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {

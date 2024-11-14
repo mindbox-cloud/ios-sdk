@@ -54,7 +54,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func clean() {
+    func cleanTargetingArray() {
         targetingArray = []
     }
 }
