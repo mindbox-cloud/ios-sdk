@@ -1,0 +1,418 @@
+{
+    "monitoring": {
+        "logs": []
+    },
+    "settings": {
+        "operations": {
+            "viewProduct": {
+                "systemName": "viewProduct"
+            },
+            "viewCategory": {
+                "systemName": "viewCategory"
+            }
+        },
+        "ttl": {
+            "inapps": "1.00:00:00"
+        }
+    },
+    "inapps": [
+        {
+            "id": "1",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "frequency": {
+                "kind": "lifetime",
+                "$type": "once"
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "kind": "negative",
+                        "ids": [
+                            9017370
+                        ],
+                        "$type": "country"
+                    },
+                    {
+                        "internalId": "559760d9-7525-4948-9c3e-5fac899e987b",
+                        "systemName": "test",
+                        "$type": "apiMethodCall"
+                    }
+                ],
+                "$type": "or"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "123",
+                                            "value": "https://pushok-mindbox.onelink.me/13Z2/a97bb56f",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://mobile-static.mindbox.ru/f3d41714973639a3e18788e4b582f451d0952f723ccd9f33092d841bbb9e5b95/79ea6f82b5a43223774cb4c5ba08165c9fb271039d67ea083e4e63d8e168ad5b.jpg",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "elements": [
+                                {
+                                    "color": "#000000",
+                                    "lineWidth": 1,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 24,
+                                        "height": 24
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.02,
+                                            "right": 0.02,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "modal"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "2",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "frequency": {
+                "kind": "lifetime",
+                "$type": "once"
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "internalId": "93",
+                        "systemName": "test",
+                        "$type": "apiMethodCall"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "",
+                                            "value": "https://pushok-mindbox.onelink.me/13Z2/a97bb56f",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://mobile-static.mindbox.ru/f3d41714973639a3e18788e4b582f451d0952f723ccd9f33092d841bbb9e5b95/226784d88d863ab33e5db2be7873449f9c2f110cf0019bd6f6ee53b4fb3f4889.jpg",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "position": {
+                                "margin": {
+                                    "kind": "dp",
+                                    "top": 0,
+                                    "right": 0,
+                                    "left": 0,
+                                    "bottom": 0
+                                },
+                                "gravity": {
+                                    "horizontal": "center",
+                                    "vertical": "bottom"
+                                }
+                            },
+                            "elements": [
+                                {
+                                    "color": "#000000",
+                                    "lineWidth": 1,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 16,
+                                        "height": 16
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.025,
+                                            "right": 0.025,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "snackbar"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "3",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "frequency": {
+                "kind": "lifetime",
+                "$type": "once"
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "internalId": "93",
+                        "systemName": "test",
+                        "$type": "apiMethodCall"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "",
+                                            "value": "https://pushok-mindbox.onelink.me/13Z2/a97bb56f",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://mobile-static.mindbox.ru/f3d41714973639a3e18788e4b582f451d0952f723ccd9f33092d841bbb9e5b95/226784d88d863ab33e5db2be7873449f9c2f110cf0019bd6f6ee53b4fb3f4889.jpg",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "position": {
+                                "margin": {
+                                    "kind": "dp",
+                                    "top": 0,
+                                    "right": 0,
+                                    "left": 0,
+                                    "bottom": 0
+                                },
+                                "gravity": {
+                                    "horizontal": "center",
+                                    "vertical": "bottom"
+                                }
+                            },
+                            "elements": [
+                                {
+                                    "color": "#000000",
+                                    "lineWidth": 1,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 16,
+                                        "height": 16
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.025,
+                                            "right": 0.025,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "snackbar"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "4",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "frequency": {
+                "kind": "lifetime",
+                "$type": "once"
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "internalId": "93",
+                        "systemName": "test2",
+                        "$type": "apiMethodCall"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "",
+                                            "value": "https://pushok-mindbox.onelink.me/13Z2/a97bb56f",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://mobile-static.mindbox.ru/f3d41714973639a3e18788e4b582f451d0952f723ccd9f33092d841bbb9e5b95/226784d88d863ab33e5db2be7873449f9c2f110cf0019bd6f6ee53b4fb3f4889.jpg",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "position": {
+                                "margin": {
+                                    "kind": "dp",
+                                    "top": 0,
+                                    "right": 0,
+                                    "left": 0,
+                                    "bottom": 0
+                                },
+                                "gravity": {
+                                    "horizontal": "center",
+                                    "vertical": "bottom"
+                                }
+                            },
+                            "elements": [
+                                {
+                                    "color": "#000000",
+                                    "lineWidth": 1,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 16,
+                                        "height": 16
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.025,
+                                            "right": 0.025,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "snackbar"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "5",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "frequency": {
+                "kind": "lifetime",
+                "$type": "once"
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "kind": "negative",
+                        "ids": [
+                            9017370
+                        ],
+                        "$type": "country"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "123",
+                                            "value": "",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://mobile-static.mindbox.ru/f3d41714973639a3e18788e4b582f451d0952f723ccd9f33092d841bbb9e5b95/ab3dfd78626465802ebe6f3fac42a4645656ee5be9cb835de4e27efe9a9c91fa.jpg",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "elements": [
+                                {
+                                    "color": "#000000",
+                                    "lineWidth": 1,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 24,
+                                        "height": 24
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.02,
+                                            "right": 0.02,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "modal"
+                    }
+                ]
+            }
+        }
+    ]
+}

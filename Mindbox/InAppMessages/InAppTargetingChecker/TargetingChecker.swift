@@ -30,7 +30,7 @@ protocol TargetingCheckerActionProtocol: AnyObject {
 }
 
 class CheckerFunctions {
-    var prepare: (_ id: String, inout PreparationContext) -> Void = { id, _ in }
+    var prepare: (_ id: String, inout PreparationContext) -> Void = { _, _ in }
     var check: () -> Bool = { false }
 
     init(prepare: @escaping (_ id: String, inout PreparationContext) -> Void, check: @escaping () -> Bool) {
