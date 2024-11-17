@@ -24,11 +24,15 @@
 		0AEDBC992BB7058B00EE8722 /* ButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC982BB7058B00EE8722 /* ButtonsView.swift */; };
 		0AEDBC9B2BB70D6E00EE8722 /* SDKDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC9A2BB70D6E00EE8722 /* SDKDataView.swift */; };
 		43E1C73D7E87903545C2ACBC /* Pods_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9AF8ABB9430FE76D72FE17D /* Pods_Example.framework */; };
+		470C85C22CE79C2D000DBDA4 /* LocalPushNotificationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47E0D0B12CE61CD1000381B0 /* LocalPushNotificationModel.swift */; };
+		470C85C42CE7B435000DBDA4 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470C85C32CE7B435000DBDA4 /* ImageFormat.swift */; };
+		470C85C52CE7B435000DBDA4 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470C85C32CE7B435000DBDA4 /* ImageFormat.swift */; };
 		472423992C185B8400B2A9BC /* Item+SwiftData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472423982C185B8400B2A9BC /* Item+SwiftData.swift */; };
 		474F37A22C16F5A700F38BB0 /* NotificationCenterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37A12C16F5A700F38BB0 /* NotificationCenterViewModel.swift */; };
 		474F37A42C16F5B000F38BB0 /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */; };
 		474F37AE2C170FB600F38BB0 /* NotificationCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */; };
 		4774807A2C174BAA00580FB2 /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 477480792C174BAA00580FB2 /* Payload.swift */; };
+		47E0D0B22CE61CD1000381B0 /* LocalPushNotificationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47E0D0B12CE61CD1000381B0 /* LocalPushNotificationModel.swift */; };
 		47FFE2232C187B650007E2F6 /* Item+SwiftData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472423982C185B8400B2A9BC /* Item+SwiftData.swift */; };
 		47FFE2262C187D3C0007E2F6 /* SwiftDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */; };
 		47FFE2282C187D5C0007E2F6 /* SwiftDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */; };
@@ -94,6 +98,7 @@
 		0AEDBC9A2BB70D6E00EE8722 /* SDKDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKDataView.swift; sourceTree = "<group>"; };
 		0AEDBC9C2BB7177A00EE8722 /* Example.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Example.entitlements; sourceTree = "<group>"; };
 		1B29989833584963EC18BDF2 /* Pods-MindboxNotificationContentExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindboxNotificationContentExtension.release.xcconfig"; path = "Target Support Files/Pods-MindboxNotificationContentExtension/Pods-MindboxNotificationContentExtension.release.xcconfig"; sourceTree = "<group>"; };
+		470C85C32CE7B435000DBDA4 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		472423982C185B8400B2A9BC /* Item+SwiftData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Item+SwiftData.swift"; sourceTree = "<group>"; };
 		474F37A12C16F5A700F38BB0 /* NotificationCenterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterViewModel.swift; sourceTree = "<group>"; };
 		474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
@@ -101,6 +106,7 @@
 		477480792C174BAA00580FB2 /* Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payload.swift; sourceTree = "<group>"; };
 		47912FD92CB42D640063387D /* AppDelegate_IDFA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate_IDFA.swift; sourceTree = "<group>"; };
 		47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		47E0D0B12CE61CD1000381B0 /* LocalPushNotificationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPushNotificationModel.swift; sourceTree = "<group>"; };
 		47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataManager.swift; sourceTree = "<group>"; };
 		4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C06401BC9C282DDDDADEA9D /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Example.release.xcconfig"; path = "Target Support Files/Pods-Example/Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
@@ -147,6 +153,8 @@
 			children = (
 				0A0DE3512BB8457100812E73 /* MindboxNotificationServiceExtension.entitlements */,
 				0A0DE3472BB8455A00812E73 /* NotificationService.swift */,
+				470C85C32CE7B435000DBDA4 /* ImageFormat.swift */,
+				47E0D0B12CE61CD1000381B0 /* LocalPushNotificationModel.swift */,
 				0A0DE3492BB8455A00812E73 /* Info.plist */,
 			);
 			path = MindboxNotificationServiceExtension;
@@ -521,9 +529,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				470C85C42CE7B435000DBDA4 /* ImageFormat.swift in Sources */,
 				47FFE2282C187D5C0007E2F6 /* SwiftDataManager.swift in Sources */,
 				47FFE2232C187B650007E2F6 /* Item+SwiftData.swift in Sources */,
 				0A0DE3482BB8455A00812E73 /* NotificationService.swift in Sources */,
+				47E0D0B22CE61CD1000381B0 /* LocalPushNotificationModel.swift in Sources */,
 				47FFE22C2C1886550007E2F6 /* Payload.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -542,12 +552,14 @@
 			files = (
 				474F37A22C16F5A700F38BB0 /* NotificationCenterViewModel.swift in Sources */,
 				0AEDBC7A2BB6F8F200EE8722 /* AppDelegate.swift in Sources */,
+				470C85C22CE79C2D000DBDA4 /* LocalPushNotificationModel.swift in Sources */,
 				0AEDBC992BB7058B00EE8722 /* ButtonsView.swift in Sources */,
 				474F37A42C16F5B000F38BB0 /* NotificationCenterView.swift in Sources */,
 				0AEDBC922BB6FA4800EE8722 /* MainView.swift in Sources */,
 				472423992C185B8400B2A9BC /* Item+SwiftData.swift in Sources */,
 				47FFE2262C187D3C0007E2F6 /* SwiftDataManager.swift in Sources */,
 				474F37AE2C170FB600F38BB0 /* NotificationCellView.swift in Sources */,
+				470C85C52CE7B435000DBDA4 /* ImageFormat.swift in Sources */,
 				4774807A2C174BAA00580FB2 /* Payload.swift in Sources */,
 				0AEDBC962BB6FE4900EE8722 /* MainViewModel.swift in Sources */,
 				0AEDBC7C2BB6F8F200EE8722 /* SceneDelegate.swift in Sources */,
@@ -599,9 +611,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos.MindboxNotificationServiceExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -632,9 +648,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos.MindboxNotificationServiceExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -660,9 +680,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos.MindboxNotificationContentExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -688,9 +712,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos.MindboxNotificationContentExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -839,9 +867,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -871,9 +903,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cloud.Mindbox.ReleaseExampleIos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

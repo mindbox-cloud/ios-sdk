@@ -7,6 +7,7 @@
 //
 
 import Mindbox
+import MindboxLogger
 import UIKit
 
 @main
@@ -55,14 +56,25 @@ final class AppDelegate: MindboxAppDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        let userInfo = response.notification.request.content.userInfo
+
+        // Проверяем, что это запланированное локальное push-уведомление от Mindbox
+        if Mindbox.shared.isMindboxPush(userInfo: userInfo),
+           let data = try? JSONSerialization.data(withJSONObject: userInfo),
+           let localNotification = MBLocalPushNotification.decode(from: data),
+           let uniqueKey = localNotification.pushData.uniqueKey {
+            Logger.common(message: "Tapped local push notification. userInfo: \(userInfo)", category: .notification)
+            Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
+        }
+
         // https://developers.mindbox.ru/docs/ios-sdk-methods
-        print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo))")
-        if let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: response.notification.request.content.userInfo),
-           Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo),
+        print("Is Mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: userInfo))")
+        if Mindbox.shared.isMindboxPush(userInfo: userInfo),
+           let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: userInfo),
            let uniqueKey = mindboxPushNotification.uniqueKey {
             Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
         }
-        
+
         super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
     
