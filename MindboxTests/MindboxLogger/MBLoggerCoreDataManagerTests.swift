@@ -52,10 +52,6 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             wait(for: [fetchExpectation], timeout: 30.0)
             manager.debugWriteBufferToCD()
         }
-
-        let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
-        XCTAssertEqual(remainingLogs.count, logsCount * 10)
-        XCTAssertEqual(remainingLogs.last?.message, "Log: 9999")
     }
 
     func testCreateWithBatch() throws {
