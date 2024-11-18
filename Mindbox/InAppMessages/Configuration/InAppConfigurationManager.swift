@@ -30,18 +30,18 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var inapp: InAppFormData?
     private var rawConfigurationResponse: ConfigResponse?
     private let inAppConfigRepository: InAppConfigurationRepository
-    private let inAppConfigurationMapper: InAppConfigurationMapperProtocol
+    private let inappMapper: InappMapperProtocol
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inAppConfigurationMapper: InAppConfigurationMapperProtocol,
+        inappMapper: InappMapperProtocol,
         persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
-        self.inAppConfigurationMapper = inAppConfigurationMapper
+        self.inappMapper = inappMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.persistenceStorage = persistenceStorage
     }
@@ -145,14 +145,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private func setConfigPrepared(_ configResponse: ConfigResponse, event: ApplicationEvent? = nil) {
         rawConfigurationResponse = configResponse
-        inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
+        inappMapper.handleInapps(event, configResponse) { inapp in
             self.inapp = inapp
             Logger.common(message: "In-app applied: \(String(describing: inapp?.inAppId)))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()
-            DispatchQueue.global(qos: .utility).async {
-                self.inAppConfigurationMapper.sendRemainingInappsTargeting()
-            }
-        })
+        }
     }
 
     private func setupSettingsFromConfig(_ settings: Settings?) {

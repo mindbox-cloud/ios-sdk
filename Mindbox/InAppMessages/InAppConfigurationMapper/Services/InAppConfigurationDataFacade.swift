@@ -13,7 +13,6 @@ import MindboxLogger
 protocol InAppConfigurationDataFacadeProtocol {
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void)
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void)
-    func setObservedOperation()
     func trackTargeting(id: String?)
 }
 
@@ -46,10 +45,6 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         dispatchGroup.notify(queue: .main) {
             completion()
         }
-    }
-
-    func setObservedOperation() {
-        SessionTemporaryStorage.shared.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
 
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {

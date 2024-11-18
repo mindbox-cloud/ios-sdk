@@ -11,7 +11,7 @@ import Foundation
 final class ProductIDChecker: InternalTargetingChecker<ProductIDTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
 
-    override func prepareInternal(targeting: ProductIDTargeting, context: inout PreparationContext) {}
+    override func prepareInternal(id: String, targeting: ProductIDTargeting, context: inout PreparationContext) {}
 
     override func checkInternal(targeting: ProductIDTargeting) -> Bool {
         guard let checker = checker,

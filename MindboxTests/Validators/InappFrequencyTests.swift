@@ -202,7 +202,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     private func getConfig(name: String) throws -> ConfigResponse {
-        let bundle = Bundle(for: InAppTargetingRequestsTests.self)
+        let bundle = Bundle(for: InappFrequencyTests.self)
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try Data(contentsOf: fileURL)
         return try JSONDecoder().decode(ConfigResponse.self, from: data)

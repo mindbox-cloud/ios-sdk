@@ -32,13 +32,13 @@ extension MBContainer {
                 eventRepository: eventRepository)
         }
 
-        register(InAppConfigurationMapperProtocol.self) {
+        register(InappMapperProtocol.self) {
             let inappFilterService = DI.injectOrFail(InappFilterProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let dataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)
-            return InAppConfigutationMapper(inappFilterService: inappFilterService,
-                                            targetingChecker: targetingChecker,
-                                            dataFacade: dataFacade)
+            return InappMapper(targetingChecker: targetingChecker,
+                               inappFilterService: inappFilterService,
+                               dataFacade: dataFacade)
         }
 
         register(InAppConfigurationManagerProtocol.self) {
@@ -46,7 +46,7 @@ extension MBContainer {
             return InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
-                inAppConfigurationMapper: DI.injectOrFail(InAppConfigurationMapperProtocol.self),
+                inappMapper: DI.injectOrFail(InappMapperProtocol.self),
                 persistenceStorage: persistenceStorage)
         }
 

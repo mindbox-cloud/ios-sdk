@@ -35,10 +35,6 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         completion()
     }
 
-    func setObservedOperation() {
-        SessionTemporaryStorage.shared.observedCustomOperations = Set(targetingChecker.context.operationsName)
-    }
-
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
         if #available(iOS 13.0, *) {
             let image = UIImage(systemName: "star")
@@ -58,7 +54,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func clean() {
+    func cleanTargetingArray() {
         targetingArray = []
     }
 }

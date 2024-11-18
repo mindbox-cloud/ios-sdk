@@ -11,24 +11,24 @@ import Foundation
 struct PreparationContext {
     var segments: [String] = []
     var isNeedGeoRequest: Bool = false
-    var operationsName: [String] = []
     var productSegments: [String] = []
+    var operationInapps: [String: [String]] = [:]
 }
 
 protocol ITargetingChecker: AnyObject {
-    func prepare(targeting: ITargeting, context: inout PreparationContext)
+    func prepare(id: String, targeting: ITargeting, context: inout PreparationContext)
     func check(targeting: ITargeting) -> Bool
 }
 
 class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
-    func prepare(targeting: ITargeting, context: inout PreparationContext) {
+    func prepare(id: String, targeting: ITargeting, context: inout PreparationContext) {
         guard let specificTargeting = targeting as? T else {
             fatalError("Failed to cast targeting to type \(T.self)")
         }
-        prepareInternal(targeting: specificTargeting, context: &context)
+        prepareInternal(id: id, targeting: specificTargeting, context: &context)
     }
 
-    func prepareInternal(targeting: T, context: inout PreparationContext) {
+    func prepareInternal(id: String, targeting: T, context: inout PreparationContext) {
         return
     }
 
