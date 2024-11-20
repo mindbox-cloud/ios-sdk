@@ -71,7 +71,8 @@ class InappMapper: InappMapperProtocol {
     private func chooseInappToShow(filteredInapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
         dataFacade.fetchDependencies(model: applicationEvent?.model) {
             let inapps = self.applicationEvent == nil ? filteredInapps : self.getOperationInappsByEvent()
-            let suitableInapps = self.filterByInappsEvents(inapps: inapps)
+            let filteredByAlreadyShown = self.inappFilterService.filterInappsByAlreadyShown(inapps)
+            let suitableInapps = self.filterByInappsEvents(inapps: filteredByAlreadyShown)
 
             if suitableInapps.isEmpty {
                 completion(nil)

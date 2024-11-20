@@ -11,6 +11,7 @@ import MindboxLogger
 
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
+    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp]
     var validInapps: [InApp] { get }
     var shownInAppDictionary: [String: Date] { get }
 }
@@ -43,6 +44,20 @@ final class InappsFilterService: InappFilterProtocol {
         let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
 
         return filteredByAlreadyShown
+    }
+
+    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
+        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
+        let filteredInapps = inapps.filter {
+            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            let frequencyValidator = self.createFrequencyValidator()
+            let result = frequencyValidator.isValid(item: $0)
+            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            return result
+        }
+
+        return filteredInapps
     }
 }
 
@@ -150,20 +165,6 @@ private extension InappsFilterService {
         Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
 
         return result
-    }
-
-    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
-        let filteredInapps = inapps.filter {
-            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
-            let frequencyValidator = self.createFrequencyValidator()
-            let result = frequencyValidator.isValid(item: $0)
-            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
-            return result
-        }
-
-        return filteredInapps
     }
 
     private func createFrequencyValidator() -> InappFrequencyValidator {
