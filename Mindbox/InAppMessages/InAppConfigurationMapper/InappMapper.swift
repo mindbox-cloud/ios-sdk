@@ -24,6 +24,7 @@ class InappMapper: InappMapperProtocol {
     private let dataFacade: InAppConfigurationDataFacadeProtocol
 
     private var shownInappIDWithHashValue: [String: Int] = [:]
+    private var abTests: [ABTest]?
 
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
@@ -37,7 +38,7 @@ class InappMapper: InappMapperProtocol {
                       _ response: ConfigResponse,
                       _ completion: @escaping (InAppFormData?) -> Void) {
         setupEnvironment(event: event)
-
+        abTests = response.abtests
         let filteredInapps = getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
         prepareTargetingChecker(for: filteredInapps)
         prepareForRemainingTargeting()
@@ -70,9 +71,8 @@ class InappMapper: InappMapperProtocol {
 
     private func chooseInappToShow(filteredInapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
         dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let inapps = self.applicationEvent == nil ? filteredInapps : self.getOperationInappsByEvent()
-            let filteredByAlreadyShown = self.inappFilterService.filterInappsByAlreadyShown(inapps)
-            let suitableInapps = self.filterByInappsEvents(inapps: filteredByAlreadyShown)
+            let inapps = self.applicationEvent == nil ? filteredInapps : self.getOperationInappsByEventForShow()
+            let suitableInapps = self.filterByInappsEvents(inapps: inapps)
 
             if suitableInapps.isEmpty {
                 completion(nil)
@@ -92,6 +92,13 @@ class InappMapper: InappMapperProtocol {
         }
 
         return []
+    }
+
+    private func getOperationInappsByEventForShow() -> [InApp] {
+        let inapps = getOperationInappsByEvent()
+        let filteredByABTest = inappFilterService.filterInappsByABTests(abTests, responseInapps: inapps)
+        let filteredByAlreadyShown = self.inappFilterService.filterInappsByAlreadyShown(filteredByABTest)
+        return filteredByAlreadyShown
     }
 
     private func filterByInappsEvents(inapps: [InApp]) -> [InAppTransitionData] {
