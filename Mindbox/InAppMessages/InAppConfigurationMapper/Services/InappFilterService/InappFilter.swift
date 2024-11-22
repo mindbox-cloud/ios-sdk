@@ -11,6 +11,7 @@ import MindboxLogger
 
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
+    func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp]
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp]
     var validInapps: [InApp] { get }
     var shownInAppDictionary: [String: Date] { get }
@@ -44,56 +45,6 @@ final class InappsFilterService: InappFilterProtocol {
         let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
 
         return filteredByAlreadyShown
-    }
-
-    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
-        let filteredInapps = inapps.filter {
-            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
-            let frequencyValidator = self.createFrequencyValidator()
-            let result = frequencyValidator.isValid(item: $0)
-            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
-            return result
-        }
-
-        return filteredInapps
-    }
-}
-
-// MARK: - Private methods
-private extension InappsFilterService {
-    func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
-        let inapps = inapps
-        let filteredInapps = inapps.filter {
-            sdkVersionValidator.isValid(item: $0.sdkVersion)
-        }
-
-        return filteredInapps
-    }
-
-    func filterValidInAppMessages(_ inapps: [InAppDTO]) -> [InApp] {
-        var filteredInapps: [InApp] = []
-        for inapp in inapps {
-            do {
-                let variants = try variantsFilter.filter(inapp.form.variants)
-                if !variants.isEmpty {
-                    let formModel = InAppForm(variants: variants)
-                    let inappModel = InApp(id: inapp.id,
-                                           sdkVersion: inapp.sdkVersion,
-                                           targeting: inapp.targeting,
-                                           frequency: inapp.frequency,
-                                           form: formModel)
-                    filteredInapps.append(inappModel)
-                }
-            } catch {
-                Logger.common(message: "In-app [ID:] \(inapp.id)\n[Error]: \(error)", level: .error, category: .inAppMessages)
-            }
-        }
-
-        Logger.common(message: "Filtering process completed. \(filteredInapps.count) valid in-app(s) found.", level: .debug, category: .inAppMessages)
-        validInapps = filteredInapps
-        return filteredInapps
     }
 
     // FIXME: Rewrite this func in the future
@@ -165,6 +116,56 @@ private extension InappsFilterService {
         Logger.common(message: "Filtered in-app IDs after AB-filter based on UUID branch: [\(ids.joined(separator: ", "))]")
 
         return result
+    }
+
+    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
+        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
+        let filteredInapps = inapps.filter {
+            Logger.common(message: "[Inapp frequency] Start checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            let frequencyValidator = self.createFrequencyValidator()
+            let result = frequencyValidator.isValid(item: $0)
+            Logger.common(message: "[Inapp frequency] Finish checking frequency of inapp with id = \($0.id)", level: .debug, category: .inAppMessages)
+            return result
+        }
+
+        return filteredInapps
+    }
+}
+
+// MARK: - Private methods
+private extension InappsFilterService {
+    func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
+        let inapps = inapps
+        let filteredInapps = inapps.filter {
+            sdkVersionValidator.isValid(item: $0.sdkVersion)
+        }
+
+        return filteredInapps
+    }
+
+    func filterValidInAppMessages(_ inapps: [InAppDTO]) -> [InApp] {
+        var filteredInapps: [InApp] = []
+        for inapp in inapps {
+            do {
+                let variants = try variantsFilter.filter(inapp.form.variants)
+                if !variants.isEmpty {
+                    let formModel = InAppForm(variants: variants)
+                    let inappModel = InApp(id: inapp.id,
+                                           sdkVersion: inapp.sdkVersion,
+                                           targeting: inapp.targeting,
+                                           frequency: inapp.frequency,
+                                           form: formModel)
+                    filteredInapps.append(inappModel)
+                }
+            } catch {
+                Logger.common(message: "In-app [ID:] \(inapp.id)\n[Error]: \(error)", level: .error, category: .inAppMessages)
+            }
+        }
+
+        Logger.common(message: "Filtering process completed. \(filteredInapps.count) valid in-app(s) found.", level: .debug, category: .inAppMessages)
+        validInapps = filteredInapps
+        return filteredInapps
     }
 
     private func createFrequencyValidator() -> InappFrequencyValidator {
