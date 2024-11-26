@@ -24,8 +24,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
 
         try! databaseRepository.erase()
         updateDatabaseRepositoryWith(createsDeprecated: false)
-//        (databaseRepository as! MockDatabaseRepository).tempLimit = nil
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
     override func tearDown() {
@@ -40,12 +38,6 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
 
         mockDatabaseRepository.createsDeprecated = createsDeprecated
-    }
-
-    func testCreateDatabaseRepository() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        XCTAssertNotNil(databaseRepository)
     }
 
     func testCreateEvent() {
@@ -196,7 +188,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         updateDatabaseRepositoryWith(createsDeprecated: true)
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
-        let depracatedExpectation = expectation(description: "Deprecated events are current count")
+        let deprecatedExpectation = expectation(description: "Deprecated events are current count")
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
@@ -210,7 +202,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
                 let totalEvents = try self.databaseRepository.countEvents()
                 XCTAssertTrue(deprecatedEvents == totalEvents)
                 XCTAssertTrue(deprecatedEvents == count)
-                depracatedExpectation.fulfill()
+                deprecatedExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)
             }
@@ -223,7 +215,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         updateDatabaseRepositoryWith(createsDeprecated: true)
         let count = 5
         let events = eventGenerator.generateEvents(count: count)
-        let depracatedExpectation = expectation(description: "Deprecated events are zero after remove")
+        let deprecatedExpectation = expectation(description: "Deprecated events are zero after remove")
         do {
             try events.forEach {
                 try databaseRepository.create(event: $0)
@@ -236,7 +228,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
                 try self.databaseRepository.removeDeprecatedEventsIfNeeded()
                 let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
                 XCTAssertTrue(deprecatedEvents == 0)
-                depracatedExpectation.fulfill()
+                deprecatedExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)
             }
