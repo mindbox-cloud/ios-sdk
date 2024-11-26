@@ -73,7 +73,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
 
     func testUpdateEvent() {
         let event = eventGenerator.generateEvent()
-        var initailRetryTimeStamp: Double?
+        var initialRetryTimeStamp: Double?
         var updatedRetryTimeStamp: Double?
         do {
             try databaseRepository.create(event: event)
@@ -82,8 +82,8 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         do {
             let entity = try databaseRepository.read(by: event.transactionId)
-            initailRetryTimeStamp = entity?.retryTimestamp
-            XCTAssertNotNil(initailRetryTimeStamp)
+            initialRetryTimeStamp = entity?.retryTimestamp
+            XCTAssertNotNil(initialRetryTimeStamp)
         } catch {
             XCTFail(error.localizedDescription)
         }
@@ -94,12 +94,12 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         do {
             let entity = try databaseRepository.read(by: event.transactionId)
-            XCTAssertNotNil(initailRetryTimeStamp)
+            XCTAssertNotNil(initialRetryTimeStamp)
             updatedRetryTimeStamp = entity?.retryTimestamp
         } catch {
             XCTFail(error.localizedDescription)
         }
-        XCTAssertNotEqual(initailRetryTimeStamp, updatedRetryTimeStamp)
+        XCTAssertNotEqual(initialRetryTimeStamp, updatedRetryTimeStamp)
     }
 
     func testDeleteEvent() {
@@ -123,7 +123,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         databaseRepository.onObjectsDidChange = { [self] in
             do {
                 let totalEvents = try self.databaseRepository.countEvents()
-                XCTAssertTrue(totalEvents > 0)
+                XCTAssertGreaterThan(totalEvents, 0)
             } catch {
                 XCTFail(error.localizedDescription)
             }
@@ -167,7 +167,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
             XCTFail("monthLimitDate could not be nil")
             return
         }
-        XCTAssertTrue(event.enqueueTimeStamp > monthLimitDate.timeIntervalSince1970)
+        XCTAssertGreaterThan(event.enqueueTimeStamp, monthLimitDate.timeIntervalSince1970)
     }
 
     func testRemoveDeprecatedEvents() {
@@ -196,19 +196,19 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
             do {
                 let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
                 let totalEvents = try self.databaseRepository.countEvents()
-                XCTAssertTrue(deprecatedEvents == totalEvents)
-                XCTAssertTrue(deprecatedEvents == count)
+                XCTAssertEqual(deprecatedEvents, totalEvents)
+                XCTAssertEqual(deprecatedEvents, count)
                 deprecatedExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)
             }
         }
 
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 2)
     }
 
     func testDeprecatedEventsDelete() {
@@ -223,18 +223,18 @@ class DatabaseRepositoryTestCase: XCTestCase {
         } catch {
             XCTFail(error.localizedDescription)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
             do {
                 try self.databaseRepository.removeDeprecatedEventsIfNeeded()
                 let deprecatedEvents = try self.databaseRepository.countDeprecatedEvents()
-                XCTAssertTrue(deprecatedEvents == 0)
+                XCTAssertEqual(deprecatedEvents, 0)
                 deprecatedExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)
             }
         }
 
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 2)
     }
 
     func testFetchUnretryEvents() {
@@ -249,8 +249,8 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         do {
             let events = try self.databaseRepository.query(fetchLimit: count)
-            XCTAssertFalse(events.isEmpty)
-            XCTAssertTrue(events.count == count)
+            XCTAssertFalse(events.isEmpty, "The events array should not be empty.")
+            XCTAssertEqual(events.count, count)
         } catch {
             XCTFail(error.localizedDescription)
         }
