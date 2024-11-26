@@ -10,7 +10,7 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
-// swiftlint:disable force_try
+// swiftlint:disable force_try force_cast
 
 class DatabaseRepositoryTestCase: XCTestCase {
 
@@ -139,24 +139,33 @@ class DatabaseRepositoryTestCase: XCTestCase {
         testCreateEvent()
     }
 
-    func testLimitCount() {
-//        try! databaseRepository.erase()
-////        (databaseRepository as! MockDatabaseRepository).tempLimit = 3
-//        let events = eventGenerator.generateEvents(count: databaseRepository.limit)
-//        do {
-//            try events.forEach {
-//                try databaseRepository.create(event: $0)
-//            }
-//        } catch {
-//            XCTFail(error.localizedDescription)
-//        }
-//
-//        do {
-//            let totalEvents = try self.databaseRepository.countEvents()
-//            XCTAssertTrue(totalEvents <= databaseRepository.limit)
-//        } catch {
-//            XCTFail(error.localizedDescription)
-//        }
+    func testCleanUpWhenTryingToCountEventsWhenExceedingTheLimit() {
+        try! databaseRepository.erase()
+
+        let temporaryLimit = 3
+        (databaseRepository as! MockDatabaseRepository).tempLimit = temporaryLimit
+        XCTAssertEqual(databaseRepository.limit, temporaryLimit)
+
+        let doubleLimit = databaseRepository.limit * 2
+        let events = eventGenerator.generateEvents(count: doubleLimit)
+
+        do {
+            try events.forEach {
+                try databaseRepository.create(event: $0)
+            }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+
+        do {
+            let countsEventsBeforeCleanUp = try self.databaseRepository.countEvents()
+            XCTAssertEqual(countsEventsBeforeCleanUp, doubleLimit)
+
+            let totalCountOfEventsAfterCleanUp = try self.databaseRepository.countEvents()
+            XCTAssertLessThanOrEqual(totalCountOfEventsAfterCleanUp, databaseRepository.limit)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
     }
 
     func testLifeTimeLimit() {
