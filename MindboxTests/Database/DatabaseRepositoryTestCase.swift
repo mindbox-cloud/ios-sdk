@@ -10,19 +10,17 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
-// swiftlint:disable force_try force_cast
-
 class DatabaseRepositoryTestCase: XCTestCase {
 
     var databaseRepository: MBDatabaseRepository!
     var eventGenerator: EventGenerator!
 
-    override func setUp() {
+    override func setUpWithError() throws {
         super.setUp()
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         eventGenerator = EventGenerator()
 
-        try! databaseRepository.erase()
+        try databaseRepository.erase()
         updateDatabaseRepositoryWith(createsDeprecated: false)
     }
 
@@ -94,10 +92,13 @@ class DatabaseRepositoryTestCase: XCTestCase {
     }
 
     func testCleanUpWhenTryingToCountEventsWhenExceedingTheLimit() throws {
-        try! databaseRepository.erase()
+        try databaseRepository.erase()
 
         let temporaryLimit = 3
-        (databaseRepository as! MockDatabaseRepository).tempLimit = temporaryLimit
+        guard let mockDatabaseRepository = databaseRepository as? MockDatabaseRepository else {
+            fatalError("databaseRepository is not a MockDatabaseRepository")
+        }
+        mockDatabaseRepository.tempLimit = temporaryLimit
         XCTAssertEqual(databaseRepository.limit, temporaryLimit)
 
         let doubleLimit = databaseRepository.limit * 2
