@@ -179,28 +179,37 @@ class DatabaseRepositoryTestCase: XCTestCase {
         let retriedEvent2 = events[(count / 2) + 1]
         let eventsToRetry = [retriedEvent, retriedEvent2]
 
+        try events.forEach { try databaseRepository.create(event: $0) }
+
         try events.forEach {
-            try databaseRepository.create(event: $0)
+            let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
+            XCTAssertEqual(fetchedEvent?.retryTimestamp, 0.0)
         }
+
+        try eventsToRetry.forEach { try databaseRepository.update(event: $0) }
 
         try eventsToRetry.forEach {
-            try databaseRepository.update(event: $0)
+            let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
+            let retryTimestamp = try XCTUnwrap(fetchedEvent?.retryTimestamp)
+            XCTAssertGreaterThan(retryTimestamp, 0.0)
         }
 
-        let retryDeadline: TimeInterval = 4
-        let expectDeadline = retryDeadline + 2
+        let retryDeadline: TimeInterval = 2
         let retryExpectation = expectation(description: "RetryExpectation")
+
+        let expectDeadline = retryDeadline + 1
         DispatchQueue.main.asyncAfter(deadline: .now() + expectDeadline) {
             do {
                 let events = try self.databaseRepository.query(fetchLimit: count, retryDeadline: retryDeadline)
                 XCTAssertFalse(events.isEmpty)
-                XCTAssertTrue(retriedEvent.transactionId == events[events.count - 2].transactionId)
-                XCTAssertTrue(retriedEvent2.transactionId == events[events.count - 1].transactionId)
+                XCTAssertEqual(events.count, count)
+                XCTAssertEqual(retriedEvent.transactionId, events[events.count - 2].transactionId)
+                XCTAssertEqual(retriedEvent2.transactionId, events[events.count - 1].transactionId)
                 retryExpectation.fulfill()
             } catch {
                 XCTFail(error.localizedDescription)
             }
         }
-        waitForExpectations(timeout: retryDeadline + 2.0)
+        waitForExpectations(timeout: expectDeadline + 2.0)
     }
 }
