@@ -193,7 +193,6 @@
 		840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */; };
 		840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */; };
 		840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */; };
-		840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */; };
 		840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */; };
 		840C38A625D1191000D50183 /* GuaranteedDeliveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */; };
 		840C38AC25D11BB200D50183 /* DeliveryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C38AB25D11BB200D50183 /* DeliveryOperation.swift */; };
@@ -787,7 +786,6 @@
 		840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickNotificationManager.swift; sourceTree = "<group>"; };
 		840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataClass.swift"; sourceTree = "<group>"; };
 		840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataBaseLoader.swift; sourceTree = "<group>"; };
 		840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryTestCase.swift; sourceTree = "<group>"; };
 		840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuaranteedDeliveryManager.swift; sourceTree = "<group>"; };
 		840C38AB25D11BB200D50183 /* DeliveryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryOperation.swift; sourceTree = "<group>"; };
@@ -1757,7 +1755,6 @@
 			isa = PBXGroup;
 			children = (
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
-				840C387E25CD15C200D50183 /* MockDataBaseLoader.swift */,
 				84B09FB32611C74400B0A06E /* MockDatabaseRepository.swift */,
 				84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */,
 			);
@@ -3880,7 +3877,6 @@
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
-				840C387F25CD15C200D50183 /* MockDataBaseLoader.swift in Sources */,
 				F32E53792C3FD64A002C7CA0 /* DIMainModuleRegistrationTests.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
