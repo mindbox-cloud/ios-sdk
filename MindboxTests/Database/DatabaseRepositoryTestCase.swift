@@ -180,14 +180,18 @@ class DatabaseRepositoryTestCase: XCTestCase {
         let retriedEvent2 = events[(count / 2) + 1]
         let eventsToRetry = [retriedEvent, retriedEvent2]
 
-        try events.forEach { try databaseRepository.create(event: $0) }
+        try events.forEach {
+            try databaseRepository.create(event: $0)
+        }
 
         try events.forEach {
             let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
             XCTAssertEqual(fetchedEvent?.retryTimestamp, 0.0)
         }
 
-        try eventsToRetry.forEach { try databaseRepository.update(event: $0) }
+        try eventsToRetry.forEach {
+            try databaseRepository.update(event: $0)
+        }
 
         try eventsToRetry.forEach {
             let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
