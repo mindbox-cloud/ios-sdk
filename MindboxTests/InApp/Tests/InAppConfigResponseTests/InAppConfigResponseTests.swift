@@ -11,7 +11,7 @@ import XCTest
 @testable import Mindbox
 
 // swiftlint:disable comment_spacing
-
+//
 //class InAppConfigResponseTests: XCTestCase {
 //
 //    var container = try! TestDependencyProvider()
@@ -540,51 +540,6 @@ import XCTest
 //        XCTAssertEqual(response.abtests, abtests)
 //        XCTAssertEqual(response.monitoring, monitoring)
 //        XCTAssertEqual(response.settings, settings)
-//    }
-//
-//    func test_config_settings_invalid_to_parse() throws {
-//        let response = try getConfig(name: "InappConfigResponseSettingsInvalid")
-//        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-//                                      sdkVersion: SdkVersion(min: 4, max: nil),
-//                                      targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-//                                      form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
-//                                                                                     redirectUrl: "2",
-//                                                                                     intentPayload: "3",
-//                                                                                     type: "simpleImage")]))]
-//
-//        XCTAssertEqual(response.inapps, inapps)
-//        // No systemName in Settings JSON
-//        XCTAssertNil(response.settings)
-//    }
-//
-//    func test_config_monitoring_invalid_to_parse() throws {
-//        let response = try getConfig(name: "InappConfigResponseMonitoringInvalid")
-//        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-//                                      sdkVersion: SdkVersion(min: 4, max: nil),
-//                                      targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-//                                      form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
-//                                                                                     redirectUrl: "2",
-//                                                                                     intentPayload: "3",
-//                                                                                     type: "simpleImage")]))]
-//
-//        XCTAssertEqual(response.inapps, inapps)
-//        // No id in Monitoring JSON
-//        XCTAssertNil(response.monitoring)
-//    }
-//
-//    func test_config_abtests_invalid_to_parse() throws {
-//        let response = try getConfig(name: "InappConfigResponseAbtestsInvalid")
-//        let inapps: [InApp]? = [.init(id: "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-//                                      sdkVersion: SdkVersion(min: 4, max: nil),
-//                                      targeting: .and(AndTargeting(nodes: [.true(TrueTargeting())])),
-//                                      form: InApp.InAppFormVariants(variants: [.init(imageUrl: "1",
-//                                                                                     redirectUrl: "2",
-//                                                                                     intentPayload: "3",
-//                                                                                     type: "simpleImage")]))]
-//
-//        XCTAssertEqual(response.inapps, inapps)
-//        // No id in Abtest JSON
-//        XCTAssertNil(response.abtests)
 //    }
 //}
 //
