@@ -11,4 +11,5 @@ import Testing
 
 extension Tag {
     @Tag static var sdkVersion: Self
+    @Tag static var customOperations: Self
 }
