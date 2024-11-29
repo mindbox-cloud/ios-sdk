@@ -10,28 +10,29 @@ import Foundation
 
 struct MobileApplicationInfoUpdated: Codable {
 
-    let notificationProvider: String
-
-    let token: String
-
-    var isTokenAvailable: Bool
-
     let isNotificationsEnabled: Bool
 
     let version: Int
 
     let instanceId: String
 
+    let tokens: [TokenData]
+
     init(token: String?,
          isNotificationsEnabled: Bool,
          version: Int,
          instanceId: String,
          notificationProvider: String = "APNS") {
-        self.token = token ?? ""
-        self.isTokenAvailable = !self.token.isEmpty
+
+        if let tokenValue = token, !tokenValue.isEmpty {
+            let tokenData = TokenData(token: tokenValue, notificationProvider: notificationProvider)
+            self.tokens = [tokenData]
+        } else {
+            self.tokens = []
+        }
+
         self.isNotificationsEnabled = isNotificationsEnabled
         self.version = version
         self.instanceId = instanceId
-        self.notificationProvider = notificationProvider
     }
 }
