@@ -18,14 +18,14 @@ final class AppDelegate: MindboxAppDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
-
+        print(#function)
         do {
             // To run the application on a physical device you need to change the endpoint
             // You should also change the application bundle ID in all targets, more details in the readme
             // You can still run the application on the simulator to see In-Apps
             let mindboxSdkConfig = try MBConfiguration(
-                endpoint: "Mpush-test.ReleaseExample.IosApp",
-                domain: "api.mindbox.ru",
+                endpoint: "Test-staging.Test01",
+                domain: "api-staging.mindbox.ru",
                 subscribeCustomerIfCreated: true,
                 shouldCreateCustomer: true
             )
@@ -33,7 +33,11 @@ final class AppDelegate: MindboxAppDelegate {
         } catch {
             print(error.localizedDescription)
         }
-        
+
+        Mindbox.shared.getDeviceUUID { deviceUUID in
+            print("DeviceUUID: \(deviceUUID)")
+        }
+
         // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
         registerForRemoteNotifications()
         
