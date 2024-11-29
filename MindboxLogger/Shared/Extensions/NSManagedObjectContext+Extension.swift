@@ -13,7 +13,7 @@ import CoreData
 
 public extension NSManagedObjectContext {
 
-    func executePerformAndWait(_ block: () throws -> Void) rethrows {
+    func executePerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
         if #available(iOS 15, *) {
             try self.performAndWait(block)
         } else {
