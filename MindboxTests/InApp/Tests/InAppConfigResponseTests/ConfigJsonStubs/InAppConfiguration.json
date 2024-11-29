@@ -1,54 +1,122 @@
 {
-  "inapps": [
-    {
-      "id": "00000000-0000-0000-0000-000000000001",
-      "sdkVersion": {
-        "min": 1,
-        "max": null
-      },
-      "targeting": {
-        "nodes": [
-          {
-            "$type": "true"
-          }
-        ],
-        "$type": "and"
-      },
-      "form": {
-        "variants": [
-          {
-            "imageUrl": "https://example.com/image.jpg",
-            "redirectUrl": "",
-            "intentPayload": "",
-            "$type": "simpleImage"
-          }
-        ]
-      }
-    },
-    {
-      "id": "00000000-0000-0000-0000-000000000002",
-      "sdkVersion": {
-        "min": 2,
-        "max": 4
-      },
-      "targeting": {
-        "nodes": [
-          {
-            "$type": "true"
-          }
-        ],
-        "$type": "and"
-      },
-      "form": {
-        "variants": [
-          {
-            "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
-            "redirectUrl": "",
-            "intentPayload": "",
-            "$type": "simpleImage"
-          }
-        ]
-      }
-    }
-  ]
+    "inapps": [
+        {
+            "id": "1",
+            "sdkVersion": {
+                "min": 4,
+                "max": 7
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "$type": "true"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "",
+                                            "value": "",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://google.png",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "position": {
+                                "margin": {
+                                    "kind": "dp",
+                                    "top": 0.0,
+                                    "right": 20.0,
+                                    "left": 20.0,
+                                    "bottom": 0.0
+                                },
+                                "gravity": {
+                                    "horizontal": "center",
+                                    "vertical": "top"
+                                }
+                            },
+                            "elements": [
+
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "snackbar"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "2",
+            "sdkVersion": {
+                "min": 8,
+                "max": null
+            },
+            "targeting": {
+                "nodes": [
+                    {
+                        "$type": "true"
+                    }
+                ],
+                "$type": "and"
+            },
+            "form": {
+                "variants": [
+                    {
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "",
+                                            "value": "",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://google.png",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "position": {
+                                "margin": {
+                                    "kind": "dp",
+                                    "top": 0.0,
+                                    "right": 20.0,
+                                    "left": 20.0,
+                                    "bottom": 0.0
+                                },
+                                "gravity": {
+                                    "horizontal": "center",
+                                    "vertical": "top"
+                                }
+                            },
+                            "elements": [
+
+                            ]
+                        },
+                        "imageUrl": "",
+                        "redirectUrl": "",
+                        "intentPayload": "",
+                        "$type": "snackbar"
+                    }
+                ]
+            }
+        }
+    ]
 }
