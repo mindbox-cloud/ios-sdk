@@ -582,7 +582,7 @@ class InappConfigurationTests {
     }
 
     @available(iOS 13.0, *)
-    @Test("2.Неправильный productSegment negative", .tags(.productSegment))
+    @Test("2.Правильный productSegment negative", .tags(.productSegment))
     func productSegment_negative_true() async throws {
         let stub = InAppConfigStub()
         let response = try stub.getProductSegment_Negative()

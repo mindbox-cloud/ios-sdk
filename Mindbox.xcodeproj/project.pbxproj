@@ -325,7 +325,6 @@
 		A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A192787129D442D900CDB53D /* ProductSegmentChecker.swift */; };
 		A1A916DF29C9032700D59D9E /* CategoryIDInTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */; };
 		A1A916E129C9053200D59D9E /* CategoryIDInChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */; };
-		A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */ = {isa = PBXBuildFile; fileRef = A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */; };
 		A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E429C9191900D59D9E /* InAppConfigStub.swift */; };
 		A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
@@ -367,10 +366,6 @@
 		F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470952B96681F00E01E5C /* 27-TargetingRequests.json */; };
 		F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470972B9668F100E01E5C /* 31-TargetingRequests.json */; };
 		F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F315503E2BBB24E20072A071 /* TTLValidationService.swift */; };
-		F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801F72A38649D0021774C /* InappConfigResponseValid.json */; };
-		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
-		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
-		F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */; };
 		F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A94772BC6995500E6C978 /* InappFrequency.swift */; };
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
@@ -917,7 +912,6 @@
 		A192787129D442D900CDB53D /* ProductSegmentChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductSegmentChecker.swift; sourceTree = "<group>"; };
 		A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInTargeting.swift; sourceTree = "<group>"; };
 		A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInChecker.swift; sourceTree = "<group>"; };
-		A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithCategoryIDIn.json; sourceTree = "<group>"; };
 		A1A916E429C9191900D59D9E /* InAppConfigStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigStub.swift; sourceTree = "<group>"; };
 		A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = UnknownTargetingsModel.json; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
@@ -961,10 +955,6 @@
 		F31470952B96681F00E01E5C /* 27-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "27-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31470972B9668F100E01E5C /* 31-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "31-TargetingRequests.json"; sourceTree = "<group>"; };
 		F315503E2BBB24E20072A071 /* TTLValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTLValidationService.swift; sourceTree = "<group>"; };
-		F31801F72A38649D0021774C /* InappConfigResponseValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseValid.json; sourceTree = "<group>"; };
-		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
-		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
-		F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseMonitoringInvalid.json; sourceTree = "<group>"; };
 		F31A94772BC6995500E6C978 /* InappFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequency.swift; sourceTree = "<group>"; };
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
@@ -2188,8 +2178,6 @@
 			isa = PBXGroup;
 			children = (
 				F31470852B96373600E01E5C /* ConfigTargetings */,
-				F31801F92A386A350021774C /* ConfigResponse */,
-				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
 				9BC24E7928F6C08700C2619C /* InAppConfiguration.json */,
 			);
@@ -2468,17 +2456,6 @@
 				F315503E2BBB24E20072A071 /* TTLValidationService.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		F31801F92A386A350021774C /* ConfigResponse */ = {
-			isa = PBXGroup;
-			children = (
-				F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */,
-				F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */,
-				F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */,
-				F31801F72A38649D0021774C /* InappConfigResponseValid.json */,
-			);
-			path = ConfigResponse;
 			sourceTree = "<group>";
 		};
 		F31A94792BC69E0500E6C978 /* InappFrequency */ = {
@@ -3347,7 +3324,6 @@
 				473A984D2C91B620005A3B94 /* SettingsOperationsTypeError.json in Resources */,
 				4766A8B62C932D92002D15A4 /* ABTestsSdkVersionConfigError.json in Resources */,
 				473A985B2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */,
-				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				F351F1C82CE72B300053423E /* 44-Targeting.json in Resources */,
 				F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
@@ -3360,7 +3336,6 @@
 				F3FAD8722AB8673100D98C03 /* missingMarginFieldInSection.json in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
 				473A984B2C91B606005A3B94 /* SettingsOperationsError.json in Resources */,
-				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
 				F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */,
 				473A98672C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
@@ -3385,9 +3360,7 @@
 				F39B67C02A3FBA77005C0CCA /* ConfigWithABCrossRange.json in Resources */,
 				473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */,
 				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
-				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
 				4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */,
-				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
@@ -3405,7 +3378,6 @@
 				F39B67C62A3FBC47005C0CCA /* ConfigWithABNormal.json in Resources */,
 				4766A8B82C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json in Resources */,
 				4766A89D2C931BD6002D15A4 /* ConfigMonitoringError.json in Resources */,
-				F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */,
 				F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */,
 				4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
