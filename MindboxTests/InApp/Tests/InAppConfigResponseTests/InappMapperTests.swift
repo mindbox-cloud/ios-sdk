@@ -11,7 +11,7 @@ import XCTest
 
 // swiftlint:disable all
 
-class InappMapperTests: XCTestCase {
+class InappRemainingTargetingTests: XCTestCase {
 
     private var targetingChecker: InAppTargetingCheckerProtocol!
     private var mockDataFacade: MockInAppConfigurationDataFacade!
@@ -471,14 +471,14 @@ class InappMapperTests: XCTestCase {
     }
 
     private func getConfig(name: String) -> ConfigResponse {
-        let bundle = Bundle(for: InappMapperTests.self)
+        let bundle = Bundle(for: InappRemainingTargetingTests.self)
         let fileURL = bundle.url(forResource: name, withExtension: "json")!
         let data = try! Data(contentsOf: fileURL)
         return try! JSONDecoder().decode(ConfigResponse.self, from: data)
     }
 }
 
-private extension InappMapperTests {
+private extension InappRemainingTargetingTests {
     func targetingShow(id: String) {
         XCTAssertTrue(mockDataFacade.showArray.contains(id), "ID \(id) is expected to be shown")
     }

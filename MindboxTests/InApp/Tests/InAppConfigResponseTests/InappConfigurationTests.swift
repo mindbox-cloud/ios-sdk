@@ -21,11 +21,13 @@ class InappConfigurationTests {
 
     private var mapper: InappMapperProtocol
     private var targetingChecker: InAppTargetingCheckerProtocol
+    private var stub: InAppConfigStub
 
     init() {
         TestConfiguration.configure()
         self.mapper = DI.injectOrFail(InappMapperProtocol.self)
         self.targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        self.stub = InAppConfigStub()
     }
 
     @available(iOS 13.0, *)
@@ -121,7 +123,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("Пустая модель в viewCategory", .tags(.categoryID))
     func categoryID_emptyModel_returnNil() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_Substring()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: nil)
@@ -138,7 +139,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Правильный substring категории", .tags(.categoryID))
     func categoryID_substring_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_Substring()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -158,7 +158,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Неправильный substring категории", .tags(.categoryID))
     func categoryID_substring_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_Substring()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -178,7 +177,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Правильный notSubstring категории", .tags(.categoryID))
     func categoryID_notSubstring_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_notSubstring()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -198,7 +196,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Неправильный notSubstring категории", .tags(.categoryID))
     func categoryID_notSubstring_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_notSubstring()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -218,7 +215,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("3.Правильный startWith категории", .tags(.categoryID))
     func categoryID_startWith_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_startWith()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -238,7 +234,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("3.Неправильный startWith категории", .tags(.categoryID))
     func categoryID_startWith_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_startWith()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -258,7 +253,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("4.Правильный endWith категории", .tags(.categoryID))
     func categoryID_endWith_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_endWith()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -278,7 +272,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("4.Неправильный endWith категории", .tags(.categoryID))
     func categoryID_endWith_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryID_endWith()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -298,7 +291,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Правильная categoryID_In any", .tags(.categoryID_In))
     func categoryID_In_any_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryIDIn_Any()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -316,7 +308,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Неправильная categoryID_In any", .tags(.categoryID_In))
     func categoryID_In_any_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryIDIn_Any()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -334,7 +325,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Правильная categoryID_In none", .tags(.categoryID_In))
     func categoryID_In_none_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryIDIn_None()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -352,7 +342,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Неправильная categoryID_In none", .tags(.categoryID_In))
     func categoryID_In_none_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getCategoryIDIn_None()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
@@ -370,7 +359,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("Пустая модель productID", .tags(.productID))
     func productID_emptyModel_nil() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_substring()
         let event = ApplicationEvent(name: "viewProduct", model: nil)
 
@@ -386,7 +374,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Правильный productID substring", .tags(.productID))
     func productID_substring_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_substring()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
@@ -405,7 +392,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Неправильный productID substring", .tags(.productID))
     func productID_substring_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_substring()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Bovts".uppercased(),
@@ -424,7 +410,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Правильный productID notSubstring", .tags(.productID))
     func productID_notSubstring_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_notSubstring()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
@@ -443,7 +428,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Неправильный productID notSubstring", .tags(.productID))
     func productID_notSubstring_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_notSubstring()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
@@ -462,7 +446,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("3.Правильный productID startWith", .tags(.productID))
     func productID_startWith_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_startWith()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "oots".uppercased(),
@@ -481,7 +464,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("3.Неправильный productID startWith", .tags(.productID))
     func productID_startWith_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_startWith()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
@@ -500,7 +482,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("4.Правильный productID endWith", .tags(.productID))
     func productID_endWith_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_endWith()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
@@ -519,7 +500,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("4.Неправильный productID endWith", .tags(.productID))
     func productID_endWith_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductID_endWith()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boats".uppercased(),
@@ -538,7 +518,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Правильный productSegment positive", .tags(.productSegment))
     func productSegment_positive_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductSegment_Positive()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
@@ -566,7 +545,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("1.Неправильный productSegment positive", .tags(.productSegment))
     func productSegment_positive_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductSegment_Positive()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
@@ -584,7 +562,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Правильный productSegment negative", .tags(.productSegment))
     func productSegment_negative_true() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductSegment_Negative()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
@@ -606,7 +583,6 @@ class InappConfigurationTests {
     @available(iOS 13.0, *)
     @Test("2.Неправильный productSegment negative", .tags(.productSegment))
     func productSegment_negateive_false() async throws {
-        let stub = InAppConfigStub()
         let response = try stub.getProductSegment_Negative()
         let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
