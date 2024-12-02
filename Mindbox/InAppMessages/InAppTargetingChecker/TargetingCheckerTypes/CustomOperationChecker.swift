@@ -16,7 +16,7 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
         SessionTemporaryStorage.shared.observedCustomOperations.insert(operationName)
 
         let key = targeting.systemName.lowercased()
-        context.operationInapps[key, default: []].append(id)
+        context.operationInapps[key, default: []].insert(id)
     }
 
     override func checkInternal(targeting: CustomOperationTargeting) -> Bool {
