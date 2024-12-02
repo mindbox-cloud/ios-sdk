@@ -267,9 +267,7 @@
 		9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */; };
 		9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7328F6953D00C2619C /* ConfigResponse.swift */; };
-		9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */; };
 		9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BC24E7928F6C08700C2619C /* InAppConfiguration.json */; };
-		9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BE941F42916822900258077 /* InAppConfigurationInvalid.json */; };
 		A11FBE8929DD76BF00F5FB7B /* InAppMessagesEventSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */; };
 		A1515DB229B228F40025E2EE /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */; };
@@ -862,9 +860,7 @@
 		9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionProvider.swift; sourceTree = "<group>"; };
 		9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfigurationAPI.swift; sourceTree = "<group>"; };
 		9BC24E7328F6953D00C2619C /* ConfigResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfigResponse.swift; sourceTree = "<group>"; };
-		9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigResponseTests.swift; sourceTree = "<group>"; };
 		9BC24E7928F6C08700C2619C /* InAppConfiguration.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppConfiguration.json; sourceTree = "<group>"; };
-		9BE941F42916822900258077 /* InAppConfigurationInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationInvalid.json; sourceTree = "<group>"; };
 		A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesEventSender.swift; sourceTree = "<group>"; };
 		A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationTargeting.swift; sourceTree = "<group>"; };
 		A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationChecker.swift; sourceTree = "<group>"; };
@@ -2180,7 +2176,6 @@
 			isa = PBXGroup;
 			children = (
 				9BE941F62916823300258077 /* ConfigJsonStubs */,
-				9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */,
 				A1A916E429C9191900D59D9E /* InAppConfigStub.swift */,
 				F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */,
 				F351F1C12CE5F23A0053423E /* InappMapperTests.swift */,
@@ -2196,7 +2191,6 @@
 				F31801F92A386A350021774C /* ConfigResponse */,
 				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
-				9BE941F42916822900258077 /* InAppConfigurationInvalid.json */,
 				9BC24E7928F6C08700C2619C /* InAppConfiguration.json */,
 			);
 			path = ConfigJsonStubs;
@@ -3382,7 +3376,6 @@
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
-				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
 				F3FAD8702AB866B600D98C03 /* unknownSizeKind.json in Resources */,
 				473A98652C91DFB5005A3B94 /* MonitoringLogsOneElementError.json in Resources */,
 				F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */,
@@ -3913,7 +3906,6 @@
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 				F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
-				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
 				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
 				F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */,
 				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,

@@ -12,4 +12,8 @@ import Testing
 extension Tag {
     @Tag static var sdkVersion: Self
     @Tag static var customOperations: Self
+    @Tag static var categoryID: Self
+    @Tag static var categoryID_In: Self
+    @Tag static var productID: Self
+    @Tag static var productSegment: Self
 }

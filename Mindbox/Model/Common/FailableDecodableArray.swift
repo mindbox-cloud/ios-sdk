@@ -32,6 +32,12 @@ struct FailableDecodableArray<Element: Decodable & Equatable>: Decodable, Equata
     }
 
     private struct DummyCodable: Decodable { }
+
+    #if DEBUG
+    init(elements: [Element]) {
+        self.elements = elements
+    }
+    #endif
 }
 
 struct FailableDecodable<Element: Decodable & Equatable>: Decodable, Equatable {

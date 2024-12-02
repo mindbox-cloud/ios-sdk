@@ -40,6 +40,16 @@ struct InAppDTO: Decodable, Equatable {
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
     }
+
+    #if DEBUG
+    init(id: String, sdkVersion: SdkVersion, frequency: InappFrequency? = nil, targeting: Targeting, form: InAppFormDTO) {
+        self.id = id
+        self.sdkVersion = sdkVersion
+        self.frequency = frequency
+        self.targeting = targeting
+        self.form = form
+    }
+    #endif
 }
 
 struct InApp: Decodable, Equatable {
