@@ -6,7 +6,7 @@
 ////  Copyright © 2023 Mindbox. All rights reserved.
 ////
 
-// swiftlint:disable comment_spacing
+// swiftlint:disable file_length
 
 import Foundation
 import XCTest
@@ -26,7 +26,6 @@ fileprivate enum InappConfig: String, Configurable {
     case configWithABNormal = "ConfigWithABNormal"
     case configWithABTypeNotInapps = "ConfigWithABTypeNotInapps"
 }
-
 class ABTests: XCTestCase {
 
     private var inappFilter: InappFilterProtocol!
@@ -104,15 +103,15 @@ class ABTests: XCTestCase {
             stub.getABTest(variants: [
                 stub.getVariantConcrete(lower: 0, upper: 50),
                 stub.getVariantConcrete(id: "2", lower: 50, upper: 100, inapps: [
-                    "655f5ffa-de86-4224-a0bf-229fe208ed0d",
-                    "b33ca779-3c99-481f-ad46-91282b0caf04"
+                    "1",
+                    "3"
                 ])
             ])
         ]
 
         let expectedIds1: Set = [
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+            "2",
+            "4"
         ]
 
         persistenceStorage.deviceUUID = "4078E211-7C3F-C607-D35C-DC6B591EF355"
@@ -125,10 +124,10 @@ class ABTests: XCTestCase {
 
         // Test case for UUID "4D27710A-3F3A-FF6E-7764-375B1E06E05D" with expected inapp count of 4
         let expectedIds2: Set = [
-            "655f5ffa-de86-4224-a0bf-229fe208ed0d",
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "b33ca779-3c99-481f-ad46-91282b0caf04",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+            "1",
+            "2",
+            "3",
+            "4"
         ]
 
         persistenceStorage.deviceUUID = "4D27710A-3F3A-FF6E-7764-375B1E06E05D"
@@ -185,11 +184,11 @@ class ABTests: XCTestCase {
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
                 stub.getVariantConcrete(lower: 0, upper: 27, inapps: []),
-                stub.getVariantConcrete(id: "211f1c16-fa72-4456-bf87-af448eb84a32", lower: 27, upper: 65, inapps: [
-                    "655f5ffa-de86-4224-a0bf-229fe208ed0d"
+                stub.getVariantConcrete(id: "2", lower: 27, upper: 65, inapps: [
+                    "1"
                 ]),
                 stub.getVariantConcrete(lower: 65, upper: 100, inapps: [
-                    "b33ca779-3c99-481f-ad46-91282b0caf04"
+                    "3"
                 ])
             ])
         ]
@@ -198,8 +197,8 @@ class ABTests: XCTestCase {
         persistenceStorage.deviceUUID = "4078E211-7C3F-C607-D35C-DC6B591EF355"
         let inappsFirstVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds1: Set = [
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+            "2",
+            "4"
         ]
         XCTAssertEqual(inappsFirstVariant.count, expectedIds1.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsFirstVariant.map { $0.id }), expectedIds1, "Идентификаторы инапов не совпадают с ожидаемыми")
@@ -208,9 +207,9 @@ class ABTests: XCTestCase {
         persistenceStorage.deviceUUID = "0809B0F8-8F21-18E8-2EF8-EC2D98938A84"
         let inappsSecondVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds2: Set = [
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b",
-            "655f5ffa-de86-4224-a0bf-229fe208ed0d"
+            "1",
+            "2",
+            "4"
         ]
         XCTAssertEqual(inappsSecondVariant.count, expectedIds2.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsSecondVariant.map { $0.id }), expectedIds2, "Идентификаторы инапов не совпадают с ожидаемыми")
@@ -219,9 +218,9 @@ class ABTests: XCTestCase {
         persistenceStorage.deviceUUID = "4D27710A-3F3A-FF6E-7764-375B1E06E05D"
         let inappsThirdVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds3: Set = [
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b",
-            "b33ca779-3c99-481f-ad46-91282b0caf04"
+            "2",
+            "3",
+            "4"
         ]
         XCTAssertEqual(inappsThirdVariant.count, expectedIds3.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsThirdVariant.map { $0.id }), expectedIds3, "Идентификаторы инапов не совпадают с ожидаемыми")
@@ -233,8 +232,13 @@ class ABTests: XCTestCase {
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
-                stub.getVariantConcrete(lower: 0, upper: 99, inapps: ["1", "3"]),
-                stub.getVariantConcrete(lower: 99, upper: 100, inapps: ["2"])
+                stub.getVariantConcrete(lower: 0, upper: 99, inapps: [
+                    "1",
+                    "3"
+                ]),
+                stub.getVariantConcrete(lower: 99, upper: 100, inapps: [
+                    "2"
+                ])
             ])
         ]
 
@@ -265,7 +269,10 @@ class ABTests: XCTestCase {
             stub.getABTest(variants: [
                 stub.getVariantConcrete(lower: 0, upper: 33, inapps: []),
                 stub.getVariantConcrete(lower: 33, upper: 66, inapps: []),
-                stub.getVariantConcrete(lower: 66, upper: 100, inapps: ["1", "3"])
+                stub.getVariantConcrete(lower: 66, upper: 100, inapps: [
+                    "1",
+                    "3"
+                ])
             ])
         ]
 
@@ -393,66 +400,66 @@ class ABTests: XCTestCase {
             stub.getABTest(
                 variants: [
                     stub.getVariantConcrete(lower: 0, upper: 10, inapps: [
-                        "655f5ffa-de86-4224-a0bf-229fe208ed0d"
+                        "1"
                     ]),
                     stub.getVariantConcrete(lower: 10, upper: 20, inapps: [
-                        "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"
+                        "2"
                     ]),
                     stub.getVariantConcrete(lower: 20, upper: 30, inapps: [
-                        "b33ca779-3c99-481f-ad46-91282b0caf04"
+                        "3"
                     ]),
                     stub.getVariantConcrete(lower: 30, upper: 70, inapps: [
-                        "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+                        "4"
                     ]),
                     stub.getVariantAll(lower: 70, upper: 100)
                 ]
             )
         ]
 
-        // Test case for UUID "7544976E-FEA4-6A48-EB5D-85A6EEB4D306"
+        // Тест для UUID "7544976E-FEA4-6A48-EB5D-85A6EEB4D306"
         persistenceStorage.deviceUUID = "7544976E-FEA4-6A48-EB5D-85A6EEB4D306"
         let inappsFirstVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds1: Set = [
-            "655f5ffa-de86-4224-a0bf-229fe208ed0d"
+            "1"
         ]
         XCTAssertEqual(inappsFirstVariant.count, expectedIds1.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsFirstVariant.map { $0.id }), expectedIds1, "Идентификаторы инапов не совпадают с ожидаемыми")
 
-        // Test case for UUID "618F8CA3-282D-5B18-7186-F2CF361ABD32"
+        // Тест для UUID "618F8CA3-282D-5B18-7186-F2CF361ABD32"
         persistenceStorage.deviceUUID = "618F8CA3-282D-5B18-7186-F2CF361ABD32"
         let inappsSecondVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds2: Set = [
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83"
+            "2"
         ]
         XCTAssertEqual(inappsSecondVariant.count, expectedIds2.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsSecondVariant.map { $0.id }), expectedIds2, "Идентификаторы инапов не совпадают с ожидаемыми")
 
-        // Test case for UUID "DC0F2330-785B-5D80-CD34-F2F520AD618F"
+        // Тест для UUID "DC0F2330-785B-5D80-CD34-F2F520AD618F"
         persistenceStorage.deviceUUID = "DC0F2330-785B-5D80-CD34-F2F520AD618F"
         let inappsThirdVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds3: Set = [
-            "b33ca779-3c99-481f-ad46-91282b0caf04"
+            "3"
         ]
         XCTAssertEqual(inappsThirdVariant.count, expectedIds3.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsThirdVariant.map { $0.id }), expectedIds3, "Идентификаторы инапов не совпадают с ожидаемыми")
 
-        // Test case for UUID "0809B0F8-8F21-18E8-2EF8-EC2D98938A84"
+        // Тест для UUID "0809B0F8-8F21-18E8-2EF8-EC2D98938A84"
         persistenceStorage.deviceUUID = "0809B0F8-8F21-18E8-2EF8-EC2D98938A84"
         let inappsFourthVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds4: Set = [
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+            "4"
         ]
         XCTAssertEqual(inappsFourthVariant.count, expectedIds4.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsFourthVariant.map { $0.id }), expectedIds4, "Идентификаторы инапов не совпадают с ожидаемыми")
 
-        // Test case for UUID "4D27710A-3F3A-FF6E-7764-375B1E06E05D"
+        // Тест для UUID "4D27710A-3F3A-FF6E-7764-375B1E06E05D"
         persistenceStorage.deviceUUID = "4D27710A-3F3A-FF6E-7764-375B1E06E05D"
         let inappsFifthVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds5: Set = [
-            "655f5ffa-de86-4224-a0bf-229fe208ed0d",
-            "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
-            "b33ca779-3c99-481f-ad46-91282b0caf04",
-            "d1b312bd-aa5c-414c-a0d8-8126376a2a9b"
+            "1",
+            "2",
+            "3",
+            "4"
         ]
         XCTAssertEqual(inappsFifthVariant.count, expectedIds5.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsFifthVariant.map { $0.id }), expectedIds5, "Идентификаторы инапов не совпадают с ожидаемыми")
@@ -506,7 +513,9 @@ class ABTests: XCTestCase {
         persistenceStorage.deviceUUID = "d35df6c2-9e20-4f7e-9e20-51894e2c4810"
         let inappsFourthVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         let expectedIds3: Set = [
-            "1", "2", "3"
+            "1",
+            "2",
+            "3"
         ]
         XCTAssertEqual(inappsFourthVariant.count, expectedIds3.count, "Количество инапов не совпадает с ожидаемым")
         XCTAssertEqual(Set(inappsFourthVariant.map { $0.id }), expectedIds3, "Идентификаторы инапов не совпадают с ожидаемыми")

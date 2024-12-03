@@ -1,7 +1,7 @@
 {
   "inapps": [
     {
-      "id": "655f5ffa-de86-4224-a0bf-229fe208ed0d",
+      "id": "1",
       "sdkVersion": {
         "min": 3,
         "max": null
@@ -42,7 +42,7 @@
       }
     },
     {
-      "id": "6f93e2ef-0615-4e63-9c80-24bcb9e83b83",
+      "id": "2",
       "sdkVersion": {
         "min": 4,
         "max": null
@@ -85,7 +85,7 @@
       }
     },
     {
-      "id": "b33ca779-3c99-481f-ad46-91282b0caf04",
+      "id": "3",
       "sdkVersion": {
         "min": 3,
         "max": null
@@ -130,7 +130,7 @@
       }
     },
     {
-      "id": "d1b312bd-aa5c-414c-a0d8-8126376a2a9b",
+      "id": "4",
       "sdkVersion": {
         "min": 3,
         "max": null
