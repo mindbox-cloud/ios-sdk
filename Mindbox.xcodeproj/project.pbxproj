@@ -357,6 +357,7 @@
 		D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */; };
 		D2F7E24A2BADC2AB00B24BB8 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */; };
 		D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */; };
+		F30005442CFF3F7D004BE915 /* ABTestStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30005432CFF3F7D004BE915 /* ABTestStubs.swift */; };
 		F306291A2BD27D7500EF6609 /* InappFrequencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */; };
 		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
@@ -951,6 +952,7 @@
 		D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManagerTests.swift; sourceTree = "<group>"; };
 		D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSessionManager.swift; sourceTree = "<group>"; };
+		F30005432CFF3F7D004BE915 /* ABTestStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestStubs.swift; sourceTree = "<group>"; };
 		F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyTests.swift; sourceTree = "<group>"; };
 		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
@@ -3006,6 +3008,7 @@
 				F39B67B72A3FAA75005C0CCA /* ABTests.swift */,
 				F39B67AF2A3C8B1D005C0CCA /* ConfigWithAB_1.json */,
 				F39B67B02A3C8B1D005C0CCA /* ConfigWithAB_2.json */,
+				F30005432CFF3F7D004BE915 /* ABTestStubs.swift */,
 			);
 			path = ABTesting;
 			sourceTree = "<group>";
@@ -3909,6 +3912,7 @@
 				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
 				F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */,
 				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,
+				F30005442CFF3F7D004BE915 /* ABTestStubs.swift in Sources */,
 				F306291A2BD27D7500EF6609 /* InappFrequencyTests.swift in Sources */,
 				F3AF0AD02BC40FCF0063BA58 /* InappTTLTests.swift in Sources */,
 			);
