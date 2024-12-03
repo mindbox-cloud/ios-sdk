@@ -311,7 +311,7 @@ class InappConfigurationTests {
         let response = try stub.getCategoryIDIn_Any()
         let event = ApplicationEvent(name: "viewCategory",
                                      model: .init(viewProductCategory: .init(productCategory: .init(ids: [
-            "System1C": "potato"]))))
+                                        "System1C": "potato"]))))
 
         let result = await withCheckedContinuation { continuation in
             mapper.handleInapps(event, response) { formData in
@@ -568,7 +568,7 @@ class InappConfigurationTests {
         ]))))
 
         let segmentation = [InAppProductSegmentResponse.CustomerSegmentation(ids: .init(externalId: "1"),
-                                                                            segment: .init(ids: .init(externalId: "4")))]
+                                                                             segment: .init(ids: .init(externalId: "4")))]
         self.targetingChecker.checkedProductSegmentations = segmentation
 
         let result = await withCheckedContinuation { continuation in
