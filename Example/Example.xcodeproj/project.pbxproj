@@ -22,7 +22,6 @@
 		0AEDBC962BB6FE4900EE8722 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEDBC952BB6FE4900EE8722 /* ViewModel.swift */; };
 		43E1C73D7E87903545C2ACBC /* Pods_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9AF8ABB9430FE76D72FE17D /* Pods_Example.framework */; };
 		472137C12CF784D400354602 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472137C02CF784D400354602 /* WebView.swift */; };
-		476FC2002CF89E340097EEBD /* TestPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476FC1FF2CF89E340097EEBD /* TestPage.swift */; };
 		9E3108F96D4F26745D3B37A4 /* Pods_MindboxNotificationServiceExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */; };
 		D9585975AC05213E1682C760 /* Pods_MindboxNotificationContentExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91EB2315545CE887D05CB505 /* Pods_MindboxNotificationContentExtension.framework */; };
 /* End PBXBuildFile section */
@@ -82,7 +81,6 @@
 		0AEDBC9C2BB7177A00EE8722 /* Example.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Example.entitlements; sourceTree = "<group>"; };
 		1B29989833584963EC18BDF2 /* Pods-MindboxNotificationContentExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MindboxNotificationContentExtension.release.xcconfig"; path = "Target Support Files/Pods-MindboxNotificationContentExtension/Pods-MindboxNotificationContentExtension.release.xcconfig"; sourceTree = "<group>"; };
 		472137C02CF784D400354602 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
-		476FC1FF2CF89E340097EEBD /* TestPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPage.swift; sourceTree = "<group>"; };
 		47912FD92CB42D640063387D /* AppDelegate_IDFA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate_IDFA.swift; sourceTree = "<group>"; };
 		47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -188,7 +186,6 @@
 			isa = PBXGroup;
 			children = (
 				0AEDBC912BB6FA4800EE8722 /* ContentView.swift */,
-				476FC1FF2CF89E340097EEBD /* TestPage.swift */,
 				472137C02CF784D400354602 /* WebView.swift */,
 			);
 			path = Views;
@@ -477,7 +474,6 @@
 				0AEDBC922BB6FA4800EE8722 /* ContentView.swift in Sources */,
 				0AEDBC962BB6FE4900EE8722 /* ViewModel.swift in Sources */,
 				0AEDBC7C2BB6F8F200EE8722 /* SceneDelegate.swift in Sources */,
-				476FC2002CF89E340097EEBD /* TestPage.swift in Sources */,
 				472137C12CF784D400354602 /* WebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

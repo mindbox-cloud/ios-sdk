@@ -18,7 +18,7 @@ final class AppDelegate: MindboxAppDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
-        print(#function)
+
         do {
             // To run the application on a physical device you need to change the endpoint
             // You should also change the application bundle ID in all targets, more details in the readme
@@ -32,10 +32,6 @@ final class AppDelegate: MindboxAppDelegate {
             Mindbox.shared.initialization(configuration: mindboxSdkConfig)
         } catch {
             print(error.localizedDescription)
-        }
-
-        Mindbox.shared.getDeviceUUID { deviceUUID in
-            print("DeviceUUID: \(deviceUUID)")
         }
 
         // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate

@@ -18,11 +18,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         willConnectTo session: UISceneSession,
         options connectionOptions: UIScene.ConnectionOptions
     ) {
-        print(#function)
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
+
         let viewModel = ViewModel()
         window.rootViewController = UIHostingController(rootView: ContentView(webViewModel: viewModel))
+
         self.window = window
         window.makeKeyAndVisible()
     }
