@@ -11,12 +11,12 @@ import XCTest
 
 fileprivate enum ABTestsConfig: String, Configurable {
     typealias DecodeType = [ABTest]
-    
+
     case configWithABTests = "ABTestsConfig" // Correct config
-    
+
     case abTestsIdConfigError = "ABTestsIdConfigError" // Key is `idTest` instead of `id`
     case abTestsIdConfigTypeError = "ABTestsIdConfigTypeError" // Type of `id` is Int instead of String
-    
+
     case abTestsSdkVersionConfigError = "ABTestsSdkVersionConfigError" // Key is `sdkVersionTest` instead of `sdkVersion`
     case abTestsSdkVersionConfigTypeError = "ABTestsSdkVersionConfigTypeError" // Type of `sdkVersion` is Int instead of SdkVersion
 }
@@ -27,16 +27,16 @@ final class ABTestsConfigParsingTests: XCTestCase {
         // Correct config
         let config = try ABTestsConfig.configWithABTests.getConfig()
         XCTAssertEqual(config.count, 2)
-        
+
         for abTest in config {
-            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { test in
+            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { _ in
                 XCTAssertNotNil(abTest.salt)
                 XCTAssertNotNil(abTest.sdkVersion)
                 XCTAssertNotNil(abTest.variants)
             }
         }
     }
-    
+
     func test_ABTestsConfig_withIdError_shouldThrowDecodingError() throws {
         // Key is `idTest` instead of `id`
         XCTAssertThrowsError(try ABTestsConfig.abTestsIdConfigError.getConfig()) { error in
@@ -53,7 +53,7 @@ final class ABTestsConfigParsingTests: XCTestCase {
             }
         }
     }
-    
+
     func test_ABTestsConfig_withIdTypeError_shouldThrowDecodingError() throws {
         // Type of `id` is Int instead of String
         XCTAssertThrowsError(try ABTestsConfig.abTestsIdConfigTypeError.getConfig()) { error in
@@ -71,14 +71,14 @@ final class ABTestsConfigParsingTests: XCTestCase {
             }
         }
     }
-    
+
     func test_ABTestsConfig_withSdkVersionError_shouldSetToNilCorruptedData() throws {
         // Key is `sdkVersionTest` instead of `sdkVersion`
         let config = try ABTestsConfig.abTestsSdkVersionConfigError.getConfig()
         XCTAssertEqual(config.count, 2)
-        
+
         for abTest in config {
-            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { test in
+            XCTContext.runActivity(named: "Check abTest \(abTest) is in `config`") { _ in
                 if abTest.id == "94CD824A-59AA-4937-9E0E-089895A0DB6F" {
                     XCTAssertNil(abTest.sdkVersion)
                 } else {
@@ -89,7 +89,7 @@ final class ABTestsConfigParsingTests: XCTestCase {
             }
         }
     }
-    
+
     func test_ABTestsConfig_withSdkVersionTypeError_shouldThrowDecodingError() throws {
         // Type of `sdkVersion` is Int instead of SdkVersion
         XCTAssertThrowsError(try ABTestsConfig.abTestsSdkVersionConfigTypeError.getConfig()) { error in

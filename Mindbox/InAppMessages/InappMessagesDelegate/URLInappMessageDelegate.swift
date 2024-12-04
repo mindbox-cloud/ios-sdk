@@ -24,6 +24,6 @@ public extension URLInappMessageDelegate {
         Logger.common(message: "URLInappMessageDelegate inAppMessageTapAction called.")
         openURL(url)
     }
-    
+
     func inAppMessageDismissed(id: String) { }
 }

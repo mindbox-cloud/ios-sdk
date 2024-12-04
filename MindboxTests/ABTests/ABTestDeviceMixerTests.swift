@@ -9,8 +9,10 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 final class ABTestDeviceMixerTests: XCTestCase {
-    
+
     var sut: ABTestDeviceMixer!
 
     override func setUp() {
@@ -22,11 +24,11 @@ final class ABTestDeviceMixerTests: XCTestCase {
         sut = nil
         super.tearDown()
     }
-    
+
     func testModulusGuidHash() throws {
         let salt = "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F1"
         let array = try getArray(resourceName: "MixerUUIDS")
-            
+
         for item in array {
             let components = item.components(separatedBy: " | ")
             guard components.count == 2,
@@ -49,7 +51,7 @@ final class ABTestDeviceMixerTests: XCTestCase {
             if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [String] {
                 return jsonArray
             }
-            
+
             throw MindboxError.internalError(.init(errorKey: .parsing, reason: "Failed to convert data to JSON array."))
         } catch {
             let errorReason: String = "Error loading resource \(resourceName): \(error.localizedDescription)."

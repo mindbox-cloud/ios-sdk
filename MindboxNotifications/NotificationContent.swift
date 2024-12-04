@@ -13,7 +13,7 @@ import UserNotificationsUI
 import MindboxLogger
 
 public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProtocol {
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     func didReceive(
         notification: UNNotification,
@@ -25,7 +25,7 @@ public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProto
 // MARK: - MindboxNotificationContentProtocol
 
 extension MindboxNotificationService: MindboxNotificationContentProtocol {
-    
+
     /// Call this method in `didReceive(_ notification: UNNotification)` of `NotificationViewController`
     public func didReceive(notification: UNNotification, viewController: UIViewController, extensionContext: NSExtensionContext?) {
         context = extensionContext
@@ -38,7 +38,7 @@ extension MindboxNotificationService: MindboxNotificationContentProtocol {
 // MARK: Private methods for MindboxNotificationContentProtocol
 
 private extension MindboxNotificationService {
-    
+
     func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
@@ -58,7 +58,8 @@ private extension MindboxNotificationService {
 
     func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
-            Logger.common(message: "MindboxNotificationService: Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))", level: .error, category: .notification)
+            let message = "Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))"
+            Logger.common(message: message, level: .error, category: .notification)
             return
         }
         let actions = buttons.map { button in
@@ -92,19 +93,19 @@ private extension MindboxNotificationService {
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(imageView)
-        
+
         let imageHeight = image?.size.height ?? 0
         let imageWidth = image?.size.width ?? 0
-        
+
         let imageRatio = (imageWidth > 0) ? imageHeight / imageWidth : 0
         let imageViewHeight = view.bounds.width * imageRatio
-        
+
         NSLayoutConstraint.activate([
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight),
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight)
         ])
     }
 }

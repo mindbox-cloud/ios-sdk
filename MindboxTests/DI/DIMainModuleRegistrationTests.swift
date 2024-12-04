@@ -15,7 +15,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         super.setUp()
         MBInject.mode = .standard
     }
-     
+
     func testCoreControllerIsRegistered() {
         let coreController: CoreController? = DI.inject(CoreController.self)
         XCTAssertNotNil(coreController)
@@ -27,7 +27,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testInAppConfigurationMapperIsRegistered() {
-        let mapper: InAppConfigurationMapperProtocol? = DI.inject(InAppConfigurationMapperProtocol.self)
+        let mapper: InappMapperProtocol? = DI.inject(InappMapperProtocol.self)
         XCTAssertNotNil(mapper)
     }
 
@@ -40,7 +40,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         let manager: InAppCoreManagerProtocol? = DI.inject(InAppCoreManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
-    
+
     func testUUIDDebugServiceIsRegistered() {
         let service: UUIDDebugService? = DI.inject(UUIDDebugService.self)
         XCTAssertNotNil(service)
@@ -156,98 +156,98 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         let manager: ClickNotificationManager? = DI.inject(ClickNotificationManager.self)
         XCTAssertNotNil(manager)
     }
-    
+
     func testABTestDeviceMixerIsRegistered() {
         let mixer: ABTestDeviceMixer? = DI.inject(ABTestDeviceMixer.self)
         XCTAssertNotNil(mixer)
     }
-    
+
     func testABTestVariantsValidatorIsRegistered() {
         let validator: ABTestVariantsValidator? = DI.inject(ABTestVariantsValidator.self)
         XCTAssertNotNil(validator)
     }
-    
+
     func testABTestValidatorIsRegistered() {
         let validator: ABTestValidator? = DI.inject(ABTestValidator.self)
         XCTAssertNotNil(validator)
     }
-    
+
     func testLayerActionFilterIsRegistered() {
         let filter: LayerActionFilterProtocol? = DI.inject(LayerActionFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testLayersSourceFilterIsRegistered() {
         let filter: LayersSourceFilterProtocol? = DI.inject(LayersSourceFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testLayersFilterIsRegistered() {
         let filter: LayersFilterProtocol? = DI.inject(LayersFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testElementsSizeFilterIsRegistered() {
         let filter: ElementsSizeFilterProtocol? = DI.inject(ElementsSizeFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testElementsColorFilterIsRegistered() {
         let filter: ElementsColorFilterProtocol? = DI.inject(ElementsColorFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testElementsPositionFilterIsRegistered() {
         let filter: ElementsPositionFilterProtocol? = DI.inject(ElementsPositionFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testElementsFilterIsRegistered() {
         let filter: ElementsFilterProtocol? = DI.inject(ElementsFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testContentPositionFilterIsRegistered() {
         let filter: ContentPositionFilterProtocol? = DI.inject(ContentPositionFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testVariantFilterIsRegistered() {
         let filter: VariantFilterProtocol? = DI.inject(VariantFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     func testInappFilterIsRegistered() {
         let filter: InappFilterProtocol? = DI.inject(InappFilterProtocol.self)
         XCTAssertNotNil(filter)
     }
-    
+
     // Тесты для InappPresentation
     func testInAppMessagesTrackerIsRegistered() {
         let tracker: InAppMessagesTracker? = DI.inject(InAppMessagesTracker.self)
         XCTAssertNotNil(tracker)
     }
-    
+
     func testPresentationDisplayUseCaseIsRegistered() {
         let useCase: PresentationDisplayUseCase? = DI.inject(PresentationDisplayUseCase.self)
         XCTAssertNotNil(useCase)
     }
-    
+
     func testUseCaseFactoryIsRegistered() {
         let factory: UseCaseFactoryProtocol? = DI.inject(UseCaseFactoryProtocol.self)
         XCTAssertNotNil(factory)
     }
-    
+
     func testInAppActionHandlerIsRegistered() {
         let handler: InAppActionHandlerProtocol? = DI.inject(InAppActionHandlerProtocol.self)
         XCTAssertNotNil(handler)
     }
-    
+
     func testInAppPresentationManagerIsRegistered() {
         let manager: InAppPresentationManagerProtocol? = DI.inject(InAppPresentationManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
-    
+
     func testMigrationManagerIsRegistered() {
         let manager: MigrationManagerProtocol? = DI.inject(MigrationManagerProtocol.self)
         XCTAssertNotNil(manager)

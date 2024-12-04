@@ -18,7 +18,7 @@ final class LayersSourceFilterService: LayersSourceFilterProtocol {
               source.sourceType != .unknown else {
             throw CustomDecodingError.unknownType("LayersSourceFilterService validation not passed.")
         }
-        
+
         switch source {
             case .url(let urlLayerSource):
                 if let value = urlLayerSource.value, !value.isEmpty {
@@ -28,7 +28,7 @@ final class LayersSourceFilterService: LayersSourceFilterProtocol {
             case .unknown:
                 break
         }
-        
+
         throw CustomDecodingError.unknownType("LayersSourceFilterService validation not passed.")
     }
 }

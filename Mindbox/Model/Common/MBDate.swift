@@ -79,7 +79,7 @@ extension Date {
     public var asDateTime: DateTime {
         return DateTime(self)
     }
-    
+
     public var asDateTimeWithSeconds: String {
         return DateTimeWithSeconds(self).string
     }

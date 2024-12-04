@@ -14,34 +14,34 @@ protocol ElementsFilterProtocol {
 }
 
 final class ElementsFilterService: ElementsFilterProtocol {
-    
+
     enum Constants {
         static let lineWidth = 2
     }
-    
+
     private let sizeFilter: ElementsSizeFilterProtocol
     private let positionFilter: ElementsPositionFilterProtocol
     private let colorFilter: ElementsColorFilterProtocol
-    
+
     init(sizeFilter: ElementsSizeFilterProtocol, positionFilter: ElementsPositionFilterProtocol, colorFilter: ElementsColorFilterProtocol) {
         self.sizeFilter = sizeFilter
         self.positionFilter = positionFilter
         self.colorFilter = colorFilter
     }
-    
+
     func filter(_ elements: [ContentElementDTO]?) throws -> [ContentElement] {
         guard let elements = elements, !elements.isEmpty else {
             Logger.common(message: "Elements are missing or empty.", level: .debug, category: .inAppMessages)
             return []
         }
-        
+
         var filteredElements: [ContentElement] = []
-        
+
         elementsLoop: for element in elements {
             if element.elementType == .unknown {
                 continue
             }
-            
+
             switch element {
                 case .closeButton(let closeButtonElementDTO):
                     let size = try sizeFilter.filter(closeButtonElementDTO.size)

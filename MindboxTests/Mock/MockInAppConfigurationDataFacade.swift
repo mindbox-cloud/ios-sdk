@@ -6,20 +6,21 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import Foundation
 import UIKit
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
-    
+
     let segmentationService: SegmentationServiceProtocol
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
-    
+
     public var showArray: [String] = []
     public var targetingArray: [String] = []
-    
+
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
@@ -29,13 +30,9 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         self.imageService = imageService
         self.tracker = tracker
     }
-    
+
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
         completion()
-    }
-    
-    func setObservedOperation() {
-        SessionTemporaryStorage.shared.observedCustomOperations = Set(targetingChecker.context.operationsName)
     }
 
     func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
@@ -46,18 +43,18 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
             completion(.success(UIImage()))
         }
     }
-    
+
     func trackTargeting(id: String?) {
         if let id = id {
             if showArray.isEmpty {
                 showArray.append(id)
             }
-            
+
             targetingArray.append(id)
         }
     }
-    
-    func clean() {
+
+    func cleanTargetingArray() {
         targetingArray = []
     }
 }

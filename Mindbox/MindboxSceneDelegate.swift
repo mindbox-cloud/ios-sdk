@@ -17,7 +17,7 @@ open class MindboxSceneDelegate: UIResponder, UIWindowSceneDelegate {
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         Mindbox.shared.track(.launchScene(connectionOptions))
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard (scene as? UIWindowScene) != nil else { return }
     }
 
     open func scene(

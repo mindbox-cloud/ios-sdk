@@ -15,7 +15,7 @@ protocol VariantImageUrlExtractorServiceProtocol {
 class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
     func extractImageURL(from variant: MindboxFormVariant) -> [String] {
         var urlString: [String] = []
-        
+
         let elements: [ContentBackgroundLayer]
 
         switch variant {
@@ -31,7 +31,7 @@ class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
 
         return urlString
     }
-    
+
     private func extractImageURLs(from elements: [ContentBackgroundLayer], into urlString: inout [String]) {
         for element in elements {
             switch element {

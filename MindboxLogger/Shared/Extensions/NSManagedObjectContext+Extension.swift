@@ -9,16 +9,18 @@
 import Foundation
 import CoreData
 
+// swiftlint:disable force_unwrapping
+
 public extension NSManagedObjectContext {
-    
-    func executePerformAndWait(_ block: () throws -> Void) rethrows {
+
+    func executePerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
         if #available(iOS 15, *) {
             try self.performAndWait(block)
         } else {
             try mindboxPerformAndWait(block)
         }
     }
-    
+
     func mindboxPerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
         return try _performAndWaitHelper(
             fn: performAndWait, execute: block, rescue: { throw $0 }
@@ -32,8 +34,7 @@ public extension NSManagedObjectContext {
     private func _performAndWaitHelper<T>(
         fn: (() -> Void) -> Void,
         execute work: () throws -> T,
-        rescue: ((Error) throws -> (T))) rethrows -> T
-    {
+        rescue: ((Error) throws -> (T))) rethrows -> T {
         var result: T?
         var error: Error?
         withoutActuallyEscaping(work) { _work in

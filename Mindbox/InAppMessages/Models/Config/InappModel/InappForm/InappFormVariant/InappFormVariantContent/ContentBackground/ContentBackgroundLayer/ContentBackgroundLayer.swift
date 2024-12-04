@@ -13,7 +13,7 @@ protocol ContentBackgroundLayerProtocol: Decodable, Equatable { }
 enum ContentBackgroundLayerType: String, Decodable {
     case image
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
         let type: String = try container.decode(String.self)
@@ -24,11 +24,11 @@ enum ContentBackgroundLayerType: String, Decodable {
 enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
     case image(ImageContentBackgroundLayerDTO)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayerDTO, rhs: ContentBackgroundLayerDTO) -> Bool {
         switch (lhs, rhs) {
             case (.image, .image): return true
@@ -36,23 +36,23 @@ enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .image: hasher.combine("image")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayerDTO.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The layer type could not be decoded. The layer will be ignored.")
         }
-        
+
         let layerContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .image:
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayerDTO.self)
@@ -77,11 +77,11 @@ extension ContentBackgroundLayerDTO {
 enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
     case image(ImageContentBackgroundLayer)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayer, rhs: ContentBackgroundLayer) -> Bool {
         switch (lhs, rhs) {
             case (.image, .image): return true
@@ -89,23 +89,23 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .image: hasher.combine("image")
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayer.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The layer type could not be decoded. The layer will be ignored.")
         }
-        
+
         let layerContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .image:
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayer.self)

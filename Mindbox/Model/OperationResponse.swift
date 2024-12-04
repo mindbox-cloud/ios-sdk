@@ -78,7 +78,6 @@ public extension OperationResponse {
                         }
                     }
                     """
-
         }
         return jsonString
     }

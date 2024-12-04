@@ -15,7 +15,7 @@ open class RecommendationRequest: Encodable {
         self.area = area
         self.productCategory = productCategory
     }
-    
+
     public init(
         limit: Int,
         area: AreaRequest? = nil,

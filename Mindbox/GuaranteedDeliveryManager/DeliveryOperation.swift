@@ -9,7 +9,7 @@
 import Foundation
 import MindboxLogger
 
-class DeliveryOperation: AsyncOperation {
+class DeliveryOperation: AsyncOperation, @unchecked Sendable {
     private let event: Event
 
     private let databaseRepository: MBDatabaseRepository
@@ -44,5 +44,4 @@ class DeliveryOperation: AsyncOperation {
             self.finish()
         }
     }
-
 }

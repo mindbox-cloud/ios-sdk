@@ -11,13 +11,13 @@ import UserNotifications
 import MindboxLogger
 
 struct NotificationDecoder<T: Codable> {
-    
+
     var isMindboxNotification: Bool {
         userInfo[Constants.Notification.mindBoxIdentifireKey] != nil
     }
-    
+
     private let userInfo: [AnyHashable: Any]
-        
+
     init(request: UNNotificationRequest) throws {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             let error = MindboxError.internalError(InternalError(errorKey: "unableToFetchUserInfo"))
@@ -26,11 +26,11 @@ struct NotificationDecoder<T: Codable> {
         }
         try self.init(userInfo: userInfo)
     }
-    
+
     init(response: UNNotificationResponse) throws {
         try self.init(request: response.notification.request)
     }
-    
+
     init(userInfo: [AnyHashable: Any]) throws {
         if let jsonData = try? JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted),
            let jsonString = String(data: jsonData, encoding: .utf8) {
@@ -38,7 +38,7 @@ struct NotificationDecoder<T: Codable> {
         } else {
             Logger.common(message: "NotificationDecoder: Unable to serialize userInfo to JSON", level: .error)
         }
-        
+
         if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any], innerUserInfo["uniqueKey"] != nil {
             self.userInfo = innerUserInfo
             Logger.common(message: "Push Notification format with one big aps object")
@@ -47,7 +47,7 @@ struct NotificationDecoder<T: Codable> {
             Logger.common(message: "Push Notification format with multiple keys")
         }
     }
-    
+
     func decode() throws -> T {
         do {
             let data = try JSONSerialization.data(withJSONObject: userInfo, options: .prettyPrinted)
@@ -65,5 +65,4 @@ struct NotificationDecoder<T: Codable> {
             throw error
         }
     }
-    
 }

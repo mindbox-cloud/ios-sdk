@@ -52,5 +52,4 @@ class InAppConfigurationRepository {
             .urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("InAppMessagesConfiguration.json")
     }
-
 }

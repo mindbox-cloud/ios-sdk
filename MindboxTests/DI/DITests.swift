@@ -9,7 +9,6 @@
 import XCTest
 @testable import Mindbox
 
-
 class TestModeRegistrationTests: XCTestCase {
     override func setUp() {
         super.setUp()

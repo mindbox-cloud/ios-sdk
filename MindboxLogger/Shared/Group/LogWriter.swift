@@ -14,7 +14,7 @@ protocol LogWriter {
 }
 
 class OSLogWriter: LogWriter {
-    
+
     let log: OSLog
 
     init(subsystem: String, category: String) {
@@ -27,7 +27,7 @@ class OSLogWriter: LogWriter {
 }
 
 fileprivate extension LogLevel {
-    
+
     var asOSLogType: OSLogType {
         switch self {
         case .none:
@@ -44,5 +44,4 @@ fileprivate extension LogLevel {
             return .fault
         }
     }
-    
 }

@@ -7,11 +7,11 @@
 //
 
 import Foundation
- 
+
 public class Logger {
     private typealias Meta = (filename: String, line: Int, funcName: String)
     private typealias Borders = (start: String, end: String)
-    
+
     private static let subsystem: String = "cloud.Mindbox"
     private static func log(message: String,
                             level: LogLevel,
@@ -27,7 +27,7 @@ public class Logger {
         header += timestamp.toString() + " "
 
         header += "\n[\(sourceFileName(filePath: meta.filename))]:\(meta.line) \(meta.funcName)"
-        
+
         MBLogger.shared.log(
             level: level,
             message: borders.start + message + borders.end,
@@ -36,7 +36,7 @@ public class Logger {
             subsystem: subsystem ?? "cloud.Mindbox"
         )
     }
-    
+
     public static func error(_ error: LoggerErrorModel,
                              level: LogLevel = .error,
                              category: LogCategory = .network,
@@ -44,76 +44,76 @@ public class Logger {
                              line: Int = #line,
                              funcName: String = #function) {
         var logMessage: String = ""
-        logMessage = logMessage + "\n[\(error.errorType.rawValue) error: \(error.description ?? "No description")]"
+        logMessage += "\n[\(error.errorType.rawValue) error: \(error.description ?? "No description")]"
         if let status = error.status {
-            logMessage = logMessage + "\n[status: \(status)]"
+            logMessage += "\n[status: \(status)]"
         }
-        
+
         if let statusCode = error.statusCode {
-            logMessage = logMessage + "\n[httpStatusCode: \(statusCode)]"
+            logMessage += "\n[httpStatusCode: \(statusCode)]"
         }
-        
+
         if logMessage.isEmpty { return }
 
         let message = "LogManager: \n--- Error --- \(String(describing: logMessage)) \n--- End ---\n"
-        
+
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("", "\n")
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
-    
+
     @available(*, deprecated, message: "Method deprecated. Use error(_ error: LoggerErrorModel:) instead")
     public static func error(_ error: MindboxError,
-                      level: LogLevel = .error,
-                      category: LogCategory = .network,
-                      fileName: String = #file,
-                      line: Int = #line,
-                      funcName: String = #function
+                             level: LogLevel = .error,
+                             category: LogCategory = .network,
+                             fileName: String = #file,
+                             line: Int = #line,
+                             funcName: String = #function
     ) {
         var logMessage: String = ""
 
         switch error {
         case .validationError:
-            logMessage = logMessage + "\n[validationError: \(error.errorDescription ?? "No description")]"
+            logMessage += "\n[validationError: \(error.errorDescription ?? "No description")]"
         case let .protocolError(e):
-            logMessage = logMessage + "\n[status: \(e.status)]"
-            logMessage = logMessage + "\n[responseError: \(error.errorDescription ?? "No description")]"
-            logMessage = logMessage + "\n[httpStatusCode: \(e.httpStatusCode)]"
+            logMessage += "\n[status: \(e.status)]"
+            logMessage += "\n[responseError: \(error.errorDescription ?? "No description")]"
+            logMessage += "\n[httpStatusCode: \(e.httpStatusCode)]"
         case let .serverError(e):
-            logMessage = logMessage + "\n\(e.description)"
+            logMessage += "\n\(e.description)"
         case let .internalError(e):
-            logMessage = logMessage + "\n[key: \(e.errorKey)]"
+            logMessage += "\n[key: \(e.errorKey)]"
             if let rawError = e.rawError {
-                logMessage = logMessage + "\n[message: \(rawError.localizedDescription)]"
+                logMessage += "\n[message: \(rawError.localizedDescription)]"
             }
         case let .invalidResponse(e):
             guard let e = e else { return }
-            logMessage = logMessage + "\n[response: \(String(describing: e))]"
+            logMessage += "\n[response: \(String(describing: e))]"
         case .connectionError:
-            logMessage = logMessage + "\n[connectionError]"
+            logMessage += "\n[connectionError]"
         case let .unknown(e):
-            logMessage = logMessage + "\n[error: \(e.localizedDescription)]"
+            logMessage += "\n[error: \(e.localizedDescription)]"
         }
 
         if logMessage.isEmpty { return }
 
         let message = "LogManager: \n--- Error --- \(String(describing: logMessage)) \n--- End ---\n"
-        
+
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("", "\n")
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
-    
+
     public static func network(request: URLRequest,
-                        httpAdditionalHeaders: [AnyHashable: Any]? = nil,
-                        fileName: String = #file,
-                        line: Int = #line,
-                        funcName: String = #function) {
-        
+                               httpAdditionalHeaders: [AnyHashable: Any]? = nil,
+                               fileName: String = #file,
+                               line: Int = #line,
+                               funcName: String = #function) {
+
         let urlString = request.url?.absoluteString ?? ""
         let components = NSURLComponents(string: urlString)
 
-        let method = request.httpMethod != nil ? "\(request.httpMethod!)" : ""
+        let method = "\(request.httpMethod ?? "")"
         let path = "\(components?.path ?? "")"
         let query = "\(components?.query ?? "")"
         let host = "\(components?.host ?? "")"
@@ -137,19 +137,19 @@ public class Logger {
             let bodyString = NSString(data: body, encoding: String.Encoding.utf8.rawValue) ?? "Can't render body; not utf8 encoded"
             requestLog += "\n\(bodyString)\n"
         }
-        
+
         let message = requestLog
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("\n[---------- OUT ---------->\n", "\n------------------------>]")
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
-    
+
     public static func response(data: Data?,
-                         response: URLResponse?,
-                         error: Error?,
-                         fileName: String = #file,
-                         line: Int = #line,
-                         funcName: String = #function) {
+                                response: URLResponse?,
+                                error: Error?,
+                                fileName: String = #file,
+                                line: Int = #line,
+                                funcName: String = #function) {
         let urlString = response?.url?.absoluteString
         let components = NSURLComponents(string: urlString ?? "")
 
@@ -171,7 +171,7 @@ public class Logger {
 //        for (key, value) in (response as? HTTPURLResponse)?.allHeaderFields ?? [:] {
 //            responseLog += "\(key): \(value)\n"
 //        }
-        
+
         if let body = data,
            let object = try? JSONSerialization.jsonObject(with: body, options: []),
            let data = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]),
@@ -182,7 +182,7 @@ public class Logger {
 //        if let body = data {
 //            responseLog += "[Body]: \n\(String(data: body, encoding: .utf8) ?? "")\n"
 //        }
-        
+
         var level: LogLevel = .debug
         if let error = error {
             responseLog += "\n[Error]: \(error.localizedDescription)\n"
@@ -193,14 +193,14 @@ public class Logger {
         let borders: Borders = ("\n[<---------- IN ----------\n", "\n<------------------------]")
         log(message: message, level: level, category: .network, meta: meta, borders: borders)
     }
-    
+
     public static func common(message: String,
-                       level: LogLevel = .debug,
-                       category: LogCategory = .general,
-                       subsystem: String? = nil,
-                       fileName: String = #file,
-                       line: Int = #line,
-                       funcName: String = #function) {
+                              level: LogLevel = .debug,
+                              category: LogCategory = .general,
+                              subsystem: String? = nil,
+                              fileName: String = #file,
+                              line: Int = #line,
+                              funcName: String = #function) {
         let meta: Meta = (fileName, line, funcName)
         let borders: Borders = ("", "\n")
         log(message: message, level: level, category: category, meta: meta, borders: borders, subsystem: subsystem)
@@ -215,6 +215,6 @@ private extension Logger {
     /// - Returns: File Name with extension
     static func sourceFileName(filePath: String) -> String {
         let components = filePath.components(separatedBy: "/")
-        return components.isEmpty ? "" : components.last!
+        return components.last ?? ""
     }
 }

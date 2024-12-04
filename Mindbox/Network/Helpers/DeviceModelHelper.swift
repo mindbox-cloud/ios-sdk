@@ -10,7 +10,7 @@ import Foundation
 import UIKit.UIDevice
 
 struct DeviceModelHelper {
-    
+
     static let os = UIDevice.current.systemName
     static let iOSVersion = UIDevice.current.systemVersion
 
@@ -24,5 +24,4 @@ struct DeviceModelHelper {
         }
         return identifier
     }()
-    
 }

@@ -19,14 +19,15 @@ import Foundation
  4. fault ⚠️
  5. none
  */
-@objc public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
+@objc
+public enum LogLevel: Int, CaseIterable, Comparable, Equatable {
     case debug = 0
     case info = 1
     case `default` = 2
     case error = 3
     case fault = 4
     case none = 5
-    
+
     var emoji: String {
         switch self {
         case .none:
@@ -43,7 +44,7 @@ import Foundation
             return "[⚠️]"
         }
     }
-    
+
     public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
         lhs.rawValue < rhs.rawValue
     }

@@ -10,7 +10,7 @@ import Foundation
 public struct LogMessage {
     public let timestamp: Date
     public let message: String
-    
+
     public var description: String {
         return timestamp.toString(withFormat: .utc) + " | " + message
     }

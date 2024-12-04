@@ -21,5 +21,4 @@ final class MockUUIDDebugService: UUIDDebugService {
         invokedStartParameters = (uuid, ())
         invokedStartParametersList.append((uuid, ()))
     }
-
 }

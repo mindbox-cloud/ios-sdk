@@ -15,7 +15,7 @@ enum ContentBackgroundLayerActionType: String, Decodable {
     case pushPermission
     case redirectUrl
     case unknown
-    
+
     init(from decoder: Decoder) throws {
         let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
         let type: String = try container.decode(String.self)
@@ -27,11 +27,11 @@ enum ContentBackgroundLayerActionDTO: Decodable, Hashable, Equatable {
     case pushPermission(PushPermissionLayerActionDTO)
     case redirectUrl(RedirectUrlLayerActionDTO)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayerActionDTO, rhs: ContentBackgroundLayerActionDTO) -> Bool {
         switch (lhs, rhs) {
             case (.pushPermission, .pushPermission): return true
@@ -40,7 +40,7 @@ enum ContentBackgroundLayerActionDTO: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .pushPermission: hasher.combine("pushPermission")
@@ -48,16 +48,16 @@ enum ContentBackgroundLayerActionDTO: Decodable, Hashable, Equatable {
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayerActionDTO.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerActionType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The action type could not be decoded. The action will be ignored.")
         }
-        
+
         let actionContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .pushPermission:
                 let pushPermissionAction = try actionContainer.decode(PushPermissionLayerActionDTO.self)
@@ -84,17 +84,16 @@ extension ContentBackgroundLayerActionDTO {
     }
 }
 
-
 // MARK: - Real model
 enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
     case pushPermission(PushPermissionLayerAction)
     case redirectUrl(RedirectUrlLayerAction)
     case unknown
-    
+
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
-    
+
     static func == (lhs: ContentBackgroundLayerAction, rhs: ContentBackgroundLayerAction) -> Bool {
         switch (lhs, rhs) {
             case (.redirectUrl, .redirectUrl): return true
@@ -102,7 +101,7 @@ enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
             default: return false
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
             case .pushPermission: hasher.combine("pushPermission")
@@ -110,16 +109,16 @@ enum ContentBackgroundLayerAction: Decodable, Hashable, Equatable {
             case .unknown: hasher.combine("unknown")
         }
     }
-    
+
     init(from decoder: Decoder) throws {
         let container: KeyedDecodingContainer<ContentBackgroundLayerAction.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(ContentBackgroundLayerActionType.self, forKey: .type) else {
             throw CustomDecodingError.decodingError("The action type could not be decoded. The action will be ignored.")
         }
-        
+
         let actionContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        
+
         switch type {
             case .pushPermission:
                 let pushPermissionAction = try actionContainer.decode(PushPermissionLayerAction.self)

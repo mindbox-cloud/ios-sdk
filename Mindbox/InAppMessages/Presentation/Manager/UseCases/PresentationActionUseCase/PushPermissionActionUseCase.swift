@@ -12,15 +12,15 @@ import UserNotifications
 import UIKit
 
 final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
-    
+
     private let tracker: PresentationClickTracker
     private let model: PushPermissionLayerAction
-    
+
     init(tracker: PresentationClickTracker, model: PushPermissionLayerAction) {
         self.tracker = tracker
         self.model = model
     }
-    
+
     func onTapAction(
         id: String,
         onTap: @escaping InAppMessageTapAction,
@@ -32,7 +32,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         onTap(nil, model.intentPayload)
         close()
     }
-    
+
     func requestOrOpenSettingsForNotifications() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
@@ -49,14 +49,14 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
         }
     }
-    
+
     private func pushNotificationRequest() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
                 Logger.common(message: "Error requesting notification permissions: \(error)", level: .error, category: .inAppMessages)
                 return
             }
-            
+
             if granted {
                 DispatchQueue.main.async {
                     UIApplication.shared.registerForRemoteNotifications()
@@ -67,7 +67,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
         }
     }
-    
+
     private func openPushNotificationSettings() {
         DispatchQueue.main.async {
             let settingsUrl: URL?
@@ -76,15 +76,15 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             } else {
                 settingsUrl = URL(string: UIApplication.openSettingsURLString)
             }
-            
+
             guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
                 Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
                 return
             }
-            
+
             if UIApplication.shared.canOpenURL(settingsUrl) {
                 UIApplication.shared.open(settingsUrl)
-                
+
                 Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
             }
         }

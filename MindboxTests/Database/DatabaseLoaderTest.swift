@@ -10,23 +10,25 @@ import XCTest
 import CoreData
 @testable import Mindbox
 
+// swiftlint:disable force_try force_unwrapping
+
 class DatabaseLoaderTest: XCTestCase {
-    
+
     var persistentContainer: NSPersistentContainer!
     var databaseLoader: DataBaseLoader!
-    
+
     override func setUp() {
         super.setUp()
         databaseLoader = DI.injectOrFail(DataBaseLoader.self)
         persistentContainer = DI.injectOrFail(MBDatabaseRepository.self).persistentContainer
     }
-    
+
     override func tearDown() {
         databaseLoader = nil
         persistentContainer = nil
         super.tearDown()
     }
-    
+
     func testDestroyDatabase() {
         let persistentStoreURL = databaseLoader.persistentStoreURL!
         XCTAssertNotNil(persistentContainer.persistentStoreCoordinator.persistentStore(for: persistentStoreURL))

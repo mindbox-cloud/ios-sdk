@@ -10,10 +10,10 @@ import UIKit
 import MindboxLogger
 
 public final class TimerManager {
-    
+
     internal var didEnterBackgroundApplication: NSObjectProtocol?
     internal var didBecomeActiveApplication: NSObjectProtocol?
-    
+
     internal var timer: Timer? {
         didSet {
             if didBecomeActiveApplication == nil && didEnterBackgroundApplication == nil {
@@ -21,9 +21,9 @@ public final class TimerManager {
             }
         }
     }
-    
-    internal var deadline: TimeInterval? = nil
-    
+
+    internal var deadline: TimeInterval?
+
     internal var seconds: TimeInterval = 0 {
         didSet {
             if seconds >= deadline ?? TimeInterval(Int.max) {
@@ -32,50 +32,48 @@ public final class TimerManager {
             }
         }
     }
-    
-    internal var block: (() -> ())?
-    
+
+    internal var block: (() -> Void)?
+
     internal func invalidate() {
         timer?.invalidate()
         timer = nil
         seconds = 0
         Logger.common(message: "The timer is stopped")
     }
-    
+
     internal func removeObservers() {
-        if didBecomeActiveApplication != nil && didEnterBackgroundApplication != nil {
-            NotificationCenter.default.removeObserver(didEnterBackgroundApplication!)
-            NotificationCenter.default.removeObserver(didBecomeActiveApplication!)
+        if let didEnterBackground = didEnterBackgroundApplication,
+           let didBecomeActive = didBecomeActiveApplication {
+            NotificationCenter.default.removeObserver(didEnterBackground)
+            NotificationCenter.default.removeObserver(didBecomeActive)
             didBecomeActiveApplication = nil
             didEnterBackgroundApplication = nil
         }
-        
     }
-    
+
     internal func setupObservers() {
         didEnterBackgroundApplication = NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
-            
+            queue: nil) { [weak self] _ in
+
             self?.invalidate()
         }
-        
-        
+
         didBecomeActiveApplication = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: nil) { [weak self] (_) in
-        
+            queue: nil) { [weak self] _ in
+
             if self?.timer == nil {
-                
+
                 self?.setupTimer()
             }
         }
-        
     }
-    
-    public func configurate(trackEvery seconds: TimeInterval?, block: (() -> ())?) {
+
+    public func configurate(trackEvery seconds: TimeInterval?, block: (() -> Void)?) {
         if seconds != nil {
             self.deadline = seconds
         }
@@ -83,23 +81,22 @@ public final class TimerManager {
             self.block = block
         }
         self.seconds = 0
-        
     }
-    
+
     public func setupTimer(trackEvery newDeadline: TimeInterval? = nil) {
-        if newDeadline != nil {
-            self.deadline = newDeadline!
+        if let newDeadline {
+            self.deadline = newDeadline
         }
         self.seconds = 0
-        
+
         timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             self?.seconds += 1
         }
-        
+
         guard let timer = timer else {
             return
         }
-        
+
         RunLoop.main.add(timer, forMode: .common)
         Logger.common(message: "The timer is running")
     }

@@ -16,19 +16,19 @@ import SDKVersionProvider
 import MindboxLogger
 
 class MBUtilitiesFetcher: UtilitiesFetcher {
-    
+
     private let appBundle: Bundle = {
         var bundle: Bundle = .main
         prepareBundle(&bundle)
         return bundle
     }()
-    
+
     private let sdkBundle: Bundle = {
         var bundle = BundleToken.bundle
         prepareBundle(&bundle)
         return bundle
     }()
-    
+
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
             fatalError("CFBundleShortVersionString not found for host app")
@@ -46,11 +46,9 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         }
         return identifier
     }
-    
-    init() {
-        
-    }
-    
+
+    init() {}
+
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
             // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
@@ -60,26 +58,26 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             }
         }
     }
-    
+
     var appVerson: String? {
-        appBundle.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String
+        appBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
-    
+
     var sdkVersion: String? {
         SDKVersionProvider.sdkVersion
     }
-    
+
     var hostApplicationName: String? {
         appBundle.bundleIdentifier
     }
-        
+
     func getDeviceUUID(completion: @escaping (String) -> Void) {
         if let uuid = IDFAFetcher().fetch() {
             Logger.common(message: "IDFAFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
             completion(uuid.uuidString)
         } else {
             Logger.common(message: "IDFAFetcher fail", level: .default, category: .general)
-            IDFVFetcher().fetch(tryCount: 3) { (uuid) in
+            IDFVFetcher().fetch(tryCount: 3) { uuid in
                 if let uuid = uuid {
                     Logger.common(message: "IDFVFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
                     completion(uuid.uuidString)

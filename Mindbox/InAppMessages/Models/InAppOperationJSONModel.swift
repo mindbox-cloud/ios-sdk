@@ -48,13 +48,13 @@ struct ProductCategory: Codable, Equatable, Hashable {
     init(ids: [String: String]) {
         self.ids = ids
     }
-    
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let rawIds = try container.decode([String: CodableValue].self, forKey: .ids)
-        
+
         var convertedIds = [String: String]()
-        
+
         for (key, value) in rawIds {
             switch value {
             case .string(let stringValue):
@@ -65,10 +65,10 @@ struct ProductCategory: Codable, Equatable, Hashable {
                 convertedIds[key] = String(doubleValue)
             }
         }
-        
+
         self.ids = convertedIds
     }
-    
+
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.ids, forKey: .ids)
@@ -79,10 +79,10 @@ enum CodableValue: Codable {
     case string(String)
     case int(Int)
     case double(Double)
-    
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if let stringValue = try? container.decode(String.self) {
             self = .string(stringValue)
         } else if let intValue = try? container.decode(Int.self) {
@@ -99,7 +99,7 @@ enum CodableValue: Codable {
             )
         }
     }
-    
+
     func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {

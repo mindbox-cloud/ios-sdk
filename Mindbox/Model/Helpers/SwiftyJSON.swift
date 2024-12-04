@@ -23,6 +23,8 @@
 import Foundation
 import MindboxLogger
 
+// swiftlint:disable all
+
 // MARK: - Error
 
 // swiftlint:disable line_length

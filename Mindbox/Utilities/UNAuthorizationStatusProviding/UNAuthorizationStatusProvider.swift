@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 class UNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
-    
+
     func getStatus(result: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             SessionTemporaryStorage.shared.pushPermissionStatus = settings.authorizationStatus

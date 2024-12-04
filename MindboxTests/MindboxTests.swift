@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_try
+
 class MindboxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
@@ -138,7 +140,7 @@ class MindboxTests: XCTestCase {
             firstApnsToken = token
         }
 
-        let tokenData = "740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".data(using: .utf8)!
+        let tokenData = Data("740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".utf8)
         let tokenString = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
 
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
@@ -160,7 +162,7 @@ class MindboxTests: XCTestCase {
         Mindbox.shared.getAPNSToken { _ in
             firstCountApnsToken += 1
         }
-        let tokenData = "740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".data(using: .utf8)!
+        let tokenData = Data("740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".utf8)
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
         waitForInitializationFinished()
 

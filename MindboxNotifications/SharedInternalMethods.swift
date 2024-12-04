@@ -26,19 +26,19 @@ extension MindboxNotificationService {
 
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
         Logger.common(message: "MindboxNotificationService: payload.withButton: \(String(describing: payload.withButton))", level: .info, category: .notification)
-        
+
         payload.withImageURL = try? JSONDecoder().decode(Payload.ImageURL.self, from: data)
         Logger.common(message: "MindboxNotificationService: payload.withImageURL: \(String(describing: payload.withImageURL))", level: .info, category: .notification)
-        
+
         return payload
     }
-    
+
     func getUserInfo(from request: UNNotificationRequest) -> [AnyHashable: Any]? {
         guard let userInfo = (request.content.mutableCopy() as? UNMutableNotificationContent)?.userInfo else {
             Logger.common(message: "MindboxNotificationService: Failed to get userInfo", level: .error, category: .notification)
             return nil
         }
-        
+
         if let innerUserInfo = userInfo["aps"] as? [AnyHashable: Any], innerUserInfo["uniqueKey"] != nil {
             Logger.common(message: "MindboxNotificationService: userInfo: \(innerUserInfo), userInfo.keys.count: \(userInfo.keys.count), innerUserInfo: \(innerUserInfo)", level: .info, category: .notification)
             return innerUserInfo

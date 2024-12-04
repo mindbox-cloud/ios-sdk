@@ -13,11 +13,11 @@ final class SharedInternalMethodsTests: XCTestCase {
 
     var service: MindboxNotificationService!
     var mockNotificationRequest: UNNotificationRequest!
-    
+
     override func setUp() {
         super.setUp()
         service = MindboxNotificationService()
-        
+
         let aps: [AnyHashable: Any] = [
             "mutable-content": 1,
             "alert": [
@@ -27,7 +27,7 @@ final class SharedInternalMethodsTests: XCTestCase {
             "content-available": 1,
             "sound": "default"
         ]
-        
+
         let userInfo: [AnyHashable: Any] = [
             "clickUrl": "https://mindbox.ru/",
             "payload": "{\n  \"payload\": \"data\"\n}",
@@ -47,18 +47,18 @@ final class SharedInternalMethodsTests: XCTestCase {
             ],
             "aps": aps
         ]
-        
+
         let content = UNMutableNotificationContent()
         content.userInfo = userInfo
         mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
     }
-    
+
     override func tearDown() {
         service = nil
         mockNotificationRequest = nil
         super.tearDown()
     }
-    
+
     func testParseToPayload() {
         let payload = service.parse(request: mockNotificationRequest)
         XCTAssertNotNil(payload)
@@ -70,19 +70,19 @@ final class SharedInternalMethodsTests: XCTestCase {
         XCTAssertNotNil(payload?.withImageURL)
         XCTAssertEqual(payload?.withImageURL?.imageUrl, "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png")
     }
-    
+
     func testGetUserInfo() {
         let result = service.getUserInfo(from: mockNotificationRequest)
         XCTAssertNotNil(result)
         XCTAssertEqual(result?["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
         XCTAssertEqual(result?["clickUrl"] as? String, "https://mindbox.ru/")
-        
+
         let apsResult = result?["aps"] as? [AnyHashable: Any]
         XCTAssertNotNil(apsResult)
         XCTAssertEqual(apsResult?["mutable-content"] as? Int, 1)
         XCTAssertEqual(apsResult?["content-available"] as? Int, 1)
         XCTAssertEqual(apsResult?["sound"] as? String, "default")
-        
+
         let alertResult = apsResult?["alert"] as? [String: String]
         XCTAssertNotNil(alertResult)
         XCTAssertEqual(alertResult?["title"], "Test title")
@@ -109,26 +109,25 @@ final class SharedInternalMethodsTests: XCTestCase {
                         "text": "Documentation",
                         "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
                     ]
-                ],
+                ]
             ]
         ]
-        
+
         let userInfo: [AnyHashable: Any] = aps
-        
+
         let content = UNMutableNotificationContent()
         content.userInfo = userInfo
         let request = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
-        
+
         let result = service.getUserInfo(from: request)
         XCTAssertNotNil(result)
         XCTAssertEqual(result?["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
         XCTAssertEqual(result?["clickUrl"] as? String, "https://mindbox.ru/")
-        
 
         XCTAssertEqual(result?["mutable-content"] as? Int, 1)
         XCTAssertEqual(result?["content-available"] as? Int, 1)
         XCTAssertEqual(result?["sound"] as? String, "default")
-        
+
         let alertResult = result?["alert"] as? [String: String]
         XCTAssertNotNil(alertResult)
         XCTAssertEqual(alertResult?["title"], "Test title")

@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 class MBPersistenceStorage: PersistenceStorage {
-    
+
     var onDidChange: (() -> Void)?
 
     // MARK: - Dependency
@@ -27,7 +27,7 @@ class MBPersistenceStorage: PersistenceStorage {
     var isInstalled: Bool {
         installationDate != nil
     }
-    
+
     var installationDate: Date? {
         get {
             if let dateString = installationDateString {
@@ -44,7 +44,7 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
-    
+
     var apnsTokenSaveDate: Date? {
         get {
             if let dateString = apnsTokenSaveDateString {
@@ -61,7 +61,7 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
-    
+
     var deprecatedEventsRemoveDate: Date? {
         get {
             if let dateString = deprecatedEventsRemoveDateString {
@@ -78,7 +78,7 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
-    
+
     var configuration: MBConfiguration? {
         get {
             guard let data = configurationData else {
@@ -94,7 +94,7 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
-    
+
     var configDownloadDate: Date? {
         get {
             if let dateString = configDownloadDateString {
@@ -111,30 +111,28 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
-    
+
     var backgroundExecutions: [BackgroudExecution] {
-        get {
-            if let data = MBPersistenceStorage.defaults.value(forKey:"backgroundExecution") as? Data {
-                return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
-            } else {
-                return []
-            }
+        if let data = MBPersistenceStorage.defaults.value(forKey: "backgroundExecution") as? Data {
+            return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
+        } else {
+            return []
         }
     }
-    
+
     func setBackgroundExecution(_ value: BackgroudExecution) {
         var tasks = backgroundExecutions
         tasks.append(value)
-        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey:"backgroundExecution")
+        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
         onDidChange?()
     }
-    
+
     func storeToFileBackgroundExecution() {
         let path = FileManager.default
             .urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("BackgroundExecution.plist")
-        
+
         // Swift Dictionary To Data.
         let encoder = PropertyListEncoder()
         encoder.outputFormat = .xml
@@ -146,8 +144,7 @@ class MBPersistenceStorage: PersistenceStorage {
             Logger.common(message: "StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
         }
     }
-    
-    
+
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
     }
@@ -177,51 +174,51 @@ class MBPersistenceStorage: PersistenceStorage {
 
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
-    
+
     @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
-    var shownInappsDictionary: [String : Date]?
-    
+    var shownInappsDictionary: [String: Date]?
+
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
-    
+
     @UserDefaultsWrapper(key: .imageLoadingMaxTimeInSeconds, defaultValue: nil)
     var imageLoadingMaxTimeInSeconds: Double?
-    
+
     @UserDefaultsWrapper(key: .apnsTokenSaveDate, defaultValue: nil)
     private var apnsTokenSaveDateString: String? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .deprecatedEventsRemoveDate, defaultValue: nil)
     private var deprecatedEventsRemoveDateString: String? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .configurationData, defaultValue: nil)
     private var configurationData: Data? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .isNotificationsEnabled, defaultValue: nil)
     var isNotificationsEnabled: Bool? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .installationData, defaultValue: nil)
     private var installationDateString: String? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
     var needUpdateInfoOnce: Bool? {
         didSet {
@@ -235,17 +232,17 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-    
+
     @UserDefaultsWrapper(key: .versionCodeForMigration, defaultValue: 0)
     var versionCodeForMigration: Int?
-    
+
     @UserDefaultsWrapper(key: .configDownloadDate, defaultValue: nil)
     private var configDownloadDateString: String? {
         didSet {
             onDidChange?()
         }
     }
-    
+
     func softReset() {
         configDownloadDate = nil
         shownInappsDictionary = nil
@@ -253,7 +250,7 @@ class MBPersistenceStorage: PersistenceStorage {
         userVisitCount = 0
         resetBackgroundExecutions()
     }
-    
+
     func resetBackgroundExecutions() {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
@@ -263,7 +260,7 @@ class MBPersistenceStorage: PersistenceStorage {
 // MARK: - Functions for unit testing
 
 extension MBPersistenceStorage {
-    
+
     func reset() {
         installationDate = nil
         deviceUUID = nil
@@ -279,24 +276,23 @@ extension MBPersistenceStorage {
 }
 
 struct BackgroudExecution: Codable {
-    
+
     let taskID: String
-    
+
     let taskName: String
-    
+
     let dateString: String
-    
+
     let info: String
-    
 }
 
 extension MBPersistenceStorage {
-    
+
     @propertyWrapper
     struct UserDefaultsWrapper<T> {
-        
+
         enum Key: String {
-            
+
             case installationId = "MBPersistenceStorage-installationId"
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
             case apnsToken = "MBPersistenceStorage-apnsToken"
@@ -314,15 +310,15 @@ extension MBPersistenceStorage {
             case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
         }
-        
+
         private let key: Key
         private let defaultValue: T?
-        
+
         init(key: Key, defaultValue: T?) {
             self.key = key
             self.defaultValue = defaultValue
         }
-        
+
         var wrappedValue: T? {
             get {
                 // Read value from UserDefaults
@@ -336,9 +332,7 @@ extension MBPersistenceStorage {
                 MBPersistenceStorage.defaults.synchronize()
             }
         }
-        
     }
-    
 }
 
 fileprivate extension UserDefaults {
@@ -346,5 +340,4 @@ fileprivate extension UserDefaults {
     func isValueExists(forKey key: String) -> Bool {
         return object(forKey: key) != nil
     }
-
 }

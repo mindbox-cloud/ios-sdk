@@ -99,6 +99,7 @@
 		474F37A32C16F5B000F38BB0 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
 		474F37AD2C170FB600F38BB0 /* NotificationCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCellView.swift; sourceTree = "<group>"; };
 		477480792C174BAA00580FB2 /* Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payload.swift; sourceTree = "<group>"; };
+		47912FD92CB42D640063387D /* AppDelegate_IDFA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate_IDFA.swift; sourceTree = "<group>"; };
 		47D63E2C2C2EAD220055E7D8 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		47FFE2252C187D3C0007E2F6 /* SwiftDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataManager.swift; sourceTree = "<group>"; };
 		4AF2BFD8ABA97C73F589C5DB /* Pods_MindboxNotificationServiceExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MindboxNotificationServiceExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +165,7 @@
 		0AEDBC6D2BB6F8F200EE8722 = {
 			isa = PBXGroup;
 			children = (
+				47912FD82CB4130C0063387D /* Samples */,
 				0AEDBC782BB6F8F200EE8722 /* Example */,
 				0A0DE3462BB8455A00812E73 /* MindboxNotificationServiceExtension */,
 				0AD271D32BB9D81E00750279 /* MindboxNotificationContentExtension */,
@@ -254,6 +256,14 @@
 				0A4B68192BBC82B500639BC5 /* ChooseInAppMessagesDelegate.swift */,
 			);
 			path = ChooseInAppMessagesDelegate;
+			sourceTree = "<group>";
+		};
+		47912FD82CB4130C0063387D /* Samples */ = {
+			isa = PBXGroup;
+			children = (
+				47912FD92CB42D640063387D /* AppDelegate_IDFA.swift */,
+			);
+			path = Samples;
 			sourceTree = "<group>";
 		};
 		47FFE2242C187D360007E2F6 /* Services */ = {

@@ -27,7 +27,7 @@ enum ImageFormat: String {
 
 extension ImageFormat {
     static func get(from data: Data) -> ImageFormat? {
-        guard let firstByte = data.first else { 
+        guard let firstByte = data.first else {
             Logger.common(message: "ImageFormat: Failed to get firstByte", level: .error, category: .notification)
             return nil
         }

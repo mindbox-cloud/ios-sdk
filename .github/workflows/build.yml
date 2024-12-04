@@ -11,6 +11,14 @@ on:
     tags-ignore:
       - '**'
 jobs:
+  SwiftLint:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cirruslabs/swiftlint-action@v1
+      with:
+        args: --config .swiftlint.yml
+
   build:
     runs-on: macos-latest
     timeout-minutes: 15

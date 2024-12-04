@@ -14,19 +14,19 @@ protocol ContentPositionFilterProtocol {
 }
 
 final class ContentPositionFilterService: ContentPositionFilterProtocol {
-    
+
     enum Constants {
         static let defaultGravity = ContentPositionGravity(vertical: .bottom, horizontal: .center)
         static let defaultMargin = ContentPositionMargin(kind: .dp, top: 0, right: 0, left: 0, bottom: 0)
         static let defaultContentPosition = ContentPosition(gravity: defaultGravity, margin: defaultMargin)
     }
-    
+
     func filter(_ contentPosition: ContentPositionDTO?) throws -> ContentPosition {
         guard let contentPosition = contentPosition else {
             Logger.common(message: "Content position is invalid or missing. Default value set: [\(Constants.defaultContentPosition)].", level: .debug, category: .inAppMessages)
             return Constants.defaultContentPosition
         }
-        
+
         var customGravity: ContentPositionGravity
         if let gravity = contentPosition.gravity {
             let vertical = gravity.vertical ?? .bottom
@@ -36,7 +36,7 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
             Logger.common(message: "Gravity is invalid or missing. Default value set: [\(Constants.defaultGravity)].", level: .debug, category: .inAppMessages)
             customGravity = Constants.defaultGravity
         }
-        
+
         var customMargin: ContentPositionMargin?
         if let margin = contentPosition.margin {
             switch margin.kind {
@@ -59,11 +59,11 @@ final class ContentPositionFilterService: ContentPositionFilterProtocol {
             Logger.common(message: "Content position margin is invalid or missing. Default value set: [\(Constants.defaultMargin)].", level: .debug, category: .inAppMessages)
             customMargin = Constants.defaultMargin
         }
-        
+
         guard let customMargin = customMargin else {
             throw CustomDecodingError.unknownType("ContentPositionFilterService validation not passed. Inapp will be skipped.")
         }
-        
+
         return ContentPosition(gravity: customGravity, margin: customMargin)
     }
 }

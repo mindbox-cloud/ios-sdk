@@ -17,22 +17,22 @@ class CloseButtonElementFactory: ElementFactory {
             let closeRecognizer = UILongPressGestureRecognizer(target: controller, action: #selector(controller.onCloseButton))
             closeRecognizer.minimumPressDuration = 0
             closeButton.addGestureRecognizer(closeRecognizer)
-            
+
             return closeButton
         }
-        
+
         return nil
     }
-    
+
     func setupConstraints(for view: UIView, from element: ContentElement, in parentView: UIView) {
         if case .closeButton(let closeButtonElement) = element {
             let size = closeButtonElement.size
             let top = closeButtonElement.position.margin.top
             let right = closeButtonElement.position.margin.right
-            
+
             let horizontalOffset = (parentView.frame.width - CGFloat(size.width)) * right
             let verticalOffset = (parentView.frame.height - CGFloat(size.height)) * top
-            
+
             if size.kind == .dp {
                 view.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([

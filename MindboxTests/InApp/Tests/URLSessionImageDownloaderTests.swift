@@ -9,6 +9,8 @@
 import XCTest
 @testable import Mindbox
 
+// swiftlint:disable force_unwrapping
+
 class URLSessionImageDownloaderTests: XCTestCase {
 
     var imageDownloader: ImageDownloader!
@@ -32,7 +34,7 @@ class URLSessionImageDownloaderTests: XCTestCase {
         mockDownloader.expectedResponse = HTTPURLResponse(url: URL(string: imageUrl)!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
         imageDownloader = mockDownloader
-        imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+        imageDownloader.downloadImage(withUrl: imageUrl) { localURL, response, error in
             XCTAssertEqual(localURL, mockDownloader.expectedLocalURL, "Local URL should match the expected value")
             XCTAssertEqual(response?.statusCode, mockDownloader.expectedResponse?.statusCode, "Response status code should match the expected value")
             XCTAssertNil(error, "Error should be nil")
@@ -52,7 +54,7 @@ class URLSessionImageDownloaderTests: XCTestCase {
 
         imageDownloader = mockDownloader
 
-        imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+        imageDownloader.downloadImage(withUrl: imageUrl) { localURL, _, error in
             XCTAssertNil(localURL, "Local URL should be nil")
             XCTAssertNotNil(error, "Error should not be nil")
             XCTAssertEqual((error as NSError?)?.code, NSURLErrorTimedOut, "Error code should be NSURLErrorTimedOut")
@@ -62,7 +64,6 @@ class URLSessionImageDownloaderTests: XCTestCase {
 
         wait(for: [expectation], timeout: 5.0)
     }
-
 
     func testNon200StatusCode() {
         let imageUrl = "https://example.com/non-existing-image.jpg"
@@ -75,7 +76,7 @@ class URLSessionImageDownloaderTests: XCTestCase {
 
         imageDownloader = mockDownloader
 
-        imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+        imageDownloader.downloadImage(withUrl: imageUrl) { localURL, response, error in
             XCTAssertNil(localURL, "Local URL should be nil")
             XCTAssertNotNil(response, "Response should not be nil")
             XCTAssertEqual(response?.statusCode, non200Response?.statusCode, "Response status code should match the expected value")
@@ -102,7 +103,7 @@ class URLSessionImageDownloaderTests: XCTestCase {
         let corruptedImagePath = imageURL.path
         FileManager.default.createFile(atPath: corruptedImagePath, contents: Data(), attributes: nil)
 
-        imageDownloader.downloadImage(withUrl: imageUrl) { (localURL, response, error) in
+        imageDownloader.downloadImage(withUrl: imageUrl) { localURL, response, error in
             XCTAssertNotNil(localURL, "Local URL should not be nil")
             XCTAssertNil(error, "Error should be nil")
             XCTAssertEqual(response?.statusCode, 200, "Response status code should be 200")

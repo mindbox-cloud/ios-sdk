@@ -10,11 +10,12 @@ import Foundation
 
 final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
-    
-    override func prepareInternal(targeting: CategoryIDTargeting, context: inout PreparationContext) {
-        
+
+    override func prepareInternal(id: String, targeting: CategoryIDTargeting, context: inout PreparationContext) {
+        let key = "viewCategory".lowercased()
+        context.operationInapps[key, default: []].insert(id)
     }
-    
+
     override func checkInternal(targeting: CategoryIDTargeting) -> Bool {
         guard let checker = checker,
               let event = checker.event,
@@ -37,7 +38,7 @@ final class CategoryIDChecker: InternalTargetingChecker<CategoryIDTargeting> {
                 if lowercaseValue.hasSuffix(lowercaseName) { return true }
             }
         }
-        
+
         return false
     }
 }

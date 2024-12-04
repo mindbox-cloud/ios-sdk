@@ -11,28 +11,35 @@ import Foundation
 struct PreparationContext {
     var segments: [String] = []
     var isNeedGeoRequest: Bool = false
-    var operationsName: [String] = []
     var productSegments: [String] = []
+    var operationInapps: [String: Set<String>] = [:]
 }
 
 protocol ITargetingChecker: AnyObject {
-    func prepare(targeting: ITargeting, context: inout PreparationContext) -> Void
+    func prepare(id: String, targeting: ITargeting, context: inout PreparationContext)
     func check(targeting: ITargeting) -> Bool
 }
 
 class InternalTargetingChecker<T: ITargeting>: ITargetingChecker {
-    func prepare(targeting: ITargeting, context: inout PreparationContext) {
-        prepareInternal(targeting: targeting as! T, context: &context)
+    func prepare(id: String, targeting: ITargeting, context: inout PreparationContext) {
+        guard let specificTargeting = targeting as? T else {
+            fatalError("Failed to cast targeting to type \(T.self)")
+        }
+        prepareInternal(id: id, targeting: specificTargeting, context: &context)
     }
-    
-    func prepareInternal(targeting: T, context: inout PreparationContext) -> Void {
+
+    func prepareInternal(id: String, targeting: T, context: inout PreparationContext) {
         return
     }
-    
+
     func check(targeting: ITargeting) -> Bool {
-        return checkInternal(targeting: targeting as! T)
+        guard let specificTargeting = targeting as? T else {
+            fatalError("Failed to cast targeting to type \(T.self)")
+        }
+
+        return checkInternal(targeting: specificTargeting)
     }
-    
+
     func checkInternal(targeting: T) -> Bool {
         assertionFailure("This method must be overridden")
         return false

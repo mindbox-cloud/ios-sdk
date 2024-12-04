@@ -7,6 +7,4 @@
 
 import Foundation
 
-struct TrueTargeting: ITargeting, Decodable {
-    
-}
+struct TrueTargeting: ITargeting, Decodable {}

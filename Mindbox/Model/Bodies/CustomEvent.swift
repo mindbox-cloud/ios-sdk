@@ -11,9 +11,4 @@ import Foundation
 struct CustomEvent: Codable {
     let name: String
     let payload: String
-    
-    init(name: String, payload: String) {
-        self.name = name
-        self.payload = payload
-    }
 }

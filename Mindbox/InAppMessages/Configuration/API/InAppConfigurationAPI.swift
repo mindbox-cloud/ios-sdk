@@ -58,7 +58,7 @@ class InAppConfigurationAPI {
             Logger.error(error.asLoggerError())
             return .error(error)
         }
-        
+
         Logger.response(data: data, response: response, error: error)
 
         if httpResponse.statusCode == 404 {
@@ -66,7 +66,7 @@ class InAppConfigurationAPI {
         }
         if let data = data {
             return .data(data)
-        }  else if let error = error {
+        } else if let error = error {
             return .error(error)
         } else {
             let error = MindboxError.invalidResponse(response)
@@ -75,7 +75,6 @@ class InAppConfigurationAPI {
         }
     }
 }
-
 
 private struct FetchInAppConfigRoute: Route {
 
@@ -95,5 +94,3 @@ private struct FetchInAppConfigRoute: Route {
 
     var body: Data? { nil }
 }
-
-

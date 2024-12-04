@@ -55,8 +55,7 @@ public class Mindbox: NSObject {
             delegate?.mindBox(self, failedWithError: error)
         }
     }
-    
-    
+
     /**
      A delegate for handling in-app messages.
 
@@ -66,7 +65,7 @@ public class Mindbox: NSObject {
 
      - However, if the user wishes to customize the handling of in-app messages, it is mandatory to subscribe to this delegate. Customization can include handling specific user interactions, presenting messages in a custom format, or integrating more complex in-app message logic.
      */
-    
+
     public weak var inAppMessagesDelegate: InAppMessagesDelegate? {
         didSet {
             inAppMessagesManager?.delegate = inAppMessagesDelegate
@@ -164,13 +163,13 @@ public class Mindbox: NSObject {
             .joined()
         Logger.common(message: "Did register for remote notifications with token: \(token)", level: .info, category: .notification)
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
-            
+
             if persistenceStorage?.needUpdateInfoOnce ?? true {
                 Logger.common(message: "APNS Token forced to update")
                 coreController?.apnsTokenDidUpdate(token: token)
                 return
             }
-            
+
             guard persistenceAPNSToken != token else {
                 Logger.common(message: "persistenceAPNSToken is equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
                 return
@@ -236,7 +235,7 @@ public class Mindbox: NSObject {
         guard let tracker = DI.inject(ClickNotificationManager.self) else {
             return
         }
-        
+
         do {
             try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
             Logger.common(message: "Track Click", level: .info, category: .notification)
@@ -283,7 +282,7 @@ public class Mindbox: NSObject {
             return
         }
         guard let jsonData = json.data(using: .utf8),
-              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
             Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
             return
         }
@@ -342,7 +341,7 @@ public class Mindbox: NSObject {
             return
         }
         guard let jsonData = json.data(using: .utf8),
-              let _ = try? JSONSerialization.jsonObject(with: jsonData) else {
+              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
             Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
             return
         }
@@ -447,7 +446,7 @@ public class Mindbox: NSObject {
             Logger.common(message: "Track Visit failed with error: \(error)", level: .error, category: .visit)
         }
     }
-    
+
     /**
      Objc method for tracking application activities.
 
@@ -508,7 +507,7 @@ public class Mindbox: NSObject {
     ) {
         guaranteedDeliveryManager?.backgroundTaskManager.application(application, performFetchWithCompletionHandler: completionHandler)
     }
-    
+
     /**
      Determines whether the given notification is a Mindbox push notification.
 
@@ -522,7 +521,7 @@ public class Mindbox: NSObject {
         let pushValidator = DI.injectOrFail(MindboxPushValidator.self)
         return pushValidator.isValid(item: userInfo)
     }
-    
+
     /**
      Converts a `UNNotification` to a `MBPushNotification` model for Mindbox push notifications.
 
@@ -540,10 +539,10 @@ public class Mindbox: NSObject {
 
     private var initError: Error?
 
-    private override init() {
+    override private init() {
         super.init()
         self.assembly()
-        self.persistenceStorage?.storeToFileBackgroundExecution()            
+        self.persistenceStorage?.storeToFileBackgroundExecution()
     }
 
     func assembly() {
@@ -560,19 +559,19 @@ public class Mindbox: NSObject {
         guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
             return
         }
-        
+
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
-    @objc private func resetShownInApps() {
+    @objc
+    private func resetShownInApps() {
         persistenceStorage?.shownInappsDictionary = [:]
     }
-    
-    @objc private func eraseSessionStorage() {
+
+    @objc
+    private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()
     }
 }
 
-extension Mindbox: DefaultInappMessageDelegate {
-    
-}
+extension Mindbox: DefaultInappMessageDelegate {}

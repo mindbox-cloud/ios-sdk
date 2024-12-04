@@ -72,6 +72,6 @@ public extension InAppMessagesDelegate {
     func inAppMessageTapAction(id: String, url: URL?, payload: String) {
         Logger.common(message: "InAppMessagesDelegate inAppMessageTapAction called.")
     }
-    
+
     func inAppMessageDismissed(id: String) { }
 }
