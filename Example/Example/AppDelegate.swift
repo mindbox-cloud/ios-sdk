@@ -24,8 +24,8 @@ final class AppDelegate: MindboxAppDelegate {
             // You should also change the application bundle ID in all targets, more details in the readme
             // You can still run the application on the simulator to see In-Apps
             let mindboxSdkConfig = try MBConfiguration(
-                endpoint: "Test-staging.Test01",
-                domain: "api-staging.mindbox.ru",
+                endpoint: "Mpush-test.ReleaseExample.IosApp",
+                domain: "api.mindbox.ru",
                 subscribeCustomerIfCreated: true,
                 shouldCreateCustomer: true
             )
