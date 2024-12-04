@@ -34,6 +34,7 @@ class ABTests: XCTestCase {
     private var stub: ABTestsStub!
 
     override func setUp() {
+        super.setUp()
         self.inappFilter = DI.injectOrFail(InappFilterProtocol.self)
         self.variantsFilter = DI.injectOrFail(VariantFilterProtocol.self)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -45,6 +46,7 @@ class ABTests: XCTestCase {
         self.variantsFilter = nil
         self.persistenceStorage = nil
         self.stub = nil
+        super.tearDown()
     }
 
     func test_no_abtests() throws {
