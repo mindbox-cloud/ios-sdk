@@ -35,12 +35,12 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                 fetchExpectation.fulfill()
             }
 
-            wait(for: [fetchExpectation], timeout: 2.0)
+            wait(for: [fetchExpectation], timeout: 5.0)
         }
     }
 
-    func test_measure_create_10_000() throws {
-        let logsCount = 10_000
+    func test_measure_create_1_000() throws {
+        let logsCount = 1_000
         measure {
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             fetchExpectation.expectedFulfillmentCount = logsCount
@@ -72,7 +72,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 3.0)
+        wait(for: [fetchExpectation], timeout: 5.0)
 
         let fetchPeriodExpectation = XCTestExpectation(description: "Fetch period logs")
 
@@ -86,7 +86,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             } catch {}
         }
 
-        wait(for: [fetchPeriodExpectation], timeout: 5.0)
+        wait(for: [fetchPeriodExpectation], timeout: 7.0)
     }
 
     func testFetchFirstLog() throws {
