@@ -33,7 +33,7 @@ final class AppDelegate: MindboxAppDelegate {
         } catch {
             print(error.localizedDescription)
         }
-        
+
         // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
         registerForRemoteNotifications()
         
