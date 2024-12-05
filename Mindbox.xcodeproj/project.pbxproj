@@ -267,9 +267,7 @@
 		9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */; };
 		9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7328F6953D00C2619C /* ConfigResponse.swift */; };
-		9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */; };
 		9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BC24E7928F6C08700C2619C /* InAppConfiguration.json */; };
-		9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BE941F42916822900258077 /* InAppConfigurationInvalid.json */; };
 		A11FBE8929DD76BF00F5FB7B /* InAppMessagesEventSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */; };
 		A1515DB229B228F40025E2EE /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */; };
@@ -327,7 +325,6 @@
 		A192787229D442D900CDB53D /* ProductSegmentChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A192787129D442D900CDB53D /* ProductSegmentChecker.swift */; };
 		A1A916DF29C9032700D59D9E /* CategoryIDInTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */; };
 		A1A916E129C9053200D59D9E /* CategoryIDInChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */; };
-		A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */ = {isa = PBXBuildFile; fileRef = A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */; };
 		A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E429C9191900D59D9E /* InAppConfigStub.swift */; };
 		A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
@@ -370,14 +367,11 @@
 		F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470952B96681F00E01E5C /* 27-TargetingRequests.json */; };
 		F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470972B9668F100E01E5C /* 31-TargetingRequests.json */; };
 		F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F315503E2BBB24E20072A071 /* TTLValidationService.swift */; };
-		F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801F72A38649D0021774C /* InappConfigResponseValid.json */; };
-		F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */; };
-		F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */; };
-		F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */; };
 		F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A94772BC6995500E6C978 /* InappFrequency.swift */; };
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
+		F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32E536E2C3F2B05002C7CA0 /* DITests.swift */; };
@@ -439,6 +433,7 @@
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
+		F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */; };
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
 		F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1C12CE5F23A0053423E /* InappMapperTests.swift */; };
 		F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C32CE60CA90053423E /* 1-Targeting.json */; };
@@ -522,6 +517,7 @@
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
+		F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */; };
 		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */; };
@@ -851,9 +847,7 @@
 		9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionProvider.swift; sourceTree = "<group>"; };
 		9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfigurationAPI.swift; sourceTree = "<group>"; };
 		9BC24E7328F6953D00C2619C /* ConfigResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfigResponse.swift; sourceTree = "<group>"; };
-		9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigResponseTests.swift; sourceTree = "<group>"; };
 		9BC24E7928F6C08700C2619C /* InAppConfiguration.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppConfiguration.json; sourceTree = "<group>"; };
-		9BE941F42916822900258077 /* InAppConfigurationInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationInvalid.json; sourceTree = "<group>"; };
 		A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesEventSender.swift; sourceTree = "<group>"; };
 		A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationTargeting.swift; sourceTree = "<group>"; };
 		A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationChecker.swift; sourceTree = "<group>"; };
@@ -910,7 +904,6 @@
 		A192787129D442D900CDB53D /* ProductSegmentChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductSegmentChecker.swift; sourceTree = "<group>"; };
 		A1A916DE29C9032700D59D9E /* CategoryIDInTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInTargeting.swift; sourceTree = "<group>"; };
 		A1A916E029C9053200D59D9E /* CategoryIDInChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryIDInChecker.swift; sourceTree = "<group>"; };
-		A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithCategoryIDIn.json; sourceTree = "<group>"; };
 		A1A916E429C9191900D59D9E /* InAppConfigStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigStub.swift; sourceTree = "<group>"; };
 		A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = UnknownTargetingsModel.json; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
@@ -955,14 +948,11 @@
 		F31470952B96681F00E01E5C /* 27-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "27-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31470972B9668F100E01E5C /* 31-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "31-TargetingRequests.json"; sourceTree = "<group>"; };
 		F315503E2BBB24E20072A071 /* TTLValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTLValidationService.swift; sourceTree = "<group>"; };
-		F31801F72A38649D0021774C /* InappConfigResponseValid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseValid.json; sourceTree = "<group>"; };
-		F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseSettingsInvalid.json; sourceTree = "<group>"; };
-		F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseAbtestsInvalid.json; sourceTree = "<group>"; };
-		F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InappConfigResponseMonitoringInvalid.json; sourceTree = "<group>"; };
 		F31A94772BC6995500E6C978 /* InappFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequency.swift; sourceTree = "<group>"; };
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
+		F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F32E536E2C3F2B05002C7CA0 /* DITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITests.swift; sourceTree = "<group>"; };
@@ -1024,6 +1014,7 @@
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
+		F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTestsXCTestCase.swift; sourceTree = "<group>"; };
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
 		F351F1C12CE5F23A0053423E /* InappMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapperTests.swift; sourceTree = "<group>"; };
 		F351F1C32CE60CA90053423E /* 1-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "1-Targeting.json"; sourceTree = "<group>"; };
@@ -1107,6 +1098,7 @@
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
+		F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+Extensions.swift"; sourceTree = "<group>"; };
 		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -2162,10 +2154,11 @@
 			isa = PBXGroup;
 			children = (
 				9BE941F62916823300258077 /* ConfigJsonStubs */,
-				9BC24E7628F6BF8C00C2619C /* InAppConfigResponseTests.swift */,
 				A1A916E429C9191900D59D9E /* InAppConfigStub.swift */,
 				F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */,
 				F351F1C12CE5F23A0053423E /* InappMapperTests.swift */,
+				F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */,
+				F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */,
 			);
 			path = InAppConfigResponseTests;
 			sourceTree = "<group>";
@@ -2174,10 +2167,7 @@
 			isa = PBXGroup;
 			children = (
 				F31470852B96373600E01E5C /* ConfigTargetings */,
-				F31801F92A386A350021774C /* ConfigResponse */,
-				A1A916E229C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json */,
 				A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */,
-				9BE941F42916822900258077 /* InAppConfigurationInvalid.json */,
 				9BC24E7928F6C08700C2619C /* InAppConfiguration.json */,
 			);
 			path = ConfigJsonStubs;
@@ -2408,6 +2398,7 @@
 			children = (
 				D216DE502C0716B70020F58A /* StringExtensionsTests.swift */,
 				F3FEEAA52C25CB2E000E9D0F /* XCTestCase+Extensions.swift */,
+				F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -2454,17 +2445,6 @@
 				F315503E2BBB24E20072A071 /* TTLValidationService.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		F31801F92A386A350021774C /* ConfigResponse */ = {
-			isa = PBXGroup;
-			children = (
-				F31801FC2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json */,
-				F31801FD2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json */,
-				F31801FA2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json */,
-				F31801F72A38649D0021774C /* InappConfigResponseValid.json */,
-			);
-			path = ConfigResponse;
 			sourceTree = "<group>";
 		};
 		F31A94792BC69E0500E6C978 /* InappFrequency */ = {
@@ -3326,7 +3306,6 @@
 				473A984D2C91B620005A3B94 /* SettingsOperationsTypeError.json in Resources */,
 				4766A8B62C932D92002D15A4 /* ABTestsSdkVersionConfigError.json in Resources */,
 				473A985B2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */,
-				F31801FF2A386BE60021774C /* InappConfigResponseMonitoringInvalid.json in Resources */,
 				F351F1C82CE72B300053423E /* 44-Targeting.json in Resources */,
 				F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
@@ -3340,6 +3319,7 @@
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
 				473A984B2C91B606005A3B94 /* SettingsOperationsError.json in Resources */,
 				F31801FB2A386A5B0021774C /* InappConfigResponseSettingsInvalid.json in Resources */,
+				F39B67BE2A3FB9EF005C0CCA /* ConfigWithABUnexpectedValue.json in Resources */,
 				473A98672C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
 				F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */,
@@ -3354,7 +3334,6 @@
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
-				9BE941F52916822900258077 /* InAppConfigurationInvalid.json in Resources */,
 				F3FAD8702AB866B600D98C03 /* unknownSizeKind.json in Resources */,
 				473A98652C91DFB5005A3B94 /* MonitoringLogsOneElementError.json in Resources */,
 				F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */,
@@ -3362,9 +3341,7 @@
 				4766A8A72C931E40002D15A4 /* ConfigInAppsTypeError.json in Resources */,
 				473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */,
 				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
-				F31801FE2A386BE60021774C /* InappConfigResponseAbtestsInvalid.json in Resources */,
 				4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */,
-				A1A916E329C914C000D59D9E /* InAppConfigurationWithCategoryIDIn.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
@@ -3380,6 +3357,7 @@
 				473A98612C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json in Resources */,
 				4766A8B82C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json in Resources */,
 				4766A89D2C931BD6002D15A4 /* ConfigMonitoringError.json in Resources */,
+				F39B67B22A3C8B1D005C0CCA /* ConfigWithAB_1.json in Resources */,
 				F31801F82A38649D0021774C /* InappConfigResponseValid.json in Resources */,
 				4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
@@ -3814,10 +3792,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */,
 				4766A8AE2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift in Sources */,
 				F3FEEA9F2C25AF39000E9D0F /* StubContainer.swift in Sources */,
 				840C38B325D133B000D50183 /* GuaranteedDeliveryTestCase.swift in Sources */,
 				F32E537B2C3FDA30002C7CA0 /* DIMainModuleReplaceableTests.swift in Sources */,
+				F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
 				9B9C9538292111A700BB29DA /* MockUUIDDebugService.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
@@ -3829,6 +3809,7 @@
 				F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */,
 				476689C72C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift in Sources */,
 				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
+				F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */,
 				F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
@@ -3876,7 +3857,6 @@
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
 				F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
-				9BC24E7728F6BF8C00C2619C /* InAppConfigResponseTests.swift in Sources */,
 				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
 				F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */,
 				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,
