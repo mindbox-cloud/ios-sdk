@@ -1,67 +1,71 @@
 {
     "inapps": [
         {
-            "id": "00000000-0000-0000-0000-000000000001",
+            "id": "1",
             "sdkVersion": {
-                "min": 1,
+                "min": 8,
                 "max": null
             },
-            "targeting": {
-                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
-                "systemName": "TestPushok",
-                "$type": "apiMethodCall"
+            "frequency": {
+                "kind": "session",
+                "$type": "once"
             },
-            "form": {
-                "variants": [
+            "targeting": {
+                "nodes": [
                     {
-                        "imageUrl": "https://example.com/image.jpg",
-                        "redirectUrl": "",
-                        "intentPayload": "",
-                        "$type": "simpleImage"
+                        "internalId": "153",
+                        "systemName": "test",
+                        "$type": "apiMethodCall"
                     }
-                ]
-            }
-        },
-        {
-            "id": "00000000-0000-0000-0000-000000000001",
-            "sdkVersion": {
-                "min": 2,
-                "max": 4
-            },
-            "targeting": {
-                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
-                "systemName": "",
-                "$type": "apiMethodCall"
+                ],
+                "$type": "and"
             },
             "form": {
                 "variants": [
                     {
-                        "imageUrl": "https://example.com/image.jpg",
+                        "content": {
+                            "background": {
+                                "layers": [
+                                    {
+                                        "action": {
+                                            "intentPayload": "приветик",
+                                            "value": "https://ru.wikipedia.org/wiki/Hello,_world!",
+                                            "$type": "redirectUrl"
+                                        },
+                                        "source": {
+                                            "value": "https://google.png",
+                                            "$type": "url"
+                                        },
+                                        "$type": "image"
+                                    }
+                                ]
+                            },
+                            "elements": [
+                                {
+                                    "color": "#D4C1C1",
+                                    "lineWidth": 19,
+                                    "size": {
+                                        "kind": "dp",
+                                        "width": 48,
+                                        "height": 48
+                                    },
+                                    "position": {
+                                        "margin": {
+                                            "kind": "proportion",
+                                            "top": 0.475,
+                                            "right": 0.4125,
+                                            "left": 0,
+                                            "bottom": 0
+                                        }
+                                    },
+                                    "$type": "closeButton"
+                                }
+                            ]
+                        },
+                        "imageUrl": "",
                         "redirectUrl": "",
                         "intentPayload": "",
-                        "$type": "simpleImage"
-                    }
-                ]
-            }
-        },
-        {
-            "id": "00000000-0000-0000-0000-000000000001",
-            "sdkVersion": {
-                "min": 2,
-                "max": 4
-            },
-            "targeting": {
-                "internalId": "406a2a14-f8be-4090-bd02-911a3524c113",
-                "systemName": "",
-                "$type": "apiMethodCall"
-            },
-            "form": {
-                "variants": [
-                    {
-                        "imageUrl": "https://example.com/image.jpg",
-                        "redirectUrl": "",
-                        "intentPayload": "",
-                        "$type": "simpleImage"
+                        "$type": "modal"
                     }
                 ]
             }
