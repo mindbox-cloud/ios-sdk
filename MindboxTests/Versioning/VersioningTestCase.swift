@@ -15,89 +15,154 @@ class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
     var persistenceStorage: PersistenceStorage!
+    var databaseRepository: MBDatabaseRepository!
+    var guaranteedDeliveryManager: GuaranteedDeliveryManager!
 
     override func setUp() {
         super.setUp()
+
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         try! databaseRepository.erase()
+
+        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         Mindbox.shared.assembly()
         let timer = DI.injectOrFail(TimerManager.self)
         timer.invalidate()
+
         queues = []
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    }
+
+    override func tearDown() {
+        persistenceStorage = nil
+        databaseRepository = nil
+        guaranteedDeliveryManager = nil
+        queues.removeAll()
+        super.tearDown()
     }
 
     func testInfoUpdateVersioningByAPNSToken() {
-//        let inspectVersionsExpectation = expectation(description: "InspectVersion")
-//        initConfiguration()
-//        container.guaranteedDeliveryManager.canScheduleOperations = false
-//        let infoUpdateLimit = 50
-//        makeMockAsyncCall(limit: infoUpdateLimit) { _ in
-//            let deviceToken = APNSTokenGenerator().generate()
-//            Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
-//        }
-//
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-//            do {
-//                let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
-//                events.forEach({
-//                    XCTAssertTrue($0.type == .infoUpdated)
-//                })
-//                events
-//                    .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
-//                    .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
-//                    .enumerated()
-//                    .makeIterator()
-//                    .forEach { offset, element in
-//                        XCTAssertTrue(offset + 1 == element.version, "Element version is \(element.version). Current element is \(offset + 1). Are they equal? \(offset + 1 == element.version)")
-//                    }
-//                inspectVersionsExpectation.fulfill()
-//            } catch {
-//                XCTFail(error.localizedDescription)
-//            }
-//        }
-//
-//        waitForExpectations(timeout: 30, handler: nil)
+        initConfiguration(delay: .default)
+
+        self.guaranteedDeliveryManager.canScheduleOperations = false
+        let infoUpdateLimit = 50
+
+        makeMockAsyncCallWithDelay(limit: infoUpdateLimit) { _ in
+            let deviceToken = APNSTokenGenerator().generate()
+            Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
+        }
+
+        delay(of: .default)
+
+        do {
+            let events = try self.databaseRepository.query(fetchLimit: infoUpdateLimit)
+            XCTAssertNotEqual(events.count, 0)
+            XCTAssertEqual(events.count, infoUpdateLimit)
+
+            events.forEach {
+                XCTAssertTrue($0.type == .infoUpdated)
+            }
+
+            events
+                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
+                .enumerated()
+                .makeIterator()
+                .forEach { offset, element in
+                    XCTAssertEqual(offset + 1, element.version, "Element version mismatch at offset \(offset + 1)")
+                }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
     }
 
     func testInfoUpdateVersioningByRequestAuthorization() {
-//        let inspectVersionsExpectation = expectation(description: "InspectVersion")
-//        initConfiguration()
-//        container.guaranteedDeliveryManager.canScheduleOperations = false
-//        let infoUpdateLimit = 50
-//
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//            self.makeMockAsyncCall(limit: infoUpdateLimit) { index in
-//                Mindbox.shared.notificationsRequestAuthorization(granted: index % 2 == 0)
-//            }
-//        }
-//
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-//            do {
-//                let events = try self.container.databaseRepository.query(fetchLimit: infoUpdateLimit)
-//                events.forEach({
-//                    XCTAssertTrue($0.type == .infoUpdated)
-//                })
-//                events
-//                    .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
-//                    .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
-//                    .enumerated()
-//                    .makeIterator()
-//                    .forEach { offset, element in
-//                        XCTAssertTrue(offset + 1 == element.version, "Element version is \(element.version). Current element is \(offset + 1). Are they equal? \(offset + 1 == element.version)")
-//                    }
-//                inspectVersionsExpectation.fulfill()
-//            } catch {
-//                XCTFail(error.localizedDescription)
-//            }
-//        }
-//
-//        waitForExpectations(timeout: 60, handler: nil)
+        initConfiguration(delay: .default)
+
+        self.guaranteedDeliveryManager.canScheduleOperations = false
+        let infoUpdateLimit = 50
+
+        makeMockSequentialCall(limit: infoUpdateLimit) { index in
+            Mindbox.shared.notificationsRequestAuthorization(granted: index % 2 == 0)
+        }
+
+        delay(of: .default)
+
+        do {
+            let events = try self.databaseRepository.query(fetchLimit: infoUpdateLimit)
+            XCTAssertNotEqual(events.count, 0)
+            XCTAssertEqual(events.count, infoUpdateLimit)
+
+            events.forEach({
+                XCTAssertTrue($0.type == .infoUpdated)
+            })
+            events
+                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
+                .enumerated()
+                .makeIterator()
+                .forEach { offset, element in
+                    XCTAssertEqual(offset + 1, element.version, "Element version mismatch at offset \(offset + 1)")
+                }
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+}
+
+private extension VersioningTestCase {
+
+    enum DelayTime {
+        case `default`
+        case custom(DispatchTimeInterval)
+
+        var dispatchTime: DispatchTime {
+            switch self {
+            case .default:
+                    .now() + .seconds(3) + .milliseconds(500)
+            case .custom(let interval):
+                    .now() + interval
+            }
+        }
+
+        var timeInterval: TimeInterval {
+            switch self {
+            case .default:
+                return 3.5 // 1.5 секунды
+            case .custom(let interval):
+                switch interval {
+                case .seconds(let seconds):
+                    return TimeInterval(seconds)
+                case .milliseconds(let milliseconds):
+                    return TimeInterval(milliseconds) / 1000
+                case .microseconds(let microseconds):
+                    return TimeInterval(microseconds) / 1_000_000
+                case .nanoseconds(let nanoseconds):
+                    return TimeInterval(nanoseconds) / 1_000_000_000
+                case .never:
+                    fatalError("Never DispatchTimeInterval case")
+                @unknown default:
+                    fatalError("Unknown DispatchTimeInterval case")
+                }
+            }
+        }
     }
 
-    private func initConfiguration() {
+    func initConfiguration(delay of: DelayTime) {
+        let delayExpectation = expectation(description: "Delay for initialization")
+
+        initConfiguration()
+
+        DispatchQueue.main.asyncAfter(deadline: of.dispatchTime) {
+            delayExpectation.fulfill()
+        }
+
+        wait(for: [delayExpectation], timeout: of.timeInterval * 2)
+    }
+
+    func initConfiguration() {
         let configuration = try! MBConfiguration(
             endpoint: "mpush-test-iOS-test",
             domain: "api.mindbox.ru",
@@ -108,7 +173,36 @@ class VersioningTestCase: XCTestCase {
         Mindbox.shared.initialization(configuration: configuration)
     }
 
-    private func makeMockAsyncCall(limit: Int, mockSDKCall: @escaping ((Int) -> Void)) {
+    func makeMockAsyncCallWithDelay(limit: Int, mockSDKCall: @escaping ((Int) -> Void)) {
+        let dispatchGroup = DispatchGroup()
+
+        for index in 1...limit {
+            dispatchGroup.enter()
+            DispatchQueue.global().async {
+                mockSDKCall(index)
+                dispatchGroup.leave()
+            }
+        }
+
+        // Явное ожидание завершения всех задач
+        let result = dispatchGroup.wait(timeout: .now() + TimeInterval(limit / 2))
+        XCTAssertEqual(result, .success, "Timeout while waiting for async calls")
+
+        // Проверяем, что все вызовы произошли
+        XCTAssertEqual(dispatchGroup.wait(timeout: .now()), .success, "Not all calls completed")
+    }
+
+    func makeMockSequentialCall(limit: Int, mockSDKCall: @escaping ((Int) -> Void)) {
+        let serialQueue = DispatchQueue(label: "com.Mindbox.testInfoUpdateVersioning.serial")
+
+        for index in 1...limit {
+            serialQueue.sync {
+                mockSDKCall(index)
+            }
+        }
+    }
+
+    func makeMockAsyncCall(limit: Int, mockSDKCall: @escaping ((Int) -> Void)) {
         (1 ... limit)
             .map { index in
                 DispatchWorkItem {
@@ -122,5 +216,15 @@ class VersioningTestCase: XCTestCase {
                 queues.append(queue)
                 queue.async(execute: workItem)
             }
+    }
+
+    func delay(of: DelayTime) {
+        let delayExpectation = expectation(description: "Delay")
+
+        DispatchQueue.main.asyncAfter(deadline: of.dispatchTime) {
+            delayExpectation.fulfill()
+        }
+
+        wait(for: [delayExpectation], timeout: of.timeInterval * 2)
     }
 }
