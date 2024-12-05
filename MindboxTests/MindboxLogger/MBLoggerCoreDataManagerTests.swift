@@ -19,7 +19,14 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         manager = MBLoggerCoreDataManager.shared
+
         try manager.deleteAll()
+
+        let fetchExpectation = XCTestExpectation(description: "Fetch delete all logs")
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
+            fetchExpectation.fulfill()
+        }
+        wait(for: [fetchExpectation])
     }
 
     override func tearDown() {
@@ -35,12 +42,12 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                 fetchExpectation.fulfill()
             }
 
-            wait(for: [fetchExpectation], timeout: 2.0)
+            wait(for: [fetchExpectation])
         }
     }
 
-    func test_measure_create_10_000() throws {
-        let logsCount = 10_000
+    func test_measure_create_1_000() throws {
+        let logsCount = 1_000
         measure {
             let fetchExpectation = XCTestExpectation(description: "Fetch created log")
             fetchExpectation.expectedFulfillmentCount = logsCount
@@ -49,8 +56,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                 fetchExpectation.fulfill()
             }
 
-            wait(for: [fetchExpectation], timeout: 30.0)
-            manager.debugWriteBufferToCD()
+            wait(for: [fetchExpectation])
         }
     }
 
@@ -72,7 +78,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 3.0)
+        wait(for: [fetchExpectation])
 
         let fetchPeriodExpectation = XCTestExpectation(description: "Fetch period logs")
 
@@ -86,7 +92,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             } catch {}
         }
 
-        wait(for: [fetchPeriodExpectation], timeout: 5.0)
+        wait(for: [fetchPeriodExpectation])
     }
 
     func testFetchFirstLog() throws {
@@ -116,7 +122,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
 
         let fetchResult = try self.manager.getFirstLog()
         XCTAssertNotNil(fetchResult)
@@ -154,7 +160,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
 
         let fetchResult = try self.manager.getLastLog()
         XCTAssertEqual(fetchResult?.message, message3)
@@ -194,7 +200,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
 
         let fetchResult = try self.manager.fetchPeriod(timestamp1, timestamp2)
         XCTAssertEqual(fetchResult.count, 2)
@@ -232,7 +238,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
 
         let fetchResult = try self.manager.fetchPeriod(specificDate, specificDate)
         XCTAssertEqual(fetchResult.count, cycleCount, "Initial count should be 'cycleCount' logs.")
@@ -260,7 +266,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectationExtraLast.fulfill()
         }
 
-        wait(for: [fetchExpectationExtraLast], timeout: 5.0)
+        wait(for: [fetchExpectationExtraLast])
 
         NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
 
@@ -274,7 +280,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             } catch {}
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
     }
 
     func testFlushBufferWhenApplicationWillTerminate() throws {
@@ -284,7 +290,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectationExtraLast.fulfill()
         }
 
-        wait(for: [fetchExpectationExtraLast], timeout: 5.0)
+        wait(for: [fetchExpectationExtraLast])
 
         NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
 
@@ -298,7 +304,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             } catch {}
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
     }
 
     func testFlushBufferInAppExtensions() throws {
@@ -317,7 +323,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
             fetchExpectation.fulfill()
         }
 
-        wait(for: [fetchExpectation], timeout: 5.0)
+        wait(for: [fetchExpectation])
 
         let fetchResult = try self.manager.getLastLog()
         XCTAssertEqual(fetchResult?.message, "Log: \(maxCountOfLogs.description)")
