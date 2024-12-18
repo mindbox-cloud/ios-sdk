@@ -17,7 +17,7 @@ current_branch=$(git symbolic-ref --short HEAD)
 echo "Currently on branch: $current_branch"
 
 if [[ ! $current_branch =~ ^(release|support)/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
-    echo "Текущая ветка ($current_branch) не соответствует формату 'release/X.Y.Z', 'release/X.Y.Z-rc', 'support/X.Y.Z' или 'support/X.Y.Z-rc'."
+    echo "The current Git branch ($current_branch) is not in the format 'release/X.Y.Z', 'release/X.Y.Z-rc', 'support/X.Y.Z' or 'support/X.Y.Z-rc'."
     exit 1
 fi
 
@@ -91,6 +91,23 @@ git add $sdkversionprovider_file
 git add $sdkversionconfig_file
 git add $logger_podspec_file
 git commit -m "Bump SDK version from $current_version to $version"
+
+# Update Example/Podfile version
+podfile="Example/Podfile"
+
+echo "'Example Podfile' Before updating version:"
+grep "pod 'Mindbox'" $podfile
+grep "pod 'MindboxNotifications'" $podfile
+
+sed -i '' "s/\(pod 'Mindbox', '\)[^']*\(\'\)/\1$version\2/g" $podfile
+sed -i '' "s/\(pod 'MindboxNotifications', '\)[^']*\(\'\)/\1$version\2/g" $podfile
+
+echo "'Example Podfile After' updating version:"
+grep "pod 'Mindbox'" $podfile
+grep "pod 'MindboxNotifications'" $podfile
+
+git add $podfile
+git commit -m "Bump 'Example/Podfile' SDK version from $current_version to $version"
 
 echo "Pushing changes to branch: $current_branch"
 if ! git push origin $current_branch; then

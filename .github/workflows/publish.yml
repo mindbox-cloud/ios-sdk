@@ -85,17 +85,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
       - name: Update bundler
         run: gem install bundler
       - name: Install bundler dependencies
         run: bundle install
-      - name: Run build
-        run: bundle exec fastlane buildLane
-        env:
-          CI: true
       - name: Deploy to Cocoapods Mindbox
         run: |
             pod repo update
@@ -110,17 +103,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
       - name: Update bundler
         run: gem install bundler
       - name: Install bundler dependencies
         run: bundle install
-      - name: Run build
-        run: bundle exec fastlane buildLane
-        env:
-          CI: true
       - name: Deploy to Cocoapods MindboxNotifications
         run: |
             pod repo update
