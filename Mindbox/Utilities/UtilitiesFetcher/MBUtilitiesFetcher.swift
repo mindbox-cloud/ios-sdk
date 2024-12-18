@@ -73,19 +73,17 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
 
     func getDeviceUUID(completion: @escaping (String) -> Void) {
         if let uuid = IDFAFetcher().fetch() {
-            Logger.common(message: "IDFAFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
+            Logger.common(message: "[MBUtilitiesFetcher] IDFAFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
             completion(uuid.uuidString)
         } else {
-            Logger.common(message: "IDFAFetcher fail", level: .default, category: .general)
             IDFVFetcher().fetch(tryCount: 3) { uuid in
                 if let uuid = uuid {
-                    Logger.common(message: "IDFVFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
+                    Logger.common(message: "[MBUtilitiesFetcher] IDFVFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
                     completion(uuid.uuidString)
                 } else {
-                    Logger.common(message: "IDFVFetcher fail", level: .default, category: .general)
                     let uuid = UUID()
                     completion(uuid.uuidString)
-                    Logger.common(message: "Generated uuid:\(uuid.uuidString)", level: .default, category: .general)
+                    Logger.common(message: "[MBUtilitiesFetcher] Generated uuid:\(uuid.uuidString)", level: .default, category: .general)
                 }
             }
         }
