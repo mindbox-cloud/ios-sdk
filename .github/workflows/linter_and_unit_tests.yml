@@ -1,15 +1,12 @@
-name: SDK CI
+name: SwiftLint + UnitTests
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize]
     branches:
-      - '**'
-      - '!master'
-      - '!release-*'
-    paths-ignore:
-      - '**.md'
-    tags-ignore:
-      - '**'
+      - 'master'
+      - 'develop'
+ 
 jobs:
   SwiftLint:
     runs-on: ubuntu-24.04
