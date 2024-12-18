@@ -49,7 +49,7 @@ class InappMapper: InappMapperProtocol {
     }
 
     private func setupEnvironment(event: ApplicationEvent?) {
-        Logger.common(message: "Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
+        Logger.common(message: "[InappMapper] Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
         applicationEvent = event
         targetingChecker.event = event
     }
@@ -132,6 +132,7 @@ class InappMapper: InappMapperProtocol {
             for inapp in inapps {
 
                 guard formData == nil else {
+                    Logger.common(message: "[InappMapper] formData is nil", level: .debug, category: .inAppMessages)
                     break
                 }
 
@@ -139,16 +140,17 @@ class InappMapper: InappMapperProtocol {
                 var gotError = false
 
                 if self.inappFilterService.shownInAppDictionary[inapp.inAppId] != nil {
+                    Logger.common(message: "[InappMapper] In-app message with ID '\(inapp.inAppId)' has already been shown. Skipping", level: .debug, category: .inAppMessages)
                     continue
                 }
 
                 let urlExtractorService = DI.injectOrFail(VariantImageUrlExtractorServiceProtocol.self)
                 let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
 
-                Logger.common(message: "Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 for imageValue in imageValues {
                     group.enter()
-                    Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
+                    Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
                     self.dataFacade.downloadImage(withUrl: imageValue) { result in
                         defer {
                             group.leave()
@@ -200,6 +202,7 @@ class InappMapper: InappMapperProtocol {
             let suitableInapps = self.filterByInappsEvents(inapps: inapps)
 
             let logMessage = """
+            [InappMapper]
             TR | Initiating processing of remaining in-app targeting requests.
                  Full list of in-app messages: \(self.inappFilterService.validInapps.map { $0.id })
                  Saved event for targeting: \(self.applicationEvent?.name ?? "None")
