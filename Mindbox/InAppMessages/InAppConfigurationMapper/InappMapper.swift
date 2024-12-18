@@ -202,8 +202,7 @@ class InappMapper: InappMapperProtocol {
             let suitableInapps = self.filterByInappsEvents(inapps: inapps)
 
             let logMessage = """
-            [InappMapper]
-            TR | Initiating processing of remaining in-app targeting requests.
+            [InappMapper] TR | Initiating processing of remaining in-app targeting requests.
                  Full list of in-app messages: \(self.inappFilterService.validInapps.map { $0.id })
                  Saved event for targeting: \(self.applicationEvent?.name ?? "None")
             """
