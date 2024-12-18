@@ -77,17 +77,17 @@ class DataBaseLoader {
 
     private func loadPersistentStores() throws -> NSPersistentContainer {
         persistentContainer.loadPersistentStores { [weak self] persistentStoreDescription, error in
-            if let url = persistentStoreDescription.url {
-                Logger.common(message: "Persistent store url: \(url.description)", level: .info, category: .database)
+            if persistentStoreDescription.url != nil {
+                Logger.common(message: "[DataBaseLoader]: Persistent store URL successfully loaded", level: .info, category: .database)
             } else {
-                Logger.common(message: "Unable to find persistentStoreURL", level: .error, category: .database)
+                Logger.common(message: "[DataBaseLoader]: Persistent store URL is missing", level: .error, category: .database)
             }
             self?.persistentStoreURL = persistentStoreDescription.url
             self?.loadPersistentStoresError = error
             self?.persistentStoreDescription = persistentStoreDescription
         }
         if let error = loadPersistentStoresError {
-            Logger.common(message: "Load persistent stores error: \(error) ", level: .error, category: .database)
+            Logger.common(message: "[DataBaseLoader]: Failed to load persistent stores: \(error)", level: .error, category: .database)
             throw error
         }
         return persistentContainer
@@ -99,7 +99,7 @@ class DataBaseLoader {
             throw MBDatabaseError.persistentStoreURLNotFound
         }
 
-        Logger.common(message: "Removing database at url: \(persistentStoreURL.absoluteString)", level: .info, category: .database)
+        Logger.common(message: "[DataBaseLoader]: Removing database at url: \(persistentStoreURL.absoluteString)", level: .info, category: .database)
 
         guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
             Logger.common(message: MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path).errorDescription, level: .error, category: .database)
@@ -107,9 +107,9 @@ class DataBaseLoader {
         }
         do {
             try self.persistentContainer.persistentStoreCoordinator.destroyPersistentStore(at: persistentStoreURL, ofType: "sqlite", options: nil)
-            Logger.common(message: "Database has been removed", level: .info, category: .database)
+            Logger.common(message: "[DataBaseLoader]: Database has been removed", level: .info, category: .database)
         } catch {
-            Logger.common(message: "Removed database failed with error: \(error.localizedDescription)", level: .error, category: .database)
+            Logger.common(message: "[DataBaseLoader]: Failed to remove database: \(error.localizedDescription)", level: .error, category: .database)
             throw error
         }
     }
