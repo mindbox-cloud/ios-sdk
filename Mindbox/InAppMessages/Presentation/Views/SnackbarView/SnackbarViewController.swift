@@ -80,11 +80,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         self.onPresented = onPresented
         self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
-        Logger.common(message: "SnackbarViewController inited.")
     }
 
     required init?(coder: NSCoder) {
-        Logger.common(message: "SnackbarViewController init(coder:) has not been implemented.")
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -274,7 +272,6 @@ class BottomSnackbarViewController: SnackbarViewController {
         self.view.frame = CGRect(x: leftOffset, y: screenHeight - finalHeight,
                                  width: UIScreen.main.bounds.width - leftOffset - rightOffset,
                                  height: finalHeight)
-        Logger.common(message: "SnackbarViewController setViewFrame function finished.")
     }
 
     override func setupEdgeConstraint(with height: CGFloat) {

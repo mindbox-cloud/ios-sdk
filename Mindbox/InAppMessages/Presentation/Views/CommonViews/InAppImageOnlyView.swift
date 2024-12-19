@@ -34,8 +34,6 @@ final class InAppImageOnlyView: UIView {
             return
         }
 
-        Logger.common(message: "InAppImageOnlyView custom init started.")
-
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
 
