@@ -43,12 +43,10 @@ class SnackbarView: UIView {
         self.onClose = onClose
         self.animationTime = animationTime
         super.init(frame: .zero)
-        Logger.common(message: "SnackbarView inited.")
         setupPanGesture()
     }
 
     required init?(coder: NSCoder) {
-        Logger.common(message: "SnackbarView init(coder:) has not been implemented.")
         fatalError("init(coder:) has not been implemented")
     }
 

@@ -26,14 +26,12 @@ final class PresentationDisplayUseCase {
         changeType(model: model.content)
 
         guard let window = presentationStrategy?.getWindow() else {
-            Logger.common(message: "In-app window creating failed")
+            Logger.common(message: "[PresentationDisplayUseCase] In-app window creating failed")
             return
         }
 
-        Logger.common(message: "PresentationDisplayUseCase window: \(window)")
-
         guard let factory = self.factory else {
-            Logger.common(message: "Factory does not exists.", level: .error, category: .general)
+            Logger.common(message: "[PresentationDisplayUseCase] Factory does not exists.", level: .error, category: .general)
             return
         }
 
@@ -73,9 +71,9 @@ final class PresentationDisplayUseCase {
     func onPresented(id: String, _ completion: @escaping () -> Void) {
         do {
             try tracker.trackView(id: id)
-            Logger.common(message: "Track InApp.View. Id \(id)", level: .info, category: .notification)
+            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View. Id \(id)", level: .info, category: .notification)
         } catch {
-            Logger.common(message: "Track InApp.View failed with error: \(error)", level: .error, category: .notification)
+            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
         }
         completion()
     }

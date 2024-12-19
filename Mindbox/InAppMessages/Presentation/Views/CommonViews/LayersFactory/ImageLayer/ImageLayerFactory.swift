@@ -15,7 +15,6 @@ class ImageLayerFactory: LayerFactory {
             let inAppView = InAppImageOnlyView(image: image, action: imageContentBackgroundLayer.action)
             let imageTapGestureRecognizer = UITapGestureRecognizer(target: controller, action: #selector(controller.imageTapped(_:)))
             inAppView.addGestureRecognizer(imageTapGestureRecognizer)
-            Logger.common(message: "ImageLayerFactory return uiView.")
             return inAppView
         }
 
@@ -41,6 +40,5 @@ class ImageLayerFactory: LayerFactory {
             view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor),
             view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor)
         ])
-        Logger.common(message: "ImageLayerFactory setupConstraintsSnackbar finished.")
     }
 }

@@ -44,7 +44,7 @@ final class TrackVisitManager {
 
     func trackForeground() throws {
         let encodable = TrackVisit()
-        Logger.common(message: "Tracked Visit event type direct", level: .info, category: .visit)
+        Logger.common(message: "Tracked Visit event type foreground", level: .info, category: .visit)
         try sendTrackVisit(encodable)
     }
 

@@ -74,30 +74,30 @@ class MBDatabaseRepository {
             entity.timestamp = Date().timeIntervalSince1970
             entity.type = event.type.rawValue
             entity.body = event.body
-            Logger.common(message: "Creating event with transactionId: \(event.transactionId)", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Creating event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .info, category: .database)
             try saveEvent(withContext: context)
         }
     }
 
     func read(by transactionId: String) throws -> CDEvent? {
         try context.executePerformAndWait {
-            Logger.common(message: "Reading event with transactionId: \(transactionId)", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Reading event with transactionId: \(transactionId)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: transactionId)
             guard let entity = try findEvent(by: request) else {
-                Logger.common(message: "Unable to find event with transactionId: \(transactionId)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Unable to find event with transactionId: \(transactionId)", level: .error, category: .database)
                 return nil
             }
-            Logger.common(message: "Did read event with transactionId: \(entity.transactionId ?? "undefined")", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Did read event with transactionId: \(entity.transactionId ?? "undefined")", level: .info, category: .database)
             return entity
         }
     }
 
     func update(event: Event) throws {
         try context.executePerformAndWait {
-            Logger.common(message: "Updating event with transactionId: \(event.transactionId)", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Updating event \(event.type.rawValue) with transactionId: \(event.transactionId)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: event.transactionId)
             guard let entity = try findEvent(by: request) else {
-                Logger.common(message: "Unable to find event with transactionId: \(event.transactionId)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Unable to find event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .error, category: .database)
                 return
             }
             entity.retryTimestamp = Date().timeIntervalSince1970
@@ -107,10 +107,10 @@ class MBDatabaseRepository {
 
     func delete(event: Event) throws {
         try context.executePerformAndWait {
-            Logger.common(message: "Deleting event with transactionId: \(event.transactionId)", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Deleting event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .info, category: .database)
             let request = CDEvent.fetchRequest(by: event.transactionId)
             guard let entity = try findEvent(by: request) else {
-                Logger.common(message: "Unable to find event with transactionId: \(event.transactionId)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Unable to find event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .error, category: .database)
                 return
             }
             context.delete(entity)
@@ -120,18 +120,19 @@ class MBDatabaseRepository {
 
     func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws -> [Event] {
         try context.executePerformAndWait {
-            Logger.common(message: "Quering events with fetchLimit: \(fetchLimit)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
             let events = try context.fetch(request)
             guard !events.isEmpty else {
-                Logger.common(message: "Unable to find events", level: .info, category: .delivery)
+                Logger.common(message: "[MBDBRepo] Unable to find events", level: .info, category: .delivery)
                 return []
             }
-            Logger.common(message: "Did query events count: \(events.count)", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Did query events count `\(events.count)` with fetchLimit `\(fetchLimit)`", level: .info, category: .database)
             return events.compactMap {
-                Logger.common(message: "Event with transactionId: \(String(describing: $0.transactionId))", level: .info, category: .database)
-                return Event($0)
+                let event = Event($0)
+                Logger.common(message: "[MBDBRepo] Event `\(String(describing: event?.type.rawValue ?? "null"))` with transactionId: \(String(describing: event?.transactionId ?? "null"))",
+                              level: .info, category: .database)
+                return event
             }
         }
     }
@@ -150,13 +151,13 @@ class MBDatabaseRepository {
         let context = persistentContainer.newBackgroundContext()
         let request: NSFetchRequest<CDEvent> = CDEvent.deprecatedEventsFetchRequest(lifeLimitDate: lifeLimitDate)
         return try context.executePerformAndWait {
-            Logger.common(message: "Counting deprecated elements", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Counting deprecated elements", level: .info, category: .database)
             do {
                 let count = try context.count(for: request)
-                Logger.common(message: "Deprecated Events did count: \(count)", level: .info, category: .database)
+                Logger.common(message: "[MBDBRepo] Deprecated Events did count: \(count)", level: .info, category: .database)
                 return count
             } catch {
-                Logger.common(message: "Counting events failed with error: \(error.localizedDescription)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Counting events failed with error: \(error.localizedDescription)", level: .error, category: .database)
                 throw error
             }
         }
@@ -178,15 +179,12 @@ class MBDatabaseRepository {
     func countEvents() throws -> Int {
         let request: NSFetchRequest<CDEvent> = CDEvent.countEventsFetchRequest()
         return try context.executePerformAndWait {
-            Logger.common(message: "Events count limit: \(limit)", level: .info, category: .database)
-            Logger.common(message: "Counting events...", level: .info, category: .database)
             do {
                 let count = try context.count(for: request)
-                Logger.common(message: "Events count: \(count)", level: .info, category: .database)
                 cleanUp(count: count)
                 return count
             } catch {
-                Logger.common(message: "Counting events failed with error: \(error.localizedDescription)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Counting events failed with error: \(error.localizedDescription)", level: .error, category: .database)
                 throw error
             }
         }
@@ -201,21 +199,22 @@ class MBDatabaseRepository {
         do {
             try delete(by: request, withContext: context)
         } catch {
-            Logger.common(message: "Unable to remove elements", level: .error, category: .database)
+            Logger.common(message: "[MBDBRepo] Unable to remove elements", level: .error, category: .database)
         }
     }
 
     private func delete(by request: NSFetchRequest<CDEvent>, withContext context: NSManagedObjectContext) throws {
         try context.executePerformAndWait {
-            Logger.common(message: "Finding elements to remove", level: .info, category: .database)
+            Logger.common(message: "[MBDBRepo] Finding elements to remove", level: .info, category: .database)
 
             let events = try context.fetch(request)
             guard !events.isEmpty else {
-                Logger.common(message: "Elements to remove not found", level: .info, category: .database)
+                Logger.common(message: "[MBDBRepo] Elements to remove not found", level: .info, category: .database)
                 return
             }
             events.forEach {
-                Logger.common(message: "Remove element with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))", level: .info, category: .database)
+                Logger.common(message: "[MBDBRepo] Remove element `\(String(describing: $0.type))` with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))",
+                              level: .info, category: .database)
                 context.delete($0)
             }
             try saveEvent(withContext: context)
@@ -243,15 +242,14 @@ private extension MBDatabaseRepository {
     func saveContext(_ context: NSManagedObjectContext) throws {
         do {
             try context.save()
-            Logger.common(message: "Context did save", level: .info, category: .database)
         } catch {
             switch error {
             case let error as NSError where error.domain == NSSQLiteErrorDomain && error.code == 13:
-                Logger.common(message: "Context did save failed with SQLite Database out of space error: \(error)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Context did save failed with SQLite Database out of space error: \(error)", level: .error, category: .database)
                 fallthrough
             default:
                 context.rollback()
-                Logger.common(message: "Context did save failed with error: \(error)", level: .error, category: .database)
+                Logger.common(message: "[MBDBRepo] Context did save failed with error: \(error)", level: .error, category: .database)
             }
             throw error
         }
@@ -263,7 +261,7 @@ private extension MBDatabaseRepository {
 
     func getMetadata<T>(forKey key: MetadataKey) -> T? {
         let value = store.metadata[key.rawValue] as? T
-        Logger.common(message: "Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))", level: .info, category: .database)
+        Logger.common(message: "[MBDBRepo] Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))", level: .info, category: .database)
         return value
     }
 
@@ -273,10 +271,10 @@ private extension MBDatabaseRepository {
         do {
             try context.executePerformAndWait {
                 try saveContext(context)
-                Logger.common(message: "Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)
+                Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)
             }
         } catch {
-            Logger.common(message: "Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
+            Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
 }
