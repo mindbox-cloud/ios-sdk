@@ -16,9 +16,9 @@ fi
 current_branch=$(git symbolic-ref --short HEAD)
 echo "Currently on branch: $current_branch"
 
-if [[ ! $current_branch =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
-echo "The current Git branch ($current_branch) is not in the format 'release/X.Y.Z' or 'release/X.Y.Z-rc'."
-exit 1
+if [[ ! $current_branch =~ ^(release|support)/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
+    echo "The current Git branch ($current_branch) is not in the format 'release/X.Y.Z', 'release/X.Y.Z-rc', 'support/X.Y.Z' or 'support/X.Y.Z-rc'."
+    exit 1
 fi
 
 version=$1
@@ -91,7 +91,6 @@ git add $sdkversionprovider_file
 git add $sdkversionconfig_file
 git add $logger_podspec_file
 git commit -m "Bump SDK version from $current_version to $version"
-
 
 # Update Example/Podfile version
 podfile="Example/Podfile"
