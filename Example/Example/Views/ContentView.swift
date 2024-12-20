@@ -7,18 +7,24 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct ContentView: View {
 
-    var webViewModel: ViewModel
-    let url = URL(string: "https://your-website.com/")
+    let webViewModel: ViewModel
+
+    private let url = URL(string: "https://your-website.com/")
 
     var body: some View {
         VStack {
             WebView(url: url, viewModel: webViewModel)
 
             Button("Print in console Cookies and LocalStorage") {
-                webViewModel.viewCookiesAndLocalStorage()
+                guard let webView = WebView.currentWebView else {
+                    print("WebView is not initialized yet")
+                    return
+                }
+                webViewModel.viewCookiesAndLocalStorage(with: webView)
             }.padding()
         }
     }

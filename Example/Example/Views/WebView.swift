@@ -8,11 +8,13 @@
 
 import SwiftUI
 import WebKit
-import MindboxLogger
+import Mindbox
 
 struct WebView: UIViewRepresentable {
-    let url: URL?
 
+    static var currentWebView: WKWebView?
+
+    let url: URL?
     var viewModel: ViewModel
 
     func makeCoordinator() -> Coordinator {
@@ -33,25 +35,28 @@ struct WebView: UIViewRepresentable {
         let request = URLRequest(url: url)
         wkWebView.load(request)
 
-        viewModel.setWebView(wkWebView)
-
+        WebView.currentWebView = wkWebView
         return wkWebView
     }
-    
+
     func updateUIView(_ uiView: WKWebView, context: Context) { }
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    final class Coordinator: NSObject {
         var viewModel: ViewModel
 
         init(viewModel: ViewModel) {
             self.viewModel = viewModel
         }
+    }
+}
 
-        func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-            viewModel.syncMindboxDeviceUUIDs()
+// MARK: - WKNavigationDelegate
 
-            let message = "[WebView]: \(#function): Content started arriving for: \(webView.url?.absoluteString ?? "Unknown URL")"
-            Logger.common(message: message)
-        }
+extension WebView.Coordinator: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        viewModel.syncMindboxDeviceUUIDs(with: webView)
+
+        let message = "[WebView]: \(#function): Content started arriving for: \(webView.url?.absoluteString ?? "Unknown URL")"
+        Mindbox.logger.log(level: .debug, message: message)
     }
 }
