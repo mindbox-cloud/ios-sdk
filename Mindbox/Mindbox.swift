@@ -560,6 +560,8 @@ public class Mindbox: NSObject {
             return
         }
 
+        Logger.common(message: "[Mindbox] Send event to InApp messages if needed. Operation system name: \(operationSystemName)", category: .inAppMessages)
+
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
