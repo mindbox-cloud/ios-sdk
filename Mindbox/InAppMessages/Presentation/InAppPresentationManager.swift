@@ -58,7 +58,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     ) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
-                onError(.failed("Self guard not passed."))
+                onError(.failed("[InAppPresentationManager] Self guard not passed."))
                 return
             }
 

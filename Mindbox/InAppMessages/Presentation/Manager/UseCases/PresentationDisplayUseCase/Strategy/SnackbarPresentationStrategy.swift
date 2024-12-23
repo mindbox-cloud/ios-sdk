@@ -21,7 +21,6 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         let window: UIWindow
         let screenBounds = UIScreen.main.bounds
         let windowFrame = CGRect(x: 0, y: 0, width: screenBounds.width, height: screenBounds.height)
-        Logger.common(message: "SnackbarPresentationStrategy getWindow started.")
         if #available(iOS 13, *) {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
                 window = UIWindow(windowScene: windowScene)
