@@ -5,7 +5,6 @@ on:
     types: [ closed ]
     branches:
       - develop
-      - master
   push:
     branches:
       - 'release/*'
