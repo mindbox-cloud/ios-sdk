@@ -4,9 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches:
-      - 'master'
-      - 'develop'
- 
+      - develop
+      - master
+  push:
+    branches:
+      - 'release/*'
+      - 'support/*'
+
 jobs:
   SwiftLint:
     runs-on: ubuntu-24.04
