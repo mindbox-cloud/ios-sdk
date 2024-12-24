@@ -1,16 +1,15 @@
 name: SwiftLint + UnitTests
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    branches:
-      - develop
-      - master
   push:
     branches:
-      - 'release/*'
-      - 'support/*'
-
+      - '**'
+      - '!master'
+    paths-ignore:
+      - '**.md'
+    tags-ignore:
+      - '**'
+      
 jobs:
   SwiftLint:
     runs-on: ubuntu-24.04
