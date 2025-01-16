@@ -92,23 +92,6 @@ git add $sdkversionconfig_file
 git add $logger_podspec_file
 git commit -m "Bump SDK version from $current_version to $version"
 
-# Update Example/Podfile version
-podfile="Example/Podfile"
-
-echo "'Example Podfile' Before updating version:"
-grep "pod 'Mindbox'" $podfile
-grep "pod 'MindboxNotifications'" $podfile
-
-sed -i '' "s/\(pod 'Mindbox', '\)[^']*\(\'\)/\1$version\2/g" $podfile
-sed -i '' "s/\(pod 'MindboxNotifications', '\)[^']*\(\'\)/\1$version\2/g" $podfile
-
-echo "'Example Podfile After' updating version:"
-grep "pod 'Mindbox'" $podfile
-grep "pod 'MindboxNotifications'" $podfile
-
-git add $podfile
-git commit -m "Bump 'Example/Podfile' SDK version from $current_version to $version"
-
 echo "Pushing changes to branch: $current_branch"
 if ! git push origin $current_branch; then
     echo "Failed to push changes to the origin $current_branch"
