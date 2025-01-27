@@ -71,7 +71,7 @@ extension MBContainer {
 
         register(SessionManager.self) {
             let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
-            let inappSessionManger = DI.injectOrFail(InappSessionManager.self)
+            let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
             return MBSessionManager(trackVisitManager: trackVisitManager, inapSessionManager: inappSessionManger)
         }
 

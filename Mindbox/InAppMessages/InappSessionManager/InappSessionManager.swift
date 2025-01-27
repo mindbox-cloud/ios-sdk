@@ -9,11 +9,13 @@
 import UIKit
 import MindboxLogger
 
-// TODO: - Уйдет в параметр с бэка в следующих задачах
-let expiredInappSession = "0.00:00:30.0000000"
+protocol InappSessionManagerProtocol {
+    func checkInappSession()
+}
 
-final class InappSessionManager {
-    private var lastTrackVisitTimestamp: Date?
+final class InappSessionManager: InappSessionManagerProtocol {
+    var lastTrackVisitTimestamp: Date?
+
     private let inappCoreManager: InAppCoreManagerProtocol
     private let inappConfigManager: InAppConfigurationManagerProtocol
 
@@ -37,7 +39,9 @@ final class InappSessionManager {
             return
         }
 
-        guard let sessionTimeInSeconds = try? expiredInappSession.parseTimeStampToSeconds(), sessionTimeInSeconds > 0 else {
+        guard let inappSession = SessionTemporaryStorage.shared.expiredInappSession,
+              let sessionTimeInSeconds = try? inappSession.parseTimeStampToSeconds(),
+              sessionTimeInSeconds > 0 else {
             Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
             return
         }
@@ -52,12 +56,12 @@ final class InappSessionManager {
     }
 
     private func updateInappSession() {
-        Logger.common(message: "[InappSessionManager] Update inapp session.")
         hideInappIfInappSessionExpired()
 
         inappCoreManager.discardEvents()
         inappCoreManager.sendEvent(.start)
         inappConfigManager.prepareConfiguration()
+        Logger.common(message: "[InappSessionManager] Update inapp session.")
     }
 
     private func hideInappIfInappSessionExpired() {

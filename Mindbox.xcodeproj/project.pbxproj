@@ -1130,6 +1130,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
+		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2104,6 +2105,7 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
 				F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */,
 				A17958932978D03200609E91 /* InAppTargetingCheckerTests */,
@@ -3151,6 +3153,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
+				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 			);
 			name = MindboxTests;
 			productName = MindBoxTests;

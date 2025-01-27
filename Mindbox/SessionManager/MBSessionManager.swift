@@ -15,9 +15,9 @@ final class MBSessionManager {
     var isActiveNow: Bool { return isActive }
 
     private let trackVisitManager: TrackVisitManager
-    private let inappSessionManager: InappSessionManager
+    private let inappSessionManager: InappSessionManagerProtocol
 
-    init(trackVisitManager: TrackVisitManager, inapSessionManager: InappSessionManager) {
+    init(trackVisitManager: TrackVisitManager, inapSessionManager: InappSessionManagerProtocol) {
         self.trackVisitManager = trackVisitManager
         self.inappSessionManager = inapSessionManager
         subscribe()

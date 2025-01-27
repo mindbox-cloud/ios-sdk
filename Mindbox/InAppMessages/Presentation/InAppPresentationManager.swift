@@ -50,7 +50,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
         addObserverToDismissInApp()
     }
-    
+
     private func addObserverToDismissInApp() {
         NotificationCenter.default.addObserver(
             forName: Notification.Name("shouldDiscardInapps"),
