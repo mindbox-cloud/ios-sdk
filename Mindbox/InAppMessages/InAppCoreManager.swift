@@ -125,6 +125,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "In-app was shown before in this session. Discarding event", level: .debug, category: .inAppMessages)
             return
         }
 

@@ -25,31 +25,43 @@ final class InappSessionManager {
     func checkInappSession() {
         Logger.common(message: "[InappSessionManager] checkInappSession called")
 
-        guard let lastTrackVisitTimestamp = lastTrackVisitTimestamp else {
-            self.lastTrackVisitTimestamp = Date()
-            Logger.common(message: "[InappSessionManager] lastTrackVisitTimestamp is nil, setting it to current timestamp: \(Date())")
-            return
-        }
-
-        guard let expiredInappTime = try? expiredInappSession.parseTimeSpanToMillis(), expiredInappTime > 0 else {
-            Logger.common(message: "[InappSessionManager] expiredInappTime is nil or invalid — do nothing")
-            return
-        }
-
         let now = Date()
-        if now > lastTrackVisitTimestamp.addingTimeInterval(Double(expiredInappTime) / 1000) {
-            Logger.common(message: "[InappSessionManager] In-app session has expired. Last visit timestamp: \(String(describing: self.lastTrackVisitTimestamp)). Current time: \(now). Updating session...")
+
+        defer {
+            lastTrackVisitTimestamp = now
+            Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
+        }
+
+        guard let lastTimestamp = lastTrackVisitTimestamp else {
+            Logger.common(message: "[InappSessionManager] lastTrackVisitTimestamp is nil — skip session expiration check.")
+            return
+        }
+
+        guard let sessionTimeInSeconds = try? expiredInappSession.parseTimeStampToSeconds(), sessionTimeInSeconds > 0 else {
+            Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
+            return
+        }
+
+        let timeBetweenVisitsSeconds = now.timeIntervalSince(lastTimestamp)
+        if timeBetweenVisitsSeconds > Double(sessionTimeInSeconds) {
+            Logger.common(message: "[InappSessionManager] Session expired. Need to update session...")
             updateInappSession()
         } else {
-            Logger.common(message: "[InappSessionManager] In-app session not yet expired. Last visit timestamp: \(String(describing: self.lastTrackVisitTimestamp)). Current time: \(now). No update needed.")
+            Logger.common(message: "[InappSessionManager] Session not expired.")
         }
-
-        self.lastTrackVisitTimestamp = now
     }
 
     private func updateInappSession() {
+        Logger.common(message: "[InappSessionManager] Update inapp session.")
+        hideInappIfInappSessionExpired()
+
         inappCoreManager.discardEvents()
         inappCoreManager.sendEvent(.start)
         inappConfigManager.prepareConfiguration()
+    }
+
+    private func hideInappIfInappSessionExpired() {
+        Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
+        NotificationCenter.default.post(name: Notification.Name("shouldDiscardInapps"), object: nil)
     }
 }
