@@ -20,7 +20,7 @@ jobs:
         args: --config .swiftlint.yml
 
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v4

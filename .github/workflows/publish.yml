@@ -10,7 +10,7 @@ on:
 jobs:
   unit-tests:
     if: github.event.pull_request.merged == true
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -40,7 +40,7 @@ jobs:
 
   publish-MindboxLogger:
     needs: [set-tag]
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Update bundler
@@ -63,7 +63,7 @@ jobs:
       
   check-podspecs-with-retry:
     needs: [delay]
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Update bundler
@@ -82,7 +82,7 @@ jobs:
   
   publish-Mindbox:
     needs: [check-podspecs-with-retry]
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Update bundler
@@ -100,7 +100,7 @@ jobs:
           
   publish-MindboxNotifications:
     needs: [check-podspecs-with-retry]
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Update bundler
