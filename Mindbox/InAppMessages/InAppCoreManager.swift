@@ -49,6 +49,7 @@ class ApplicationEvent: Hashable {
 protocol InAppCoreManagerProtocol: AnyObject {
     func start()
     func sendEvent(_ event: InAppMessageTriggerEvent)
+    func discardEvents()
     var delegate: InAppMessagesDelegate? { get set }
 }
 
@@ -101,13 +102,22 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         serialQueue.async {
             guard self.isConfigurationReady else {
-                self.unhandledEvents.append(event)
+                if case .start = event {
+                    self.unhandledEvents.insert(event, at: 0)
+                } else {
+                    self.unhandledEvents.append(event)
+                }
                 return
             }
 
             Logger.common(message: "Received event: \(event)", level: .debug, category: .inAppMessages)
             self.handleEvent(event)
         }
+    }
+
+    func discardEvents() {
+        isConfigurationReady = false
+        unhandledEvents = []
     }
 
     // MARK: - Private

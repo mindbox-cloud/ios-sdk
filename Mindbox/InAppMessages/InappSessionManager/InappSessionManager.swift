@@ -10,7 +10,7 @@ import UIKit
 import MindboxLogger
 
 // TODO: - Уйдет в параметр с бэка в следующих задачах
-let expiredInappSession = "0.00:00:01.0000000"
+let expiredInappSession = "0.00:00:30.0000000"
 
 final class InappSessionManager {
     private var lastTrackVisitTimestamp: Date?
@@ -23,7 +23,6 @@ final class InappSessionManager {
     }
 
     func checkInappSession() {
-        return
         Logger.common(message: "[InappSessionManager] checkInappSession called")
 
         guard let lastTrackVisitTimestamp = lastTrackVisitTimestamp else {
@@ -49,8 +48,7 @@ final class InappSessionManager {
     }
 
     private func updateInappSession() {
-        inappCoreManager.isConfigurationReady = false
-        inappCoreManager.sendEvent(.applicationEvent(ApplicationEvent(name: "Hello", model: nil)))
+        inappCoreManager.discardEvents()
         inappCoreManager.sendEvent(.start)
         inappConfigManager.prepareConfiguration()
     }
