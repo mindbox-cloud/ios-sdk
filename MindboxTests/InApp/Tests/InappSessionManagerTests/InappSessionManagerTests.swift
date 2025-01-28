@@ -24,7 +24,7 @@ final class InappSessionManagerTests: XCTestCase {
     override func tearDown() {
         manager = nil
         coreManagerMock = nil
-        SessionTemporaryStorage.shared.expiredInappSession = ""
+        SessionTemporaryStorage.shared.expiredInappSession = nil
         super.tearDown()
     }
 
