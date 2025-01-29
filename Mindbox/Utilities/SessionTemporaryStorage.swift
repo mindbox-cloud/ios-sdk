@@ -29,6 +29,7 @@ final class SessionTemporaryStorage {
         }
     }
 
+    var expiredInappSession: String?
     private init() {}
 
     var customOperations: Set<String> {

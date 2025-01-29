@@ -49,6 +49,7 @@ class ApplicationEvent: Hashable {
 protocol InAppCoreManagerProtocol: AnyObject {
     func start()
     func sendEvent(_ event: InAppMessageTriggerEvent)
+    func discardEvents()
     var delegate: InAppMessagesDelegate? { get set }
 }
 
@@ -101,7 +102,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         serialQueue.async {
             guard self.isConfigurationReady else {
-                self.unhandledEvents.append(event)
+                if case .start = event {
+                    self.unhandledEvents.insert(event, at: 0)
+                } else {
+                    self.unhandledEvents.append(event)
+                }
                 return
             }
 
@@ -110,11 +115,17 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
 
+    func discardEvents() {
+        isConfigurationReady = false
+        unhandledEvents = []
+    }
+
     // MARK: - Private
 
     /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent) {
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "In-app was shown before in this session. Discarding event", level: .debug, category: .inAppMessages)
             return
         }
 

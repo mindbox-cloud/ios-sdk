@@ -66,6 +66,12 @@ extension MBContainer {
                                        sdkVersionValidator: sdkVersionValidator)
         }
 
+        register(InappSessionManagerProtocol.self) {
+            let coreManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
+            let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
+            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager)
+        }
+
         return self
     }
 

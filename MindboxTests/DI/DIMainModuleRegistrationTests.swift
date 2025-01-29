@@ -253,4 +253,9 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(manager)
         XCTAssert(manager is MigrationManager)
     }
+
+    func testInappSessionManagerIsRegistered() {
+        let manager: InappSessionManagerProtocol? = DI.inject(InappSessionManagerProtocol.self)
+        XCTAssertNotNil(manager)
+    }
 }
