@@ -63,7 +63,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
     private func updateInappSession() {
         hideInappIfInappSessionExpired()
         resetCacheAndSessionFlags()
+        
         userVisitManager.saveUserVisit()
+        
         inappCoreManager.sendEvent(.start)
         inappConfigManager.prepareConfiguration()
         Logger.common(message: "[InappSessionManager] Update inapp session.")

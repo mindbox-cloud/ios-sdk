@@ -65,6 +65,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
     
     func resetInappManager() {
+        Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
         inappMapper = nil
         inappMapper = DI.inject(InappMapperProtocol.self)
     }

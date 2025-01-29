@@ -8,6 +8,7 @@
 
 import Foundation
 import UserNotifications
+import MindboxLogger
 
 final class SessionTemporaryStorage {
 
@@ -44,5 +45,7 @@ final class SessionTemporaryStorage {
         checkSegmentsRequestCompleted = false
         isPresentingInAppMessage = false
         sessionShownInApps = []
+        isUserVisitSaved = false
+        Logger.common(message: "[SessionTemporaryStorage] Erasing...")
     }
 }

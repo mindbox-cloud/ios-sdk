@@ -87,6 +87,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         checkedProductSegmentations = nil
         geoModels = nil
         event = nil
+        Logger.common(message: "[TargetingChecker] Erasing...")
     }
 
     private func setupCheckerMap() {
