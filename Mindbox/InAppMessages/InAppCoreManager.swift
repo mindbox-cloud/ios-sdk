@@ -113,6 +113,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     
     func discardEvents() {
         isConfigurationReady = false
+        configManager.resetInappManager()
         unhandledEvents = []
     }
 

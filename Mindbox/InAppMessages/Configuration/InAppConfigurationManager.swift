@@ -18,6 +18,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
+    func resetInappManager()
 }
 
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
@@ -28,14 +29,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
     private let inAppConfigRepository: InAppConfigurationRepository
-    private let inappMapper: InappMapperProtocol
+    private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inappMapper: InappMapperProtocol,
+        inappMapper: InappMapperProtocol?,
         persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
@@ -53,7 +54,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
     
     func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
-        guard let config = configResponse else {
+        guard let inappMapper = inappMapper, let config = configResponse else {
             completion(nil)
             return
         }
@@ -61,6 +62,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         inappMapper.handleInapps(event, config) { inapp in
             completion(inapp)
         }
+    }
+    
+    func resetInappManager() {
+        inappMapper = nil
+        inappMapper = DI.inject(InappMapperProtocol.self)
     }
 
     // MARK: - Private
