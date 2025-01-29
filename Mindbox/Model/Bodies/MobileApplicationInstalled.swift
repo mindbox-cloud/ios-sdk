@@ -10,12 +10,6 @@ import Foundation
 
 struct MobileApplicationInstalled: Codable {
 
-    let notificationProvider: String
-
-    let token: String
-
-    var isTokenAvailable: Bool
-
     let isNotificationsEnabled: Bool
 
     let installationId: String
@@ -31,6 +25,9 @@ struct MobileApplicationInstalled: Codable {
     /// ID текущая таймзона устройства в формате IANA, например "Asia/Krasnoyarsk", null если недоступно
     let ianaTimeZone: String?
 
+    /// Храним единственный токен в массиве, потому что в таком формате его ожидает бекенд
+    let tokens: [TokenData]
+
     init(
         token: String? = nil,
         isNotificationsEnabled: Bool,
@@ -42,15 +39,19 @@ struct MobileApplicationInstalled: Codable {
         notificationProvider: String = "APNS",
         ianaTimeZone: String?
     ) {
-        self.token = token ?? ""
-        self.isTokenAvailable = !self.token.isEmpty
+        if let tokenValue = token, !tokenValue.isEmpty {
+            let tokenData = TokenData(token: tokenValue, notificationProvider: notificationProvider)
+            self.tokens = [tokenData]
+        } else {
+            self.tokens = []
+        }
+
         self.isNotificationsEnabled = isNotificationsEnabled
         self.installationId = installationId ?? ""
         self.subscribe = subscribe ?? false
         self.externalDeviceUUID = externalDeviceUUID
         self.version = version
         self.instanceId = instanceId
-        self.notificationProvider = notificationProvider
         self.ianaTimeZone = ianaTimeZone
     }
 }
