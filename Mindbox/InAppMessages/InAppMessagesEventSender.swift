@@ -17,23 +17,12 @@ class InappMessageEventSender {
     }
 
     func sendEventIfEnabled(_ operatingSystemName: String, jsonString: String?) {
-        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
-            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
-        }
-
         let lowercasedName = operatingSystemName.lowercased()
         let jsonString = jsonString ?? ""
 
-        if shouldSendEventForOperation(lowercasedName) {
-            let model = decodeInAppOperationJSONModel(from: jsonString)
-            inAppMessagesManager?.sendEvent(.applicationEvent(.init(name: lowercasedName, model: model)))
-        }
-    }
-
-    private func shouldSendEventForOperation(_ operationName: String) -> Bool {
-
-        return SessionTemporaryStorage.shared.customOperations.contains(operationName)
-            || SessionTemporaryStorage.shared.operationsFromSettings.contains(operationName)
+        let model = decodeInAppOperationJSONModel(from: jsonString)
+        let event: InAppMessageTriggerEvent = .applicationEvent(ApplicationEvent(name: lowercasedName, model: model))
+        inAppMessagesManager?.sendEvent(event)
     }
 
     private func decodeInAppOperationJSONModel(from jsonString: String) -> InappOperationJSONModel? {
