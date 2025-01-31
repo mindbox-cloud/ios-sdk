@@ -8,6 +8,6 @@
 import Foundation
 
 public class SDKVersionProvider {
-    public static let sdkVersion = "2.11.2"
+    public static let sdkVersion = "2.12.0"
 }
 
