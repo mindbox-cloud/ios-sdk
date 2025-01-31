@@ -39,7 +39,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
         guard let bestAttemptContent = bestAttemptContent else {
-            Logger.common(message: "MindboxNotificationService: Failed to get bestAttemptContent. bestAttemptContent: \(String(describing: bestAttemptContent))", level: .error, category: .notification)
+            Logger.common(message: "[NotificationService] Failed to get bestAttemptContent. bestAttemptContent: \(String(describing: bestAttemptContent))", level: .error, category: .notification)
             return
         }
 
@@ -52,7 +52,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
                 self?.proceedFinalStage(bestAttemptContent)
             }
         } else {
-            Logger.common(message: "MindboxNotificationService: Failed to parse imageUrl", level: .error, category: .notification)
+            Logger.common(message: "[NotificationService] Failed to parse imageUrl", level: .error, category: .notification)
             proceedFinalStage(bestAttemptContent)
         }
     }
@@ -60,7 +60,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
     /// Call this method in `serviceExtensionTimeWillExpire()` of `NotificationService`
     public func serviceExtensionTimeWillExpire() {
         if let bestAttemptContent = bestAttemptContent {
-            Logger.common(message: "MindboxNotificationService: Failed to get bestAttemptContent. bestAttemptContent: \(bestAttemptContent)", level: .error, category: .notification)
+            Logger.common(message: "[NotificationService] Failed to get bestAttemptContent. bestAttemptContent: \(bestAttemptContent)", level: .error, category: .notification)
             proceedFinalStage(bestAttemptContent)
         }
     }
@@ -69,7 +69,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
     /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
     /// At the moment, this method only writes a push delivery log.
     public func pushDelivered(_ request: UNNotificationRequest) {
-        let message = "[NotificationService]: \(#function), request id: \(request.identifier)"
+        let message = "[NotificationService] \(#function), request id: \(request.identifier)"
         Logger.common(message: message, level: .info, category: .notification)
     }
 }
@@ -78,12 +78,12 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
 private extension MindboxNotificationService {
     func downloadImage(with url: URL, completion: @escaping () -> Void) {
-        Logger.common(message: "Image loading. [URL]: \(url)", level: .info, category: .notification)
+        Logger.common(message: "[NotificationService] Image loading. [URL]: \(url)", level: .info, category: .notification)
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             defer { completion() }
             guard let self = self,
                   let data = data else {
-                Logger.common(message: "MindboxNotificationService: Failed to get self or data. self: \(String(describing: self)), data: \(String(describing: data))", level: .error, category: .notification)
+                Logger.common(message: "[NotificationService] Failed to get self or data. self: \(String(describing: self)), data: \(String(describing: data))", level: .error, category: .notification)
                 return
             }
 
@@ -98,7 +98,7 @@ private extension MindboxNotificationService {
     func saveImage(_ data: Data) -> UNNotificationAttachment? {
         let name = UUID().uuidString
         guard let format = ImageFormat(data) else {
-            Logger.common(message: "MindboxNotificationService: Image load failed, data: \(data)", level: .error, category: .notification)
+            Logger.common(message: "[NotificationService] Image load failed, data: \(data)", level: .error, category: .notification)
             return nil
         }
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -109,7 +109,7 @@ private extension MindboxNotificationService {
             try data.write(to: fileURL, options: .atomic)
             return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
         } catch {
-            Logger.common(message: "MindboxNotificationService: Failed to save image. data: \(data), name: \(name), url: \(url), directory: \(directory)", level: .error, category: .notification)
+            Logger.common(message: "[NotificationService] Failed to save image. data: \(data), name: \(name), url: \(url), directory: \(directory)", level: .error, category: .notification)
             return nil
         }
     }

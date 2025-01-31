@@ -22,7 +22,9 @@ struct InAppDTO: Decodable, Equatable {
         case targeting
         case form
     }
+}
 
+extension InAppDTO {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)

@@ -26,7 +26,6 @@ class PresentationClickTracker {
     }
 
     func trackClick(id: String) {
-        Logger.common(message: "Presentation completed", level: .debug, category: .inAppMessages)
         guard !clickTracked else { return }
 
         do {

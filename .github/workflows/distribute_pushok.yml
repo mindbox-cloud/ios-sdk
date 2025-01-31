@@ -1,0 +1,48 @@
+name: Distribute PushOk
+
+on:
+  pull_request:
+    types: [ closed ]
+    branches:
+      - develop
+  push:
+    branches:
+      - 'release/*'
+      - 'support/*'
+
+jobs:
+  distribution:
+    if: github.event.pull_request.merged == true || (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/support/')))
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get last 3 commit messages
+        run: |
+          commits=$(git log -3 --pretty=format:"%s")
+          echo "commits=$commits" >> $GITHUB_ENV
+
+      - name: Get Mindbox SDK Version
+        run: |
+          sdkVersion=$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
+          echo "sdkVersion=$sdkVersion" >> $GITHUB_ENV
+
+      - name: Print environment variables for debugging
+        run: |
+          echo "Debugging variables:"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.head_ref: ${{ github.head_ref }}"
+          echo "commits: ${{ env.commits }}"
+          echo "sdkVersion: ${{ env.sdkVersion }}"
+
+      - name: Trigger build workflow in ios-app repo
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.PAT_IOS_APP }}
+          workflow: connected_publish_workflow.yml
+          repo: mindbox-cloud/ios-app
+          ref: develop
+          inputs: '{"branch": "${{ github.ref_name }}", "commits": "${{ env.commits }}", "sdkVersion": "${{ env.sdkVersion }}"}'
+ 

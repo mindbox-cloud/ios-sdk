@@ -161,7 +161,7 @@ public class Mindbox: NSObject {
         let token = deviceToken
             .map { String(format: "%02.2hhx", $0) }
             .joined()
-        Logger.common(message: "Did register for remote notifications with token: \(token)", level: .info, category: .notification)
+        Logger.common(message: "Did register for remote notifications with device token: \(token)", level: .info, category: .notification)
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
 
             if persistenceStorage?.needUpdateInfoOnce ?? true {
@@ -171,7 +171,7 @@ public class Mindbox: NSObject {
             }
 
             guard persistenceAPNSToken != token else {
-                Logger.common(message: "persistenceAPNSToken is equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
+                Logger.common(message: "APNS token hasn't changed", level: .error, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)
@@ -559,6 +559,8 @@ public class Mindbox: NSObject {
         guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
             return
         }
+
+        Logger.common(message: "[Mindbox] Send event to InApp messages if needed. Operation system name: \(operationSystemName)", category: .inAppMessages)
 
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }

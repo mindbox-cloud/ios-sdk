@@ -17,7 +17,7 @@ public protocol MindboxURLHandlerDelegate {
 public extension MindboxURLHandlerDelegate {
     func openURL(_ url: URL?) {
         guard let url = url, UIApplication.shared.canOpenURL(url) else {
-            Logger.common(message: "The URL does not exist or is invalid.", category: .inAppMessages)
+            Logger.common(message: "[URLHandlerDelegate] The URL `\(String(describing: url?.absoluteString ?? "null"))` does not exist or is invalid.", category: .inAppMessages)
             return
         }
 
