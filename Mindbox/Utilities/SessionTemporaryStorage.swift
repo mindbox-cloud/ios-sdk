@@ -46,6 +46,6 @@ final class SessionTemporaryStorage {
         isPresentingInAppMessage = false
         sessionShownInApps = []
         isUserVisitSaved = false
-        Logger.common(message: "[SessionTemporaryStorage] Erasing...")
+        Logger.common(message: "[SessionTemporaryStorage] Erased.")
     }
 }
