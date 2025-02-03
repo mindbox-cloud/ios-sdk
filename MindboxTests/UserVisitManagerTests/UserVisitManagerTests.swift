@@ -23,6 +23,7 @@ final class UserVisitManagerTests: XCTestCase {
     }
 
     override func tearDown() {
+        SessionTemporaryStorage.shared.erase()
         persistenceStorageMock.reset()
         persistenceStorageMock = nil
         userVisitManager = nil
@@ -41,6 +42,7 @@ final class UserVisitManagerTests: XCTestCase {
         userVisitManager.saveUserVisit()
         XCTAssertEqual(persistenceStorageMock.userVisitCount, 2)
 
+        SessionTemporaryStorage.shared.isUserVisitSaved = false
         userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
         userVisitManager.saveUserVisit()
 
