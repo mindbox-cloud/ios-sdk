@@ -13,11 +13,15 @@ final class InappSessionManagerTests: XCTestCase {
 
     private var manager: InappSessionManager!
     private var coreManagerMock: InAppCoreManagerMock!
+    private var persistenceStorage: PersistenceStorage!
+    private var targetingChecker: InAppTargetingCheckerProtocol!
 
     override func setUp() {
         super.setUp()
         manager = DI.injectOrFail(InappSessionManagerProtocol.self) as? InappSessionManager
         coreManagerMock = DI.injectOrFail(InAppCoreManagerProtocol.self) as? InAppCoreManagerMock
+        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         SessionTemporaryStorage.shared.expiredInappSession = ""
     }
 
@@ -34,7 +38,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNotNil(manager.lastTrackVisitTimestamp, "lastTrackVisitTimestamp должен быть установлен")
     }
 
-    func test_inappSession_isNil_No_Session_Update() throws {
+    func test_inappSession_isNil_NoSessionUpdate() throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
@@ -50,7 +54,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNotEqual(newTimestamp, oldTimestamp)
     }
 
-    func test_inappSession_isZero_No_Session_Update() throws {
+    func test_inappSession_isZero_NoSessionUpdate() throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
@@ -66,7 +70,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNotEqual(newTimestamp, oldTimestamp)
     }
 
-    func test_inappSession_isNegative_No_Session_Update() throws {
+    func test_inappSession_isNegative_NoSessionUpdate() throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
@@ -99,7 +103,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNotEqual(newTimestamp, oldTimestamp)
     }
 
-    func test_timeBetweenVisitsGreaterThanSessionTimeInSeconds_SessionUpdated() throws {
+    func test_timeBetweenVisitsGreaterThanSessionTimeInSeconds_SessionUpdate() throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
@@ -113,5 +117,65 @@ final class InappSessionManagerTests: XCTestCase {
         let newTimestamp = manager.lastTrackVisitTimestamp
         XCTAssertNotNil(newTimestamp)
         XCTAssertNotEqual(newTimestamp, oldTimestamp, "Timestamp должен быть обновлён")
+    }
+    
+    func test_NoSessionUpdate_NoUserVisitCountIncrement() {
+        let now = Date()
+        manager.lastTrackVisitTimestamp = now.addingTimeInterval(-2400)
+        let oldUserVisitCount = persistenceStorage.userVisitCount
+
+        SessionTemporaryStorage.shared.expiredInappSession = "0.00:59:00.0000000"
+        
+        manager.checkInappSession()
+        XCTAssertEqual(persistenceStorage.userVisitCount, oldUserVisitCount)
+    }
+    
+    func test_sessionUpdate_UpdateUserVisitCount() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+
+        let oldUserVisitCount = persistenceStorage.userVisitCount
+
+        SessionTemporaryStorage.shared.expiredInappSession = "0.00:30:00.0000000"
+
+        manager.checkInappSession()
+        XCTAssertNotEqual(persistenceStorage.userVisitCount, oldUserVisitCount)
+        if let oldUserVisitCount = oldUserVisitCount {
+            XCTAssertEqual(persistenceStorage.userVisitCount, oldUserVisitCount + 1)
+        }
+    }
+    
+    func test_sessionUpdate_ResetStorages() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        SessionTemporaryStorage.shared.expiredInappSession = "0.00:30:00.0000000"
+
+        SessionTemporaryStorage.shared.observedCustomOperations = ["Test"]
+        SessionTemporaryStorage.shared.operationsFromSettings = ["Test2"]
+        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1"]
+        
+        targetingChecker.context.isNeedGeoRequest = true
+        targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "1")), segment: nil)]
+        targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: nil)]
+        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+        targetingChecker.event = .init(name: "Test", model: nil)
+
+        manager.checkInappSession()
+        
+        XCTAssertEqual(SessionTemporaryStorage.shared.observedCustomOperations, [])
+        XCTAssertEqual(SessionTemporaryStorage.shared.operationsFromSettings, [])
+        XCTAssertEqual(SessionTemporaryStorage.shared.geoRequestCompleted, false)
+        XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
+        XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
+        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
+        
+        targetingChecker.context.isNeedGeoRequest = false
+        targetingChecker.checkedSegmentations = nil
+        targetingChecker.checkedProductSegmentations = nil
+        targetingChecker.geoModels = nil
+        targetingChecker.event = nil
+        
+        targetingChecker.geoModels = nil
     }
 }
