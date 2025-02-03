@@ -139,10 +139,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
-        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
-            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
-        }
-        
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
             self.onReceivedInAppResponse(inapp: inapp) {
                 completion()
@@ -158,6 +154,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private func onReceivedInAppResponse(inapp: InAppFormData?, completion: @escaping () -> Void) {
         guard let inapp = inapp else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
+            completion()
+            return
+        }
+        
+        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
             completion()
             return
         }
