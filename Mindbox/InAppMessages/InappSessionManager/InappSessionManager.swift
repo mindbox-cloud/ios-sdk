@@ -18,15 +18,20 @@ final class InappSessionManager: InappSessionManagerProtocol {
 
     private let inappCoreManager: InAppCoreManagerProtocol
     private let inappConfigManager: InAppConfigurationManagerProtocol
+    private let targetingChecker: TargetingCheckerEraseProtocol
+    private let userVisitManager: UserVisitManagerProtocol
 
-    init(inappCoreManager: InAppCoreManagerProtocol, inappConfigManager: InAppConfigurationManagerProtocol) {
+    init(inappCoreManager: InAppCoreManagerProtocol,
+         inappConfigManager: InAppConfigurationManagerProtocol,
+         targetingChecker: TargetingCheckerEraseProtocol,
+         userVisitManager: UserVisitManagerProtocol) {
         self.inappCoreManager = inappCoreManager
         self.inappConfigManager = inappConfigManager
+        self.targetingChecker = targetingChecker
+        self.userVisitManager = userVisitManager
     }
 
     func checkInappSession() {
-        Logger.common(message: "[InappSessionManager] checkInappSession called")
-
         let now = Date()
 
         defer {
@@ -57,11 +62,19 @@ final class InappSessionManager: InappSessionManagerProtocol {
 
     private func updateInappSession() {
         hideInappIfInappSessionExpired()
-
-        inappCoreManager.discardEvents()
+        resetCacheAndSessionFlags()
+        
+        userVisitManager.saveUserVisit()
+        
         inappCoreManager.sendEvent(.start)
         inappConfigManager.prepareConfiguration()
         Logger.common(message: "[InappSessionManager] Update inapp session.")
+    }
+    
+    private func resetCacheAndSessionFlags() {
+        inappCoreManager.discardEvents()
+        SessionTemporaryStorage.shared.erase()
+        targetingChecker.eraseCache()
     }
 
     private func hideInappIfInappSessionExpired() {

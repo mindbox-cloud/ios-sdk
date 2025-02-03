@@ -112,7 +112,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     }
     
     func discardEvents() {
+        Logger.common(message: "[InappCoreManager] Discard expired events.")
         isConfigurationReady = false
+        configManager.resetInappManager()
         unhandledEvents = []
     }
 
