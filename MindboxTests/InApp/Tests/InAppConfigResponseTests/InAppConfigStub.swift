@@ -115,7 +115,7 @@ extension InAppConfigStub {
                 viewCategory: operationType == .viewCategory ? .init(systemName: operationType.rawValue) : nil,
                 setCart: nil
             ),
-            ttl: nil
+            ttl: nil, slidingExpiration: nil
         )
         return ConfigResponse(
             inapps: FailableDecodableArray(elements: try getInappDTO(with: targeting)),
