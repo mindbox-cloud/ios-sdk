@@ -278,17 +278,13 @@ final class SettingsConfigParsingTests: XCTestCase {
         // Key `slidingExpirationTest` вместо `slidingExpiration`
         let config = try! SettingsConfig.settingsSlidingExpirationError.getConfig()
 
-        // Убеждаемся, что остальное успешно спарсилось
         XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
         XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
 
-        // А вот slidingExpiration должен быть nil
         XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если ключ `slidingExpiration` не найден")
         XCTAssertNil(config.slidingExpiration?.inappSession, "SlidingExpiration тоже должен быть nil")
     }
 
-    /// 2. Неверный тип `slidingExpiration` — вместо JSON-объекта приходит, например, `Int`.
-    ///    Ожидаем, что при несоответствии типа парсинг `slidingExpiration` вернёт `nil`.
     func test_SettingsConfig_withSlidingExpirationTypeError_shouldSetSlidingExpirationToNil() {
         // Тип `slidingExpiration` = Int вместо объекта
         let config = try! SettingsConfig.settingsSlidingExpirationTypeError.getConfig()
@@ -300,8 +296,6 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.slidingExpiration?.inappSession)
     }
 
-    /// 3. Неверный ключ `inappSession` внутри `slidingExpiration` (например, `inappSessionTest` вместо `inappSession`).
-    ///    По аналогии с другими моделями, если внутри объекта ключи некорректны, мы хотим получить `nil` для всего `slidingExpiration`.
     func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetSlidingExpirationToNil() {
         // Ключ `inappSessionTest` вместо `inappSession`
         let config = try! SettingsConfig.settingsSlidingExpirationInappSessionError.getConfig()
@@ -313,8 +307,6 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.slidingExpiration?.inappSession)
     }
 
-    /// 4. Неверный тип `inappSession` — вместо `String` приходит, например, `Int`.
-    ///    Ожидаем, что при ошибке в типе поля внутри объекта весь `slidingExpiration` упадёт в `nil` (как и в случае c TTL).
     func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetSlidingExpirationToNil() {
         // Тип `inappSession` = Int вместо String
         let config = try! SettingsConfig.settingsSlidingExpirationInappSessionTypeError.getConfig()

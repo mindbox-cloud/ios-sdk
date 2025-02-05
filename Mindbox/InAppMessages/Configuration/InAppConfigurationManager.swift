@@ -84,7 +84,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 let config = try jsonDecoder.decode(ConfigResponse.self, from: data)
                 configResponse = config
                 saveConfigToCache(data)
-                saveInappSessionToCache(inappSession: config.settings?.slidingExpiration?.inappSession)
                 setupSettingsFromConfig(config.settings)
                 if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
                     logsManager.sendLogs(logs: monitoring.logs.elements)
@@ -153,6 +152,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewProduct = settings.operations?.viewProduct {
             SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
         }
+        
+        saveInappSessionToCache(inappSession: settings.slidingExpiration?.inappSession)
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {
@@ -161,6 +162,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private func saveInappSessionToCache(inappSession: String?) {
         SessionTemporaryStorage.shared.expiredInappSession = inappSession
-        Logger.common(message: "Saved expiredInappSession - \(inappSession) to temporary storage.")
+        Logger.common(message: "Saved slidingExpiration.inappSession - \(inappSession) to temporary storage.")
     }
 }
