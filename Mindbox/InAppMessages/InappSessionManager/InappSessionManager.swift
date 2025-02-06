@@ -37,16 +37,19 @@ final class InappSessionManager: InappSessionManagerProtocol {
         defer {
             lastTrackVisitTimestamp = now
             Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
+            
+            if let sessionTimeInSeconds = getInappSession(), sessionTimeInSeconds > 0 {
+                let expirationDate = now.addingTimeInterval(sessionTimeInSeconds)
+                Logger.common(message: "[InappSessionManager] Nearest session expiration time is \(expirationDate.asDateTimeWithSeconds).")
+            }
         }
 
         guard let lastTimestamp = lastTrackVisitTimestamp else {
             Logger.common(message: "[InappSessionManager] lastTrackVisitTimestamp is nil — skip session expiration check.")
             return
         }
-
-        guard let inappSession = SessionTemporaryStorage.shared.expiredInappSession,
-              let sessionTimeInSeconds = try? inappSession.parseTimeStampToSeconds(),
-              sessionTimeInSeconds > 0 else {
+        
+        guard let sessionTimeInSeconds = getInappSession(), sessionTimeInSeconds > 0 else {
             Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
             return
         }
@@ -80,5 +83,14 @@ final class InappSessionManager: InappSessionManagerProtocol {
     private func hideInappIfInappSessionExpired() {
         Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
         NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+    }
+    
+    private func getInappSession() -> Double? {
+        guard let inappSession = SessionTemporaryStorage.shared.expiredInappSession,
+              let sessionTimeInSeconds = try? inappSession.parseTimeStampToSeconds() else {
+            return nil
+        }
+        
+        return Double(sessionTimeInSeconds)
     }
 }

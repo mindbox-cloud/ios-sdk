@@ -152,9 +152,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewProduct = settings.operations?.viewProduct {
             SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
         }
+        
+        saveInappSessionToCache(inappSession: settings.slidingExpiration?.inappSession)
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {
         return TTLValidationService(persistenceStorage: self.persistenceStorage)
+    }
+    
+    private func saveInappSessionToCache(inappSession: String?) {
+        SessionTemporaryStorage.shared.expiredInappSession = inappSession
+        Logger.common(message: "Saved slidingExpiration.inappSession - \(inappSession) to temporary storage.")
     }
 }

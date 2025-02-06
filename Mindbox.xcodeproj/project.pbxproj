@@ -492,6 +492,7 @@
 		F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */; };
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
+		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
 		F3A8B95C2A389EAD00E9C055 /* GeoServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */; };
@@ -1074,6 +1075,7 @@
 		F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockImageDownloadService.swift; sourceTree = "<group>"; };
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
+		F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingExpirationModel.swift; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
 		F3A8B9572A389D9D00E9C055 /* GeoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoService.swift; sourceTree = "<group>"; };
 		F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoServiceTests.swift; sourceTree = "<group>"; };
@@ -1130,6 +1132,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
+		F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SlidingExpirationsError; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -1533,6 +1536,7 @@
 		473A982A2C919226005A3B94 /* SettingsJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				473A98492C91B5E6005A3B94 /* OperationsErrors */,
 				473A98482C91B5D8005A3B94 /* TtlErrors */,
 				473A98392C91ABF5005A3B94 /* SettingsConfig.json */,
@@ -3018,6 +3022,7 @@
 				4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */,
 				4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */,
 				F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */,
+				F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -3153,6 +3158,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
+				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 			);
 			name = MindboxTests;
@@ -3706,6 +3712,7 @@
 				F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */,
 				F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
+				F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */,
 				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,

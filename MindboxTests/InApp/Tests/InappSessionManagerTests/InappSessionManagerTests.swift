@@ -85,6 +85,22 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNotNil(newTimestamp)
         XCTAssertNotEqual(newTimestamp, oldTimestamp)
     }
+    
+    func test_inappSession_isWrongFormat_NoSessionUpdate() throws {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
+        let oldTimestamp = manager.lastTrackVisitTimestamp
+
+        SessionTemporaryStorage.shared.expiredInappSession = "100"
+
+        manager.checkInappSession()
+
+        XCTAssertFalse(coreManagerMock.discardEventsCalled)
+        XCTAssertTrue(coreManagerMock.sendEventCalled.isEmpty)
+
+        let newTimestamp = manager.lastTrackVisitTimestamp
+        XCTAssertNotNil(newTimestamp)
+        XCTAssertNotEqual(newTimestamp, oldTimestamp)
+    }
 
     func test_timeBetweenVisitsLessThanSessionTimeInSeconds_NoSessionUpdate() throws {
         let now = Date()
