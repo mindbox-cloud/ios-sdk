@@ -29,18 +29,20 @@ final class InappSessionManager: InappSessionManagerProtocol {
         self.inappConfigManager = inappConfigManager
         self.targetingChecker = targetingChecker
         self.userVisitManager = userVisitManager
+        
+        addObserverToDismissInApp()
     }
 
     func checkInappSession() {
         let now = Date()
-
+        var updatingInappSession = false
+        
         defer {
             lastTrackVisitTimestamp = now
             Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
             
-            if let sessionTimeInSeconds = getInappSession(), sessionTimeInSeconds > 0 {
-                let expirationDate = now.addingTimeInterval(sessionTimeInSeconds)
-                Logger.common(message: "[InappSessionManager] Nearest session expiration time is \(expirationDate.asDateTimeWithSeconds).")
+            if !updatingInappSession {
+                logNearestInappSessionExpirationTime()
             }
         }
 
@@ -56,6 +58,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
 
         let timeBetweenVisitsSeconds = now.timeIntervalSince(lastTimestamp)
         if timeBetweenVisitsSeconds > Double(sessionTimeInSeconds) {
+            updatingInappSession = true
             Logger.common(message: "[InappSessionManager] Session expired. Need to update session...")
             updateInappSession()
         } else {
@@ -92,5 +95,23 @@ final class InappSessionManager: InappSessionManagerProtocol {
         }
         
         return Double(sessionTimeInSeconds)
+    }
+    
+    private func addObserverToDismissInApp() {
+        NotificationCenter.default.addObserver(
+            forName: .inappConfigDownloaded,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.logNearestInappSessionExpirationTime()
+        }
+    }
+    
+    private func logNearestInappSessionExpirationTime() {
+        if let lastTrackVisitTimestamp = lastTrackVisitTimestamp,
+           let sessionTimeInSeconds = self.getInappSession(), sessionTimeInSeconds > 0 {
+            let expirationDate = lastTrackVisitTimestamp.addingTimeInterval(sessionTimeInSeconds)
+            Logger.common(message: "[InappSessionManager] Nearest session expiration time is \(expirationDate.asDateTimeWithSeconds).")
+        }
     }
 }
