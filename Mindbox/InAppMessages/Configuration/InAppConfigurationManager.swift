@@ -163,5 +163,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private func saveInappSessionToCache(inappSession: String?) {
         SessionTemporaryStorage.shared.expiredInappSession = inappSession
         Logger.common(message: "Saved slidingExpiration.inappSession - \(inappSession) to temporary storage.")
+        NotificationCenter.default.post(name: .inappConfigDownloaded, object: nil)
     }
 }
