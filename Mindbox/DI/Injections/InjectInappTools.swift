@@ -57,13 +57,21 @@ extension MBContainer {
             return VariantFilterService(layersFilter: layersFilter, elementsFilter: elementsFilter, contentPositionFilter: contentPositionFilter)
         }
 
-        register(InappFilterProtocol.self) {
+        register(InappFilterProtocol.self, scope: .transient) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             let variantsFilter = DI.injectOrFail(VariantFilterProtocol.self)
             let sdkVersionValidator = DI.injectOrFail(SDKVersionValidator.self)
             return InappsFilterService(persistenceStorage: persistenceStorage,
                                        variantsFilter: variantsFilter,
                                        sdkVersionValidator: sdkVersionValidator)
+        }
+
+        register(InappSessionManagerProtocol.self) {
+            let coreManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
+            let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
+            let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+            let userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
+            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager)
         }
 
         return self

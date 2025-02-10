@@ -43,6 +43,11 @@ fileprivate enum SettingsConfig: String, Configurable {
 
     case ttlInappsError = "SettingsTtlInappsError" // Key is `inappsTest` instead of `inapps`
     case ttlInappsTypeError = "SettingsTtlInappsTypeError" // Type of `ttl` is Int instead of String
+    
+    case settingsSlidingExpirationError = "SettingsSlidingExpirationError"
+    case settingsSlidingExpirationTypeError = "SettingsSlidingExpirationTypeError"
+    case settingsSlidingExpirationInappSessionError = "SettingsSlidingExpirationInappSessionError"
+    case settingsSlidingExpirationInappSessionTypeError = "SettingsSlidingExpirationInappSessionTypeError"
 }
 
 final class SettingsConfigParsingTests: XCTestCase {
@@ -267,5 +272,49 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.ttl, "TTL must be `nil` if the key `inapps` is not a `String`")
         XCTAssertNil(config.ttl?.inapps, "TTL must be `nil` if the key `inapps` is not a `String`")
+    }
+    
+    func test_SettingsConfig_withSlidingExpirationError_shouldSetSlidingExpirationToNil() {
+        // Key `slidingExpirationTest` вместо `slidingExpiration`
+        let config = try! SettingsConfig.settingsSlidingExpirationError.getConfig()
+
+        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
+        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если ключ `slidingExpiration` не найден")
+        XCTAssertNil(config.slidingExpiration?.inappSession, "SlidingExpiration тоже должен быть nil")
+    }
+
+    func test_SettingsConfig_withSlidingExpirationTypeError_shouldSetSlidingExpirationToNil() {
+        // Тип `slidingExpiration` = Int вместо объекта
+        let config = try! SettingsConfig.settingsSlidingExpirationTypeError.getConfig()
+
+        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
+        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если тип в JSON не соответствует `Settings.SlidingExpiration`")
+        XCTAssertNil(config.slidingExpiration?.inappSession)
+    }
+
+    func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetSlidingExpirationToNil() {
+        // Ключ `inappSessionTest` вместо `inappSession`
+        let config = try! SettingsConfig.settingsSlidingExpirationInappSessionError.getConfig()
+
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если внутренний ключ `inappSession` не найден")
+        XCTAssertNil(config.slidingExpiration?.inappSession)
+    }
+
+    func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetSlidingExpirationToNil() {
+        // Тип `inappSession` = Int вместо String
+        let config = try! SettingsConfig.settingsSlidingExpirationInappSessionTypeError.getConfig()
+
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если поле `inappSession` имеет неверный тип")
+        XCTAssertNil(config.slidingExpiration?.inappSession)
     }
 }

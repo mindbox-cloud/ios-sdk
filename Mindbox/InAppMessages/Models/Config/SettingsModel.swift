@@ -11,9 +11,10 @@ import Foundation
 struct Settings: Decodable, Equatable {
     let operations: SettingsOperations?
     let ttl: TimeToLive?
+    let slidingExpiration: SlidingExpiration?
 
     enum CodingKeys: CodingKey {
-        case operations, ttl
+        case operations, ttl, slidingExpiration
     }
 }
 
@@ -22,5 +23,6 @@ extension Settings {
         let container: KeyedDecodingContainer = try decoder.container(keyedBy: CodingKeys.self)
         self.operations = try? container.decodeIfPresent(SettingsOperations.self, forKey: .operations)
         self.ttl = try? container.decodeIfPresent(TimeToLive.self, forKey: .ttl)
+        self.slidingExpiration = try? container.decodeIfPresent(SlidingExpiration.self, forKey: .slidingExpiration)
     }
 }

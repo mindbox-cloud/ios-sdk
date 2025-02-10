@@ -54,6 +54,7 @@ class ApplicationEvent: Hashable {
 protocol InAppCoreManagerProtocol: AnyObject {
     func start()
     func sendEvent(_ event: InAppMessageTriggerEvent)
+    func discardEvents()
     var delegate: InAppMessagesDelegate? { get set }
 }
 
@@ -111,7 +112,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     }
     
     func discardEvents() {
+        Logger.common(message: "[InappCoreManager] Discard expired events.")
         isConfigurationReady = false
+        configManager.resetInappManager()
         unhandledEvents = []
     }
 

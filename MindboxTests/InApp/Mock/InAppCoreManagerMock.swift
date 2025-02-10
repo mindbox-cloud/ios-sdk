@@ -12,9 +12,17 @@ import Foundation
 class InAppCoreManagerMock: InAppCoreManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
 
+    var discardEventsCalled = false
+    var sendEventCalled: [InAppMessageTriggerEvent] = []
+
     func start() {
     }
 
     func sendEvent(_ event: InAppMessageTriggerEvent) {
+        sendEventCalled.append(event)
+    }
+
+    func discardEvents() {
+        discardEventsCalled = true
     }
 }
