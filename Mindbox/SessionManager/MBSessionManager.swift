@@ -15,9 +15,11 @@ final class MBSessionManager {
     var isActiveNow: Bool { return isActive }
 
     private let trackVisitManager: TrackVisitManager
+    private let inappSessionManager: InappSessionManagerProtocol
 
-    init(trackVisitManager: TrackVisitManager) {
+    init(trackVisitManager: TrackVisitManager, inapSessionManager: InappSessionManagerProtocol) {
         self.trackVisitManager = trackVisitManager
+        self.inappSessionManager = inapSessionManager
         subscribe()
     }
 
@@ -65,6 +67,7 @@ extension MBSessionManager: SessionManager {
     func trackDirect() {
         do {
             try trackVisitManager.trackDirect()
+            inappSessionManager.checkInappSession()
         } catch {
             Logger.common(message: "Track Visit Direct failed with error: \(error)", level: .info, category: .visit)
         }
@@ -73,6 +76,7 @@ extension MBSessionManager: SessionManager {
     func trackForeground() {
         do {
             try trackVisitManager.trackForeground()
+            inappSessionManager.checkInappSession()
         } catch {
             Logger.common(message: "Track Visit Foreground failed with error: \(error)", level: .info, category: .visit)
         }

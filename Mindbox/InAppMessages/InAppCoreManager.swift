@@ -26,6 +26,11 @@ enum InAppMessageTriggerEvent: Hashable {
     case start // All inapps by now is Start
     /// Any other event sent to SDK
     case applicationEvent(ApplicationEvent)
+    
+    var applicationEvent: ApplicationEvent? {
+        guard case let .applicationEvent(event) = self else { return nil }
+        return event
+    }
 }
 
 class ApplicationEvent: Hashable {
@@ -49,6 +54,7 @@ class ApplicationEvent: Hashable {
 protocol InAppCoreManagerProtocol: AnyObject {
     func start()
     func sendEvent(_ event: InAppMessageTriggerEvent)
+    func discardEvents()
     var delegate: InAppMessagesDelegate? { get set }
 }
 
@@ -86,22 +92,17 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
 
-        isInAppManagerLaunched = true
         sendEvent(.start)
+        isInAppManagerLaunched = true
         configManager.delegate = self
         configManager.prepareConfiguration()
     }
 
     /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
-        if case .applicationEvent(let event) = event {
-            isConfigurationReady = false
-            configManager.recalculateInapps(with: event)
-        }
-
         serialQueue.async {
             guard self.isConfigurationReady else {
-                self.unhandledEvents.append(event)
+                self.saveEvent(event)
                 return
             }
 
@@ -109,21 +110,57 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             self.handleEvent(event)
         }
     }
-
-    // MARK: - Private
-
-    /// Core flow that decised to show in-app message based on incoming event
-    private func handleEvent(_ event: InAppMessageTriggerEvent) {
-        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
-            return
-        }
-
-        onReceivedInAppResponse()
+    
+    func discardEvents() {
+        Logger.common(message: "[InappCoreManager] Discard expired events.")
+        isConfigurationReady = false
+        configManager.resetInappManager()
+        unhandledEvents = []
     }
 
-    private func onReceivedInAppResponse() {
-        guard let inapp = configManager.getInapp() else {
+    // MARK: - Private
+    
+    private func saveEvent(_ event: InAppMessageTriggerEvent) {
+        switch event {
+        case .start:
+            self.unhandledEvents.insert(event, at: 0)
+        case .applicationEvent:
+            self.unhandledEvents.append(event)
+        }
+    }
+
+    /// Core flow that decised to show in-app message based on incoming event
+    private func handleEvent(_ event: InAppMessageTriggerEvent,
+                             _ completion: @escaping () -> Void = {}) {
+        
+        if case .applicationEvent(let customEvent) = event, !shouldHandleCustomOperation(customEvent.name) {
+            Logger.common(message: "\(customEvent.name) not contained in customOperations or in Settings. Ignoring... ", category: .inAppMessages)
+            completion()
+            return
+        }
+        
+        self.configManager.handleInapps(event: event.applicationEvent) { inapp in
+            self.onReceivedInAppResponse(inapp: inapp) {
+                completion()
+            }
+        }
+    }
+    
+    private func shouldHandleCustomOperation(_ operationName: String) -> Bool {
+        return SessionTemporaryStorage.shared.customOperations.contains(operationName)
+        || SessionTemporaryStorage.shared.operationsFromSettings.contains(operationName)
+    }
+
+    private func onReceivedInAppResponse(inapp: InAppFormData?, completion: @escaping () -> Void) {
+        guard let inapp = inapp else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
+            completion()
+            return
+        }
+        
+        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
+            completion()
             return
         }
 
@@ -154,13 +191,20 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 }
             }
         )
+        
+        completion()
     }
 
     private func handleQueuedEvents() {
         Logger.common(message: "Start handling waiting events. Count: \(unhandledEvents.count)", level: .debug, category: .inAppMessages)
-        while !unhandledEvents.isEmpty {
-            let event = unhandledEvents.removeFirst()
-            handleEvent(event)
+        processNextEvent()
+    }
+    
+    private func processNextEvent() {
+        guard !unhandledEvents.isEmpty else { return }
+        let event = unhandledEvents.removeFirst()
+        handleEvent(event) {
+            self.processNextEvent()
         }
     }
 }

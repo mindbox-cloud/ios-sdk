@@ -32,7 +32,7 @@ extension MBContainer {
                 eventRepository: eventRepository)
         }
 
-        register(InappMapperProtocol.self) {
+        register(InappMapperProtocol.self, scope: .transient) {
             let inappFilterService = DI.injectOrFail(InappFilterProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let dataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)

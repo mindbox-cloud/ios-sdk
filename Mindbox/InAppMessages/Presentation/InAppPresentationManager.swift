@@ -47,6 +47,18 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
          displayUseCase: PresentationDisplayUseCase) {
         self.actionHandler = actionHandler
         self.displayUseCase = displayUseCase
+
+        addObserverToDismissInApp()
+    }
+
+    private func addObserverToDismissInApp() {
+        NotificationCenter.default.addObserver(
+            forName: .shouldDiscardInapps,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.displayUseCase.dismissInAppUIModel(onClose: { })
+        }
     }
 
     func present(
