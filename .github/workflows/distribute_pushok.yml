@@ -7,7 +7,7 @@ on:
 
 jobs:
   distribution:
-    if: github.event.pull_request.merged == true || (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/support/')))
+    #if: github.event.pull_request.merged == true || (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/support/')))
     runs-on: macos-15
     steps:
       - name: Checkout repository
