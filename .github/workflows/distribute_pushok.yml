@@ -41,7 +41,7 @@ jobs:
         run: |
           curl --location 'https://mindbox.gitlab.yandexcloud.net/api/v4/projects/966/trigger/pipeline' \
             --form 'token="${{ secrets.GITLAB_TRIGGER_TOKEN }}"' \
-            --form 'ref="test_branch"' \
+            --form 'ref="develop"' \
             --form "variables[INPUT_BRANCH]=\"${{ github.ref_name }}\"" \
             --form "variables[INPUT_COMMITS]=\"${{ env.commits }}\"" \
             --form "variables[INPUT_SDK_VERSION]=\"${{ env.sdkVersion }}\""
