@@ -1,14 +1,9 @@
 name: Distribute PushOk
 
 on:
-  pull_request:
-    types: [ closed ]
-    branches:
-      - develop
   push:
     branches:
-      - 'release/*'
-      - 'support/*'
+      - poziev/change-worfklow-dispatch-to-gitlab
 
 jobs:
   distribution:
@@ -38,11 +33,11 @@ jobs:
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
       - name: Trigger build workflow in ios-app repo
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          token: ${{ secrets.PAT_IOS_APP }}
-          workflow: connected_publish_workflow.yml
-          repo: mindbox-cloud/ios-app
-          ref: develop
-          inputs: '{"branch": "${{ github.ref_name }}", "commits": "${{ env.commits }}", "sdkVersion": "${{ env.sdkVersion }}"}'
+        run: |
+          curl --location 'https://mindbox.gitlab.yandexcloud.net/api/v4/projects/966/trigger/pipeline' \
+            --form 'token="${{ secrets.GITLAB_TRIGGER_TOKEN }}"' \
+            --form 'ref="test_branch"' \
+            --form "variables[INPUT_BRANCH]=\"${{ github.ref_name }}\"" \
+            --form "variables[INPUT_COMMITS]=\"${{ env.commits }}\"" \
+            --form "variables[INPUT_SDK_VERSION]=\"${{ env.sdkVersion }}\""
  
