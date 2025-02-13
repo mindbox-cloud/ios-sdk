@@ -16,5 +16,8 @@
     "inapps": 123
     
     
+  }, 
+  "slidingExpiration": {
+    "config": "0.00:00:23"
   }
 }
