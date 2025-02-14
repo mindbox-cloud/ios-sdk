@@ -51,7 +51,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
             return
         }
         
-        guard let sessionTimeInSeconds = getInappSession(), sessionTimeInSeconds > 0 else {
+        guard let sessionTimeInSeconds = getConfigSession(), sessionTimeInSeconds > 0 else {
             Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
             return
         }
@@ -88,9 +88,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
         NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
     }
     
-    private func getInappSession() -> Double? {
-        guard let inappSession = SessionTemporaryStorage.shared.expiredInappSession,
-              let sessionTimeInSeconds = try? inappSession.parseTimeStampToSeconds() else {
+    private func getConfigSession() -> Double? {
+        guard let configSession = SessionTemporaryStorage.shared.expiredConfigSession,
+              let sessionTimeInSeconds = try? configSession.parseTimeStampToSeconds() else {
             return nil
         }
         
@@ -99,7 +99,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
     
     private func addObserverToDismissInApp() {
         NotificationCenter.default.addObserver(
-            forName: .inappConfigDownloaded,
+            forName: .mobileConfigDownloaded,
             object: nil,
             queue: nil
         ) { [weak self] _ in
@@ -109,7 +109,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
     
     private func logNearestInappSessionExpirationTime() {
         if let lastTrackVisitTimestamp = lastTrackVisitTimestamp,
-           let sessionTimeInSeconds = self.getInappSession(), sessionTimeInSeconds > 0 {
+           let sessionTimeInSeconds = self.getConfigSession(), sessionTimeInSeconds > 0 {
             let expirationDate = lastTrackVisitTimestamp.addingTimeInterval(sessionTimeInSeconds)
             Logger.common(message: "[InappSessionManager] Nearest session expiration time is \(expirationDate.asDateTimeWithSeconds).")
         }

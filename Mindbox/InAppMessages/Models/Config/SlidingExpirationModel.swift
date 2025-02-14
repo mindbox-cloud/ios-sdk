@@ -10,10 +10,10 @@ import Foundation
 
 extension Settings {
     struct SlidingExpiration: Decodable, Equatable {
-        let inappSession: String?
+        let config: String?
 
         enum CodingKeys: CodingKey {
-            case inappSession
+            case config
         }
     }
 }
@@ -21,10 +21,10 @@ extension Settings {
 extension Settings.SlidingExpiration {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let inappSession = try? container.decodeIfPresent(String.self, forKey: .inappSession) {
-            self.inappSession = inappSession
+        if let config = try? container.decodeIfPresent(String.self, forKey: .config) {
+            self.config = config
         } else {
-            throw DecodingError.dataCorruptedError(forKey: .inappSession, in: container, debugDescription: "Missing required key 'inappSession'")
+            throw DecodingError.dataCorruptedError(forKey: .config, in: container, debugDescription: "Missing required key 'config'")
         }
     }
 }
