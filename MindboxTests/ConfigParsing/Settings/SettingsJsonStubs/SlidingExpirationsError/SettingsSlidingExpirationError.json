@@ -14,6 +14,6 @@
         "inapps": "2.00:00:00"
     },
     "slidingExpirationTest": {
-        "inappSession": "2.00:00:00"
+        "config": "2.00:00:00"
     }
 }
