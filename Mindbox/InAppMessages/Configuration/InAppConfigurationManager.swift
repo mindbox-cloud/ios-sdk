@@ -153,16 +153,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
         }
         
-        saveInappSessionToCache(config: settings.slidingExpiration?.config)
+        saveConfigSessionToCache(settings.slidingExpiration?.config)
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {
         return TTLValidationService(persistenceStorage: self.persistenceStorage)
     }
     
-    private func saveInappSessionToCache(config: String?) {
-        SessionTemporaryStorage.shared.expiredInappSession = config
-        Logger.common(message: "Saved slidingExpiration.config - \(config) to temporary storage.")
-        NotificationCenter.default.post(name: .inappConfigDownloaded, object: nil)
+    private func saveConfigSessionToCache(_ config: String?) {
+        SessionTemporaryStorage.shared.expiredConfigSession = config
+        Logger.common(message: "Saved slidingExpiration.config - \(String(describing: config)) to temporary storage.")
+        NotificationCenter.default.post(name: .mobileConfigDownloaded, object: nil)
     }
 }

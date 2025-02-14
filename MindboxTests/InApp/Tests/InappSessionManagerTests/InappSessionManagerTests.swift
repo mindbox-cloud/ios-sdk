@@ -22,13 +22,13 @@ final class InappSessionManagerTests: XCTestCase {
         coreManagerMock = DI.injectOrFail(InAppCoreManagerProtocol.self) as? InAppCoreManagerMock
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
-        SessionTemporaryStorage.shared.expiredInappSession = ""
+        SessionTemporaryStorage.shared.expiredConfigSession = ""
     }
 
     override func tearDown() {
         manager = nil
         coreManagerMock = nil
-        SessionTemporaryStorage.shared.expiredInappSession = nil
+        SessionTemporaryStorage.shared.expiredConfigSession = nil
         super.tearDown()
     }
 
@@ -42,7 +42,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = nil
+        SessionTemporaryStorage.shared.expiredConfigSession = nil
 
         manager.checkInappSession()
 
@@ -58,7 +58,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:00:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:00:00.0000000"
 
         manager.checkInappSession()
 
@@ -74,7 +74,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = "-0.00:00:01.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "-0.00:00:01.0000000"
 
         manager.checkInappSession()
 
@@ -90,7 +90,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-100)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = "100"
+        SessionTemporaryStorage.shared.expiredConfigSession = "100"
 
         manager.checkInappSession()
 
@@ -107,7 +107,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = now.addingTimeInterval(-2400)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:59:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:59:00.0000000"
 
         manager.checkInappSession()
 
@@ -123,7 +123,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
         let oldTimestamp = manager.lastTrackVisitTimestamp
 
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:30:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:30:00.0000000"
 
         manager.checkInappSession()
 
@@ -140,7 +140,7 @@ final class InappSessionManagerTests: XCTestCase {
         manager.lastTrackVisitTimestamp = now.addingTimeInterval(-2400)
         let oldUserVisitCount = persistenceStorage.userVisitCount
 
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:59:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:59:00.0000000"
         
         manager.checkInappSession()
         XCTAssertEqual(persistenceStorage.userVisitCount, oldUserVisitCount)
@@ -151,7 +151,7 @@ final class InappSessionManagerTests: XCTestCase {
 
         let oldUserVisitCount = persistenceStorage.userVisitCount
 
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:30:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:30:00.0000000"
 
         manager.checkInappSession()
         XCTAssertNotEqual(persistenceStorage.userVisitCount, oldUserVisitCount)
@@ -162,7 +162,7 @@ final class InappSessionManagerTests: XCTestCase {
     
     func test_sessionUpdate_ResetStorages() {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
-        SessionTemporaryStorage.shared.expiredInappSession = "0.00:30:00.0000000"
+        SessionTemporaryStorage.shared.expiredConfigSession = "0.00:30:00.0000000"
 
         SessionTemporaryStorage.shared.observedCustomOperations = ["Test"]
         SessionTemporaryStorage.shared.operationsFromSettings = ["Test2"]

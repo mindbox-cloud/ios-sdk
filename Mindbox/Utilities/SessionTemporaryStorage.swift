@@ -30,7 +30,7 @@ final class SessionTemporaryStorage {
         }
     }
 
-    var expiredInappSession: String?
+    var expiredConfigSession: String?
     var isUserVisitSaved = false
     private init() {}
 

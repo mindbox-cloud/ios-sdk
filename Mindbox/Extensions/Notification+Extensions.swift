@@ -11,5 +11,5 @@ import Foundation
 extension Notification.Name {
     static let initializationCompleted = Notification.Name("MBNotification-initializationCompleted")
     static let shouldDiscardInapps = Notification.Name("MBNotification-shouldDiscardInapps")
-    static let inappConfigDownloaded = Notification.Name("MBNotification-inappConfigDownloaded")
+    static let mobileConfigDownloaded = Notification.Name("MBNotification-mobileConfigDownloaded")
 }
