@@ -63,7 +63,10 @@ public class MBLogger {
         }
         let writer = makeWriter(subsystem: subsystem, category: category)
 
+        #if DEBUG
         let message = "\(level.emoji) \(category.emoji) \(message)"
+        #endif
+        
         switch executionMethod {
         case let .async(queue: queue):
             queue.async {
