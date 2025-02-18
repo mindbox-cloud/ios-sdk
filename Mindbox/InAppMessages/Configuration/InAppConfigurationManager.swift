@@ -110,14 +110,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to apply configuration from cache: No cached configuration found.")
             return
         }
-        
-        configResponse = cachedConfig
 
         let ttlValidationService = createTTLValidationService()
         if ttlValidationService.needResetInapps(config: cachedConfig) {
             cachedConfig.inapps = nil
             Logger.common(message: "[TTL] Resetting in-app due to the expiration of the current configuration.")
         }
+        
+        configResponse = cachedConfig
     }
 
     private func fetchConfigFromCache() -> ConfigResponse? {
