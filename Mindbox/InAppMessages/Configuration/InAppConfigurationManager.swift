@@ -17,8 +17,8 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
     func prepareConfiguration()
-    func getInapp() -> InAppFormData?
-    func recalculateInapps(with event: ApplicationEvent)
+    func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
+    func resetInappManager()
 }
 
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
@@ -27,17 +27,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
-    private var inapp: InAppFormData?
-    private var rawConfigurationResponse: ConfigResponse?
+    private var configResponse: ConfigResponse?
     private let inAppConfigRepository: InAppConfigurationRepository
-    private let inappMapper: InappMapperProtocol
+    private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
-        inappMapper: InappMapperProtocol,
+        inappMapper: InappMapperProtocol?,
         persistenceStorage: PersistenceStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
@@ -53,25 +52,22 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             self.downloadConfig()
         }
     }
-
-    func getInapp() -> InAppFormData? {
-        return queue.sync {
-            defer {
-                inapp = nil
-            }
-
-            return inapp
+    
+    func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
+        guard let inappMapper = inappMapper, let config = configResponse else {
+            completion(nil)
+            return
+        }
+        
+        inappMapper.handleInapps(event, config) { inapp in
+            completion(inapp)
         }
     }
-
-    func recalculateInapps(with event: ApplicationEvent) {
-        queue.sync {
-            guard let rawConfigurationResponse = rawConfigurationResponse else {
-                return
-            }
-
-            setConfigPrepared(rawConfigurationResponse, event: event)
-        }
+    
+    func resetInappManager() {
+        Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
+        inappMapper = nil
+        inappMapper = DI.inject(InappMapperProtocol.self)
     }
 
     // MARK: - Private
@@ -86,8 +82,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         case let .data(data):
             do {
                 let config = try jsonDecoder.decode(ConfigResponse.self, from: data)
+                configResponse = config
                 saveConfigToCache(data)
-                setConfigPrepared(config)
                 setupSettingsFromConfig(config.settings)
                 if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
                     logsManager.sendLogs(logs: monitoring.logs.elements)
@@ -98,14 +94,15 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             }
 
         case .empty:
-            let emptyConfig = ConfigResponse()
+            configResponse = ConfigResponse()
             inAppConfigRepository.clean()
-            setConfigPrepared(emptyConfig)
 
         case let .error(error):
             applyConfigFromCache()
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
+        
+        self.delegate?.didPreparedConfiguration()
     }
 
     private func applyConfigFromCache() {
@@ -119,8 +116,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             cachedConfig.inapps = nil
             Logger.common(message: "[TTL] Resetting in-app due to the expiration of the current configuration.")
         }
-
-        setConfigPrepared(cachedConfig)
+        
+        configResponse = cachedConfig
     }
 
     private func fetchConfigFromCache() -> ConfigResponse? {
@@ -143,14 +140,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         inAppConfigRepository.saveConfigToCache(data)
     }
 
-    private func setConfigPrepared(_ configResponse: ConfigResponse, event: ApplicationEvent? = nil) {
-        rawConfigurationResponse = configResponse
-        inappMapper.handleInapps(event, configResponse) { inapp in
-            self.inapp = inapp
-            self.delegate?.didPreparedConfiguration()
-        }
-    }
-
     private func setupSettingsFromConfig(_ settings: Settings?) {
         guard let settings = settings else {
             return
@@ -163,9 +152,17 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewProduct = settings.operations?.viewProduct {
             SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
         }
+        
+        saveConfigSessionToCache(settings.slidingExpiration?.config)
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {
         return TTLValidationService(persistenceStorage: self.persistenceStorage)
+    }
+    
+    private func saveConfigSessionToCache(_ config: String?) {
+        SessionTemporaryStorage.shared.expiredConfigSession = config
+        Logger.common(message: "Saved slidingExpiration.config - \(String(describing: config)) to temporary storage.")
+        NotificationCenter.default.post(name: .mobileConfigDownloaded, object: nil)
     }
 }

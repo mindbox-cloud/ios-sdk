@@ -57,7 +57,7 @@ extension MBContainer {
             return MBNetworkFetcher(utilitiesFetcher: utilitiesFetcher, persistenceStorage: persistenceStorage)
         }
 
-        register(InAppConfigurationDataFacadeProtocol.self) {
+        register(InAppConfigurationDataFacadeProtocol.self, scope: .transient) {
             let segmentationSevice = DI.injectOrFail(SegmentationServiceProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
@@ -71,7 +71,8 @@ extension MBContainer {
 
         register(SessionManager.self) {
             let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
-            return MBSessionManager(trackVisitManager: trackVisitManager)
+            let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
+            return MBSessionManager(trackVisitManager: trackVisitManager, inapSessionManager: inappSessionManger)
         }
 
         register(SDKLogsManagerProtocol.self, scope: .transient) {

@@ -25,7 +25,9 @@ class InappMapper: InappMapperProtocol {
 
     private var shownInappIDWithHashValue: [String: Int] = [:]
     private var abTests: [ABTest]?
-
+    
+    private let processingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.processingQueue")
+    
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
@@ -37,14 +39,23 @@ class InappMapper: InappMapperProtocol {
     func handleInapps(_ event: ApplicationEvent?,
                       _ response: ConfigResponse,
                       _ completion: @escaping (InAppFormData?) -> Void) {
-        setupEnvironment(event: event)
-        abTests = response.abtests
-        let filteredInapps = getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
-        prepareTargetingChecker(for: filteredInapps)
-        prepareForRemainingTargeting()
-        chooseInappToShow(filteredInapps: filteredInapps) { formData in
-            completion(formData)
-            self.sendRemainingInappsTargeting()
+        processingQueue.async {
+            let group = DispatchGroup()
+            group.enter()
+            
+            self.setupEnvironment(event: event)
+            self.abTests = response.abtests
+            let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
+            self.prepareTargetingChecker(for: filteredInapps)
+            self.prepareForRemainingTargeting()
+            self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
+                self.sendRemainingInappsTargeting {
+                    completion(formData)
+                    group.leave()
+                }
+            }
+            
+            group.wait()
         }
     }
 
@@ -196,7 +207,7 @@ class InappMapper: InappMapperProtocol {
         return applicationEvent?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
     }
 
-    func sendRemainingInappsTargeting() {
+    func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
         self.dataFacade.fetchDependencies(model: applicationEvent?.model) {
             let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.getOperationInappsByEvent()
             let suitableInapps = self.filterByInappsEvents(inapps: inapps)
@@ -215,6 +226,8 @@ class InappMapper: InappMapperProtocol {
                        self.dataFacade.trackTargeting(id: inapp.id)
                 }
             }
+            
+            completion()
         }
     }
 }
