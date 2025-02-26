@@ -11,11 +11,14 @@ import MindboxLogger
 
 final class TrackVisitManager {
     private let databaseRepository: MBDatabaseRepository
+    private let inappSessionManager: InappSessionManagerProtocol
 
     init(
-        databaseRepository: MBDatabaseRepository
+        databaseRepository: MBDatabaseRepository,
+        inappSessionManager: InappSessionManagerProtocol
     ) {
         self.databaseRepository = databaseRepository
+        self.inappSessionManager = inappSessionManager
     }
 
     func track(_ type: TrackVisitType) throws {
@@ -80,6 +83,7 @@ final class TrackVisitManager {
     private func sendTrackVisit<E: Encodable>(_ encodable: E) throws {
         let event = Event(type: .trackVisit, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
+        inappSessionManager.checkInappSession()
     }
 }
 
