@@ -32,6 +32,8 @@ final class SessionTemporaryStorage {
 
     var expiredConfigSession: String?
     var isUserVisitSaved = false
+    var clickTracked = false
+
     private init() {}
 
     var customOperations: Set<String> {
@@ -46,6 +48,7 @@ final class SessionTemporaryStorage {
         isPresentingInAppMessage = false
         sessionShownInApps = []
         isUserVisitSaved = false
+        clickTracked = false
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
     }
 }
