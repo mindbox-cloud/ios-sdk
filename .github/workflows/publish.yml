@@ -145,6 +145,24 @@ jobs:
           gh pr merge $pr_number --merge
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+  message-to-loop-if-success:
+    needs: [release-github]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send message to LOOP
+        env:
+            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
+            VERSION: ${{ github.ref_name }}
+        run: |
+            MESSAGE=$(cat <<EOF
+            {
+              "text": "**🚀 iOS release was successful. Version: ${VERSION}**"
+            }
+            EOF)
+            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "$MESSAGE"
 
   notify-on-error:
     needs: [unit-tests, set-tag, publish-MindboxLogger, delay, check-podspecs-with-retry, publish-Mindbox, publish-MindboxNotifications, release-github]
