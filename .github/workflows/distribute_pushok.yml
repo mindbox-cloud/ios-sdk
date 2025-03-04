@@ -5,14 +5,15 @@ on:
     types: [ closed ]
     branches:
       - develop
-  push:
-    branches:
-      - 'release/*'
-      - 'support/*'
+  workflow_run:
+    workflows: ["Prepare release branch"]
+    types:
+      - completed
 
 jobs:
   distribution:
-    if: github.event.pull_request.merged == true || (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/support/')))
+    if: github.event.pull_request.merged == true ||
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: macos-15
     steps:
       - name: Checkout repository
