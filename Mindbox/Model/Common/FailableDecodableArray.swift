@@ -12,6 +12,10 @@ struct FailableDecodableArray<Element: Decodable & Equatable>: Decodable, Equata
 
     let elements: [Element]
 
+    private struct DummyCodable: Decodable { }
+}
+
+extension FailableDecodableArray {
     init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
 
@@ -30,8 +34,6 @@ struct FailableDecodableArray<Element: Decodable & Equatable>: Decodable, Equata
 
         self.elements = elements
     }
-
-    private struct DummyCodable: Decodable { }
 }
 
 struct FailableDecodable<Element: Decodable & Equatable>: Decodable, Equatable {

@@ -12,7 +12,7 @@ struct PreparationContext {
     var segments: [String] = []
     var isNeedGeoRequest: Bool = false
     var productSegments: [String] = []
-    var operationInapps: [String: [String]] = [:]
+    var operationInapps: [String: Set<String>] = [:]
 }
 
 protocol ITargetingChecker: AnyObject {

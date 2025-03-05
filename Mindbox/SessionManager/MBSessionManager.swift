@@ -66,7 +66,7 @@ extension MBSessionManager: SessionManager {
         do {
             try trackVisitManager.trackDirect()
         } catch {
-            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
+            Logger.common(message: "Track Visit Direct failed with error: \(error)", level: .info, category: .visit)
         }
     }
 
@@ -74,7 +74,7 @@ extension MBSessionManager: SessionManager {
         do {
             try trackVisitManager.trackForeground()
         } catch {
-            Logger.common(message: "Track Visit failed with error: \(error)", level: .info, category: .visit)
+            Logger.common(message: "Track Visit Foreground failed with error: \(error)", level: .info, category: .visit)
         }
     }
 }

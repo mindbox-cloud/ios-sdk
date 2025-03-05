@@ -43,6 +43,14 @@ fileprivate enum SettingsConfig: String, Configurable {
 
     case ttlInappsError = "SettingsTtlInappsError" // Key is `inappsTest` instead of `inapps`
     case ttlInappsTypeError = "SettingsTtlInappsTypeError" // Type of `ttl` is Int instead of String
+    
+    // Sliding Expiration file names
+    
+    case settingsSlidingExpirationError = "SettingsSlidingExpirationError"
+    case settingsSlidingExpirationTypeError = "SettingsSlidingExpirationTypeError"
+    
+    case settingsSlidingExpirationConfigError = "SettingsSlidingExpirationConfigError"
+    case settingsSlidingExpirationConfigTypeError = "SettingsSlidingExpirationConfigTypeError"
 }
 
 final class SettingsConfigParsingTests: XCTestCase {
@@ -59,6 +67,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl)
         XCTAssertNotNil(config.ttl?.inapps)
+        
+        XCTAssertNotNil(config.slidingExpiration)
+        XCTAssertNotNil(config.slidingExpiration?.config)
     }
 
     // MARK: - Operations
@@ -73,6 +84,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsTypeError_shouldSetOperationsToNil() {
@@ -85,6 +99,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewProductError_shouldSetViewProductToNil() {
@@ -97,6 +114,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewProductTypeError_shouldSetViewProductToNil() {
@@ -109,6 +129,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewProductSystemNameError_shouldSetViewProductToNil() {
@@ -121,6 +144,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewProductSystemNameTypeError_shouldSetViewProductToNil() {
@@ -133,6 +159,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withAllOperationsWithErrors_shouldSetOperationsToNil() {
@@ -145,6 +174,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withAllOperationsWithTypeErrors_shouldSetOperationsToNil() {
@@ -157,6 +189,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartError_shouldSetViewCategoryAndSetCartToNil() {
@@ -169,6 +204,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartTypeError_shouldSetViewCategoryAndSetCartToNil() {
@@ -181,6 +219,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameError_shouldSetViewCategoryAndSetCartToNil() {
@@ -193,6 +234,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameTypeError_shouldSetViewCategoryAndSetCartToNil() {
@@ -205,6 +249,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameMixedError_shouldSetViewCategoryAndSetCartToNil() {
@@ -217,6 +264,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.ttl?.inapps, "TTL must be successfully parsed")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     // MARK: - TTL
@@ -231,6 +281,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.ttl, "TTL must be `nil` if the key `ttl` is not found")
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withTtlTypeError_shouldSetTtlToNil() {
@@ -243,6 +296,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.ttl, "TTL must be `nil` if the type of `inapps` is not a `TimeToLive`")
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withTtlInappsError_shouldSetTtlToNil() {
@@ -255,6 +311,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.ttl, "TTL must be `nil` if the key `inapps` is not found")
         XCTAssertNil(config.ttl?.inapps, "TTL must be nil")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
     }
 
     func test_SettingsConfig_withTtlInappsTypeError_shouldSetTtlToNil() {
@@ -267,5 +326,54 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.ttl, "TTL must be `nil` if the key `inapps` is not a `String`")
         XCTAssertNil(config.ttl?.inapps, "TTL must be `nil` if the key `inapps` is not a `String`")
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config, "SlidingExpiration must be successfully parsed")
+    }
+    
+    // MARK: - Sliding Expiration
+    
+    func test_SettingsConfig_withSlidingExpirationError_shouldSetSlidingExpirationToNil() {
+        // Key `slidingExpirationTest` вместо `slidingExpiration`
+        let config = try! SettingsConfig.settingsSlidingExpirationError.getConfig()
+
+        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
+        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если ключ `slidingExpiration` не найден")
+        XCTAssertNil(config.slidingExpiration?.config, "SlidingExpiration тоже должен быть nil")
+    }
+
+    func test_SettingsConfig_withSlidingExpirationTypeError_shouldSetSlidingExpirationToNil() {
+        // Тип `slidingExpiration` = Int вместо объекта
+        let config = try! SettingsConfig.settingsSlidingExpirationTypeError.getConfig()
+
+        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
+        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если тип в JSON не соответствует `Settings.SlidingExpiration`")
+        XCTAssertNil(config.slidingExpiration?.config)
+    }
+
+    func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetSlidingExpirationToNil() {
+        // Ключ `inappSessionTest` вместо `config`
+        let config = try! SettingsConfig.settingsSlidingExpirationConfigError.getConfig()
+
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если внутренний ключ `config` не найден")
+        XCTAssertNil(config.slidingExpiration?.config)
+    }
+
+    func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetSlidingExpirationToNil() {
+        // Тип `config` = Int вместо String
+        let config = try! SettingsConfig.settingsSlidingExpirationConfigTypeError.getConfig()
+
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если поле `config` имеет неверный тип")
+        XCTAssertNil(config.slidingExpiration?.config)
     }
 }

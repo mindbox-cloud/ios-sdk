@@ -47,6 +47,18 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
          displayUseCase: PresentationDisplayUseCase) {
         self.actionHandler = actionHandler
         self.displayUseCase = displayUseCase
+
+        addObserverToDismissInApp()
+    }
+
+    private func addObserverToDismissInApp() {
+        NotificationCenter.default.addObserver(
+            forName: .shouldDiscardInapps,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.displayUseCase.dismissInAppUIModel(onClose: { })
+        }
     }
 
     func present(
@@ -58,7 +70,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     ) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
-                onError(.failed("Self guard not passed."))
+                onError(.failed("[InAppPresentationManager] Self guard not passed."))
                 return
             }
 

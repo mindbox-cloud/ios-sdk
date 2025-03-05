@@ -10,125 +10,181 @@ import Foundation
 @testable import Mindbox
 
 final class InAppConfigStub {
-//    func getCategoryID_Substring() -> ConfigResponse {
-//        let categoryIdTargeting = CategoryIDTargeting(kind: .substring, value: "oot")
-//        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: FailableDecodableArray(getInapps(with: targeting)) , monitoring: nil, settings: settings)
-//    }
-//
-//    func getCategoryID_notSubstring() -> ConfigResponse {
-//        let categoryIdTargeting = CategoryIDTargeting(kind: .notSubstring, value: "oot")
-//        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getCategoryID_startWith() -> ConfigResponse {
-//        let categoryIdTargeting = CategoryIDTargeting(kind: .startsWith, value: "oot")
-//        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getCategoryID_endWith() -> ConfigResponse {
-//        let categoryIdTargeting = CategoryIDTargeting(kind: .endsWith, value: "ots")
-//        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getCategoryIDIn_Any() -> ConfigResponse {
-//        let categoryIdInTargeting = CategoryIDInTargeting(kind: .any,
-//                                                          values: [.init(id: "testik2", name: "System1C"),
-//                                                                   .init(id: "81", name: "TestSite")])
-//        let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getCategoryIDIn_None() -> ConfigResponse {
-//        let categoryIdInTargeting = CategoryIDInTargeting(kind: .none,
-//                                                          values: [.init(id: "testik2", name: "System1C"),
-//                                                                   .init(id: "81", name: "TestSite")])
-//        let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getInapps(with targeting: Targeting) -> [InApp] {
-//        return  [.init(id: "0",
-//                       sdkVersion: .init(min: 5, max: nil),
-//                       targeting: targeting,
-//                       form: getForm())]
-//    }
-//
-//    func getForm() -> InApp.InAppFormVariants {
-//        .init(variants: [.init(imageUrl: "https://example.com/image.jpg", redirectUrl: "2", intentPayload: "3", type: "simpleImage")])
-//    }
-//    func getProductID_Substring() -> ConfigResponse {
-//        let productIdTargeting = ProductIDTargeting(kind: .substring, value: "oot")
-//        let targeting = Targeting.viewProductId(productIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getProductID_notSubstring() -> ConfigResponse {
-//        let productIdTargeting = ProductIDTargeting(kind: .notSubstring, value: "oot")
-//        let targeting = Targeting.viewProductId(productIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getProductID_startsWith() -> ConfigResponse {
-//        let productIdTargeting = ProductIDTargeting(kind: .startsWith, value: "oot")
-//        let targeting = Targeting.viewProductId(productIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getProductID_endsWith() -> ConfigResponse {
-//        let productIdTargeting = ProductIDTargeting(kind: .endsWith, value: "ots")
-//        let targeting = Targeting.viewProductId(productIdTargeting)
-//        let settings = Settings(operations: .init(viewProduct: nil,
-//                                                                      viewCategory: .init(systemName: "Hello"),
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getProductSegment_Any() -> ConfigResponse {
-//        let productSegmentTargeting = ProductSegmentTargeting(kind: .positive, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
-//        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
-//        let settings = Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
-//                                                                      viewCategory: nil,
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
-//
-//    func getProductSegment_None() -> ConfigResponse {
-//        let productSegmentTargeting = ProductSegmentTargeting(kind: .negative, segmentationInternalId: "1", segmentationExternalId: "2", segmentExternalId: "3")
-//        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
-//        let settings = Settings(operations: .init(viewProduct: .init(systemName: "Hello"),
-//                                                                      viewCategory: nil,
-//                                                                      setCart: nil))
-//        return .init(inapps: getInapps(with: targeting), monitoring: nil, settings: settings)
-//    }
+
+    func getCategoryID_Substring() throws -> ConfigResponse {
+        let categoryIdTargeting = CategoryIDTargeting(kind: .substring, value: "oot")
+        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getCategoryID_notSubstring() throws -> ConfigResponse {
+        let categoryIdTargeting = CategoryIDTargeting(kind: .notSubstring, value: "oot")
+        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getCategoryID_startWith() throws -> ConfigResponse {
+        let categoryIdTargeting = CategoryIDTargeting(kind: .startsWith, value: "oot")
+        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getCategoryID_endWith() throws -> ConfigResponse {
+        let categoryIdTargeting = CategoryIDTargeting(kind: .endsWith, value: "ots")
+        let targeting = Targeting.viewProductCategoryId(categoryIdTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getCategoryIDIn_Any() throws -> ConfigResponse {
+        let categoryIdInTargeting = CategoryIDInTargeting(
+            kind: .any,
+            values: [
+                .init(id: "testik2", name: "System1C"),
+                .init(id: "81", name: "TestSite")
+            ]
+        )
+        let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getCategoryIDIn_None() throws -> ConfigResponse {
+        let categoryIdInTargeting = CategoryIDInTargeting(
+            kind: .none,
+            values: [.init(id: "testik2", name: "System1C"),
+                     .init(id: "81", name: "TestSite")
+            ]
+        )
+        let targeting = Targeting.viewProductCategoryIdIn(categoryIdInTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewCategory)
+    }
+
+    func getProductID_substring() throws -> ConfigResponse {
+        let productIDTargeting = ProductIDTargeting(kind: .substring, value: "oot")
+        let targeting = Targeting.viewProductId(productIDTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+
+    func getProductID_notSubstring() throws -> ConfigResponse {
+        let productIDTargeting = ProductIDTargeting(kind: .notSubstring, value: "oot")
+        let targeting = Targeting.viewProductId(productIDTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+
+    func getProductID_startWith() throws -> ConfigResponse {
+        let productIDTargeting = ProductIDTargeting(kind: .startsWith, value: "oot")
+        let targeting = Targeting.viewProductId(productIDTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+
+    func getProductID_endWith() throws -> ConfigResponse {
+        let productIDTargeting = ProductIDTargeting(kind: .endsWith, value: "ots")
+        let targeting = Targeting.viewProductId(productIDTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+
+    func getProductSegment_Positive() throws -> ConfigResponse {
+        let productSegmentTargeting = ProductSegmentTargeting(kind: .positive,
+                                                         segmentationInternalId: "1",
+                                                         segmentationExternalId: "2",
+                                                         segmentExternalId: "3")
+        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+
+    func getProductSegment_Negative() throws -> ConfigResponse {
+        let productSegmentTargeting = ProductSegmentTargeting(kind: .negative,
+                                                         segmentationInternalId: "1",
+                                                         segmentationExternalId: "2",
+                                                         segmentExternalId: "3")
+        let targeting = Targeting.viewProductSegment(productSegmentTargeting)
+        return try createConfigResponse(targeting: targeting, operationType: .viewProduct)
+    }
+}
+
+extension InAppConfigStub {
+
+    enum OperationType: String {
+        case viewProduct
+        case viewCategory
+    }
+
+    func createConfigResponse(targeting: Targeting, operationType: OperationType) throws -> ConfigResponse {
+        let settings = Settings(
+            operations: .init(
+                viewProduct: operationType == .viewProduct ? .init(systemName: operationType.rawValue) : nil,
+                viewCategory: operationType == .viewCategory ? .init(systemName: operationType.rawValue) : nil,
+                setCart: nil
+            ),
+            ttl: nil, slidingExpiration: nil
+        )
+        return ConfigResponse(
+            inapps: FailableDecodableArray(elements: try getInappDTO(with: targeting)),
+            monitoring: nil,
+            settings: settings,
+            abtests: nil
+        )
+    }
+
+    private func getInappDTO(with targeting: Targeting) throws -> [InAppDTO] {
+        return [InAppDTO(id: "1",
+                         sdkVersion: .init(min: 8, max: nil),
+                         frequency: .once(.init(kind: .session)),
+                         targeting: targeting,
+                         form: try getForm())]
+    }
+
+    private func getForm() throws -> InAppFormDTO {
+        let jsonString = """
+        {
+          "variants": [
+            {
+              "content": {
+                "background": {
+                  "layers": [
+                    {
+                      "action": {
+                        "intentPayload": "",
+                        "value": "",
+                        "$type": "redirectUrl"
+                      },
+                      "source": {
+                        "value": "https://google.png",
+                        "$type": "url"
+                      },
+                      "$type": "image"
+                    }
+                  ]
+                },
+                "position": {
+                  "margin": {
+                    "kind": "dp",
+                    "top": 0.0,
+                    "right": 20.0,
+                    "left": 20.0,
+                    "bottom": 0.0
+                  },
+                  "gravity": {
+                    "horizontal": "center",
+                    "vertical": "top"
+                  }
+                },
+                "elements": []
+              },
+              "imageUrl": "",
+              "redirectUrl": "",
+              "intentPayload": "",
+              "$type": "snackbar"
+            }
+          ]
+        }
+        """
+
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            fatalError("Не удалось преобразовать строку JSON в Data")
+        }
+
+        let decoder = JSONDecoder()
+        let formDTO = try decoder.decode(InAppFormDTO.self, from: jsonData)
+        return formDTO
+    }
 }

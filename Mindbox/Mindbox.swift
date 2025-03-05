@@ -161,7 +161,7 @@ public class Mindbox: NSObject {
         let token = deviceToken
             .map { String(format: "%02.2hhx", $0) }
             .joined()
-        Logger.common(message: "Did register for remote notifications with token: \(token)", level: .info, category: .notification)
+        Logger.common(message: "Did register for remote notifications with device token: \(token)", level: .info, category: .notification)
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
 
             if persistenceStorage?.needUpdateInfoOnce ?? true {
@@ -171,7 +171,7 @@ public class Mindbox: NSObject {
             }
 
             guard persistenceAPNSToken != token else {
-                Logger.common(message: "persistenceAPNSToken is equal to deviceToken. persistenceAPNSToken: \(persistenceAPNSToken)", level: .error, category: .notification)
+                Logger.common(message: "APNS token hasn't changed", level: .error, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)
@@ -260,7 +260,7 @@ public class Mindbox: NSObject {
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
 
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
+        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -288,7 +288,7 @@ public class Mindbox: NSObject {
         }
         let customEvent = CustomEvent(name: operationSystemName, payload: json)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
+        sendCustomEventInapps(operationSystemName, jsonString: json)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -319,7 +319,7 @@ public class Mindbox: NSObject {
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         let eventRepository = DI.injectOrFail(EventRepository.self)
         eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
+        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -349,7 +349,7 @@ public class Mindbox: NSObject {
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         let eventRepository = DI.injectOrFail(EventRepository.self)
         eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: json)
+        sendCustomEventInapps(operationSystemName, jsonString: json)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -379,7 +379,7 @@ public class Mindbox: NSObject {
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
         let eventRepository = DI.injectOrFail(EventRepository.self)
         eventRepository.send(type: P.self, event: event, completion: completion)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
+        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
         Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
     }
 
@@ -403,7 +403,7 @@ public class Mindbox: NSObject {
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendEventToInAppMessagesIfNeeded(operationSystemName, jsonString: operationBodyJSON)
+        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
         do {
             try databaseRepository?.create(event: event)
             Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
@@ -555,10 +555,12 @@ public class Mindbox: NSObject {
         coreController = DI.injectOrFail(CoreController.self)
     }
 
-    private func sendEventToInAppMessagesIfNeeded(_ operationSystemName: String, jsonString: String?) {
+    private func sendCustomEventInapps(_ operationSystemName: String, jsonString: String?) {
         guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
             return
         }
+
+        Logger.common(message: "[Mindbox] Send event to InApp messages if needed. Operation system name: \(operationSystemName)", category: .inAppMessages)
 
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }

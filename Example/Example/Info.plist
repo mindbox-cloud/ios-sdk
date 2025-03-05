@@ -2,8 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver personalized ads to you.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>cloud.MindBox.$(PRODUCT_BUNDLE_IDENTIFIER).GDAppRefresh</string>
+		<string>cloud.MindBox.$(PRODUCT_BUNDLE_IDENTIFIER).GDAppProcessing</string>
+		<string>cloud.MindBox.$(PRODUCT_BUNDLE_IDENTIFIER).DBCleanAppProcessing</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

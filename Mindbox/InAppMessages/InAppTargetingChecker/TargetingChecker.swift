@@ -29,6 +29,10 @@ protocol TargetingCheckerActionProtocol: AnyObject {
     func check(targeting: Targeting) -> Bool
 }
 
+protocol TargetingCheckerEraseProtocol: AnyObject {
+    func eraseCache()
+}
+
 class CheckerFunctions {
     var prepare: (_ id: String, inout PreparationContext) -> Void = { _, _ in }
     var check: () -> Bool = { false }
@@ -41,7 +45,7 @@ class CheckerFunctions {
     init() {}
 }
 
-protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap, TargetingCheckerPersistenceStorageProtocol { }
+protocol InAppTargetingCheckerProtocol: TargetingCheckerContextProtocol, TargetingCheckerActionProtocol, TargetingCheckerMap, TargetingCheckerPersistenceStorageProtocol, TargetingCheckerEraseProtocol { }
 
 final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
 
@@ -75,6 +79,15 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         }
 
         return target(targeting).check()
+    }
+    
+    func eraseCache() {
+        context = PreparationContext()
+        checkedSegmentations = nil
+        checkedProductSegmentations = nil
+        geoModels = nil
+        event = nil
+        Logger.common(message: "[TargetingChecker] Erased.")
     }
 
     private func setupCheckerMap() {

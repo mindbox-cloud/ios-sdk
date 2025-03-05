@@ -15,7 +15,6 @@ protocol UserVisitManagerProtocol {
 
 final class UserVisitManager {
     private let persistenceStorage: PersistenceStorage
-    private var isVisitSaved: Bool = false
 
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
@@ -26,12 +25,12 @@ final class UserVisitManager {
 
 extension UserVisitManager: UserVisitManagerProtocol {
     func saveUserVisit() {
-        guard !isVisitSaved else {
+        guard !SessionTemporaryStorage.shared.isUserVisitSaved else {
             Logger.common(message: "Skip changing userVisit because it is already saved", level: .info, category: .visit)
             return
         }
 
-        isVisitSaved = true
+        SessionTemporaryStorage.shared.isUserVisitSaved = true
 
         var previousUserVisitCount = persistenceStorage.userVisitCount ?? UVMConstants.noAppVisits
 

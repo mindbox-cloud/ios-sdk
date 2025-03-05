@@ -25,7 +25,9 @@ class InappMapper: InappMapperProtocol {
 
     private var shownInappIDWithHashValue: [String: Int] = [:]
     private var abTests: [ABTest]?
-
+    
+    private let processingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.processingQueue")
+    
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
          dataFacade: InAppConfigurationDataFacadeProtocol) {
@@ -37,19 +39,28 @@ class InappMapper: InappMapperProtocol {
     func handleInapps(_ event: ApplicationEvent?,
                       _ response: ConfigResponse,
                       _ completion: @escaping (InAppFormData?) -> Void) {
-        setupEnvironment(event: event)
-        abTests = response.abtests
-        let filteredInapps = getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
-        prepareTargetingChecker(for: filteredInapps)
-        prepareForRemainingTargeting()
-        chooseInappToShow(filteredInapps: filteredInapps) { formData in
-            completion(formData)
-            self.sendRemainingInappsTargeting()
+        processingQueue.async {
+            let group = DispatchGroup()
+            group.enter()
+            
+            self.setupEnvironment(event: event)
+            self.abTests = response.abtests
+            let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
+            self.prepareTargetingChecker(for: filteredInapps)
+            self.prepareForRemainingTargeting()
+            self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
+                self.sendRemainingInappsTargeting {
+                    completion(formData)
+                    group.leave()
+                }
+            }
+            
+            group.wait()
         }
     }
 
     private func setupEnvironment(event: ApplicationEvent?) {
-        Logger.common(message: "Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
+        Logger.common(message: "[InappMapper] Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
         applicationEvent = event
         targetingChecker.event = event
     }
@@ -132,6 +143,7 @@ class InappMapper: InappMapperProtocol {
             for inapp in inapps {
 
                 guard formData == nil else {
+                    Logger.common(message: "[InappMapper] formData is nil", level: .debug, category: .inAppMessages)
                     break
                 }
 
@@ -139,16 +151,17 @@ class InappMapper: InappMapperProtocol {
                 var gotError = false
 
                 if self.inappFilterService.shownInAppDictionary[inapp.inAppId] != nil {
+                    Logger.common(message: "[InappMapper] In-app message with ID '\(inapp.inAppId)' has already been shown. Skipping", level: .debug, category: .inAppMessages)
                     continue
                 }
 
                 let urlExtractorService = DI.injectOrFail(VariantImageUrlExtractorServiceProtocol.self)
                 let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
 
-                Logger.common(message: "Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 for imageValue in imageValues {
                     group.enter()
-                    Logger.common(message: "Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
+                    Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
                     self.dataFacade.downloadImage(withUrl: imageValue) { result in
                         defer {
                             group.leave()
@@ -194,13 +207,13 @@ class InappMapper: InappMapperProtocol {
         return applicationEvent?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
     }
 
-    func sendRemainingInappsTargeting() {
+    func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
         self.dataFacade.fetchDependencies(model: applicationEvent?.model) {
             let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.getOperationInappsByEvent()
             let suitableInapps = self.filterByInappsEvents(inapps: inapps)
 
             let logMessage = """
-            TR | Initiating processing of remaining in-app targeting requests.
+            [InappMapper] TR | Initiating processing of remaining in-app targeting requests.
                  Full list of in-app messages: \(self.inappFilterService.validInapps.map { $0.id })
                  Saved event for targeting: \(self.applicationEvent?.name ?? "None")
             """
@@ -213,6 +226,8 @@ class InappMapper: InappMapperProtocol {
                        self.dataFacade.trackTargeting(id: inapp.id)
                 }
             }
+            
+            completion()
         }
     }
 }
