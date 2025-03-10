@@ -49,6 +49,8 @@ class InappMapper: InappMapperProtocol {
             self.prepareTargetingChecker(for: filteredInapps)
             self.prepareForRemainingTargeting()
             self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
+                Logger.common(message: "🟡 Done with id: \(formData?.inAppId)")
+                
                 self.sendRemainingInappsTargeting {
                     completion(formData)
                     group.leave()
@@ -60,7 +62,7 @@ class InappMapper: InappMapperProtocol {
     }
 
     private func setupEnvironment(event: ApplicationEvent?) {
-        Logger.common(message: "[InappMapper] Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
+        Logger.common(message: "[InappMapper] 🟢 Start handingInapps by event: \(event?.name ?? "start")", level: .debug, category: .inAppMessages)
         applicationEvent = event
         targetingChecker.event = event
     }
@@ -86,6 +88,7 @@ class InappMapper: InappMapperProtocol {
             let suitableInapps = self.filterByInappsEvents(inapps: inapps)
 
             if suitableInapps.isEmpty {
+                Logger.common(message: "❌ Suitable inapps nil. Return nil")
                 completion(nil)
                 return
             }
@@ -116,8 +119,9 @@ class InappMapper: InappMapperProtocol {
         var filteredInAppsByEvent: [InAppTransitionData] = []
 
         for inapp in inapps {
-
+            Logger.common(message: "[STC] ID: \(inapp.id)", level: .info)
             guard targetingChecker.check(targeting: inapp.targeting) else {
+                Logger.common(message: "❌ Continue filterByInappsEvents id: \(inapp.id)", level: .info)
                 continue
             }
 
