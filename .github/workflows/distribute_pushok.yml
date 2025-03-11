@@ -2,18 +2,22 @@ name: Distribute PushOk
 
 on:
   pull_request:
-    types: [ closed ]
+    types: [ closed, synchronize ]
     branches:
       - develop
   workflow_run:
     workflows: ["Prepare release branch"]
     types:
       - completed
+  push:
+    branches:
+      - release/*.*.*
+      - support/*.*.*
 
 jobs:
   distribution:
     if: github.event.pull_request.merged == true ||
-        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'push')
     runs-on: macos-15
     steps:
       - name: Checkout repository
