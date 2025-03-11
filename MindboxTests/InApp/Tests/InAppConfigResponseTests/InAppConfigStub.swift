@@ -117,6 +117,14 @@ extension InAppConfigStub {
             ),
             ttl: nil, slidingExpiration: nil
         )
+        
+        switch operationType {
+        case .viewProduct:
+            SessionTemporaryStorage.shared.viewProductOperation = operationType.rawValue
+        case .viewCategory:
+            SessionTemporaryStorage.shared.viewCategoryOperation = operationType.rawValue
+        }
+        
         return ConfigResponse(
             inapps: FailableDecodableArray(elements: try getInappDTO(with: targeting)),
             monitoring: nil,

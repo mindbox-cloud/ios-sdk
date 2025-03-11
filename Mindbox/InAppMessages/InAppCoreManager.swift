@@ -148,7 +148,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     
     private func shouldHandleCustomOperation(_ operationName: String) -> Bool {
         return SessionTemporaryStorage.shared.customOperations.contains(operationName)
-        || SessionTemporaryStorage.shared.operationsFromSettings.contains(operationName)
+        || SessionTemporaryStorage.shared.viewProductOperation?.contains(operationName) ?? false
+        || SessionTemporaryStorage.shared.viewCategoryOperation?.contains(operationName) ?? false
     }
 
     private func onReceivedInAppResponse(inapp: InAppFormData?, completion: @escaping () -> Void) {

@@ -15,7 +15,8 @@ final class SessionTemporaryStorage {
     public static let shared = SessionTemporaryStorage()
 
     var observedCustomOperations: Set<String> = []
-    var operationsFromSettings: Set<String> = []
+    var viewProductOperation: String?
+    var viewCategoryOperation: String?
     var geoRequestCompleted = false
     var checkSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
@@ -37,12 +38,13 @@ final class SessionTemporaryStorage {
     private init() {}
 
     var customOperations: Set<String> {
-        return observedCustomOperations.union(operationsFromSettings)
+        observedCustomOperations.union([viewCategoryOperation, viewProductOperation].compactMap { $0 })
     }
 
     func erase() {
         observedCustomOperations = []
-        operationsFromSettings = []
+        viewProductOperation = nil
+        viewCategoryOperation = nil
         geoRequestCompleted = false
         checkSegmentsRequestCompleted = false
         isPresentingInAppMessage = false

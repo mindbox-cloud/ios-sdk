@@ -32,6 +32,11 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
         self.targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         self.stub = InAppConfigStub()
     }
+    
+    override func tearDown() {
+        super.tearDown()
+        SessionTemporaryStorage.shared.erase()
+    }
 
     // Первый инапп не подходит по версии SDK.
     @available(iOS 13.0, *)

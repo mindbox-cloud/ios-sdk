@@ -12,8 +12,9 @@ final class ProductIDChecker: InternalTargetingChecker<ProductIDTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
 
     override func prepareInternal(id: String, targeting: ProductIDTargeting, context: inout PreparationContext) {
-        let key = "viewProduct".lowercased()
-        context.operationInapps[key, default: []].insert(id)
+        if let key = SessionTemporaryStorage.shared.viewProductOperation {
+            context.operationInapps[key.lowercased(), default: []].insert(id)
+        }
     }
 
     override func checkInternal(targeting: ProductIDTargeting) -> Bool {
