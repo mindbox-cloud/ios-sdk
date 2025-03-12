@@ -111,19 +111,16 @@ extension InAppConfigStub {
     func createConfigResponse(targeting: Targeting, operationType: OperationType) throws -> ConfigResponse {
         let settings = Settings(
             operations: .init(
-                viewProduct: operationType == .viewProduct ? .init(systemName: operationType.rawValue) : nil,
-                viewCategory: operationType == .viewCategory ? .init(systemName: operationType.rawValue) : nil,
+                viewProduct: operationType == .viewProduct ? .init(systemName: "Mobile.ViewProduct") : nil,
+                viewCategory: operationType == .viewCategory ? .init(systemName: "Mobile.ViewCategory") : nil,
                 setCart: nil
             ),
             ttl: nil, slidingExpiration: nil
         )
         
-        switch operationType {
-        case .viewProduct:
-            SessionTemporaryStorage.shared.viewProductOperation = operationType.rawValue
-        case .viewCategory:
-            SessionTemporaryStorage.shared.viewCategoryOperation = operationType.rawValue
-        }
+        // Mock method setupSettingsFromConfig.
+        SessionTemporaryStorage.shared.viewProductOperation = "Mobile.ViewProduct"
+        SessionTemporaryStorage.shared.viewCategoryOperation = "Mobile.ViewCategory"
         
         return ConfigResponse(
             inapps: FailableDecodableArray(elements: try getInappDTO(with: targeting)),
