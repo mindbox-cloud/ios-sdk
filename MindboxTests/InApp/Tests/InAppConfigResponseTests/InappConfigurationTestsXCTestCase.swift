@@ -32,6 +32,11 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
         self.targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         self.stub = InAppConfigStub()
     }
+    
+    override func tearDown() {
+        super.tearDown()
+        SessionTemporaryStorage.shared.erase()
+    }
 
     // Первый инапп не подходит по версии SDK.
     @available(iOS 13.0, *)
@@ -127,7 +132,7 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
     @available(iOS 13.0, *)
     func testCategoryIDSubstringTrue() async throws {
         let response = try stub.getCategoryID_Substring()
-        let event = ApplicationEvent(name: "viewCategory", model: .init(viewProductCategory: .init(productCategory: .init(ids: [
+        let event = ApplicationEvent(name: "Mobile.viewCategory", model: .init(viewProductCategory: .init(productCategory: .init(ids: [
             "System1C": "Boots".uppercased(),
             "TestSite": "81".uppercased()
         ]))))
@@ -144,7 +149,7 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
     @available(iOS 13.0, *)
     func testProductIDSubstringTrue() async throws {
         let response = try stub.getProductID_substring()
-        let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
+        let event = ApplicationEvent(name: "Mobile.viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "Boots".uppercased(),
             "system1c": "81".uppercased()
         ]))))
@@ -161,7 +166,7 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
     @available(iOS 13.0, *)
     func testProductSegmentPositiveTrue() async throws {
         let response = try stub.getProductSegment_Positive()
-        let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
+        let event = ApplicationEvent(name: "Mobile.viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
         ]))))
 
@@ -187,7 +192,7 @@ final class InappConfigurationTestsXCTestCase: XCTestCase {
     @available(iOS 13.0, *)
     func testProductSegmentNegativeTrue() async throws {
         let response = try stub.getProductSegment_Negative()
-        let event = ApplicationEvent(name: "viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
+        let event = ApplicationEvent(name: "Mobile.viewProduct", model: .init(viewProduct: .init(product: .init(ids: [
             "website": "49"
         ]))))
 
