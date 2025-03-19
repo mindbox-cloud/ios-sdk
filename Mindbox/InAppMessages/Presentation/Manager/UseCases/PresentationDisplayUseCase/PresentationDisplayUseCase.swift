@@ -86,6 +86,9 @@ final class PresentationDisplayUseCase {
             case .snackbar:
                 self.presentationStrategy = SnackbarPresentationStrategy()
                 self.factory = SnackbarViewFactory()
+            case .webview:
+                self.presentationStrategy = WebviewPresentationStrategy()
+                self.factory = WebViewFactory()
             default:
                 break
         }

@@ -13,6 +13,7 @@ protocol iFormVariant: Decodable, Equatable { }
 enum MindboxFormVariantType: String, Decodable {
     case modal
     case snackbar
+    case webview
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -25,6 +26,7 @@ enum MindboxFormVariantType: String, Decodable {
 enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
     case modal(ModalFormVariantDTO)
     case snackbar(SnackbarFormVariantDTO)
+    case webview(WebviewFormVariantDTO)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +37,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
         switch (lhs, rhs) {
             case (.modal, .modal): return true
             case (.snackbar, .snackbar): return true
+            case (.webview, .webview): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -44,6 +47,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
         switch self {
             case .modal: hasher.combine("modal")
             case .snackbar: hasher.combine("snackbar")
+            case .webview: hasher.combine("webview")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -64,6 +68,9 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
             case .snackbar:
                 let snackbarVariant = try variantContainer.decode(SnackbarFormVariantDTO.self)
                 self = .snackbar(snackbarVariant)
+            case .webview:
+                let webviewVariant = try variantContainer.decode(WebviewFormVariantDTO.self)
+                self = .webview(webviewVariant)
             case .unknown:
                 self = .unknown
         }
@@ -73,6 +80,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
 enum MindboxFormVariant: Decodable, Hashable, Equatable {
     case modal(ModalFormVariant)
     case snackbar(SnackbarFormVariant)
+    case webview(WebviewFormVariant)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -83,6 +91,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
         switch (lhs, rhs) {
             case (.modal, .modal): return true
             case (.snackbar, .snackbar): return true
+            case (.webview, .webview): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -92,6 +101,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
         switch self {
             case .modal: hasher.combine("modal")
             case .snackbar: hasher.combine("snackbar")
+            case .webview: hasher.combine("webview")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -112,6 +122,9 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
             case .snackbar:
                 let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
                 self = .snackbar(snackbarVariant)
+            case .webview:
+                let webviewVariant = try variantContainer.decode(WebviewFormVariant.self)
+                self = .webview(webviewVariant)
             case .unknown:
                 self = .unknown
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
@@ -120,7 +133,11 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
 }
 
 extension MindboxFormVariant {
-    init(type: MindboxFormVariantType, modalVariant: ModalFormVariant? = nil, snackbarVariant: SnackbarFormVariant? = nil) throws {
+    init(type: MindboxFormVariantType,
+         modalVariant: ModalFormVariant? = nil,
+         snackbarVariant: SnackbarFormVariant? = nil,
+         webviewVariant: WebviewFormVariant? = nil
+    ) throws {
         switch type {
         case .modal:
             guard let modalVariant = modalVariant else {
@@ -133,6 +150,12 @@ extension MindboxFormVariant {
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
             }
             self = .snackbar(snackbarVariant)
+            
+        case .webview:
+            guard let webviewVariant = webviewVariant else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+            self = .webview(webviewVariant)
 
         case .unknown:
             self = .unknown

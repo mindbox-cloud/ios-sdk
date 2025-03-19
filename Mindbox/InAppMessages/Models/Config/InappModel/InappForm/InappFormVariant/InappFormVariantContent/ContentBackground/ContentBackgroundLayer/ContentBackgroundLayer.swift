@@ -12,6 +12,7 @@ protocol ContentBackgroundLayerProtocol: Decodable, Equatable { }
 
 enum ContentBackgroundLayerType: String, Decodable {
     case image
+    case webview
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -23,6 +24,7 @@ enum ContentBackgroundLayerType: String, Decodable {
 
 enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
     case image(ImageContentBackgroundLayerDTO)
+    case webview(WebviewContentBackgroundLayerDTO)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -32,6 +34,7 @@ enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
     static func == (lhs: ContentBackgroundLayerDTO, rhs: ContentBackgroundLayerDTO) -> Bool {
         switch (lhs, rhs) {
             case (.image, .image): return true
+            case (.webview, .webview): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -40,6 +43,7 @@ enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
     func hash(into hasher: inout Hasher) {
         switch self {
             case .image: hasher.combine("image")
+            case .webview: hasher.combine("webview")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -57,6 +61,9 @@ enum ContentBackgroundLayerDTO: Decodable, Hashable, Equatable {
             case .image:
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayerDTO.self)
                 self = .image(imageLayer)
+            case .webview:
+                let webviewLayer = try layerContainer.decode(WebviewContentBackgroundLayerDTO.self)
+                self = .webview(webviewLayer)
             case .unknown:
                 self = .unknown
         }
@@ -68,6 +75,8 @@ extension ContentBackgroundLayerDTO {
         switch self {
             case .image:
                 return .image
+            case .webview:
+                return .webview
             case .unknown:
                 return .unknown
         }
@@ -76,6 +85,7 @@ extension ContentBackgroundLayerDTO {
 
 enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
     case image(ImageContentBackgroundLayer)
+    case webview(WebviewContentBackgroundLayer)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -93,6 +103,7 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
     func hash(into hasher: inout Hasher) {
         switch self {
             case .image: hasher.combine("image")
+            case .webview: hasher.combine("webview")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -110,6 +121,9 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
             case .image:
                 let imageLayer = try layerContainer.decode(ImageContentBackgroundLayer.self)
                 self = .image(imageLayer)
+            case .webview:
+                let webviewLayer = try layerContainer.decode(WebviewContentBackgroundLayer.self)
+                self = .webview(webviewLayer)
             case .unknown:
                 self = .unknown
         }
@@ -121,6 +135,8 @@ extension ContentBackgroundLayer {
         switch self {
             case .image:
                 return .image
+            case .webview:
+                return .webview
             case .unknown:
                 return .unknown
         }
@@ -128,13 +144,18 @@ extension ContentBackgroundLayer {
 }
 
 extension ContentBackgroundLayer {
-    init(type: ContentBackgroundLayerType, imageLayer: ImageContentBackgroundLayer? = nil) throws {
+    init(type: ContentBackgroundLayerType, layer: (any ContentBackgroundLayerProtocol)? = nil) throws {
         switch type {
         case .image:
-            guard let imageLayer = imageLayer else {
+            guard let imageLayer = layer as? ImageContentBackgroundLayer else {
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
             }
-                self = .image(imageLayer)
+            self = .image(imageLayer)
+        case .webview:
+            guard let webviewLayer = layer as? WebviewContentBackgroundLayer else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+            self = .webview(webviewLayer)
         case .unknown:
             self = .unknown
         }

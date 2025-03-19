@@ -2,30 +2,32 @@
 //  ModalViewController.swift
 //  Mindbox
 //
-//  Created by Максим Казаков on 07.09.2022.
+//  Created by Egor Kitselyuk on 19.03.2025.
 //
 
 import UIKit
 import MindboxLogger
 
-protocol InappViewControllerProtocol {
+protocol WebViewControllerProtocol {
     var layers: [UIView] { get set }
     var elements: [UIView] { get set }
     var elementFactories: [ContentElementType: ElementFactory] { get }
     var layersFactories: [ContentBackgroundLayerType: LayerFactory] { get }
 }
 
-@objc
-protocol GestureHandler {
 
-    @objc
-    func imageTapped(_ sender: UITapGestureRecognizer)
-
-    @objc
-    func onCloseButton(_ gesture: UILongPressGestureRecognizer)
+protocol WebVCDelegate: AnyObject {
+    func closeVC()
 }
 
-final class ModalViewController: UIViewController, InappViewControllerProtocol {
+extension WebViewController: WebVCDelegate {
+    func closeVC() {
+        print(#function)
+        onClose()
+    }
+}
+
+final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: InappViewControllerProtocol
 
@@ -36,13 +38,12 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     ]
 
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
-        .image: ImageLayerFactory(),
-        .webview: ImageLayerFactory()
+        .image: ImageLayerFactory()
     ]
 
     // MARK: Private properties
 
-    private let model: ModalFormVariant
+    private let model: WebviewFormVariant
     private let id: String
     private let imagesDict: [String: UIImage]
 
@@ -53,13 +54,15 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     private var viewWillAppearWasCalled = false
 
     private enum Constants {
-        static let defaultAlphaBackgroundColor: CGFloat = 0.2
+        static let defaultAlphaBackgroundColor: CGFloat = 0.0
     }
+
+    private var transparentWebView: TransparentWebView?
 
     // MARK: Init
 
     init(
-        model: ModalFormVariant,
+        model: WebviewFormVariant,
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
@@ -79,6 +82,54 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        print("DEINIT ModalVC")
+        transparentWebView?.cleanUp()
+    }
+
+    private func setupWebView() {
+        let webView = TransparentWebView()
+        view.addSubview(webView)
+
+        setupConstraints(for: webView, in: view)
+        
+        guard let layer = model.content.background.layers.first else {
+            closeVC()
+            return
+        }
+
+        switch layer {
+        case .webview(let webviewLayer):
+            webView.delegate = self
+            webView.loadHTMLPage(
+                baseUrl: webviewLayer.baseUrl,
+                contentUrl: webviewLayer.contentUrl
+            )
+
+            self.transparentWebView = webView
+        default:
+            closeVC()
+            return
+        }
+
+    }
+
+    private func setupConstraints(for view: UIView, in parentView: UIView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.heightAnchor.constraint(equalToConstant:  UIScreen.main.bounds.height).isActive = true
+        NSLayoutConstraint.activate([
+//            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 20),
+//            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -20),
+            view.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
+        
+            
+            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 0),
+            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -00),
+            view.bottomAnchor.constraint(equalTo: parentView.bottomAnchor),
+            view.widthAnchor.constraint(equalTo: parentView.widthAnchor, multiplier: 1)
+        ])
+    }
+
     // MARK: Life cycle
 
     override func viewDidLoad() {
@@ -90,8 +141,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         )
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
-
-        setupLayers()
+        setupWebView()
     }
 
     override func viewDidLayoutSubviews() {
@@ -124,45 +174,17 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupLayers() {
-        let layers = model.content.background.layers
-        for layer in layers {
-            if let factory = layersFactories[layer.layerType] {
-                if case .image(let imageContentBackgroundLayer) = layer {
-                    if case .url(let urlModel) = imageContentBackgroundLayer.source, let image = imagesDict[urlModel.value] {
-                        let layerView = factory.create(from: image, layer: layer, in: view, with: self)
-                        if let layerView = layerView {
-                            self.layers.append(layerView)
-                            view.addSubview(layerView)
-                            factory.setupConstraints(for: layerView, in: view)
-                        }
-                    }
-                }
-            }
-        }
+   
     }
 
     private func setupElements() {
-        guard let elements = model.content.elements,
-              let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
-            return
-        }
-
-        for element in elements {
-            if let factory = elementFactories[element.elementType] {
-                let elementView = factory.create(from: element, with: self)
-                if let elementView = elementView {
-                    self.elements.append(elementView)
-                    view.addSubview(elementView)
-                    factory.setupConstraints(for: elementView, from: element, in: inappView)
-                }
-            }
-        }
+        
     }
 }
 
 // MARK: - GestureHandler
 
-extension ModalViewController: GestureHandler {
+extension WebViewController: GestureHandler {
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? InAppImageOnlyView else {
