@@ -23,10 +23,11 @@ public class MBLoggerCoreDataManager {
     private var logBuffer: [LogMessage]
     private let isAppExtension: Bool
     private let queue: DispatchQueue
+    private var previousDBSize: Int?
 
     private var writeCount = 0 {
         didSet {
-            if writeCount > Constants.operationBatchLimitBeforeNeedToDelete {
+            if writeCount > Constants.operationBatchLimitBeforeNeedToDelete && !isAppExtension {
                 writeCount = 0
                 checkDatabaseSizeAndDeleteIfNeeded()
             }
@@ -76,7 +77,7 @@ public class MBLoggerCoreDataManager {
 
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-        storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
+        storeDescription.setValue(250 as NSObject, forPragmaNamed: "wal_autocheckpoint") // Write WAL to main sqlite file every 1MB - 250 * pageSize 4KB = 1000 KB 
         container.persistentStoreDescriptions = [storeDescription]
         container.loadPersistentStores { _, error in
             if let error = error {
@@ -102,6 +103,7 @@ public class MBLoggerCoreDataManager {
         self.logBuffer.reserveCapacity(Constants.batchSize)
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
         setupNotificationCenterObservers()
+        setupPreviousDatabaseSize()
     }
 }
 
@@ -124,11 +126,13 @@ public extension MBLoggerCoreDataManager {
 
     private func writeBufferToCoreData() {
         guard !logBuffer.isEmpty else { return }
-
-        if #available(iOS 13.0, *) {
-            performBatchInsert()
-        } else {
-            performContextInsertion()
+        
+        context.executePerformAndWait {
+            if #available(iOS 13.0, *) {
+                performBatchInsert()
+            } else {
+                performContextInsertion()
+            }
         }
     }
 
@@ -221,10 +225,14 @@ public extension MBLoggerCoreDataManager {
                 NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
             }
 
-            Logger.common(message: "\(limit) logs have been deleted", level: .debug, category: .general)
+            Logger.common(message: "Out of \(count) logs, \(limit) were deleted", level: .debug, category: .general)
         }
     }
+}
 
+// MARK: - Only for debug
+
+public extension MBLoggerCoreDataManager {
     func deleteAll() throws {
         self.logBuffer.removeAll()
         try context.executePerformAndWait {
@@ -277,19 +285,17 @@ private extension MBLoggerCoreDataManager {
 private extension MBLoggerCoreDataManager {
     func performContextInsertion() {
         do {
-            try context.executePerformAndWait {
-                for log in self.logBuffer {
-                    let entity = CDLogMessage(context: self.context)
-                    entity.message = log.message
-                    entity.timestamp = log.timestamp
-                }
-
-                try self.saveEvent(withContext: self.context)
-                logBuffer.removeAll()
-                writeCount += 1
+            for log in self.logBuffer {
+                let entity = CDLogMessage(context: self.context)
+                entity.message = log.message
+                entity.timestamp = log.timestamp
             }
+            
+            try self.saveEvent(withContext: self.context)
+            logBuffer.removeAll()
+            writeCount += 1
         } catch {
-            let errorMessage = "Failed to batch insert logs: \(error.localizedDescription)"
+            let errorMessage = "Failed to save context with batch logs: \(error.localizedDescription)"
             let errorLogEntity = CDLogMessage(context: self.context)
             errorLogEntity.message = errorMessage
             errorLogEntity.timestamp = Date()
@@ -323,12 +329,22 @@ private extension MBLoggerCoreDataManager {
 // MARK: - Auxiliary private functions for checking the size of the database
 
 private extension MBLoggerCoreDataManager {
+    func setupPreviousDatabaseSize() {
+        queue.async {
+            self.previousDBSize = self.getDBFileSize() 
+        }
+    }
+    
     func checkDatabaseSizeAndDeleteIfNeeded() {
-        if getDBFileSize() > Constants.dbSizeLimitKB {
+        let currentDBFileSize = getDBFileSize()
+        
+        if currentDBFileSize > Constants.dbSizeLimitKB && previousDBSize != currentDBFileSize {
             do {
                 try deleteTenPercentOfAllOldRecords()
             } catch { }
         }
+        
+        previousDBSize = currentDBFileSize
     }
 
     func getDBFileSize() -> Int {
