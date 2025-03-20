@@ -1,0 +1,16 @@
+name: PushOk (Release/Support PR)
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  call-reusable:
+    if: ${{ startsWith(github.event.pull_request.head.ref, 'release/') || startsWith(github.event.pull_request.head.ref, 'support/') }}
+    uses: ./.github/workflows/distribute-reusable.yml
+    secrets: inherit
+ 

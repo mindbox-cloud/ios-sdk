@@ -13,8 +13,9 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
     weak var checker: TargetingCheckerContextProtocol?
 
     override func prepareInternal(id: String, targeting: ProductSegmentTargeting, context: inout PreparationContext) {
-        let key = "viewProduct".lowercased()
-        context.operationInapps[key, default: []].insert(id)
+        if let key = SessionTemporaryStorage.shared.viewProductOperation {
+            context.operationInapps[key.lowercased(), default: []].insert(id)
+        }
         context.productSegments.append(targeting.segmentationExternalId)
     }
 

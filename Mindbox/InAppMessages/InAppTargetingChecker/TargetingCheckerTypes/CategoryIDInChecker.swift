@@ -12,8 +12,9 @@ final class CategoryIDInChecker: InternalTargetingChecker<CategoryIDInTargeting>
     weak var checker: TargetingCheckerContextProtocol?
 
     override func prepareInternal(id: String, targeting: CategoryIDInTargeting, context: inout PreparationContext) {
-        let key = "viewCategory".lowercased()
-        context.operationInapps[key, default: []].insert(id)
+        if let key = SessionTemporaryStorage.shared.viewCategoryOperation {
+            context.operationInapps[key.lowercased(), default: []].insert(id)
+        }
     }
 
     override func checkInternal(targeting: CategoryIDInTargeting) -> Bool {

@@ -146,11 +146,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
 
         if let viewCategory = settings.operations?.viewCategory {
-            SessionTemporaryStorage.shared.operationsFromSettings.insert(viewCategory.systemName.lowercased())
+            SessionTemporaryStorage.shared.viewCategoryOperation = viewCategory.systemName.lowercased()
         }
 
         if let viewProduct = settings.operations?.viewProduct {
-            SessionTemporaryStorage.shared.operationsFromSettings.insert(viewProduct.systemName.lowercased())
+            SessionTemporaryStorage.shared.viewProductOperation = viewProduct.systemName.lowercased()
         }
         
         saveConfigSessionToCache(settings.slidingExpiration?.config)

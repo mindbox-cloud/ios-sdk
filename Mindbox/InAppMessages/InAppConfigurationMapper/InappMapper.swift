@@ -102,6 +102,7 @@ class InappMapper: InappMapperProtocol {
             return inappFilterService.validInapps.filter { inappIDS.contains($0.id) }
         }
 
+        Logger.common(message: "[InappMapper] No operation inapps for event. Return empty array")
         return []
     }
 

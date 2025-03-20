@@ -1,0 +1,15 @@
+name: PushOk (Develop PR Merge)
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types:
+      - closed
+
+jobs:
+  call-reusable:
+    if: ${{ github.event.pull_request.merged == true }}
+    uses: ./.github/workflows/distribute-reusable.yml
+    secrets: inherit 
