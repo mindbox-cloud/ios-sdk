@@ -15,19 +15,19 @@ public class MBLoggerCoreDataManager {
 
     private enum Constants {
         static let model = "CDLogMessage"
-        static let dbSizeLimitKB: Int = 10_000
+        static let dbSizeLimitKB: Int = 10_240
+        static let dbLogsLimitCount: Int = 85_000
         static let batchSize = 15
-        static let operationBatchLimitBeforeNeedToDelete = 5
+        static let limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired = 5
     }
 
     private var logBuffer: [LogMessage]
     private let isAppExtension: Bool
     private let queue: DispatchQueue
-    private var previousDBSize: Int?
 
     private var writeCount = 0 {
         didSet {
-            if writeCount > Constants.operationBatchLimitBeforeNeedToDelete && !isAppExtension {
+            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !isAppExtension {       
                 writeCount = 0
                 checkDatabaseSizeAndDeleteIfNeeded()
             }
@@ -77,7 +77,6 @@ public class MBLoggerCoreDataManager {
 
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-        storeDescription.setValue(250 as NSObject, forPragmaNamed: "wal_autocheckpoint") // Write WAL to main sqlite file every 1MB - 250 * pageSize 4KB = 1000 KB 
         container.persistentStoreDescriptions = [storeDescription]
         container.loadPersistentStores { _, error in
             if let error = error {
@@ -103,7 +102,6 @@ public class MBLoggerCoreDataManager {
         self.logBuffer.reserveCapacity(Constants.batchSize)
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
         setupNotificationCenterObservers()
-        setupPreviousDatabaseSize()
     }
 }
 
@@ -206,11 +204,9 @@ public extension MBLoggerCoreDataManager {
 
     // MARK: Delete
 
-    func deleteTenPercentOfAllOldRecords() throws {
+    func deleteTenPercentOfAllOldRecords(for count: Int) throws {
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
-
-            let count = try context.count(for: fetchRequest)
             let limit = Int((Double(count) * 0.1).rounded()) // 10% percent of all records should be removed
 
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
@@ -224,8 +220,8 @@ public extension MBLoggerCoreDataManager {
                 let changes = [NSDeletedObjectsKey: objectIDs]
                 NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
             }
-
-            Logger.common(message: "Out of \(count) logs, \(limit) were deleted", level: .debug, category: .general)
+            
+            Logger.common(message: "[LoggerCDManager] Out of \(count) logs, \(limit) were deleted", level: .info, category: .loggerDatabase)
         }
     }
 }
@@ -254,26 +250,14 @@ public extension MBLoggerCoreDataManager {
 
 private extension MBLoggerCoreDataManager {
     func setupNotificationCenterObservers() {
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationDidEnterBackground),
-                                               name: UIApplication.didEnterBackgroundNotification,
-                                               object: nil)
-
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationWillTerminate),
-                                               name: UIApplication.willTerminateNotification,
+        NotificationCenter.default.addObserver(self, 
+                                               selector: #selector(applicationWillResignActive), 
+                                               name: UIApplication.willResignActiveNotification, 
                                                object: nil)
     }
-
+    
     @objc
-    func applicationDidEnterBackground() {
-        queue.async { [weak self] in
-            self?.writeBufferToCoreData()
-        }
-    }
-
-    @objc
-    func applicationWillTerminate() {
+    func applicationWillResignActive() {
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
@@ -329,22 +313,29 @@ private extension MBLoggerCoreDataManager {
 // MARK: - Auxiliary private functions for checking the size of the database
 
 private extension MBLoggerCoreDataManager {
-    func setupPreviousDatabaseSize() {
-        queue.async {
-            self.previousDBSize = self.getDBFileSize() 
+    func numberOfLogs() -> Int {
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+        
+        do {
+            return try context.count(for: request)
+        } catch {
+            Logger.common(message: "[LoggerCDManager] Error counting logs \(error.localizedDescription)", 
+                          level: .error, category: .loggerDatabase)
+            return 0
         }
     }
     
     func checkDatabaseSizeAndDeleteIfNeeded() {
+        
         let currentDBFileSize = getDBFileSize()
         
-        if currentDBFileSize > Constants.dbSizeLimitKB && previousDBSize != currentDBFileSize {
+        let numberOfLogs = numberOfLogs()
+        
+        if currentDBFileSize > Constants.dbSizeLimitKB && numberOfLogs >= Constants.dbLogsLimitCount {
             do {
-                try deleteTenPercentOfAllOldRecords()
+                try deleteTenPercentOfAllOldRecords(for: numberOfLogs)
             } catch { }
         }
-        
-        previousDBSize = currentDBFileSize
     }
 
     func getDBFileSize() -> Int {
@@ -359,9 +350,13 @@ private extension MBLoggerCoreDataManager {
 #if DEBUG
 extension MBLoggerCoreDataManager {
     var debugBatchSize: Int {
-        return Constants.batchSize
+        Constants.batchSize
     }
-
+    
+    var debugNumberOfLogs: Int {
+        numberOfLogs()
+    }
+    
     func debugWriteBufferToCD() {
         queue.async {
             self.writeBufferToCoreData()

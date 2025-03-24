@@ -165,13 +165,13 @@ public class Mindbox: NSObject {
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
 
             if persistenceStorage?.needUpdateInfoOnce ?? true {
-                Logger.common(message: "APNS Token forced to update")
+                Logger.common(message: "APNS Token forced to update", category: .notification)
                 coreController?.apnsTokenDidUpdate(token: token)
                 return
             }
 
             guard persistenceAPNSToken != token else {
-                Logger.common(message: "APNS token hasn't changed", level: .error, category: .notification)
+                Logger.common(message: "APNS token hasn't changed", level: .info, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)

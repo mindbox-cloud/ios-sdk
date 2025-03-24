@@ -242,8 +242,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let fetchResult = try self.manager.fetchPeriod(specificDate, specificDate)
         XCTAssertEqual(fetchResult.count, cycleCount, "Initial count should be 'cycleCount' logs.")
-
-        try manager.deleteTenPercentOfAllOldRecords()
+        
+        try manager.deleteTenPercentOfAllOldRecords(for: manager.debugNumberOfLogs)
 
         let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60),
                                                                specificDate)
@@ -258,8 +258,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
                            "Remaining log messages should match the expected message.")
         }
     }
-
-    func testFlushBufferWhenApplicationDidEnterBackground() throws {
+    
+    func testFlushBufferWhenApplicationWillResignActive() throws {
         let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
 
         createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
@@ -268,33 +268,9 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         wait(for: [fetchExpectationExtraLast])
 
-        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
 
         let fetchExpectation = XCTestExpectation(description: "Fetch last log after didEnterBackgroundNotification")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
-            do {
-                let fetchResult = try self.manager.getLastLog()
-                XCTAssertEqual(fetchResult?.message, "Log: \(self.batchSizeConstant / 2)")
-                fetchExpectation.fulfill()
-            } catch {}
-        }
-
-        wait(for: [fetchExpectation])
-    }
-
-    func testFlushBufferWhenApplicationWillTerminate() throws {
-        let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
-
-        createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
-            fetchExpectationExtraLast.fulfill()
-        }
-
-        wait(for: [fetchExpectationExtraLast])
-
-        NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
-
-        let fetchExpectation = XCTestExpectation(description: "Fetch last log after willTerminateNotification")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
             do {
@@ -365,6 +341,7 @@ private extension MBLoggerCoreDataManagerTests {
             timestamp = date.addingTimeInterval(Double(index) * interval)
         }
 
+//        let someLongString = Array(repeating: "m", count: 78).joined()
         let message = message ?? "Log: \(index)"
         manager.create(message: message, timestamp: timestamp) {
             completion?(index, timestamp)
