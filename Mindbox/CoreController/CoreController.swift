@@ -15,7 +15,6 @@ final class CoreController {
     private let utilitiesFetcher: UtilitiesFetcher
     private let databaseRepository: MBDatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
-    private let trackVisitManager: TrackVisitManager
     private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
     private let userVisitManager: UserVisitManagerProtocol
@@ -174,7 +173,7 @@ final class CoreController {
             ianaTimeZone: self.customerTimeZone(for: configuration)
         )
         do {
-            self.trackDirect()
+            sessionManager.trackDirect()
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
@@ -231,20 +230,11 @@ final class CoreController {
         }
     }
 
-    private func trackDirect() {
-        do {
-            try trackVisitManager.trackDirect()
-        } catch {
-            Logger.common(message: "[Core] Track Visit failed with error: \(error)", level: .info, category: .visit)
-        }
-    }
-
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
         databaseRepository: MBDatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
-        trackVisitManager: TrackVisitManager,
         sessionManager: SessionManager,
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
@@ -255,7 +245,6 @@ final class CoreController {
         self.utilitiesFetcher = utilitiesFetcher
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
-        self.trackVisitManager = trackVisitManager
         self.uuidDebugService = uuidDebugService
         self.controllerQueue = controllerQueue
         self.inAppMessagesManager = inAppMessagesManager

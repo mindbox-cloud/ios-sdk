@@ -69,7 +69,7 @@ extension MBContainer {
             return MBEventRepository(fetcher: networkFetcher, persistenceStorage: persistenceStorage)
         }
 
-        register(TrackVisitManager.self) {
+        register(TrackVisitManagerProtocol.self) {
             let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
             let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
             return TrackVisitManager(databaseRepository: databaseRepository, inappSessionManager: inappSessionManger)

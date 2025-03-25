@@ -162,7 +162,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private func saveConfigSessionToCache(_ config: String?) {
         SessionTemporaryStorage.shared.expiredConfigSession = config
-        Logger.common(message: "Saved slidingExpiration.config - \(String(describing: config)) to temporary storage.")
+        Logger.common(message: "[InappSessionManager] Saved slidingExpiration.config - \(config ?? "nil") to temporary storage.")
         NotificationCenter.default.post(name: .mobileConfigDownloaded, object: nil)
     }
 }
