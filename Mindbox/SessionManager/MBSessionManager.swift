@@ -25,7 +25,6 @@ final class MBSessionManager {
         didSet {
             guard isActive, isActive != oldValue else { return }
             sessionHandler?(isActive)
-            trackDirect()
         }
     }
 

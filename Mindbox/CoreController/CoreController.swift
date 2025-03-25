@@ -266,6 +266,7 @@ final class CoreController {
             if isActive && SessionTemporaryStorage.shared.isInitializationCalled {
                 self?.checkNotificationStatus()
                 self?.controllerQueue.async {
+                    self?.sessionManager.trackDirect()
                     self?.userVisitManager.saveUserVisit()
                     self?.inAppMessagesManager.start()
                 }
