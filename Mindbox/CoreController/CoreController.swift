@@ -173,7 +173,6 @@ final class CoreController {
             ianaTimeZone: self.customerTimeZone(for: configuration)
         )
         do {
-            sessionManager.trackDirect()
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
