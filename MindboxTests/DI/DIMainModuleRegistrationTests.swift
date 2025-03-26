@@ -143,8 +143,11 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testTrackVisitManagerIsRegistered() {
-        let manager: TrackVisitManager? = DI.inject(TrackVisitManager.self)
-        XCTAssertNotNil(manager)
+        let commonTrackManager: TrackVisitCommonTrackProtocol? = DI.inject(TrackVisitManagerProtocol.self)
+        XCTAssertNotNil(commonTrackManager)
+        
+        let specificTrackManager: TrackVisitSpecificTrackProtocol? = DI.inject(TrackVisitManagerProtocol.self)
+        XCTAssertNotNil(specificTrackManager)
     }
 
     func testInappMessageEventSenderIsRegistered() {
