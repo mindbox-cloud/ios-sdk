@@ -14,6 +14,5 @@ protocol SessionManager: AnyObject {
     var sessionHandler: ((Bool) -> Void)? { get set }
 
     func trackDirect()
-
     func trackForeground()
 }
