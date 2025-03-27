@@ -57,7 +57,9 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            self?.displayUseCase.dismissInAppUIModel(onClose: { })
+            DispatchQueue.main.async {
+                self?.displayUseCase.dismissInAppUIModel(onClose: { })
+            }
         }
     }
 
