@@ -13,6 +13,7 @@ public enum LogCategory: String, CaseIterable {
     case general
     case network
     case database
+    case loggerDatabase
     case delivery
     case background
     case notification
@@ -28,6 +29,8 @@ public enum LogCategory: String, CaseIterable {
             return "📡"
         case .database:
             return "📖"
+        case .loggerDatabase:
+            return "💿"
         case .delivery:
             return "⚙️"
         case .background:
