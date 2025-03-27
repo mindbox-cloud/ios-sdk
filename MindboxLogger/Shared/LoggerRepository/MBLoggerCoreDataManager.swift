@@ -11,13 +11,19 @@ import CoreData
 import UIKit.UIApplication
 
 public class MBLoggerCoreDataManager {
+    
     public static let shared = MBLoggerCoreDataManager()
 
     private enum Constants {
+        
+        enum UserDefaultsKeys {
+            static let previousDBSizeKey = "MBLoggerPersistenceStorage-previousDatabaseSize"
+        }
+        
         static let model = "CDLogMessage"
-        static let dbSizeLimitKB: Int = 10_000
+        static let dbSizeLimitKB: Int = 10_240
         static let batchSize = 15
-        static let operationBatchLimitBeforeNeedToDelete = 5
+        static let limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired = 5
     }
 
     private var logBuffer: [LogMessage]
@@ -26,7 +32,7 @@ public class MBLoggerCoreDataManager {
 
     private var writeCount = 0 {
         didSet {
-            if writeCount > Constants.operationBatchLimitBeforeNeedToDelete {
+            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !isAppExtension {
                 writeCount = 0
                 checkDatabaseSizeAndDeleteIfNeeded()
             }
@@ -76,7 +82,6 @@ public class MBLoggerCoreDataManager {
 
         let storeDescription = NSPersistentStoreDescription(url: storeURL)
         storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-        storeDescription.setValue("DELETE" as NSObject, forPragmaNamed: "journal_mode") // Disabling WAL journal
         container.persistentStoreDescriptions = [storeDescription]
         container.loadPersistentStores { _, error in
             if let error = error {
@@ -102,6 +107,7 @@ public class MBLoggerCoreDataManager {
         self.logBuffer.reserveCapacity(Constants.batchSize)
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
         setupNotificationCenterObservers()
+        checkDatabaseSizeAndDeleteIfNeededThroughInit()
     }
 }
 
@@ -124,11 +130,13 @@ public extension MBLoggerCoreDataManager {
 
     private func writeBufferToCoreData() {
         guard !logBuffer.isEmpty else { return }
-
-        if #available(iOS 13.0, *) {
-            performBatchInsert()
-        } else {
-            performContextInsertion()
+        
+        context.executePerformAndWait {
+            if #available(iOS 13.0, *) {
+                performBatchInsert()
+            } else {
+                performContextInsertion()
+            }
         }
     }
 
@@ -205,7 +213,7 @@ public extension MBLoggerCoreDataManager {
     func deleteTenPercentOfAllOldRecords() throws {
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
-
+            
             let count = try context.count(for: fetchRequest)
             let limit = Int((Double(count) * 0.1).rounded()) // 10% percent of all records should be removed
 
@@ -220,11 +228,15 @@ public extension MBLoggerCoreDataManager {
                 let changes = [NSDeletedObjectsKey: objectIDs]
                 NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
             }
-
-            Logger.common(message: "\(limit) logs have been deleted", level: .debug, category: .general)
+            
+            Logger.common(message: "[LoggerCDManager] Out of \(count) logs, \(limit) were deleted", level: .info, category: .loggerDatabase)
         }
     }
+}
 
+// MARK: - Only for debug
+
+public extension MBLoggerCoreDataManager {
     func deleteAll() throws {
         self.logBuffer.removeAll()
         try context.executePerformAndWait {
@@ -246,26 +258,14 @@ public extension MBLoggerCoreDataManager {
 
 private extension MBLoggerCoreDataManager {
     func setupNotificationCenterObservers() {
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationDidEnterBackground),
-                                               name: UIApplication.didEnterBackgroundNotification,
-                                               object: nil)
-
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationWillTerminate),
-                                               name: UIApplication.willTerminateNotification,
+        NotificationCenter.default.addObserver(self, 
+                                               selector: #selector(applicationWillResignActive), 
+                                               name: UIApplication.willResignActiveNotification, 
                                                object: nil)
     }
-
+    
     @objc
-    func applicationDidEnterBackground() {
-        queue.async { [weak self] in
-            self?.writeBufferToCoreData()
-        }
-    }
-
-    @objc
-    func applicationWillTerminate() {
+    func applicationWillResignActive() {
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
@@ -277,19 +277,17 @@ private extension MBLoggerCoreDataManager {
 private extension MBLoggerCoreDataManager {
     func performContextInsertion() {
         do {
-            try context.executePerformAndWait {
-                for log in self.logBuffer {
-                    let entity = CDLogMessage(context: self.context)
-                    entity.message = log.message
-                    entity.timestamp = log.timestamp
-                }
-
-                try self.saveEvent(withContext: self.context)
-                logBuffer.removeAll()
-                writeCount += 1
+            for log in self.logBuffer {
+                let entity = CDLogMessage(context: self.context)
+                entity.message = log.message
+                entity.timestamp = log.timestamp
             }
+            
+            try self.saveEvent(withContext: self.context)
+            logBuffer.removeAll()
+            writeCount += 1
         } catch {
-            let errorMessage = "Failed to batch insert logs: \(error.localizedDescription)"
+            let errorMessage = "Failed to save context with batch logs: \(error.localizedDescription)"
             let errorLogEntity = CDLogMessage(context: self.context)
             errorLogEntity.message = errorMessage
             errorLogEntity.timestamp = Date()
@@ -323,12 +321,25 @@ private extension MBLoggerCoreDataManager {
 // MARK: - Auxiliary private functions for checking the size of the database
 
 private extension MBLoggerCoreDataManager {
+    func checkDatabaseSizeAndDeleteIfNeededThroughInit() {
+        queue.async { [weak self] in
+            self?.checkDatabaseSizeAndDeleteIfNeeded()
+        }
+    }
+    
     func checkDatabaseSizeAndDeleteIfNeeded() {
-        if getDBFileSize() > Constants.dbSizeLimitKB {
+        let currentDBFileSize = getDBFileSize()
+        let previousDBSize = loadPreviousDBSize()
+        
+        let isDatabaseSizeChanged: Bool = currentDBFileSize != previousDBSize
+        
+        if currentDBFileSize > Constants.dbSizeLimitKB && isDatabaseSizeChanged {
             do {
                 try deleteTenPercentOfAllOldRecords()
             } catch { }
         }
+        
+        savePreviousDBSize(currentDBFileSize)
     }
 
     func getDBFileSize() -> Int {
@@ -340,12 +351,25 @@ private extension MBLoggerCoreDataManager {
     }
 }
 
+// MARK: - UserDefaults for previousDatabaseSize
+
+private extension MBLoggerCoreDataManager {
+    
+    func savePreviousDBSize(_ size: Int) {
+        UserDefaults.standard.set(size, forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
+    }
+    
+    func loadPreviousDBSize() -> Int {
+        UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
+    }
+}
+
 #if DEBUG
 extension MBLoggerCoreDataManager {
     var debugBatchSize: Int {
-        return Constants.batchSize
+        Constants.batchSize
     }
-
+    
     func debugWriteBufferToCD() {
         queue.async {
             self.writeBufferToCoreData()
