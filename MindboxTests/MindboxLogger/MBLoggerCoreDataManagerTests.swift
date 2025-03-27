@@ -243,7 +243,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         let fetchResult = try self.manager.fetchPeriod(specificDate, specificDate)
         XCTAssertEqual(fetchResult.count, cycleCount, "Initial count should be 'cycleCount' logs.")
         
-        try manager.deleteTenPercentOfAllOldRecords(for: manager.debugNumberOfLogs)
+        try manager.deleteTenPercentOfAllOldRecords()
 
         let fetchResultAfterDeletion = try manager.fetchPeriod(specificDate.addingTimeInterval(-60),
                                                                specificDate)
@@ -341,7 +341,6 @@ private extension MBLoggerCoreDataManagerTests {
             timestamp = date.addingTimeInterval(Double(index) * interval)
         }
 
-//        let someLongString = Array(repeating: "m", count: 78).joined()
         let message = message ?? "Log: \(index)"
         manager.create(message: message, timestamp: timestamp) {
             completion?(index, timestamp)

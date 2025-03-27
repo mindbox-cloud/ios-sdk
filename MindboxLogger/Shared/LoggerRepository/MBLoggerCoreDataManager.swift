@@ -11,12 +11,17 @@ import CoreData
 import UIKit.UIApplication
 
 public class MBLoggerCoreDataManager {
+    
     public static let shared = MBLoggerCoreDataManager()
 
     private enum Constants {
+        
+        enum UserDefaultsKeys {
+            static let previousDBSizeKey = "MBLoggerPersistenceStorage-previousDatabaseSize"
+        }
+        
         static let model = "CDLogMessage"
         static let dbSizeLimitKB: Int = 10_240
-        static let dbLogsLimitCount: Int = 85_000
         static let batchSize = 15
         static let limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired = 5
     }
@@ -27,7 +32,7 @@ public class MBLoggerCoreDataManager {
 
     private var writeCount = 0 {
         didSet {
-            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !isAppExtension {       
+            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !isAppExtension {
                 writeCount = 0
                 checkDatabaseSizeAndDeleteIfNeeded()
             }
@@ -102,6 +107,7 @@ public class MBLoggerCoreDataManager {
         self.logBuffer.reserveCapacity(Constants.batchSize)
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
         setupNotificationCenterObservers()
+        checkDatabaseSizeAndDeleteIfNeededThroughInit()
     }
 }
 
@@ -204,9 +210,11 @@ public extension MBLoggerCoreDataManager {
 
     // MARK: Delete
 
-    func deleteTenPercentOfAllOldRecords(for count: Int) throws {
+    func deleteTenPercentOfAllOldRecords() throws {
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+            
+            let count = try context.count(for: fetchRequest)
             let limit = Int((Double(count) * 0.1).rounded()) // 10% percent of all records should be removed
 
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
@@ -313,29 +321,25 @@ private extension MBLoggerCoreDataManager {
 // MARK: - Auxiliary private functions for checking the size of the database
 
 private extension MBLoggerCoreDataManager {
-    func numberOfLogs() -> Int {
-        let request = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
-        
-        do {
-            return try context.count(for: request)
-        } catch {
-            Logger.common(message: "[LoggerCDManager] Error counting logs \(error.localizedDescription)", 
-                          level: .error, category: .loggerDatabase)
-            return 0
+    func checkDatabaseSizeAndDeleteIfNeededThroughInit() {
+        queue.async { [weak self] in
+            self?.checkDatabaseSizeAndDeleteIfNeeded()
         }
     }
     
     func checkDatabaseSizeAndDeleteIfNeeded() {
-        
         let currentDBFileSize = getDBFileSize()
+        let previousDBSize = loadPreviousDBSize()
         
-        let numberOfLogs = numberOfLogs()
+        let isDatabaseSizeChanged: Bool = currentDBFileSize != previousDBSize
         
-        if currentDBFileSize > Constants.dbSizeLimitKB && numberOfLogs >= Constants.dbLogsLimitCount {
+        if currentDBFileSize > Constants.dbSizeLimitKB && isDatabaseSizeChanged {
             do {
-                try deleteTenPercentOfAllOldRecords(for: numberOfLogs)
+                try deleteTenPercentOfAllOldRecords()
             } catch { }
         }
+        
+        savePreviousDBSize(currentDBFileSize)
     }
 
     func getDBFileSize() -> Int {
@@ -347,14 +351,23 @@ private extension MBLoggerCoreDataManager {
     }
 }
 
+// MARK: - UserDefaults for previousDatabaseSize
+
+private extension MBLoggerCoreDataManager {
+    
+    func savePreviousDBSize(_ size: Int) {
+        UserDefaults.standard.set(size, forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
+    }
+    
+    func loadPreviousDBSize() -> Int {
+        UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
+    }
+}
+
 #if DEBUG
 extension MBLoggerCoreDataManager {
     var debugBatchSize: Int {
         Constants.batchSize
-    }
-    
-    var debugNumberOfLogs: Int {
-        numberOfLogs()
     }
     
     func debugWriteBufferToCD() {
