@@ -15,7 +15,6 @@ extension MBContainer {
                            utilitiesFetcher: DI.injectOrFail(UtilitiesFetcher.self),
                            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
                            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
-                           trackVisitManager: DI.injectOrFail(TrackVisitManager.self),
                            sessionManager: DI.injectOrFail(SessionManager.self),
                            inAppMessagesManager: DI.injectOrFail(InAppCoreManagerProtocol.self),
                            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),

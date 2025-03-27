@@ -34,15 +34,22 @@ final class InappSessionManager: InappSessionManagerProtocol {
     }
 
     func checkInappSession() {
+        let isSDKInitialized = SessionTemporaryStorage.shared.isInitializationCalled
+        if !isSDKInitialized {
+            return
+        }
+        
         let now = Date()
         var updatingInappSession = false
         
         defer {
-            lastTrackVisitTimestamp = now
-            Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
-            
-            if !updatingInappSession {
-                logNearestInappSessionExpirationTime()
+            if isSDKInitialized {
+                lastTrackVisitTimestamp = now
+                Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
+                
+                if !updatingInappSession {
+                    logNearestInappSessionExpirationTime()
+                }
             }
         }
 

@@ -9,7 +9,19 @@
 import UIKit
 import MindboxLogger
 
-final class TrackVisitManager {
+protocol TrackVisitCommonTrackProtocol {
+    func track(_ type: TrackVisitType) throws
+    func track(data: TrackVisitData) throws
+}
+
+protocol TrackVisitSpecificTrackProtocol {
+    func trackForeground() throws
+    func trackDirect() throws
+}
+
+protocol TrackVisitManagerProtocol: TrackVisitCommonTrackProtocol, TrackVisitSpecificTrackProtocol {}
+
+final class TrackVisitManager: TrackVisitManagerProtocol {
     private let databaseRepository: MBDatabaseRepository
     private let inappSessionManager: InappSessionManagerProtocol
 

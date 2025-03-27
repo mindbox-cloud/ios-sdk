@@ -14,9 +14,9 @@ final class MBSessionManager {
     var sessionHandler: ((Bool) -> Void)?
     var isActiveNow: Bool { return isActive }
 
-    private let trackVisitManager: TrackVisitManager
+    private let trackVisitManager: TrackVisitSpecificTrackProtocol
 
-    init(trackVisitManager: TrackVisitManager) {
+    init(trackVisitManager: TrackVisitSpecificTrackProtocol) {
         self.trackVisitManager = trackVisitManager
         subscribe()
     }
@@ -25,7 +25,6 @@ final class MBSessionManager {
         didSet {
             guard isActive, isActive != oldValue else { return }
             sessionHandler?(isActive)
-            trackDirect()
         }
     }
 

@@ -70,7 +70,7 @@ extension MBContainer {
         }
 
         register(SessionManager.self) {
-            let trackVisitManager = DI.injectOrFail(TrackVisitManager.self)
+            let trackVisitManager = DI.injectOrFail(TrackVisitManagerProtocol.self)
             return MBSessionManager(trackVisitManager: trackVisitManager)
         }
 
