@@ -50,7 +50,7 @@ jobs:
       - name: Deploy to Cocoapods MindboxLogger
         run: |
           pod lib lint MindboxLogger.podspec --allow-warnings
-          pod trunk push MindboxLogger.podspec --allow-warnings
+          pod trunk push MindboxLogger.podspec --allow-warnings --verbose
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
           
@@ -72,31 +72,13 @@ jobs:
         run: bundle install
       - uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 5
+          timeout_minutes: 10
           max_attempts: 20
           command: |
               pod repo update
               pod lib lint --allow-warnings
           retry_on: error
           retry_wait_seconds: 120
-  
-  publish-Mindbox:
-    needs: [check-podspecs-with-retry]
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - name: Deploy to Cocoapods Mindbox
-        run: |
-            pod repo update
-            set -eo pipefail
-            pod lib lint Mindbox.podspec --allow-warnings
-            pod trunk push Mindbox.podspec --allow-warnings
-        env:
-          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
           
   publish-MindboxNotifications:
     needs: [check-podspecs-with-retry]
@@ -112,12 +94,37 @@ jobs:
             pod repo update
             set -eo pipefail
             pod lib lint MindboxNotifications.podspec --allow-warnings
-            pod trunk push MindboxNotifications.podspec --allow-warnings
+            pod trunk push MindboxNotifications.podspec --allow-warnings --verbose
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+          
+  second-delay:
+    needs: [publish-MindboxNotifications]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delay for 2 minutes
+        run: sleep 120
+  
+  publish-Mindbox:
+    needs: [second-delay]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update bundler
+        run: gem install bundler
+      - name: Install bundler dependencies
+        run: bundle install
+      - name: Deploy to Cocoapods Mindbox
+        run: |
+            pod repo update
+            set -eo pipefail
+            pod lib lint Mindbox.podspec --allow-warnings
+            pod trunk push Mindbox.podspec --allow-warnings --verbose
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
 
   release-github:
-    needs: [publish-Mindbox, publish-MindboxNotifications]
+    needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -127,7 +134,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
   merge:
-    needs: [publish-Mindbox, publish-MindboxNotifications]
+    needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
     if: startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     steps:
