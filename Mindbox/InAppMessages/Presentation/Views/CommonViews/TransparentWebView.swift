@@ -47,7 +47,7 @@ final class TransparentWebView: UIView {
         
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
-            function endpointIdIos(){return '\("Test-staging.mobile-sdk-test-staging.mindbox.ru")';}
+            function endpointIdIos(){return '\("holodilnik-android")';}
             function deviceUuidIos(){return '\(persistenceStorage.deviceUUID!)';}
         """
 
