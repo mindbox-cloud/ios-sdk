@@ -40,13 +40,28 @@ final class TransparentWebView: UIView {
     private func createWKWebView() {
         print("TransparentWebView: Creating WKWebView")
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
         let contentController = WKUserContentController()
         contentController.add(self, name: "mindbox")
+
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
+        let appVersion = utilitiesFetcher.appVerson ?? "unknow"
+        let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
+        let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
 
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
             function endpointIdIos(){return '\("holodilnik-android")';}
             function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
+            
+            // Log UserAgent to console
+            console.log('UserAgent:', navigator.userAgent);
+            
+            // Send UserAgent to native code
+            window.webkit.messageHandlers.mindbox.postMessage({
+                'action': 'userAgent',
+                'data': navigator.userAgent
+            });
         """
         
 //        let scrollPreventionScript = """
@@ -72,11 +87,15 @@ final class TransparentWebView: UIView {
 
         let webViewConfig = WKWebViewConfiguration()
         webViewConfig.userContentController = contentController
+        webViewConfig.applicationNameForUserAgent = userAgent
 
         webView = WKWebView(frame: .zero, configuration: webViewConfig)
         webView.navigationDelegate = self
         print("TransparentWebView: WKWebView created with configuration")
 
+//        print(userAgent)
+//        webView.customUserAgent = userAgent
+        
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
@@ -164,6 +183,7 @@ final class TransparentWebView: UIView {
 
 extension TransparentWebView: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        print(message.body, message.name)
         let name = message.name
         
         if name == "mindbox", let messageBody = message.body as? [String: String] {
@@ -179,8 +199,8 @@ extension TransparentWebView: WKScriptMessageHandler {
                 print("TransparentWebView: Received init action")
                 if data.contains("quiz") {
                     DispatchQueue.main.async {
-                        if let window = UIApplication.shared.windows.first(where: { 
-                            $0.rootViewController is WebViewController 
+                        if let window = UIApplication.shared.windows.first(where: {
+                            $0.rootViewController is WebViewController
                         }) {
                             window.isHidden = false
                             window.makeKeyAndVisible()
@@ -188,19 +208,8 @@ extension TransparentWebView: WKScriptMessageHandler {
                         }
                     }
                 }
-//            case "show":
-//                print("TransparentWebView: Received show action")
-//                if data.contains("quiz") {
-//                    DispatchQueue.main.async {
-//                        if let window = UIApplication.shared.windows.first(where: { 
-//                            $0.rootViewController is WebViewController 
-//                        }) {
-//                            window.isHidden = false
-//                            window.makeKeyAndVisible()
-//                            print("TransparentWebView: Window is now visible")
-//                        }
-//                    }
-//                }
+            case "userAgent":
+                print("TransparentWebView: UserAgent: \(data)")
             default:
                 print("action: \(action) with \(data)")
             }
