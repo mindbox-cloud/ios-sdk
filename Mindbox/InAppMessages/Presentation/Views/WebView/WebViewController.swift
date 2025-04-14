@@ -15,7 +15,6 @@ protocol WebViewControllerProtocol {
     var layersFactories: [ContentBackgroundLayerType: LayerFactory] { get }
 }
 
-
 protocol WebVCDelegate: AnyObject {
     func closeVC()
 }
@@ -111,18 +110,16 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
             closeVC()
             return
         }
-
     }
 
     private func setupConstraints(for view: UIView, in parentView: UIView) {
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.heightAnchor.constraint(equalToConstant:  UIScreen.main.bounds.height).isActive = true
+        view.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height).isActive = true
         NSLayoutConstraint.activate([
 //            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 20),
 //            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -20),
             view.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
-        
-            
+
             view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 0),
             view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -00),
             view.bottomAnchor.constraint(equalTo: parentView.bottomAnchor),
@@ -173,13 +170,9 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onClose()
     }
 
-    private func setupLayers() {
-   
-    }
+    private func setupLayers() {}
 
-    private func setupElements() {
-        
-    }
+    private func setupElements() {}
 }
 
 // MARK: - GestureHandler
