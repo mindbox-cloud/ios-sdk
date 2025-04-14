@@ -12,18 +12,27 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     var window: UIWindow?
 
     func getWindow() -> UIWindow? {
-        return makeInAppMessageWindow()
+        makeInAppMessageWindow()
     }
 
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
+        print("WebviewPresentationStrategy: Starting presentation")
         window.rootViewController = viewController
-        window.isHidden = false
+        window.isHidden = true
+        print("WebviewPresentationStrategy: Window setup completed")
+        
+        // Force view controller to load its view
+        _ = viewController.view
+        print("WebviewPresentationStrategy: View controller view loaded")
+        
         Logger.common(message: "In-app modal with id \(id) presented", level: .info, category: .inAppMessages)
+        print("WebviewPresentationStrategy: Presentation completed")
     }
 
     func dismiss(viewController: UIViewController) {
         viewController.view.window?.isHidden = true
         viewController.view.window?.rootViewController = nil
+        window = nil
         Logger.common(message: "In-app modal presentation dismissed", level: .debug, category: .inAppMessages)
     }
 
@@ -32,35 +41,28 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     }
 
     private func makeInAppMessageWindow() -> UIWindow? {
+        print("WebviewPresentationStrategy: Creating window")
         let window: UIWindow?
         if #available(iOS 13.0, *) {
-            window = iOS13PlusWindow
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                print("WebviewPresentationStrategy: Found scene")
+                window = UIWindow(windowScene: scene)
+                window?.frame = UIScreen.main.bounds
+                window?.backgroundColor = .clear
+                window?.isHidden = true
+                print("WebviewPresentationStrategy: Window created with scene")
+            } else {
+                print("WebviewPresentationStrategy: No scene found")
+                window = nil
+            }
         } else {
-            window = nil
+            print("WebviewPresentationStrategy: iOS < 13, creating window without scene")
+            window = UIWindow(frame: UIScreen.main.bounds)
+            window?.backgroundColor = .clear
+            window?.isHidden = true
         }
         self.window = window
-        window?.windowLevel = .normal + 3
-        window?.isHidden = false
+        print("WebviewPresentationStrategy: Window setup completed")
         return window
-    }
-
-    @available(iOS 13.0, *)
-    private var mostSuitableScene: UIWindowScene? {
-        for connectedScene in UIApplication.shared.connectedScenes {
-            if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
-                return windowScene
-            }
-        }
-
-        return UIApplication.shared.connectedScenes.first as? UIWindowScene
-    }
-
-    @available(iOS 13.0, *)
-    private var iOS13PlusWindow: UIWindow? {
-        if let mostSuitableScene = mostSuitableScene {
-            return UIWindow(windowScene: mostSuitableScene)
-        } else {
-            return nil
-        }
     }
 }
