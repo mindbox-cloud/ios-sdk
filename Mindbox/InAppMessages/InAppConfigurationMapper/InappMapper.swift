@@ -182,7 +182,9 @@ class InappMapper: InappMapperProtocol {
                 group.wait()
 
                 imageDictQueue.sync {
-                    if !imageDict.isEmpty && !gotError {
+                    if case .webview = inapp.content {
+                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, firstImageValue: "", content: inapp.content)
+                    } else if !imageDict.isEmpty && !gotError {
                         let firstImageValue = imageValues.first ?? ""
                         formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, firstImageValue: firstImageValue, content: inapp.content)
                     }
