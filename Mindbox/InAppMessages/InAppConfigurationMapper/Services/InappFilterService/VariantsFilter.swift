@@ -60,24 +60,23 @@ final class VariantFilterService: VariantFilterProtocol {
                     let filteredLayers = try layersFilter.filter(background.layers)
                     let fileterdElements = try elementsFilter.filter(content.elements)
                 
-                    var payload: String? = nil
+                    var payload: String?
                 
-                    switch (filteredLayers.first) {
+                    switch filteredLayers.first {
                         case .image(let image):
-                        switch (image.action) {
+                        switch image.action {
                         case .redirectUrl(let redirectUrlLayerAction):
                             payload = redirectUrlLayerAction.intentPayload
                             default:
-                                break;
+                                break
                         }
                         default:
-                        break;
+                        break
                     }
                 
-                    
                     let webViewFormVariant = getWebviewFromPayload(payload)
                     
-                    if (webViewFormVariant != nil) {
+                    if webViewFormVariant != nil {
                         let mindboxFormVariant = try MindboxFormVariant(type: .webview, webviewVariant: webViewFormVariant)
                         resultVariants.append(mindboxFormVariant)
                     } else {

@@ -217,7 +217,6 @@ extension TransparentWebView: WKScriptMessageHandler {
     }
 }
 
-
 // {"mode":"quiz","screen":"minimal","slug":"televisions","action":"show"}
 class RequestBody: Decodable {
     let mode: String
@@ -232,7 +231,6 @@ class RequestBody: Decodable {
         self.action = action
     }
 }
-
 
 // MARK: - WKNavigationDelegate
 
@@ -295,7 +293,7 @@ extension TransparentWebView {
     }
 }
 
-extension TransparentWebView: UIScrollViewDelegate  {
+extension TransparentWebView: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return nil
     }
