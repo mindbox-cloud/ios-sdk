@@ -38,27 +38,44 @@ final class TransparentWebView: UIView {
     }
 
     private func createWKWebView() {
+        print("TransparentWebView: Creating WKWebView")
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let contentController = WKUserContentController()
         contentController.add(self, name: "mindbox")
 
-        //let userScript = WKUserScript(source: jsClick, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-        //contentController.addUserScript(userScript)
-        
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
             function endpointIdIos(){return '\("holodilnik-android")';}
-            function deviceUuidIos(){return '\(persistenceStorage.deviceUUID!)';}
+            function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
         """
+        
+//        let scrollPreventionScript = """
+//            // Фиксируем размер и позицию контента
+//            document.body.style.overflow = 'hidden';
+//            document.body.style.position = 'fixed';
+//            
+//            // Блокируем все события скролла
+//            document.addEventListener('touchmove', function(e) {
+//                e.preventDefault();
+//            }, { passive: false });
+//            
+//            // Блокируем программный скролл
+//            window.scrollTo = function() {};
+//            window.scroll = function() {};
+//        """
 
         let userScriptForObserver = WKUserScript(source: jsObserver, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+//        let userScriptForScrollPrevention = WKUserScript(source: scrollPreventionScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        
         contentController.addUserScript(userScriptForObserver)
+//        contentController.addUserScript(userScriptForScrollPrevention)
 
         let webViewConfig = WKWebViewConfiguration()
         webViewConfig.userContentController = contentController
 
         webView = WKWebView(frame: .zero, configuration: webViewConfig)
-        webView.navigationDelegate = self // WKNavigationDelegate
+        webView.navigationDelegate = self
+        print("TransparentWebView: WKWebView created with configuration")
 
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
@@ -66,6 +83,7 @@ final class TransparentWebView: UIView {
     }
 
     private func setupWebView() {
+        print("TransparentWebView: Setting up WebView")
         webView.isOpaque = false
         self.addSubview(webView)
         setupWebViewConstraints()
@@ -76,15 +94,20 @@ final class TransparentWebView: UIView {
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
+        print("TransparentWebView: Starting to load HTML page")
+        print("TransparentWebView: Base URL: \(baseUrl)")
+        print("TransparentWebView: Content URL: \(contentUrl)")
+        
         let url = URL(string: baseUrl)
         fetchHTMLContent(from: contentUrl) { htmlString in
             if let htmlString = htmlString {
-                print("Содержимое страницы \(baseUrl) загружено")
+                print("TransparentWebView: HTML content fetched successfully")
                 DispatchQueue.main.async {
+                    print("TransparentWebView: Loading HTML string into WebView")
                     self.webView.loadHTMLString(htmlString, baseURL: url)
                 }
             } else {
-                print("Не удалось загрузить HTML")
+                print("TransparentWebView: Failed to fetch HTML content")
                 DispatchQueue.main.async {
                     self.delegate?.closeVC()
                 }
@@ -141,11 +164,9 @@ final class TransparentWebView: UIView {
 
 extension TransparentWebView: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        
         let name = message.name
         
         if name == "mindbox", let messageBody = message.body as? [String: String] {
-        
             let action = messageBody["action"] ?? "unknown"
             let data = messageBody["data"] ?? ""
             
@@ -154,6 +175,32 @@ extension TransparentWebView: WKScriptMessageHandler {
                 delegate?.closeVC()
             case "collapse":
                 delegate?.closeVC()
+            case "init":
+                print("TransparentWebView: Received init action")
+                if data.contains("quiz") {
+                    DispatchQueue.main.async {
+                        if let window = UIApplication.shared.windows.first(where: { 
+                            $0.rootViewController is WebViewController 
+                        }) {
+                            window.isHidden = false
+                            window.makeKeyAndVisible()
+                            print("TransparentWebView: Window is now visible")
+                        }
+                    }
+                }
+//            case "show":
+//                print("TransparentWebView: Received show action")
+//                if data.contains("quiz") {
+//                    DispatchQueue.main.async {
+//                        if let window = UIApplication.shared.windows.first(where: { 
+//                            $0.rootViewController is WebViewController 
+//                        }) {
+//                            window.isHidden = false
+//                            window.makeKeyAndVisible()
+//                            print("TransparentWebView: Window is now visible")
+//                        }
+//                    }
+//                }
             default:
                 print("action: \(action) with \(data)")
             }
