@@ -23,6 +23,10 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
         guard let checker = checker else {
             return false
         }
+        
+        guard (checker.event?.model?.viewProduct?.product.ids.first) != nil else {
+            return false
+        }
 
         guard let checkedProductSegmentations = checker.checkedProductSegmentations, !checkedProductSegmentations.isEmpty else {
             return false
