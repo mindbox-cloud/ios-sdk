@@ -17,12 +17,26 @@ protocol WebViewControllerProtocol {
 
 protocol WebVCDelegate: AnyObject {
     func closeVC()
+    func handleClick()
 }
 
 extension WebViewController: WebVCDelegate {
     func closeVC() {
         print(#function)
         onClose()
+    }
+    
+    func handleClick() {
+        print(#function)
+        guard let layer = model.content.background.layers.first/*,
+              case .webview(let webviewLayer) = layer*/ else {
+            return
+        }
+        print(layer)
+        
+        let layerAction = try? ContentBackgroundLayerAction(type: .redirectUrl, redirectModel: RedirectUrlLayerAction(intentPayload: "", value: ""))
+        
+        onTapAction(layerAction)
     }
 }
 
