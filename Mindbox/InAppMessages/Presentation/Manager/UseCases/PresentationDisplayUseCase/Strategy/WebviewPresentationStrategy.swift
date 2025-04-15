@@ -40,28 +40,35 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     }
 
     private func makeInAppMessageWindow() -> UIWindow? {
-        Logger.common(message: "[WebView] WebviewPresentationStrategy: Creating window", category: .webViewInAppMessages)
         let window: UIWindow?
         if #available(iOS 13.0, *) {
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                Logger.common(message: "[WebView] WebviewPresentationStrategy: Found scene", category: .webViewInAppMessages)
-                window = UIWindow(windowScene: scene)
-                window?.frame = UIScreen.main.bounds
-                window?.backgroundColor = .clear
-                window?.isHidden = true
-                Logger.common(message: "[WebView] WebviewPresentationStrategy: Window created with scene", category: .webViewInAppMessages)
-            } else {
-                Logger.common(message: "[WebView] WebviewPresentationStrategy: No scene found", level: .error, category: .webViewInAppMessages)
-                window = nil
-            }
+            window = iOS13PlusWindow
         } else {
-            Logger.common(message: "[WebView] WebviewPresentationStrategy: iOS < 13, creating window without scene", category: .webViewInAppMessages)
-            window = UIWindow(frame: UIScreen.main.bounds)
-            window?.backgroundColor = .clear
-            window?.isHidden = true
+            window = nil
         }
         self.window = window
-        Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
+        window?.windowLevel = .normal + 3
+        window?.isHidden = true
         return window
+    }
+    
+    @available(iOS 13.0, *)
+    private var mostSuitableScene: UIWindowScene? {
+        for connectedScene in UIApplication.shared.connectedScenes {
+            if let windowScene = connectedScene as? UIWindowScene, connectedScene.activationState == .foregroundActive {
+                return windowScene
+            }
+        }
+        
+        return UIApplication.shared.connectedScenes.first as? UIWindowScene
+    }
+    
+    @available(iOS 13.0, *)
+    private var iOS13PlusWindow: UIWindow? {
+        if let mostSuitableScene = mostSuitableScene {
+            return UIWindow(windowScene: mostSuitableScene)
+        } else {
+            return nil
+        }
     }
 }
