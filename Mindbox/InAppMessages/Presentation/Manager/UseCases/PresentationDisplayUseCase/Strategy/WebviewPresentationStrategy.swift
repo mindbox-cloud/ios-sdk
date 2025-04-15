@@ -16,24 +16,23 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     }
 
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
-        print("WebviewPresentationStrategy: Starting presentation")
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Starting presentation", category: .webViewInAppMessages)
         window.rootViewController = viewController
         window.isHidden = true
-        print("WebviewPresentationStrategy: Window setup completed")
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
         
         // Force view controller to load its view
         _ = viewController.view
-        print("WebviewPresentationStrategy: View controller view loaded")
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: View controller view loaded", category: .webViewInAppMessages)
         
-        Logger.common(message: "In-app modal with id \(id) presented", level: .info, category: .inAppMessages)
-        print("WebviewPresentationStrategy: Presentation completed")
+        Logger.common(message: "[WebView] In-app WebView with id \(id) start presenting with hidden window", category: .webViewInAppMessages)
     }
 
     func dismiss(viewController: UIViewController) {
         viewController.view.window?.isHidden = true
         viewController.view.window?.rootViewController = nil
         window = nil
-        Logger.common(message: "In-app modal presentation dismissed", level: .debug, category: .inAppMessages)
+        Logger.common(message: "[WebView] In-app WebView presentation dismissed", category: .webViewInAppMessages)
     }
 
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
@@ -41,28 +40,28 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     }
 
     private func makeInAppMessageWindow() -> UIWindow? {
-        print("WebviewPresentationStrategy: Creating window")
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Creating window", category: .webViewInAppMessages)
         let window: UIWindow?
         if #available(iOS 13.0, *) {
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                print("WebviewPresentationStrategy: Found scene")
+                Logger.common(message: "[WebView] WebviewPresentationStrategy: Found scene", category: .webViewInAppMessages)
                 window = UIWindow(windowScene: scene)
                 window?.frame = UIScreen.main.bounds
                 window?.backgroundColor = .clear
                 window?.isHidden = true
-                print("WebviewPresentationStrategy: Window created with scene")
+                Logger.common(message: "[WebView] WebviewPresentationStrategy: Window created with scene", category: .webViewInAppMessages)
             } else {
-                print("WebviewPresentationStrategy: No scene found")
+                Logger.common(message: "[WebView] WebviewPresentationStrategy: No scene found", level: .error, category: .webViewInAppMessages)
                 window = nil
             }
         } else {
-            print("WebviewPresentationStrategy: iOS < 13, creating window without scene")
+            Logger.common(message: "[WebView] WebviewPresentationStrategy: iOS < 13, creating window without scene", category: .webViewInAppMessages)
             window = UIWindow(frame: UIScreen.main.bounds)
             window?.backgroundColor = .clear
             window?.isHidden = true
         }
         self.window = window
-        print("WebviewPresentationStrategy: Window setup completed")
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
         return window
     }
 }
