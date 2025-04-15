@@ -57,11 +57,6 @@ class SegmentationService: SegmentationServiceProtocol {
     }
 
     func checkProductSegmentationRequest(products: ProductCategory, completion: @escaping ([InAppProductSegmentResponse.CustomerSegmentation]?) -> Void) {
-        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
-            completion(nil)
-            return
-        }
-
         let arrayOfSegments = Array(Set(targetingChecker.context.productSegments))
         let segments: [InAppProductSegmentRequest.Segmentation] = arrayOfSegments.map {
             return .init(ids: .init(externalId: $0))
