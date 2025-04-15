@@ -192,7 +192,11 @@ extension TransparentWebView: WKScriptMessageHandler {
             
             switch action {
             case "close":
-                delegate?.closeVC()
+                if data == "final" {
+                    delegate?.handleClick()
+                } else {
+                    delegate?.closeVC()
+                }
             case "collapse":
                 delegate?.closeVC()
             case "init":
