@@ -11,8 +11,6 @@ import MindboxLogger
 
 final class TransparentWebView: UIView {
     
-    private var loadStartTime: DispatchTime?
-    
     weak var delegate: WebVCDelegate?
     
     private var webView: WKWebView!
@@ -103,7 +101,6 @@ final class TransparentWebView: UIView {
             } else {
                 Logger.common(message: "[WebView] TransparentWebView: Failed to fetch HTML content", category: .webViewInAppMessages)
                 self.quizInitTimeoutWorkItem?.cancel()
-                self.checkTime()
                 DispatchQueue.main.async {
                     self.delegate?.closeTapWebViewVC()
                 }
@@ -161,29 +158,16 @@ final class TransparentWebView: UIView {
     }
     
     private func setupTimeoutTimer() {
-        print(#function)
         let secondsTimeout = 7
-        self.loadStartTime = DispatchTime.now()
         Logger.common(message: "[WebView] TransparentWebView: setup timeout timer with \(secondsTimeout) seconds", category: .webViewInAppMessages)
         
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             Logger.common(message: "[WebView] TransparentWebView: quiz init timeout reached, closing", category: .webViewInAppMessages)
-            self?.checkTime()
             self?.delegate?.closeTapWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsTimeout), execute: workItem)
-        print(Date())
-    }
-    
-    private func checkTime() {
-        if let startTime = loadStartTime {
-            let endTime = DispatchTime.now()
-            let elapsedNanoseconds = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let elapsedMilliseconds = Double(elapsedNanoseconds) / 1_000_000.0
-            Logger.common(message: "[WebView] Download completed in \(elapsedMilliseconds) ms", category: .webViewInAppMessages)
-        }
     }
 }
 
@@ -191,7 +175,6 @@ final class TransparentWebView: UIView {
 
 extension TransparentWebView: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print(message.body, message.name)
         let name = message.name
         
         if name == "mindbox", let messageBody = message.body as? [String: String] {
@@ -205,7 +188,6 @@ extension TransparentWebView: WKScriptMessageHandler {
                 Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
                 if data.contains("quiz") {
                     quizInitTimeoutWorkItem?.cancel()
-                    checkTime()
                     DispatchQueue.main.async {
                         if let window = UIApplication.shared.windows.first(where: {
                             $0.rootViewController is WebViewController
@@ -220,7 +202,6 @@ extension TransparentWebView: WKScriptMessageHandler {
                 print("TransparentWebView: UserAgent: \(data)")
             default:
                 Logger.common(message: "[WebView] TransparentWebView: action: \(action) with \(data)", category: .webViewInAppMessages)
-                print("action: \(action) with \(data)")
             }
         }
     }

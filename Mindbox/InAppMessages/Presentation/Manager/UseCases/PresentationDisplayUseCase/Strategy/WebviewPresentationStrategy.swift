@@ -31,7 +31,6 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     func dismiss(viewController: UIViewController) {
         viewController.view.window?.isHidden = true
         viewController.view.window?.rootViewController = nil
-        window = nil
         Logger.common(message: "[WebView] In-app WebView presentation dismissed", category: .webViewInAppMessages)
     }
 
