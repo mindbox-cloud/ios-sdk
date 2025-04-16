@@ -44,10 +44,9 @@ final class TransparentWebView: UIView {
         let contentController = WKUserContentController()
         contentController.add(self, name: "mindbox")
 
-        let endpoint = persistenceStorage.configuration?.endpoint
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
-            function endpointIdIos(){return '\("holodilnik-android")';}
+            function endpointIdIos(){return '\(persistenceStorage.configuration?.endpoint ?? "error")';}
             function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
             
             // Log UserAgent to console
