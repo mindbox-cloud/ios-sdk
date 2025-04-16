@@ -60,19 +60,10 @@ final class TransparentWebView: UIView {
                 'data': navigator.userAgent
             });
         """
-        
-        let scrollPreventionScript = """
-            // Block all scroll events
-            document.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-            }, { passive: false });
-        """
 
         let userScriptForObserver = WKUserScript(source: jsObserver, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-        let userScriptForScrollPrevention = WKUserScript(source: scrollPreventionScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         
         contentController.addUserScript(userScriptForObserver)
-        contentController.addUserScript(userScriptForScrollPrevention)
 
         let webViewConfig = WKWebViewConfiguration()
         webViewConfig.userContentController = contentController
@@ -166,7 +157,8 @@ final class TransparentWebView: UIView {
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
         let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
-        let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+//        let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+        let userAgent: String = "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
         return userAgent
     }
     
