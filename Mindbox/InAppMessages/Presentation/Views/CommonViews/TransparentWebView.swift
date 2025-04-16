@@ -46,6 +46,7 @@ final class TransparentWebView: UIView {
         let contentController = WKUserContentController()
         contentController.add(self, name: "mindbox")
 
+        let endpoint = persistenceStorage.configuration?.endpoint
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
             function endpointIdIos(){return '\("holodilnik-android")';}
@@ -67,13 +68,11 @@ final class TransparentWebView: UIView {
 
         let webViewConfig = WKWebViewConfiguration()
         webViewConfig.userContentController = contentController
-        webViewConfig.applicationNameForUserAgent = createUserAgent() // Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) mindbox.sdk/2.13.0 (iOS 18.4; iPhone13,2) PushOk/1.9.3
+        webViewConfig.applicationNameForUserAgent = createUserAgent()
 
         webView = WKWebView(frame: .zero, configuration: webViewConfig)
         webView.navigationDelegate = self
         Logger.common(message: "[WebView] TransparentWebView: WKWebView created with configuration", category: .webViewInAppMessages)
-
-//        webView.customUserAgent = createUserAgent()
         
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
@@ -157,7 +156,6 @@ final class TransparentWebView: UIView {
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
         let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
-//        let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
         let userAgent: String = "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
         return userAgent
     }
