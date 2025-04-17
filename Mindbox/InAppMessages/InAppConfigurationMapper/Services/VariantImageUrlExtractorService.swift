@@ -24,7 +24,7 @@ class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
         case .snackbar(let snackbarModel):
             elements = snackbarModel.content.background.layers
         case .webview(let webviewModel):
-            return []
+            elements = webviewModel.content.background.layers
         case .unknown:
             return []
         }
