@@ -21,7 +21,9 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         window.isHidden = true
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
         
-        // Force view controller to load its view
+        // Force view controller to load its view.
+        // Start loading the WebView when it is hidden.
+        // It is necessary that the window is fully initialized before making it further visible.
         _ = viewController.view
         Logger.common(message: "[WebView] WebviewPresentationStrategy: View controller view loaded", category: .webViewInAppMessages)
         
