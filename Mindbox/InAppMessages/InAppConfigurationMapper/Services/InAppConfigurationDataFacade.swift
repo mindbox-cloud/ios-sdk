@@ -88,25 +88,27 @@ private extension InAppConfigurationDataFacade {
         }
     }
 
-    private func fetchProductSegmentationIfNeeded(products: ViewProductIDS?) {
+    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
         guard targetingChecker.event?.name == SessionTemporaryStorage.shared.viewProductOperation else {
-            return
-        }
-        
-        guard let products = products,
-              let firstProduct = products.firstProduct else {
+            Logger.common(message: "Skipping segmentation fetch: unexpected event '\(targetingChecker.event?.name ?? "nil")'")
             return
         }
 
-        let key = DictionaryKeyValueModel(key: firstProduct.key, value: firstProduct.value)
-        guard targetingChecker.checkedProductSegmentations[key] == nil else {
+        guard let products = products,
+              let firstProduct = products.firstProduct else {
+            Logger.common(message: "Skipping segmentation fetch: no products or empty IDs")
             return
         }
-        
+
+        guard targetingChecker.checkedProductSegmentations[firstProduct] == nil else {
+            Logger.common(message: "Skipping segmentation fetch: already checked for product '\(firstProduct.key)'")
+            return
+        }
+
         dispatchGroup.enter()
         segmentationService.checkProductSegmentationRequest(products: products) { response in
             if let response = response {
-                self.targetingChecker.checkedProductSegmentations[key] = response
+                self.targetingChecker.checkedProductSegmentations[firstProduct] = response
             }
             
             self.dispatchGroup.leave()
