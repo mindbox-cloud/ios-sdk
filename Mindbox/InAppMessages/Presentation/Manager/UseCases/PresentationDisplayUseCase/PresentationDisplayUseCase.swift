@@ -61,21 +61,17 @@ final class PresentationDisplayUseCase {
             return
         }
         
-        if let webVC = presentedVC as? WebViewController, webVC.isTimeoutClose {
-            presentationStrategy?.dismiss(viewController: presentedVC)
-            self.presentedVC = nil
-            self.model = nil
-            self.presentationStrategy = nil
-            self.factory = nil
-            return
-        }
-        
         presentationStrategy?.dismiss(viewController: presentedVC)
-        onClose()
         self.presentedVC = nil
         self.model = nil
         self.presentationStrategy = nil
         self.factory = nil
+        
+        if let webVC = presentedVC as? WebViewController, webVC.isTimeoutClose {
+            return
+        }
+        
+        onClose()
     }
 
     func onPresented(id: String, _ completion: @escaping () -> Void) {
