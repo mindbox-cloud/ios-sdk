@@ -35,7 +35,6 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     }
 
     private let dispatchGroup = DispatchGroup()
-    private var fetchedProductIdsCache: [String: String] = [:]
 
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
         fetchSegmentationIfNeeded()
@@ -89,24 +88,27 @@ private extension InAppConfigurationDataFacade {
         }
     }
 
-    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
-        guard let products = products else {
+    private func fetchProductSegmentationIfNeeded(products: ViewProductIDS?) {
+        guard targetingChecker.event?.name == SessionTemporaryStorage.shared.viewProductOperation else {
+            return
+        }
+        
+        guard let products = products,
+              let firstProduct = products.firstProduct else {
             return
         }
 
-        let productIds = products.ids
-        let allMatch = productIds.allSatisfy { key, value in
-            fetchedProductIdsCache[key] == value
-        }
-
-        if allMatch {
+        let key = DictionaryKeyValueModel(key: firstProduct.key, value: firstProduct.value)
+        guard targetingChecker.checkedProductSegmentations[key] == nil else {
             return
         }
-
+        
         dispatchGroup.enter()
         segmentationService.checkProductSegmentationRequest(products: products) { response in
-            self.fetchedProductIdsCache = productIds
-            self.targetingChecker.checkedProductSegmentations = response
+            if let response = response {
+                self.targetingChecker.checkedProductSegmentations[key] = response
+            }
+            
             self.dispatchGroup.leave()
         }
     }

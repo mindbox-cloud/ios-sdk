@@ -23,16 +23,17 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
         guard let checker = checker else {
             return false
         }
-        
-        guard (checker.event?.model?.viewProduct?.product.ids.first) != nil else {
+ 
+        guard let firstProduct = checker.event?.model?.viewProduct?.product.firstProduct else {
             return false
         }
 
-        guard let checkedProductSegmentations = checker.checkedProductSegmentations, !checkedProductSegmentations.isEmpty else {
+        guard let productResponse = checker.checkedProductSegmentations[firstProduct],
+              !checker.checkedProductSegmentations.isEmpty else {
             return false
         }
 
-        let segment = checkedProductSegmentations.first(where: {
+        let segment = productResponse.first(where: {
             $0.segment?.ids?.externalId == targeting.segmentExternalId
         })
 
