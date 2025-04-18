@@ -101,7 +101,7 @@ final class TransparentWebView: UIView {
                 Logger.common(message: "[WebView] TransparentWebView: Failed to fetch HTML content", category: .webViewInAppMessages)
                 self.quizInitTimeoutWorkItem?.cancel()
                 DispatchQueue.main.async {
-                    self.delegate?.closeTapWebViewVC()
+                    self.delegate?.closeTimeoutWebViewVC()
                 }
             }
         }
@@ -163,7 +163,7 @@ final class TransparentWebView: UIView {
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             Logger.common(message: "[WebView] TransparentWebView: quiz init timeout reached, closing", category: .webViewInAppMessages)
-            self?.delegate?.closeTapWebViewVC()
+            self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsTimeout), execute: workItem)
