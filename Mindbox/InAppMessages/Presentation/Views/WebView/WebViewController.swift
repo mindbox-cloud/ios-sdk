@@ -10,11 +10,18 @@ import MindboxLogger
 
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
+    func closeTimeoutWebViewVC()
 }
 
 extension WebViewController: WebVCDelegate {
     func closeTapWebViewVC() {
         Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onClose()
+    }
+    
+    func closeTimeoutWebViewVC() {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         onClose()
     }
 }
