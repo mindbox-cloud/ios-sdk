@@ -20,6 +20,7 @@ extension WebViewController: WebVCDelegate {
     }
     
     func closeTimeoutWebViewVC() {
+        isTimeoutClose = true
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         onClose()
@@ -49,6 +50,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    var isTimeoutClose = false
 
     private var viewWillAppearWasCalled = false
 
