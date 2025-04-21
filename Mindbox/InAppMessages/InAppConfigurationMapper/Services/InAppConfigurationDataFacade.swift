@@ -64,7 +64,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     }
 }
 
-private extension InAppConfigurationDataFacade {
+extension InAppConfigurationDataFacade {
     private func fetchSegmentationIfNeeded() {
         if !SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
             dispatchGroup.enter()
@@ -88,7 +88,7 @@ private extension InAppConfigurationDataFacade {
         }
     }
 
-    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
+    func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
         guard targetingChecker.event?.name == SessionTemporaryStorage.shared.viewProductOperation else {
             Logger.common(message: "Skipping segmentation fetch: unexpected event '\(targetingChecker.event?.name ?? "nil")'")
             return

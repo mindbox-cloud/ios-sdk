@@ -605,7 +605,10 @@ class InappConfigurationTests {
                   ])
         ])
 
-        self.targetingChecker.checkedProductSegmentations = productSegments.products?.first?.segmentations
+        if let segmentations = productSegments.products?.first?.segmentations {
+            self.targetingChecker.checkedProductSegmentations = [.init(key: "website", value: "49") : segmentations]
+        }
+
 
         let result = await withCheckedContinuation { continuation in
             mapper.handleInapps(event, response) { formData in
@@ -643,7 +646,8 @@ class InappConfigurationTests {
 
         let segmentation = [InAppProductSegmentResponse.CustomerSegmentation(ids: .init(externalId: "1"),
                                                                              segment: .init(ids: .init(externalId: "4")))]
-        self.targetingChecker.checkedProductSegmentations = segmentation
+        
+        self.targetingChecker.checkedProductSegmentations = [.init(key: "website", value: "49") : segmentation]
 
         let result = await withCheckedContinuation { continuation in
             mapper.handleInapps(event, response) { formData in

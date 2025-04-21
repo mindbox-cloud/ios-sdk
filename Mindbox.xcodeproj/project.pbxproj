@@ -453,6 +453,7 @@
 		F382F20B2BAC50D000BC97FF /* VisitTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */; };
 		F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20C2BAC548900BC97FF /* VisitTargetingChecker.swift */; };
 		F382F2112BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F2102BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift */; };
+		F38562FF2DB66CB600D91208 /* DictionaryKeyValueModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38562FE2DB66CB600D91208 /* DictionaryKeyValueModel.swift */; };
 		F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */; };
 		F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F42AA9AF7A00852298 /* InappFilter.swift */; };
 		F39116F82AA9B04E00852298 /* VariantsFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39116F72AA9B04E00852298 /* VariantsFilter.swift */; };
@@ -1037,6 +1038,7 @@
 		F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargeting.swift; sourceTree = "<group>"; };
 		F382F20C2BAC548900BC97FF /* VisitTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargetingChecker.swift; sourceTree = "<group>"; };
 		F382F2102BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UNAuthorizationStatus+Extensions.swift"; sourceTree = "<group>"; };
+		F38562FE2DB66CB600D91208 /* DictionaryKeyValueModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryKeyValueModel.swift; sourceTree = "<group>"; };
 		F39116ED2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorServiceTests.swift; sourceTree = "<group>"; };
 		F39116F42AA9AF7A00852298 /* InappFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFilter.swift; sourceTree = "<group>"; };
 		F39116F72AA9B04E00852298 /* VariantsFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantsFilter.swift; sourceTree = "<group>"; };
@@ -1133,6 +1135,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SlidingExpirationsError; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
@@ -2070,6 +2073,7 @@
 		9B24FAB628C7554C00F10B5D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F38562FE2DB66CB600D91208 /* DictionaryKeyValueModel.swift */,
 				F39B67A32A3C6BCE005C0CCA /* CustomerSegment */,
 				F3A8B9A12A3A6DBF00E9C055 /* Config */,
 				A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */,
@@ -2112,6 +2116,7 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
 				F3A8B9592A389E7A00E9C055 /* InAppConfigurationMapperTests */,
@@ -3160,6 +3165,7 @@
 				313B233C25ADEA0F00A1CB72 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
 				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
@@ -3789,6 +3795,7 @@
 				F331DCBF2A80993600222120 /* ContentElementSize.swift in Sources */,
 				334F3AF1264C199900A6AC00 /* PoolRequest.swift in Sources */,
 				3191C2A625ADFD8000E7D6B9 /* Mindbox.swift in Sources */,
+				F38562FF2DB66CB600D91208 /* DictionaryKeyValueModel.swift in Sources */,
 				A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */,
 				A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */,
 				F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */,
