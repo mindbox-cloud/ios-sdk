@@ -192,6 +192,7 @@ extension TransparentWebView: WKScriptMessageHandler {
                 if data.contains("init") {
                     Logger.common(message: "[WebView] TransparentWebView: received close init action (error)", category: .webViewInAppMessages)
                     delegate?.closeTimeoutWebViewVC()
+                    return
                 }
                 delegate?.closeTapWebViewVC()
             case "init":
