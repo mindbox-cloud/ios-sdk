@@ -16,6 +16,7 @@ final class TransparentWebView: UIView {
     private var webView: WKWebView!
 
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
+    private var wizardId: String?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -42,18 +43,19 @@ final class TransparentWebView: UIView {
         Logger.common(message: "[WebView] TransparentWebView: Creating WKWebView", category: .webViewInAppMessages)
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let contentController = WKUserContentController()
-        contentController.add(self, name: "mindbox")
+        contentController.add(self, name: "SdkBridge")
 
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
             function endpointIdIos(){return '\(persistenceStorage.configuration?.endpoint ?? "error")';}
             function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
+            function wizardIdIos(){return '\(wizardId ?? "")';}
             
             // Log UserAgent to console
             console.log('UserAgent:', navigator.userAgent);
             
             // Send UserAgent to native code
-            window.webkit.messageHandlers.mindbox.postMessage({
+            window.webkit.messageHandlers.SdkBridge.postMessage({
                 'action': 'userAgent',
                 'data': navigator.userAgent
             });
@@ -83,10 +85,13 @@ final class TransparentWebView: UIView {
         setupWebViewConstraints()
     }
 
-    func loadHTMLPage(baseUrl: String, contentUrl: String) {
+    func loadHTMLPage(baseUrl: String, contentUrl: String, wizardId: String) {
+        self.wizardId = wizardId
+        
         Logger.common(message: "[WebView] Starting to load HTML page", category: .webViewInAppMessages)
         Logger.common(message: "[WebView] Base URL: \(baseUrl)", category: .webViewInAppMessages)
         Logger.common(message: "[WebView] Content URL: \(contentUrl)", category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] WizardId: \(wizardId)", category: .webViewInAppMessages)
         
         setupTimeoutTimer()
         let url = URL(string: baseUrl)
@@ -141,7 +146,7 @@ final class TransparentWebView: UIView {
     }
 
     func cleanUp() {
-        webView.configuration.userContentController.removeScriptMessageHandler(forName: "mindbox")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "SdkBridge")
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
     }
@@ -176,7 +181,7 @@ extension TransparentWebView: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         let name = message.name
         
-        if name == "mindbox", let messageBody = message.body as? [String: String] {
+        if name == "SdkBridge", let messageBody = message.body as? [String: String] {
             let action = messageBody["action"] ?? "unknown"
             let data = messageBody["data"] ?? ""
             

@@ -95,7 +95,8 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
             webView.delegate = self
             webView.loadHTMLPage(
                 baseUrl: webviewLayer.baseUrl,
-                contentUrl: webviewLayer.contentUrl
+                contentUrl: webviewLayer.contentUrl,
+                wizardId: webviewLayer.wizardId
             )
 
             self.transparentWebView = webView
