@@ -40,7 +40,16 @@ final class LayersFilterService: LayersFilterProtocol {
                 case .webview(let webviewContentBackgroundLayerDTO):
                     let baseUrl = webviewContentBackgroundLayerDTO.baseUrl
                     let contentUrl = webviewContentBackgroundLayerDTO.contentUrl
-                    let webviewLayer = WebviewContentBackgroundLayer(baseUrl: baseUrl, contentUrl: contentUrl)
+                    let payload = webviewContentBackgroundLayerDTO.payload
+                    let redirectUrl = webviewContentBackgroundLayerDTO.redirectUrl
+                    let wizardId = webviewContentBackgroundLayerDTO.wizardId
+                    let webviewLayer = WebviewContentBackgroundLayer(
+                        baseUrl: baseUrl,
+                        contentUrl: contentUrl,
+                        redirectUrl: redirectUrl,
+                        payload: payload,
+                        wizardId: wizardId
+                    )
                     let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: webviewLayer)
                     filteredLayers.append(newLayer)
                 case .unknown:
