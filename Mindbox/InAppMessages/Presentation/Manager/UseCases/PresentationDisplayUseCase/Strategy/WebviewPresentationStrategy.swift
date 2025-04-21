@@ -12,19 +12,28 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     var window: UIWindow?
 
     func getWindow() -> UIWindow? {
-        return makeInAppMessageWindow()
+        makeInAppMessageWindow()
     }
 
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Starting presentation", category: .webViewInAppMessages)
         window.rootViewController = viewController
-        window.isHidden = false
-        Logger.common(message: "In-app modal with id \(id) presented", level: .info, category: .inAppMessages)
+        window.isHidden = true
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
+        
+        // Force view controller to load its view.
+        // Start loading the WebView when it is hidden.
+        // It is necessary that the window is fully initialized before making it further visible.
+        _ = viewController.view
+        Logger.common(message: "[WebView] WebviewPresentationStrategy: View controller view loaded", category: .webViewInAppMessages)
+        
+        Logger.common(message: "[WebView] In-app WebView with id \(id) start presenting with hidden window", category: .webViewInAppMessages)
     }
 
     func dismiss(viewController: UIViewController) {
         viewController.view.window?.isHidden = true
         viewController.view.window?.rootViewController = nil
-        Logger.common(message: "In-app modal presentation dismissed", level: .debug, category: .inAppMessages)
+        Logger.common(message: "[WebView] In-app WebView presentation dismissed", category: .webViewInAppMessages)
     }
 
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
@@ -40,10 +49,10 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         }
         self.window = window
         window?.windowLevel = .normal + 3
-        window?.isHidden = false
+        window?.isHidden = true
         return window
     }
-
+    
     @available(iOS 13.0, *)
     private var mostSuitableScene: UIWindowScene? {
         for connectedScene in UIApplication.shared.connectedScenes {
@@ -51,10 +60,10 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
                 return windowScene
             }
         }
-
+        
         return UIApplication.shared.connectedScenes.first as? UIWindowScene
     }
-
+    
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
         if let mostSuitableScene = mostSuitableScene {

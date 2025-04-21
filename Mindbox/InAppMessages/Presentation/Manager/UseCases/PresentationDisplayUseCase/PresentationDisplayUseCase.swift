@@ -60,12 +60,18 @@ final class PresentationDisplayUseCase {
         guard let presentedVC = presentedVC else {
             return
         }
+        
         presentationStrategy?.dismiss(viewController: presentedVC)
-        onClose()
         self.presentedVC = nil
         self.model = nil
         self.presentationStrategy = nil
         self.factory = nil
+        
+        if let webVC = presentedVC as? WebViewController, webVC.isTimeoutClose {
+            return
+        }
+        
+        onClose()
     }
 
     func onPresented(id: String, _ completion: @escaping () -> Void) {

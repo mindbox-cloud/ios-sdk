@@ -8,21 +8,21 @@
 import UIKit
 import MindboxLogger
 
-protocol WebViewControllerProtocol {
-    var layers: [UIView] { get set }
-    var elements: [UIView] { get set }
-    var elementFactories: [ContentElementType: ElementFactory] { get }
-    var layersFactories: [ContentBackgroundLayerType: LayerFactory] { get }
-}
-
-
 protocol WebVCDelegate: AnyObject {
-    func closeVC()
+    func closeTapWebViewVC()
+    func closeTimeoutWebViewVC()
 }
 
 extension WebViewController: WebVCDelegate {
-    func closeVC() {
-        print(#function)
+    func closeTapWebViewVC() {
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onClose()
+    }
+    
+    func closeTimeoutWebViewVC() {
+        isTimeoutClose = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         onClose()
     }
 }
@@ -50,6 +50,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onPresented: () -> Void
     private let onClose: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    var isTimeoutClose = false
 
     private var viewWillAppearWasCalled = false
 
@@ -83,7 +84,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     deinit {
-        print("DEINIT ModalVC")
+        Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
     }
 
@@ -94,7 +95,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         setupConstraints(for: webView, in: view)
         
         guard let layer = model.content.background.layers.first else {
-            closeVC()
+            closeTapWebViewVC()
             return
         }
 
@@ -108,25 +109,18 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
             self.transparentWebView = webView
         default:
-            closeVC()
+            closeTapWebViewVC()
             return
         }
-
     }
 
     private func setupConstraints(for view: UIView, in parentView: UIView) {
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.heightAnchor.constraint(equalToConstant:  UIScreen.main.bounds.height).isActive = true
         NSLayoutConstraint.activate([
-//            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 20),
-//            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -20),
-            view.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
-        
-            
-            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 0),
-            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -00),
-            view.bottomAnchor.constraint(equalTo: parentView.bottomAnchor),
-            view.widthAnchor.constraint(equalTo: parentView.widthAnchor, multiplier: 1)
+            view.topAnchor.constraint(equalTo: parentView.topAnchor),
+            view.leadingAnchor.constraint(equalTo: parentView.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: parentView.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: parentView.bottomAnchor)
         ])
     }
 
@@ -144,21 +138,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         setupWebView()
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-
-        if let inappView = layers.first(where: { $0 is InAppImageOnlyView }) {
-            Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
-            Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
-        }
-
-        elements.forEach({
-            $0.removeFromSuperview()
-        })
-
-        setupElements()
-    }
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         guard !viewWillAppearWasCalled else { return }
@@ -171,14 +150,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     @objc
     private func onTapDimmedView() {
         onClose()
-    }
-
-    private func setupLayers() {
-   
-    }
-
-    private func setupElements() {
-        
     }
 }
 

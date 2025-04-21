@@ -7,17 +7,18 @@
 
 import UIKit
 import WebKit
+import MindboxLogger
 
 final class TransparentWebView: UIView {
+    
+    weak var delegate: WebVCDelegate?
+    
     private var webView: WKWebView!
 
-    private var isClosing: Bool = false
-
-    weak var delegate: WebVCDelegate?
+    private var quizInitTimeoutWorkItem: DispatchWorkItem?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-//        Self.clean()
         createWKWebView()
         setupWebView()
         
@@ -34,59 +35,73 @@ final class TransparentWebView: UIView {
 
     deinit {
         webView.scrollView.delegate = nil
-        print("DEINIT TransparentView")
+        Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
     private func createWKWebView() {
+        Logger.common(message: "[WebView] TransparentWebView: Creating WKWebView", category: .webViewInAppMessages)
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let contentController = WKUserContentController()
         contentController.add(self, name: "mindbox")
 
-        //let userScript = WKUserScript(source: jsClick, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-        //contentController.addUserScript(userScript)
-        
         let jsObserver: String = """
             function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
-            function endpointIdIos(){return '\("Test-staging.mobile-sdk-test-staging.mindbox.ru")';}
-            function deviceUuidIos(){return '\(persistenceStorage.deviceUUID!)';}
+            function endpointIdIos(){return '\(persistenceStorage.configuration?.endpoint ?? "error")';}
+            function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
+            
+            // Log UserAgent to console
+            console.log('UserAgent:', navigator.userAgent);
+            
+            // Send UserAgent to native code
+            window.webkit.messageHandlers.mindbox.postMessage({
+                'action': 'userAgent',
+                'data': navigator.userAgent
+            });
         """
 
         let userScriptForObserver = WKUserScript(source: jsObserver, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        
         contentController.addUserScript(userScriptForObserver)
 
         let webViewConfig = WKWebViewConfiguration()
         webViewConfig.userContentController = contentController
+        webViewConfig.applicationNameForUserAgent = createUserAgent()
 
         webView = WKWebView(frame: .zero, configuration: webViewConfig)
-        webView.navigationDelegate = self // WKNavigationDelegate
-
+        webView.navigationDelegate = self
+        Logger.common(message: "[WebView] TransparentWebView: WKWebView created with configuration", category: .webViewInAppMessages)
+        
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
     }
 
     private func setupWebView() {
+        Logger.common(message: "[WebView] TransparentWebView: Setting up WebView", category: .webViewInAppMessages)
         webView.isOpaque = false
         self.addSubview(webView)
         setupWebViewConstraints()
     }
 
-    func getHTML() -> String {
-        return ""
-    }
-
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
+        Logger.common(message: "[WebView] Starting to load HTML page", category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] Base URL: \(baseUrl)", category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] Content URL: \(contentUrl)", category: .webViewInAppMessages)
+        
+        setupTimeoutTimer()
         let url = URL(string: baseUrl)
         fetchHTMLContent(from: contentUrl) { htmlString in
             if let htmlString = htmlString {
-                print("Содержимое страницы \(baseUrl) загружено")
+                Logger.common(message: "[WebView] TransparentWebView: HTML content fetched successfully", category: .webViewInAppMessages)
+                Logger.common(message: "[WebView] TransparentWebView: Loading HTML string into WebView", category: .webViewInAppMessages)
                 DispatchQueue.main.async {
                     self.webView.loadHTMLString(htmlString, baseURL: url)
                 }
             } else {
-                print("Не удалось загрузить HTML")
+                Logger.common(message: "[WebView] TransparentWebView: Failed to fetch HTML content", category: .webViewInAppMessages)
+                self.quizInitTimeoutWorkItem?.cancel()
                 DispatchQueue.main.async {
-                    self.delegate?.closeVC()
+                    self.delegate?.closeTimeoutWebViewVC()
                 }
             }
         }
@@ -105,16 +120,14 @@ final class TransparentWebView: UIView {
         
         let task = session.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("Ошибка загрузки данных: \(error)")
+                Logger.common(message: "[WebView] TransparentWebView: Failed to fetch HTML content with error \(error.localizedDescription)", category: .webViewInAppMessages)
                 completion(nil)
                 return
             }
 
             guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                print("Некорректный ответ сервера")
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
+                Logger.common(message: "[WebView] TransparentWebView: Failed to fetch HTML content. Incorrect server response", category: .webViewInAppMessages)
+                completion(nil)
                 return
             }
             
@@ -128,12 +141,32 @@ final class TransparentWebView: UIView {
     }
 
     func cleanUp() {
-        print(#function)
-
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "mindbox")
-
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
+    }
+    
+    private func createUserAgent() -> String {
+        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+        
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
+        let appVersion = utilitiesFetcher.appVerson ?? "unknow"
+        let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
+        let userAgent: String = "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
+        return userAgent
+    }
+    
+    private func setupTimeoutTimer() {
+        let secondsTimeout = 7
+        Logger.common(message: "[WebView] TransparentWebView: setup timeout timer with \(secondsTimeout) seconds", category: .webViewInAppMessages)
+        
+        quizInitTimeoutWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            Logger.common(message: "[WebView] TransparentWebView: quiz init timeout reached, closing", category: .webViewInAppMessages)
+            self?.delegate?.closeTimeoutWebViewVC()
+        }
+        quizInitTimeoutWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsTimeout), execute: workItem)
     }
 }
 
@@ -141,26 +174,37 @@ final class TransparentWebView: UIView {
 
 extension TransparentWebView: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        
         let name = message.name
         
         if name == "mindbox", let messageBody = message.body as? [String: String] {
-        
             let action = messageBody["action"] ?? "unknown"
             let data = messageBody["data"] ?? ""
             
             switch action {
-            case "close":
-                delegate?.closeVC()
-            case "collapse":
-                delegate?.closeVC()
+            case "close", "collapse":
+                delegate?.closeTapWebViewVC()
+            case "init":
+                Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
+                if data.contains("quiz") {
+                    quizInitTimeoutWorkItem?.cancel()
+                    DispatchQueue.main.async {
+                        if let window = UIApplication.shared.windows.first(where: {
+                            $0.rootViewController is WebViewController
+                        }) {
+                            window.isHidden = false
+                            window.makeKeyAndVisible()
+                            Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
+                        }
+                    }
+                }
+            case "userAgent":
+                print("TransparentWebView: UserAgent: \(data)")
             default:
-                print("action: \(action) with \(data)")
+                Logger.common(message: "[WebView] TransparentWebView: action: \(action) with \(data)", category: .webViewInAppMessages)
             }
         }
     }
 }
-
 
 // {"mode":"quiz","screen":"minimal","slug":"televisions","action":"show"}
 class RequestBody: Decodable {
@@ -177,16 +221,15 @@ class RequestBody: Decodable {
     }
 }
 
-
 // MARK: - WKNavigationDelegate
 
 extension TransparentWebView: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        print("Начало загрузки URL: \(webView.url?.absoluteString ?? "unknown")")
+        Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        print("Загрузка завершена: \(webView.url?.absoluteString ?? "unknown")")
+        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
     }
 
     func webView(
@@ -194,7 +237,7 @@ extension TransparentWebView: WKNavigationDelegate {
         decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
     ) {
         if let url = navigationAction.request.url {
-            print("Переход по URL: \(url.absoluteString)")
+            Logger.common(message: "[WebView] WKNavigationDelegate: Navigating by URL \(url.absoluteString)", category: .webViewInAppMessages)
         }
         decisionHandler(.allow)
     }
@@ -204,7 +247,7 @@ extension TransparentWebView: WKNavigationDelegate {
         didFailProvisionalNavigation navigation: WKNavigation!,
         withError error: any Error
     ) {
-        print("Ошибка загрузки: \(error.localizedDescription)")
+        Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
     }
 }
 
@@ -228,18 +271,18 @@ extension TransparentWebView {
 extension TransparentWebView {
     static func clean() {
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-        print("[WebCacheCleaner] All cookies deleted")
+        Logger.common(message: "[WebView] WebCacheCleaner: All cookies deleted", category: .webViewInAppMessages)
 
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
             records.forEach { record in
                 WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
-                print("[WebCacheCleaner] Record \(record) deleted")
+                Logger.common(message: "[WebView] Record \(record) deleted", category: .webViewInAppMessages)
             }
         }
     }
 }
 
-extension TransparentWebView: UIScrollViewDelegate  {
+extension TransparentWebView: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return nil
     }

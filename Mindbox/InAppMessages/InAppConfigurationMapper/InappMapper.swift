@@ -160,6 +160,13 @@ class InappMapper: InappMapperProtocol {
                 let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
 
                 Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+                
+                // For the webview case, we skip downloading images
+                if case .webview = inapp.content {
+                    formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: [:], firstImageValue: "", content: inapp.content)
+                    continue
+                }
+                
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
