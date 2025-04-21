@@ -185,8 +185,14 @@ extension TransparentWebView: WKScriptMessageHandler {
             let action = messageBody["action"] ?? "unknown"
             let data = messageBody["data"] ?? ""
             
+            Logger.common(message: "[WebView] TransparentWebView: SdkBridge - received \(action) \(data)", category: .webViewInAppMessages)
+            
             switch action {
             case "close", "collapse":
+                if data.contains("init") {
+                    Logger.common(message: "[WebView] TransparentWebView: received close init action (error)", category: .webViewInAppMessages)
+                    delegate?.closeTimeoutWebViewVC()
+                }
                 delegate?.closeTapWebViewVC()
             case "init":
                 Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
