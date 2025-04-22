@@ -125,26 +125,6 @@ jobs:
         run: ./.github/git-release.sh
         env:
           GH_TOKEN: ${{ github.token }}
-
-  merge:
-    needs: [publish-Mindbox, publish-MindboxNotifications]
-    if: startsWith(github.head_ref, 'release/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout develop branch
-        uses: actions/checkout@v4
-        with:
-          ref: develop
-      - name: Create Pull Request
-        run: gh pr create --base develop --head master --title "Merge 'master' into 'develop' after release" --body "Automated Pull Request to merge 'master' into 'develop' after release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Merge Pull Request
-        run: |
-          pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
-          gh pr merge $pr_number --merge
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
   message-to-loop-if-success:
     needs: [release-github]
