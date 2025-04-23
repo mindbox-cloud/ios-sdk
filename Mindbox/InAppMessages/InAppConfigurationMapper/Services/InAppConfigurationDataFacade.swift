@@ -35,7 +35,6 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     }
 
     private let dispatchGroup = DispatchGroup()
-    private var fetchedProductIdsCache: [String: String] = [:]
 
     func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
         fetchSegmentationIfNeeded()
@@ -65,7 +64,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     }
 }
 
-private extension InAppConfigurationDataFacade {
+extension InAppConfigurationDataFacade {
     private func fetchSegmentationIfNeeded() {
         if !SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
             dispatchGroup.enter()
@@ -89,24 +88,29 @@ private extension InAppConfigurationDataFacade {
         }
     }
 
-    private func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
-        guard let products = products else {
+    func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
+        guard targetingChecker.event?.name == SessionTemporaryStorage.shared.viewProductOperation else {
+            Logger.common(message: "Skipping segmentation fetch: unexpected event '\(targetingChecker.event?.name ?? "nil")'")
             return
         }
 
-        let productIds = products.ids
-        let allMatch = productIds.allSatisfy { key, value in
-            fetchedProductIdsCache[key] == value
+        guard let products = products,
+              let firstProduct = products.firstProduct else {
+            Logger.common(message: "Skipping segmentation fetch: no products or empty IDs")
+            return
         }
 
-        if allMatch {
+        guard targetingChecker.checkedProductSegmentations[firstProduct] == nil else {
+            Logger.common(message: "Skipping segmentation fetch: already checked for product '\(firstProduct.key)'")
             return
         }
 
         dispatchGroup.enter()
         segmentationService.checkProductSegmentationRequest(products: products) { response in
-            self.fetchedProductIdsCache = productIds
-            self.targetingChecker.checkedProductSegmentations = response
+            if let response = response {
+                self.targetingChecker.checkedProductSegmentations[firstProduct] = response
+            }
+            
             self.dispatchGroup.leave()
         }
     }

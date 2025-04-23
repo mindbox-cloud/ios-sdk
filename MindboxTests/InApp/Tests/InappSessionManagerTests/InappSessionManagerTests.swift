@@ -173,7 +173,8 @@ final class InappSessionManagerTests: XCTestCase {
         
         targetingChecker.context.isNeedGeoRequest = true
         targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "1")), segment: nil)]
-        targetingChecker.checkedProductSegmentations = [.init(ids: .init(externalId: "1"), segment: nil)]
+        
+        targetingChecker.checkedProductSegmentations = [.init(key: "Test", value: "A"): [.init(ids: .init(externalId: "1"), segment: nil)]]
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         targetingChecker.event = .init(name: "Test", model: nil)
 
@@ -188,7 +189,7 @@ final class InappSessionManagerTests: XCTestCase {
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil
-        targetingChecker.checkedProductSegmentations = nil
+        targetingChecker.checkedProductSegmentations = [:]
         targetingChecker.geoModels = nil
         targetingChecker.event = nil
         
