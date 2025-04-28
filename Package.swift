@@ -47,6 +47,11 @@ let package = Package(
             resources: [
                 .process("PrivacyInfo.xcprivacy")
             ]
-        )
+        ),
+        .binaryTarget(
+            name: "AbMixer",
+            url: "https://github.com/mindbox-cloud/kmp-abmixer/releases/download/1.0.0/AbMixer.xcframework.zip",
+            checksum: "5c8d4ad71fdd52043e5b45ceb0e2666c66b2095f8aa563bd2af9b62ca0d66436"
+        ),
     ]
 )

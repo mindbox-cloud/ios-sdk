@@ -16,4 +16,20 @@ Pod::Spec.new do |spec|
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger', '2.13.1'
 
+  # вот эта строка подключит ваш KMP-фреймворк
+  spec.vendored_frameworks = 'abmixer.framework'
+  spec.preserve_paths = 'abmixer.framework'
+  spec.xcconfig = { 
+    'FRAMEWORK_SEARCH_PATHS' => '$(PODS_ROOT)/Mindbox',
+    'OTHER_LDFLAGS' => '-framework abmixer'
+  }
+
+  spec.pod_target_xcconfig = {
+    'FRAMEWORK_SEARCH_PATHS' => '$(PODS_ROOT)/Mindbox',
+    'OTHER_LDFLAGS' => '-framework abmixer'
+  }
+
+  spec.subspec 'AbMixer' do |ss|
+    ss.source_files = 'KMP/CustomerAbMixer/abmixer/build/cocoapods/framework/AbMixer.framework/**/*.{h,m}'
+  end
 end

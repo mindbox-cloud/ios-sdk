@@ -8,16 +8,17 @@
 
 import XCTest
 @testable import Mindbox
+@testable import abmixer
 
 // swiftlint:disable force_unwrapping
 
 final class ABTestDeviceMixerTests: XCTestCase {
 
-    var sut: ABTestDeviceMixer!
+    var sut: CustomerAbMixer!
 
     override func setUp() {
         super.setUp()
-        sut = DI.injectOrFail(ABTestDeviceMixer.self)
+        sut = DI.injectOrFail(CustomerAbMixer.self)
     }
 
     override func tearDown() {
@@ -32,13 +33,13 @@ final class ABTestDeviceMixerTests: XCTestCase {
         for item in array {
             let components = item.components(separatedBy: " | ")
             guard components.count == 2,
-                  let uuid = UUID(uuidString: components[0].trimmingCharacters(in: .whitespacesAndNewlines)),
+                  let uuid = UUID(uuidString: components[0].trimmingCharacters(in: .whitespacesAndNewlines))?.uuidString,
                   let result = Int(components[1].trimmingCharacters(in: .whitespacesAndNewlines))
             else {
                 throw MindboxError.internalError(.init(errorKey: .general, reason: "MixerUUIDS damaged. Check data."))
             }
 
-            let modulusResult = try sut.modulusGuidHash(identifier: uuid, salt: salt)
+            let modulusResult = Int(sut.stringModulusHash(identifier: uuid, salt: salt))
             XCTAssertEqual(result, modulusResult)
         }
     }

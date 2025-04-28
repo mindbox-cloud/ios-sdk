@@ -8,6 +8,7 @@
 
 import Foundation
 import MindboxLogger
+import abmixer
 
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
@@ -56,20 +57,16 @@ final class InappsFilterService: InappFilterProtocol {
         }
 
         var result: [InApp] = responseInapps
-        let abTestDeviceMixer = DI.injectOrFail(ABTestDeviceMixer.self)
+        let abTestDeviceMixer = DI.injectOrFail(CustomerAbMixer.self)
 
         for abTest in abTests {
-            guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" ),
+            guard let uuid = UUID(uuidString: persistenceStorage.deviceUUID ?? "" )?.uuidString,
                   let salt = abTest.salt,
                   let variants = abTest.variants else {
                 continue
             }
 
-            let hashValue = try? abTestDeviceMixer.modulusGuidHash(identifier: uuid, salt: salt)
-
-            guard let hashValue = hashValue else {
-                continue
-            }
+            let hashValue = Int(abTestDeviceMixer.stringModulusHash(identifier: uuid, salt: salt))
 
             Logger.common(message: "[Hash Value]: \(hashValue) for [UUID]: \(persistenceStorage.deviceUUID ?? "nil")")
             Logger.common(message: "[AB-test ID]: \(abTest.id)")

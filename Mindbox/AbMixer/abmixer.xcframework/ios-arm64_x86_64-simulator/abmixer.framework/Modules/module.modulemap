@@ -1,0 +1,6 @@
+framework module "abmixer" {
+    umbrella header "abmixer.h"
+
+    export *
+    module * { export * }
+}

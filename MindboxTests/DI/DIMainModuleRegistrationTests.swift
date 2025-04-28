@@ -8,6 +8,7 @@
 
 import XCTest
 @testable import Mindbox
+@testable import abmixer
 
 final class DIMainModuleRegistrationTests: XCTestCase {
 
@@ -161,7 +162,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testABTestDeviceMixerIsRegistered() {
-        let mixer: ABTestDeviceMixer? = DI.inject(ABTestDeviceMixer.self)
+        let mixer: CustomerAbMixer? = DI.inject(CustomerAbMixer.self)
         XCTAssertNotNil(mixer)
     }
 

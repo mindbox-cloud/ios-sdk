@@ -8,10 +8,12 @@
 
 import Foundation
 
+import abmixer
+
 extension MBContainer {
     func registerABTestUtilities() -> Self {
-        register(ABTestDeviceMixer.self, scope: .transient) {
-            ABTestDeviceMixer()
+        register(CustomerAbMixer.self, scope: .transient) {
+            CustomerAbMixerCompanion().impl()
         }
 
         register(ABTestVariantsValidator.self, scope: .transient) {
