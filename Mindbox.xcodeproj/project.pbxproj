@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 73;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -585,19 +585,6 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		B409A4742DBFC1D5008286EC /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1145,34 +1132,8 @@
 		F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchSemaphore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B409A4752DBFC1D5008286EC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				abmixer.xcframework,
-			);
-			target = 313B232F25ADEA0F00A1CB72 /* Mindbox */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		B409A4762DBFC1D5008286EC /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			attributesByRelativePath = {
-				abmixer.xcframework = (
-					CodeSignOnCopy,
-					RemoveHeadersOnCopy,
-				);
-			};
-			buildPhase = B409A4742DBFC1D5008286EC /* Embed Frameworks */;
-			membershipExceptions = (
-				abmixer.xcframework,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B45FFD1B2DBA8A8500BBDD2D /* AbMixer */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (B409A4752DBFC1D5008286EC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, B409A4762DBFC1D5008286EC /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = AbMixer; sourceTree = "<group>"; };
+		B45FFD1B2DBA8A8500BBDD2D /* AbMixer */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AbMixer; sourceTree = "<group>"; };
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SlidingExpirationsError; sourceTree = "<group>"; };
@@ -3170,7 +3131,6 @@
 				313B232D25ADEA0F00A1CB72 /* Frameworks */,
 				313B232E25ADEA0F00A1CB72 /* Resources */,
 				3159FFB425B5AAF300EE80E9 /* Increment Build Number Script */,
-				B409A4742DBFC1D5008286EC /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -3312,6 +3272,7 @@
 				};
 			};
 			buildConfigurationList = 313B232A25ADEA0F00A1CB72 /* Build configuration list for PBXProject "Mindbox" */;
+			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -3319,7 +3280,6 @@
 				Base,
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
-			preferredProjectObjectVersion = 50;
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

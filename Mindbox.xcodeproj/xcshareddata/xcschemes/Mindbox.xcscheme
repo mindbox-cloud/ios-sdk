@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "#cd &quot;$SRCROOT/Mindbox/AbMixer/&quot;&#10;#./gradlew :abmixer:embedAndSignAppleFrameworkForXcode&#10;">
+               scriptText = "cd &quot;$SRCROOT/kmp-abmixer/&quot;&#10;./gradlew :abmixer:embedAndSignAppleFrameworkForXcode&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"

@@ -8,7 +8,7 @@
 
 import Foundation
 
-import abmixer
+import AbMixer
 
 extension MBContainer {
     func registerABTestUtilities() -> Self {

@@ -8,7 +8,7 @@
 
 import XCTest
 @testable import Mindbox
-@testable import abmixer
+@testable import AbMixer
 
 final class DIMainModuleRegistrationTests: XCTestCase {
 

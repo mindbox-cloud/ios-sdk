@@ -1,0 +1,3 @@
+[submodule "kmp-abmixer"]
+	path = kmp-abmixer
+	url = git@github.com:mindbox-cloud/kmp-abmixer.git

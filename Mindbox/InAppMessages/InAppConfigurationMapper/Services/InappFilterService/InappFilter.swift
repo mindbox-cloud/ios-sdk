@@ -8,7 +8,7 @@
 
 import Foundation
 import MindboxLogger
-import abmixer
+import AbMixer
 
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
