@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>abmixer</string>
+	<string>AbMixer</string>
 	<key>CFBundleIdentifier</key>
-	<string>cloud.mindbox.mobile_sdk.abmixer.abmixer</string>
+	<string>cloud.mindbox.mobile_sdk.AbMixer</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>abmixer</string>
+	<string>AbMixer</string>
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>

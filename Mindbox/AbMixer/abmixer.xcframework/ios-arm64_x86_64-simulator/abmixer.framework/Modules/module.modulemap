@@ -1,5 +1,5 @@
-framework module "abmixer" {
-    umbrella header "abmixer.h"
+framework module "AbMixer" {
+    umbrella header "AbMixer.h"
 
     export *
     module * { export * }

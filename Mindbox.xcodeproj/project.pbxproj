@@ -346,6 +346,7 @@
 		B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F980268EEAC90092EC3C /* AmountBenefitsResponse.swift */; };
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
+		B409A5312DC208B9008286EC /* AbMixer.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B409A5302DC208B9008286EC /* AbMixer.xcframework */; };
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
 		BB4D7CC72BDEC51D008E3AB8 /* Notification+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4D7CC62BDEC51D008E3AB8 /* Notification+Extensions.swift */; };
 		BB6563102BE3BA430090C473 /* UIApplication+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */; };
@@ -930,6 +931,7 @@
 		B3F4F985268EEADE0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
+		B409A5302DC208B9008286EC /* AbMixer.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = AbMixer.xcframework; sourceTree = "<group>"; };
 		B4547EC92CFA0EC6001478AD /* TokenData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenData.swift; sourceTree = "<group>"; };
 		BB4D7CC62BDEC51D008E3AB8 /* Notification+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+Extensions.swift"; sourceTree = "<group>"; };
 		BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIApplication+Extensions.swift"; sourceTree = "<group>"; };
@@ -1133,7 +1135,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B45FFD1B2DBA8A8500BBDD2D /* AbMixer */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AbMixer; sourceTree = "<group>"; };
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SlidingExpirationsError; sourceTree = "<group>"; };
@@ -1145,6 +1146,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B409A5312DC208B9008286EC /* AbMixer.xcframework in Frameworks */,
 				A170EDDC29B0883800CE547F /* MindboxLogger.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1222,6 +1224,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				B409A5232DC20138008286EC /* AbMixer */,
 				F3F5BB882B79F2430022AC3F /* PushNotifications */,
 				F34A45AC2B76286D00634C8B /* PublicModels */,
 				F37613DF2A6A8CFF009F2EE4 /* Extensions */,
@@ -1250,7 +1253,6 @@
 				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				84B625E725C989B100AB6228 /* Validators */,
-				B45FFD1B2DBA8A8500BBDD2D /* AbMixer */,
 			);
 			path = Mindbox;
 			sourceTree = "<group>";
@@ -2407,6 +2409,14 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B409A5232DC20138008286EC /* AbMixer */ = {
+			isa = PBXGroup;
+			children = (
+				B409A5302DC208B9008286EC /* AbMixer.xcframework */,
+			);
+			path = AbMixer;
 			sourceTree = "<group>";
 		};
 		D216DE4F2C07168D0020F58A /* Extensions */ = {

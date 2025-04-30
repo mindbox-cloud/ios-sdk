@@ -12,24 +12,15 @@ Pod::Spec.new do |spec|
   spec.exclude_files = "Classes/Exclude"
   spec.resource_bundles = { 
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld', 'Mindbox/**/*.xcprivacy']
-  } 
+  }
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger', '2.13.1'
-
-  # вот эта строка подключит ваш KMP-фреймворк
-  spec.vendored_frameworks = 'abmixer.framework'
-  spec.preserve_paths = 'abmixer.framework'
+  
+  # Добавляем AbMixer как vendored_framework
+  spec.vendored_frameworks = 'Mindbox/AbMixer/AbMixer.xcframework'
+  spec.preserve_paths = 'Mindbox/AbMixer/AbMixer.xcframework'
   spec.xcconfig = { 
-    'FRAMEWORK_SEARCH_PATHS' => '$(PODS_ROOT)/Mindbox',
-    'OTHER_LDFLAGS' => '-framework abmixer'
+    'FRAMEWORK_SEARCH_PATHS' => '$(PODS_ROOT)/Mindbox/Mindbox/AbMixer',
+    'OTHER_LDFLAGS' => '-framework AbMixer'
   }
-
-  spec.pod_target_xcconfig = {
-    'FRAMEWORK_SEARCH_PATHS' => '$(PODS_ROOT)/Mindbox',
-    'OTHER_LDFLAGS' => '-framework abmixer'
-  }
-
-  spec.subspec 'AbMixer' do |ss|
-    ss.source_files = 'KMP/CustomerAbMixer/abmixer/build/cocoapods/framework/AbMixer.framework/**/*.{h,m}'
-  end
 end

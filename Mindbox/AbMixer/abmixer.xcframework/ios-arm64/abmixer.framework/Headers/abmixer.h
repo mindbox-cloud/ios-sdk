@@ -6,9 +6,9 @@
 #import <Foundation/NSString.h>
 #import <Foundation/NSValue.h>
 
-@class AbmixerCustomerAbMixerCompanion, AbmixerKotlinByteIterator, AbmixerKotlinByteArray;
+@class AbMixerCustomerAbMixerCompanion, AbMixerKotlinByteIterator, AbMixerKotlinByteArray;
 
-@protocol AbmixerCustomerAbMixer, AbmixerKotlinIterator;
+@protocol AbMixerCustomerAbMixer, AbMixerKotlinIterator;
 
 NS_ASSUME_NONNULL_BEGIN
 #pragma clang diagnostic push
@@ -23,29 +23,29 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 __attribute__((swift_name("KotlinBase")))
-@interface AbmixerBase : NSObject
+@interface AbMixerBase : NSObject
 - (instancetype)init __attribute__((unavailable));
 + (instancetype)new __attribute__((unavailable));
 + (void)initialize __attribute__((objc_requires_super));
 @end
 
-@interface AbmixerBase (AbmixerBaseCopying) <NSCopying>
+@interface AbMixerBase (AbMixerBaseCopying) <NSCopying>
 @end
 
 __attribute__((swift_name("KotlinMutableSet")))
-@interface AbmixerMutableSet<ObjectType> : NSMutableSet<ObjectType>
+@interface AbMixerMutableSet<ObjectType> : NSMutableSet<ObjectType>
 @end
 
 __attribute__((swift_name("KotlinMutableDictionary")))
-@interface AbmixerMutableDictionary<KeyType, ObjectType> : NSMutableDictionary<KeyType, ObjectType>
+@interface AbMixerMutableDictionary<KeyType, ObjectType> : NSMutableDictionary<KeyType, ObjectType>
 @end
 
-@interface NSError (NSErrorAbmixerKotlinException)
+@interface NSError (NSErrorAbMixerKotlinException)
 @property (readonly) id _Nullable kotlinException;
 @end
 
 __attribute__((swift_name("KotlinNumber")))
-@interface AbmixerNumber : NSNumber
+@interface AbMixerNumber : NSNumber
 - (instancetype)initWithChar:(char)value __attribute__((unavailable));
 - (instancetype)initWithUnsignedChar:(unsigned char)value __attribute__((unavailable));
 - (instancetype)initWithShort:(short)value __attribute__((unavailable));
@@ -79,116 +79,116 @@ __attribute__((swift_name("KotlinNumber")))
 @end
 
 __attribute__((swift_name("KotlinByte")))
-@interface AbmixerByte : AbmixerNumber
+@interface AbMixerByte : AbMixerNumber
 - (instancetype)initWithChar:(char)value;
 + (instancetype)numberWithChar:(char)value;
 @end
 
 __attribute__((swift_name("KotlinUByte")))
-@interface AbmixerUByte : AbmixerNumber
+@interface AbMixerUByte : AbMixerNumber
 - (instancetype)initWithUnsignedChar:(unsigned char)value;
 + (instancetype)numberWithUnsignedChar:(unsigned char)value;
 @end
 
 __attribute__((swift_name("KotlinShort")))
-@interface AbmixerShort : AbmixerNumber
+@interface AbMixerShort : AbMixerNumber
 - (instancetype)initWithShort:(short)value;
 + (instancetype)numberWithShort:(short)value;
 @end
 
 __attribute__((swift_name("KotlinUShort")))
-@interface AbmixerUShort : AbmixerNumber
+@interface AbMixerUShort : AbMixerNumber
 - (instancetype)initWithUnsignedShort:(unsigned short)value;
 + (instancetype)numberWithUnsignedShort:(unsigned short)value;
 @end
 
 __attribute__((swift_name("KotlinInt")))
-@interface AbmixerInt : AbmixerNumber
+@interface AbMixerInt : AbMixerNumber
 - (instancetype)initWithInt:(int)value;
 + (instancetype)numberWithInt:(int)value;
 @end
 
 __attribute__((swift_name("KotlinUInt")))
-@interface AbmixerUInt : AbmixerNumber
+@interface AbMixerUInt : AbMixerNumber
 - (instancetype)initWithUnsignedInt:(unsigned int)value;
 + (instancetype)numberWithUnsignedInt:(unsigned int)value;
 @end
 
 __attribute__((swift_name("KotlinLong")))
-@interface AbmixerLong : AbmixerNumber
+@interface AbMixerLong : AbMixerNumber
 - (instancetype)initWithLongLong:(long long)value;
 + (instancetype)numberWithLongLong:(long long)value;
 @end
 
 __attribute__((swift_name("KotlinULong")))
-@interface AbmixerULong : AbmixerNumber
+@interface AbMixerULong : AbMixerNumber
 - (instancetype)initWithUnsignedLongLong:(unsigned long long)value;
 + (instancetype)numberWithUnsignedLongLong:(unsigned long long)value;
 @end
 
 __attribute__((swift_name("KotlinFloat")))
-@interface AbmixerFloat : AbmixerNumber
+@interface AbMixerFloat : AbMixerNumber
 - (instancetype)initWithFloat:(float)value;
 + (instancetype)numberWithFloat:(float)value;
 @end
 
 __attribute__((swift_name("KotlinDouble")))
-@interface AbmixerDouble : AbmixerNumber
+@interface AbMixerDouble : AbMixerNumber
 - (instancetype)initWithDouble:(double)value;
 + (instancetype)numberWithDouble:(double)value;
 @end
 
 __attribute__((swift_name("KotlinBoolean")))
-@interface AbmixerBoolean : AbmixerNumber
+@interface AbMixerBoolean : AbMixerNumber
 - (instancetype)initWithBool:(BOOL)value;
 + (instancetype)numberWithBool:(BOOL)value;
 @end
 
 __attribute__((swift_name("CustomerAbMixer")))
-@protocol AbmixerCustomerAbMixer
+@protocol AbMixerCustomerAbMixer
 @required
 - (int32_t)stringModulusHashIdentifier:(NSString *)identifier salt:(NSString *)salt __attribute__((swift_name("stringModulusHash(identifier:salt:)")));
 @end
 
 __attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("CustomerAbMixerCompanion")))
-@interface AbmixerCustomerAbMixerCompanion : AbmixerBase
+@interface AbMixerCustomerAbMixerCompanion : AbMixerBase
 + (instancetype)alloc __attribute__((unavailable));
 + (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
 + (instancetype)companion __attribute__((swift_name("init()")));
-@property (class, readonly, getter=shared) AbmixerCustomerAbMixerCompanion *shared __attribute__((swift_name("shared")));
-- (id<AbmixerCustomerAbMixer>)impl __attribute__((swift_name("impl()")));
+@property (class, readonly, getter=shared) AbMixerCustomerAbMixerCompanion *shared __attribute__((swift_name("shared")));
+- (id<AbMixerCustomerAbMixer>)impl __attribute__((swift_name("impl()")));
 @end
 
 __attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("KotlinByteArray")))
-@interface AbmixerKotlinByteArray : AbmixerBase
+@interface AbMixerKotlinByteArray : AbMixerBase
 + (instancetype)arrayWithSize:(int32_t)size __attribute__((swift_name("init(size:)")));
-+ (instancetype)arrayWithSize:(int32_t)size init:(AbmixerByte *(^)(AbmixerInt *))init __attribute__((swift_name("init(size:init:)")));
++ (instancetype)arrayWithSize:(int32_t)size init:(AbMixerByte *(^)(AbMixerInt *))init __attribute__((swift_name("init(size:init:)")));
 + (instancetype)alloc __attribute__((unavailable));
 + (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
 - (int8_t)getIndex:(int32_t)index __attribute__((swift_name("get(index:)")));
-- (AbmixerKotlinByteIterator *)iterator __attribute__((swift_name("iterator()")));
+- (AbMixerKotlinByteIterator *)iterator __attribute__((swift_name("iterator()")));
 - (void)setIndex:(int32_t)index value:(int8_t)value __attribute__((swift_name("set(index:value:)")));
 @property (readonly) int32_t size __attribute__((swift_name("size")));
 @end
 
-@interface AbmixerKotlinByteArray (Extensions)
+@interface AbMixerKotlinByteArray (Extensions)
 - (id)sha256 __attribute__((swift_name("sha256()")));
 @end
 
 __attribute__((swift_name("KotlinIterator")))
-@protocol AbmixerKotlinIterator
+@protocol AbMixerKotlinIterator
 @required
 - (BOOL)hasNext __attribute__((swift_name("hasNext()")));
 - (id _Nullable)next __attribute__((swift_name("next()")));
 @end
 
 __attribute__((swift_name("KotlinByteIterator")))
-@interface AbmixerKotlinByteIterator : AbmixerBase <AbmixerKotlinIterator>
+@interface AbMixerKotlinByteIterator : AbMixerBase <AbMixerKotlinIterator>
 - (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
 + (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
-- (AbmixerByte *)next __attribute__((swift_name("next()")));
+- (AbMixerByte *)next __attribute__((swift_name("next()")));
 - (int8_t)nextByte __attribute__((swift_name("nextByte()")));
 @end
 
