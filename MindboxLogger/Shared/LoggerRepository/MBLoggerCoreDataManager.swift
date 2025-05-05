@@ -262,10 +262,37 @@ private extension MBLoggerCoreDataManager {
                                                selector: #selector(applicationWillResignActive), 
                                                name: UIApplication.willResignActiveNotification, 
                                                object: nil)
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationDidEnterBackground),
+                                               name: UIApplication.didEnterBackgroundNotification,
+                                               object: nil)
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationWillTerminate),
+                                               name: UIApplication.willTerminateNotification,
+                                               object: nil)  
     }
     
     @objc
     func applicationWillResignActive() {
+        print(#function)
+        queue.async { [weak self] in
+            self?.writeBufferToCoreData()
+        }
+    }
+    
+    @objc
+    func applicationDidEnterBackground() {
+        print(#function)
+        queue.async { [weak self] in
+            self?.writeBufferToCoreData()
+        }
+    }
+    
+    @objc
+    func applicationWillTerminate() {
+        print(#function)
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
