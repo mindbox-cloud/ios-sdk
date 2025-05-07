@@ -1,4 +1,4 @@
-name: Manual Release Prep: Branch & Version Bump
+name: "Manual Release Prep: Branch & Version Bump"
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   validate-input:
-    name: Validate release_version semver format
+    name: Validate release_version format
     runs-on: ubuntu-latest
     steps:
       - name: Check version matches semver or semver-rc
@@ -28,18 +28,18 @@ jobs:
             echo "❌ release_version must be X.Y.Z or X.Y.Z-rc"
             exit 1
           fi
-          
+
   validate-branches:
     name: Validate branch names
     runs-on: ubuntu-latest
     needs: validate-input
     steps:
-      - name: Check out minimal repo
+      - name: Checkout minimal repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Validate source_branch exists
+      - name: Validate source branch exists
         run: |
           SRC="${{ github.event.inputs.source_branch }}"
           if ! git ls-remote --heads origin "$SRC" | grep -q "$SRC"; then
@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
 
-      - name: Validate target_branch exists
+      - name: Validate target branch exists
         run: |
           DST="${{ github.event.inputs.target_branch }}"
           if ! git ls-remote --heads origin "$DST" | grep -q "$DST"; then
@@ -56,11 +56,10 @@ jobs:
           fi
 
   bump_and_branch:
-    name: Bump versions
+    name: Create release branch & bump version
     runs-on: macos-15
     needs: validate-branches
     outputs:
-      version2: ${{ steps.bump.outputs.version2 }}
       release_branch: ${{ steps.bump.outputs.release_branch }}
     steps:
       - name: Checkout source branch
@@ -82,8 +81,11 @@ jobs:
           echo "→ Running bump script on $REL"
           ./.github/git-release-branch-create.sh "$VERSION"
 
-          echo "version2=$VERSION"     >> $GITHUB_OUTPUT
-          echo "release_branch=$REL"   >> $GITHUB_OUTPUT
+          echo "release_branch=$REL" >> $GITHUB_OUTPUT
+
+      - name: Push release branch
+        run: |
+          git push origin "${{ steps.bump.outputs.release_branch }}"
 
   check_sdk_version:
     name: Check SDK Version
@@ -101,7 +103,7 @@ jobs:
 
       - name: Validate sdkVersion
         run: |
-          EXPECT="${{ needs.bump_and_branch.outputs.version2 }}"
+          EXPECT="${{ github.event.inputs.release_version }}"
           SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
           echo "→ Found in code: $SDK_VERSION, expected: $EXPECT"
           if [ "$SDK_VERSION" != "$EXPECT" ]; then
@@ -127,4 +129,4 @@ jobs:
             --base "$DST" \
             --head "$SRC" \
             --title "Release ${{ github.event.inputs.release_version }}" \
-            --body "Updates the release version to ${{ github.ref_name }}. Automated PR: merge $SRC into $DST"
+            --body "Updates the release version to ${{ github.event.inputs.release_version }}. Automated PR: merge $SRC into $DST"
