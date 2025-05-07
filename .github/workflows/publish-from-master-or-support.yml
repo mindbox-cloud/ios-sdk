@@ -1,0 +1,16 @@
+name: SDK publish from master or support branch
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'master'
+      - 'support/*'
+
+jobs:
+  call-reusable:
+    if: ${{ github.event.pull_request.merged == true }}
+    uses: ./.github/workflows/publish-reusable.yml
+    with:
+      branch: ${{ github.base_ref }}
+    secrets: inherit
