@@ -116,7 +116,7 @@ jobs:
     steps:
       - name: Create PR via GitHub CLI
         env:
-          GH_TOKEN: ${{ secrets.PAT_TEST }}
+          GH_TOKEN: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
           SRC: ${{ needs.bump_and_branch.outputs.release_branch }}
           DST: ${{ github.event.inputs.target_branch }}
           REPO: ${{ github.repository }}
