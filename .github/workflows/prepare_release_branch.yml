@@ -1,132 +1,86 @@
-name: "Manual Release Prep: Branch & Version Bump"
+name: Prepare release branch
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'Release version (e.g. 1.2.3 or 1.2.3-rc)'
-        required: true
-      source_branch:
-        description: 'Branch to branch off from'
-        required: true
-        default: 'develop'
-      target_branch:
-        description: 'Branch to merge into (PR target)'
-        required: true
-        default: 'master'
+  push:
+    branches:
+      - 'release/*.*.*'
+      - 'support/*.*.*'
 
 jobs:
-  validate-input:
-    name: Validate release_version format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check version matches semver or semver-rc
-        run: |
-          VER="${{ github.event.inputs.release_version }}"
-          echo "→ release_version = $VER"
-          if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
-            echo "❌ release_version must be X.Y.Z or X.Y.Z-rc"
-            exit 1
-          fi
-
-  validate-branches:
-    name: Validate branch names
-    runs-on: ubuntu-latest
-    needs: validate-input
-    steps:
-      - name: Checkout minimal repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Validate source branch exists
-        run: |
-          SRC="${{ github.event.inputs.source_branch }}"
-          if ! git ls-remote --heads origin "$SRC" | grep -q "$SRC"; then
-            echo "❌ source_branch '$SRC' does not exist on origin"
-            exit 1
-          fi
-
-      - name: Validate target branch exists
-        run: |
-          DST="${{ github.event.inputs.target_branch }}"
-          if ! git ls-remote --heads origin "$DST" | grep -q "$DST"; then
-            echo "❌ target_branch '$DST' does not exist on origin"
-            exit 1
-          fi
-
-  bump_and_branch:
-    name: Create release branch & bump version
+  extract_version:
+    if: github.event.created
+    name: Extract Version
     runs-on: macos-15
-    needs: validate-branches
     outputs:
-      release_branch: ${{ steps.bump.outputs.release_branch }}
+      version: ${{ steps.extract.outputs.version }}
     steps:
-      - name: Checkout source branch
+      - name: Extract version from branch name
+        id: extract
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          echo "BRANCH_NAME: $BRANCH_NAME"
+          VERSION="${BRANCH_NAME#release/}"
+          VERSION="${VERSION#support/}"
+          echo "VERSION: $VERSION"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+  bump_version:
+    name: Bump Version
+    runs-on: macos-15
+    needs: extract_version
+    outputs:
+      version2: ${{ steps.bump.outputs.version2 }}
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.source_branch }}
-          fetch-depth: 0
+      
+      - name: Bump version
+        run: ./.github/git-release-branch-create.sh "${{ needs.extract_version.outputs.version }}"
 
-      - name: Create release branch & bump version
+      - name: Ouput version
         id: bump
         run: |
-          VERSION="${{ github.event.inputs.release_version }}"
-          SRC="${{ github.event.inputs.source_branch }}"
-          REL="release/$VERSION"
-
-          echo "→ Branching from $SRC into $REL"
-          git checkout -b "$REL"
-
-          echo "→ Running bump script on $REL"
-          ./.github/git-release-branch-create.sh "$VERSION"
-
-          echo "release_branch=$REL" >> $GITHUB_OUTPUT
-
-      - name: Push release branch
-        run: |
-          git push origin "${{ steps.bump.outputs.release_branch }}"
-
+          echo "version2=${{ needs.extract_version.outputs.version }}" >> $GITHUB_OUTPUT
+          
   check_sdk_version:
     name: Check SDK Version
     runs-on: macos-15
-    needs: bump_and_branch
+    needs: bump_version
     steps:
-      - name: Checkout the release branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.bump_and_branch.outputs.release_branch }}
           fetch-depth: 0
 
       - name: Pull latest changes
         run: git pull
 
-      - name: Validate sdkVersion
+      - name: Check if sdkVersion matches VERSION
         run: |
-          EXPECT="${{ github.event.inputs.release_version }}"
           SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-          echo "→ Found in code: $SDK_VERSION, expected: $EXPECT"
-          if [ "$SDK_VERSION" != "$EXPECT" ]; then
-            echo "❌ SDK version does not match!"
+          if [ "$SDK_VERSION" != "${{ needs.bump_version.outputs.version2 }}" ]; then
+            echo "SDK version ($SDK_VERSION) does not match the branch version (${{ needs.bump_version.outputs.version2 }})."
             exit 1
           fi
+        shell: bash
 
   create_pull_request:
     name: Create Pull Request
     runs-on: ubuntu-latest
-    needs: [bump_and_branch, check_sdk_version]
+    needs: check_sdk_version
     steps:
-      - name: Create PR via GitHub CLI
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Create Pull Request
+        run: |
+          gh pr create \
+            --base master \
+            --head ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            --body "Updates the release version to ${{ github.ref_name }}"
+          PR_URL=$(gh pr view --json url --jq '.url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
-          SRC: ${{ needs.bump_and_branch.outputs.release_branch }}
-          DST: ${{ github.event.inputs.target_branch }}
-          REPO: ${{ github.repository }}
-        run: |
-          echo "→ Creating PR from $SRC into $DST"
-          gh pr create \
-            --repo "$REPO" \
-            --base "$DST" \
-            --head "$SRC" \
-            --title "Release ${{ github.event.inputs.release_version }}" \
-            --body "Updates the release version to ${{ github.event.inputs.release_version }}. Automated PR: merge $SRC into $DST"
+ 
