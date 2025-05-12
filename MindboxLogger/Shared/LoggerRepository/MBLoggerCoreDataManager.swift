@@ -276,7 +276,6 @@ private extension MBLoggerCoreDataManager {
     
     @objc
     func applicationWillResignActive() {
-        print(#function)
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
@@ -284,7 +283,6 @@ private extension MBLoggerCoreDataManager {
     
     @objc
     func applicationDidEnterBackground() {
-        print(#function)
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
@@ -292,7 +290,6 @@ private extension MBLoggerCoreDataManager {
     
     @objc
     func applicationWillTerminate() {
-        print(#function)
         queue.async { [weak self] in
             self?.writeBufferToCoreData()
         }
