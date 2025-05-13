@@ -1,0 +1,11 @@
+name: Distribute PushOk (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call-reusable:
+    uses: ./.github/workflows/distribute-reusable.yml
+    with:
+      branch: ${{ github.ref_name }}
+    secrets: inherit
