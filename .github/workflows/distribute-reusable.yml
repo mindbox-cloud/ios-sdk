@@ -2,6 +2,13 @@ name: Distribute PushOk - Reusable
 
 on:
   workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+    secrets:
+      GITLAB_TRIGGER_TOKEN:
+        required: true
 
 jobs:
   distribution:
@@ -9,11 +16,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
 
       - name: Get last 3 commit messages
         run: |
           commits=$(git log -3 --pretty=format:"%s")
-          echo "commits=$commits" >> $GITHUB_ENV
+          echo "commits<<EOF" >> $GITHUB_ENV
+          echo "$commits"     >> $GITHUB_ENV
+          echo "EOF"          >> $GITHUB_ENV
 
       - name: Get Mindbox SDK Version
         run: |
@@ -34,6 +46,6 @@ jobs:
           curl --location 'https://mindbox.gitlab.yandexcloud.net/api/v4/projects/1021/trigger/pipeline' \
             --form 'token="${{ secrets.GITLAB_TRIGGER_TOKEN }}"' \
             --form 'ref="develop"' \
-            --form "variables[INPUT_BRANCH]=\"${{ github.ref_name }}\"" \
+            --form "variables[INPUT_BRANCH]=\"${{ inputs.branch }}\"" \
             --form "variables[INPUT_COMMITS]=\"${{ env.commits }}\"" \
             --form "variables[INPUT_SDK_VERSION]=\"${{ env.sdkVersion }}\""

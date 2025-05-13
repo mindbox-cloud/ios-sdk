@@ -1,14 +1,11 @@
-name: SwiftLint + UnitTests
+name: SwiftLint & UnitTests
 
 on:
   push:
-    branches:
-      - '**'
-      - '!master'
+    branches-ignore:
+      - master
     paths-ignore:
       - '**.md'
-    tags-ignore:
-      - '**'
       
 jobs:
   SwiftLint:

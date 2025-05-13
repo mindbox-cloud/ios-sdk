@@ -1,0 +1,23 @@
+name: SDK publish RC manual
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-branch:
+    name: Check RC pattern for publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if branch matches pattern
+        run: |
+          if ! echo "${{ github.ref_name }}" | grep -q "release/.*-rc"; then
+            echo "Branch name must match pattern 'release/*-rc' (e.g. release/2.13.2-rc)"
+            exit 1
+          fi
+           
+  call-publish-reusable:
+    needs: check-branch
+    uses: ./.github/workflows/publish-reusable.yml
+    with:
+      branch: ${{ github.ref_name }}
+    secrets: inherit
