@@ -49,6 +49,8 @@ protocol PersistenceStorage: AnyObject {
     var needUpdateInfoOnce: Bool? { get set }
 
     var userVisitCount: Int? { get set }
+    
+    var lastInfoUpdateTime: String? { get set }
 
     /// The date when the InApps configuration was last downloaded.
     /// It is optional and can be set to `nil` if the configuration has not yet been downloaded yet or reset.

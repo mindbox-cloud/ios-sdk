@@ -241,6 +241,13 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    @UserDefaultsWrapper(key: .lastInfoUpdateTime, defaultValue: nil)
+    var lastInfoUpdateTime: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     func softReset() {
         configDownloadDate = nil
@@ -296,6 +303,7 @@ extension MBPersistenceStorage {
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
             case apnsToken = "MBPersistenceStorage-apnsToken"
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
+            case lastInfoUpdateTime = "MBPersistenceStorage-lastInfoUpdateTime"
             case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
