@@ -13,8 +13,8 @@
     "ttl": {
         "inapps": "2.00:00:00"
     },
-    "slidingExpirationTest": {
+    "slidingExpiration": {
         "config": "2.00:00:00",
-        "pushTokenKeepalive": "14.00:00:00"
+        "pushTokenKeepalive": 123
     }
 }
