@@ -97,7 +97,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
     
     private func getConfigSession() -> Double? {
         guard let configSession = SessionTemporaryStorage.shared.expiredConfigSession,
-              let sessionTimeInSeconds = try? configSession.parseTimeStampToSeconds() else {
+              let sessionTimeInSeconds = try? configSession.parseTimeSpanToSeconds() else {
             return nil
         }
         
