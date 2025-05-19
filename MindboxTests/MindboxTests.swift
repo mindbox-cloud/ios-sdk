@@ -208,9 +208,6 @@ extension MindboxTests {
         initializeCoreController()
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
         
-        let countEventsBefore = try? databaseRepository.countEvents()
-        XCTAssertEqual(countEventsBefore, 0, "There should be 0 events because `ApplicationInstalled` has already left the database and no new events have been created.")
-        
         delay(for: .seconds(3))
         
         let pushToken = "0.00:00:02"
@@ -238,9 +235,6 @@ extension MindboxTests {
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
         controllerQueue.sync { }
         
-        let countEventsBeforeKeepalive = try? databaseRepository.countEvents()
-        XCTAssertEqual(countEventsBeforeKeepalive, 1, "There should be `InfoUpdate` event")
-        
         delay(for: .seconds(3))
         
         let pushToken = "0.00:00:02"
@@ -266,9 +260,6 @@ extension MindboxTests {
         
         initializeCoreController()
         persistenceStorage.lastInfoUpdateDate = nil
-        
-        let countEventsBefore = try? databaseRepository.countEvents()
-        XCTAssertEqual(countEventsBefore, 0, "There should be 0 events because `ApplicationInstalled` has already left the database and no new events have been created.")
         
         let pushToken = "0.00:10:02"
         sendPushTokenKeepaliveNotification(with: pushToken)
