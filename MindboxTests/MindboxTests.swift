@@ -261,6 +261,8 @@ extension MindboxTests {
         initializeCoreController()
         persistenceStorage.lastInfoUpdateDate = nil
         
+        delay(for: .seconds(3))
+        
         let pushToken = "0.00:10:02"
         sendPushTokenKeepaliveNotification(with: pushToken)
         
