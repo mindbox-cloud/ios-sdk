@@ -17,6 +17,7 @@ public enum LogCategory: String, CaseIterable {
     case delivery
     case background
     case notification
+    case pushTokenKeepalive
     case visit
     case migration
     case inAppMessages
@@ -43,6 +44,8 @@ public enum LogCategory: String, CaseIterable {
             return "✈️"
         case .inAppMessages:
             return "🖼️"
+        case .pushTokenKeepalive:
+            return "🧟"
         }
     }
 }

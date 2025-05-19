@@ -11,6 +11,11 @@ import XCTest
 
 // swiftlint:disable force_try
 
+fileprivate enum ConstantsForTests {
+    static let token = "740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad"
+    static let pushTokenKeepaliveNotification = Constants.Notification.pushTokenKeepalive
+}
+
 class MindboxTests: XCTestCase {
     var mindBoxDidInstalledFlag: Bool = false
     var apnsTokenDidUpdatedFlag: Bool = false
@@ -18,11 +23,13 @@ class MindboxTests: XCTestCase {
     var coreController: CoreController!
     var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
     var persistenceStorage: PersistenceStorage!
+    var databaseRepository: MBDatabaseRepository!
 
     override func setUp() {
+        super.setUp()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
         try! databaseRepository.erase()
         Mindbox.shared.assembly()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
@@ -30,7 +37,10 @@ class MindboxTests: XCTestCase {
     }
 
     override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        super.tearDown()
+        persistenceStorage = nil
+        databaseRepository = nil
+        coreController = nil
     }
 
     func testInitialization() {
@@ -140,7 +150,7 @@ class MindboxTests: XCTestCase {
             firstApnsToken = token
         }
 
-        let tokenData = Data("740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".utf8)
+        let tokenData = Data(ConstantsForTests.token.utf8)
         let tokenString = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
 
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
@@ -162,7 +172,7 @@ class MindboxTests: XCTestCase {
         Mindbox.shared.getAPNSToken { _ in
             firstCountApnsToken += 1
         }
-        let tokenData = Data("740f4707 bebcf74f 9b7c25d4 8e335894 5f6aa01d a5ddb387 462c7eaf 61bb78ad".utf8)
+        let tokenData = Data(ConstantsForTests.token.utf8)
         Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
         waitForInitializationFinished()
 
@@ -184,10 +194,189 @@ class MindboxTests: XCTestCase {
         XCTAssertFalse("тест".operationNameIsValid)
         XCTAssertFalse("TESт".operationNameIsValid)
     }
+}
 
-    private func waitForInitializationFinished() {
+// MARK: - PushTokenKeepalive
+
+extension MindboxTests {
+    
+    func testSendKeepaliveAfterInstallation() {
+        XCTAssertFalse(persistenceStorage.isInstalled)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        
+        initializeCoreController()
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
+        
+        let countEventsBefore = try? databaseRepository.countEvents()
+        XCTAssertEqual(countEventsBefore, 0, "There should be 0 events because `ApplicationInstalled` has already left the database and no new events have been created.")
+        
+        delay(for: .seconds(3))
+        
+        let pushToken = "0.00:00:02"
+        sendPushTokenKeepaliveNotification(with: pushToken)
+        
+        controllerQueue.sync { }
+        
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented")
+        
+        let result = try? databaseRepository.query(fetchLimit: 5)
+        XCTAssertEqual(result?.count, 1)
+        XCTAssertEqual(result?.last?.type, .keepAlive, "Event type must be `keepAlive`")
+    }
+    
+    func testSendKeepaliveAfterInstallationAndInfoUpdate_whenExpired() {
+        XCTAssertFalse(persistenceStorage.isInstalled)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        
+        initializeCoreController()
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
+        
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        controllerQueue.sync { }
+        
+        let countEventsBeforeKeepalive = try? databaseRepository.countEvents()
+        XCTAssertEqual(countEventsBeforeKeepalive, 1, "There should be `InfoUpdate` event")
+        
+        delay(for: .seconds(3))
+        
+        let pushToken = "0.00:00:02"
+        sendPushTokenKeepaliveNotification(with: pushToken)
+
+        controllerQueue.sync { }
+        
+        XCTAssertNotNil(self.persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 2, "InfoUpdate must be incremented twice")
+        
+        let result = try? databaseRepository.query(fetchLimit: 5)
+        XCTAssertEqual(result?.count, 2)
+        
+        XCTAssertEqual(result?.first?.type, .infoUpdated, "First event type must be `infoUpdated`")
+        XCTAssertEqual(result?.last?.type, .keepAlive, "Last event type must be `keepAlive`")
+    }
+    
+    func test_PushTokenKeepalive_withLastInfoUpdateDateIsNil_shouldSendOperation() {
+        XCTAssertFalse(persistenceStorage.isInstalled)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        
+        initializeCoreController()
+        persistenceStorage.lastInfoUpdateDate = nil
+        
+        let countEventsBefore = try? databaseRepository.countEvents()
+        XCTAssertEqual(countEventsBefore, 0, "There should be 0 events because `ApplicationInstalled` has already left the database and no new events have been created.")
+        
+        let pushToken = "0.00:10:02"
+        sendPushTokenKeepaliveNotification(with: pushToken)
+        
+        controllerQueue.sync { }
+        
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented")
+        
+        let result = try? databaseRepository.query(fetchLimit: 5)
+        XCTAssertEqual(result?.count, 1)
+        XCTAssertEqual(result?.last?.type, .keepAlive, "Event type must be `keepAlive`")
+    }
+    
+    func test_PushTokenKeepalive_doesNotSendOperationWhenNotExpired() {
+        generalNegativeTestPushTokenKeepalive(with: "0.00:00:10")
+    }
+    
+    func test_PushTokenKeepalive_doesNotSendOperationWhenTokenFromConfigIsNotSet() {
+        generalNegativeTestPushTokenKeepalive(with: nil)
+    }
+    
+    func test_PushTokenKeepalive_doesNotSendOperationWhenTokenFromConfigIsInvalid() {
+        generalNegativeTestPushTokenKeepalive(with: "foo")
+    }
+    
+    func test_PushTokenKeepalive_doesNotSendOperationWhenTokenFromConfigIsLessThenZero() {
+        generalNegativeTestPushTokenKeepalive(with: "-0.0:0:02")
+    }
+    
+    func test_PushTokenKeepalive_doesNotSendOperationWhenTokenFromConfigIsZero() {
+        generalNegativeTestPushTokenKeepalive(with: "0.0:0:00")
+    }
+}
+
+private extension MindboxTests {
+    func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
         controllerQueue.async { expectation.fulfill() }
         self.wait(for: [expectation], timeout: 10)
+    }
+    
+    func delay(for timeInterval: DispatchTimeInterval) {
+        let expectation = XCTestExpectation(description: "delay")
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeInterval) {
+            expectation.fulfill()
+        }
+
+        let timeout = timeInterval.timeIntervalValue + 1.0
+        wait(for: [expectation], timeout: timeout)
+    }
+    
+    func sendPushTokenKeepaliveNotification(with pushToken: String?) {
+        NotificationCenter.default.post(
+            name: .receivedPushTokenKeepaliveFromTheMobileConfig,
+            object: nil,
+            userInfo: [ConstantsForTests.pushTokenKeepaliveNotification: pushToken as Any]
+        )
+    }
+    
+    func initializeCoreController() {
+        coreController = DI.injectOrFail(CoreController.self)
+        let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
+        coreController.initialization(configuration: configuration1)
+        waitForInitializationFinished()
+        DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
+    }
+    
+    func generalNegativeTestPushTokenKeepalive(with pushTokenKeepalive: String?, file: StaticString = #file, line: UInt = #line) {
+        XCTAssertFalse(persistenceStorage.isInstalled, file: file, line: line)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate, file: file, line: line)
+        XCTAssertNil(databaseRepository.infoUpdateVersion, file: file, line: line)
+        
+        initializeCoreController()
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event", file: file, line: line)
+        
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        controllerQueue.sync { }
+        
+        delay(for: .seconds(2))
+        
+        let configResponse = Settings.SlidingExpiration(config: "0.00:30:00", pushTokenKeepalive: pushTokenKeepalive)
+        sendPushTokenKeepaliveNotification(with: configResponse.pushTokenKeepalive)
+        
+        controllerQueue.sync { }
+        
+        XCTAssertNotNil(self.persistenceStorage.lastInfoUpdateDate, file: file, line: line)
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion, file: file, line: line)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented only by apnsTokenDidUpdate", file: file, line: line)
+        
+        let result = try? databaseRepository.query(fetchLimit: 5)
+        XCTAssertEqual(result?.count, 1, file: file, line: line)
+        
+        XCTAssertEqual(result?.first?.type, .infoUpdated, "First event type must be `infoUpdated`", file: file, line: line)
+    }
+}
+
+extension DispatchTimeInterval {
+    
+    var timeIntervalValue: TimeInterval {
+        switch self {
+        case .seconds(let s):         return TimeInterval(s)
+        case .milliseconds(let ms):   return TimeInterval(ms) / 1_000.0
+        case .microseconds(let us):   return TimeInterval(us) / 1_000_000.0
+        case .nanoseconds(let ns):    return TimeInterval(ns) / 1_000_000_000.0
+        case .never:                  return .infinity
+        @unknown default:             return 0
+        }
     }
 }

@@ -103,6 +103,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
         
         self.delegate?.didPreparedConfiguration()
+        sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
     }
 
     private func applyConfigFromCache() {
@@ -164,5 +165,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         SessionTemporaryStorage.shared.expiredConfigSession = config
         Logger.common(message: "[InappSessionManager] Saved slidingExpiration.config - \(config ?? "nil") to temporary storage.")
         NotificationCenter.default.post(name: .mobileConfigDownloaded, object: nil)
+    }
+}
+
+// MARK: - For sending "ApplicationKeepalive" via Config
+
+private extension InAppConfigurationManager {
+    
+    func sendNotification(with pushToken: String?) {
+        guard let pushToken else {
+            Logger.common(message: "[Keepalive] Push token is nil. Skip next steps", level: .debug, category: .pushTokenKeepalive)
+            return
+        }
+        
+        NotificationCenter.default.post(
+            name: .receivedPushTokenKeepaliveFromTheMobileConfig,
+            object: nil,
+            userInfo: [Constants.Notification.pushTokenKeepalive: pushToken as Any]
+        )
     }
 }

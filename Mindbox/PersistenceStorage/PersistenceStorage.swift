@@ -20,6 +20,8 @@ protocol PersistenceStorage: AnyObject {
     var apnsToken: String? { get set }
 
     var apnsTokenSaveDate: Date? { get set }
+    
+    var lastInfoUpdateDate: Date? { get set }
 
     var deprecatedEventsRemoveDate: Date? { get set }
 
@@ -49,8 +51,6 @@ protocol PersistenceStorage: AnyObject {
     var needUpdateInfoOnce: Bool? { get set }
 
     var userVisitCount: Int? { get set }
-    
-    var lastInfoUpdateTime: String? { get set }
 
     /// The date when the InApps configuration was last downloaded.
     /// It is optional and can be set to `nil` if the configuration has not yet been downloaded yet or reset.
@@ -71,3 +71,34 @@ protocol PersistenceStorage: AnyObject {
     /// Clears most parts of the persistence storage. It is used in unit tests.
     func reset()
 }
+
+extension PersistenceStorage {
+    
+    func softReset() {
+        configDownloadDate = nil
+        shownInappsDictionary = nil
+        handledlogRequestIds = nil
+        userVisitCount = 0
+        resetBackgroundExecutions()
+    }
+}
+
+// MARK: - Functions for unit testing
+
+#if DEBUG
+extension PersistenceStorage {
+    func reset() {
+        installationDate = nil
+        deviceUUID = nil
+        installationId = nil
+        apnsToken = nil
+        apnsTokenSaveDate = nil
+        lastInfoUpdateDate = nil
+        deprecatedEventsRemoveDate = nil
+        configuration = nil
+        isNotificationsEnabled = nil
+        configDownloadDate = nil
+        resetBackgroundExecutions()
+    }
+}
+#endif
