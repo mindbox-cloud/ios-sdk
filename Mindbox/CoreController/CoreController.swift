@@ -307,7 +307,7 @@ private extension CoreController {
             let interval = TimeInterval(seconds)
             if shouldSendKeepalive(after: interval) {
                 Logger.common(
-                    message: "[Keepalive] Sending keep-alive (interval \(Int(interval))s)", level: .debug, category: .pushTokenKeepalive
+                    message: "[Keepalive] Sending keep-alive (interval \(timeSpanString))", level: .debug, category: .pushTokenKeepalive
                 )
 
                 updateInfo(
