@@ -85,7 +85,6 @@ extension PersistenceStorage {
 
 // MARK: - Functions for unit testing
 
-#if DEBUG
 extension PersistenceStorage {
     func reset() {
         installationDate = nil
@@ -101,4 +100,3 @@ extension PersistenceStorage {
         resetBackgroundExecutions()
     }
 }
-#endif
