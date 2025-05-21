@@ -1,0 +1,64 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches:
+      - master
+      - develop
+
+jobs:
+  check-rc-pattern:
+    name: Check RC pattern
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.head_ref, 'release/') }}
+    steps:
+      - name: Check RC pattern
+        run: |
+          if [[ "${{ github.head_ref }}" =~ release/[0-9]+\.[0-9]+\.[0-9]+-rc ]]; then
+            echo "Branch name contains release/version-rc pattern. Merging is not allowed. Only stable release should be merge into master"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check-master-version:
+    name: Check master version
+    needs: check-rc-pattern
+    runs-on: ubuntu-latest
+    if: ${{ github.base_ref == 'master' && startsWith(github.head_ref, 'release/') }}
+    steps:
+      - name: Checkout master branch
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: master
+          
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          path: release
+          
+      - name: Print branch info
+        run: |
+          echo "→ Pull Request target: ${GITHUB_BASE_REF}"
+          echo "→ Pull Request source: ${GITHUB_HEAD_REF}"
+          echo "→ master/HEAD: $(git --git-dir=master/.git rev-parse --abbrev-ref HEAD)"
+          echo "→ release/HEAD: $(git --git-dir=release/.git rev-parse --abbrev-ref HEAD)"
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          
+      - name: Extract versions
+        run: |
+          MASTER_SDK_VERSION=$(grep 'static let sdkVersion' master/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
+          RELEASE_SDK_VERSION=$(grep 'static let sdkVersion' release/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
+          echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> $GITHUB_ENV
+          echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> $GITHUB_ENV
+      - name: Compare versions
+        uses: jackbilestech/semver-compare@1.0.4
+        with:
+          head: ${{ env.RELEASE_SDK_VERSION }}
+          base: ${{ env.MASTER_SDK_VERSION }}
+          operator: '>'

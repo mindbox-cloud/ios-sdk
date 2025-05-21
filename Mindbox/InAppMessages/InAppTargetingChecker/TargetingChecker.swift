@@ -11,7 +11,7 @@ import MindboxLogger
 protocol TargetingCheckerContextProtocol: AnyObject {
     var context: PreparationContext { get set }
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]? { get set }
-    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]? { get set }
+    var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] { get set }
     var geoModels: InAppGeoResponse? { get set }
     var event: ApplicationEvent? { get set }
 }
@@ -56,7 +56,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
 
     var context = PreparationContext()
     var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
-    var checkedProductSegmentations: [InAppProductSegmentResponse.CustomerSegmentation]?
+    var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]
     var geoModels: InAppGeoResponse?
     var event: ApplicationEvent?
     var persistenceStorage: PersistenceStorage
@@ -84,7 +84,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
     func eraseCache() {
         context = PreparationContext()
         checkedSegmentations = nil
-        checkedProductSegmentations = nil
+        checkedProductSegmentations = [:]
         geoModels = nil
         event = nil
         Logger.common(message: "[TargetingChecker] Erased.")

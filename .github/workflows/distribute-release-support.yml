@@ -1,16 +1,19 @@
-name: PushOk (Release/Support PR)
+name: Distribute PushOk (Release / Support / Mission PRs)
 
 on:
   pull_request:
     branches:
       - master
+      - support/*
+      - mission/*
     types:
       - opened
       - synchronize
 
 jobs:
   call-reusable:
-    if: ${{ startsWith(github.event.pull_request.head.ref, 'release/') || startsWith(github.event.pull_request.head.ref, 'support/') }}
+    if: ${{ startsWith(github.event.pull_request.head.ref, 'release/') }}
     uses: ./.github/workflows/distribute-reusable.yml
+    with:
+      branch: ${{ github.event.pull_request.head.ref }}
     secrets: inherit
- 

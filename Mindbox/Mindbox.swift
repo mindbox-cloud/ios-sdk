@@ -41,6 +41,7 @@ public class Mindbox: NSObject {
     private var databaseRepository: MBDatabaseRepository?
     private var inAppMessagesManager: InAppCoreManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
+    private var trackVisitManager: TrackVisitCommonTrackProtocol?
 
     private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
 
@@ -165,13 +166,13 @@ public class Mindbox: NSObject {
         if let persistenceAPNSToken = persistenceStorage?.apnsToken {
 
             if persistenceStorage?.needUpdateInfoOnce ?? true {
-                Logger.common(message: "APNS Token forced to update")
+                Logger.common(message: "APNS Token forced to update", category: .notification)
                 coreController?.apnsTokenDidUpdate(token: token)
                 return
             }
 
             guard persistenceAPNSToken != token else {
-                Logger.common(message: "APNS token hasn't changed", level: .error, category: .notification)
+                Logger.common(message: "APNS token hasn't changed", level: .info, category: .notification)
                 return
             }
             coreController?.apnsTokenDidUpdate(token: token)
@@ -439,9 +440,11 @@ public class Mindbox: NSObject {
 
      */
     public func track(_ type: TrackVisitType) {
-        let tracker = DI.injectOrFail(TrackVisitManager.self)
+        guard let trackVisitManager = trackVisitManager else {
+            return
+        }
         do {
-            try tracker.track(type)
+            try trackVisitManager.track(type)
         } catch {
             Logger.common(message: "Track Visit failed with error: \(error)", level: .error, category: .visit)
         }
@@ -455,9 +458,11 @@ public class Mindbox: NSObject {
 
      */
     public func track(data: TrackVisitData) {
-        let tracker = DI.injectOrFail(TrackVisitManager.self)
+        guard let trackVisitManager = trackVisitManager else {
+            return
+        }
         do {
-            try tracker.track(data: data)
+            try trackVisitManager.track(data: data)
         } catch {
             Logger.common(message: "Track Visit failed with error: \(error)", level: .error, category: .visit)
         }
@@ -553,6 +558,7 @@ public class Mindbox: NSObject {
         inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
         inAppMessagesDelegate = self
         coreController = DI.injectOrFail(CoreController.self)
+        trackVisitManager = DI.injectOrFail(TrackVisitManagerProtocol.self)
     }
 
     private func sendCustomEventInapps(_ operationSystemName: String, jsonString: String?) {

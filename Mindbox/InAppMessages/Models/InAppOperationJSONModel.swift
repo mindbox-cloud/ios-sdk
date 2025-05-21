@@ -73,6 +73,14 @@ struct ProductCategory: Codable, Equatable, Hashable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.ids, forKey: .ids)
     }
+    
+    var firstProduct: DictionaryKeyValueModel? {
+        if let firstProduct = ids.first {
+            return DictionaryKeyValueModel(key: firstProduct.key, value: firstProduct.value)
+        }
+        
+        return nil
+    }
 }
 
 enum CodableValue: Codable {

@@ -1,16 +1,16 @@
-name: Distribute PushOk (Develop PR Merge)
+name: SDK publish from master or support branch
 
 on:
   pull_request:
+    types: [closed]
     branches:
-      - develop
-    types:
-      - closed
+      - 'master'
+      - 'support/*'
 
 jobs:
   call-reusable:
     if: ${{ github.event.pull_request.merged == true }}
-    uses: ./.github/workflows/distribute-reusable.yml
+    uses: ./.github/workflows/publish-reusable.yml
     with:
       branch: ${{ github.base_ref }}
     secrets: inherit
