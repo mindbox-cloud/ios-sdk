@@ -51,6 +51,9 @@ fileprivate enum SettingsConfig: String, Configurable {
     
     case settingsSlidingExpirationConfigError = "SettingsSlidingExpirationConfigError"
     case settingsSlidingExpirationConfigTypeError = "SettingsSlidingExpirationConfigTypeError"
+    
+    case settingsSlidingExpirationPushTokenError = "SettingsSlidingExpirationPushTokenKeepaliveError"
+    case settingsSlidingExpirationPushTokenTypeError = "SettingsSlidingExpirationPushTokenKeepaliveTypeError"
 }
 
 final class SettingsConfigParsingTests: XCTestCase {
@@ -70,6 +73,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         
         XCTAssertNotNil(config.slidingExpiration)
         XCTAssertNotNil(config.slidingExpiration?.config)
+        XCTAssertNotNil(config.slidingExpiration?.pushTokenKeepalive)
     }
 
     // MARK: - Operations
@@ -334,46 +338,76 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - Sliding Expiration
     
     func test_SettingsConfig_withSlidingExpirationError_shouldSetSlidingExpirationToNil() {
-        // Key `slidingExpirationTest` вместо `slidingExpiration`
+        // Key is `slidingExpirationTest` instead of `slidingExpiration`
         let config = try! SettingsConfig.settingsSlidingExpirationError.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
-        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
 
-        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если ключ `slidingExpiration` не найден")
-        XCTAssertNil(config.slidingExpiration?.config, "SlidingExpiration тоже должен быть nil")
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration must be `nil` if the key `slidingExpiration` is not found")
+        XCTAssertNil(config.slidingExpiration?.config)
+        XCTAssertNil(config.slidingExpiration?.pushTokenKeepalive)
     }
 
     func test_SettingsConfig_withSlidingExpirationTypeError_shouldSetSlidingExpirationToNil() {
-        // Тип `slidingExpiration` = Int вместо объекта
+        // Type of `slidingExpiration` is Int instead of SlidingExpiration
         let config = try! SettingsConfig.settingsSlidingExpirationTypeError.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations должен успешно парситься")
-        XCTAssertNotNil(config.ttl, "TTL должен успешно парситься")
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
 
-        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если тип в JSON не соответствует `Settings.SlidingExpiration`")
+        XCTAssertNil(config.slidingExpiration, "SlidingExpiration must be `nil` if the key `slidingExpiration` is not a `Settings.SlidingExpiration`")
         XCTAssertNil(config.slidingExpiration?.config)
+        XCTAssertNil(config.slidingExpiration?.pushTokenKeepalive)
     }
 
-    func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetSlidingExpirationToNil() {
-        // Ключ `inappSessionTest` вместо `config`
+    func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetConfigToNil() {
+        // Key is `configTest` instaed of `config`
         let config = try! SettingsConfig.settingsSlidingExpirationConfigError.getConfig()
 
         XCTAssertNotNil(config.operations)
         XCTAssertNotNil(config.ttl)
 
-        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если внутренний ключ `config` не найден")
-        XCTAssertNil(config.slidingExpiration?.config)
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        
+        XCTAssertNil(config.slidingExpiration?.config, "Config must be `nil` if the key `config` is not found")
+        XCTAssertNotNil(config.slidingExpiration?.pushTokenKeepalive)
     }
 
-    func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetSlidingExpirationToNil() {
-        // Тип `config` = Int вместо String
+    func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetConfigToNil() {
+        // Type of `config` is Int instead of String
         let config = try! SettingsConfig.settingsSlidingExpirationConfigTypeError.getConfig()
 
         XCTAssertNotNil(config.operations)
         XCTAssertNotNil(config.ttl)
 
-        XCTAssertNil(config.slidingExpiration, "SlidingExpiration должен быть `nil`, если поле `config` имеет неверный тип")
-        XCTAssertNil(config.slidingExpiration?.config)
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        
+        XCTAssertNil(config.slidingExpiration?.config, "Config must be `nil` if the key `config` is not a String")
+        XCTAssertNotNil(config.slidingExpiration?.pushTokenKeepalive)
+    }
+    
+    func test_SettingsConfig_withSlidingExpirationPushTokenKeepaliveError_shouldSetPushTokenToNil() {
+        // Key is `pushTokenKeepaliveTest` instead of `pushTokenKeepalive`
+        let config = try! SettingsConfig.settingsSlidingExpirationPushTokenError.getConfig()
+        
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config)
+        XCTAssertNil(config.slidingExpiration?.pushTokenKeepalive, "PushTokenKeepalive must be `nil` if the key `pushTokenKeepalive` is not found")
+    }
+    
+    func test_SettingsConfig_withSlidingExpirationPushTokenKeepaliveTypeError_shouldSetPushTokenToNil() {
+        // Type of `pushTokenKeepalive` is Int instead of String
+        let config = try! SettingsConfig.settingsSlidingExpirationPushTokenTypeError.getConfig()
+        
+        XCTAssertNotNil(config.operations)
+        XCTAssertNotNil(config.ttl)
+        
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration?.config)
+        XCTAssertNil(config.slidingExpiration?.pushTokenKeepalive, "PushTokenKeepalive must be `nil` if the key `pushTokenKeepalive` is not a String")
     }
 }

@@ -11,9 +11,11 @@ import Foundation
 extension Settings {
     struct SlidingExpiration: Decodable, Equatable {
         let config: String?
+        let pushTokenKeepalive: String?
 
         enum CodingKeys: CodingKey {
             case config
+            case pushTokenKeepalive
         }
     }
 }
@@ -21,10 +23,12 @@ extension Settings {
 extension Settings.SlidingExpiration {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let config = try? container.decodeIfPresent(String.self, forKey: .config) {
-            self.config = config
-        } else {
-            throw DecodingError.dataCorruptedError(forKey: .config, in: container, debugDescription: "Missing required key 'config'")
+        self.config = try? container.decodeIfPresent(String.self, forKey: .config)
+        self.pushTokenKeepalive = try? container.decodeIfPresent(String.self, forKey: .pushTokenKeepalive)
+
+        if config == nil && pushTokenKeepalive == nil {
+            // Will never be caught because of `try?` in `Settings.init`
+            throw DecodingError.dataCorruptedError(forKey: .config, in: container, debugDescription: "The `operation` type could not be decoded because `config` and `pushTokenKeepalive` are nil")
         }
     }
 }

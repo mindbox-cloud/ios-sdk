@@ -84,6 +84,7 @@ class MBEventRepository: EventRepository {
         switch wrapper.event.type {
         case .installed,
              .infoUpdated,
+             .keepAlive,
              .trackClick,
              .installedWithoutCustomer,
              .inAppViewEvent,
