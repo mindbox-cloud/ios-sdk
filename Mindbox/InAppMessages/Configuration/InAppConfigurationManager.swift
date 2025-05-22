@@ -154,6 +154,19 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             SessionTemporaryStorage.shared.viewProductOperation = viewProduct.systemName.lowercased()
         }
         
+        if let inappSettings = settings.inapp {
+            Logger.common(
+                message: """
+                [InAppSettings] Parsed parameters:
+                maxInappsPerSession: \(String(describing: inappSettings.maxInappsPerSession))
+                maxInappsPerDay: \(String(describing: inappSettings.maxInappsPerDay))
+                minIntervalBetweenShows: \(String(describing: inappSettings.minIntervalBetweenShows))
+                """,
+                level: .debug,
+                category: .inAppMessages
+            )
+        }
+        
         saveConfigSessionToCache(settings.slidingExpiration?.config)
     }
 
