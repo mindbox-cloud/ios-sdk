@@ -172,12 +172,12 @@ final class CoreController {
             instanceId: instanceId,
             ianaTimeZone: self.customerTimeZone(for: configuration)
         )
-        updateLastInfoUpdateDate()
         do {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
             Logger.common(message: "[Core] Mobile application has been installed", level: .default, category: .general)
+            updateLastInfoUpdateDate()
         } catch {
             Logger.common(message: "[Core] Installing mobile application failed with an error: \(error.localizedDescription)", level: .error, category: .general)
         }
@@ -221,11 +221,11 @@ final class CoreController {
             type: eventType.operation,
             body: BodyEncoder(encodable: infoUpdated).body
         )
-        updateLastInfoUpdateDate()
         do {
             try databaseRepository.create(event: event)
             databaseRepository.infoUpdateVersion = newVersion
             Logger.common(message: "[Core] Mobile application info has been updated", level: .default, category: .general)
+            updateLastInfoUpdateDate()
         } catch {
             Logger.common(message: "[Core] Updating mobile application info failed with an error: \(error.localizedDescription)", level: .error, category: .general)
         }
@@ -352,6 +352,7 @@ private extension CoreController {
     }
     
     func updateLastInfoUpdateDate() {
+        guard persistenceStorage.isInstalled else { return }
         let now = Date()
         persistenceStorage.lastInfoUpdateDate = now
         Logger.common(message: "[Keepalive] Updated lastInfoUpdateDate to \(now.toFullString())",
