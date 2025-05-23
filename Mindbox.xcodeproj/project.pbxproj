@@ -494,6 +494,14 @@
 		F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */; };
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
+		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
+		F3A49BF52DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */; };
+		F3A49BF62DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */; };
+		F3A49BF72DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */; };
+		F3A49BF82DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */; };
+		F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */; };
+		F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */; };
+		F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */; };
 		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
@@ -1079,6 +1087,14 @@
 		F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockImageDownloadService.swift; sourceTree = "<group>"; };
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
+		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
+		F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsError.json; sourceTree = "<group>"; };
+		F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerDay.json; sourceTree = "<group>"; };
+		F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerSession.json; sourceTree = "<group>"; };
+		F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMinIntervalBetweenShows.json; sourceTree = "<group>"; };
+		F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsPartialError.json; sourceTree = "<group>"; };
+		F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeError.json; sourceTree = "<group>"; };
+		F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeErrors.json; sourceTree = "<group>"; };
 		F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingExpirationModel.swift; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
 		F3A8B9572A389D9D00E9C055 /* GeoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoService.swift; sourceTree = "<group>"; };
@@ -1541,6 +1557,7 @@
 		473A982A2C919226005A3B94 /* SettingsJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F3A49BF42DDF0BD400C52AB6 /* InappError */,
 				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				473A98492C91B5E6005A3B94 /* OperationsErrors */,
 				473A98482C91B5D8005A3B94 /* TtlErrors */,
@@ -2985,6 +3002,20 @@
 			path = ABTesting;
 			sourceTree = "<group>";
 		};
+		F3A49BF42DDF0BD400C52AB6 /* InappError */ = {
+			isa = PBXGroup;
+			children = (
+				F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */,
+				F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */,
+				F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */,
+				F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */,
+				F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */,
+				F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */,
+				F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */,
+			);
+			path = InappError;
+			sourceTree = "<group>";
+		};
 		F3A8B9552A389D8300E9C055 /* InAppConfigurationMapper */ = {
 			isa = PBXGroup;
 			children = (
@@ -3022,6 +3053,7 @@
 		F3A8B9A12A3A6DBF00E9C055 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */,
 				F331DC8C2A80993600222120 /* InappModel */,
 				9BC24E7328F6953D00C2619C /* ConfigResponse.swift */,
 				F3A8B9A22A3A6E6900E9C055 /* SdkVersionModel.swift */,
@@ -3368,6 +3400,13 @@
 				4766A8A72C931E40002D15A4 /* ConfigInAppsTypeError.json in Resources */,
 				473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */,
 				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
+				F3A49BF52DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */,
+				F3A49BF62DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json in Resources */,
+				F3A49BF72DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */,
+				F3A49BF82DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */,
+				F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */,
+				F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */,
+				F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */,
 				4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */,
@@ -3767,6 +3806,7 @@
 				F3FEEA9B2C25AC68000E9D0F /* MBContainer.swift in Sources */,
 				A184654729C32FEF00E64780 /* CategoryIDChecker.swift in Sources */,
 				A192786729D389EE00CDB53D /* ProductIDTargeting.swift in Sources */,
+				F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */,
 				47FDF0BC2C5BE8BB0051F08C /* MigrationProtocol.swift in Sources */,
 				6FDD1445266F7C2200A50C35 /* CouponResponse.swift in Sources */,
 				F78E92EF282E63320003B4A3 /* DispatchSemaphore.swift in Sources */,
