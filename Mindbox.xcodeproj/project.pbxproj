@@ -502,7 +502,6 @@
 		F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */; };
 		F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */; };
 		F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */; };
-		F3A49BFC2DDF0BD400C52AB6 /* SettingsInAppSettingsAllValid.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BEC2DDF0BD400C52AB6 /* SettingsInAppSettingsAllValid.json */; };
 		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
@@ -1089,7 +1088,6 @@
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
 		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
-		F3A49BEC2DDF0BD400C52AB6 /* SettingsInAppSettingsAllValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsAllValid.json; sourceTree = "<group>"; };
 		F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsError.json; sourceTree = "<group>"; };
 		F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerDay.json; sourceTree = "<group>"; };
 		F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerSession.json; sourceTree = "<group>"; };
@@ -1559,6 +1557,7 @@
 		473A982A2C919226005A3B94 /* SettingsJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F3A49BF42DDF0BD400C52AB6 /* InappError */,
 				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				473A98492C91B5E6005A3B94 /* OperationsErrors */,
 				473A98482C91B5D8005A3B94 /* TtlErrors */,
@@ -1593,7 +1592,6 @@
 		473A983E2C91ACAF005A3B94 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				F3A49BF42DDF0BD400C52AB6 /* Resources */,
 				473A982A2C919226005A3B94 /* SettingsJsonStubs */,
 				473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */,
 			);
@@ -3004,10 +3002,9 @@
 			path = ABTesting;
 			sourceTree = "<group>";
 		};
-		F3A49BF42DDF0BD400C52AB6 /* Resources */ = {
+		F3A49BF42DDF0BD400C52AB6 /* InappError */ = {
 			isa = PBXGroup;
 			children = (
-				F3A49BEC2DDF0BD400C52AB6 /* SettingsInAppSettingsAllValid.json */,
 				F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */,
 				F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */,
 				F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */,
@@ -3016,7 +3013,7 @@
 				F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */,
 				F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */,
 			);
-			path = Resources;
+			path = InappError;
 			sourceTree = "<group>";
 		};
 		F3A8B9552A389D8300E9C055 /* InAppConfigurationMapper */ = {
@@ -3410,7 +3407,6 @@
 				F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */,
 				F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */,
 				F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */,
-				F3A49BFC2DDF0BD400C52AB6 /* SettingsInAppSettingsAllValid.json in Resources */,
 				4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */,

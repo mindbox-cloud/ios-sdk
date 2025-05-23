@@ -60,7 +60,6 @@ fileprivate enum SettingsConfig: String, Configurable {
     case settingsInAppSettingsError = "SettingsInAppSettingsError" // Key is `inappTest` instead of `inapp`
     case settingsInAppSettingsTypeError = "SettingsInAppSettingsTypeError" // Type of `inapp` is Int instead of InAppSettings
     case settingsInAppSettingsPartialError = "SettingsInAppSettingsPartialError" // maxInappsPerSession is Int, maxInappsPerDay is String, minIntervalBetweenShows is missing
-    case settingsInAppSettingsAllValid = "SettingsInAppSettingsAllValid" // All values are valid
     case settingsInAppSettingsMissingMaxInappsPerSession = "SettingsInAppSettingsMissingMaxInappsPerSession" // Missing maxInappsPerSession
     case settingsInAppSettingsMissingMaxInappsPerDay = "SettingsInAppSettingsMissingMaxInappsPerDay" // Missing maxInappsPerDay
     case settingsInAppSettingsMissingMinIntervalBetweenShows = "SettingsInAppSettingsMissingMinIntervalBetweenShows" // Missing minIntervalBetweenShows
@@ -85,6 +84,11 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.slidingExpiration)
         XCTAssertNotNil(config.slidingExpiration?.config)
         XCTAssertNotNil(config.slidingExpiration?.pushTokenKeepalive)
+        
+        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
+        XCTAssertEqual(config.inapp?.maxInappsPerSession, 1, "maxInappsPerSession must be parsed correctly")
+        XCTAssertEqual(config.inapp?.maxInappsPerDay, 1, "maxInappsPerDay must be parsed correctly")
+        XCTAssertEqual(config.inapp?.minIntervalBetweenShows, "0.00:00:10", "minIntervalBetweenShows must be parsed correctly")
     }
 
     // MARK: - Operations
@@ -466,20 +470,6 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.inapp?.minIntervalBetweenShows, "minIntervalBetweenShows must be nil as it's missing")
     }
     
-    func test_SettingsConfig_withInAppSettingsAllValid_shouldParseAllValues() {
-        // All values are valid
-        let config = try! SettingsConfig.settingsInAppSettingsAllValid.getConfig()
-        
-        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
-        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
-        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
-        XCTAssertEqual(config.inapp?.maxInappsPerSession, 1, "maxInappsPerSession must be parsed correctly")
-        XCTAssertEqual(config.inapp?.maxInappsPerDay, 1, "maxInappsPerDay must be parsed correctly")
-        XCTAssertEqual(config.inapp?.minIntervalBetweenShows, "0.00:00:10", "minIntervalBetweenShows must be parsed correctly")
-    }
-    
     func test_SettingsConfig_withInAppSettingsMissingMaxInappsPerSession_shouldKeepOtherValues() {
         // Missing maxInappsPerSession
         let config = try! SettingsConfig.settingsInAppSettingsMissingMaxInappsPerSession.getConfig()
@@ -530,7 +520,7 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
         
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
+        XCTAssertNil(config.inapp, "InAppSettings must be nil")
         XCTAssertNil(config.inapp?.maxInappsPerSession, "maxInappsPerSession must be nil due to type error")
         XCTAssertNil(config.inapp?.maxInappsPerDay, "maxInappsPerDay must be nil due to type error")
         XCTAssertNil(config.inapp?.minIntervalBetweenShows, "minIntervalBetweenShows must be nil due to type error")

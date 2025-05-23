@@ -28,5 +28,9 @@ extension Settings.InAppSettings {
         self.maxInappsPerSession = try? container.decodeIfPresent(Int.self, forKey: .maxInappsPerSession)
         self.maxInappsPerDay = try? container.decodeIfPresent(Int.self, forKey: .maxInappsPerDay)
         self.minIntervalBetweenShows = try? container.decodeIfPresent(String.self, forKey: .minIntervalBetweenShows)
+        
+        if maxInappsPerSession == nil && maxInappsPerDay == nil && minIntervalBetweenShows == nil {
+            throw DecodingError.dataCorruptedError(forKey: .maxInappsPerSession, in: container, debugDescription: "The `operation` type could not be decoded because all values are nil")
+        }
     }
-} 
+}
