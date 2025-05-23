@@ -339,7 +339,7 @@ private extension CoreController {
         
         Logger.common(
             message: """
-              [Keepalive] Last sent: \(lastDate.toFullString()), \
+              [Keepalive] Last lastInfoUpdateDate: \(lastDate.toFullString()), \
               earliest next send allowed from: \(thresholdDate.toFullString()), \
               elapsed: \(Int(elapsed))s, \
               required: \(Int(interval))s, \
