@@ -1,11 +1,14 @@
 name: SwiftLint & UnitTests
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
     types:
-    - opened
-    - reopened
-    - synchronize
+      - opened
+      - reopened
+      - synchronize
       
 jobs:
   SwiftLint:
