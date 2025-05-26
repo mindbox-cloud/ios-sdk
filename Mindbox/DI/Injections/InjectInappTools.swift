@@ -103,6 +103,11 @@ extension MBContainer {
             let displayUseCase = DI.injectOrFail(PresentationDisplayUseCase.self)
             return InAppPresentationManager(actionHandler: actionHandler, displayUseCase: displayUseCase)
         }
+        
+        register(InAppPresentationValidatorProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppPresentationValidator(persistenceStorage: persistenceStorage)
+        }
 
         return self
     }

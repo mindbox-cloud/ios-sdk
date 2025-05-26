@@ -66,11 +66,13 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager: InAppConfigurationManagerProtocol,
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
+        presentationValidator: InAppPresentationValidatorProtocol,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
         self.presentationManager = presentationManager
         self.persistenceStorage = persistenceStorage
+        self.presentationValidator = presentationValidator
         self.serialQueue = serialQueue
     }
 
@@ -79,6 +81,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let configManager: InAppConfigurationManagerProtocol
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
+    private let presentationValidator: InAppPresentationValidatorProtocol
     private var isConfigurationReady = false
     private var isInAppManagerLaunched: Bool = false
     private let serialQueue: DispatchQueue
@@ -159,14 +162,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
-        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
-            Logger.common(message: "In-app was already shown in this session", category: .inAppMessages)
+        guard presentationValidator.canPresentInApp() else {
             completion()
             return
         }
 
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-
         Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
 
         presentationManager.present(
@@ -181,13 +182,14 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
                 delegate?.inAppMessageTapAction(id: inapp.inAppId, url: url, payload: payload)
             },
             onPresentationCompleted: { [delegate] in
+                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
             },
             onError: { error in
                 switch error {
                 case .failedToLoadWindow:
-                        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                        Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
+                    SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                    Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
                 default:
                     break
                 }
