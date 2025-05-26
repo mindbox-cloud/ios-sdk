@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - mission/*
   pull_request:
     types:
       - opened
