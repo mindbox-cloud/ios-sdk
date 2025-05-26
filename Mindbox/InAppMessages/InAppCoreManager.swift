@@ -173,6 +173,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
+                    SessionTemporaryStorage.shared.sessionShownInApps.insert(inapp.inAppId)
                     self.persistenceStorage.shownInappsDictionary?[inapp.inAppId] = Date()
                 }
             },
