@@ -23,7 +23,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     func canPresentInApp() -> Bool {
         // Проверяем что инапп не показывается в данный момент
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
-            Logger.common(message: "Cannot present in-app: another in-app is already being shown", level: .debug, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] Another in-app is already being shown. Skip in-app", level: .debug, category: .inAppMessages)
             return false
         }
 
