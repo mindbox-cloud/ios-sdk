@@ -261,4 +261,9 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         let manager: InappSessionManagerProtocol? = DI.inject(InappSessionManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
+    
+    func testInappPresentationValidatorIsRegistered() {
+        let manager: InAppPresentationValidatorProtocol? = DI.inject(InAppPresentationValidatorProtocol.self)
+        XCTAssertNotNil(manager)
+    }
 }
