@@ -51,11 +51,45 @@ class InappFrequencyTests: XCTestCase {
         XCTAssertTrue(validator.isValid(item: inapp))
     }
 
-    func test_once_session_shownBefore() throws {
-        persistenceStorage.shownInappsDictionary = ["1": Date(timeIntervalSince1970: 0)]
+    func test_once_session_shownInCurrentSession() throws {
+        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
         let onceFrequency = OnceFrequency(kind: .session)
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp = getInapp(frequency: inappFrequency)
+        XCTAssertFalse(validator.isValid(item: inapp))
+    }
+
+    func test_once_session_shownInPreviousSession() throws {
+        persistenceStorage.shownInappsDictionary = ["1": Date(timeIntervalSince1970: 0)]
+        SessionTemporaryStorage.shared.sessionShownInApps.removeAll()
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let inapp = getInapp(frequency: inappFrequency)
+        XCTAssertTrue(validator.isValid(item: inapp))
+    }
+
+    func test_once_session_multipleInapps() throws {
+        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let inapp1 = getInapp(frequency: inappFrequency)
+        let inapp2 = InApp(id: "2",
+                          sdkVersion: SdkVersion(min: 9, max: nil),
+                          targeting: .true(TrueTargeting()),
+                          frequency: inappFrequency,
+                          form: InAppForm(variants: [.unknown]))
+        XCTAssertFalse(validator.isValid(item: inapp1))
+        XCTAssertTrue(validator.isValid(item: inapp2))
+    }
+
+    func test_once_session_clearSession() throws {
+        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let inapp = getInapp(frequency: inappFrequency)
+        XCTAssertFalse(validator.isValid(item: inapp))
+        
+        SessionTemporaryStorage.shared.sessionShownInApps.removeAll()
         XCTAssertTrue(validator.isValid(item: inapp))
     }
 
