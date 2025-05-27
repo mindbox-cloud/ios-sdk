@@ -168,6 +168,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
 
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+        SessionTemporaryStorage.shared.lastInappClickedID = nil
         Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
 
         presentationManager.present(
