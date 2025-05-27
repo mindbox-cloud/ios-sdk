@@ -539,6 +539,7 @@
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F3DEB33B2D4377D000D0EFA4 /* InappSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */; };
 		F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */; };
+		F3EB95712DE44684000E221B /* InappPresentationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3EB95702DE44684000E221B /* InappPresentationValidator.swift */; };
 		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3F5BB8A2B79F2600022AC3F /* PushNotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F5BB892B79F2600022AC3F /* PushNotificationFormatter.swift */; };
@@ -1141,6 +1142,7 @@
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappSessionManager.swift; sourceTree = "<group>"; };
 		F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+Extensions.swift"; sourceTree = "<group>"; };
+		F3EB95702DE44684000E221B /* InappPresentationValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappPresentationValidator.swift; sourceTree = "<group>"; };
 		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -1898,6 +1900,7 @@
 		84B625E725C989B100AB6228 /* Validators */ = {
 			isa = PBXGroup;
 			children = (
+				F3EB95702DE44684000E221B /* InappPresentationValidator.swift */,
 				84B625E325C988FA00AB6228 /* URLValidator.swift */,
 				84B625E825C989C100AB6228 /* UDIDValidator.swift */,
 				F3A8B9932A3A409C00E9C055 /* Validator.swift */,
@@ -3800,6 +3803,7 @@
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
 				F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */,
 				847F57FE25C88BB700147A9A /* HTTPMethod.swift in Sources */,
+				F3EB95712DE44684000E221B /* InappPresentationValidator.swift in Sources */,
 				F39117052AA9B92500852298 /* ElementsPositionFilter.swift in Sources */,
 				334F3AE9264C199900A6AC00 /* OrderRequest.swift in Sources */,
 				9B24FAAC28C74B8300F10B5D /* InAppConfigurationRepository.swift in Sources */,

@@ -191,11 +191,9 @@ class InappMapper: InappMapperProtocol {
 
             group.notify(queue: .main) {
                 DispatchQueue.main.async { [weak self] in
-                    if !SessionTemporaryStorage.shared.isPresentingInAppMessage {
-                        if let id = formData?.inAppId {
-                            self?.dataFacade.trackTargeting(id: id)
-                            self?.shownInappIDWithHashValue[id] = self?.getEventHashValue()
-                        }
+                    if let id = formData?.inAppId {
+                        self?.dataFacade.trackTargeting(id: id)
+                        self?.shownInappIDWithHashValue[id] = self?.getEventHashValue()
                     }
 
                     completion(formData)

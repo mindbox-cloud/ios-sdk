@@ -50,8 +50,8 @@ class OnceFrequencyValidator {
             case .lifetime:
                 result = shownInappsDictionary[id] == nil
             case .session:
-                if let savedTime = shownInappsDictionary[id], Date() < savedTime {
-                    Logger.common(message: "[Inapp frequency] Saved date less than current date. Skip this in-app.",
+                if SessionTemporaryStorage.shared.sessionShownInApps.contains(id) {
+                    Logger.common(message: "[Inapp frequency] Inapp ID \(id) is already shown in this session. Skip this in-app.",
                                   level: .debug, category: .inAppMessages)
                     result = false
                 } else {

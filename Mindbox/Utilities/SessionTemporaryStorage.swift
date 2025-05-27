@@ -30,10 +30,11 @@ final class SessionTemporaryStorage {
             }
         }
     }
+    
+    var lastInappClickedID: String?
 
     var expiredConfigSession: String?
     var isUserVisitSaved = false
-    var clickTracked = false
 
     private init() {}
 
@@ -50,7 +51,7 @@ final class SessionTemporaryStorage {
         isPresentingInAppMessage = false
         sessionShownInApps = []
         isUserVisitSaved = false
-        clickTracked = false
+        lastInappClickedID = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
     }
 }
