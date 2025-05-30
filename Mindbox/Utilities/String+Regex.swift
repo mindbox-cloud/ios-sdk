@@ -74,7 +74,7 @@ extension String {
         return sign == "-" ? -millis : millis
     }
 
-    func parseTimeStampToSeconds() throws -> Int64 {
+    func parseTimeSpanToSeconds() throws -> Int64 {
         try parseTimeSpanToMillis() / 1000
     }
 }

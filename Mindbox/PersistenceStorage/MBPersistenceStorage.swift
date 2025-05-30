@@ -61,6 +61,24 @@ class MBPersistenceStorage: PersistenceStorage {
             }
         }
     }
+    
+    var lastInfoUpdateDate: Date? {
+        get {
+            if let dateString = lastInfoUpdateDateString {
+                return dateFormatter.date(from: dateString)
+            } else {
+                return nil
+            }
+        }
+        
+        set {
+            if let date = newValue {
+                lastInfoUpdateDateString = dateFormatter.string(from: date)
+            } else {
+                lastInfoUpdateDateString = nil
+            }
+        }
+    }
 
     var deprecatedEventsRemoveDate: Date? {
         get {
@@ -241,36 +259,17 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-
-    func softReset() {
-        configDownloadDate = nil
-        shownInappsDictionary = nil
-        handledlogRequestIds = nil
-        userVisitCount = 0
-        resetBackgroundExecutions()
+    
+    @UserDefaultsWrapper(key: .lastInfoUpdateTime, defaultValue: nil)
+    var lastInfoUpdateDateString: String? {
+        didSet {
+            onDidChange?()
+        }
     }
 
     func resetBackgroundExecutions() {
         MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
         MBPersistenceStorage.defaults.synchronize()
-    }
-}
-
-// MARK: - Functions for unit testing
-
-extension MBPersistenceStorage {
-
-    func reset() {
-        installationDate = nil
-        deviceUUID = nil
-        installationId = nil
-        apnsToken = nil
-        apnsTokenSaveDate = nil
-        deprecatedEventsRemoveDate = nil
-        configuration = nil
-        isNotificationsEnabled = nil
-        configDownloadDate = nil
-        resetBackgroundExecutions()
     }
 }
 
@@ -296,6 +295,7 @@ extension MBPersistenceStorage {
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
             case apnsToken = "MBPersistenceStorage-apnsToken"
             case apnsTokenSaveDate = "MBPersistenceStorage-apnsTokenSaveDate"
+            case lastInfoUpdateTime = "MBPersistenceStorage-lastInfoUpdateTime"
             case deprecatedEventsRemoveDate = "MBPersistenceStorage-deprecatedEventsRemoveDate"
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"

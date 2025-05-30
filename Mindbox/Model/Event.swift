@@ -28,6 +28,7 @@ struct Event: EventProtocol {
         case installed = "MobilePush.ApplicationInstalled"
         case installedWithoutCustomer = "MobilePush.ApplicationInstalledWithoutCustomer"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
+        case keepAlive = "MobilePush.ApplicationKeepalive"
         case trackClick = "MobilePush.TrackClick"
         case trackVisit = "MobilePush.TrackVisit"
         case customEvent = "MobilePush.CustomEvent"

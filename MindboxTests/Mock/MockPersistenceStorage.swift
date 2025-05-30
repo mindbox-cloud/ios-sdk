@@ -73,6 +73,12 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    var lastInfoUpdateDate: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
     var shownInAppsIds: [String]?
 
@@ -100,26 +106,6 @@ class MockPersistenceStorage: PersistenceStorage {
         didSet {
             onDidChange?()
         }
-    }
-
-    func reset() {
-        installationDate = nil
-        deviceUUID = nil
-        installationId = nil
-        apnsToken = nil
-        apnsTokenSaveDate = nil
-        deprecatedEventsRemoveDate = nil
-        configuration = nil
-        isNotificationsEnabled = nil
-        resetBackgroundExecutions()
-    }
-
-    func softReset() {
-        configDownloadDate = nil
-        shownInappsDictionary = nil
-        handledlogRequestIds = nil
-        userVisitCount = 0
-        resetBackgroundExecutions()
     }
 
     func setBackgroundExecution(_ value: BackgroudExecution) {

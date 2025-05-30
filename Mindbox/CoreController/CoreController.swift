@@ -177,6 +177,7 @@ final class CoreController {
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             persistenceStorage.installationDate = Date()
             Logger.common(message: "[Core] Mobile application has been installed", level: .default, category: .general)
+            updateLastInfoUpdateDate()
         } catch {
             Logger.common(message: "[Core] Installing mobile application failed with an error: \(error.localizedDescription)", level: .error, category: .general)
         }
@@ -207,7 +208,7 @@ final class CoreController {
         try databaseRepository.create(event: event)
     }
 
-    private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool) {
+    private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool, eventType: Constants.InfoUpdateVersions = .infoUpdated) {
         let previousVersion = databaseRepository.infoUpdateVersion ?? 0
         let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
@@ -217,13 +218,14 @@ final class CoreController {
             instanceId: databaseRepository.instanceId ?? ""
         )
         let event = Event(
-            type: .infoUpdated,
+            type: eventType.operation,
             body: BodyEncoder(encodable: infoUpdated).body
         )
         do {
             try databaseRepository.create(event: event)
             databaseRepository.infoUpdateVersion = newVersion
             Logger.common(message: "[Core] Mobile application info has been updated", level: .default, category: .general)
+            updateLastInfoUpdateDate()
         } catch {
             Logger.common(message: "[Core] Updating mobile application info failed with an error: \(error.localizedDescription)", level: .error, category: .general)
         }
@@ -249,6 +251,8 @@ final class CoreController {
         self.inAppMessagesManager = inAppMessagesManager
         self.sessionManager = sessionManager
         self.userVisitManager = userVisitManager
+        
+        registerPushTokenKeepaliveObserver()
 
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive && SessionTemporaryStorage.shared.isInitializationCalled {
@@ -268,5 +272,90 @@ final class CoreController {
         }
 
         timer.setupTimer()
+    }
+}
+
+// MARK: - For sending "ApplicationKeepalive" via Config
+
+private extension CoreController {
+    
+    func registerPushTokenKeepaliveObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePushTokenKeepalive),
+            name: .receivedPushTokenKeepaliveFromTheMobileConfig,
+            object: nil
+        )
+    }
+    
+    @objc
+    func handlePushTokenKeepalive(_ notification: Notification) {
+        controllerQueue.async { [weak self] in
+            guard let self, let timeSpanString = notification.userInfo?[Constants.Notification.pushTokenKeepalive] as? String else {
+                Logger.common(
+                    message: "[Keepalive] missing or wrong key in userInfo: \(String(describing: notification.userInfo))", level: .debug, category: .pushTokenKeepalive
+                )
+                return
+            }
+            guard let seconds = try? timeSpanString.parseTimeSpanToSeconds(), seconds > 0 else {
+                Logger.common(
+                    message: "[Keepalive] invalid time span - \(timeSpanString)", level: .debug, category: .pushTokenKeepalive
+                )
+                return
+            }
+            
+            let interval = TimeInterval(seconds)
+            if shouldSendKeepalive(after: interval) {
+                Logger.common(
+                    message: "[Keepalive] Sending keep-alive (interval \(timeSpanString))", level: .debug, category: .pushTokenKeepalive
+                )
+
+                updateInfo(
+                    apnsToken: persistenceStorage.apnsToken,
+                    isNotificationsEnabled: notificationStatus(),
+                    eventType: .keepAlive
+                )
+            } else {
+                Logger.common(
+                    message: "[Keepalive] Skip sending (not expired yet)", level: .debug, category: .pushTokenKeepalive
+                )
+            }
+        }
+    }
+    
+    func shouldSendKeepalive(after interval: TimeInterval) -> Bool {
+        guard let lastDate = persistenceStorage.lastInfoUpdateDate else {
+            Logger.common(
+                message: "[Keepalive] First run — no lastInfoUpdateDate, will send now",
+                level: .debug, category: .pushTokenKeepalive
+            )
+            return true
+        }
+        
+        let now = Date()
+        let elapsed = now.timeIntervalSince(lastDate)
+        let thresholdDate = lastDate.addingTimeInterval(interval)
+        let isAllowed = elapsed > interval
+        
+        Logger.common(
+            message: """
+              [Keepalive] Last lastInfoUpdateDate: \(lastDate.toFullString()), \
+              earliest next send allowed from: \(thresholdDate.toFullString()), \
+              elapsed: \(Int(elapsed))s, \
+              required: \(Int(interval))s, \
+              allowed to send: \(isAllowed)
+              """,
+            level: .debug, category: .pushTokenKeepalive
+          )
+        
+        return isAllowed
+    }
+    
+    func updateLastInfoUpdateDate() {
+        guard persistenceStorage.isInstalled else { return }
+        let now = Date()
+        persistenceStorage.lastInfoUpdateDate = now
+        Logger.common(message: "[Keepalive] Updated lastInfoUpdateDate to \(now.toFullString())",
+                      level: .debug, category: .pushTokenKeepalive)
     }
 }

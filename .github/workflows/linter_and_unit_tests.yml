@@ -2,10 +2,14 @@ name: SwiftLint & UnitTests
 
 on:
   push:
-    branches-ignore:
-      - master
-    paths-ignore:
-      - '**.md'
+    branches:
+      - develop
+      - mission/*
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
       
 jobs:
   SwiftLint:

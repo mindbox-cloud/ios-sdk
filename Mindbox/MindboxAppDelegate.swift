@@ -51,6 +51,11 @@ open class MindboxAppDelegate: NSObject, UNUserNotificationCenterDelegate, UIApp
     ) {
         Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
     }
+    
+    open func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
+        Logger.common(message: "didFailToRegisterForRemoteNotificationsWithError \(error.localizedDescription)",
+                      level: .error, category: .notification)
+    }
 
     open func userNotificationCenter(
         _ center: UNUserNotificationCenter,

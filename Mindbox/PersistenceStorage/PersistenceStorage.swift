@@ -20,6 +20,8 @@ protocol PersistenceStorage: AnyObject {
     var apnsToken: String? { get set }
 
     var apnsTokenSaveDate: Date? { get set }
+    
+    var lastInfoUpdateDate: Date? { get set }
 
     var deprecatedEventsRemoveDate: Date? { get set }
 
@@ -68,4 +70,33 @@ protocol PersistenceStorage: AnyObject {
 
     /// Clears most parts of the persistence storage. It is used in unit tests.
     func reset()
+}
+
+extension PersistenceStorage {
+    
+    func softReset() {
+        configDownloadDate = nil
+        shownInappsDictionary = nil
+        handledlogRequestIds = nil
+        userVisitCount = 0
+        resetBackgroundExecutions()
+    }
+}
+
+// MARK: - Functions for unit testing
+
+extension PersistenceStorage {
+    func reset() {
+        installationDate = nil
+        deviceUUID = nil
+        installationId = nil
+        apnsToken = nil
+        apnsTokenSaveDate = nil
+        lastInfoUpdateDate = nil
+        deprecatedEventsRemoveDate = nil
+        configuration = nil
+        isNotificationsEnabled = nil
+        configDownloadDate = nil
+        resetBackgroundExecutions()
+    }
 }
