@@ -37,7 +37,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     
     func checkSessionLimit() -> Bool {
         guard let maxInappsPerSession = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession else {
-            Logger.common(message: "[PresentationValidator] No session limit specified", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] No session inapp limit specified", level: .info, category: .inAppMessages)
             return true
         }
         
