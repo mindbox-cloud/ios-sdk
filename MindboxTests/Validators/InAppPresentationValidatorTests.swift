@@ -64,6 +64,16 @@ final class InAppPresentationValidatorTests: XCTestCase {
         XCTAssertFalse(validator.checkSessionLimit())
     }
     
+    func test_checkSessionLimit_whenLimitIsZero_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 0, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
+        XCTAssertTrue(validator.checkSessionLimit())
+    }
+    
+    func test_checkSessionLimit_whenLimitIsNegative_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: -1, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
+        XCTAssertTrue(validator.checkSessionLimit())
+    }
+    
     // MARK: - canPresentInApp tests
     
     func test_canPresentInApp_whenAllChecksPass_returnsTrue() {

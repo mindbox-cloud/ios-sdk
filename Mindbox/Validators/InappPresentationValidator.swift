@@ -41,6 +41,11 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return true
         }
         
+        guard maxInappsPerSession > 0 else {
+            Logger.common(message: "[PresentationValidator] Session inapp limit is not positive (\(maxInappsPerSession)), treating as no limit", level: .info, category: .inAppMessages)
+            return true
+        }
+        
         let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
         let isAllowed = maxInappsPerSession > currentShownCount
         
