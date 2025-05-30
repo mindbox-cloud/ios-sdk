@@ -77,14 +77,14 @@ class PeriodicFrequencyValidator {
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)].
             Value (\(item.value)) is zero or negative.
-            Inapp is not valid.
+            Inapp ID \(id) is not valid.
             """, level: .info, category: .inAppMessages)
             return false
         }
 
         let currentDate = Date()
         guard let inappsDict = persistenceStorage.shownInappsDictionary else {
-            Logger.common(message: "shownInappsDictionary not exists. Inapp is not valid.", level: .error, category: .inAppMessages)
+            Logger.common(message: "shownInappsDictionary not exists. Inapp ID \(id) is not valid.", level: .error, category: .inAppMessages)
             return false
         }
 
@@ -105,7 +105,7 @@ class PeriodicFrequencyValidator {
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)] value is (\(item.value)).
             Last shown date plus frequency: \(shownDatePlusFrequency.asDateTimeWithSeconds).
             Current date: \(currentDate.asDateTimeWithSeconds).
-            Valid = \(isValid)
+            Inapp ID \(id) valid = \(isValid)
             """, level: .debug, category: .inAppMessages)
             return isValid
         } else {

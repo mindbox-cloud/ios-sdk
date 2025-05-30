@@ -162,6 +162,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
+        Logger.common(message: "[PresentationValidator] Checking if can present in-app with id: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
         guard presentationValidator.canPresentInApp() else {
             completion()
             return
@@ -175,7 +176,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
-                    SessionTemporaryStorage.shared.sessionShownInApps.insert(inapp.inAppId)
+                    SessionTemporaryStorage.shared.sessionShownInApps.append(inapp.inAppId)
                     self.persistenceStorage.shownInappsDictionary?[inapp.inAppId] = Date()
                 }
             },
