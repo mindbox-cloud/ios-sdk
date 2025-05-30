@@ -28,50 +28,50 @@ final class InAppPresentationValidatorTests: XCTestCase {
         super.tearDown()
     }
     
-    // MARK: - checkIsNotPresenting tests
+    // MARK: - isNotPresentingAnotherInApp tests
     
-    func test_checkIsNotPresenting_whenNotPresenting_returnsTrue() {
-        XCTAssertTrue(validator.checkIsNotPresenting())
+    func test_isNotPresentingAnotherInApp_whenNotPresenting_returnsTrue() {
+        XCTAssertTrue(validator.isNotPresentingAnotherInApp())
     }
     
-    func test_checkIsNotPresenting_whenPresenting_returnsFalse() {
+    func test_isNotPresentingAnotherInApp_whenPresenting_returnsFalse() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        XCTAssertFalse(validator.checkIsNotPresenting())
+        XCTAssertFalse(validator.isNotPresentingAnotherInApp())
     }
     
-    // MARK: - checkSessionLimit tests
+    // MARK: - isUnderSessionLimit tests
     
-    func test_checkSessionLimit_whenNoSettings_returnsTrue() {
+    func test_isUnderSessionLimit_whenNoSettings_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = nil
-        XCTAssertTrue(validator.checkSessionLimit())
+        XCTAssertTrue(validator.isUnderSessionLimit())
     }
     
-    func test_checkSessionLimit_whenUnderLimit_returnsTrue() {
+    func test_isUnderSessionLimit_whenUnderLimit_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertTrue(validator.checkSessionLimit())
+        XCTAssertTrue(validator.isUnderSessionLimit())
     }
     
-    func test_checkSessionLimit_whenAtLimit_returnsFalse() {
+    func test_isUnderSessionLimit_whenAtLimit_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertFalse(validator.checkSessionLimit())
+        XCTAssertFalse(validator.isUnderSessionLimit())
     }
     
-    func test_checkSessionLimit_whenOverLimit_returnsFalse() {
+    func test_isUnderSessionLimit_whenOverLimit_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2", "3"]
-        XCTAssertFalse(validator.checkSessionLimit())
+        XCTAssertFalse(validator.isUnderSessionLimit())
     }
     
-    func test_checkSessionLimit_whenLimitIsZero_returnsTrue() {
+    func test_isUnderSessionLimit_whenLimitIsZero_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 0, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
-        XCTAssertTrue(validator.checkSessionLimit())
+        XCTAssertTrue(validator.isUnderSessionLimit())
     }
     
-    func test_checkSessionLimit_whenLimitIsNegative_returnsTrue() {
+    func test_isUnderSessionLimit_whenLimitIsNegative_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: -1, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
-        XCTAssertTrue(validator.checkSessionLimit())
+        XCTAssertTrue(validator.isUnderSessionLimit())
     }
     
     // MARK: - canPresentInApp tests

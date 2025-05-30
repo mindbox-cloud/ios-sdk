@@ -21,13 +21,13 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     }
     
     func canPresentInApp() -> Bool {
-        return checkIsNotPresenting() &&
-               checkSessionLimit() &&
-               checkDailyLimit() &&
-               checkMinimalIntervalBetweenInApps()
+        return isNotPresentingAnotherInApp() &&
+               isUnderSessionLimit() &&
+               isUnderDailyLimit() &&
+               hasElapsedMinimumIntervalBetweenInApps()
     }
     
-    func checkIsNotPresenting() -> Bool {
+    func isNotPresentingAnotherInApp() -> Bool {
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
             Logger.common(message: "[PresentationValidator] Another in-app is already being shown. Skip in-app", level: .debug, category: .inAppMessages)
             return false
@@ -35,7 +35,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         return true
     }
     
-    func checkSessionLimit() -> Bool {
+    func isUnderSessionLimit() -> Bool {
         guard let maxInappsPerSession = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession else {
             Logger.common(message: "[PresentationValidator] No session inapp limit specified", level: .info, category: .inAppMessages)
             return true
@@ -54,11 +54,11 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         return isAllowed
     }
     
-    func checkDailyLimit() -> Bool {
-        return true // MARK: - Add logic here later.
+    func isUnderDailyLimit() -> Bool {
+        return true 
     }
     
-    func checkMinimalIntervalBetweenInApps() -> Bool {
-        return true // MARK: - Add logic here later.
+    func hasElapsedMinimumIntervalBetweenInApps() -> Bool {
+        return true
     }
 }
