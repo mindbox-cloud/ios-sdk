@@ -177,7 +177,9 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onPresented: {
                 self.serialQueue.async {
                     SessionTemporaryStorage.shared.sessionShownInApps.append(inapp.inAppId)
-                    self.persistenceStorage.shownInappsDictionary?[inapp.inAppId] = Date()
+                    var dates = self.persistenceStorage.shownInappsShowDatesDictionary?[inapp.inAppId] ?? []
+                    dates.append(Date())
+                    self.persistenceStorage.shownInappsShowDatesDictionary?[inapp.inAppId] = dates
                 }
             },
             onTapAction: { [delegate] url, payload in

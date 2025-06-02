@@ -151,7 +151,7 @@ class InappMapper: InappMapperProtocol {
                 var imageDict: [String: UIImage] = [:]
                 var gotError = false
 
-                if self.inappFilterService.shownInAppDictionary[inapp.inAppId] != nil {
+                if self.inappFilterService.shownInAppShowDatesDictionary[inapp.inAppId] != nil {
                     Logger.common(message: "[InappMapper] In-app message with ID '\(inapp.inAppId)' has already been shown. Skipping", level: .debug, category: .inAppMessages)
                     continue
                 }

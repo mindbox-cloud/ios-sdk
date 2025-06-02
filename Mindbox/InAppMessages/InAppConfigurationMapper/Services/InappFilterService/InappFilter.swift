@@ -14,13 +14,13 @@ protocol InappFilterProtocol {
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp]
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp]
     var validInapps: [InApp] { get }
-    var shownInAppDictionary: [String: Date] { get }
+    var shownInAppShowDatesDictionary: [String: [Date]] { get }
 }
 
 final class InappsFilterService: InappFilterProtocol {
 
     var validInapps: [InApp] = []
-    var shownInAppDictionary: [String: Date] = [:]
+    var shownInAppShowDatesDictionary: [String: [Date]] = [:]
 
     private let persistenceStorage: PersistenceStorage
     private let variantsFilter: VariantFilterProtocol
@@ -119,8 +119,8 @@ final class InappsFilterService: InappFilterProtocol {
     }
 
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
+        let shownInAppShowDatesDictionary = persistenceStorage.shownInappsShowDatesDictionary ?? [:]
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppShowDatesDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
             let frequencyValidator = self.createFrequencyValidator()
             let result = frequencyValidator.isValid(item: $0)
