@@ -432,6 +432,7 @@
 		F3482F212A65DC2C002A41EC /* URLInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F202A65DC2C002A41EC /* URLInappMessageDelegate.swift */; };
 		F3482F232A65DC37002A41EC /* InAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */; };
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
+		F34975382DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975372DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */; };
@@ -1027,6 +1028,7 @@
 		F3482F202A65DC2C002A41EC /* URLInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLInappMessageDelegate.swift; sourceTree = "<group>"; };
 		F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesDelegate.swift; sourceTree = "<group>"; };
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
+		F34975372DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationShownInAppsDictionary.swift; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTestsXCTestCase.swift; sourceTree = "<group>"; };
@@ -1523,6 +1525,7 @@
 			isa = PBXGroup;
 			children = (
 				472179A62C80755A00C15E7F /* ShownInAppsIdsMigration.swift */,
+				F34975372DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift */,
 			);
 			path = ImplementationOfMigrations;
 			sourceTree = "<group>";
@@ -3586,6 +3589,7 @@
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
+				F34975382DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift in Sources */,
 				4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */,
 				337A473C265510AA000DC613 /* IDS.swift in Sources */,
 				317F1FD525B879B200B54346 /* MBUtilitiesFetcher.swift in Sources */,
