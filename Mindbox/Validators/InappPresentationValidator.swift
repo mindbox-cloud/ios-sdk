@@ -55,7 +55,37 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     }
     
     func isUnderDailyLimit() -> Bool {
-        return true 
+        guard let maxInappsPerDay = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerDay else {
+            Logger.common(message: "[PresentationValidator] No daily inapp limit specified", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        guard maxInappsPerDay > 0 else {
+            Logger.common(message: "[PresentationValidator] Daily inapp limit is not positive (\(maxInappsPerDay)), treating as no limit", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        guard let dictionary = persistenceStorage.shownInappsShowDatesDictionary, !dictionary.isEmpty else {
+            Logger.common(message: "[PresentationValidator] No in-apps shown today", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        
+        var shownInappsToday = 0
+        for dates in dictionary.values {
+            for date in dates where calendar.isDate(date, inSameDayAs: today) {
+                shownInappsToday += 1
+            }
+        }
+        
+        let isAllowed = maxInappsPerDay > shownInappsToday
+        
+        Logger.common(message: "[PresentationValidator] Total in-app shows today count: \(shownInappsToday), limit: \(maxInappsPerDay), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
+        
+        return isAllowed
     }
     
     func hasElapsedMinimumIntervalBetweenInApps() -> Bool {
