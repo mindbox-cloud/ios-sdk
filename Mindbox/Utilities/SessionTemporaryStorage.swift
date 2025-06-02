@@ -21,7 +21,7 @@ final class SessionTemporaryStorage {
     var checkSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
-    var sessionShownInApps: Set<String> = []
+    var sessionShownInApps: [String] = []
     var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
     var isInitializationCalled = false {
         didSet {
@@ -35,6 +35,7 @@ final class SessionTemporaryStorage {
 
     var expiredConfigSession: String?
     var isUserVisitSaved = false
+    var inAppSettings: Settings.InAppSettings?
 
     private init() {}
 
@@ -52,6 +53,7 @@ final class SessionTemporaryStorage {
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
+        inAppSettings = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
     }
 }

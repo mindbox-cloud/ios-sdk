@@ -170,6 +170,7 @@ final class InappSessionManagerTests: XCTestCase {
         SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.sessionShownInApps = ["1"]
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: 2, minIntervalBetweenShows: "00:00:00")
         
         targetingChecker.context.isNeedGeoRequest = true
         targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "1")), segment: nil)]
@@ -186,13 +187,12 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
+        XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil
         targetingChecker.checkedProductSegmentations = [:]
         targetingChecker.geoModels = nil
         targetingChecker.event = nil
-        
-        targetingChecker.geoModels = nil
     }
 }

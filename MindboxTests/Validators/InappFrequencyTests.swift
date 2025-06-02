@@ -52,7 +52,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     func test_once_session_shownInCurrentSession() throws {
-        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
+        SessionTemporaryStorage.shared.sessionShownInApps.append("1")
         let onceFrequency = OnceFrequency(kind: .session)
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -69,7 +69,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     func test_once_session_multipleInapps() throws {
-        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
+        SessionTemporaryStorage.shared.sessionShownInApps.append("1")
         let onceFrequency = OnceFrequency(kind: .session)
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp1 = getInapp(frequency: inappFrequency)
@@ -83,7 +83,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     func test_once_session_clearSession() throws {
-        SessionTemporaryStorage.shared.sessionShownInApps.insert("1")
+        SessionTemporaryStorage.shared.sessionShownInApps.append("1")
         let onceFrequency = OnceFrequency(kind: .session)
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp = getInapp(frequency: inappFrequency)
