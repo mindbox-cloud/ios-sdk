@@ -517,6 +517,7 @@
 		F3A8B9A52A3A6F2800E9C055 /* MonitoringModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */; };
 		F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */; };
 		F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */; };
+		F3A961D62DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */; };
 		F3AF0AD02BC40FCF0063BA58 /* InappTTLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */; };
 		F3B2A3982A4C79D900E2CA25 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */; };
 		F3B2A39E2A4C79E200E2CA25 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3992A4C79E200E2CA25 /* Status.swift */; };
@@ -1111,6 +1112,7 @@
 		F3A8B9A42A3A6F2800E9C055 /* MonitoringModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringModel.swift; sourceTree = "<group>"; };
 		F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestModel.swift; sourceTree = "<group>"; };
+		F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppPresentationValidatorTests.swift; sourceTree = "<group>"; };
 		F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappTTLTests.swift; sourceTree = "<group>"; };
 		F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxLogger.swift; sourceTree = "<group>"; };
 		F3B2A3992A4C79E200E2CA25 /* Status.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
@@ -1892,6 +1894,7 @@
 		84B625EE25C98A8000AB6228 /* Validators */ = {
 			isa = PBXGroup;
 			children = (
+				F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */,
 				84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */,
 				F3A8B9972A3A421C00E9C055 /* SDKVersionValidatorTests.swift */,
 				F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */,
@@ -3913,6 +3916,7 @@
 				473A982D2C91A38C005A3B94 /* SettingsConfigParsingTests.swift in Sources */,
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
+				F3A961D62DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift in Sources */,
 				A17958972978D2B300609E91 /* InAppTargetingCheckerTests.swift in Sources */,
 				F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */,
 				47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */,

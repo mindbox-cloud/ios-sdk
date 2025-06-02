@@ -21,12 +21,44 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     }
     
     func canPresentInApp() -> Bool {
-        // Проверяем что инапп не показывается в данный момент
+        return isNotPresentingAnotherInApp() &&
+               isUnderSessionLimit() &&
+               isUnderDailyLimit() &&
+               hasElapsedMinimumIntervalBetweenInApps()
+    }
+    
+    func isNotPresentingAnotherInApp() -> Bool {
         guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
             Logger.common(message: "[PresentationValidator] Another in-app is already being shown. Skip in-app", level: .debug, category: .inAppMessages)
             return false
         }
-
+        return true
+    }
+    
+    func isUnderSessionLimit() -> Bool {
+        guard let maxInappsPerSession = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession else {
+            Logger.common(message: "[PresentationValidator] No session inapp limit specified", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        guard maxInappsPerSession > 0 else {
+            Logger.common(message: "[PresentationValidator] Session inapp limit is not positive (\(maxInappsPerSession)), treating as no limit", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
+        let isAllowed = maxInappsPerSession > currentShownCount
+        
+        Logger.common(message: "[PresentationValidator] Inapp shown in session count: \(currentShownCount), limit: \(maxInappsPerSession), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
+        
+        return isAllowed
+    }
+    
+    func isUnderDailyLimit() -> Bool {
+        return true 
+    }
+    
+    func hasElapsedMinimumIntervalBetweenInApps() -> Bool {
         return true
     }
 }
