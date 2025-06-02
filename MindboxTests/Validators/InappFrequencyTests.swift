@@ -19,7 +19,7 @@ class InappFrequencyTests: XCTestCase {
     override func setUp() {
         super.setUp()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        persistenceStorage.shownInappsDictionary = [:]
+        persistenceStorage.shownInappsShowDatesDictionary = [:]
         validator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
 
@@ -37,7 +37,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     func test_once_lifetime_shownBefore() throws {
-        persistenceStorage.shownInappsDictionary = ["1": Date(timeIntervalSince1970: 0)]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [Date()]]
         let onceFrequency = OnceFrequency(kind: .lifetime)
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -60,7 +60,7 @@ class InappFrequencyTests: XCTestCase {
     }
 
     func test_once_session_shownInPreviousSession() throws {
-        persistenceStorage.shownInappsDictionary = ["1": Date(timeIntervalSince1970: 0)]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [Date()]]
         SessionTemporaryStorage.shared.sessionShownInApps.removeAll()
         let onceFrequency = OnceFrequency(kind: .session)
         let inappFrequency: InappFrequency = .once(onceFrequency)
@@ -103,7 +103,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_days_alreadyShown_two_days_ago() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .day, value: -2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .days, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -113,7 +113,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_days_alreadyShown_today() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .day, value: 0, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .days, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -123,7 +123,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_days_alreadyShown_in_future() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .day, value: 2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .days, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -133,7 +133,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_hours_alreadyShown_two_days_ago() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .hour, value: -2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .hours, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -143,7 +143,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_hours_alreadyShown_today() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .hour, value: 0, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .hours, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -153,7 +153,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_hours_alreadyShown_in_future() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .hour, value: 2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .hours, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -163,7 +163,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_minutes_alreadyShown_two_days_ago() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .minute, value: -2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .minutes, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -173,7 +173,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_minutes_alreadyShown_today() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .minute, value: 0, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .minutes, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -183,7 +183,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_minutes_alreadyShown_in_future() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .minute, value: 2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .minutes, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -193,7 +193,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_seconds_alreadyShown_two_days_ago() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .second, value: -2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .seconds, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -203,7 +203,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_seconds_alreadyShown_today() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .second, value: 0, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .seconds, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)
@@ -213,7 +213,7 @@ class InappFrequencyTests: XCTestCase {
     func test_periodic_seconds_alreadyShown_in_future() throws {
         let calendar = Calendar.current
         let shownDate = calendar.date(byAdding: .second, value: 2, to: Date())!
-        persistenceStorage.shownInappsDictionary = ["1": shownDate]
+        persistenceStorage.shownInappsShowDatesDictionary = ["1": [shownDate]]
         let periodicFrequency = PeriodicFrequency(unit: .seconds, value: 1)
         let inappFrequency: InappFrequency = .periodic(periodicFrequency)
         let inapp = getInapp(frequency: inappFrequency)

@@ -83,6 +83,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var shownInAppsIds: [String]?
 
     var shownInappsDictionary: [String: Date]?
+    
+    var shownInappsShowDatesDictionary: [String : [Date]]?
 
     var handledlogRequestIds: [String]?
 

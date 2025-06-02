@@ -35,7 +35,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
         persistenceStorageMock.installationDate = Date()
-        persistenceStorageMock.shownInappsDictionary = nil
+        persistenceStorageMock.shownInappsShowDatesDictionary = nil
         persistenceStorageMock.shownInAppsIds = shownInAppsIdsBeforeMigration
 
         let testMigrations: [MigrationProtocol] = [
@@ -59,6 +59,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
     func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerformSuccessfully() throws {
+        // MARK: - Do not change shownInappsDictionary in this class. Is should be unchanged because we have migration. 
         try mbLoggerCDManager.deleteAll()
 
         let migrationExpectation = XCTestExpectation(description: "Migration completed")
@@ -97,12 +98,12 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
             shownInAppsIdsMigration
         ]
 
-        let shownInappsDictionary: [String: Date] = [
-            "36920d7e-3c42-4194-9a11-b0b5c550460c": Date(),
-            "37bed734-aa34-4c10-918b-873f67505d46": Date()
+        let shownInappsShowDatesDictionary: [String: [Date]] = [
+            "1": [Date()],
+            "2": [Date()]
         ]
 
-        persistenceStorageMock.shownInappsDictionary = shownInappsDictionary
+        persistenceStorageMock.shownInappsShowDatesDictionary = shownInappsShowDatesDictionary
         persistenceStorageMock.shownInAppsIds = nil
 
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock,
@@ -112,13 +113,12 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         mbLoggerCDManager.debugWriteBufferToCD()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertNotNil(self.persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil")
+            XCTAssertNotNil(self.persistenceStorageMock.shownInappsShowDatesDictionary, "shownInAppShowDatesDictionary must NOT be nil")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
-            XCTAssertEqual(shownInappsDictionary, self.persistenceStorageMock.shownInappsDictionary, "Must be equal")
+            XCTAssertEqual(shownInappsShowDatesDictionary, self.persistenceStorageMock.shownInappsShowDatesDictionary, "Must be equal")
 
-            let defaultSetDateAfterMigration = Date(timeIntervalSince1970: 0)
-            for (_, value) in self.persistenceStorageMock.shownInappsDictionary! {
-                XCTAssertNotEqual(value, defaultSetDateAfterMigration)
+            for (_, value) in self.persistenceStorageMock.shownInappsShowDatesDictionary! {
+                XCTAssertEqual(value.count, 1, "Each in-app should have exactly one show date")
             }
 
             migrationExpectation.fulfill()
