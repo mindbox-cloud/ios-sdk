@@ -108,6 +108,11 @@ extension MBContainer {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppPresentationValidator(persistenceStorage: persistenceStorage)
         }
+        
+        register(InAppTrackingServiceProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppTrackingService(persistenceStorage: persistenceStorage)
+        }
 
         return self
     }

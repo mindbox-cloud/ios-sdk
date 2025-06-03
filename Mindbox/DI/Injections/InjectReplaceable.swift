@@ -85,10 +85,12 @@ extension MBContainer {
             let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
+            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
             return InAppCoreManager(configManager: configManager,
                                     presentationManager: presentationManager,
                                     persistenceStorage: persistenceStorage,
-                                    presentationValidator: presentationValidator)
+                                    presentationValidator: presentationValidator,
+                                    inappTrackingService: inappTrackingService)
         }
 
         return self

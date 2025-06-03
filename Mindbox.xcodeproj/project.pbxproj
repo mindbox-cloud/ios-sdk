@@ -434,6 +434,7 @@
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F34975382DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975372DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift */; };
 		F349753A2DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975392DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift */; };
+		F349756A2DEF2C8400BEC667 /* InappTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975692DEF2C8400BEC667 /* InappTrackingService.swift */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */; };
@@ -1031,6 +1032,7 @@
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F34975372DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationShownInAppsDictionary.swift; sourceTree = "<group>"; };
 		F34975392DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsDictionaryMigrationTests.swift; sourceTree = "<group>"; };
+		F34975692DEF2C8400BEC667 /* InappTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappTrackingService.swift; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTestsXCTestCase.swift; sourceTree = "<group>"; };
@@ -2074,6 +2076,7 @@
 				9B24FAB628C7554C00F10B5D /* Models */,
 				9B24FAAF28C74BB700F10B5D /* Configuration */,
 				9B24FAB328C751CB00F10B5D /* Images */,
+				F34975692DEF2C8400BEC667 /* InappTrackingService.swift */,
 			);
 			path = InAppMessages;
 			sourceTree = "<group>";
@@ -3816,6 +3819,7 @@
 				A184654329C3102A00E64780 /* CategoryIDTargeting.swift in Sources */,
 				F33608282A8CD17E00C7C9B7 /* SnackbarPresentationStrategy.swift in Sources */,
 				330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */,
+				F349756A2DEF2C8400BEC667 /* InappTrackingService.swift in Sources */,
 				F382F2112BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift in Sources */,
 				F3FEEA9B2C25AC68000E9D0F /* MBContainer.swift in Sources */,
 				A184654729C32FEF00E64780 /* CategoryIDChecker.swift in Sources */,

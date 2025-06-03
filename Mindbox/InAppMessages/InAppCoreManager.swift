@@ -67,6 +67,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         presentationManager: InAppPresentationManagerProtocol,
         persistenceStorage: PersistenceStorage,
         presentationValidator: InAppPresentationValidatorProtocol,
+        inappTrackingService: InAppTrackingServiceProtocol,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
@@ -74,6 +75,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         self.persistenceStorage = persistenceStorage
         self.presentationValidator = presentationValidator
         self.serialQueue = serialQueue
+        self.inappTrackingService = inappTrackingService
     }
 
     weak var delegate: InAppMessagesDelegate?
@@ -82,6 +84,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let presentationManager: InAppPresentationManagerProtocol
     private let persistenceStorage: PersistenceStorage
     private let presentationValidator: InAppPresentationValidatorProtocol
+    private let inappTrackingService: InAppTrackingServiceProtocol
     private var isConfigurationReady = false
     private var isInAppManagerLaunched: Bool = false
     private let serialQueue: DispatchQueue
@@ -171,15 +174,12 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
-
+        
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
                 self.serialQueue.async {
-                    SessionTemporaryStorage.shared.sessionShownInApps.append(inapp.inAppId)
-                    var dates = self.persistenceStorage.shownInappsShowDatesDictionary?[inapp.inAppId] ?? []
-                    dates.append(Date())
-                    self.persistenceStorage.shownInappsShowDatesDictionary?[inapp.inAppId] = dates
+                    self.inappTrackingService.trackInAppShown(id: inapp.inAppId)
                 }
             },
             onTapAction: { [delegate] url, payload in
@@ -191,11 +191,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             },
             onError: { error in
                 switch error {
-                case .failedToLoadWindow:
-                    SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                    Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
-                default:
-                    break
+                    case .failedToLoadWindow:
+                        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                        Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
+                    default:
+                        break
                 }
             }
         )
