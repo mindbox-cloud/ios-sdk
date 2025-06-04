@@ -45,14 +45,14 @@ final class MigrationManagerTests: XCTestCase {
     }
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
-    func testGeneralProductionMigrations() {
+    func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock)
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == Constants.Migration.sdkVersionCode)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
-
-        XCTAssertNotNil(persistenceStorageMock.shownInappsShowDatesDictionary, "shownInAppShowDatesDictionary must NOT be nil after MigrationShownInAppIds")
+        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after MigrationShownInAppIds")
+        XCTAssertNotNil(persistenceStorageMock.shownInappsShowDatesDictionary, "shownInappsShowDatesDictionary must NOT be nil after MigrationShownInAppIds")
         XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
     }
 

@@ -42,12 +42,13 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     
     private func cleanupOldDates(id: String, currentDate: Date) {
         guard var currentDates = persistenceStorage.shownInappsShowDatesDictionary?[id] else { return }
-        
-        let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: currentDate)!
-        currentDates = currentDates.filter { date in
-            date > twoDaysAgo
-        }
-        
+        guard let cutoffDate = calendar.date(
+            byAdding: .day,
+            value: -Constants.MagicNumbers.daysToKeepInappShowTimes,
+            to: currentDate
+        ) else { return }
+
+        currentDates = currentDates.filter { $0 > cutoffDate }
         persistenceStorage.shownInappsShowDatesDictionary?[id] = currentDates
     }
 }
