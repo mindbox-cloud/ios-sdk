@@ -38,7 +38,7 @@ enum Constants {
     enum Migration {
 
         /// The current SDK version code used for comparison in migrations.
-        static let sdkVersionCode = 0
+        static let sdkVersionCode = 1
     }
     
     /// Constants helper. Operations used for update push-notifications data on the server
