@@ -28,8 +28,6 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         trackInAppInSession(id: id)
         updateShownDates(id: id, newDate: now)
         cleanupOldDates(id: id, currentDate: now)
-        
-//        logTracking(id: id, dates: persistenceStorage.shownInappsShowDatesDictionary?[id] ?? [])
     }
     
     private func trackInAppInSession(id: String) {
@@ -51,14 +49,5 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         }
         
         persistenceStorage.shownInappsShowDatesDictionary?[id] = currentDates
-    }
-    
-    private func logTracking(id: String, dates: [Date]) {
-        Logger.common(message: """
-        [InAppTracking] Tracked in-app show:
-        - ID: \(id)
-        - Current dates count: \(dates.count)
-        - Latest date: \(dates.last?.asDateTimeWithSeconds ?? "none")
-        """, level: .debug, category: .inAppMessages)
     }
 }
