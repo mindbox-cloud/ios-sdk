@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 final class MigrationShownInAppsDictionary: MigrationProtocol {
 
@@ -28,6 +29,7 @@ final class MigrationShownInAppsDictionary: MigrationProtocol {
     @available(*, deprecated, message: "Suppress deprecated `shownInappsDictionary` warning")
     func run() throws {
         guard let oldShownInappsDictionary = persistenceStorage.shownInappsDictionary else {
+            Logger.common(message: "[Migrations] Skip shownInappsDictionary migration: no old format data to migrate", level: .info, category: .migration)
             return
         }
 
