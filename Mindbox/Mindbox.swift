@@ -573,7 +573,7 @@ public class Mindbox: NSObject {
 
     @objc
     private func resetShownInApps() {
-        persistenceStorage?.shownInappsDictionary = [:]
+        persistenceStorage?.shownDatesByInApp = [:]
     }
 
     @objc

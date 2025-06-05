@@ -26,7 +26,11 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
     private var migration: MigrationProtocol!
     private var storage: PersistenceStorage!
 
-    // MARK: Test life-cycle
+        persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
+        persistenceStorageMock.installationDate = Date()
+        persistenceStorageMock.shownDatesByInApp = nil
+        persistenceStorageMock.shownInAppsIds = shownInAppsIdsBeforeMigration
 
     @available(*, deprecated,
                message: "Suppress `deprecated` shownInAppsIds warning")
@@ -50,7 +54,10 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Helper
+    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
+    func test_ShownInAppsIdsMigration_withIsNeededTrue_shouldPerformSuccessfully() throws {
+        // MARK: - Do not change shownInappsDictionary in this class. Is should be unchanged because we have migration. 
+        try mbLoggerCDManager.deleteAll()
 
     /// Ensures the legacy array is removed and each id
     /// appears in `shownInappsDictionary`.
@@ -88,14 +95,13 @@ extension ShownInAppsIdsMigrationTests {
         // pre-condition
         XCTAssertTrue(migration.isNeeded)
 
-        // act
-        try migration.run()
+        let shownDatesByInApp: [String: [Date]] = [
+            "1": [Date()],
+            "2": [Date()]
+        ]
 
-        // assert
-        assertIdsWereMigrated()
-        XCTAssertFalse(migration.isNeeded,
-                       "`isNeeded` must flip to false after successful run()")
-    }
+        persistenceStorageMock.shownDatesByInApp = shownDatesByInApp
+        persistenceStorageMock.shownInAppsIds = nil
 
     /// If data is already in the new format, `isNeeded` is false and
     /// `run()` becomes a no-op.
@@ -105,10 +111,26 @@ extension ShownInAppsIdsMigrationTests {
         storage.shownInAppsIds = nil
         XCTAssertFalse(migration.isNeeded)
 
-        // when / then – `run()` must not throw nor change state
-        XCTAssertNoThrow(try migration.run())
-        XCTAssertEqual(storage.shownInappsDictionary?.count, legacyIds.count)
-        XCTAssertNil(storage.shownInAppsIds)
+        migrationManager.migrate()
+        mbLoggerCDManager.debugWriteBufferToCD()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            XCTAssertNotNil(self.persistenceStorageMock.shownDatesByInApp, "shownInAppShowDatesDictionary must NOT be nil")
+            XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
+            XCTAssertEqual(shownDatesByInApp, self.persistenceStorageMock.shownDatesByInApp, "Must be equal")
+
+            for (_, value) in self.persistenceStorageMock.shownDatesByInApp! {
+                XCTAssertEqual(value.count, 1, "Each in-app should have exactly one show date")
+            }
+
+            migrationExpectation.fulfill()
+        }
+
+        wait(for: [migrationExpectation], timeout: 5)
+
+        let lastLog = try mbLoggerCDManager.getLastLog()
+        let expectedLogMessage = "[Migrations] Migrations have been skipped\n"
+        XCTAssertEqual(lastLog?.message, expectedLogMessage)
     }
 
     /// Two consecutive runs: the first migrates, the second is silently skipped
