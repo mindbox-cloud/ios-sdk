@@ -83,7 +83,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_isUnderDailyLimit_whenUnderLimit_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: 5, minIntervalBetweenShows: nil)
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [Date()],
             "2": [Date()]
         ]
@@ -92,7 +92,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_isUnderDailyLimit_whenAtLimit_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: 2, minIntervalBetweenShows: nil)
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [Date()],
             "2": [Date()]
         ]
@@ -101,7 +101,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_isUnderDailyLimit_whenOverLimit_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: 2, minIntervalBetweenShows: nil)
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [Date()],
             "2": [Date()],
             "3": [Date()]
@@ -119,7 +119,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
         let todayAfternoon = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: now)!
         let todayEvening = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: now)!
         
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [yesterday, todayMorning, todayAfternoon, todayEvening]
         ]
         
@@ -128,7 +128,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_isUnderDailyLimit_whenLimitIsZero_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: 0, minIntervalBetweenShows: nil)
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [Date(timeIntervalSince1970: 0)],
             "2": [Date(timeIntervalSince1970: 0)]
         ]
@@ -137,7 +137,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_isUnderDailyLimit_whenLimitIsNegative_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: -1, minIntervalBetweenShows: nil)
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [Date(timeIntervalSince1970: 0)],
             "2": [Date(timeIntervalSince1970: 0)]
         ]
@@ -150,7 +150,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
         let calendar = Calendar.current
         let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
         
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [yesterday],
             "2": [yesterday],
             "3": [Date(timeIntervalSince1970: 0)]
@@ -158,13 +158,13 @@ final class InAppPresentationValidatorTests: XCTestCase {
         XCTAssertTrue(validator.isUnderDailyLimit())
     }
     
-    func test_isUnderDailyLimit_whenShownInappsShowDatesDictionaryIsNil_returnsTrue() {
-        persistenceStorage.shownInappsShowDatesDictionary = nil
+    func test_isUnderDailyLimit_whenshownDatesByInAppIsNil_returnsTrue() {
+        persistenceStorage.shownDatesByInApp = nil
         XCTAssertTrue(validator.isUnderDailyLimit())
     }
     
-    func test_isUnderDailyLimit_whenShownInappsShowDatesDictionaryIsEmpty_returnsTrue() {
-        persistenceStorage.shownInappsShowDatesDictionary = [:]
+    func test_isUnderDailyLimit_whenshownDatesByInAppIsEmpty_returnsTrue() {
+        persistenceStorage.shownDatesByInApp = [:]
         XCTAssertTrue(validator.isUnderDailyLimit())
     }
     
@@ -174,7 +174,7 @@ final class InAppPresentationValidatorTests: XCTestCase {
         let calendar = Calendar.current
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date())!
         
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             "1": [tomorrow],
             "2": [tomorrow]
         ]

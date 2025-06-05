@@ -14,7 +14,7 @@ final class MigrationShownInAppsDictionary: MigrationProtocol {
     private var persistenceStorage: PersistenceStorage = DI.injectOrFail(PersistenceStorage.self)
 
     var description: String {
-        "Migration shownInappsDictionary to shownInappsShowDatesDictionary. Starting with SDK 2.14.0."
+        "Migration shownInappsDictionary to shownDatesByInApp. Starting with SDK 2.14.0."
     }
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInappsDictionary warning")
@@ -39,7 +39,7 @@ final class MigrationShownInAppsDictionary: MigrationProtocol {
             newFormatShownInapps[id] = [date]
         }
 
-        persistenceStorage.shownInappsShowDatesDictionary = newFormatShownInapps
+        persistenceStorage.shownDatesByInApp = newFormatShownInapps
         persistenceStorage.shownInappsDictionary = nil
     }
 }

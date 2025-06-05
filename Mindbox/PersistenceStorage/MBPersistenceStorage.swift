@@ -189,8 +189,8 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
-    @UserDefaultsWrapper(key: .shownInAppsShowDatesDictionary, defaultValue: [:])
-    var shownInappsShowDatesDictionary: [String: [Date]]?
+    @UserDefaultsWrapper(key: .shownDatesByInApp, defaultValue: [:])
+    var shownDatesByInApp: [String: [Date]]?
 
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
@@ -306,7 +306,7 @@ extension MBPersistenceStorage {
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
-            case shownInAppsShowDatesDictionary = "MBPersistenceStorage-shownInAppsShowDatesDictionary"
+            case shownDatesByInApp = "MBPersistenceStorage-shownDatesByInApp"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"

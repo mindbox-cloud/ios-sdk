@@ -35,13 +35,13 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     }
     
     private func updateShownDates(id: String, newDate: Date) {
-        var currentDates = persistenceStorage.shownInappsShowDatesDictionary?[id] ?? []
+        var currentDates = persistenceStorage.shownDatesByInApp?[id] ?? []
         currentDates.append(newDate)
-        persistenceStorage.shownInappsShowDatesDictionary?[id] = currentDates
+        persistenceStorage.shownDatesByInApp?[id] = currentDates
     }
     
     private func cleanupOldDates(id: String, currentDate: Date) {
-        guard var currentDates = persistenceStorage.shownInappsShowDatesDictionary?[id] else { return }
+        guard var currentDates = persistenceStorage.shownDatesByInApp?[id] else { return }
         guard let cutoffDate = calendar.date(
             byAdding: .day,
             value: -Constants.MagicNumbers.daysToKeepInappShowTimes,
@@ -49,6 +49,6 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         ) else { return }
 
         currentDates = currentDates.filter { $0 > cutoffDate }
-        persistenceStorage.shownInappsShowDatesDictionary?[id] = currentDates
+        persistenceStorage.shownDatesByInApp?[id] = currentDates
     }
 }

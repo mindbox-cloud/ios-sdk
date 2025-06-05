@@ -33,7 +33,7 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
         persistenceStorageMock.installationDate = Date()
-        persistenceStorageMock.shownInappsShowDatesDictionary = nil
+        persistenceStorageMock.shownDatesByInApp = nil
         persistenceStorageMock.shownInappsDictionary = shownInAppsDictionaryBeforeMigration
         persistenceStorageMock.versionCodeForMigration = 1
 
@@ -65,20 +65,20 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
         mbLoggerCDManager.debugWriteBufferToCD()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertNotNil(self.persistenceStorageMock.shownInappsShowDatesDictionary)
+            XCTAssertNotNil(self.persistenceStorageMock.shownDatesByInApp)
             XCTAssertNil(self.persistenceStorageMock.shownInappsDictionary)
             XCTAssertEqual(self.shownInAppsDictionaryBeforeMigration.count, 
-                          self.persistenceStorageMock.shownInappsShowDatesDictionary?.count)
+                          self.persistenceStorageMock.shownDatesByInApp?.count)
 
-            guard let migratedDictionary = self.persistenceStorageMock.shownInappsShowDatesDictionary else {
+            guard let migratedDictionary = self.persistenceStorageMock.shownDatesByInApp else {
                 XCTFail("Migrated dictionary should not be nil")
                 return
             }
 
             for (id, date) in self.shownInAppsDictionaryBeforeMigration {
-                XCTContext.runActivity(named: "Check shownInAppsId \(id) is in shownInappsShowDatesDictionary") { _ in
+                XCTContext.runActivity(named: "Check shownInAppsId \(id) is in shownDatesByInApp") { _ in
                     guard let dates = migratedDictionary[id] else {
-                        XCTFail("The shownInAppsId \(id) should be in shownInappsShowDatesDictionary")
+                        XCTFail("The shownInAppsId \(id) should be in shownDatesByInApp")
                         return
                     }
                     XCTAssertEqual(dates.count, 1, "Each in-app should have exactly one show date")
@@ -106,12 +106,12 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
             shownInAppsDictionaryMigration
         ]
 
-        let shownInappsShowDatesDictionary: [String: [Date]] = [
+        let shownDatesByInApp: [String: [Date]] = [
             "1": [Date()],
             "2": [Date()]
         ]
 
-        persistenceStorageMock.shownInappsShowDatesDictionary = shownInappsShowDatesDictionary
+        persistenceStorageMock.shownDatesByInApp = shownDatesByInApp
         persistenceStorageMock.shownInappsDictionary = nil
 
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock,
@@ -122,12 +122,12 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
         mbLoggerCDManager.debugWriteBufferToCD()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertNotNil(self.persistenceStorageMock.shownInappsShowDatesDictionary)
+            XCTAssertNotNil(self.persistenceStorageMock.shownDatesByInApp)
             XCTAssertNil(self.persistenceStorageMock.shownInappsDictionary)
-            XCTAssertEqual(shownInappsShowDatesDictionary, 
-                          self.persistenceStorageMock.shownInappsShowDatesDictionary)
+            XCTAssertEqual(shownDatesByInApp, 
+                          self.persistenceStorageMock.shownDatesByInApp)
 
-            guard let migratedDictionary = self.persistenceStorageMock.shownInappsShowDatesDictionary else {
+            guard let migratedDictionary = self.persistenceStorageMock.shownDatesByInApp else {
                 XCTFail("Migrated dictionary should not be nil")
                 return
             }
