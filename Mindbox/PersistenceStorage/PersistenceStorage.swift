@@ -31,20 +31,11 @@ protocol PersistenceStorage: AnyObject {
 
     var isNotificationsEnabled: Bool? { get set }
 
-    @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
-    var shownInAppsIds: [String]? { get set }
-
-    var shownInappsDictionary: [String: Date]? { get set }
+    var shownDatesByInApp: [String: [Date]]? { get set }
 
     var handledlogRequestIds: [String]? { get set }
 
     var imageLoadingMaxTimeInSeconds: Double? { get set }
-
-    func setBackgroundExecution(_ value: BackgroudExecution)
-
-    func resetBackgroundExecutions()
-
-    func storeToFileBackgroundExecution()
 
     var onDidChange: (() -> Void)? { get set }
 
@@ -63,20 +54,32 @@ protocol PersistenceStorage: AnyObject {
     /// ensure that the system remains in a consistent state.
     var versionCodeForMigration: Int? { get set }
 
-    /// Clears certain parts of the persistence storage to revert the system to a stable state.
+    func setBackgroundExecution(_ value: BackgroudExecution)
+
+    func resetBackgroundExecutions()
+
+    func storeToFileBackgroundExecution()
+
     func softReset()
 
-    // MARK: - Functions for testing
-
-    /// Clears most parts of the persistence storage. It is used in unit tests.
     func reset()
+
+    // MARK: - Deprecated Properties
+    // These properties are deprecated and will be removed in future versions.
+    // Please use the recommended alternatives instead.
+    
+    @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
+    var shownInAppsIds: [String]? { get set }
+
+    @available(*, deprecated, message: "Use shownDatesByInApp instead since 2.14.0")
+    var shownInappsDictionary: [String: Date]? { get set }
 }
 
 extension PersistenceStorage {
     
     func softReset() {
         configDownloadDate = nil
-        shownInappsDictionary = nil
+        shownDatesByInApp = nil
         handledlogRequestIds = nil
         userVisitCount = 0
         resetBackgroundExecutions()
