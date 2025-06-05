@@ -35,7 +35,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
         persistenceStorageMock.installationDate = Date()
-        persistenceStorageMock.shownInappsShowDatesDictionary = nil
+        persistenceStorageMock.shownDatesByInApp = nil
         persistenceStorageMock.shownInAppsIds = shownInAppsIdsBeforeMigration
 
         let testMigrations: [MigrationProtocol] = [
@@ -98,12 +98,12 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
             shownInAppsIdsMigration
         ]
 
-        let shownInappsShowDatesDictionary: [String: [Date]] = [
+        let shownDatesByInApp: [String: [Date]] = [
             "1": [Date()],
             "2": [Date()]
         ]
 
-        persistenceStorageMock.shownInappsShowDatesDictionary = shownInappsShowDatesDictionary
+        persistenceStorageMock.shownDatesByInApp = shownDatesByInApp
         persistenceStorageMock.shownInAppsIds = nil
 
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock,
@@ -113,11 +113,11 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         mbLoggerCDManager.debugWriteBufferToCD()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertNotNil(self.persistenceStorageMock.shownInappsShowDatesDictionary, "shownInAppShowDatesDictionary must NOT be nil")
+            XCTAssertNotNil(self.persistenceStorageMock.shownDatesByInApp, "shownInAppShowDatesDictionary must NOT be nil")
             XCTAssertNil(self.persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil")
-            XCTAssertEqual(shownInappsShowDatesDictionary, self.persistenceStorageMock.shownInappsShowDatesDictionary, "Must be equal")
+            XCTAssertEqual(shownDatesByInApp, self.persistenceStorageMock.shownDatesByInApp, "Must be equal")
 
-            for (_, value) in self.persistenceStorageMock.shownInappsShowDatesDictionary! {
+            for (_, value) in self.persistenceStorageMock.shownDatesByInApp! {
                 XCTAssertEqual(value.count, 1, "Each in-app should have exactly one show date")
             }
 

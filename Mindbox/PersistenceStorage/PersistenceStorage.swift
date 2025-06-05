@@ -31,7 +31,7 @@ protocol PersistenceStorage: AnyObject {
 
     var isNotificationsEnabled: Bool? { get set }
 
-    var shownInappsShowDatesDictionary: [String: [Date]]? { get set }
+    var shownDatesByInApp: [String: [Date]]? { get set }
 
     var handledlogRequestIds: [String]? { get set }
 
@@ -71,7 +71,7 @@ protocol PersistenceStorage: AnyObject {
     @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
     var shownInAppsIds: [String]? { get set }
 
-    @available(*, deprecated, message: "Use shownInappsShowDatesDictionary instead since 2.14.0")
+    @available(*, deprecated, message: "Use shownDatesByInApp instead since 2.14.0")
     var shownInappsDictionary: [String: Date]? { get set }
 }
 
@@ -79,7 +79,7 @@ extension PersistenceStorage {
     
     func softReset() {
         configDownloadDate = nil
-        shownInappsShowDatesDictionary = nil
+        shownDatesByInApp = nil
         handledlogRequestIds = nil
         userVisitCount = 0
         resetBackgroundExecutions()

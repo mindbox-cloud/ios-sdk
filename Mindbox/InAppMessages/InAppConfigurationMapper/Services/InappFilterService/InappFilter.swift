@@ -119,7 +119,7 @@ final class InappsFilterService: InappFilterProtocol {
     }
 
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppShowDatesDictionary = persistenceStorage.shownInappsShowDatesDictionary ?? [:]
+        let shownInAppShowDatesDictionary = persistenceStorage.shownDatesByInApp ?? [:]
         Logger.common(message: "Shown in-apps ids: [\(shownInAppShowDatesDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
             let frequencyValidator = self.createFrequencyValidator()

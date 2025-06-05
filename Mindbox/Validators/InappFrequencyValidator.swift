@@ -44,11 +44,11 @@ class OnceFrequencyValidator {
     }
 
     func isValid(item: OnceFrequency, id: String) -> Bool {
-        let shownInappsShowDatesDictionary = persistenceStorage.shownInappsShowDatesDictionary ?? [:]
+        let shownDatesByInApp = persistenceStorage.shownDatesByInApp ?? [:]
         var result = false
         switch item.kind {
             case .lifetime:
-                result = shownInappsShowDatesDictionary[id] == nil
+                result = shownDatesByInApp[id] == nil
             case .session:
                 if SessionTemporaryStorage.shared.sessionShownInApps.contains(id) {
                     Logger.common(message: "[Inapp frequency] Inapp ID \(id) is already shown in this session. Skip this in-app.",
@@ -83,8 +83,8 @@ class PeriodicFrequencyValidator {
         }
 
         let currentDate = Date()
-        guard let inappsDict = persistenceStorage.shownInappsShowDatesDictionary else {
-            Logger.common(message: "shownInappsShowDatesDictionary not exists. Inapp ID \(id) is not valid.", level: .error, category: .inAppMessages)
+        guard let inappsDict = persistenceStorage.shownDatesByInApp else {
+            Logger.common(message: "shownDatesByInApp not exists. Inapp ID \(id) is not valid.", level: .error, category: .inAppMessages)
             return false
         }
 
@@ -99,8 +99,8 @@ class PeriodicFrequencyValidator {
 
         let calendar = Calendar.current
         let component = item.unit.calendarComponent
-        let lastShownDate = shownDates.max() ?? Date()
-        if let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: lastShownDate) {
+        if let lastShownDate = shownDates.last,
+           let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: lastShownDate) {
             let isValid = currentDate > shownDatePlusFrequency
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)] value is (\(item.value)).

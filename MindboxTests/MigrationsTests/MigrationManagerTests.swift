@@ -22,7 +22,7 @@ final class MigrationManagerTests: XCTestCase {
         persistenceStorageMock.configDownloadDate = Date()
         persistenceStorageMock.userVisitCount = 1
         persistenceStorageMock.handledlogRequestIds = ["37db8697-ace9-4d1f-99b6-7e303d6c874f"]
-        persistenceStorageMock.shownInappsShowDatesDictionary = [
+        persistenceStorageMock.shownDatesByInApp = [
             "1": [Date()],
             "2": [Date()]
         ]
@@ -52,7 +52,7 @@ final class MigrationManagerTests: XCTestCase {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == Constants.Migration.sdkVersionCode)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
         XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNotNil(persistenceStorageMock.shownInappsShowDatesDictionary, "shownInappsShowDatesDictionary must NOT be nil after MigrationShownInAppIds")
+        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after MigrationShownInAppIds")
         XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
     }
 
@@ -156,7 +156,7 @@ extension MigrationManagerTests {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == expectedSdkVersionCodeAfterMigrations)
 
         XCTAssertNil(persistenceStorageMock.configDownloadDate, "Must softReset() persistenceStorage")
-        XCTAssertNil(persistenceStorageMock.shownInappsShowDatesDictionary, "Must softReset() persistenceStorage")
+        XCTAssertNil(persistenceStorageMock.shownDatesByInApp, "Must softReset() persistenceStorage")
         XCTAssertNil(persistenceStorageMock.handledlogRequestIds, "Must softReset() persistenceStorage")
         let expectedUserVisitCountAfterSoftReset = 0
         XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCountAfterSoftReset, "Must softReset() persistenceStorage")
@@ -217,7 +217,7 @@ extension MigrationManagerTests {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == expectedSdkVersionCodeAfterMigrations)
 
         XCTAssertNil(persistenceStorageMock.configDownloadDate, "Must softReset() persistenceStorage")
-        XCTAssertNil(persistenceStorageMock.shownInappsShowDatesDictionary, "Must softReset() persistenceStorage")
+        XCTAssertNil(persistenceStorageMock.shownDatesByInApp, "Must softReset() persistenceStorage")
         XCTAssertNil(persistenceStorageMock.handledlogRequestIds, "Must softReset() persistenceStorage")
         let expectedUserVisitCountAfterSoftReset = 0
         XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCountAfterSoftReset, "Must softReset() persistenceStorage")

@@ -65,7 +65,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return true
         }
         
-        guard let dictionary = persistenceStorage.shownInappsShowDatesDictionary, !dictionary.isEmpty else {
+        guard let dictionary = persistenceStorage.shownDatesByInApp, !dictionary.isEmpty else {
             Logger.common(message: "[PresentationValidator] No in-apps shown today", level: .info, category: .inAppMessages)
             return true
         }

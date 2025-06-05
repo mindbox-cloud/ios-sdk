@@ -19,7 +19,7 @@ final class InAppTrackingServiceTests: XCTestCase {
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         trackingService = InAppTrackingService(persistenceStorage: persistenceStorage)
         SessionTemporaryStorage.shared.erase()
-        persistenceStorage.shownInappsShowDatesDictionary = [:]
+        persistenceStorage.shownDatesByInApp = [:]
     }
     
     override func tearDown() {
@@ -39,9 +39,9 @@ final class InAppTrackingServiceTests: XCTestCase {
         
         // Then
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.count, 1)
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.first)
-        if let storedDate = persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.first {
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
+        if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate, inSameDayAs: now))
         }
     }
@@ -58,9 +58,9 @@ final class InAppTrackingServiceTests: XCTestCase {
         
         // Then
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId, inAppId, inAppId])
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.count, 3)
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId])
-        if let dates = persistenceStorage.shownInappsShowDatesDictionary?[inAppId] {
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 3)
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId])
+        if let dates = persistenceStorage.shownDatesByInApp?[inAppId] {
             for date in dates {
                 XCTAssertTrue(Calendar.current.isDate(date, inSameDayAs: now))
             }
@@ -79,16 +79,16 @@ final class InAppTrackingServiceTests: XCTestCase {
         
         // Then
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId1, inAppId2])
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId1]?.count, 1)
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId2]?.count, 1)
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId1]?.count, 1)
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId2]?.count, 1)
         
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId1]?.first)
-        if let storedDate1 = persistenceStorage.shownInappsShowDatesDictionary?[inAppId1]?.first {
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId1]?.first)
+        if let storedDate1 = persistenceStorage.shownDatesByInApp?[inAppId1]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate1, inSameDayAs: now))
         }
         
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId2]?.first)
-        if let storedDate2 = persistenceStorage.shownInappsShowDatesDictionary?[inAppId2]?.first {
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId2]?.first)
+        if let storedDate2 = persistenceStorage.shownDatesByInApp?[inAppId2]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate2, inSameDayAs: now))
         }
     }
@@ -103,15 +103,15 @@ final class InAppTrackingServiceTests: XCTestCase {
         let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
         
         // When
-        persistenceStorage.shownInappsShowDatesDictionary = [
+        persistenceStorage.shownDatesByInApp = [
             inAppId: [threeDaysAgo, twoDaysAgo, yesterday, now]
         ]
         trackingService.trackInAppShown(id: inAppId)
         
         // Then
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.count, 3)
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId])
-        if let dates = persistenceStorage.shownInappsShowDatesDictionary?[inAppId] {
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 3)
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId])
+        if let dates = persistenceStorage.shownDatesByInApp?[inAppId] {
             XCTAssertFalse(dates.contains { date in
                 Calendar.current.isDate(date, inSameDayAs: threeDaysAgo)
             })
@@ -137,9 +137,9 @@ final class InAppTrackingServiceTests: XCTestCase {
         
         // Then
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
-        XCTAssertEqual(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.count, 1)
-        XCTAssertNotNil(persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.first)
-        if let storedDate = persistenceStorage.shownInappsShowDatesDictionary?[inAppId]?.first {
+        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
+        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
+        if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {
             XCTAssertTrue(calendar.isDate(storedDate, inSameDayAs: now))
         }
     }
