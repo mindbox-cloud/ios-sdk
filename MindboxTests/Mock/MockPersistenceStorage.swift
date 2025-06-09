@@ -86,6 +86,8 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var shownDatesByInApp: [String : [Date]]?
 
+    var lastShownInappDate: Date?
+
     var handledlogRequestIds: [String]?
 
     var imageLoadingMaxTimeInSeconds: Double?
