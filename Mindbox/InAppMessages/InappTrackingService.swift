@@ -32,7 +32,9 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     }
     
     func saveLastShownTimestamp() {
-        persistenceStorage.lastShownInappDate = Date()
+        let now = Date()
+        persistenceStorage.lastShownInappDate = now
+        Logger.common(message: "[InAppTrackingService] Updated lastShownInappDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
     }
     
     private func trackInAppInSession(id: String) {
