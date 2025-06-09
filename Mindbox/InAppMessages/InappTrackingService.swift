@@ -58,7 +58,10 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         let datesToRemove = currentDates.filter { $0 <= cutoffDate }
         if !datesToRemove.isEmpty {
             currentDates = currentDates.filter { $0 > cutoffDate }
-            Logger.common(message: "[InAppTrackingService] Removed \(datesToRemove.count) old dates for in-app \(id): \(datesToRemove.map { $0.asDateTimeWithSeconds }.joined(separator: ", "))", level: .info, category: .inAppMessages)
+            Logger.common(message: """
+                            [InAppTrackingService] Removed \(datesToRemove.count) old dates for in-app \(id):
+                            \(datesToRemove.map { $0.asDateTimeWithSeconds }.joined(separator: ", "))
+                            """, level: .info, category: .inAppMessages)
             persistenceStorage.shownDatesByInApp?[id] = currentDates
         }
     }

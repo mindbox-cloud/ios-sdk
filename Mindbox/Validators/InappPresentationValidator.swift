@@ -110,7 +110,14 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         let now = Date()
         let isAllowed = nextAllowedShowTime < now
         
-        Logger.common(message: "[PresentationValidator] lastShowDate: \(lastShowDate.asDateTimeWithSeconds), minInterval: \(minInterval)s, nextAllowedShowTime: \(nextAllowedShowTime.asDateTimeWithSeconds), now: \(now.asDateTimeWithSeconds), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
+        Logger.common(message: """
+            [PresentationValidator] 
+            lastShowDate: \(lastShowDate.asDateTimeWithSeconds)
+            minInterval: \(minInterval)s
+            nextAllowedShowTime: \(nextAllowedShowTime.asDateTimeWithSeconds)
+            now: \(now.asDateTimeWithSeconds)
+            Show allowed: \(isAllowed)
+            """)
         return isAllowed
     }
 }
