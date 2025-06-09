@@ -11,6 +11,7 @@ import MindboxLogger
 
 protocol InAppTrackingServiceProtocol {
     func trackInAppShown(id: String)
+    func saveLastShownTimestamp()
 }
 
 final class InAppTrackingService: InAppTrackingServiceProtocol {
@@ -28,6 +29,10 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         trackInAppInSession(id: id)
         updateShownDates(id: id, newDate: now)
         cleanupOldDates(id: id, currentDate: now)
+    }
+    
+    func saveLastShownTimestamp() {
+        persistenceStorage.lastShownInappDate = Date()
     }
     
     private func trackInAppInSession(id: String) {

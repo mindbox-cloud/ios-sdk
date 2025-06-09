@@ -188,6 +188,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onPresentationCompleted: { [delegate] in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
+                self.inappTrackingService.saveLastShownTimestamp()
             },
             onError: { error in
                 switch error {
