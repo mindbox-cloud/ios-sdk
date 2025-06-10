@@ -86,7 +86,7 @@ class MockPersistenceStorage: PersistenceStorage {
     
     var shownDatesByInApp: [String : [Date]]?
 
-    var lastShownInappDate: Date?
+    var lastInappStateChangeDate: Date?
 
     var handledlogRequestIds: [String]?
 

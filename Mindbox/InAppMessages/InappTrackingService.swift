@@ -11,7 +11,7 @@ import MindboxLogger
 
 protocol InAppTrackingServiceProtocol {
     func trackInAppShown(id: String)
-    func saveLastShownTimestamp()
+    func saveInappStateChange()
 }
 
 final class InAppTrackingService: InAppTrackingServiceProtocol {
@@ -31,10 +31,13 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         cleanupOldDates(id: id, currentDate: now)
     }
     
-    func saveLastShownTimestamp() {
+    func saveInappStateChange() {
+        // We save the in-app state timestamp in two places (onPresented and onPresentationCompleted) to handle the case
+        // when the app is terminated while an in-app message is being shown.
+        
         let now = Date()
-        persistenceStorage.lastShownInappDate = now
-        Logger.common(message: "[InAppTrackingService] Updated lastShownInappDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
+        persistenceStorage.lastInappStateChangeDate = now
+        Logger.common(message: "[InAppTrackingService] Updated lastInappStateChangeDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
     }
     
     private func trackInAppInSession(id: String) {

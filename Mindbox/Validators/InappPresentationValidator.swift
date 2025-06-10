@@ -100,7 +100,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return true
         }
         
-        guard let lastShowDate = persistenceStorage.lastShownInappDate else {
+        guard let lastShowDate = persistenceStorage.lastInappStateChangeDate else {
             Logger.common(message: "[PresentationValidator] lastInappShowTimestamp is nil, allow show", level: .info, category: .inAppMessages)
             return true
         }

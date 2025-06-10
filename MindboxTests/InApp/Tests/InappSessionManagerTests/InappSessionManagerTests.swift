@@ -181,7 +181,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         targetingChecker.event = .init(name: "Test", model: nil)
         
-        XCTAssertNil(persistenceStorage.lastShownInappDate)
+        XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
 
         manager.checkInappSession()
         
@@ -191,7 +191,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
-        XCTAssertNotNil(persistenceStorage.lastShownInappDate)
+        XCTAssertNotNil(persistenceStorage.lastInappStateChangeDate)
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
         
         targetingChecker.context.isNeedGeoRequest = false

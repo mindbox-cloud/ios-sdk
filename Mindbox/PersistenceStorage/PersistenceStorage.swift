@@ -33,7 +33,7 @@ protocol PersistenceStorage: AnyObject {
 
     var shownDatesByInApp: [String: [Date]]? { get set }
     
-    var lastShownInappDate: Date? { get set }
+    var lastInappStateChangeDate: Date? { get set }
 
     var handledlogRequestIds: [String]? { get set }
 
@@ -83,7 +83,7 @@ extension PersistenceStorage {
         configDownloadDate = nil
         shownDatesByInApp = nil
         handledlogRequestIds = nil
-        lastShownInappDate = nil
+        lastInappStateChangeDate = nil
         userVisitCount = 0
         resetBackgroundExecutions()
     }

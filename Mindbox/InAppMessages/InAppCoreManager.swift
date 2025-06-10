@@ -180,6 +180,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onPresented: {
                 self.serialQueue.async {
                     self.inappTrackingService.trackInAppShown(id: inapp.inAppId)
+                    self.inappTrackingService.saveInappStateChange()
                 }
             },
             onTapAction: { [delegate] url, payload in
@@ -188,7 +189,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             onPresentationCompleted: { [delegate] in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
-                self.inappTrackingService.saveLastShownTimestamp()
+                self.inappTrackingService.saveInappStateChange()
             },
             onError: { error in
                 switch error {
