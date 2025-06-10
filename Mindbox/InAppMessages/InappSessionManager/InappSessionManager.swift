@@ -96,7 +96,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
     private func hideInappIfInappSessionExpired() {
         Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
         NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
-        inappTrackingService.saveInappStateChange()
+        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
+            inappTrackingService.saveInappStateChange()
+        }
     }
     
     private func getConfigSession() -> Double? {
