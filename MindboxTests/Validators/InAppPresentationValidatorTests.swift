@@ -199,4 +199,78 @@ final class InAppPresentationValidatorTests: XCTestCase {
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
         XCTAssertFalse(validator.canPresentInApp())
     }
+    
+    // MARK: - hasElapsedMinimumIntervalBetweenInApps tests
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenMinIntervalNotSet_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenMinIntervalIsZero_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: "00:00:00")
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenLastShowDateIsNil_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: "00:05:00")
+        persistenceStorage.lastInappStateChangeDate = nil
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenIntervalNotElapsed_returnsFalse() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: "00:05:00")
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertFalse(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenIntervalElapsed_returnsTrue() {
+        let minInterval = "00:00:01" // 1 секунда
+        let timeElapsed = 2.0 // Прошло 2 секунды, что больше минимального интервала
+        
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(
+            maxInappsPerSession: nil,
+            maxInappsPerDay: nil,
+            minIntervalBetweenShows: minInterval
+        )
+        persistenceStorage.lastInappStateChangeDate = Date().addingTimeInterval(-timeElapsed)
+        
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_withComplexInterval_returnsCorrectly() {
+        let minInterval = "01:30:00" // 1 час 30 минут
+        let timeElapsed = 5400.0 // Прошло 1.5 часа (5400 секунд), что равно минимальному интервалу
+        
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(
+            maxInappsPerSession: nil,
+            maxInappsPerDay: nil,
+            minIntervalBetweenShows: minInterval
+        )
+        persistenceStorage.lastInappStateChangeDate = Date().addingTimeInterval(-timeElapsed)
+        
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_withInvalidIntervalFormat_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: "invalid_format")
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
+    
+    func test_hasElapsedMinimumIntervalBetweenInApps_whenMinIntervalIsNegative_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: nil, maxInappsPerDay: nil, minIntervalBetweenShows: "-00:05:00")
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.hasElapsedMinimumIntervalBetweenInApps()
+        XCTAssertTrue(result)
+    }
 } 

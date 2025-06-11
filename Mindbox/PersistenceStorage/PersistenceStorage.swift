@@ -32,6 +32,8 @@ protocol PersistenceStorage: AnyObject {
     var isNotificationsEnabled: Bool? { get set }
 
     var shownDatesByInApp: [String: [Date]]? { get set }
+    
+    var lastInappStateChangeDate: Date? { get set }
 
     var handledlogRequestIds: [String]? { get set }
 
@@ -81,6 +83,7 @@ extension PersistenceStorage {
         configDownloadDate = nil
         shownDatesByInApp = nil
         handledlogRequestIds = nil
+        lastInappStateChangeDate = nil
         userVisitCount = 0
         resetBackgroundExecutions()
     }

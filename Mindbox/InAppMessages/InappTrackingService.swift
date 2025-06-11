@@ -11,6 +11,7 @@ import MindboxLogger
 
 protocol InAppTrackingServiceProtocol {
     func trackInAppShown(id: String)
+    func saveInappStateChange()
 }
 
 final class InAppTrackingService: InAppTrackingServiceProtocol {
@@ -28,6 +29,15 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         trackInAppInSession(id: id)
         updateShownDates(id: id, newDate: now)
         cleanupOldDates(id: id, currentDate: now)
+    }
+    
+    func saveInappStateChange() {
+        // We save the in-app state timestamp in two places (onPresented and onPresentationCompleted) to handle the case
+        // when the app is terminated while an in-app message is being shown.
+        
+        let now = Date()
+        persistenceStorage.lastInappStateChangeDate = now
+        Logger.common(message: "[InAppTrackingService] Updated lastInappStateChangeDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
     }
     
     private func trackInAppInSession(id: String) {
@@ -48,7 +58,14 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
             to: currentDate
         ) else { return }
 
-        currentDates = currentDates.filter { $0 > cutoffDate }
-        persistenceStorage.shownDatesByInApp?[id] = currentDates
+        let datesToRemove = currentDates.filter { $0 <= cutoffDate }
+        if !datesToRemove.isEmpty {
+            currentDates = currentDates.filter { $0 > cutoffDate }
+            Logger.common(message: """
+                            [InAppTrackingService] Removed \(datesToRemove.count) old dates for in-app \(id):
+                            \(datesToRemove.map { $0.asDateTimeWithSeconds }.joined(separator: ", "))
+                            """, level: .info, category: .inAppMessages)
+            persistenceStorage.shownDatesByInApp?[id] = currentDates
+        }
     }
 }

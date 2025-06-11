@@ -89,6 +89,35 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     }
     
     func hasElapsedMinimumIntervalBetweenInApps() -> Bool {
-        return true
+        guard let minIntervalString = SessionTemporaryStorage.shared.inAppSettings?.minIntervalBetweenShows,
+              let minIntervalSeconds = try? minIntervalString.parseTimeSpanToSeconds() else {
+            Logger.common(message: "[PresentationValidator] minIntervalBetweenShows not set or invalid, skipping interval check", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        guard minIntervalSeconds > 0 else {
+            Logger.common(message: "[PresentationValidator] minIntervalBetweenShows is \(minIntervalSeconds), skipping interval check", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        guard let lastShowDate = persistenceStorage.lastInappStateChangeDate else {
+            Logger.common(message: "[PresentationValidator] lastInappShowTimestamp is nil, allow show", level: .info, category: .inAppMessages)
+            return true
+        }
+        
+        let minInterval = TimeInterval(minIntervalSeconds)
+        let nextAllowedShowTime = lastShowDate.addingTimeInterval(minInterval)
+        let now = Date()
+        let isAllowed = nextAllowedShowTime < now
+        
+        Logger.common(message: """
+            [PresentationValidator] 
+            lastShowDate: \(lastShowDate.asDateTimeWithSeconds)
+            minInterval: \(minInterval)s
+            nextAllowedShowTime: \(nextAllowedShowTime.asDateTimeWithSeconds)
+            now: \(now.asDateTimeWithSeconds)
+            Show allowed: \(isAllowed)
+            """)
+        return isAllowed
     }
 }

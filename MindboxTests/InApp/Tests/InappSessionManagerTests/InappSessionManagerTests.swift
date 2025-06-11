@@ -23,12 +23,14 @@ final class InappSessionManagerTests: XCTestCase {
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         SessionTemporaryStorage.shared.expiredConfigSession = ""
+        SessionTemporaryStorage.shared.isInitializationCalled = true
     }
 
     override func tearDown() {
         manager = nil
         coreManagerMock = nil
-        SessionTemporaryStorage.shared.expiredConfigSession = nil
+        persistenceStorage = nil
+        SessionTemporaryStorage.shared.erase()
         super.tearDown()
     }
 
@@ -178,6 +180,8 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.checkedProductSegmentations = [.init(key: "Test", value: "A"): [.init(ids: .init(externalId: "1"), segment: nil)]]
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         targetingChecker.event = .init(name: "Test", model: nil)
+        
+        XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
 
         manager.checkInappSession()
         
@@ -187,6 +191,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
+        XCTAssertNotNil(persistenceStorage.lastInappStateChangeDate)
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
         
         targetingChecker.context.isNeedGeoRequest = false
