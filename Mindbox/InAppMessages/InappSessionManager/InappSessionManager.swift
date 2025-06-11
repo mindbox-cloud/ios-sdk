@@ -20,15 +20,18 @@ final class InappSessionManager: InappSessionManagerProtocol {
     private let inappConfigManager: InAppConfigurationManagerProtocol
     private let targetingChecker: TargetingCheckerEraseProtocol
     private let userVisitManager: UserVisitManagerProtocol
+    private let inappTrackingService: InAppTrackingServiceProtocol
 
     init(inappCoreManager: InAppCoreManagerProtocol,
          inappConfigManager: InAppConfigurationManagerProtocol,
          targetingChecker: TargetingCheckerEraseProtocol,
-         userVisitManager: UserVisitManagerProtocol) {
+         userVisitManager: UserVisitManagerProtocol,
+         inappTrackingService: InAppTrackingServiceProtocol) {
         self.inappCoreManager = inappCoreManager
         self.inappConfigManager = inappConfigManager
         self.targetingChecker = targetingChecker
         self.userVisitManager = userVisitManager
+        self.inappTrackingService = inappTrackingService
         
         addObserverToDismissInApp()
     }
@@ -93,6 +96,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
     private func hideInappIfInappSessionExpired() {
         Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
         NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+        if SessionTemporaryStorage.shared.isPresentingInAppMessage {
+            inappTrackingService.saveInappStateChange()
+        }
     }
     
     private func getConfigSession() -> Double? {
