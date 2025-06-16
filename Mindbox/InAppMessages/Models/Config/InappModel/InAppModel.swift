@@ -49,6 +49,7 @@ extension InAppDTO {
 
 struct InApp: Decodable, Equatable {
     let id: String
+    let isPriority: Bool
     let sdkVersion: SdkVersion
     let targeting: Targeting
     var frequency: InappFrequency?

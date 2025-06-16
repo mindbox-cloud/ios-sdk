@@ -611,6 +611,7 @@ private extension ABTests {
                 if !variants.isEmpty {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
+                                           isPriority: inapp.isPriority,
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
