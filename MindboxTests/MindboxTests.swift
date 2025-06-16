@@ -253,6 +253,41 @@ extension MindboxTests {
         XCTAssertEqual(result?.last?.type, .keepAlive, "Last event type must be `keepAlive`")
     }
     
+    func testMustUpdateLastInfoUpdateOnlyAfterInstallation() {
+        coreController = DI.injectOrFail(CoreController.self)
+        XCTAssertFalse(persistenceStorage.isInstalled)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        
+        coreController.apnsTokenDidUpdate(token: UUID().uuidString)
+        controllerQueue.sync { }
+        
+        XCTAssertFalse(persistenceStorage.isInstalled)
+        XCTAssertNil(persistenceStorage.lastInfoUpdateDate, "It must be nil because we won't send an `InfoUpdate` before installation because the DB will be erased during installation")
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1)
+        XCTAssertEqual(try databaseRepository.countEvents(), 1)
+        
+        initializeCoreController()
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
+        
+        delay(for: .seconds(3))
+        
+        let pushToken = "0.00:00:02"
+        sendPushTokenKeepaliveNotification(with: pushToken)
+
+        controllerQueue.sync { }
+        
+        XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
+        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
+        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented once")
+        
+        let result = try? databaseRepository.query(fetchLimit: 5)
+        XCTAssertEqual(result?.count, 1)
+        
+        XCTAssertEqual(result?.last?.type, .keepAlive, "Last event type must be `keepAlive`")
+    }
+    
     func test_PushTokenKeepalive_withLastInfoUpdateDateIsNil_shouldSendOperation() {
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
