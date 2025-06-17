@@ -100,19 +100,19 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return true
         }
         
-        guard let lastShowDate = persistenceStorage.lastInappStateChangeDate else {
-            Logger.common(message: "[PresentationValidator] lastInappShowTimestamp is nil, allow show", level: .info, category: .inAppMessages)
+        guard let lastInappStateChangeDate = persistenceStorage.lastInappStateChangeDate else {
+            Logger.common(message: "[PresentationValidator] lastInappStateChangeDate is nil, allow show", level: .info, category: .inAppMessages)
             return true
         }
         
         let minInterval = TimeInterval(minIntervalSeconds)
-        let nextAllowedShowTime = lastShowDate.addingTimeInterval(minInterval)
+        let nextAllowedShowTime = lastInappStateChangeDate.addingTimeInterval(minInterval)
         let now = Date()
         let isAllowed = nextAllowedShowTime < now
         
         Logger.common(message: """
             [PresentationValidator] 
-            lastShowDate: \(lastShowDate.asDateTimeWithSeconds)
+            lastInappStateChangeDate: \(lastInappStateChangeDate.asDateTimeWithSeconds)
             minInterval: \(minInterval)s
             nextAllowedShowTime: \(nextAllowedShowTime.asDateTimeWithSeconds)
             now: \(now.asDateTimeWithSeconds)
