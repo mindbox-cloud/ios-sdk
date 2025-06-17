@@ -10,6 +10,7 @@ import Foundation
 
 struct InAppDTO: Decodable, Equatable {
     let id: String
+    let isPriority: Bool
     let sdkVersion: SdkVersion
     var frequency: InappFrequency?
     let targeting: Targeting
@@ -17,6 +18,7 @@ struct InAppDTO: Decodable, Equatable {
 
     enum CodingKeys: CodingKey {
         case id
+        case isPriority
         case sdkVersion
         case frequency
         case targeting
@@ -28,6 +30,7 @@ extension InAppDTO {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
+        self.isPriority = try container.decodeIfPresent(Bool.self, forKey: .isPriority) ?? false
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
 
@@ -46,6 +49,7 @@ extension InAppDTO {
 
 struct InApp: Decodable, Equatable {
     let id: String
+    let isPriority: Bool
     let sdkVersion: SdkVersion
     let targeting: Targeting
     var frequency: InappFrequency?

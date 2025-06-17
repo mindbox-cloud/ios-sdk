@@ -74,10 +74,11 @@ class InappFrequencyTests: XCTestCase {
         let inappFrequency: InappFrequency = .once(onceFrequency)
         let inapp1 = getInapp(frequency: inappFrequency)
         let inapp2 = InApp(id: "2",
-                          sdkVersion: SdkVersion(min: 9, max: nil),
-                          targeting: .true(TrueTargeting()),
-                          frequency: inappFrequency,
-                          form: InAppForm(variants: [.unknown]))
+                           isPriority: false,
+                           sdkVersion: SdkVersion(min: 9, max: nil),
+                           targeting: .true(TrueTargeting()),
+                           frequency: inappFrequency,
+                           form: InAppForm(variants: [.unknown]))
         XCTAssertFalse(validator.isValid(item: inapp1))
         XCTAssertTrue(validator.isValid(item: inapp2))
     }
@@ -229,6 +230,7 @@ class InappFrequencyTests: XCTestCase {
 
     private func getInapp(frequency: InappFrequency) -> InApp {
         return InApp(id: "1",
+                     isPriority: false,
                      sdkVersion: SdkVersion(min: 9, max: nil),
                      targeting: .true(TrueTargeting()),
                      frequency: frequency,
