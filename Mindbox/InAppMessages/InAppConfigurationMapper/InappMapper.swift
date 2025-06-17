@@ -82,8 +82,12 @@ class InappMapper: InappMapperProtocol {
 
     private func chooseInappToShow(filteredInapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
         dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let inapps = self.applicationEvent == nil ? filteredInapps : self.getOperationInappsByEventForShow()
-            let suitableInapps = self.filterByInappsEvents(inapps: inapps)
+            let inapps = self.applicationEvent == nil ? filteredInapps : self.inappFilterService.filterInappsByOperationForShow(
+                event: self.applicationEvent,
+                abTests: self.abTests,
+                operationInapps: self.targetingChecker.context.operationInapps
+            )
+            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
 
             if suitableInapps.isEmpty {
                 completion(nil)
@@ -94,42 +98,6 @@ class InappMapper: InappMapperProtocol {
                 completion(formData)
             }
         }
-    }
-
-    private func getOperationInappsByEvent() -> [InApp] {
-        if let event = targetingChecker.event,
-           let inappIDS = targetingChecker.context.operationInapps[event.name] {
-            return inappFilterService.validInapps.filter { inappIDS.contains($0.id) }
-        }
-
-        Logger.common(message: "[InappMapper] No operation inapps for event. Return empty array")
-        return []
-    }
-
-    private func getOperationInappsByEventForShow() -> [InApp] {
-        let inapps = getOperationInappsByEvent()
-        let filteredByABTest = inappFilterService.filterInappsByABTests(abTests, responseInapps: inapps)
-        let filteredByAlreadyShown = self.inappFilterService.filterInappsByAlreadyShown(filteredByABTest)
-        return filteredByAlreadyShown
-    }
-
-    private func filterByInappsEvents(inapps: [InApp]) -> [InAppTransitionData] {
-        var filteredInAppsByEvent: [InAppTransitionData] = []
-
-        for inapp in inapps {
-
-            guard targetingChecker.check(targeting: inapp.targeting) else {
-                continue
-            }
-
-            if let inAppFormVariants = inapp.form.variants.first {
-                let formData = InAppTransitionData(inAppId: inapp.id,
-                                                   content: inAppFormVariants)
-                filteredInAppsByEvent.append(formData)
-            }
-        }
-
-        return filteredInAppsByEvent
     }
 
     private func buildInAppByEvent(inapps: [InAppTransitionData],
@@ -208,8 +176,11 @@ class InappMapper: InappMapperProtocol {
 
     func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
         self.dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.getOperationInappsByEvent()
-            let suitableInapps = self.filterByInappsEvents(inapps: inapps)
+            let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.inappFilterService.filterInappsByOperation(
+                event: self.applicationEvent,
+                operationInapps: self.targetingChecker.context.operationInapps
+            )
+            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
 
             let logMessage = """
             [InappMapper] TR | Initiating processing of remaining in-app targeting requests.
