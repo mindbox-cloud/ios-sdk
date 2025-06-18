@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct InAppDTO: Decodable, Equatable {
     let id: String
