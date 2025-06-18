@@ -81,7 +81,7 @@ final class InappsFilterService: InappFilterProtocol {
 }
 
 // MARK: - Private methods
-private extension InappsFilterService {
+extension InappsFilterService {
     // FIXME: Rewrite this func in the future
     // swiftlint:disable:next cyclomatic_complexity
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
