@@ -1,0 +1,86 @@
+{
+  "inapps": [
+    {
+      "id": "1",
+      "isPriority": "notABoolean",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "Some payload test",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://www.akusherstvo.ru/images/uploadfoto/events/in-app/in-app-app300-2.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              },
+              "position": {
+                "margin": {
+                  "kind": "dp",
+                  "top": 0,
+                  "right": 0,
+                  "left": 0,
+                  "bottom": 0
+                },
+                "gravity": {
+                  "horizontal": "center",
+                  "vertical": "bottom"
+                }
+              },
+              "elements": [
+                {
+                  "color": "#000000",
+                  "lineWidth": 1,
+                  "size": {
+                    "kind": "dp",
+                    "width": 30,
+                    "height": 30
+                  },
+                  "position": {
+                    "margin": {
+                      "kind": "proportion",
+                      "top": 0.05,
+                      "right": 0.025,
+                      "left": 0,
+                      "bottom": 0
+                    }
+                  },
+                  "$type": "closeButton"
+                }
+              ]
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "snackbar"
+          }
+        ]
+      }
+    }
+  ]
+} 

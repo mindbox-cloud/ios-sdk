@@ -30,6 +30,8 @@ fileprivate enum Config: String, Configurable {
 
     case configABTestsOneElementError = "ConfigABTestsOneElementError" // Key is `saltTest` instead of `salt`
     case configABTestsOneElementTypeError = "ConfigABTestsOneElementTypeError" // Type of `variants` is Int instead of [ABTestVariant]
+    
+    case configInAppIsPriorityInvalid = "ConfigInAppIsPriorityInvalid" // isPriority is String instead of Bool
 }
 
 final class ConfigParsingTests: XCTestCase {
@@ -131,5 +133,17 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.monitoring)
         XCTAssertNotNil(config.settings)
         XCTAssertNotNil(config.inapps)
+    }
+    
+    func test_Config_withInAppIsPriorityInvalid_shouldSetIsPriorityToFalse() {
+        // isPriority is String instead of Bool
+        let config = try! Config.configInAppIsPriorityInvalid.getConfig()
+        XCTAssertNotNil(config.inapps, "InApps must NOT be `nil`")
+        if let inapps = config.inapps?.elements, let firstInApp = inapps.first {
+            XCTAssertEqual(firstInApp.id, "1")
+            XCTAssertFalse(firstInApp.isPriority, "isPriority must be `false` when the value is invalid")
+        } else {
+            XCTFail("InApps should contain at least one element")
+        }
     }
 }
