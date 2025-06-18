@@ -30,7 +30,7 @@ extension InAppDTO {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
-        self.isPriority = try container.decodeIfPresent(Bool.self, forKey: .isPriority) ?? false
+        self.isPriority = (try? container.decode(Bool.self, forKey: .isPriority)) ?? false
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
 
