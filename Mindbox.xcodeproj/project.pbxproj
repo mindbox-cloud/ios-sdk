@@ -461,6 +461,7 @@
 		F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
+		F36B63422E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */; };
 		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F382F20B2BAC50D000BC97FF /* VisitTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */; };
@@ -1069,6 +1070,7 @@
 		F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionActionUseCase.swift; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
+		F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppIsPriorityInvalid.json; sourceTree = "<group>"; };
 		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargeting.swift; sourceTree = "<group>"; };
@@ -1693,6 +1695,7 @@
 		4766A8972C931AEE002D15A4 /* ConfigJsonStub */ = {
 			isa = PBXGroup;
 			children = (
+				F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */,
 				473A98372C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json */,
 				4766A8982C931B30002D15A4 /* ConfigSettingsError.json */,
 				4766A89A2C931B51002D15A4 /* ConfigSettingsTypeError.json */,
@@ -3501,6 +3504,7 @@
 				473A98512C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json in Resources */,
 				4766A8B22C932A3C002D15A4 /* ABTestsIdConfigError.json in Resources */,
 				9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */,
+				F36B63422E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json in Resources */,
 				473A98572C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
