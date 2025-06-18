@@ -27,11 +27,10 @@ fileprivate enum Config: String, Configurable {
 
     case configInAppsError = "ConfigInAppsError" // Key is `inappsTest` instead of `inapps`
     case configInAppsTypeError = "ConfigInAppsTypeError" // Type of `inapps` is Int instead of FailableDecodableArray<InAppDTO>
+    case configInAppIsPriorityInvalid = "ConfigInAppIsPriorityInvalid" // isPriority is String instead of Bool
 
     case configABTestsOneElementError = "ConfigABTestsOneElementError" // Key is `saltTest` instead of `salt`
     case configABTestsOneElementTypeError = "ConfigABTestsOneElementTypeError" // Type of `variants` is Int instead of [ABTestVariant]
-    
-    case configInAppIsPriorityInvalid = "ConfigInAppIsPriorityInvalid" // isPriority is String instead of Bool
 }
 
 final class ConfigParsingTests: XCTestCase {
