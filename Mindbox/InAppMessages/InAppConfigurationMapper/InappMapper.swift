@@ -152,7 +152,7 @@ class InappMapper: InappMapperProtocol {
                 imageDictQueue.sync {
                     if !imageDict.isEmpty && !gotError {
                         let firstImageValue = imageValues.first ?? ""
-                        formData = InAppFormData(inAppId: inapp.inAppId, imagesDict: imageDict, firstImageValue: firstImageValue, content: inapp.content)
+                        formData = InAppFormData(inAppId: inapp.inAppId, isPriority: inapp.isPriority, imagesDict: imageDict, firstImageValue: firstImageValue, content: inapp.content)
                     }
                 }
             }

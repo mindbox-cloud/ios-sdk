@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
-    func canPresentInApp() -> Bool
+    func canPresentInApp(isPriority: Bool) -> Bool
 }
 
 final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
@@ -20,7 +20,20 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         self.persistenceStorage = persistenceStorage
     }
     
-    func canPresentInApp() -> Bool {
+    func canPresentInApp(isPriority: Bool) -> Bool {
+        if isPriority {
+            let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
+            let shownInappsToday = getShownInappsTodayCount()
+            
+            Logger.common(message: """
+                [PresentationValidator] Priority in-app detected, skipping all checks except isNotPresentingAnotherInApp
+                - Current session shown count: \(currentShownCount)
+                - Shown in-apps today: \(shownInappsToday)
+                """, level: .debug, category: .inAppMessages)
+            
+            return isNotPresentingAnotherInApp()
+        }
+        
         return isNotPresentingAnotherInApp() &&
                isUnderSessionLimit() &&
                isUnderDailyLimit() &&
@@ -65,22 +78,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return true
         }
         
-        guard let dictionary = persistenceStorage.shownDatesByInApp, !dictionary.isEmpty else {
-            Logger.common(message: "[PresentationValidator] No in-apps shown today", level: .info, category: .inAppMessages)
-            return true
-        }
-        
-        let calendar = Calendar.current
-        let now = Date()
-        let today = calendar.startOfDay(for: now)
-        
-        var shownInappsToday = 0
-        for dates in dictionary.values {
-            for date in dates where calendar.isDate(date, inSameDayAs: today) {
-                shownInappsToday += 1
-            }
-        }
-        
+        let shownInappsToday = getShownInappsTodayCount()
         let isAllowed = maxInappsPerDay > shownInappsToday
         
         Logger.common(message: "[PresentationValidator] Total in-app shows today count: \(shownInappsToday), limit: \(maxInappsPerDay), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
@@ -119,5 +117,24 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             Show allowed: \(isAllowed)
             """)
         return isAllowed
+    }
+    
+    private func getShownInappsTodayCount() -> Int {
+        guard let dictionary = persistenceStorage.shownDatesByInApp, !dictionary.isEmpty else {
+            return 0
+        }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        
+        var shownInappsToday = 0
+        for dates in dictionary.values {
+            for date in dates where calendar.isDate(date, inSameDayAs: today) {
+                shownInappsToday += 1
+            }
+        }
+        
+        return shownInappsToday
     }
 }
