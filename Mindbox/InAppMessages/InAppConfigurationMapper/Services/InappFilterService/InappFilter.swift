@@ -206,6 +206,10 @@ extension InappsFilterService {
     private func applyCommonFilters(inapps: [InApp], abTests: [ABTest]?) -> [InApp] {
         let filteredByABTestInapps = filterInappsByABTests(abTests, responseInapps: inapps)
         let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
-        return filteredByAlreadyShown
+        return sortInappsByPriority(filteredByAlreadyShown)
+    }
+    
+    func sortInappsByPriority(_ inapps: [InApp]) -> [InApp] {
+        return inapps.sorted { $0.isPriority && !$1.isPriority }
     }
 }
