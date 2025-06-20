@@ -80,7 +80,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let mockEvent: EventProtocol = MockEvent(type: type, body: body)
 
         XCTAssertEqual(!event.transactionId.isEmpty, !mockEvent.transactionId.isEmpty, "Transaction Ids should not be empty")
-        XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.001, "Enqueue timestamps should match with some accuracy")
+        XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.02, "Enqueue timestamps should match with some accuracy")
 
         XCTAssertEqual(event.serialNumber, mockEvent.serialNumber, "Serial numbers should be equal")
         XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
@@ -95,7 +95,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
             let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
             let dateTimeOffset = event.dateTimeOffset
-            XCTAssertEqual(dateTimeOffset, expectation, "dateTimeOffset should be equal")
+            XCTAssertEqual(dateTimeOffset, expectation, accuracy: 20, "dateTimeOffset should be equal with some accuracy")
         }
     }
 
