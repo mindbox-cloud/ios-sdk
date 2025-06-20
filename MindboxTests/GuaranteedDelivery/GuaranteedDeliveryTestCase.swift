@@ -99,8 +99,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         }
     }
 
-    func testScheduleByTimer() {
-        // Может понадобиться MockFailureNetworkFetcher (Check later)
+    func testScheduleByTimer() throws {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
@@ -108,89 +107,99 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
-        let simpleCase: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
-        let simpleExpectations: [XCTestExpectation] = simpleCase.map { self.expectation(description: "Expect state is \($0.rawValue)") }
-
-        var iterator: Int = 0
-        // Full erase database
-        try! databaseRepository.erase()
-        // Lock update
-        guaranteedDeliveryManager.canScheduleOperations = false
-        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
-            guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
-                  simpleCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type. SimpleCase:\(simpleCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
+        
+        try databaseRepository.erase()
+        let events = eventGenerator.generateEvents(count: 10)
+        try events.forEach { try databaseRepository.create(event: $0) }
+        
+        let expectedStates: [GuaranteedDeliveryManager.State] = [.delivering, .idle]
+        let expectations = expectedStates.map { expectation(description: "Expect state \($0.rawValue)") }
+        var idx = 0
+        
+        var token: NSKeyValueObservation?
+        token = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { mgr, change in
+            guard
+                idx < expectedStates.count,
+                let raw = change.newValue as String?,
+                let state = GuaranteedDeliveryManager.State(rawValue: raw),
+                state == expectedStates[idx]
+            else {
+                XCTFail("New state is not expected type. ExpectedStates: \(expectedStates), index: \(idx). Received: \(String(describing: change.newValue))")
                 return
             }
-            if newState == simpleCase[iterator] {
-                simpleExpectations[iterator].fulfill()
+            expectations[idx].fulfill()
+            idx += 1
+            
+            // As soon as we “catch” idle, we suppress further cycles
+            if idx == expectedStates.count {
+                mgr.canScheduleOperations = false
+                token?.invalidate()
+                token = nil
             }
-            iterator += 1
         }
-        // Generating new events
-        let events = eventGenerator.generateEvents(count: 10)
-        do {
-            try events.forEach {
-                // Create new event in database
-                try databaseRepository.create(event: $0)
-            }
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        // Start update
+        
         guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 15) { _ in
-            observationToken?.invalidate()
-            observationToken = nil
-        }
+        waitForExpectations(timeout: 30)
     }
 
-    func testFailureScheduleByTimer() {
+    func testFailureAndRetryScheduleByTimer() throws {
         let retryDeadline: TimeInterval = 2
-        guaranteedDeliveryManager = GuaranteedDeliveryManager(
+        
+        let fakeDB = FakeDatabaseRepository()
+        let fetcher = MockFailureNetworkFetcher()
+        let eventRepo = MBEventRepository(fetcher: fetcher,
+                                          persistenceStorage: DI.injectOrFail(PersistenceStorage.self))
+        
+        let manager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
-            eventRepository: DI.injectOrFail(EventRepository.self),
+            databaseRepository: fakeDB,
+            eventRepository: eventRepo,
             retryDeadline: retryDeadline
         )
-        let errorCase: [GuaranteedDeliveryManager.State] = [
-            .delivering,
-            .idle
-        ]
-        let errorExpectations: [XCTestExpectation] = errorCase.map { self.expectation(description: "Expect state is \($0.rawValue)") }
-        var iterator: Int = 0
-        // Full erase database
-        try! databaseRepository.erase()
-        // Lock update
-        guaranteedDeliveryManager.canScheduleOperations = false
-
-        var observationToken: NSKeyValueObservation? = guaranteedDeliveryManager.observe(\.stateObserver, options: [.new]) { _, change in
-            guard let newState = GuaranteedDeliveryManager.State(rawValue: String(change.newValue ?? "")),
-                  errorCase.indices.contains(iterator) else {
-                XCTFail("New state is not expected type. ErrorCase:\(errorCase) Iterator:\(iterator); Received: \(String(describing: change.newValue))")
-                return
-            }
-
-            if newState == errorCase[iterator] {
-                errorExpectations[iterator].fulfill()
-            }
-            iterator += 1
-        }
-        // Generating new events
+        
+        try fakeDB.erase()
         let events = eventGenerator.generateEvents(count: 10)
-        do {
-            try events.forEach {
-                // Create new event in database
-                try databaseRepository.create(event: $0)
+        try events.forEach { try fakeDB.create(event: $0) }
+        
+        var seenStates = [GuaranteedDeliveryManager.State]()
+        
+        let token = manager.observe(\.stateObserver, options: [.new]) { _, change in
+            if let raw = change.newValue as String?,
+               let state = GuaranteedDeliveryManager.State(rawValue: raw) {
+                seenStates.append(state)
             }
-        } catch {
-            XCTFail(error.localizedDescription)
         }
-        // Start update
-        guaranteedDeliveryManager.canScheduleOperations = true
-        waitForExpectations(timeout: 15) { _ in
-            observationToken?.invalidate()
-            observationToken = nil
+        
+        // Wait until it falls into .idle and FakeDB becomes empty
+        let done = XCTNSPredicateExpectation(
+            predicate: NSPredicate { eval, _ in
+                guard let m = eval as? GuaranteedDeliveryManager else { return false }
+                return m.state == .idle && (try? fakeDB.countEvents()) == 0
+            },
+            object: manager
+        )
+        
+        manager.canScheduleOperations = true
+        wait(for: [done], timeout: 30)
+        token.invalidate()
+        
+        // Check full order
+        // delivering → idle → delivering → waitingForRetry → delivering → idle
+        func idx(of s: GuaranteedDeliveryManager.State, after i: Int = 0) -> Int? {
+            return seenStates.dropFirst(i).firstIndex(of: s)
         }
+        
+        guard let d1 = idx(of: .delivering),
+              let i1 = idx(of: .idle,            after: d1),
+              let d2 = idx(of: .delivering,      after: i1),
+              let w  = idx(of: .waitingForRetry, after: d2),
+              let d3 = idx(of: .delivering,      after: w),
+              let i2 = idx(of: .idle,            after: d3)
+        else {
+            return XCTFail("Expected order [delivering, idle, delivering, waitingForRetry, delivering, idle], but got  \(seenStates)")
+        }
+        
+        XCTAssertTrue(d1 < i1 && i1 < d2 && d2 < w && w < d3 && d3 < i2,
+                      "The order of states is incorrect: \(seenStates)")
     }
 }

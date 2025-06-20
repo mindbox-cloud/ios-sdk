@@ -21,7 +21,7 @@ struct EventGenerator {
     func generateEvents(count: Int) -> [Event] {
         return (1...count).map { _ in
             return Event(
-                type: .installed,
+                type: .customEvent,
                 body: UUID().uuidString
             )
         }
