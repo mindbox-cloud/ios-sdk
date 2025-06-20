@@ -336,6 +336,22 @@ final class InappFilterServiceTests: XCTestCase {
         XCTAssertFalse(sortedInapps[4].isPriority)
     }
     
+    func test_filterInapps_maintainsOrderForSamePriority() throws {
+        let config = try getConfig(name: "inappListWithPriority")
+        let sortedInapps = sut.filter(inapps: config.inapps?.elements, abTests: nil)
+        
+        let expectedOrder = ["1", "3", "5", "2", "4"]
+        let actualOrder = sortedInapps.map { $0.id }
+        
+        XCTAssertEqual(actualOrder, expectedOrder, "In-apps should be sorted by priority with true values first, maintaining original order within same priority")
+        
+        XCTAssertTrue(sortedInapps[0].isPriority)
+        XCTAssertTrue(sortedInapps[1].isPriority)
+        XCTAssertTrue(sortedInapps[2].isPriority)
+        XCTAssertFalse(sortedInapps[3].isPriority)
+        XCTAssertFalse(sortedInapps[4].isPriority)
+    }
+    
     func test_sortInappsByPriority_allTruePriority() {
         let inapps = [
             createTestInApp(id: "1", isPriority: true),
