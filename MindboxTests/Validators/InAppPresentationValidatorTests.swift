@@ -186,18 +186,18 @@ final class InAppPresentationValidatorTests: XCTestCase {
     func test_canPresentInApp_whenAllChecksPass_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertTrue(validator.canPresentInApp())
+        XCTAssertTrue(validator.canPresentInApp(isPriority: false))
     }
     
     func test_canPresentInApp_whenIsPresenting_returnsFalse() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        XCTAssertFalse(validator.canPresentInApp())
+        XCTAssertFalse(validator.canPresentInApp(isPriority: false))
     }
     
     func test_canPresentInApp_whenSessionLimitReached_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertFalse(validator.canPresentInApp())
+        XCTAssertFalse(validator.canPresentInApp(isPriority: false))
     }
     
     // MARK: - hasElapsedMinimumIntervalBetweenInApps tests
@@ -273,4 +273,74 @@ final class InAppPresentationValidatorTests: XCTestCase {
         let result = validator.hasElapsedMinimumIntervalBetweenInApps()
         XCTAssertTrue(result)
     }
-} 
+    
+    // MARK: - Priority in-app tests
+    
+    func test_canPresentInApp_whenIsPriorityAndNotPresenting_returnsTrue() {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndPresenting_returnsFalse() {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertFalse(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndSessionLimitReached_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndDailyLimitReached_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 5, maxInappsPerDay: 2, minIntervalBetweenShows: "00:00:00")
+        SessionTemporaryStorage.shared.sessionShownInApps = []
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        persistenceStorage.shownDatesByInApp = [
+            "1": [Date()],
+            "2": [Date()]
+        ]
+        
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndIntervalNotElapsed_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 5, maxInappsPerDay: 5, minIntervalBetweenShows: "00:05:00")
+        SessionTemporaryStorage.shared.sessionShownInApps = []
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        persistenceStorage.lastInappStateChangeDate = Date() // Recent change
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndAllLimitsReached_returnsTrue() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 2, minIntervalBetweenShows: "00:05:00")
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        persistenceStorage.shownDatesByInApp = [
+            "1": [Date()],
+            "2": [Date()]
+        ]
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_whenIsPriorityAndAllLimitsReachedButPresenting_returnsFalse() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 2, minIntervalBetweenShows: "00:05:00")
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+        persistenceStorage.shownDatesByInApp = [
+            "1": [Date()],
+            "2": [Date()]
+        ]
+        persistenceStorage.lastInappStateChangeDate = Date()
+        let result = validator.canPresentInApp(isPriority: true)
+        XCTAssertFalse(result)
+    }
+}

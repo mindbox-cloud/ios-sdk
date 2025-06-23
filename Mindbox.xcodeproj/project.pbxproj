@@ -560,6 +560,7 @@
 		F3FAD8742AB8678900D98C03 /* negativeCloseButtonSizeValues.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */; };
 		F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */; };
 		F3FAD8782AB8685D00D98C03 /* closeButtonMarginBelowZero.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */; };
+		F3FAFB222E05629C004A6065 /* inappListWithPriority.json in Resources */ = {isa = PBXBuildFile; fileRef = F3FAFB212E05629C004A6065 /* inappListWithPriority.json */; };
 		F3FEEA9B2C25AC68000E9D0F /* MBContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEA9A2C25AC68000E9D0F /* MBContainer.swift */; };
 		F3FEEA9D2C25ACFC000E9D0F /* MBInject.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEA9C2C25ACFC000E9D0F /* MBInject.swift */; };
 		F3FEEA9F2C25AF39000E9D0F /* StubContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FEEA9E2C25AF39000E9D0F /* StubContainer.swift */; };
@@ -1170,6 +1171,7 @@
 		F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = negativeCloseButtonSizeValues.json; sourceTree = "<group>"; };
 		F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonMarginAboveOne.json; sourceTree = "<group>"; };
 		F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = closeButtonMarginBelowZero.json; sourceTree = "<group>"; };
+		F3FAFB212E05629C004A6065 /* inappListWithPriority.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = inappListWithPriority.json; sourceTree = "<group>"; };
 		F3FEEA9A2C25AC68000E9D0F /* MBContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBContainer.swift; sourceTree = "<group>"; };
 		F3FEEA9C2C25ACFC000E9D0F /* MBInject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBInject.swift; sourceTree = "<group>"; };
 		F3FEEA9E2C25AF39000E9D0F /* StubContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubContainer.swift; sourceTree = "<group>"; };
@@ -2984,6 +2986,7 @@
 			isa = PBXGroup;
 			children = (
 				F3FAD8772AB8685D00D98C03 /* closeButtonMarginBelowZero.json */,
+				F3FAFB212E05629C004A6065 /* inappListWithPriority.json */,
 				F3FAD8752AB867E700D98C03 /* closeButtonMarginAboveOne.json */,
 				F3FAD8732AB8678900D98C03 /* negativeCloseButtonSizeValues.json */,
 				F3FAD8712AB8673100D98C03 /* missingMarginFieldInSection.json */,
@@ -3397,6 +3400,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3FAFB222E05629C004A6065 /* inappListWithPriority.json in Resources */,
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
 				473A985D2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json in Resources */,
 				F34940232E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json in Resources */,

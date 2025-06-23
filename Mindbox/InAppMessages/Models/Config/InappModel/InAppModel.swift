@@ -31,22 +31,7 @@ extension InAppDTO {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
-        
-        // TODO: - Логирование для isPriority убрать в задаче 460
-        if container.contains(.isPriority) {
-            do {
-                let isPriorityValue = try container.decode(Bool.self, forKey: .isPriority)
-                Logger.common(message: "isPriority parsed successfully: \(isPriorityValue)", level: .info, category: .inAppMessages)
-                self.isPriority = isPriorityValue
-            } catch {
-                Logger.common(message: "Invalid isPriority value received. Defaulting to false", level: .error, category: .inAppMessages)
-                self.isPriority = false
-            }
-        } else {
-            Logger.common(message: "isPriority not found. Defaulting to false", level: .info, category: .inAppMessages)
-            self.isPriority = false
-        }
-        
+        self.isPriority = (try? container.decode(Bool.self, forKey: .isPriority)) ?? false
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
 

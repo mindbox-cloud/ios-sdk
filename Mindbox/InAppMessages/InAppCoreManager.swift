@@ -166,7 +166,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
         
         Logger.common(message: "[PresentationValidator] Checking if can present in-app with id: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-        guard presentationValidator.canPresentInApp() else {
+        guard presentationValidator.canPresentInApp(isPriority: inapp.isPriority) else {
             completion()
             return
         }
