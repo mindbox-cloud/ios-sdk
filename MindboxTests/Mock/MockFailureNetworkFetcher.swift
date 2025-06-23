@@ -12,51 +12,47 @@ import Foundation
 // swiftlint:disable force_try force_unwrapping
 
 class MockFailureNetworkFetcher: NetworkFetcher {
-
-    init() {
+    private var hasFailed = false
+    
+    func request(route: any Route, completion: @escaping (Result<Void, MindboxError>) -> Void) {
+        if !hasFailed {
+            hasFailed = true
+            completion(
+                .failure(
+                    .internalError(
+                        .init(errorKey: .serverError, rawError: nil)
+                    )
+                )
+            )
+        } else {
+            completion(.success(()))
+        }
     }
-
-    private var routesCount: Int = 0
-
-    var failableRouteIndex = Int.random(in: 0...9)
-
-    private func errorForRoute() -> MindboxError? {
-        if routesCount >= 9 {
-            let error: MindboxError = .internalError(.init(
+    
+    func request<T>(type: T.Type, route: any Route, needBaseResponse: Bool, completion: @escaping (Result<T, MindboxError>) -> Void) where T : Decodable {
+        if !hasFailed {
+            hasFailed = true
+            completion(.failure(.internalError(.init(
                 errorKey: .parsing,
                 rawError: nil
-            ))
-
-            return error
-        }
-
-        routesCount += 1
-        return nil
-    }
-
-    func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
-        if let error = errorForRoute() {
-            completion(.failure(error))
+            ))))
         } else {
-            completion(Result.success(()))
-        }
-    }
-
-    func request<T>(type: T.Type, route: Route, needBaseResponse: Bool, completion: @escaping ((Result<T, MindboxError>) -> Void)) where T: Decodable {
-        if let error = errorForRoute() {
-            completion(.failure(error))
-        } else {
-            let bundle = Bundle(for: MockNetworkFetcher.self)
-            let path = bundle.path(forResource: "SuccessResponse", ofType: "json")!
-            let url = URL(fileURLWithPath: path)
-            let data = try! Data(contentsOf: url, options: .mappedIfSafe)
+            let data = MockFailureNetworkFetcher.successData
             do {
                 let decoded = try JSONDecoder().decode(type, from: data)
-                completion(Result.success(decoded))
-            } catch let decodeError {
-                let error = MindboxError(.init(errorKey: .parsing, rawError: decodeError))
-                completion(Result.failure(error))
+                completion(.success(decoded))
+            } catch {
+                completion(.failure(.internalError(.init(
+                    errorKey: .parsing,
+                    rawError: error
+                ))))
             }
         }
     }
+    
+    private static let successData: Data = {
+        let bundle = Bundle(for: MockNetworkFetcher.self)
+        let url = bundle.url(forResource: "SuccessResponse", withExtension: "json")!
+        return try! Data(contentsOf: url)
+    }()
 }

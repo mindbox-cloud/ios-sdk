@@ -19,6 +19,7 @@ class DatabaseLoaderTest: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        MBInject.mode = .standard
         databaseLoader = DI.injectOrFail(DataBaseLoader.self)
         persistentContainer = DI.injectOrFail(MBDatabaseRepository.self).persistentContainer
     }
