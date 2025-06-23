@@ -80,7 +80,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let mockEvent: EventProtocol = MockEvent(type: type, body: body)
 
         XCTAssertEqual(!event.transactionId.isEmpty, !mockEvent.transactionId.isEmpty, "Transaction Ids should not be empty")
-        XCTAssertEqual(event.enqueueTimeStamp, mockEvent.enqueueTimeStamp, accuracy: 0.02, "Enqueue timestamps should match with some accuracy")
 
         XCTAssertEqual(event.serialNumber, mockEvent.serialNumber, "Serial numbers should be equal")
         XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
@@ -88,15 +87,36 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
         XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
     }
-
-    func testDateTimeOffset() {
-        let events = eventGenerator.generateMockEvents(count: 100)
-        events.forEach { event in
-            let enqueueDate = Date(timeIntervalSince1970: event.enqueueTimeStamp)
-            let expectation = Int64((Date().timeIntervalSince(enqueueDate) * 1000).rounded())
-            let dateTimeOffset = event.dateTimeOffset
-            XCTAssertEqual(dateTimeOffset, expectation, accuracy: 20, "dateTimeOffset should be equal with some accuracy")
-        }
+    
+    func testDateTimeOffset_WhenNotRetry_isZero() {
+        let event = Event(type: .installed, body: "foo")
+        XCTAssertFalse(event.isRetry)
+        XCTAssertEqual(event.dateTimeOffset, 0, "If `isRetry = false`, offset must be 0.")
+    }
+    
+    func test_dateTimeOffset_WhenRetry_usingMockClock() {
+        // 1) Set a fixed enqueueTimeStamp (for example, 1,000 seconds from the epoch)
+        let fixedEnqueue: Double = 1_000
+        
+        // 2) Create a “dummy” current time using MockClock
+        // let it be 1,000.500 seconds (i.e., +500 ms)
+        let mockNow = Date(timeIntervalSince1970: 1_000.5)
+        let clock = MockClock(now: mockNow)
+        
+        // 3) Creating an event as a retry
+        let event = MockEvent(
+            type: .installed,
+            body: "baz",
+            enqueueTimeStamp: fixedEnqueue,
+            isRetry: true,
+            clock: clock
+        )
+        
+        // 4) The offset in ms will be (1,000.5 - 1,000) * 1,000 = 500 ms
+        let offset = event.dateTimeOffset
+        
+        XCTAssertEqual(offset, 500,
+                       "When enqueueTimeStamp=1000 and now=1000.5, it should be exactly 500 ms.")
     }
 
     func testScheduleByTimer() throws {

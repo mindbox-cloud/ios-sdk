@@ -164,6 +164,7 @@
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
 		47BD5BFE2C578FB400F965C0 /* BaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */; };
 		47C38A312E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */; };
+		47D0BC2C2E093F8A00182DB2 /* ClockAndMockClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
 		47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* SegmentationCheckResponse.swift */; };
 		47FDF0BA2C5BDAB80051F08C /* MigrationManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */; };
@@ -751,6 +752,7 @@
 		47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
 		47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseMigration.swift; sourceTree = "<group>"; };
 		47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepositoryTests.swift; sourceTree = "<group>"; };
+		47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockAndMockClock.swift; sourceTree = "<group>"; };
 		47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerProtocol.swift; sourceTree = "<group>"; };
 		47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationProtocol.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
@@ -1778,6 +1780,7 @@
 			children = (
 				840C38B725D13A7D00D50183 /* EventGenerator.swift */,
 				848A89582620C3AE00EDFB6D /* APNSTokenGenerator.swift */,
+				47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -3847,6 +3850,7 @@
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */,
 				BBAAC17C2BB2FC9100E1E25E /* MockEvent.swift in Sources */,
+				47D0BC2C2E093F8A00182DB2 /* ClockAndMockClock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				473A98262C918C3A005A3B94 /* ConfigParsingTests.swift in Sources */,
 				F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */,
