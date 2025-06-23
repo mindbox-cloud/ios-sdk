@@ -81,7 +81,7 @@ final class InappsFilterService: InappFilterProtocol {
     }
 }
 
-// MARK: - Private methods
+// MARK: - Internal methods
 extension InappsFilterService {
     // FIXME: Rewrite this func in the future
     // swiftlint:disable:next cyclomatic_complexity
