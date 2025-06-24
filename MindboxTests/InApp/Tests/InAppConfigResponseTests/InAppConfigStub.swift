@@ -135,6 +135,7 @@ extension InAppConfigStub {
     private func getInappDTO(with targeting: Targeting) throws -> [InAppDTO] {
         return [InAppDTO(id: "1",
                          isPriority: false,
+                         delayTime: nil,
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
                          targeting: targeting,

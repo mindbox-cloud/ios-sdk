@@ -612,6 +612,7 @@ private extension ABTests {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
                                            isPriority: inapp.isPriority,
+                                           delayTime: nil,
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,

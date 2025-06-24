@@ -75,6 +75,7 @@ class InappFrequencyTests: XCTestCase {
         let inapp1 = getInapp(frequency: inappFrequency)
         let inapp2 = InApp(id: "2",
                            isPriority: false,
+                           delayTime: nil,
                            sdkVersion: SdkVersion(min: 9, max: nil),
                            targeting: .true(TrueTargeting()),
                            frequency: inappFrequency,
@@ -231,6 +232,7 @@ class InappFrequencyTests: XCTestCase {
     private func getInapp(frequency: InappFrequency) -> InApp {
         return InApp(id: "1",
                      isPriority: false,
+                     delayTime: nil,
                      sdkVersion: SdkVersion(min: 9, max: nil),
                      targeting: .true(TrueTargeting()),
                      frequency: frequency,

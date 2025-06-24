@@ -395,6 +395,7 @@ final class InappFilterServiceTests: XCTestCase {
         return InApp(
             id: id,
             isPriority: isPriority,
+            delayTime: nil,
             sdkVersion: sdkVersion,
             targeting: .true(targeting),
             frequency: frequency,
