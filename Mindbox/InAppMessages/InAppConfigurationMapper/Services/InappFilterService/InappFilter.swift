@@ -184,6 +184,7 @@ extension InappsFilterService {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
                                            isPriority: inapp.isPriority,
+                                           delayTime: inapp.delayTime,
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
