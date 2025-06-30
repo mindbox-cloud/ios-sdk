@@ -130,38 +130,6 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
-    var backgroundExecutions: [BackgroudExecution] {
-        if let data = MBPersistenceStorage.defaults.value(forKey: "backgroundExecution") as? Data {
-            return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
-        } else {
-            return []
-        }
-    }
-
-    func setBackgroundExecution(_ value: BackgroudExecution) {
-        var tasks = backgroundExecutions
-        tasks.append(value)
-        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey: "backgroundExecution")
-        MBPersistenceStorage.defaults.synchronize()
-        onDidChange?()
-    }
-
-    func storeToFileBackgroundExecution() {
-        let path = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("BackgroundExecution.plist")
-
-        // Swift Dictionary To Data.
-        let encoder = PropertyListEncoder()
-        encoder.outputFormat = .xml
-        do {
-            let data = try encoder.encode(backgroundExecutions)
-            try data.write(to: path)
-        } catch {
-            Logger.common(message: "[PersistenceStorage] StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
-        }
-    }
-
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
     }
@@ -266,22 +234,6 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-
-    func resetBackgroundExecutions() {
-        MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
-        MBPersistenceStorage.defaults.synchronize()
-    }
-}
-
-struct BackgroudExecution: Codable {
-
-    let taskID: String
-
-    let taskName: String
-
-    let dateString: String
-
-    let info: String
 }
 
 extension MBPersistenceStorage {

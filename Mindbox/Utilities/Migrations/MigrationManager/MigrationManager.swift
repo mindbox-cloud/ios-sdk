@@ -51,7 +51,8 @@ final class MigrationManager {
         self.localSdkVersionCode = Constants.Migration.sdkVersionCode
 
         self.migrations = [
-            MigrationShownInAppsIds()
+            MigrationShownInAppsIds(),
+            RemoveBackgroundTaskDataMigration()
         ]
     }
 }

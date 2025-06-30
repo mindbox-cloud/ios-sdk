@@ -30,6 +30,8 @@ final class MigrationManagerTests: XCTestCase {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1()
         ]
+        
+        setUpForRemoveBackgroundTaskDataMigration()
 
         migrationManager = MigrationManager(
             persistenceStorage: persistenceStorageMock,
@@ -54,6 +56,8 @@ final class MigrationManagerTests: XCTestCase {
 
         XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
         XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
+        
+        XCTAssertForRemoveBackgroundTaskDataMigration()
     }
 
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
@@ -69,6 +73,43 @@ final class MigrationManagerTests: XCTestCase {
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
+    }
+}
+
+// MARK: - Additional functions for production migrations
+
+extension MigrationManagerTests {
+    func XCTAssertForRemoveBackgroundTaskDataMigration() {
+        XCTAssertNil(MBPersistenceStorage.defaults.value(forKey: "backgroundExecution"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+    
+    func setUpForRemoveBackgroundTaskDataMigration() {
+        let key = "backgroundExecution"
+        let userDefaultsSuiteName = "MigrationManagerTests"
+        
+        let userDefaults = UserDefaults(suiteName: userDefaultsSuiteName)!
+        userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
+        MBPersistenceStorage.defaults = userDefaults
+        
+        userDefaults.set(Data(), forKey: key)
+        
+        try? createDummyFile()
+    }
+    
+    private var documentsURL: URL {
+        FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+    
+    private var fileURL: URL {
+        let plistName = "BackgroundExecution.plist"
+        return documentsURL.appendingPathComponent(plistName)
+    }
+    
+    private func createDummyFile() throws {
+        // Просто создаём пустой файл в Documents
+        FileManager.default.createFile(atPath: fileURL.path, contents: Data(), attributes: nil)
     }
 }
 

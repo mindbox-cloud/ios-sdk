@@ -109,13 +109,6 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             return
         }
         let taskID = UUID().uuidString
-        let backgroudExecution = BackgroudExecution(
-            taskID: taskID,
-            taskName: "performFetchWithCompletionHandler",
-            dateString: Date().toFullString(),
-            info: "System call"
-        )
-        persistenceStorage.setBackgroundExecution(backgroudExecution)
         switch gdManager.state {
         case .idle:
             idle(taskID: taskID, completionHandler: completionHandler)
@@ -127,14 +120,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     }
 
     private func idle(taskID: String, completionHandler: @escaping CompletionHandler) {
-        Logger.common(message: "completionHandler(.noData): idle", level: .info, category: .background)
-        let backgroudExecution = BackgroudExecution(
-            taskID: taskID,
-            taskName: "performFetchWithCompletionHandler",
-            dateString: Date().toFullString(),
-            info: "GuaranteedDeliveryManager.State.idle\ncompletionHandler(.noData)"
-        )
-        persistenceStorage.setBackgroundExecution(backgroudExecution)
+        Logger.common(message: "completionHandler(.noData): idle. taskID \(taskID)", level: .info, category: .background)
         completionHandler(.noData)
     }
 
@@ -143,14 +129,8 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
             Logger.common(message: "change.newValue \(String(describing: change.newValue))", level: .info, category: .background)
             let idleString = NSString(string: GuaranteedDeliveryManager.State.idle.rawValue)
             if change.newValue == idleString {
-                Logger.common(message: "completionHandler(.newData): delivering", level: .info, category: .background)
-                let backgroudExecution = BackgroudExecution(
-                    taskID: taskID,
-                    taskName: "performFetchWithCompletionHandler",
-                    dateString: Date().toFullString(),
-                    info: "Called after loop over GuaranteedDeliveryManager.State.delivering -> GuaranteedDeliveryManager.State.idle\ncompletionHandler(.newData)"
-                )
-                self?.persistenceStorage.setBackgroundExecution(backgroudExecution)
+                Logger.common(message: "completionHandler(.newData): delivering. taskID \(taskID)", level: .info, category: .background)
+                
                 self?.observationToken?.invalidate()
                 self?.observationToken = nil
                 completionHandler(.newData)
@@ -159,14 +139,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     }
 
     private func waitingForRetry(taskID: String, completionHandler: @escaping CompletionHandler) {
-        Logger.common(message: "completionHandler(.newData): waitingForRetry", level: .info, category: .background)
-        let backgroudExecution = BackgroudExecution(
-            taskID: taskID,
-            taskName: "performFetchWithCompletionHandler",
-            dateString: Date().toFullString(),
-            info: "GuaranteedDeliveryManager.State.waitingForRetry\ncompletionHandler(.newData)"
-        )
-        persistenceStorage.setBackgroundExecution(backgroudExecution)
+        Logger.common(message: "completionHandler(.newData): waitingForRetry. taskID \(taskID)", level: .info, category: .background)
         completionHandler(.newData)
     }
 }
