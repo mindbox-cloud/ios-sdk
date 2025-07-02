@@ -16,8 +16,9 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
     private let backgroundsExecutionKey = "backgroundExecution"
     private let backgroundExecutionPlistName = "BackgroundExecution.plist"
 
+    // TODO: Replace “X.Y.Z” with the actual SDK version when this migration ships
     var description: String {
-        "Migration removes background task data"
+        "Migration removes background task data. Starting with SDK X.Y.Z."
     }
 
     var isNeeded: Bool {
