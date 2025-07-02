@@ -27,8 +27,6 @@ protocol PersistenceStorage: AnyObject {
 
     var configuration: MBConfiguration? { get set }
 
-    var backgroundExecutions: [BackgroudExecution] { get }
-
     var isNotificationsEnabled: Bool? { get set }
 
     @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
@@ -39,12 +37,6 @@ protocol PersistenceStorage: AnyObject {
     var handledlogRequestIds: [String]? { get set }
 
     var imageLoadingMaxTimeInSeconds: Double? { get set }
-
-    func setBackgroundExecution(_ value: BackgroudExecution)
-
-    func resetBackgroundExecutions()
-
-    func storeToFileBackgroundExecution()
 
     var onDidChange: (() -> Void)? { get set }
 
@@ -79,7 +71,6 @@ extension PersistenceStorage {
         shownInappsDictionary = nil
         handledlogRequestIds = nil
         userVisitCount = 0
-        resetBackgroundExecutions()
     }
 }
 
@@ -97,6 +88,5 @@ extension PersistenceStorage {
         configuration = nil
         isNotificationsEnabled = nil
         configDownloadDate = nil
-        resetBackgroundExecutions()
     }
 }
