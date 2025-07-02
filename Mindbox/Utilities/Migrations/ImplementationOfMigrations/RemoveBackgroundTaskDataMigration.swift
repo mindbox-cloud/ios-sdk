@@ -24,9 +24,14 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
         
         let userDefaultsDeleteNeeded = userDefaultsSuite.value(forKey: backgroundsExecutionKey) != nil
         
-        let fileURL = fileManager
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(backgroundExecutionPlistName)
+        guard let documentsURL = fileManager
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first
+        else {
+            return userDefaultsDeleteNeeded
+        }
+        
+        let fileURL = documentsURL.appendingPathComponent(backgroundExecutionPlistName)
         
         return userDefaultsDeleteNeeded || fileManager.fileExists(atPath: fileURL.path)
     }
@@ -38,9 +43,12 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
     func run() throws {
         userDefaultsSuite.removeObject(forKey: backgroundsExecutionKey)
         
-        let fileURL = fileManager
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(backgroundExecutionPlistName)
+        guard let documentsURL = fileManager
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first
+        else { return }
+        
+        let fileURL = documentsURL.appendingPathComponent(backgroundExecutionPlistName)
         
         // If file doesn't exist - will throw error `No such file or directory`
         try? fileManager.removeItem(at: fileURL)
