@@ -114,6 +114,11 @@ extension MBContainer {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppTrackingService(persistenceStorage: persistenceStorage)
         }
+        
+        register(InappScheduleManagerProtocol.self) {
+            let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
+            return InappScheduleManager(presentationManager: presentationManager)
+        }
 
         return self
     }

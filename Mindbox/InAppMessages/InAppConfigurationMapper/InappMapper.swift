@@ -154,6 +154,7 @@ class InappMapper: InappMapperProtocol {
                         let firstImageValue = imageValues.first ?? ""
                         formData = InAppFormData(inAppId: inapp.inAppId,
                                                  isPriority: inapp.isPriority,
+                                                 delayTime: inapp.delayTime,
                                                  imagesDict: imageDict,
                                                  firstImageValue: firstImageValue,
                                                  content: inapp.content,

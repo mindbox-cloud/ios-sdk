@@ -13,6 +13,7 @@ import UIKit
 struct InAppFormData {
     let inAppId: String
     let isPriority: Bool
+    let delayTime: String?
     let imagesDict: [String: UIImage]
     let firstImageValue: String
     let content: MindboxFormVariant
@@ -22,6 +23,7 @@ struct InAppFormData {
 struct InAppTransitionData: Equatable {
     let inAppId: String
     let isPriority: Bool
+    let delayTime: String?
     let content: MindboxFormVariant
     let frequency: InappFrequency?
 }

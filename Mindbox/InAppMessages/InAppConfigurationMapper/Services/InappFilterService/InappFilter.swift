@@ -72,6 +72,7 @@ final class InappsFilterService: InappFilterProtocol {
             if let inAppFormVariants = inapp.form.variants.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    isPriority: inapp.isPriority,
+                                                   delayTime: inapp.delayTime,
                                                    content: inAppFormVariants,
                                                    frequency: inapp.frequency)
                 filteredInAppsByEvent.append(formData)
