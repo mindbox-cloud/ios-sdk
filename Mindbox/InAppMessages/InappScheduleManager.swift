@@ -61,9 +61,20 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         
         queue.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
-    
+
     func cancelAllScheduledInApps() {
-        
+        queue.async {
+            let currentTime = Date().timeIntervalSince1970
+            let expiredKeys = self.inappsByPresentationTime.keys.filter { $0 <= currentTime }
+            
+            for key in expiredKeys {
+                if let scheduledList = self.inappsByPresentationTime[key] {
+                    scheduledList.forEach { $0.workItem.cancel() }
+                }
+                self.inappsByPresentationTime.removeValue(forKey: key)
+                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key)", level: .info, category: .inAppMessages)
+            }
+        }
     }
 }
 
