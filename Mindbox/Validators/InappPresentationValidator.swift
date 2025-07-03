@@ -20,7 +20,9 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         self.persistenceStorage = persistenceStorage
     }
     
-    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool { 
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
+        
         if isPriority {
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()

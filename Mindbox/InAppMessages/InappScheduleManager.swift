@@ -24,12 +24,15 @@ protocol InappScheduleManagerProtocol {
 final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let presentationManager: InAppPresentationManagerProtocol
+    let presentationValidator: InAppPresentationValidatorProtocol
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
-    init(presentationManager: InAppPresentationManagerProtocol) {
+    init(presentationManager: InAppPresentationManagerProtocol,
+         presentationValidator: InAppPresentationValidatorProtocol) {
         self.presentationManager = presentationManager
+        self.presentationValidator = presentationValidator
     }
     
     weak var delegate: InAppMessagesDelegate?
@@ -43,7 +46,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             DispatchQueue.main.sync {
                     guard UIApplication.shared.applicationState == .active else { return }
                 }
-            self?.tryPresentFromDateGroup(presentationTime)
+            self?.showEligibleInapp(presentationTime)
         }
         
         let scheduledInapp = ScheduledInapp(inapp: inapp, workItem: workItem)
@@ -55,11 +58,33 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         
         queue.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
-
 }
 
-extension InappScheduleManager {
-    private func getDelay(_ time: String?) -> TimeInterval {
+internal extension InappScheduleManager {
+    func showEligibleInapp(_ presentationTime: TimeInterval) {
+        guard let scheduledInapps = inappsByPresentationTime[presentationTime] else {
+            // TODO: - May be should add log here
+            return
+        }
+
+        let sortedScheduledInapps = scheduledInapps.sorted {
+            $0.inapp.isPriority && !$1.inapp.isPriority
+        }
+        
+        for inapp in sortedScheduledInapps {
+            if presentationValidator.canPresentInApp(isPriority: inapp.inapp.isPriority, frequency: inapp.inapp.frequency, id: inapp.inapp.inAppId) {
+                inappsByPresentationTime.removeValue(forKey: presentationTime)
+                presentInapp(inapp.inapp)
+                break
+            }
+        }
+    }
+    
+    func presentInapp(_ inapp: InAppFormData) {
+
+    }
+    
+    func getDelay(_ time: String?) -> TimeInterval {
         let delayTimeStr = time
         let delayMilisec = (try? delayTimeStr?.parseTimeSpanToMillis()) ?? 0
         return TimeInterval(delayMilisec)
