@@ -36,20 +36,25 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
         self.trackingService = trackingService
+        addObserver()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     weak var delegate: InAppMessagesDelegate?
     
     func scheduleInApp(_ inapp: InAppFormData) {
         let delay = getDelay(inapp.delayTime)
-        let presentationTime = Date().timeIntervalSince1970 + delay
+        let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
         let workItem = DispatchWorkItem { [weak self] in
             // TODO: - Should i check other states?
-            DispatchQueue.main.sync {
+            DispatchQueue.main.async {
                 guard UIApplication.shared.applicationState == .active else { return }
+                self?.showEligibleInapp(presentationTime)
             }
-            self?.showEligibleInapp(presentationTime)
         }
         
         let scheduledInapp = ScheduledInapp(inapp: inapp, workItem: workItem)
@@ -59,9 +64,9 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime) priority=\(inapp.isPriority)")
         }
         
-        queue.asyncAfter(deadline: .now() + delay, execute: workItem)
+        self.queue.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
-
+    
     func cancelAllScheduledInApps() {
         queue.async {
             let currentTime = Date().timeIntervalSince1970
@@ -80,20 +85,22 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
 
 internal extension InappScheduleManager {
     func showEligibleInapp(_ presentationTime: TimeInterval) {
-        guard let scheduledInapps = inappsByPresentationTime[presentationTime], !scheduledInapps.isEmpty else {
-            // TODO: - May be should add log here
-            return
-        }
-        
-        let sortedScheduledInapps = scheduledInapps.sorted {
-            $0.inapp.isPriority && !$1.inapp.isPriority
-        }
-        
-        if let scheduled = sortedScheduledInapps.first(where: { presentationValidator.canPresentInApp(isPriority: $0.inapp.isPriority,
-                                                                                                      frequency: $0.inapp.frequency,
-                                                                                                      id: $0.inapp.inAppId)}) {
-            inappsByPresentationTime.removeValue(forKey: presentationTime)
-            presentInapp(scheduled.inapp)
+        queue.async {
+            guard let scheduledInapps = self.inappsByPresentationTime[presentationTime], !scheduledInapps.isEmpty else {
+                // TODO: - May be should add log here
+                return
+            }
+            
+            let sortedScheduledInapps = scheduledInapps.sorted {
+                $0.inapp.isPriority && !$1.inapp.isPriority
+            }
+            
+            if let scheduled = sortedScheduledInapps.first(where: { self.presentationValidator.canPresentInApp(isPriority: $0.inapp.isPriority,
+                                                                                                               frequency: $0.inapp.frequency,
+                                                                                                               id: $0.inapp.inAppId)}) {
+                self.inappsByPresentationTime.removeValue(forKey: presentationTime)
+                self.presentInapp(scheduled.inapp)
+            }
         }
     }
     
@@ -135,8 +142,39 @@ internal extension InappScheduleManager {
     
     func getDelay(_ time: String?) -> TimeInterval {
         let delayTimeStr = time
-        let delayMilisec = (try? delayTimeStr?.parseTimeSpanToMillis()) ?? 0
+        let delayMilisec = (try? delayTimeStr?.parseTimeSpanToSeconds()) ?? 0
         return TimeInterval(delayMilisec)
         // TODO: - Check later if there any difference between parse in milis / seconds
+    }
+    
+    func addObserver() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.checkExpiredInapps()
+        }
+    }
+    
+    func checkExpiredInapps() {
+        queue.async {
+            guard SessionTemporaryStorage.shared.isInitializationCalled else { return }
+            
+            if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
+                if configExpirationTime < Date() {
+                    self.cancelAllScheduledInApps()
+                    Logger.common(message: "[InappScheduleManager] Сессия истекла, отменяем все запланированные in-app сообщения", level: .info, category: .inAppMessages)
+                    return
+                }
+            }
+            
+            let now = Date().timeIntervalSince1970
+            // TODO: - Check <= or just < in filter
+            let expiredInapps = self.inappsByPresentationTime.keys.filter { $0 <= now }
+            if let earliestInapp = expiredInapps.min() {
+                self.showEligibleInapp(earliestInapp)
+            }
+        }
     }
 }
