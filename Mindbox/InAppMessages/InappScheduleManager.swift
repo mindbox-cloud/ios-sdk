@@ -25,14 +25,17 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
-    
+    let trackingService: InAppTrackingServiceProtocol
+
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
-         presentationValidator: InAppPresentationValidatorProtocol) {
+         presentationValidator: InAppPresentationValidatorProtocol,
+         trackingService: InAppTrackingServiceProtocol) {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
+        self.trackingService = trackingService
     }
     
     weak var delegate: InAppMessagesDelegate?
@@ -58,6 +61,10 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         
         queue.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
+    
+    func cancelAllScheduledInApps() {
+        
+    }
 }
 
 internal extension InappScheduleManager {
@@ -81,7 +88,39 @@ internal extension InappScheduleManager {
     }
     
     func presentInapp(_ inapp: InAppFormData) {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+        SessionTemporaryStorage.shared.lastInappClickedID = nil
 
+        Logger.common(message: "[InappScheduleManager] Показываем in-app \(inapp.inAppId)")
+
+        presentationManager.present(
+            inAppFormData: inapp,
+            onPresented: {
+                self.trackingService.trackInAppShown(id: inapp.inAppId)
+                self.trackingService.saveInappStateChange()
+            },
+            onTapAction: { [delegate] url, payload in
+                delegate?.inAppMessageTapAction(
+                    id: inapp.inAppId,
+                    url: url,
+                    payload: payload
+                )
+            },
+            onPresentationCompleted: { [delegate] in
+                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                delegate?.inAppMessageDismissed(id: inapp.inAppId)
+                self.trackingService.saveInappStateChange()
+            },
+            onError: { error in
+                if case .failedToLoadWindow = error {
+                    SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                    Logger.common(
+                        message: "[InappScheduleManager] Ошибка показа window",
+                        level: .debug, category: .inAppMessages
+                    )
+                }
+            }
+        )
     }
     
     func getDelay(_ time: String?) -> TimeInterval {
