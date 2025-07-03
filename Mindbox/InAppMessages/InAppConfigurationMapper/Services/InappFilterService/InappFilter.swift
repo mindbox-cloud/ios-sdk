@@ -72,7 +72,8 @@ final class InappsFilterService: InappFilterProtocol {
             if let inAppFormVariants = inapp.form.variants.first {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    isPriority: inapp.isPriority,
-                                                   content: inAppFormVariants)
+                                                   content: inAppFormVariants,
+                                                   frequency: inapp.frequency)
                 filteredInAppsByEvent.append(formData)
             }
         }
@@ -156,10 +157,10 @@ extension InappsFilterService {
 
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
         let shownInAppShowDatesDictionary = persistenceStorage.shownDatesByInApp ?? [:]
+        let frequencyValidator = self.createFrequencyValidator()
         Logger.common(message: "Shown in-apps ids: [\(shownInAppShowDatesDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
-            let frequencyValidator = self.createFrequencyValidator()
-            let result = frequencyValidator.isValid(item: $0)
+            let result = frequencyValidator.isValid(frequency: $0.frequency, id: $0.id)
             return result
         }
 

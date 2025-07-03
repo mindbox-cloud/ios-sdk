@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
-    func canPresentInApp(isPriority: Bool) -> Bool
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
 }
 
 final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
@@ -20,7 +20,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         self.persistenceStorage = persistenceStorage
     }
     
-    func canPresentInApp(isPriority: Bool) -> Bool {
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool { 
         if isPriority {
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()
@@ -37,7 +37,8 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         return isNotPresentingAnotherInApp() &&
                isUnderSessionLimit() &&
                isUnderDailyLimit() &&
-               hasElapsedMinimumIntervalBetweenInApps()
+               hasElapsedMinimumIntervalBetweenInApps() &&
+               isValidFrequency(frequency: frequency, id: id)
     }
     
     func isNotPresentingAnotherInApp() -> Bool {
@@ -117,6 +118,11 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             Show allowed: \(isAllowed)
             """)
         return isAllowed
+    }
+    
+    func isValidFrequency(frequency: InappFrequency?, id: String) -> Bool {
+        let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
+        return frequencyValidator.isValid(frequency: frequency, id: id)
     }
     
     private func getShownInappsTodayCount() -> Int {

@@ -16,10 +16,12 @@ struct InAppFormData {
     let imagesDict: [String: UIImage]
     let firstImageValue: String
     let content: MindboxFormVariant
+    let frequency: InappFrequency?
 }
 
 struct InAppTransitionData: Equatable {
     let inAppId: String
     let isPriority: Bool
     let content: MindboxFormVariant
+    let frequency: InappFrequency?
 }
