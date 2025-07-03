@@ -26,7 +26,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
     let trackingService: InAppTrackingServiceProtocol
-
+    
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
@@ -47,8 +47,8 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         let workItem = DispatchWorkItem { [weak self] in
             // TODO: - Should i check other states?
             DispatchQueue.main.sync {
-                    guard UIApplication.shared.applicationState == .active else { return }
-                }
+                guard UIApplication.shared.applicationState == .active else { return }
+            }
             self?.showEligibleInapp(presentationTime)
         }
         
@@ -69,30 +69,29 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
 
 internal extension InappScheduleManager {
     func showEligibleInapp(_ presentationTime: TimeInterval) {
-        guard let scheduledInapps = inappsByPresentationTime[presentationTime] else {
+        guard let scheduledInapps = inappsByPresentationTime[presentationTime], !scheduledInapps.isEmpty else {
             // TODO: - May be should add log here
             return
         }
-
+        
         let sortedScheduledInapps = scheduledInapps.sorted {
             $0.inapp.isPriority && !$1.inapp.isPriority
         }
         
-        for inapp in sortedScheduledInapps {
-            if presentationValidator.canPresentInApp(isPriority: inapp.inapp.isPriority, frequency: inapp.inapp.frequency, id: inapp.inapp.inAppId) {
-                inappsByPresentationTime.removeValue(forKey: presentationTime)
-                presentInapp(inapp.inapp)
-                break
-            }
+        if let scheduled = sortedScheduledInapps.first(where: { presentationValidator.canPresentInApp(isPriority: $0.inapp.isPriority,
+                                                                                                      frequency: $0.inapp.frequency,
+                                                                                                      id: $0.inapp.inAppId)}) {
+            inappsByPresentationTime.removeValue(forKey: presentationTime)
+            presentInapp(scheduled.inapp)
         }
     }
     
     func presentInapp(_ inapp: InAppFormData) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
-
+        
         Logger.common(message: "[InappScheduleManager] Показываем in-app \(inapp.inAppId)")
-
+        
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
@@ -130,4 +129,3 @@ internal extension InappScheduleManager {
         // TODO: - Check later if there any difference between parse in milis / seconds
     }
 }
-
