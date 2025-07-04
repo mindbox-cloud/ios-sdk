@@ -128,24 +128,6 @@ final class InappScheduleManagerTests: XCTestCase {
         wait(for: [presentationExpectation], timeout: 3)
     }
     
-    
-    func test_scheduleInApp_withMultipleInAppsOnSameTime_schedulesCorrectly() {
-        // Given
-        let inapp1 = createInAppFormData(id: "test1", isPriority: true, delayTime: "00:00:05")
-        let inapp2 = createInAppFormData(id: "test2", isPriority: false, delayTime: "00:00:05")
-        
-        // When
-        scheduleManager.scheduleInApp(inapp1)
-        scheduleManager.scheduleInApp(inapp2)
-        
-        // Then
-        let expectation = XCTestExpectation(description: "Schedule multiple in-apps")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
-    }
-    
     func test_scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
         XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
@@ -196,6 +178,40 @@ final class InappScheduleManagerTests: XCTestCase {
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 1)
+    }
+    
+    func test_multipleInAppsOnSameTime_schedulesCorrectly_shownSecond() {
+        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
+        let inapp1 = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
+        let inapp2 = createInAppFormData(id: "2", isPriority: true, delayTime: "00:00:02")
+        let inapp3 = createInAppFormData(id: "3", isPriority: false, delayTime: "00:00:02")
+        
+        scheduleManager.scheduleInApp(inapp1)
+        
+        let scheduledInapp1 = ScheduledInapp(inapp: inapp1, workItem: DispatchWorkItem {})
+        let scheduledInapp2 = ScheduledInapp(inapp: inapp2, workItem: DispatchWorkItem {})
+        let scheduledInapp3 = ScheduledInapp(inapp: inapp3, workItem: DispatchWorkItem {})
+        
+        let expectation = XCTestExpectation(description: "Schedule in-app")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let scheduledTime = self.scheduleManager.inappsByPresentationTime.first?.key {
+                self.scheduleManager.inappsByPresentationTime[scheduledTime] = [scheduledInapp1, scheduledInapp2, scheduledInapp3]
+            }
+
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 1)
+
+        let presentationExpectation = XCTestExpectation(description: "Present in-app")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 0)
+            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
+            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp2.inAppId)
+            presentationExpectation.fulfill()
+        }
+        
+        wait(for: [presentationExpectation], timeout: 4)
     }
     
     // MARK: - Helper Methods
