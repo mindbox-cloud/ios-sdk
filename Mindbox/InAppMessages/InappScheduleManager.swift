@@ -98,12 +98,14 @@ internal extension InappScheduleManager {
                 $0.inapp.isPriority && !$1.inapp.isPriority
             }
             
-            if let scheduled = sortedScheduledInapps.first(where: { self.presentationValidator.canPresentInApp(isPriority: $0.inapp.isPriority,
-                                                                                                               frequency: $0.inapp.frequency,
-                                                                                                               id: $0.inapp.inAppId)}) {
-                self.inappsByPresentationTime.removeValue(forKey: presentationTime)
-                self.presentInapp(scheduled.inapp)
+            if let firstInapp = sortedScheduledInapps.first,
+                self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
+                                                           frequency: firstInapp.inapp.frequency,
+                                                           id: firstInapp.inapp.inAppId) {
+                self.presentInapp(firstInapp.inapp)
             }
+            
+            self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
     
