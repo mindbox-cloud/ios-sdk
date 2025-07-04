@@ -373,6 +373,7 @@
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
 		F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */; };
+		F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32E536E2C3F2B05002C7CA0 /* DITests.swift */; };
@@ -975,6 +976,7 @@
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
 		F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTests.swift; sourceTree = "<group>"; };
+		F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManagerTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F32E536E2C3F2B05002C7CA0 /* DITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITests.swift; sourceTree = "<group>"; };
@@ -2167,6 +2169,7 @@
 				A179587F2978B3A800609E91 /* InAppResponseModelTests */,
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
 				F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */,
+				F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -3930,6 +3933,7 @@
 				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
 				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
+				F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
