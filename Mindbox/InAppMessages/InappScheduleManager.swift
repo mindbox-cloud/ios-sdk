@@ -52,7 +52,10 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         let workItem = DispatchWorkItem { [weak self] in
             // TODO: - Should i check other states?
             DispatchQueue.main.async {
-                guard UIApplication.shared.applicationState == .active else { return }
+                guard UIApplication.shared.applicationState == .active else {
+                    // TODO: - Add log here
+                    return
+                }
                 self?.showEligibleInapp(presentationTime)
             }
         }
@@ -61,7 +64,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         
         queue.async {
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
-            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime) priority=\(inapp.isPriority)")
+            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
         }
         
         self.queue.asyncAfter(deadline: .now() + delay, execute: workItem)
@@ -77,7 +80,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
                     scheduledList.forEach { $0.workItem.cancel() }
                 }
                 self.inappsByPresentationTime.removeValue(forKey: key)
-                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key)", level: .info, category: .inAppMessages)
+                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key.asReadableDateTime)", level: .info, category: .inAppMessages)
             }
         }
     }
@@ -108,7 +111,7 @@ internal extension InappScheduleManager {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         
-        Logger.common(message: "[InappScheduleManager] Показываем in-app \(inapp.inAppId)")
+        Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
         
         presentationManager.present(
             inAppFormData: inapp,
@@ -132,7 +135,7 @@ internal extension InappScheduleManager {
                 if case .failedToLoadWindow = error {
                     SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                     Logger.common(
-                        message: "[InappScheduleManager] Ошибка показа window",
+                        message: "[InappScheduleManager] Failed to show window",
                         level: .debug, category: .inAppMessages
                     )
                 }
@@ -164,7 +167,7 @@ internal extension InappScheduleManager {
             if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
                 if configExpirationTime < Date() {
                     self.cancelAllScheduledInApps()
-                    Logger.common(message: "[InappScheduleManager] Сессия истекла, отменяем все запланированные in-app сообщения", level: .info, category: .inAppMessages)
+                    Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .info, category: .inAppMessages)
                     return
                 }
             }

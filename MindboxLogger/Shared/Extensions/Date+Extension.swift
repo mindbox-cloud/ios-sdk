@@ -32,3 +32,12 @@ public extension Date {
         return dateFormatter.string(from: self)
     }
 }
+
+public extension TimeInterval {
+    var asReadableDateTime: String {
+        let date = Date(timeIntervalSince1970: self)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return dateFormatter.string(from: date)
+    }
+}
