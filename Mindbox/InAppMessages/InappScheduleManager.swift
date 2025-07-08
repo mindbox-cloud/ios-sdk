@@ -179,6 +179,10 @@ internal extension InappScheduleManager {
             let expiredInapps = self.inappsByPresentationTime.keys.filter { $0 <= now }
             if let earliestInapp = expiredInapps.min() {
                 self.showEligibleInapp(earliestInapp)
+                
+                for expiredInapp in expiredInapps where expiredInapp != earliestInapp {
+                    self.inappsByPresentationTime.removeValue(forKey: expiredInapp)
+                }
             }
         }
     }
