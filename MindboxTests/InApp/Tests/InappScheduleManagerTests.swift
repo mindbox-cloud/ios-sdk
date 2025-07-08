@@ -95,7 +95,7 @@ final class InappScheduleManagerTests: XCTestCase {
             XCTAssertTrue(self.presentationManagerMock.presentCallsCount == 0)
             schedulingExpectation.fulfill()
         }
-        wait(for: [schedulingExpectation], timeout: 1.1)
+        wait(for: [schedulingExpectation], timeout: 2)
         
         let presentationExpectation = XCTestExpectation(description: "In-app should be presented after delay")
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {

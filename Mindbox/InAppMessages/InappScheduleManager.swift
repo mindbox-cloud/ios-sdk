@@ -50,10 +50,9 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
         let workItem = DispatchWorkItem { [weak self] in
-            // TODO: - Should i check other states?
             DispatchQueue.main.async {
                 guard UIApplication.shared.applicationState == .active else {
-                    // TODO: - Add log here
+                    Logger.common(message: "[InappScheduleManager] Skipping presentation of \(inapp.inAppId) because app is not active")
                     return
                 }
                 self?.showEligibleInapp(presentationTime)
@@ -80,7 +79,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
                     scheduledList.forEach { $0.workItem.cancel() }
                 }
                 self.inappsByPresentationTime.removeValue(forKey: key)
-                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key.asReadableDateTime)", level: .info, category: .inAppMessages)
+                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key.asReadableDateTime)", level: .debug, category: .inAppMessages)
             }
         }
     }
@@ -90,7 +89,6 @@ internal extension InappScheduleManager {
     func showEligibleInapp(_ presentationTime: TimeInterval) {
         queue.async {
             guard let scheduledInapps = self.inappsByPresentationTime[presentationTime], !scheduledInapps.isEmpty else {
-                // TODO: - May be should add log here
                 return
             }
             
@@ -147,9 +145,8 @@ internal extension InappScheduleManager {
     
     func getDelay(_ time: String?) -> TimeInterval {
         let delayTimeStr = time
-        let delayMilisec = (try? delayTimeStr?.parseTimeSpanToSeconds()) ?? 0
-        return TimeInterval(delayMilisec)
-        // TODO: - Check later if there any difference between parse in milis / seconds
+        let delayMilis = (try? delayTimeStr?.parseTimeSpanToMillis()) ?? 0
+        return TimeInterval(delayMilis) / 1000
     }
     
     func addObserver() {
@@ -169,13 +166,12 @@ internal extension InappScheduleManager {
             if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
                 if configExpirationTime < Date() {
                     self.cancelAllScheduledInApps()
-                    Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .info, category: .inAppMessages)
+                    Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .debug, category: .inAppMessages)
                     return
                 }
             }
             
             let now = Date().timeIntervalSince1970
-            // TODO: - Check <= or just < in filter
             let expiredInapps = self.inappsByPresentationTime.keys.filter { $0 <= now }
             if let earliestInapp = expiredInapps.min() {
                 self.showEligibleInapp(earliestInapp)

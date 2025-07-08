@@ -20,6 +20,7 @@ struct InAppFormData {
     let frequency: InappFrequency?
 }
 
+// TODO: - Need to remove this struct and use only InappFormData.
 struct InAppTransitionData: Equatable {
     let inAppId: String
     let isPriority: Bool
