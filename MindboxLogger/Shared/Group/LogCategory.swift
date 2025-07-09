@@ -21,6 +21,7 @@ public enum LogCategory: String, CaseIterable {
     case visit
     case migration
     case inAppMessages
+    case webViewInAppMessages
 
     var emoji: String {
         switch self {
@@ -46,6 +47,8 @@ public enum LogCategory: String, CaseIterable {
             return "🖼️"
         case .pushTokenKeepalive:
             return "🧟"
+        case .webViewInAppMessages:
+            return "🕸️"
         }
     }
 }

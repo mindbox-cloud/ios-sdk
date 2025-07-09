@@ -35,7 +35,22 @@ final class LayersFilterService: LayersFilterProtocol {
                     let action = try actionFilter.filter(imageContentBackgroundLayerDTO.action)
                     let source = try sourceFilter.filter(imageContentBackgroundLayerDTO.source)
                     let imageLayer = ImageContentBackgroundLayer(action: action, source: source)
-                    let newLayer = try ContentBackgroundLayer(type: layer.layerType, imageLayer: imageLayer)
+                    let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: imageLayer)
+                    filteredLayers.append(newLayer)
+                case .webview(let webviewContentBackgroundLayerDTO):
+                    let baseUrl = webviewContentBackgroundLayerDTO.baseUrl
+                    let contentUrl = webviewContentBackgroundLayerDTO.contentUrl
+                    let payload = webviewContentBackgroundLayerDTO.payload
+                    let redirectUrl = webviewContentBackgroundLayerDTO.redirectUrl
+                    let wizardId = webviewContentBackgroundLayerDTO.wizardId
+                    let webviewLayer = WebviewContentBackgroundLayer(
+                        baseUrl: baseUrl,
+                        contentUrl: contentUrl,
+                        redirectUrl: redirectUrl,
+                        payload: payload,
+                        wizardId: wizardId
+                    )
+                    let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: webviewLayer)
                     filteredLayers.append(newLayer)
                 case .unknown:
                     Logger.common(message: "Unknown type of layer. Layer will be skipped.", level: .debug, category: .inAppMessages)
