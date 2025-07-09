@@ -64,27 +64,18 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
         configManager: InAppConfigurationManagerProtocol,
-        presentationManager: InAppPresentationManagerProtocol,
-        persistenceStorage: PersistenceStorage,
-        presentationValidator: InAppPresentationValidatorProtocol,
-        inappTrackingService: InAppTrackingServiceProtocol,
+        inappScheduler: InappScheduleManagerProtocol,
         serialQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.InAppCoreManager.eventsQueue")
     ) {
         self.configManager = configManager
-        self.presentationManager = presentationManager
-        self.persistenceStorage = persistenceStorage
-        self.presentationValidator = presentationValidator
         self.serialQueue = serialQueue
-        self.inappTrackingService = inappTrackingService
+        self.inappScheduler = inappScheduler
     }
 
     weak var delegate: InAppMessagesDelegate?
 
     private let configManager: InAppConfigurationManagerProtocol
-    private let presentationManager: InAppPresentationManagerProtocol
-    private let persistenceStorage: PersistenceStorage
-    private let presentationValidator: InAppPresentationValidatorProtocol
-    private let inappTrackingService: InAppTrackingServiceProtocol
+    private let inappScheduler: InappScheduleManagerProtocol
     private var isConfigurationReady = false
     private var isInAppManagerLaunched: Bool = false
     private let serialQueue: DispatchQueue
@@ -165,43 +156,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
-        Logger.common(message: "[PresentationValidator] Checking if can present in-app with id: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-        guard presentationValidator.canPresentInApp(isPriority: inapp.isPriority) else {
-            completion()
-            return
-        }
-
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        SessionTemporaryStorage.shared.lastInappClickedID = nil
-        Logger.common(message: "In-app with id \(inapp.inAppId) is going to be shown", level: .debug, category: .inAppMessages)
-        
-        presentationManager.present(
-            inAppFormData: inapp,
-            onPresented: {
-                self.serialQueue.async {
-                    self.inappTrackingService.trackInAppShown(id: inapp.inAppId)
-                    self.inappTrackingService.saveInappStateChange()
-                }
-            },
-            onTapAction: { [delegate] url, payload in
-                delegate?.inAppMessageTapAction(id: inapp.inAppId, url: url, payload: payload)
-            },
-            onPresentationCompleted: { [delegate] in
-                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                delegate?.inAppMessageDismissed(id: inapp.inAppId)
-                self.inappTrackingService.saveInappStateChange()
-            },
-            onError: { error in
-                switch error {
-                    case .failedToLoadWindow:
-                        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                        Logger.common(message: "Failed to present window", level: .debug, category: .inAppMessages)
-                    default:
-                        break
-                }
-            }
-        )
-        
+        inappScheduler.scheduleInApp(inapp)
         completion()
     }
 

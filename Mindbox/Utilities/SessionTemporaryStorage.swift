@@ -36,6 +36,7 @@ final class SessionTemporaryStorage {
     var expiredConfigSession: String?
     var isUserVisitSaved = false
     var inAppSettings: Settings.InAppSettings?
+    var configSessionExpirationTime: Date?
 
     private init() {}
 
@@ -54,6 +55,7 @@ final class SessionTemporaryStorage {
         isUserVisitSaved = false
         lastInappClickedID = nil
         inAppSettings = nil
+        configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
     }
 }
