@@ -9,27 +9,25 @@
 import Foundation
 import MindboxLogger
 
-class InappFrequencyValidator: Validator {
-    typealias T = InApp
-
+class InappFrequencyValidator {
     let persistenceStorage: PersistenceStorage
 
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
 
-    func isValid(item: InApp) -> Bool {
-        guard let frequency = item.frequency else {
+    func isValid(frequency: InappFrequency?, id: String) -> Bool {
+        guard let frequency = frequency else {
             return false
         }
 
         switch frequency {
             case .periodic(let periodicFrequency):
                 let validator = PeriodicFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: periodicFrequency, id: item.id)
+                return validator.isValid(item: periodicFrequency, id: id)
             case .once(let onceFrequency):
                 let validator = OnceFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: onceFrequency, id: item.id)
+                return validator.isValid(item: onceFrequency, id: id)
             case .unknown:
                 return false
         }

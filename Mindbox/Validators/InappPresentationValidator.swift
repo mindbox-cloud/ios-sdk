@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
-    func canPresentInApp(isPriority: Bool) -> Bool
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
 }
 
 final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
@@ -20,7 +20,9 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         self.persistenceStorage = persistenceStorage
     }
     
-    func canPresentInApp(isPriority: Bool) -> Bool {
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
+        
         if isPriority {
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()
@@ -37,7 +39,8 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         return isNotPresentingAnotherInApp() &&
                isUnderSessionLimit() &&
                isUnderDailyLimit() &&
-               hasElapsedMinimumIntervalBetweenInApps()
+               hasElapsedMinimumIntervalBetweenInApps() &&
+               isValidFrequency(frequency: frequency, id: id)
     }
     
     func isNotPresentingAnotherInApp() -> Bool {
@@ -50,38 +53,38 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     
     func isUnderSessionLimit() -> Bool {
         guard let maxInappsPerSession = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession else {
-            Logger.common(message: "[PresentationValidator] No session inapp limit specified", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [Session] No session inapp limit specified", level: .info, category: .inAppMessages)
             return true
         }
         
         guard maxInappsPerSession > 0 else {
-            Logger.common(message: "[PresentationValidator] Session inapp limit is not positive (\(maxInappsPerSession)), treating as no limit", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [Session] Inapp limit is not positive (\(maxInappsPerSession)), treating as no limit", level: .info, category: .inAppMessages)
             return true
         }
         
         let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
         let isAllowed = maxInappsPerSession > currentShownCount
         
-        Logger.common(message: "[PresentationValidator] Inapp shown in session count: \(currentShownCount), limit: \(maxInappsPerSession), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
+        Logger.common(message: "[PresentationValidator] [Session] Inapp shown in session count: \(currentShownCount), limit: \(maxInappsPerSession), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
         
         return isAllowed
     }
     
     func isUnderDailyLimit() -> Bool {
         guard let maxInappsPerDay = SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerDay else {
-            Logger.common(message: "[PresentationValidator] No daily inapp limit specified", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [Daily] No daily inapp limit specified", level: .info, category: .inAppMessages)
             return true
         }
         
         guard maxInappsPerDay > 0 else {
-            Logger.common(message: "[PresentationValidator] Daily inapp limit is not positive (\(maxInappsPerDay)), treating as no limit", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [Daily] Inapp limit is not positive (\(maxInappsPerDay)), treating as no limit", level: .info, category: .inAppMessages)
             return true
         }
         
         let shownInappsToday = getShownInappsTodayCount()
         let isAllowed = maxInappsPerDay > shownInappsToday
         
-        Logger.common(message: "[PresentationValidator] Total in-app shows today count: \(shownInappsToday), limit: \(maxInappsPerDay), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
+        Logger.common(message: "[PresentationValidator] [Daily] Total in-app shows today count: \(shownInappsToday), limit: \(maxInappsPerDay), Show allowed: \(isAllowed)", level: .info, category: .inAppMessages)
         
         return isAllowed
     }
@@ -89,17 +92,17 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     func hasElapsedMinimumIntervalBetweenInApps() -> Bool {
         guard let minIntervalString = SessionTemporaryStorage.shared.inAppSettings?.minIntervalBetweenShows,
               let minIntervalSeconds = try? minIntervalString.parseTimeSpanToSeconds() else {
-            Logger.common(message: "[PresentationValidator] minIntervalBetweenShows not set or invalid, skipping interval check", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [minInterval] minIntervalBetweenShows not set or invalid, skipping interval check", level: .info, category: .inAppMessages)
             return true
         }
         
         guard minIntervalSeconds > 0 else {
-            Logger.common(message: "[PresentationValidator] minIntervalBetweenShows is \(minIntervalSeconds), skipping interval check", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [minInterval] minIntervalBetweenShows is \(minIntervalSeconds), skipping interval check", level: .info, category: .inAppMessages)
             return true
         }
         
         guard let lastInappStateChangeDate = persistenceStorage.lastInappStateChangeDate else {
-            Logger.common(message: "[PresentationValidator] lastInappStateChangeDate is nil, allow show", level: .info, category: .inAppMessages)
+            Logger.common(message: "[PresentationValidator] [minInterval] lastInappStateChangeDate is nil, allow show", level: .info, category: .inAppMessages)
             return true
         }
         
@@ -109,7 +112,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
         let isAllowed = nextAllowedShowTime < now
         
         Logger.common(message: """
-            [PresentationValidator] 
+            [PresentationValidator] [minInterval]
             lastInappStateChangeDate: \(lastInappStateChangeDate.asDateTimeWithSeconds)
             minInterval: \(minInterval)s
             nextAllowedShowTime: \(nextAllowedShowTime.asDateTimeWithSeconds)
@@ -117,6 +120,11 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             Show allowed: \(isAllowed)
             """)
         return isAllowed
+    }
+    
+    func isValidFrequency(frequency: InappFrequency?, id: String) -> Bool {
+        let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
+        return frequencyValidator.isValid(frequency: frequency, id: id)
     }
     
     private func getShownInappsTodayCount() -> Int {

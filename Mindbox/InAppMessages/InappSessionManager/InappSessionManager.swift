@@ -14,8 +14,9 @@ protocol InappSessionManagerProtocol {
 }
 
 final class InappSessionManager: InappSessionManagerProtocol {
+    
     var lastTrackVisitTimestamp: Date?
-
+    
     private let inappCoreManager: InAppCoreManagerProtocol
     private let inappConfigManager: InAppConfigurationManagerProtocol
     private let targetingChecker: TargetingCheckerEraseProtocol
@@ -124,6 +125,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
         if let lastTrackVisitTimestamp = lastTrackVisitTimestamp,
            let sessionTimeInSeconds = self.getConfigSession(), sessionTimeInSeconds > 0 {
             let expirationDate = lastTrackVisitTimestamp.addingTimeInterval(sessionTimeInSeconds)
+            SessionTemporaryStorage.shared.configSessionExpirationTime = expirationDate
             Logger.common(message: "[InappSessionManager] Nearest session expiration time is \(expirationDate.asDateTimeWithSeconds).")
         }
     }

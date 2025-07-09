@@ -379,6 +379,7 @@
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
 		F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */; };
+		F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32E536E2C3F2B05002C7CA0 /* DITests.swift */; };
@@ -508,6 +509,7 @@
 		F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */; };
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
+		F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */; };
 		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
 		F3A49BF52DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */; };
 		F3A49BF62DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */; };
@@ -989,6 +991,7 @@
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
 		F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTests.swift; sourceTree = "<group>"; };
+		F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManagerTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F32E536E2C3F2B05002C7CA0 /* DITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITests.swift; sourceTree = "<group>"; };
@@ -1118,6 +1121,7 @@
 		F39B67AB2A3C7315005C0CCA /* MockImageDownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockImageDownloadService.swift; sourceTree = "<group>"; };
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
+		F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManager.swift; sourceTree = "<group>"; };
 		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
 		F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsError.json; sourceTree = "<group>"; };
 		F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerDay.json; sourceTree = "<group>"; };
@@ -2110,6 +2114,7 @@
 				9B24FAAF28C74BB700F10B5D /* Configuration */,
 				9B24FAB328C751CB00F10B5D /* Images */,
 				F34975692DEF2C8400BEC667 /* InappTrackingService.swift */,
+				F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */,
 			);
 			path = InAppMessages;
 			sourceTree = "<group>";
@@ -2189,6 +2194,7 @@
 				A179587F2978B3A800609E91 /* InAppResponseModelTests */,
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
 				F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */,
+				F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -3635,6 +3641,7 @@
 				6FDD145B266F7CC300A50C35 /* ContentTypeResponse.swift in Sources */,
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */,
+				F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				F34975382DEE2C6A00BEC667 /* MigrationShownInAppsDictionary.swift in Sources */,
 				4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */,
@@ -3960,6 +3967,7 @@
 				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
 				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
+				F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,

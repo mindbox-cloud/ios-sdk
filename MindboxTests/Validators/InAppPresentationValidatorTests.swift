@@ -186,18 +186,24 @@ final class InAppPresentationValidatorTests: XCTestCase {
     func test_canPresentInApp_whenAllChecksPass_returnsTrue() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertTrue(validator.canPresentInApp(isPriority: false))
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        XCTAssertTrue(validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3"))
     }
     
     func test_canPresentInApp_whenIsPresenting_returnsFalse() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        XCTAssertFalse(validator.canPresentInApp(isPriority: false))
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        XCTAssertFalse(validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "1"))
     }
     
     func test_canPresentInApp_whenSessionLimitReached_returnsFalse() {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
-        XCTAssertFalse(validator.canPresentInApp(isPriority: false))
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        XCTAssertFalse(validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3"))
     }
     
     // MARK: - hasElapsedMinimumIntervalBetweenInApps tests
@@ -278,13 +284,17 @@ final class InAppPresentationValidatorTests: XCTestCase {
     
     func test_canPresentInApp_whenIsPriorityAndNotPresenting_returnsTrue() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "1")
         XCTAssertTrue(result)
     }
     
     func test_canPresentInApp_whenIsPriorityAndPresenting_returnsFalse() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "1")
         XCTAssertFalse(result)
     }
     
@@ -292,7 +302,9 @@ final class InAppPresentationValidatorTests: XCTestCase {
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 2, maxInappsPerDay: 5, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "3")
         XCTAssertTrue(result)
     }
     
@@ -305,7 +317,9 @@ final class InAppPresentationValidatorTests: XCTestCase {
             "2": [Date()]
         ]
         
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "3")
         XCTAssertTrue(result)
     }
     
@@ -314,7 +328,9 @@ final class InAppPresentationValidatorTests: XCTestCase {
         SessionTemporaryStorage.shared.sessionShownInApps = []
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         persistenceStorage.lastInappStateChangeDate = Date() // Recent change
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "1")
         XCTAssertTrue(result)
     }
     
@@ -327,7 +343,9 @@ final class InAppPresentationValidatorTests: XCTestCase {
             "2": [Date()]
         ]
         persistenceStorage.lastInappStateChangeDate = Date()
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "3")
         XCTAssertTrue(result)
     }
     
@@ -340,7 +358,40 @@ final class InAppPresentationValidatorTests: XCTestCase {
             "2": [Date()]
         ]
         persistenceStorage.lastInappStateChangeDate = Date()
-        let result = validator.canPresentInApp(isPriority: true)
+        let onceFrequency = OnceFrequency(kind: .session)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: true, frequency: inappFrequency, id: "3")
         XCTAssertFalse(result)
+    }
+    
+    // MARK: - Frequency validation tests
+    
+    func test_canPresentInApp_withNilFrequency_returnsFalse() {
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        let result = validator.canPresentInApp(isPriority: false, frequency: nil, id: "3")
+        XCTAssertFalse(result)
+    }
+    
+    func test_canPresentInApp_withUnknownFrequency_returnsFalse() {
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        let inappFrequency: InappFrequency = .unknown
+        let result = validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3")
+        XCTAssertFalse(result)
+    }
+    
+    func test_canPresentInApp_withPeriodicFrequency_returnsTrue() {
+        SessionTemporaryStorage.shared.sessionShownInApps = ["1", "2"]
+        let periodicFrequency = PeriodicFrequency(unit: .days, value: 1)
+        let inappFrequency: InappFrequency = .periodic(periodicFrequency)
+        persistenceStorage.shownDatesByInApp = ["3": [Date(timeIntervalSince1970: 0)]]
+        let result = validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3")
+        XCTAssertTrue(result)
+    }
+    
+    func test_canPresentInApp_withLifetimeFrequency_returnsTrue() {
+        let onceFrequency = OnceFrequency(kind: .lifetime)
+        let inappFrequency: InappFrequency = .once(onceFrequency)
+        let result = validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3")
+        XCTAssertTrue(result)
     }
 }
