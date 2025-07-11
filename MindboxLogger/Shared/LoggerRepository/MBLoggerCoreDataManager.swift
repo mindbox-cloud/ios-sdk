@@ -8,7 +8,9 @@
 
 import Foundation
 import CoreData
+#if canImport(UIKit)
 import UIKit.UIApplication
+#endif
 
 public class MBLoggerCoreDataManager {
     
@@ -27,33 +29,19 @@ public class MBLoggerCoreDataManager {
     }
 
     private var logBuffer: [LogMessage]
-    private let isAppExtension: Bool
     private let queue: DispatchQueue
+    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+    private var writesImmediately = false
 
     private var writeCount = 0 {
         didSet {
-            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !isAppExtension {
+            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !writesImmediately {
                 writeCount = 0
                 checkDatabaseSizeAndDeleteIfNeeded()
             }
         }
     }
-
-    private lazy var bufferPersistenceStrategy: () -> Void = {
-        if isAppExtension {
-            return { [weak self] in
-                self?.writeBufferToCoreData()
-            }
-        } else {
-            return { [weak self] in
-                guard let self = self else { return }
-                if self.logBuffer.count >= Constants.batchSize {
-                    self.writeBufferToCoreData()
-                }
-            }
-        }
-    }()
-
+    
     // MARK: CoreData objects
 
     private lazy var persistentContainer: MBPersistentContainer = {
@@ -101,12 +89,10 @@ public class MBLoggerCoreDataManager {
 
     // MARK: Initializer
 
-    private init(isAppExtension: Bool = Bundle.main.bundlePath.hasSuffix(".appex")) {
-        self.isAppExtension = isAppExtension
+    private init() {
         self.logBuffer = []
         self.logBuffer.reserveCapacity(Constants.batchSize)
         self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
-        setupNotificationCenterObservers()
         checkDatabaseSizeAndDeleteIfNeededThroughInit()
     }
 }
@@ -122,7 +108,9 @@ public extension MBLoggerCoreDataManager {
             let newLogMessage = LogMessage(timestamp: timestamp, message: message)
             self.logBuffer.append(newLogMessage)
 
-            self.bufferPersistenceStrategy()
+            if self.writesImmediately || self.logBuffer.count >= Constants.batchSize {
+                self.writeBufferToCoreData()
+            }
 
             completion?()
         }
@@ -234,6 +222,22 @@ public extension MBLoggerCoreDataManager {
     }
 }
 
+// MARK: - Public methods
+
+public extension MBLoggerCoreDataManager {
+    
+    @available(iOSApplicationExtension, unavailable)
+    func setUpAppLifeCycleObservers() {
+        setupNotificationCenterObservers()
+    }
+    
+    func setImmediateWrite(_ enabled: Bool = true) {
+        queue.async {
+            self.writesImmediately = enabled
+        }
+    }
+}
+
 // MARK: - Only for debug
 
 public extension MBLoggerCoreDataManager {
@@ -256,43 +260,56 @@ public extension MBLoggerCoreDataManager {
 
 // MARK: - NotificationCenter observers setup
 
+@available(iOSApplicationExtension, unavailable)
 private extension MBLoggerCoreDataManager {
     func setupNotificationCenterObservers() {
         NotificationCenter.default.addObserver(self, 
-                                               selector: #selector(applicationWillResignActive), 
-                                               name: UIApplication.willResignActiveNotification, 
+                                               selector: #selector(applicationWillEnterForeground),
+                                               name: UIApplication.willEnterForegroundNotification,
                                                object: nil)
         
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(applicationDidEnterBackground),
                                                name: UIApplication.didEnterBackgroundNotification,
                                                object: nil)
-        
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationWillTerminate),
-                                               name: UIApplication.willTerminateNotification,
-                                               object: nil)  
     }
     
     @objc
-    func applicationWillResignActive() {
-        queue.async { [weak self] in
-            self?.writeBufferToCoreData()
-        }
+    func applicationWillEnterForeground() {
+        queue.async { self.writesImmediately = false }
     }
     
     @objc
     func applicationDidEnterBackground() {
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(
+            withName: "writeLogsToCoreData"
+        ) { [weak self] in
+            guard let self else { return }
+            UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+            self.backgroundTaskID = .invalid
+        }
+        
+        guard backgroundTaskID != .invalid else {
+            queue.async { self.writesImmediately = true }
+            return
+        }
+        
         queue.async { [weak self] in
-            self?.writeBufferToCoreData()
+            guard let self else {
+                UIApplication.shared.endBackgroundTask(self?.backgroundTaskID ?? .invalid)
+                return
+            }
+            
+            self.flushBufferInBackground()
+            
+            UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+            self.backgroundTaskID = .invalid
         }
     }
     
-    @objc
-    func applicationWillTerminate() {
-        queue.async { [weak self] in
-            self?.writeBufferToCoreData()
-        }
+    func flushBufferInBackground() {
+        writesImmediately = true
+        writeBufferToCoreData()
     }
 }
 
@@ -388,20 +405,68 @@ private extension MBLoggerCoreDataManager {
     }
 }
 
+// MARK: - Debug and tests
+
 #if DEBUG
 extension MBLoggerCoreDataManager {
+    
+    // MARK: Properties
+    
     var debugBatchSize: Int {
         Constants.batchSize
     }
+    
+    var debugModel: String {
+        Constants.model
+    }
+    
+    var debugWritesImmediately: Bool {
+        self.writesImmediately
+    }
+    
+    var debugSerialQueue: DispatchQueue {
+        self.queue
+    }
+    
+    var debugPersistentContainer: MBPersistentContainer {
+        get {
+            self.persistentContainer
+        }
+        
+        set {
+            self.persistentContainer = newValue
+        }
+    }
+    
+    var debugContext: NSManagedObjectContext {
+        get {
+            self.context
+        }
+        
+        set {
+            self.context = newValue
+        }
+    }
+    
+    // MARK: Initializors
+
+    convenience init(debug: Bool) {
+        self.init()
+    }
+    
+    // MARK: Methods
     
     func debugWriteBufferToCD() {
         queue.async {
             self.writeBufferToCoreData()
         }
     }
-
-    convenience init(debugIsAppExtension: Bool) {
-        self.init(isAppExtension: debugIsAppExtension)
+    
+    @available(iOSApplicationExtension, unavailable)
+    func debugFlushBufferInBackground() {
+        queue.async {
+            self.flushBufferInBackground()
+        }
     }
 }
 #endif

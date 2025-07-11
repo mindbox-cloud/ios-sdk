@@ -547,6 +547,7 @@ public class Mindbox: NSObject {
     override private init() {
         super.init()
         self.assembly()
+        MBLoggerCoreDataManager.shared.setUpAppLifeCycleObservers()
     }
 
     func assembly() {
