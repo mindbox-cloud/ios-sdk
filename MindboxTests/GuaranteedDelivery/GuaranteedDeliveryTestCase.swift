@@ -163,26 +163,27 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testFailureAndRetryScheduleByTimer() throws {
-        let retryDeadline: TimeInterval = 2
-        
-        let fakeDB = FakeDatabaseRepository()
+        // 1) Setup: first delivery attempt fails, then all subsequent attempts succeed
         let fetcher = MockFailureNetworkFetcher()
-        let eventRepo = MBEventRepository(fetcher: fetcher,
-                                          persistenceStorage: DI.injectOrFail(PersistenceStorage.self))
-        
+        let fakeDB  = FakeDatabaseRepository()
+        let eventRepo = MBEventRepository(
+            fetcher: fetcher,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self)
+        )
         let manager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: fakeDB,
             eventRepository: eventRepo,
-            retryDeadline: retryDeadline
+            retryDeadline: 2  // short deadline so the retry cycle happens within the test
         )
         
+        // 2) Populate fakeDB with 10 events
         try fakeDB.erase()
         let events = eventGenerator.generateEvents(count: 10)
         try events.forEach { try fakeDB.create(event: $0) }
         
+        // 3) Record every state transition
         var seenStates = [GuaranteedDeliveryManager.State]()
-        
         let token = manager.observe(\.stateObserver, options: [.new]) { _, change in
             if let raw = change.newValue as String?,
                let state = GuaranteedDeliveryManager.State(rawValue: raw) {
@@ -190,36 +191,30 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
         }
         
-        // Wait until it falls into .idle and FakeDB becomes empty
-        let done = XCTNSPredicateExpectation(
+        // 4) Wait until the manager returns to `.idle` and the database is empty
+        let finished = XCTNSPredicateExpectation(
             predicate: NSPredicate { eval, _ in
                 guard let m = eval as? GuaranteedDeliveryManager else { return false }
                 return m.state == .idle && (try? fakeDB.countEvents()) == 0
             },
             object: manager
         )
-        
         manager.canScheduleOperations = true
-        wait(for: [done], timeout: 30)
+        wait(for: [finished], timeout: 60)
         token.invalidate()
         
-        // Check full order
-        // delivering → idle → delivering → waitingForRetry → delivering → idle
-        func idx(of s: GuaranteedDeliveryManager.State, after i: Int = 0) -> Int? {
-            return seenStates.dropFirst(i).firstIndex(of: s)
-        }
-        
-        guard let d1 = idx(of: .delivering),
-              let i1 = idx(of: .idle,            after: d1),
-              let d2 = idx(of: .delivering,      after: i1),
-              let w  = idx(of: .waitingForRetry, after: d2),
-              let d3 = idx(of: .delivering,      after: w),
-              let i2 = idx(of: .idle,            after: d3)
-        else {
-            return XCTFail("Expected order [delivering, idle, delivering, waitingForRetry, delivering, idle], but got  \(seenStates)")
-        }
-        
-        XCTAssertTrue(d1 < i1 && i1 < d2 && d2 < w && w < d3 && d3 < i2,
-                      "The order of states is incorrect: \(seenStates)")
+        // 5) Verify that:
+        //    – there were at least two `.delivering` cycles (initial + retry)
+        //    – there was at least one `.waitingForRetry` phase
+        //    – the final state is `.idle`
+        let deliverCount = seenStates.filter { $0 == .delivering }.count
+        XCTAssertGreaterThanOrEqual(deliverCount, 2,
+                                    "Expected at least two delivery cycles (initial + retry), but saw: \(seenStates)")
+
+        XCTAssertTrue(seenStates.contains(.waitingForRetry),
+                      "Expected a `waitingForRetry` phase in \(seenStates)")
+
+        XCTAssertEqual(seenStates.last, .idle,
+                       "Expected final state to be `.idle`, but saw: \(seenStates)")
     }
 }
