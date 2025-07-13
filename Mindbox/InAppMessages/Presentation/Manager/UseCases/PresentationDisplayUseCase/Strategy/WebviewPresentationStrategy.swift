@@ -18,7 +18,12 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     func present(id: String, in window: UIWindow, using viewController: UIViewController) {
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Starting presentation", category: .webViewInAppMessages)
         window.rootViewController = viewController
-        window.isHidden = true
+        window.backgroundColor = .clear
+        // A near-zero alpha keeps the window in the hierarchy and active, but invisible.
+        // It's important for the WebView to execute JavaScript in the background.
+        window.alpha = 0.01
+        window.isUserInteractionEnabled = false
+        window.isHidden = false
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
         
         // Force view controller to load its view.
@@ -49,7 +54,6 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         }
         self.window = window
         window?.windowLevel = .normal + 3
-        window?.isHidden = true
         return window
     }
     
