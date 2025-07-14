@@ -27,6 +27,63 @@ extension WebViewController: WebVCDelegate {
     }
 }
 
+extension WebViewController: WebViewAction {
+
+    func onInit() {
+        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
+        DispatchQueue.main.async {
+            if let window = UIApplication.shared.windows.first(where: {
+                $0.rootViewController is WebViewController
+            }) {
+                window.isUserInteractionEnabled = true
+                UIView.animate(withDuration: 0.3) {
+                    window.alpha = 1.0
+                }
+                window.makeKeyAndVisible()
+                Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
+            }
+        }
+    }
+
+    func onCompleted(data: String) {
+        Logger.common(message: "[WebView] WebViewVC completedWebView \(data)", category: .webViewInAppMessages)
+        do {
+            struct ActionContainer: Decodable {
+                let action: ContentBackgroundLayerActionDTO
+            }
+
+            let jsonData = data.data(using: .utf8) ?? Data()
+            let action = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
+            let service = LayerActionFilterService()
+            let layer = try service.filter(action)
+            onTapAction(layer)
+        } catch {
+            Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
+            onTapAction(nil)
+        }
+    }
+
+    func onClose() {
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onCloseInApp()
+    }
+
+    func onHide() {
+        DispatchQueue.main.async {
+            if let window = UIApplication.shared.windows.first(where: {
+                $0.rootViewController is WebViewController
+            }) {
+                window.isUserInteractionEnabled = false
+                Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
+            }
+        }
+    }
+    
+    func onLog(message: String) {
+        Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
+    }
+}
+
 final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: InappViewControllerProtocol
@@ -48,7 +105,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let imagesDict: [String: UIImage]
 
     private let onPresented: () -> Void
-    private let onClose: () -> Void
+    private let onCloseInApp: () -> Void
     private let onTapAction: (ContentBackgroundLayerAction?) -> Void
     var isTimeoutClose = false
 
@@ -68,13 +125,13 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
-        onClose: @escaping () -> Void
+        onCloseInApp: @escaping () -> Void
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
         self.onPresented = onPresented
-        self.onClose = onClose
+        self.onCloseInApp = onCloseInApp
         self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
@@ -89,11 +146,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupWebView() {
-        let webView = TransparentWebView()
-        view.addSubview(webView)
-
-        setupConstraints(for: webView, in: view)
-        
         guard let layer = model.content.background.layers.first else {
             closeTapWebViewVC()
             return
@@ -101,11 +153,16 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
+            let webView = TransparentWebView(frame: .zero, params: webviewLayer.params)
+            view.addSubview(webView)
+
+            setupConstraints(for: webView, in: view)
+
             webView.delegate = self
+            webView.webViewAction = self
             webView.loadHTMLPage(
                 baseUrl: webviewLayer.baseUrl,
-                contentUrl: webviewLayer.contentUrl,
-                wizardId: webviewLayer.wizardId
+                contentUrl: webviewLayer.contentUrl
             )
 
             self.transparentWebView = webView
@@ -151,32 +208,5 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     @objc
     private func onTapDimmedView() {
         onClose()
-    }
-}
-
-// MARK: - GestureHandler
-
-extension WebViewController: GestureHandler {
-    @objc
-    func imageTapped(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? InAppImageOnlyView else {
-            return
-        }
-
-        let action = imageView.action
-        onTapAction(action)
-    }
-
-    @objc
-    func onCloseButton(_ gesture: UILongPressGestureRecognizer) {
-        guard let crossView = gesture.view else {
-            return
-        }
-
-        let location = gesture.location(in: crossView)
-        let isInsideCrossView = crossView.bounds.contains(location)
-        if gesture.state == .ended && isInsideCrossView {
-            onClose()
-        }
     }
 }

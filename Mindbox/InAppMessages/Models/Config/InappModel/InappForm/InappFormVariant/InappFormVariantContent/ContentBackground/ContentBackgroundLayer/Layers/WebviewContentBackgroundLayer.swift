@@ -8,17 +8,15 @@
 import Foundation
 
 struct WebviewContentBackgroundLayerDTO: ContentBackgroundLayerProtocol {
-    let baseUrl: String
-    let contentUrl: String
-    let redirectUrl: String?
-    let payload: String?
-    let wizardId: String
+    let baseUrl: String?
+    let contentUrl: String?
+    let type: String?
+    let params: [String: String]?
 }
 
 struct WebviewContentBackgroundLayer: ContentBackgroundLayerProtocol {
     let baseUrl: String
     let contentUrl: String
-    let redirectUrl: String?
-    let payload: String?
-    let wizardId: String
+    let type: String?
+    let params: [String: String]
 }

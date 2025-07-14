@@ -12,13 +12,16 @@ import MindboxLogger
 final class TransparentWebView: UIView {
     
     weak var delegate: WebVCDelegate?
+    weak var webViewAction: WebViewAction?
     
     private var webView: WKWebView!
 
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
-    private var wizardId: String?
 
-    override init(frame: CGRect) {
+    private var params: [String: String]?
+
+    init(frame: CGRect, params: [String: String]) {
+        self.params = params
         super.init(frame: frame)
         createWKWebView()
         setupWebView()
@@ -45,27 +48,59 @@ final class TransparentWebView: UIView {
         let contentController = WKUserContentController()
         contentController.add(self, name: "SdkBridge")
 
+        var mindboxParams: [String: String] = [
+            "sdkVersion": Mindbox.shared.sdkVersion,
+            "endpointId": persistenceStorage.configuration?.endpoint ?? "",
+            "deviceUuid": persistenceStorage.deviceUUID ?? "",
+            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)"
+        ]
+
+        if let params = self.params {
+            mindboxParams.merge(params) { _, new in new }
+        }
+
+        let lowercasedMindboxParams = Dictionary(uniqueKeysWithValues: mindboxParams.map { key, value in
+            (key.lowercased(), value)
+        })
+
+        var sdkBridgeParamsObjectString = "{}"
+        if let jsonData = try? JSONSerialization.data(withJSONObject: lowercasedMindboxParams),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            sdkBridgeParamsObjectString = jsonString
+        }
+
         let jsObserver: String = """
-            function sdkVersionIos(){return '\(Mindbox.shared.sdkVersion)';}
-            function endpointIdIos(){return '\(persistenceStorage.configuration?.endpoint ?? "error")';}
-            function deviceUuidIos(){return '\(persistenceStorage.deviceUUID ?? "error")';}
-            function wizardIdIos(){return '\(wizardId ?? "")';}
-            
-            // Log UserAgent to console
-            console.log('UserAgent:', navigator.userAgent);
-            
-            // Send UserAgent to native code
-            window.webkit.messageHandlers.SdkBridge.postMessage({
-                'action': 'userAgent',
-                'data': navigator.userAgent
-            });
-        """
+             // Log UserAgent to console
+             console.log('UserAgent:', navigator.userAgent);
+             
+             // Send UserAgent to native code
+             window.webkit.messageHandlers.SdkBridge.postMessage({
+                 'action': 'userAgent',
+                 'data': navigator.userAgent
+             });
+         
+             window.sdkBridgeParams = \(sdkBridgeParamsObjectString);
+             
+             window.SdkBridge = {
+                 receiveParam: function(paramName) {
+                     if (typeof paramName !== 'string') return;
+                     return window.sdkBridgeParams[paramName.toLowerCase()];
+                 }
+             };
+         """
 
         let userScriptForObserver = WKUserScript(source: jsObserver, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         
         contentController.addUserScript(userScriptForObserver)
 
         let webViewConfig = WKWebViewConfiguration()
+        let prefs = WKPreferences()
+        prefs.javaScriptEnabled = true
+        #if DEBUG
+        prefs.setValue(true, forKey: "developerExtrasEnabled")
+        #endif
+
+        webViewConfig.preferences = prefs
         webViewConfig.userContentController = contentController
         webViewConfig.applicationNameForUserAgent = createUserAgent()
 
@@ -73,9 +108,11 @@ final class TransparentWebView: UIView {
         webView.navigationDelegate = self
         Logger.common(message: "[WebView] TransparentWebView: WKWebView created with configuration", category: .webViewInAppMessages)
         
+        #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
+        #endif
     }
 
     private func setupWebView() {
@@ -85,13 +122,10 @@ final class TransparentWebView: UIView {
         setupWebViewConstraints()
     }
 
-    func loadHTMLPage(baseUrl: String, contentUrl: String, wizardId: String) {
-        self.wizardId = wizardId
-        
+    func loadHTMLPage(baseUrl: String, contentUrl: String) {
         Logger.common(message: "[WebView] Starting to load HTML page", category: .webViewInAppMessages)
         Logger.common(message: "[WebView] Base URL: \(baseUrl)", category: .webViewInAppMessages)
         Logger.common(message: "[WebView] Content URL: \(contentUrl)", category: .webViewInAppMessages)
-        Logger.common(message: "[WebView] WizardId: \(wizardId)", category: .webViewInAppMessages)
         
         setupTimeoutTimer()
         let url = URL(string: baseUrl)
@@ -188,48 +222,24 @@ extension TransparentWebView: WKScriptMessageHandler {
             Logger.common(message: "[WebView] TransparentWebView: SdkBridge - received \(action) \(data)", category: .webViewInAppMessages)
             
             switch action {
-            case "close", "collapse":
-                if data.contains("init") {
-                    Logger.common(message: "[WebView] TransparentWebView: received close init action (error)", category: .webViewInAppMessages)
-                    delegate?.closeTimeoutWebViewVC()
-                    return
-                }
-                delegate?.closeTapWebViewVC()
+            case "close":
+                quizInitTimeoutWorkItem?.cancel()
+                webViewAction?.onClose()
             case "init":
-                Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
-                if data.contains("quiz") {
-                    quizInitTimeoutWorkItem?.cancel()
-                    DispatchQueue.main.async {
-                        if let window = UIApplication.shared.windows.first(where: {
-                            $0.rootViewController is WebViewController
-                        }) {
-                            window.isHidden = false
-                            window.makeKeyAndVisible()
-                            Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
-                        }
-                    }
-                }
+                quizInitTimeoutWorkItem?.cancel()
+                webViewAction?.onInit()
+            case "click":
+                webViewAction?.onCompleted(data: data)
+            case "hide":
+                webViewAction?.onHide()
+            case "log":
+                webViewAction?.onLog(message: data)
             case "userAgent":
                 print("TransparentWebView: UserAgent: \(data)")
             default:
                 Logger.common(message: "[WebView] TransparentWebView: action: \(action) with \(data)", category: .webViewInAppMessages)
             }
         }
-    }
-}
-
-// {"mode":"quiz","screen":"minimal","slug":"televisions","action":"show"}
-class RequestBody: Decodable {
-    let mode: String
-    let screen: String
-    let slug: String
-    let action: String
-    
-    init(mode: String, screen: String, slug: String, action: String) {
-        self.mode = mode
-        self.screen = screen
-        self.slug = slug
-        self.action = action
     }
 }
 
@@ -298,4 +308,16 @@ extension TransparentWebView: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return nil
     }
+}
+
+protocol WebViewAction: AnyObject {
+    func onInit()
+
+    func onCompleted(data: String)
+
+    func onClose()
+
+    func onHide()
+    
+    func onLog(message: String)
 }
