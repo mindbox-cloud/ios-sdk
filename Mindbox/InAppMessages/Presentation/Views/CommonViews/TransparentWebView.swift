@@ -152,8 +152,8 @@ final class TransparentWebView: UIView {
             return
         }
         
-        let config = URLSessionConfiguration.default
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let config = URLSessionConfiguration.ephemeral
+        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         config.urlCache = nil
         let session = URLSession(configuration: config)
         
