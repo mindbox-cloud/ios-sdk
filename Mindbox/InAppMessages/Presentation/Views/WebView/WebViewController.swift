@@ -48,10 +48,6 @@ extension WebViewController: WebViewAction {
     func onCompleted(data: String) {
         Logger.common(message: "[WebView] WebViewVC completedWebView \(data)", category: .webViewInAppMessages)
         do {
-            struct ActionContainer: Decodable {
-                let action: ContentBackgroundLayerActionDTO
-            }
-
             let jsonData = data.data(using: .utf8) ?? Data()
             let action = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
             let service = LayerActionFilterService()
@@ -74,6 +70,7 @@ extension WebViewController: WebViewAction {
                 $0.rootViewController is WebViewController
             }) {
                 window.isUserInteractionEnabled = false
+                window.alpha = 0.00
                 Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
             }
         }

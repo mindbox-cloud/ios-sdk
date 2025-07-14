@@ -21,7 +21,7 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         window.backgroundColor = .clear
         // A near-zero alpha keeps the window in the hierarchy and active, but invisible.
         // It's important for the WebView to execute JavaScript in the background.
-        window.alpha = 0.01
+        window.alpha = 0.00
         window.isUserInteractionEnabled = false
         window.isHidden = false
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)

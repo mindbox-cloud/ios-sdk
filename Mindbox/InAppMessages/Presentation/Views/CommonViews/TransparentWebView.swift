@@ -129,7 +129,7 @@ final class TransparentWebView: UIView {
         
         setupTimeoutTimer()
         let url = URL(string: baseUrl)
-        fetchHTMLContent(from: contentUrl) { htmlString in
+        fetchHTMLContent(from: "https://api-staging.mindbox.ru/mobile/byendpoint/quiz-2.13.4.html") { htmlString in
             if let htmlString = htmlString {
                 Logger.common(message: "[WebView] TransparentWebView: HTML content fetched successfully", category: .webViewInAppMessages)
                 Logger.common(message: "[WebView] TransparentWebView: Loading HTML string into WebView", category: .webViewInAppMessages)

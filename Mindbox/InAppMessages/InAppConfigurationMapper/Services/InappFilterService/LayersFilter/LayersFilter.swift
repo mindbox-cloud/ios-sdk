@@ -38,9 +38,9 @@ final class LayersFilterService: LayersFilterProtocol {
                     let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: imageLayer)
                     filteredLayers.append(newLayer)
                 case .webview(let webviewContentBackgroundLayerDTO):
-                    let baseUrl = webviewContentBackgroundLayerDTO.baseUrl ?? ""
-                    let contentUrl = webviewContentBackgroundLayerDTO.contentUrl ?? ""
-                    let type = webviewContentBackgroundLayerDTO.type ?? ""
+                    let baseUrl = webviewContentBackgroundLayerDTO.baseUrl!
+                    let contentUrl = webviewContentBackgroundLayerDTO.contentUrl!
+                    let type = webviewContentBackgroundLayerDTO.type!
                     let params = webviewContentBackgroundLayerDTO.params
                     let webviewLayer = WebviewContentBackgroundLayer(
                         baseUrl: baseUrl,
