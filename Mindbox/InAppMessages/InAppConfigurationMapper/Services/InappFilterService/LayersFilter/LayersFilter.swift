@@ -38,17 +38,17 @@ final class LayersFilterService: LayersFilterProtocol {
                     let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: imageLayer)
                     filteredLayers.append(newLayer)
                 case .webview(let webviewContentBackgroundLayerDTO):
-                    let baseUrl = webviewContentBackgroundLayerDTO.baseUrl
-                    let contentUrl = webviewContentBackgroundLayerDTO.contentUrl
-                    let payload = webviewContentBackgroundLayerDTO.payload
-                    let redirectUrl = webviewContentBackgroundLayerDTO.redirectUrl
-                    let wizardId = webviewContentBackgroundLayerDTO.wizardId
+                    guard let baseUrl = webviewContentBackgroundLayerDTO.baseUrl,
+                          let contentUrl = webviewContentBackgroundLayerDTO.contentUrl,
+                          let type = webviewContentBackgroundLayerDTO.type else {
+                        throw CustomDecodingError.unknownType("WebviewContentBackgroundLayerDTO validation not passed.")
+                    }
+                    let params = webviewContentBackgroundLayerDTO.params
                     let webviewLayer = WebviewContentBackgroundLayer(
                         baseUrl: baseUrl,
                         contentUrl: contentUrl,
-                        redirectUrl: redirectUrl,
-                        payload: payload,
-                        wizardId: wizardId
+                        type: type,
+                        params: params ?? [:]
                     )
                     let newLayer = try ContentBackgroundLayer(type: layer.layerType, layer: webviewLayer)
                     filteredLayers.append(newLayer)
