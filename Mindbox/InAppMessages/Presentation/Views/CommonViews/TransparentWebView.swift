@@ -23,6 +23,27 @@ final class TransparentWebView: UIView {
     init(frame: CGRect, params: [String: String]) {
         self.params = params
         super.init(frame: frame)
+        commonInit()
+    }
+
+    override init(frame: CGRect) {
+        self.params = nil
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        self.params = nil
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    deinit {
+        webView.scrollView.delegate = nil
+        Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
+    }
+    
+    private func commonInit() {
         createWKWebView()
         setupWebView()
         
@@ -31,15 +52,6 @@ final class TransparentWebView: UIView {
         webView.scrollView.bounces = false
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.contentInsetAdjustmentBehavior = .never
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        webView.scrollView.delegate = nil
-        Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
     private func createWKWebView() {
@@ -129,7 +141,7 @@ final class TransparentWebView: UIView {
         
         setupTimeoutTimer()
         let url = URL(string: baseUrl)
-        fetchHTMLContent(from: "https://api-staging.mindbox.ru/mobile/byendpoint/quiz-2.13.4.html") { htmlString in
+        fetchHTMLContent(from: contentUrl) { htmlString in
             if let htmlString = htmlString {
                 Logger.common(message: "[WebView] TransparentWebView: HTML content fetched successfully", category: .webViewInAppMessages)
                 Logger.common(message: "[WebView] TransparentWebView: Loading HTML string into WebView", category: .webViewInAppMessages)
