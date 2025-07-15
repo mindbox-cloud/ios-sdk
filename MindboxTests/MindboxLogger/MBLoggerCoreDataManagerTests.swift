@@ -306,7 +306,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     
     func testFlagTogglesOnApplicationStateChanges() throws {
         
-        let toggleExpectation = expectation(description: "Fflag toggled 3 times")
+        let toggleExpectation = expectation(description: "Flag toggled 3 times")
         toggleExpectation.expectedFulfillmentCount = 3
 
         
@@ -360,6 +360,39 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
         XCTAssertEqual(remainingLogs.count, maxCountOfLogs)
+    }
+    
+    func testWriteCounter() throws {
+        
+        // We need exactly (batch × limit) – 1 log records, so writeCount will be
+        // limit – 1 just before the automatic reset would happen.
+        let logsToCreate = batchSizeConstant * manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1 // e.g. 15 × 5 – 1 = 74
+        
+        let creationExpectation = XCTestExpectation(description: "All logs have been created")
+        creationExpectation.expectedFulfillmentCount = logsToCreate
+        
+        createMessages(range: 1...logsToCreate, timeStrategy: .sequentialDefault) { _, _ in
+            creationExpectation.fulfill()
+        }
+        wait(for: [creationExpectation])
+
+        let queueDrained = expectation(description: "Serial queue drained")
+        manager.debugSerialQueue.async { queueDrained.fulfill() }
+        wait(for: [queueDrained])
+        
+        XCTAssertEqual(manager.debugWriteCount,
+                       manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1,
+                       "writeCount should increment once per batch flush")
+        
+        
+        let finalLogCreated = XCTestExpectation(description: "Final log created")
+        createMessageWithIndex(index: 0, baseDate: Date(), timeStrategy: .sequentialDefault) { _, _ in
+            finalLogCreated.fulfill()
+        }
+        wait(for: [finalLogCreated])
+        
+        XCTAssertEqual(manager.debugWriteCount, 0,
+                       "writeCount should wrap around to 0 after the next flush")
     }
 }
 
