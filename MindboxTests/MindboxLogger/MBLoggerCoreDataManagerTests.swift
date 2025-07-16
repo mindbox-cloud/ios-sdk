@@ -10,6 +10,7 @@ import XCTest
 @testable import MindboxLogger
 @testable import Mindbox
 
+
 final class MBLoggerCoreDataManagerTests: XCTestCase {
 
     private var batchSizeConstant = MBLoggerCoreDataManager.shared.debugBatchSize
@@ -18,12 +19,14 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        manager = MBLoggerCoreDataManager.shared
-
-        try manager.deleteAll()
-
+        manager = MBLoggerCoreDataManager.makeEphemeral()
+        manager.setUpAppLifeCycleObservers()
+        
+        manager.debugSerialQueue.async {
+            try? self.manager.deleteAll()
+        }
         let fetchExpectation = XCTestExpectation(description: "Fetch delete all logs")
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
+        manager.debugSerialQueue.async {
             fetchExpectation.fulfill()
         }
         wait(for: [fetchExpectation])
@@ -81,8 +84,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         wait(for: [fetchExpectation])
 
         let fetchPeriodExpectation = XCTestExpectation(description: "Fetch period logs")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+        
+        manager.debugSerialQueue.async {
             do {
                 let fetchResult = try self.manager.fetchPeriod(timestamp, timestamp)
                 XCTAssertEqual(fetchResult.count, 1, "One message should be extracted")
@@ -259,32 +262,83 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         }
     }
     
-    func testFlushBufferWhenApplicationWillResignActive() throws {
+    func testFlushBufferWhenApplicationDidEnterBackgroundReturnIvalidInTestsAndChangeAppState() throws {
+        XCTAssertFalse(manager.debugWritesImmediately)
+        
         let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
-
         createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
             fetchExpectationExtraLast.fulfill()
         }
-
         wait(for: [fetchExpectationExtraLast])
 
-        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil) // UIBackgroundTaskIdentifier is always `.invalid` in tests
 
         let fetchExpectation = XCTestExpectation(description: "Fetch last log after didEnterBackgroundNotification")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+        manager.debugSerialQueue.async {
+            XCTAssertTrue(self.manager.debugWritesImmediately)
+            fetchExpectation.fulfill()
+        }
+        wait(for: [fetchExpectation])
+    }
+    
+    func testFlushBufferInBackground() throws {
+        XCTAssertFalse(manager.debugWritesImmediately)
+        
+        let fetchExpectationExtraLast = XCTestExpectation(description: "Fetch extra last log")
+        createMessages(range: 1...batchSizeConstant / 2, timeStrategy: .sequentialDefault) { _, _ in
+            fetchExpectationExtraLast.fulfill()
+        }
+        wait(for: [fetchExpectationExtraLast])
+        
+        manager.debugFlushBufferInBackground()
+        
+        let fetchExpectation = XCTestExpectation(description: "Fetch last log after didEnterBackgroundNotification")
+        manager.debugSerialQueue.async {
             do {
                 let fetchResult = try self.manager.getLastLog()
                 XCTAssertEqual(fetchResult?.message, "Log: \(self.batchSizeConstant / 2)")
+                XCTAssertTrue(self.manager.debugWritesImmediately)
                 fetchExpectation.fulfill()
             } catch {}
         }
-
         wait(for: [fetchExpectation])
     }
+    
+    func testFlagTogglesOnApplicationStateChanges() throws {
+        
+        let toggleExpectation = expectation(description: "Flag toggled 3 times")
+        toggleExpectation.expectedFulfillmentCount = 3
 
-    func testFlushBufferInAppExtensions() throws {
-        manager = MBLoggerCoreDataManager(debugIsAppExtension: true)
+        
+        // 1. Init state false
+        XCTAssertFalse(manager.debugWritesImmediately)
+
+        // 2. → Background   (false → true)
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        manager.debugSerialQueue.async {
+            XCTAssertTrue(self.manager.debugWritesImmediately)
+            toggleExpectation.fulfill()
+        }
+        
+        // 3. → Foreground   (true → false)
+        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        manager.debugSerialQueue.async {
+            XCTAssertFalse(self.manager.debugWritesImmediately)
+            toggleExpectation.fulfill()
+        }
+        
+        // 4. → Background   (false → true)
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        manager.debugSerialQueue.async {
+            XCTAssertTrue(self.manager.debugWritesImmediately)
+            toggleExpectation.fulfill()
+        }
+        
+        wait(for: [toggleExpectation])
+    }
+
+    func testSingleLogModeWritesEachMessageImmediately() throws {
+        manager.setImmediateWrite(true)
 
         let maxCountOfLogs = Int.random(in: 1..<batchSizeConstant)
 
@@ -306,6 +360,39 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
 
         let remainingLogs = try manager.fetchPeriod(Date.distantPast, Date.distantFuture)
         XCTAssertEqual(remainingLogs.count, maxCountOfLogs)
+    }
+    
+    func testWriteCounter() throws {
+        
+        // We need exactly (batch × limit) – 1 log records, so writeCount will be
+        // limit – 1 just before the automatic reset would happen.
+        let logsToCreate = batchSizeConstant * manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1 // e.g. 15 × 5 – 1 = 74
+        
+        let creationExpectation = XCTestExpectation(description: "All logs have been created")
+        creationExpectation.expectedFulfillmentCount = logsToCreate
+        
+        createMessages(range: 1...logsToCreate, timeStrategy: .sequentialDefault) { _, _ in
+            creationExpectation.fulfill()
+        }
+        wait(for: [creationExpectation])
+
+        let queueDrained = expectation(description: "Serial queue drained")
+        manager.debugSerialQueue.async { queueDrained.fulfill() }
+        wait(for: [queueDrained])
+        
+        XCTAssertEqual(manager.debugWriteCount,
+                       manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1,
+                       "writeCount should increment once per batch flush")
+        
+        
+        let finalLogCreated = XCTestExpectation(description: "Final log created")
+        createMessageWithIndex(index: 0, baseDate: Date(), timeStrategy: .sequentialDefault) { _, _ in
+            finalLogCreated.fulfill()
+        }
+        wait(for: [finalLogCreated])
+        
+        XCTAssertEqual(manager.debugWriteCount, 0,
+                       "writeCount should wrap around to 0 after the next flush")
     }
 }
 
