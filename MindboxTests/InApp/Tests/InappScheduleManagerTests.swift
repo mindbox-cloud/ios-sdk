@@ -13,18 +13,16 @@ final class InappScheduleManagerTests: XCTestCase {
     
     private var scheduleManager: InappScheduleManager!
     private var presentationManagerMock: InAppPresentationManagerMock!
-    private var presentationValidatorMock: InAppPresentationValidatorMock!
     private var trackingServiceMock: InAppTrackingServiceMock!
     
     override func setUp() {
         super.setUp()
         presentationManagerMock = InAppPresentationManagerMock()
-        presentationValidatorMock = InAppPresentationValidatorMock()
         trackingServiceMock = InAppTrackingServiceMock()
         
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: presentationValidatorMock,
+            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
             trackingService: trackingServiceMock
         )
         
@@ -34,7 +32,6 @@ final class InappScheduleManagerTests: XCTestCase {
     override func tearDown() {
         scheduleManager = nil
         presentationManagerMock = nil
-        presentationValidatorMock = nil
         trackingServiceMock = nil
         SessionTemporaryStorage.shared.erase()
         super.tearDown()
@@ -99,8 +96,8 @@ final class InappScheduleManagerTests: XCTestCase {
         
         let presentationExpectation = XCTestExpectation(description: "In-app should be presented after delay")
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            XCTAssertTrue(self.presentationManagerMock.presentCallsCount == 3)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp3.inAppId)
+            XCTAssertTrue(self.presentationManagerMock.presentCallsCount == 1)
+            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp1.inAppId)
             presentationExpectation.fulfill()
         }
         wait(for: [presentationExpectation], timeout: 6)
@@ -236,20 +233,6 @@ final class InappScheduleManagerTests: XCTestCase {
     private func createMockContent() -> InappFormVariantContent {
         let background = ContentBackground(layers: [])
         return InappFormVariantContent(background: background, elements: nil)
-    }
-}
-
-// MARK: - Mocks
-
-class InAppPresentationValidatorMock: InAppPresentationValidatorProtocol {
-    var canPresentResult = true
-    var canPresentCallCount = 0
-    var lastCanPresentParameters: (isPriority: Bool, frequency: InappFrequency?, id: String)?
-    
-    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
-        canPresentCallCount += 1
-        lastCanPresentParameters = (isPriority: isPriority, frequency: frequency, id: id)
-        return canPresentResult
     }
 }
 

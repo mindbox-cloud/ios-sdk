@@ -23,6 +23,10 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
         
+        guard isNotPresentingAnotherInApp(), isValidFrequency(frequency: frequency, id: id) else {
+            return false
+        }
+
         if isPriority {
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()
@@ -33,14 +37,12 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
                 - Shown in-apps today: \(shownInappsToday)
                 """, level: .debug, category: .inAppMessages)
             
-            return isNotPresentingAnotherInApp()
+            return true
         }
         
-        return isNotPresentingAnotherInApp() &&
-               isUnderSessionLimit() &&
+        return isUnderSessionLimit() &&
                isUnderDailyLimit() &&
-               hasElapsedMinimumIntervalBetweenInApps() &&
-               isValidFrequency(frequency: frequency, id: id)
+               hasElapsedMinimumIntervalBetweenInApps()
     }
     
     func isNotPresentingAnotherInApp() -> Bool {
