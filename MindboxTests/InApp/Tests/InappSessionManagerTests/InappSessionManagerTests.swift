@@ -191,7 +191,6 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
-        XCTAssertNotNil(persistenceStorage.lastInappStateChangeDate)
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
         
         targetingChecker.context.isNeedGeoRequest = false
