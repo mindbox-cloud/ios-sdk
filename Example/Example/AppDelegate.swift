@@ -8,6 +8,7 @@
 
 import Mindbox
 import UIKit
+import MindboxCommon
 
 @main
 final class AppDelegate: MindboxAppDelegate {
@@ -18,7 +19,7 @@ final class AppDelegate: MindboxAppDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
-
+        Mindbox.logger.logLevel = .debug
         do {
             // To run the application on a physical device you need to change the endpoint
             // You should also change the application bundle ID in all targets, more details in the readme

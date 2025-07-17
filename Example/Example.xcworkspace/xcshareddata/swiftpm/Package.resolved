@@ -1,0 +1,15 @@
+{
+  "originHash" : "fb228b659fdfe11092cea654e698f84ff7c0ba272949f07c57317d9c19a29775",
+  "pins" : [
+    {
+      "identity" : "ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mindbox-cloud/ios-sdk",
+      "state" : {
+        "branch" : "feature/WMSDK-506",
+        "revision" : "7002dc7f16fcf8939a7c51f98a581865b1598ca4"
+      }
+    }
+  ],
+  "version" : 3
+}
