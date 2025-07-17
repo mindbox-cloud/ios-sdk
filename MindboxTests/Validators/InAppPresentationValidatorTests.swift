@@ -394,4 +394,99 @@ final class InAppPresentationValidatorTests: XCTestCase {
         let result = validator.canPresentInApp(isPriority: false, frequency: inappFrequency, id: "3")
         XCTAssertTrue(result)
     }
+    
+    // MARK: - Validation order tests
+    
+    func test_canPresentInApp_validationOrderForPriorityInApp() {
+        // Arrange
+        let wrapper = InAppPresentationValidatorWrapper(persistenceStorage: persistenceStorage)
+        
+        // Act
+        let result = wrapper.canPresentInApp(isPriority: true, frequency: .once(OnceFrequency(kind: .session)), id: "priority_inapp")
+        
+        // Assert
+        XCTAssertTrue(result)
+        XCTAssertEqual(wrapper.validationChecks, [
+            .isNotPresentingAnotherInApp,
+            .isValidFrequency
+        ], "Priority in-app should only perform isNotPresentingAnotherInApp and isValidFrequency checks")
+    }
+    
+    func test_canPresentInApp_validationOrderForRegularInApp() {
+        let wrapper = InAppPresentationValidatorWrapper(persistenceStorage: persistenceStorage)
+        
+        let result = wrapper.canPresentInApp(isPriority: false, frequency: .once(OnceFrequency(kind: .session)), id: "regular_inapp")
+        
+        XCTAssertTrue(result)
+        XCTAssertEqual(wrapper.validationChecks, [
+            .isNotPresentingAnotherInApp,
+            .isValidFrequency,
+            .isUnderSessionLimit,
+            .isUnderDailyLimit,
+            .hasElapsedMinimumIntervalBetweenInApps
+        ], "Regular in-app should perform all 5 validation checks in correct order")
+    }
+}
+
+// MARK: - Wrapper for validation order testing
+
+class InAppPresentationValidatorWrapper: InAppPresentationValidatorProtocol {
+    
+    enum ValidationCheckType: String, CaseIterable {
+        case isNotPresentingAnotherInApp = "isNotPresentingAnotherInApp"
+        case isValidFrequency = "isValidFrequency"
+        case isUnderSessionLimit = "isUnderSessionLimit"
+        case isUnderDailyLimit = "isUnderDailyLimit"
+        case hasElapsedMinimumIntervalBetweenInApps = "hasElapsedMinimumIntervalBetweenInApps"
+    }
+    
+    private let validator: InAppPresentationValidator
+    var validationChecks: [ValidationCheckType] = []
+    
+    init(persistenceStorage: PersistenceStorage) {
+        self.validator = InAppPresentationValidator(persistenceStorage: persistenceStorage)
+    }
+    
+    func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        validationChecks.removeAll()
+        return trackValidationOrder(isPriority: isPriority, frequency: frequency, id: id)
+    }
+    
+    private func trackValidationOrder(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        let isNotPresenting = validator.isNotPresentingAnotherInApp()
+        validationChecks.append(.isNotPresentingAnotherInApp)
+        if !isNotPresenting {
+            return false
+        }
+        
+        let isValidFrequency = validator.isValidFrequency(frequency: frequency, id: id)
+        validationChecks.append(.isValidFrequency)
+        if !isValidFrequency {
+            return false
+        }
+        
+        if isPriority {
+            return true
+        }
+        
+        let isUnderSessionLimit = validator.isUnderSessionLimit()
+        validationChecks.append(.isUnderSessionLimit)
+        if !isUnderSessionLimit {
+            return false
+        }
+        
+        let isUnderDailyLimit = validator.isUnderDailyLimit()
+        validationChecks.append(.isUnderDailyLimit)
+        if !isUnderDailyLimit {
+            return false
+        }
+        
+        let hasElapsedInterval = validator.hasElapsedMinimumIntervalBetweenInApps()
+        validationChecks.append(.hasElapsedMinimumIntervalBetweenInApps)
+        if !hasElapsedInterval {
+            return false
+        }
+        
+        return true
+    }
 }
