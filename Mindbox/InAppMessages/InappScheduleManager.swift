@@ -18,7 +18,6 @@ internal struct ScheduledInapp {
 protocol InappScheduleManagerProtocol {
     var delegate: InAppMessagesDelegate? { get set }
     func scheduleInApp(_ inAppFormData: InAppFormData)
-    func cancelAllScheduledInApps()
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -60,27 +59,10 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         }
         
         let scheduledInapp = ScheduledInapp(inapp: inapp, workItem: workItem)
-        
+        self.queue.asyncAfter(deadline: .now() + delay, execute: workItem)
         queue.async {
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
             Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
-        }
-        
-        self.queue.asyncAfter(deadline: .now() + delay, execute: workItem)
-    }
-    
-    func cancelAllScheduledInApps() {
-        queue.async {
-            let currentTime = Date().timeIntervalSince1970
-            let expiredKeys = self.inappsByPresentationTime.keys.filter { $0 <= currentTime }
-            
-            for key in expiredKeys {
-                if let scheduledList = self.inappsByPresentationTime[key] {
-                    scheduledList.forEach { $0.workItem.cancel() }
-                }
-                self.inappsByPresentationTime.removeValue(forKey: key)
-                Logger.common(message: "[InappScheduleManager] Canceled and removed inapps scheduled at \(key.asReadableDateTime)", level: .debug, category: .inAppMessages)
-            }
         }
     }
 }
@@ -165,7 +147,7 @@ internal extension InappScheduleManager {
             
             if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
                 if configExpirationTime < Date() {
-                    self.cancelAllScheduledInApps()
+                    self.inappsByPresentationTime = [:]
                     Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .debug, category: .inAppMessages)
                     return
                 }
