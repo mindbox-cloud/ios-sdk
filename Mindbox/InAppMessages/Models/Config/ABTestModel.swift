@@ -21,7 +21,31 @@ struct ABTest: Decodable, Equatable {
 
         struct Modulus: Decodable, Equatable {
             let lower: Int
-            let upper: Int?
+            let upper: Int
+            
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                lower = try container.decode(Int.self, forKey: .lower)
+                upper = try container.decode(Int.self, forKey: .upper)
+                
+                guard lower >= 0 else {
+                    throw DecodingError.dataCorruptedError(forKey: .lower, in: container, debugDescription: "Modulus lower value must be >= 0")
+                }
+                
+                guard upper >= 0 else {
+                    throw DecodingError.dataCorruptedError(forKey: .upper, in: container, debugDescription: "Modulus upper value must be >= 0")
+                }
+            }
+            
+            init(lower: Int, upper: Int) {
+                self.lower = lower
+                self.upper = upper
+            }
+            
+            private enum CodingKeys: String, CodingKey {
+                case lower
+                case upper
+            }
         }
 
         struct ABTestObject: Decodable, Equatable {
