@@ -73,15 +73,6 @@ class PeriodicFrequencyValidator {
     }
 
     func isValid(item: PeriodicFrequency, id: String) -> Bool {
-        guard item.value > 0 else {
-            Logger.common(message: """
-            [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)].
-            Value (\(item.value)) is zero or negative.
-            Inapp is not valid.
-            """, level: .info, category: .inAppMessages)
-            return false
-        }
-
         let currentDate = Date()
         guard let inappsDict = persistenceStorage.shownInappsDictionary else {
             Logger.common(message: "shownInappsDictionary not exists. Inapp is not valid.", level: .error, category: .inAppMessages)
