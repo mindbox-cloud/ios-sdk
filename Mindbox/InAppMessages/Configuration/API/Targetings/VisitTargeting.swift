@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 enum VisitTargetingKindType: String, Decodable {
     case gte
@@ -18,4 +19,24 @@ enum VisitTargetingKindType: String, Decodable {
 struct VisitTargeting: ITargeting, Decodable {
     let kind: VisitTargetingKindType
     let value: Int
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try container.decode(VisitTargetingKindType.self, forKey: .kind)
+        value = try container.decode(Int.self, forKey: .value)
+    
+        guard value >= 0 else {
+            throw DecodingError.dataCorruptedError(forKey: .value, in: container, debugDescription: "VisitTargeting value must be >= 0")
+        }
+    }
+    
+    init(kind: VisitTargetingKindType, value: Int) {
+        self.kind = kind
+        self.value = value
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case kind
+        case value
+    }
 }
