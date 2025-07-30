@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 
 enum VisitTargetingKindType: String, Decodable {
     case gte
