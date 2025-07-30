@@ -1,5 +1,5 @@
 {
     "$type": "visit",
-    "kind": "lte",
-    "value": 1
+    "kind": "equals",
+    "value": 0
 }

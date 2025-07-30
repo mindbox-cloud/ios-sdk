@@ -32,14 +32,9 @@ class ABTestVariantsValidator: Validator {
             return false
         }
 
-        guard let upper = modulus.upper else {
-            Logger.common(message: "The 'upper' field in 'modulus' can not be null.")
-            return false
-        }
-
         guard modulus.lower >= 0,
-              upper <= 100,
-              modulus.lower < upper else {
+              modulus.upper <= 100,
+              modulus.lower < modulus.upper else {
             Logger.common(message: "The 'lower' and 'upper' fields are invalid.")
             return false
         }

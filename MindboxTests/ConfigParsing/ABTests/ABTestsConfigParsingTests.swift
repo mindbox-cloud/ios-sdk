@@ -19,6 +19,9 @@ fileprivate enum ABTestsConfig: String, Configurable {
 
     case abTestsSdkVersionConfigError = "ABTestsSdkVersionConfigError" // Key is `sdkVersionTest` instead of `sdkVersion`
     case abTestsSdkVersionConfigTypeError = "ABTestsSdkVersionConfigTypeError" // Type of `sdkVersion` is Int instead of SdkVersion
+    
+    case configWithABTestsNegativeLowerModulus = "ABTestsConfigNegativeLowerModulus" // Lower -100
+    case configWithABTestsNegativeUpperModulus = "ABTestsConfigNegativeUpperModulus" // Upper -100
 }
 
 final class ABTestsConfigParsingTests: XCTestCase {
@@ -105,6 +108,22 @@ final class ABTestsConfigParsingTests: XCTestCase {
             } else {
                 XCTFail("Unexpected error: \(error)")
             }
+        }
+    }
+    
+    func test_ABTestsConfig_withNegative_Lower_Modulus_shouldThrowDecodingError() throws {
+        XCTAssertThrowsError(try ABTestsConfig.configWithABTestsNegativeLowerModulus.getConfig()) { error in
+            XCTAssertTrue(error is DecodingError)
+            let errorDescription = String(describing: error)
+            XCTAssertTrue(errorDescription.contains("Modulus lower value must be >= 0"))
+        }
+    }
+    
+    func test_ABTestsConfig_withNegative_Upper_Modulus_shouldThrowDecodingError() throws {
+        XCTAssertThrowsError(try ABTestsConfig.configWithABTestsNegativeUpperModulus.getConfig()) { error in
+            XCTAssertTrue(error is DecodingError)
+            let errorDescription = String(describing: error)
+            XCTAssertTrue(errorDescription.contains("Modulus upper value must be >= 0"))
         }
     }
 }
