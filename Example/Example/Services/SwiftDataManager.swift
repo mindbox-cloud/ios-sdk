@@ -64,7 +64,7 @@ public struct SwiftDataManager {
     
     private static func createDirectoryForSwiftData() {
         let fileManager = FileManager.default
-        let appGroupIdentifier = "group.cloud.Mindbox.cloud.Mindbox.ReleaseExampleIos"
+        let appGroupIdentifier = "group.cloud.Mindbox.Example.iOS"
         if let appGroupURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
             let applicationSupportURL = appGroupURL.appendingPathComponent("Library/Application Support")
             
