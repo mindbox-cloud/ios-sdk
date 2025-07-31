@@ -94,7 +94,7 @@ final class InAppResponseModelTests: XCTestCase {
 
         XCTAssertNotNil(config)
         XCTAssertEqual(config.kind, .equals)
-        XCTAssertEqual(config.value, 0)
+        XCTAssertEqual(config.value, 1)
     }
     
     func test_visit_targeting_negativeValue_false() throws {

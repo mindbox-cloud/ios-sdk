@@ -24,8 +24,8 @@ struct VisitTargeting: ITargeting, Decodable {
         kind = try container.decode(VisitTargetingKindType.self, forKey: .kind)
         value = try container.decode(Int.self, forKey: .value)
     
-        guard value >= 0 else {
-            throw DecodingError.dataCorruptedError(forKey: .value, in: container, debugDescription: "VisitTargeting value must be >= 0")
+        guard value > 0 else {
+            throw DecodingError.dataCorruptedError(forKey: .value, in: container, debugDescription: "VisitTargeting value must be > 0")
         }
     }
     
