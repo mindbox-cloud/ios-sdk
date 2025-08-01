@@ -243,8 +243,6 @@ extension BGTaskManager {
         lock.withLock {
             self.appGDProcessingTask = task
         }
-        
-        scheduleAppGDProcessingTask()
 
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
