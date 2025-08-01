@@ -55,4 +55,6 @@ class MockFailureNetworkFetcher: NetworkFetcher {
         let url = bundle.url(forResource: "SuccessResponse", withExtension: "json")!
         return try! Data(contentsOf: url)
     }()
+    
+    func cancelAllTasks() {}
 }
