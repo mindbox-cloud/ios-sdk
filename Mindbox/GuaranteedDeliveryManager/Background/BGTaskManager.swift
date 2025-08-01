@@ -202,7 +202,6 @@ extension BGTaskManager {
         scheduleAppGDRefreshTask()
         
         guard beginBGSession() else {
-            Logger.common(message: "Refresh rejected: another BG session is running", level: .info, category: .background)
             // Refresh rejected: another BG session is running
             task.setTaskCompleted(success: false)
             return
@@ -234,7 +233,6 @@ extension BGTaskManager {
             return
         }
         guard beginBGSession() else {
-            Logger.common(message: "Processing rejected: another BG session is running", level: .info, category: .background)
             // Processing rejected: another BG session is running
             task.setTaskCompleted(success: false)
             return
