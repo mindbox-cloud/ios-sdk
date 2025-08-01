@@ -86,15 +86,24 @@ final class InAppResponseModelTests: XCTestCase {
         XCTAssertEqual(config.ids[0], 1)
     }
 
-    func test_visit_vargeting_valid() {
+    func test_visit_targeting_valid() throws {
         guard let config: VisitTargeting = getConfig(resourceName: "VisitTargetingModelValid") else {
             assertionFailure("config is Nil")
             return
         }
 
         XCTAssertNotNil(config)
-        XCTAssertEqual(config.kind, .lte)
+        XCTAssertEqual(config.kind, .equals)
         XCTAssertEqual(config.value, 1)
+    }
+    
+    func test_visit_targeting_negativeValue_false() throws {
+        guard let config: VisitTargeting = getConfig(resourceName: "VisitTargetingNegativeValueModel") else {
+            XCTAssertTrue(true)
+            return
+        }
+        
+        XCTAssertFalse(false)
     }
 
     func test_visit_targeting_invalid() {

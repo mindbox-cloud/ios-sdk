@@ -186,11 +186,31 @@ class InappFrequencyTests: XCTestCase {
         XCTAssertFalse(validator.isValid(item: inapp))
     }
 
-    func test_frequency_is_zero() throws {
-        let periodicFrequency = PeriodicFrequency(unit: .seconds, value: 0)
-        let inappFrequency: InappFrequency = .periodic(periodicFrequency)
-        let inapp = getInapp(frequency: inappFrequency)
-        XCTAssertFalse(validator.isValid(item: inapp))
+    func test_periodic_frequency_zero_throws_decoding_error() throws {
+        XCTAssertThrowsError(try parsePeriodicFrequency(value: 0)) { error in
+            XCTAssertTrue(error is DecodingError)
+            let errorDescription = String(describing: error)
+            XCTAssertTrue(errorDescription.contains("PeriodicFrequency value must be > 0"))
+        }
+    }
+    
+    func test_periodic_frequency_negative_throws_decoding_error() throws {
+        XCTAssertThrowsError(try parsePeriodicFrequency(value: -1)) { error in
+            XCTAssertTrue(error is DecodingError)
+            let errorDescription = String(describing: error)
+            XCTAssertTrue(errorDescription.contains("PeriodicFrequency value must be > 0"))
+        }
+    }
+    
+    private func parsePeriodicFrequency(value: Int) throws -> PeriodicFrequency {
+        let json = """
+        {
+            "unit": "seconds",
+            "value": \(value)
+        }
+        """
+        let data = json.data(using: .utf8)!
+        return try JSONDecoder().decode(PeriodicFrequency.self, from: data)
     }
 
     private func getInapp(frequency: InappFrequency) -> InApp {

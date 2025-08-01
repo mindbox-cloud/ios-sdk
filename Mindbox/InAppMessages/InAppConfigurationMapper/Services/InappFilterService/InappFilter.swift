@@ -93,8 +93,8 @@ final class InappsFilterService: InappFilterProtocol {
             var setInapps = Set(allInappsInVariantsExceptCurrentBranch)
 
             for variant in variants {
-                if let modulus = variant.modulus, let objects = variant.objects, let upper = modulus.upper {
-                    let range = modulus.lower..<upper
+                if let modulus = variant.modulus, let objects = variant.objects {
+                    let range = modulus.lower..<modulus.upper
                     if range.contains(hashValue) {
                         Logger.common(message: "[AB-test branch ID]: \(variant.id)")
                         for object in objects {
