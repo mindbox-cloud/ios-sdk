@@ -160,6 +160,7 @@
 		4766A8B82C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8B72C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json */; };
 		4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */; };
 		4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */; };
+		47980DB12E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */; };
 		47A220A52E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */; };
 		47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */; };
 		47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */; };
@@ -754,6 +755,7 @@
 		4766A8B72C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsSdkVersionConfigTypeError.json; sourceTree = "<group>"; };
 		4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementError.json; sourceTree = "<group>"; };
 		4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementTypeError.json; sourceTree = "<group>"; };
+		47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNotificationsStatusOperation.swift; sourceTree = "<group>"; };
 		47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphermalSQLiteForMBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
 		47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestBaseMigrations.swift; sourceTree = "<group>"; };
 		47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestProtocolMigrations.swift; sourceTree = "<group>"; };
@@ -1778,6 +1780,7 @@
 				840C38A525D1191000D50183 /* GuaranteedDeliveryManager.swift */,
 				84DFB33A25FA23F500A0FCE1 /* GuaranteedDeliveryManager+State.swift */,
 				840C38AB25D11BB200D50183 /* DeliveryOperation.swift */,
+				47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */,
 				84A312B325DA64B80096A017 /* Background */,
 			);
 			path = GuaranteedDeliveryManager;
@@ -3826,6 +3829,7 @@
 				F38562FF2DB66CB600D91208 /* DictionaryKeyValueModel.swift in Sources */,
 				A184654529C310F100E64780 /* InAppOperationJSONModel.swift in Sources */,
 				A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */,
+				47980DB12E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift in Sources */,
 				F39B67A92A3C72E5005C0CCA /* ImageDownloadService.swift in Sources */,
 				84CC799725CACF5500C062BD /* MBEventRepository.swift in Sources */,
 				F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */,

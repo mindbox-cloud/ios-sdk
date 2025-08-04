@@ -27,4 +27,6 @@ class EventRepositoryMock: EventRepository {
     func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
         return
     }
+    
+    func cancelAllRequests() {}
 }
