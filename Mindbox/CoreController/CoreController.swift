@@ -76,13 +76,13 @@ final class CoreController {
     func checkNotificationStatus(granted: Bool? = nil,
                                  completion: (() -> Void)? = nil) {
         controllerQueue.async {
+            defer { DispatchQueue.main.async { completion?() } }
+            
             let isNotificationsEnabled = granted ?? self.notificationStatus()
             guard self.persistenceStorage.isNotificationsEnabled != isNotificationsEnabled else {
-                DispatchQueue.main.async { completion?() }
                 return
             }
             guard self.persistenceStorage.isInstalled else {
-                DispatchQueue.main.async { completion?() }
                 return
             }
             self.updateInfo(
@@ -90,7 +90,6 @@ final class CoreController {
                 isNotificationsEnabled: isNotificationsEnabled
             )
             self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-            DispatchQueue.main.async { completion?() }
         }
     }
 
