@@ -123,7 +123,7 @@ final class GuaranteedDeliveryManager: NSObject {
             self.state = .idle
             
             guard !completion.isCancelled else {
-                Logger.common(message: "[GD] Queue was cancelled. Not rescheduling.", level: .info, category: .background)
+                Logger.common(message: "[GD] Queue was cancelled", level: .info, category: .background)
                 return
             }
             
