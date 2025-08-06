@@ -10,7 +10,6 @@ import Foundation
 import UIKit
 import UserNotifications
 import UserNotificationsUI
-import MindboxLogger
 
 public protocol MindboxNotificationContentProtocol: MindboxPushNotificationProtocol {
 
@@ -42,7 +41,6 @@ private extension MindboxNotificationService {
     func createContent(for notification: UNNotification, extensionContext: NSExtensionContext?) {
         let request = notification.request
         guard let payload = parse(request: request) else {
-            Logger.common(message: "[NotificationContent] Failed to parse payload. request: \(request)", level: .error, category: .notification)
             return
         }
 
@@ -59,7 +57,6 @@ private extension MindboxNotificationService {
     func createActions(with payload: Payload, context: NSExtensionContext?) {
         guard let context = context, let buttons = payload.withButton?.buttons else {
             let message = "[NotificationContent] Failed to create actions. payload: \(payload), context: \(String(describing: context)), payload.withButton?.buttons: \(String(describing: payload.withButton?.buttons))"
-            Logger.common(message: message, level: .error, category: .notification)
             return
         }
         let actions = buttons.map { button in
@@ -73,9 +70,6 @@ private extension MindboxNotificationService {
         if #available(iOS 12.0, *) {
             context.notificationActions = []
             actions.forEach {
-                Logger.common(message: "[NotificationContent] Button title: \($0.title), id: \($0.identifier)",
-                              level: .info,
-                              category: .notification)
                 context.notificationActions.append($0)
             }
         }
@@ -84,7 +78,6 @@ private extension MindboxNotificationService {
     func createImageView(with imagePath: String, view: UIView?) {
         guard let view = view,
               let data = FileManager.default.contents(atPath: imagePath) else {
-            Logger.common(message: "[NotificationContent] Failed to create view. imagePath: \(imagePath), view: \(String(describing: view))", level: .error, category: .notification)
             return
         }
 

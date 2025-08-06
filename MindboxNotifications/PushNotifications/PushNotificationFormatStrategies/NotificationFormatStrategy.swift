@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 
 protocol NotificationFormatStrategy {
     func handle(userInfo: [AnyHashable: Any]) -> MBPushNotification?
@@ -19,7 +18,6 @@ final class LegacyFormatStrategy: NotificationFormatStrategy {
               let alertData = apsData["alert"] as? [String: Any],
               let body = alertData["body"] as? String,
               let clickUrl = apsData["clickUrl"] as? String else {
-            Logger.common(message: "[NotificationServiceChecker] LegacyFormatStrategy: Failed to parse legacy notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
 
@@ -32,13 +30,11 @@ final class LegacyFormatStrategy: NotificationFormatStrategy {
             guard let text = dict["text"] as? String,
                   let url = dict["url"] as? String,
                   let uniqueKey = dict["uniqueKey"] as? String else {
-                Logger.common(message: "[NotificationServiceChecker] LegacyFormatStrategy: Error parsing button data. dictionary: \(dict)", level: .error, category: .notification)
                 return nil
             }
             return MBPushNotificationButton(text: text, url: url, uniqueKey: uniqueKey)
         }
 
-        Logger.common(message: "[NotificationServiceChecker] LegacyFormatStrategy: Successfully parsed legacy notification format.", level: .info, category: .notification)
         return MBPushNotification(
             aps: MBAps(alert: MBApsAlert(title: title, body: body),
                        sound: sound,
@@ -60,11 +56,9 @@ final class CurrentFormatStrategy: NotificationFormatStrategy {
               notificationModel.clickUrl != nil,
               let alert = notificationModel.aps?.alert,
               alert.body != nil else {
-            Logger.common(message: "[NotificationServiceChecker] CurrentFormatStrategy: Failed to parse current notification format. userInfo: \(userInfo)", level: .error, category: .notification)
             return nil
         }
 
-        Logger.common(message: "[NotificationServiceChecker] CurrentFormatStrategy: Successfully parsed current notification format.", level: .info, category: .notification)
         return notificationModel
     }
 }
