@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 
 public protocol MindboxPushNotificationProtocol {
     func isMindboxPush(userInfo: [AnyHashable: Any]) -> Bool
@@ -20,13 +19,11 @@ extension MindboxNotificationService: MindboxPushNotificationProtocol {
 
     public func isMindboxPush(userInfo: [AnyHashable: Any]) -> Bool {
         let message = "[NotificationServiceChecker] \(#function)"
-        Logger.common(message: message, level: .info, category: .notification)
         return pushValidator?.isValid(item: userInfo) ?? false
     }
 
     public func getMindboxPushData(userInfo: [AnyHashable: Any]) -> MBPushNotification? {
         let message = "[NotificationServiceChecker] \(#function)"
-        Logger.common(message: message, level: .info, category: .notification)
         return NotificationFormatter.formatNotification(userInfo)
     }
 }

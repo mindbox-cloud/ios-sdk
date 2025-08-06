@@ -30,7 +30,7 @@ let package = Package(
         ),
         .target(
             name: "MindboxNotifications",
-            dependencies: ["SDKVersionProvider", "MindboxLogger"],
+            dependencies: ["SDKVersionProvider"],
             path: "MindboxNotifications",
             exclude:  ["Info.plist"],
             resources: [

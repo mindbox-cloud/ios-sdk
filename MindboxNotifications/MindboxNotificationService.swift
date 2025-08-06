@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import MindboxLogger
 import UserNotifications
 import UserNotificationsUI
 
@@ -31,11 +30,6 @@ public class MindboxNotificationService: NSObject {
     /// Mindbox proxy for `NotificationsService` and `NotificationViewController`
     override public init() {
         super.init()
-        MBLoggerCoreDataManager.shared.setImmediateWrite()
         pushValidator = MindboxPushValidator()
-        
-        #if DEBUG
-        MBLogger.shared.logLevel = .debug
-        #endif
     }
 }
