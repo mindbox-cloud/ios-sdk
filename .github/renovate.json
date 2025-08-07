@@ -6,6 +6,9 @@
   ],
   "separateMinorPatch": true,
   "separateMajorMinor": true,
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
   "packageRules": [
     {
       "description": "Disable patch updates for all dependencies",
@@ -20,5 +23,5 @@
     ]
   },
   "timezone": "Europe/Moscow",
-  "schedule": ["* * 11 * * 3L"]
+  "schedule": ["0 11 * * 3L"]
 }
