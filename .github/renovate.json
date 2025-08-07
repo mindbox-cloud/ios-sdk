@@ -23,5 +23,5 @@
     ]
   },
   "timezone": "Europe/Moscow",
-  "schedule": ["0 11 * * 3L"]
+  "schedule": ["* 11 * * 3L"]
 }
