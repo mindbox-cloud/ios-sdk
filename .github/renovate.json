@@ -18,10 +18,8 @@
   ],
   "lockFileMaintenance": {
     "enabled": true,
-    "extends": [
-      "schedule:monthly"
-    ]
+    "schedule": ["* 11 15-21 * * 3"]
   },
   "timezone": "Europe/Moscow",
-  "schedule": ["* 11 * * 3L"]
+  "schedule": ["* 11 15-21 * * 3"]
 }
