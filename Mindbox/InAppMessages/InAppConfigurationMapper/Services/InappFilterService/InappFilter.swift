@@ -11,16 +11,17 @@ import MindboxLogger
 
 protocol InappFilterProtocol {
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
-    func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp]
-    func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp]
+    func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp]
+    func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp]
+    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
     var validInapps: [InApp] { get }
-    var shownInAppDictionary: [String: Date] { get }
+    var shownInAppShowDatesDictionary: [String: [Date]] { get }
 }
 
 final class InappsFilterService: InappFilterProtocol {
 
     var validInapps: [InApp] = []
-    var shownInAppDictionary: [String: Date] = [:]
+    var shownInAppShowDatesDictionary: [String: [Date]] = [:]
 
     private let persistenceStorage: PersistenceStorage
     private let variantsFilter: VariantFilterProtocol
@@ -41,12 +42,49 @@ final class InappsFilterService: InappFilterProtocol {
         inapps = filterInappsBySDKVersion(inapps)
         Logger.common(message: "Processing \(inapps.count) in-app(s).", level: .debug, category: .inAppMessages)
         let validInapps = filterValidInAppMessages(inapps)
-        let filteredByABTestInapps = filterInappsByABTests(abTests, responseInapps: validInapps)
-        let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
-
-        return filteredByAlreadyShown
+        
+        return applyCommonFilters(inapps: validInapps, abTests: abTests)
+    }
+    
+    func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp] {
+        guard let event = event,
+              let inappIDS = operationInapps[event.name] else {
+            Logger.common(message: "[InappsFilterService] No operation inapps for event. Return empty array", level: .debug, category: .inAppMessages)
+            return []
+        }
+        
+        return validInapps.filter { inappIDS.contains($0.id) }
+    }
+    
+    func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp] {
+        let inapps = filterInappsByOperation(event: event, operationInapps: operationInapps)
+        return applyCommonFilters(inapps: inapps, abTests: abTests)
     }
 
+    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
+        var filteredInAppsByEvent: [InAppTransitionData] = []
+
+        for inapp in inapps {
+            guard targetingChecker.check(targeting: inapp.targeting) else {
+                continue
+            }
+
+            if let inAppFormVariants = inapp.form.variants.first {
+                let formData = InAppTransitionData(inAppId: inapp.id,
+                                                   isPriority: inapp.isPriority,
+                                                   delayTime: inapp.delayTime,
+                                                   content: inAppFormVariants,
+                                                   frequency: inapp.frequency)
+                filteredInAppsByEvent.append(formData)
+            }
+        }
+
+        return filteredInAppsByEvent
+    }
+}
+
+// MARK: - Internal methods
+extension InappsFilterService {
     // FIXME: Rewrite this func in the future
     // swiftlint:disable:next cyclomatic_complexity
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
@@ -119,20 +157,17 @@ final class InappsFilterService: InappFilterProtocol {
     }
 
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppDictionary = persistenceStorage.shownInappsDictionary ?? [:]
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppDictionary.keys)]", level: .info, category: .inAppMessages)
+        let shownInAppShowDatesDictionary = persistenceStorage.shownDatesByInApp ?? [:]
+        let frequencyValidator = self.createFrequencyValidator()
+        Logger.common(message: "Shown in-apps ids: [\(shownInAppShowDatesDictionary.keys)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
-            let frequencyValidator = self.createFrequencyValidator()
-            let result = frequencyValidator.isValid(item: $0)
+            let result = frequencyValidator.isValid(frequency: $0.frequency, id: $0.id)
             return result
         }
 
         return filteredInapps
     }
-}
-
-// MARK: - Private methods
-private extension InappsFilterService {
+    
     func filterInappsBySDKVersion(_ inapps: [InAppDTO]) -> [InAppDTO] {
         let inapps = inapps
         let filteredInapps = inapps.filter {
@@ -150,6 +185,8 @@ private extension InappsFilterService {
                 if !variants.isEmpty {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
+                                           isPriority: inapp.isPriority,
+                                           delayTime: inapp.delayTime,
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
@@ -168,5 +205,15 @@ private extension InappsFilterService {
 
     private func createFrequencyValidator() -> InappFrequencyValidator {
         InappFrequencyValidator(persistenceStorage: persistenceStorage)
+    }
+
+    private func applyCommonFilters(inapps: [InApp], abTests: [ABTest]?) -> [InApp] {
+        let filteredByABTestInapps = filterInappsByABTests(abTests, responseInapps: inapps)
+        let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
+        return sortInappsByPriority(filteredByAlreadyShown)
+    }
+    
+    func sortInappsByPriority(_ inapps: [InApp]) -> [InApp] {
+        return inapps.sorted { $0.isPriority && !$1.isPriority }
     }
 }

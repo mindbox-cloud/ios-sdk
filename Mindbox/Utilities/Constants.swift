@@ -60,4 +60,8 @@ enum Constants {
             }
         }
     }
+    
+    enum MagicNumbers {
+        static let daysToKeepInappShowTimes = 2
+    }
 }

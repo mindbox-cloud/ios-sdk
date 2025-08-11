@@ -18,7 +18,7 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
 
     // TODO: Replace “X.Y.Z” with the actual SDK version when this migration ships
     var description: String {
-        "Migration removes background task data. Starting with SDK X.Y.Z."
+        "Migration removes background task data. Starting with SDK 2.14.0"
     }
 
     var isNeeded: Bool {
@@ -38,7 +38,7 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
     }
 
     var version: Int {
-        1
+        2
     }
 
     func run() throws {

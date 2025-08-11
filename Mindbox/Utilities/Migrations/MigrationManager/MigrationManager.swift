@@ -52,6 +52,7 @@ final class MigrationManager {
 
         self.migrations = [
             MigrationShownInAppsIds(),
+            MigrationShownInAppsDictionary(),
             RemoveBackgroundTaskDataMigration()
         ]
     }
@@ -76,18 +77,15 @@ extension MigrationManager: MigrationManagerProtocol {
         var migrationsStarted: Bool = false
 
         migrations
-            .lazy
-            .filter { $0.isNeeded }
             .sorted { $0.version < $1.version }
             .forEach { migration in
+                guard migration.isNeeded else { return }
                 migrationsStarted = true
                 do {
                     try migration.run()
-                    let message = "[Migration] Run migration: '\(migration.description)', version: \(migration.version)"
-                    Logger.common(message: message, level: .info, category: .migration)
+                    Logger.common(message: "[Migration] Run migration: '\(migration.description)', version: \(migration.version)", level: .info, category: .migration)
                 } catch {
-                    let errorMessage = "[Migration] Migration \(migration.version) failed. Description: \(migrations.description). Error: \(error.localizedDescription)"
-                    Logger.common(message: errorMessage, level: .error, category: .migration)
+                    Logger.common(message: "[Migration] Migration \(migration.version) failed. Description: \(migration.description). Error: \(error.localizedDescription)", level: .error, category: .migration)
                 }
             }
 

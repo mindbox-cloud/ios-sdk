@@ -39,7 +39,7 @@ public class Mindbox: NSObject {
     private var utilitiesFetcher: UtilitiesFetcher?
     private var guaranteedDeliveryManager: GuaranteedDeliveryManager?
     private var databaseRepository: MBDatabaseRepository?
-    private var inAppMessagesManager: InAppCoreManagerProtocol?
+    private var inappScheduleManager: InappScheduleManagerProtocol?
     private var sessionTemporaryStorage: SessionTemporaryStorage?
     private var trackVisitManager: TrackVisitCommonTrackProtocol?
 
@@ -69,7 +69,7 @@ public class Mindbox: NSObject {
 
     public weak var inAppMessagesDelegate: InAppMessagesDelegate? {
         didSet {
-            inAppMessagesManager?.delegate = inAppMessagesDelegate
+            inappScheduleManager?.delegate = inAppMessagesDelegate
         }
     }
 
@@ -555,7 +555,7 @@ public class Mindbox: NSObject {
         utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
-        inAppMessagesManager = DI.injectOrFail(InAppCoreManagerProtocol.self)
+        inappScheduleManager = DI.injectOrFail(InappScheduleManagerProtocol.self)
         inAppMessagesDelegate = self
         coreController = DI.injectOrFail(CoreController.self)
         trackVisitManager = DI.injectOrFail(TrackVisitManagerProtocol.self)
@@ -573,7 +573,7 @@ public class Mindbox: NSObject {
 
     @objc
     private func resetShownInApps() {
-        persistenceStorage?.shownInappsDictionary = [:]
+        persistenceStorage?.shownDatesByInApp = [:]
     }
 
     @objc

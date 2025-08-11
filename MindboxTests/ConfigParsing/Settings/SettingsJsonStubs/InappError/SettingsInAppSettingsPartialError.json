@@ -1,0 +1,25 @@
+{
+    "operations": {
+        "viewProduct": {
+            "systemName": "ProductView"
+        },
+        "viewCategory": {
+            "systemName": "CategoryView"
+        },
+        "setCart": {
+            "systemName": "SetCart"
+        }
+    },
+    "ttl": {
+        "inapps": "0.00:00:10"
+    },
+    "slidingExpiration": {
+        "config": "0.00:00:10",
+        "pushTokenKeepalive": "0.00:00:10"
+    },
+    "inapp": {
+        "maxInappsPerSession": 1,
+        "maxInappsPerDay": "invalid",
+        "minIntervalBetweenShowsTest": "0.00:00:10"
+    }
+} 
