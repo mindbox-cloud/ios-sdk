@@ -243,7 +243,6 @@ class MBPersistenceStorage: PersistenceStorage {
 
     @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
     var shownInappsDictionary: [String: Date]?
-    
 }
 
 extension MBPersistenceStorage {

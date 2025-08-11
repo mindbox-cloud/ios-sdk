@@ -54,12 +54,6 @@ protocol PersistenceStorage: AnyObject {
     /// ensure that the system remains in a consistent state.
     var versionCodeForMigration: Int? { get set }
 
-    func setBackgroundExecution(_ value: BackgroudExecution)
-
-    func resetBackgroundExecutions()
-
-    func storeToFileBackgroundExecution()
-
     func softReset()
 
     func reset()

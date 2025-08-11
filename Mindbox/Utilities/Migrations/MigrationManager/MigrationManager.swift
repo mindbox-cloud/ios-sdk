@@ -52,7 +52,7 @@ final class MigrationManager {
 
         self.migrations = [
             MigrationShownInAppsIds(),
-            MigrationShownInAppsDictionary()
+            MigrationShownInAppsDictionary(),
             RemoveBackgroundTaskDataMigration()
         ]
     }
