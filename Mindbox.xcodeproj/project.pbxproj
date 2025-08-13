@@ -1221,7 +1221,6 @@
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
 				A17853BF29AF7E940072578F /* MindboxLogger */,
 				313B233125ADEA0F00A1CB72 /* Products */,
-				A1EDA815298A90B000BAEC92 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2428,13 +2427,6 @@
 				A17958702978AEC600609E91 /* TargetingCheckerTypes */,
 			);
 			path = InAppTargetingChecker;
-			sourceTree = "<group>";
-		};
-		A1EDA815298A90B000BAEC92 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		D216DE4F2C07168D0020F58A /* Extensions */ = {
@@ -4070,6 +4062,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../kmp-common-sdk/mindbox-common/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -4140,6 +4133,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../kmp-common-sdk/mindbox-common/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

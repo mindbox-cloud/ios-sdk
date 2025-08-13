@@ -14,6 +14,13 @@ Pod::Spec.new do |spec|
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld', 'Mindbox/**/*.xcprivacy']
   } 
   spec.swift_version = "5"
+  spec.static_framework = true
+  spec.vendored_frameworks = "../kmp-common-sdk/mindbox-common/build/XCFrameworks/release/MindboxCommon.xcframework"
+  spec.prepare_command = <<-CMD
+    set -e
+    cd "../kmp-common-sdk"
+    ./gradlew -q :mindbox-common:assembleMindboxCommonXCFramework
+  CMD
   spec.dependency 'MindboxLogger', '2.13.4'
 
 end
