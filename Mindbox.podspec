@@ -16,6 +16,13 @@ Pod::Spec.new do |spec|
   spec.swift_version = "5"
   spec.static_framework = true
   spec.vendored_frameworks = "../kmp-common-sdk/mindbox-common/build/XCFrameworks/release/MindboxCommon.xcframework"
+  spec.preserve_paths = [
+    "../kmp-common-sdk/mindbox-common/build/XCFrameworks/release/MindboxCommon.xcframework"
+  ]
+  spec.pod_target_xcconfig = {
+    'FRAMEWORK_SEARCH_PATHS' => '$(inherited) "${PODS_ROOT}/../../kmp-common-sdk/mindbox-common/build/XCFrameworks/release/MindboxCommon.xcframework/ios-arm64" "${PODS_ROOT}/../../kmp-common-sdk/mindbox-common/build/XCFrameworks/release/MindboxCommon.xcframework/ios-arm64_x86_64-simulator"',
+    'OTHER_LDFLAGS' => '$(inherited) -framework MindboxCommon'
+  }
   spec.prepare_command = <<-CMD
     set -e
     cd "../kmp-common-sdk"
