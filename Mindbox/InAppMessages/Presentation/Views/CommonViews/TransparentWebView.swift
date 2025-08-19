@@ -82,9 +82,6 @@ final class TransparentWebView: UIView {
         }
 
         let jsObserver: String = """
-             // Log UserAgent to console
-             console.log('UserAgent:', navigator.userAgent);
-             
              // Send UserAgent to native code
              window.webkit.messageHandlers.SdkBridge.postMessage({
                  'action': 'userAgent',
@@ -200,9 +197,9 @@ final class TransparentWebView: UIView {
     private func createUserAgent() -> String {
         let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
         
-        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
-        let appVersion = utilitiesFetcher.appVerson ?? "unknow"
-        let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
+        let appVersion = utilitiesFetcher.appVerson ?? "unknown"
+        let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
         let userAgent: String = "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
         return userAgent
     }
