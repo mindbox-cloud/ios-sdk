@@ -30,9 +30,7 @@ extension MBContainer {
         }
 
         register(MBDatabaseRepository.self) {
-            let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
-            let persistentContainer = try! databaseLoader.loadPersistentContainer()
-            return try! MockDatabaseRepository(persistentContainer: persistentContainer)
+            return try! MockDatabaseRepository(inMemory: true)
         }
 
         register(ImageDownloadServiceProtocol.self, scope: .container) {

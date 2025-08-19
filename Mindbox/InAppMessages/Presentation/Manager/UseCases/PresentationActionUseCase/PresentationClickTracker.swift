@@ -25,11 +25,14 @@ class PresentationClickTracker {
     }
 
     func trackClick(id: String) {
-        guard !SessionTemporaryStorage.shared.clickTracked else { return }
-
+        if SessionTemporaryStorage.shared.lastInappClickedID == id {
+            return
+        }
+        
+        SessionTemporaryStorage.shared.lastInappClickedID = id
+        
         do {
             try tracker.trackClick(id: id)
-            SessionTemporaryStorage.shared.clickTracked = true
             Logger.common(message: "Track InApp.Click. Id \(id)", level: .info, category: .notification)
         } catch {
             Logger.common(message: "Track InApp.Click failed with error: \(error)", level: .error, category: .notification)

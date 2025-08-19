@@ -28,14 +28,14 @@ fileprivate enum InappConfig: String, Configurable {
 }
 class ABTests: XCTestCase {
 
-    private var inappFilter: InappFilterProtocol!
+    private var inappFilter: InappsFilterService!
     private var variantsFilter: VariantFilterProtocol!
     private var persistenceStorage: PersistenceStorage!
     private var stub: ABTestsStub!
 
     override func setUp() {
         super.setUp()
-        self.inappFilter = DI.injectOrFail(InappFilterProtocol.self)
+        self.inappFilter = DI.injectOrFail(InappFilterProtocol.self) as? InappsFilterService
         self.variantsFilter = DI.injectOrFail(VariantFilterProtocol.self)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         self.stub = ABTestsStub()
@@ -611,6 +611,8 @@ private extension ABTests {
                 if !variants.isEmpty {
                     let formModel = InAppForm(variants: variants)
                     let inappModel = InApp(id: inapp.id,
+                                           isPriority: inapp.isPriority,
+                                           delayTime: nil,
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,

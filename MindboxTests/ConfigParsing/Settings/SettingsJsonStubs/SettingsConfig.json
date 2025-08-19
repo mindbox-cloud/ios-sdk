@@ -16,5 +16,10 @@
   "slidingExpiration": {
     "config": "0.00:00:23",
     "pushTokenKeepalive": "14.00:00:00"
+  },
+  "inapp": {
+      "maxInappsPerSession": 1,
+      "maxInappsPerDay": 1,
+      "minIntervalBetweenShows": "0.00:00:10"
   }
 }

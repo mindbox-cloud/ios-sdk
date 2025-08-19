@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import MindboxLogger
 import UserNotifications
 import UserNotificationsUI
 

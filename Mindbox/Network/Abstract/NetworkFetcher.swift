@@ -21,4 +21,7 @@ protocol NetworkFetcher {
         route: Route,
         completion: @escaping ((Result<Void, MindboxError>) -> Void)
     )
+    
+    /// Cancels all ongoing network tasks.
+    func cancelAllTasks()
 }

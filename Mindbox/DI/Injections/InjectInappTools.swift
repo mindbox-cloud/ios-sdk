@@ -71,7 +71,8 @@ extension MBContainer {
             let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
-            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager)
+            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
+            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
         }
 
         return self
@@ -102,6 +103,24 @@ extension MBContainer {
             let actionHandler = DI.injectOrFail(InAppActionHandlerProtocol.self)
             let displayUseCase = DI.injectOrFail(PresentationDisplayUseCase.self)
             return InAppPresentationManager(actionHandler: actionHandler, displayUseCase: displayUseCase)
+        }
+        
+        register(InAppPresentationValidatorProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppPresentationValidator(persistenceStorage: persistenceStorage)
+        }
+        
+        register(InAppTrackingServiceProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppTrackingService(persistenceStorage: persistenceStorage)
+        }
+        
+        register(InappScheduleManagerProtocol.self) {
+            let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
+            let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
+            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
+            
+            return InappScheduleManager(presentationManager: presentationManager, presentationValidator: presentationValidator, trackingService: inappTrackingService)
         }
 
         return self

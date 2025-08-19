@@ -4,21 +4,15 @@
     ":disableDependencyDashboard",
     "group:all"
   ],
-  "separateMinorPatch": true,
   "separateMajorMinor": true,
-  "packageRules": [
-    {
-      "description": "Disable patch updates for all dependencies",
-      "matchUpdateTypes": ["patch"],
-      "enabled": false
-    }
-  ],
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+
   "lockFileMaintenance": {
     "enabled": true,
-    "extends": [
-      "schedule:monthly"
-    ]
+    "schedule": ["* 11 * * 3L"]
   },
   "timezone": "Europe/Moscow",
-  "schedule": ["* * 11 * * 3L"]
+  "schedule": ["* 11 * * 3L"]
 }
