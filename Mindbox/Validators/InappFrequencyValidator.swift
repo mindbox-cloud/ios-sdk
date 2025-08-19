@@ -9,27 +9,25 @@
 import Foundation
 import MindboxLogger
 
-class InappFrequencyValidator: Validator {
-    typealias T = InApp
-
+class InappFrequencyValidator {
     let persistenceStorage: PersistenceStorage
 
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
 
-    func isValid(item: InApp) -> Bool {
-        guard let frequency = item.frequency else {
+    func isValid(frequency: InappFrequency?, id: String) -> Bool {
+        guard let frequency = frequency else {
             return false
         }
 
         switch frequency {
             case .periodic(let periodicFrequency):
                 let validator = PeriodicFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: periodicFrequency, id: item.id)
+                return validator.isValid(item: periodicFrequency, id: id)
             case .once(let onceFrequency):
                 let validator = OnceFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: onceFrequency, id: item.id)
+                return validator.isValid(item: onceFrequency, id: id)
             case .unknown:
                 return false
         }
@@ -44,14 +42,14 @@ class OnceFrequencyValidator {
     }
 
     func isValid(item: OnceFrequency, id: String) -> Bool {
-        let shownInappsDictionary = persistenceStorage.shownInappsDictionary ?? [:]
+        let shownDatesByInApp = persistenceStorage.shownDatesByInApp ?? [:]
         var result = false
         switch item.kind {
             case .lifetime:
-                result = shownInappsDictionary[id] == nil
+                result = shownDatesByInApp[id] == nil
             case .session:
-                if let savedTime = shownInappsDictionary[id], Date() < savedTime {
-                    Logger.common(message: "[Inapp frequency] Saved date less than current date. Skip this in-app.",
+                if SessionTemporaryStorage.shared.sessionShownInApps.contains(id) {
+                    Logger.common(message: "[Inapp frequency] Inapp ID \(id) is already shown in this session. Skip this in-app.",
                                   level: .debug, category: .inAppMessages)
                     result = false
                 } else {
@@ -73,22 +71,13 @@ class PeriodicFrequencyValidator {
     }
 
     func isValid(item: PeriodicFrequency, id: String) -> Bool {
-        guard item.value > 0 else {
-            Logger.common(message: """
-            [Inapp frequency] Current frequency is [periodic], it's unit is [\(item.unit.rawValue)].
-            Value (\(item.value)) is zero or negative.
-            Inapp is not valid.
-            """, level: .info, category: .inAppMessages)
-            return false
-        }
-
         let currentDate = Date()
-        guard let inappsDict = persistenceStorage.shownInappsDictionary else {
-            Logger.common(message: "shownInappsDictionary not exists. Inapp is not valid.", level: .error, category: .inAppMessages)
+        guard let inappsDict = persistenceStorage.shownDatesByInApp else {
+            Logger.common(message: "shownDatesByInApp not exists. Inapp ID \(id) is not valid.", level: .error, category: .inAppMessages)
             return false
         }
 
-        guard let shownDate = inappsDict[id] else {
+        guard let shownDates = inappsDict[id], !shownDates.isEmpty else {
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)].
             Inapp ID \(id) is never shown before.
@@ -99,13 +88,14 @@ class PeriodicFrequencyValidator {
 
         let calendar = Calendar.current
         let component = item.unit.calendarComponent
-        if let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: shownDate) {
+        if let lastShownDate = shownDates.last,
+           let shownDatePlusFrequency = calendar.date(byAdding: component, value: item.value, to: lastShownDate) {
             let isValid = currentDate > shownDatePlusFrequency
             Logger.common(message: """
             [Inapp frequency] Current frequency is [periodic] and unit is [\(item.unit.rawValue)] value is (\(item.value)).
             Last shown date plus frequency: \(shownDatePlusFrequency.asDateTimeWithSeconds).
             Current date: \(currentDate.asDateTimeWithSeconds).
-            Valid = \(isValid)
+            Inapp ID \(id) valid = \(isValid)
             """, level: .debug, category: .inAppMessages)
             return isValid
         } else {

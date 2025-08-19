@@ -10,6 +10,9 @@ import Foundation
 @testable import Mindbox
 
 struct MockEvent: EventProtocol {
+    
+    private let clock: Clock
+    
     let transactionId: String
 
     var dateTimeOffset: Int64 {
@@ -17,7 +20,7 @@ struct MockEvent: EventProtocol {
             return 0
         }
         let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
-        let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
+        let ms = (clock.now.timeIntervalSince(enqueueDate) * 1000).rounded()
         return Int64(ms)
     }
 
@@ -38,6 +41,7 @@ struct MockEvent: EventProtocol {
         self.body = body
         self.serialNumber = nil
         self.isRetry = false
+        self.clock = SystemClock()
     }
 
     init?(_ event: CDEvent) {
@@ -51,6 +55,7 @@ struct MockEvent: EventProtocol {
 
             return nil
         }
+        self.clock = SystemClock()
         self.transactionId = transactionId
         self.enqueueTimeStamp = event.timestamp
         self.type = operation
@@ -61,12 +66,19 @@ struct MockEvent: EventProtocol {
 }
 
 extension MockEvent {
-    init(type: Event.Operation, body: String, isRetry: Bool = false) {
-        self.transactionId = UUID().uuidString
-        self.enqueueTimeStamp = Date().timeIntervalSince1970
+    init(type: Event.Operation,
+         body: String,
+         enqueueTimeStamp: Double = Date().timeIntervalSince1970,
+         isRetry: Bool = false,
+         clock: Clock = SystemClock(),
+         serialNumber: String? = nil,
+         transactionId: String = UUID().uuidString) {
+        self.clock = clock
+        self.transactionId = transactionId
+        self.enqueueTimeStamp = enqueueTimeStamp
         self.type = type
         self.body = body
-        self.serialNumber = nil
+        self.serialNumber = serialNumber
         self.isRetry = isRetry
     }
 }

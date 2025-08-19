@@ -56,12 +56,6 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
-    var backgroundExecutions: [BackgroudExecution] = [] {
-        didSet {
-            onDidChange?()
-        }
-    }
-
     var isNotificationsEnabled: Bool? {
         didSet {
             onDidChange?()
@@ -83,6 +77,10 @@ class MockPersistenceStorage: PersistenceStorage {
     var shownInAppsIds: [String]?
 
     var shownInappsDictionary: [String: Date]?
+    
+    var shownDatesByInApp: [String : [Date]]?
+
+    var lastInappStateChangeDate: Date?
 
     var handledlogRequestIds: [String]?
 
@@ -107,16 +105,6 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
-
-    func setBackgroundExecution(_ value: BackgroudExecution) {
-        backgroundExecutions.append(value)
-    }
-
-    func resetBackgroundExecutions() {
-        backgroundExecutions = []
-    }
-
-    func storeToFileBackgroundExecution() {}
 
     var needUpdateInfoOnce: Bool? {
         didSet {

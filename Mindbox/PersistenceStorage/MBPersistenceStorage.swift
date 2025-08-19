@@ -130,38 +130,6 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
-    var backgroundExecutions: [BackgroudExecution] {
-        if let data = MBPersistenceStorage.defaults.value(forKey: "backgroundExecution") as? Data {
-            return (try? PropertyListDecoder().decode(Array<BackgroudExecution>.self, from: data)) ?? []
-        } else {
-            return []
-        }
-    }
-
-    func setBackgroundExecution(_ value: BackgroudExecution) {
-        var tasks = backgroundExecutions
-        tasks.append(value)
-        MBPersistenceStorage.defaults.set(try? PropertyListEncoder().encode(tasks), forKey: "backgroundExecution")
-        MBPersistenceStorage.defaults.synchronize()
-        onDidChange?()
-    }
-
-    func storeToFileBackgroundExecution() {
-        let path = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("BackgroundExecution.plist")
-
-        // Swift Dictionary To Data.
-        let encoder = PropertyListEncoder()
-        encoder.outputFormat = .xml
-        do {
-            let data = try encoder.encode(backgroundExecutions)
-            try data.write(to: path)
-        } catch {
-            Logger.common(message: "[PersistenceStorage] StoreToFileBackgroundExecution did failed with error: \(error.localizedDescription)")
-        }
-    }
-
     init(defaults: UserDefaults) {
         MBPersistenceStorage.defaults = defaults
     }
@@ -189,11 +157,11 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
-    @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
-    var shownInAppsIds: [String]?
+    @UserDefaultsWrapper(key: .shownDatesByInApp, defaultValue: [:])
+    var shownDatesByInApp: [String: [Date]]?
 
-    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
-    var shownInappsDictionary: [String: Date]?
+    @UserDefaultsWrapper(key: .lastInappStateChangeDate, defaultValue: nil)
+    var lastInappStateChangeDate: Date?
 
     @UserDefaultsWrapper(key: .handledlogRequestIds, defaultValue: nil)
     var handledlogRequestIds: [String]?
@@ -266,22 +234,15 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    // MARK: - Deprecated Properties
+    // These properties are deprecated and will be removed in future versions.
+    // Please use the recommended alternatives instead.
+    
+    @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
+    var shownInAppsIds: [String]?
 
-    func resetBackgroundExecutions() {
-        MBPersistenceStorage.defaults.removeObject(forKey: "backgroundExecution")
-        MBPersistenceStorage.defaults.synchronize()
-    }
-}
-
-struct BackgroudExecution: Codable {
-
-    let taskID: String
-
-    let taskName: String
-
-    let dateString: String
-
-    let info: String
+    @UserDefaultsWrapper(key: .shownInAppsDictionary, defaultValue: [:])
+    var shownInappsDictionary: [String: Date]?
 }
 
 extension MBPersistenceStorage {
@@ -290,7 +251,6 @@ extension MBPersistenceStorage {
     struct UserDefaultsWrapper<T> {
 
         enum Key: String {
-
             case installationId = "MBPersistenceStorage-installationId"
             case deviceUUID = "MBPersistenceStorage-deviceUUID"
             case apnsToken = "MBPersistenceStorage-apnsToken"
@@ -300,14 +260,21 @@ extension MBPersistenceStorage {
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
-            case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
-            case shownInAppsDictionary = "MBPersistenceStorage-shownInAppsDictionary"
+            case shownDatesByInApp = "MBPersistenceStorage-shownDatesByInApp"
+            case lastInappStateChangeDate = "MBPersistenceStorage-lastInappStateChangeDate"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
             case imageLoadingMaxTimeInSeconds = "MBPersistenceStorage-imageLoadingMaxTimeInSeconds"
             case needUpdateInfoOnce = "MBPersistenceStorage-needUpdateInfoOnce"
             case userVisitCount = "MBPersistenceStorage-userVisitCount"
             case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
+
+            // MARK: - Deprecated Keys
+            // These keys are deprecated and will be removed in future versions.
+            // Please use the recommended alternatives instead.
+            
+            case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
+            case shownInAppsDictionary = "MBPersistenceStorage-shownInAppsDictionary"
         }
 
         private let key: Key

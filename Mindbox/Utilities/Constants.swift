@@ -14,7 +14,8 @@ enum Constants {
 
         static let removeDeprecatedEventsInterval = TimeInterval(7 * 24 * 60 * 60)
 
-        static let refreshTaskInterval = TimeInterval(2 * 60)
+        static let refreshTaskInterval = TimeInterval(6 * 60 * 60) // 6 hours
+        static let processingTaskInterval = TimeInterval(12 * 60 * 60) // 12 hours
     }
 
     enum Database {
@@ -58,5 +59,9 @@ enum Constants {
                 .keepAlive
             }
         }
+    }
+    
+    enum MagicNumbers {
+        static let daysToKeepInappShowTimes = 2
     }
 }

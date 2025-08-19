@@ -31,7 +31,7 @@ class InappRemainingTargetingTests: XCTestCase {
 
         mapper = DI.injectOrFail(InappMapperProtocol.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        persistenceStorage.shownInappsDictionary = [:]
+        persistenceStorage.shownDatesByInApp = [:]
     }
 
     override func tearDown() {
@@ -69,7 +69,7 @@ class InappRemainingTargetingTests: XCTestCase {
 
     func test_TwoInappsTrue_FirstShownBefore() { // 4
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        persistenceStorage.shownInappsDictionary = ["1": Date()]
+        persistenceStorage.shownDatesByInApp = ["1": [Date()]]
         let config = getConfig(name: "3-4-5-TargetingRequests")
         mapper.handleInapps(nil, config) { _ in
             expectation.fulfill()
@@ -82,8 +82,9 @@ class InappRemainingTargetingTests: XCTestCase {
 
     func test_TwoInappsTrue_BothAlreadyShown() { // 5
         let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        persistenceStorage.shownInappsDictionary = ["1": Date(),
-                                                    "2": Date()]
+        persistenceStorage.shownDatesByInApp = ["1": [Date()],
+            "2": [Date()]
+        ]
 
         let config = getConfig(name: "3-4-5-TargetingRequests")
         mapper.handleInapps(nil, config) { _ in
@@ -127,7 +128,7 @@ class InappRemainingTargetingTests: XCTestCase {
     func test_TrueShown_OperationTest_TrueNotShown_Geo_Segment() { // 9
         let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
         let expectationForhandleInapps = XCTestExpectation(description: "Waiting for handleInapps to complete")
-        persistenceStorage.shownInappsDictionary = ["1": Date()]
+        persistenceStorage.shownDatesByInApp = ["1": [Date()]]
 
         let config = getConfig(name: "9-TargetingRequests")
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)

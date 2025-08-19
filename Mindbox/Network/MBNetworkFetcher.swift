@@ -200,4 +200,11 @@ class MBNetworkFetcher: NetworkFetcher {
             completion(.failure(.invalidResponse(response)))
         }
     }
+    
+    /// Cancels all ongoing network tasks started by this fetcher.
+    func cancelAllTasks() {
+        session.getAllTasks { tasks in
+            tasks.forEach { $0.cancel() }
+        }
+    }
 }

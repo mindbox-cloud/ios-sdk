@@ -11,6 +11,26 @@ import Foundation
 struct PeriodicFrequency: Decodable, Equatable {
     let unit: Unit
     let value: Int
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        unit = try container.decode(Unit.self, forKey: .unit)
+        value = try container.decode(Int.self, forKey: .value)
+        
+        guard value > 0 else {
+            throw DecodingError.dataCorruptedError(forKey: .value, in: container, debugDescription: "PeriodicFrequency value must be > 0. Skip inapp")
+        }
+    }
+    
+    init(unit: Unit, value: Int) {
+        self.unit = unit
+        self.value = value
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case unit
+        case value
+    }
 
     enum Unit: String, Decodable {
         case seconds

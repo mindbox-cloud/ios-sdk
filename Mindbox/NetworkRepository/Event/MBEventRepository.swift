@@ -100,4 +100,9 @@ class MBEventRepository: EventRepository {
             return EventRoute.syncEvent(wrapper)
         }
     }
+    
+    /// Cancels all ongoing network requests made via this repository.
+    func cancelAllRequests() {
+        fetcher.cancelAllTasks()
+    }
 }

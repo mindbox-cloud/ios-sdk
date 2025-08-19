@@ -48,6 +48,12 @@ extension MBContainer {
                 inappMapper: DI.injectOrFail(InappMapperProtocol.self),
                 persistenceStorage: persistenceStorage)
         }
+        
+        register(CheckNotifWork.self) {
+            { [weak core = DI.injectOrFail(CoreController.self)] done in
+                core?.checkNotificationStatus { done() }
+            }
+        }
 
         return self
     }

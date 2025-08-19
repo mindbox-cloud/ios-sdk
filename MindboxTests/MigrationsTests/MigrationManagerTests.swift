@@ -22,14 +22,16 @@ final class MigrationManagerTests: XCTestCase {
         persistenceStorageMock.configDownloadDate = Date()
         persistenceStorageMock.userVisitCount = 1
         persistenceStorageMock.handledlogRequestIds = ["37db8697-ace9-4d1f-99b6-7e303d6c874f"]
-        persistenceStorageMock.shownInappsDictionary = [
-            "36920d7e-3c42-4194-9a11-b0b5c550460c": Date(),
-            "37bed734-aa34-4c10-918b-873f67505d46": Date()
+        persistenceStorageMock.shownDatesByInApp = [
+            "1": [Date()],
+            "2": [Date()]
         ]
 
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1()
         ]
+        
+        setUpForRemoveBackgroundTaskDataMigration()
 
         migrationManager = MigrationManager(
             persistenceStorage: persistenceStorageMock,
@@ -45,15 +47,17 @@ final class MigrationManagerTests: XCTestCase {
     }
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
-    func testGeneralProductionMigrations() {
+    func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock)
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == Constants.Migration.sdkVersionCode)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
-
-        XCTAssertNotNil(persistenceStorageMock.shownInappsDictionary, "shownInAppDictionary must NOT be nil after MigrationShownInAppIds")
+        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after MigrationShownInAppIds")
+        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after MigrationShownInAppIds")
         XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
+        
+        XCTAssertForRemoveBackgroundTaskDataMigration()
     }
 
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
@@ -69,6 +73,43 @@ final class MigrationManagerTests: XCTestCase {
         migrationManager.migrate()
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 1)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
+    }
+}
+
+// MARK: - Additional functions for production migrations
+
+extension MigrationManagerTests {
+    func XCTAssertForRemoveBackgroundTaskDataMigration() {
+        XCTAssertNil(MBPersistenceStorage.defaults.value(forKey: "backgroundExecution"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+    
+    func setUpForRemoveBackgroundTaskDataMigration() {
+        let key = "backgroundExecution"
+        let userDefaultsSuiteName = "MigrationManagerTests"
+        
+        let userDefaults = UserDefaults(suiteName: userDefaultsSuiteName)!
+        userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
+        MBPersistenceStorage.defaults = userDefaults
+        
+        userDefaults.set(Data(), forKey: key)
+        
+        try? createDummyFile()
+    }
+    
+    private var documentsURL: URL {
+        FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+    
+    private var fileURL: URL {
+        let plistName = "BackgroundExecution.plist"
+        return documentsURL.appendingPathComponent(plistName)
+    }
+    
+    private func createDummyFile() throws {
+        // Просто создаём пустой файл в Documents
+        FileManager.default.createFile(atPath: fileURL.path, contents: Data(), attributes: nil)
     }
 }
 
@@ -156,7 +197,7 @@ extension MigrationManagerTests {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == expectedSdkVersionCodeAfterMigrations)
 
         XCTAssertNil(persistenceStorageMock.configDownloadDate, "Must softReset() persistenceStorage")
-        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "Must softReset() persistenceStorage")
+        XCTAssertNil(persistenceStorageMock.shownDatesByInApp, "Must softReset() persistenceStorage")
         XCTAssertNil(persistenceStorageMock.handledlogRequestIds, "Must softReset() persistenceStorage")
         let expectedUserVisitCountAfterSoftReset = 0
         XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCountAfterSoftReset, "Must softReset() persistenceStorage")
@@ -217,7 +258,7 @@ extension MigrationManagerTests {
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == expectedSdkVersionCodeAfterMigrations)
 
         XCTAssertNil(persistenceStorageMock.configDownloadDate, "Must softReset() persistenceStorage")
-        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "Must softReset() persistenceStorage")
+        XCTAssertNil(persistenceStorageMock.shownDatesByInApp, "Must softReset() persistenceStorage")
         XCTAssertNil(persistenceStorageMock.handledlogRequestIds, "Must softReset() persistenceStorage")
         let expectedUserVisitCountAfterSoftReset = 0
         XCTAssertEqual(persistenceStorageMock.userVisitCount, expectedUserVisitCountAfterSoftReset, "Must softReset() persistenceStorage")

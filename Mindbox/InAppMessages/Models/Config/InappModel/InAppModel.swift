@@ -7,9 +7,12 @@
 //
 
 import Foundation
+import MindboxLogger
 
 struct InAppDTO: Decodable, Equatable {
     let id: String
+    let isPriority: Bool
+    let delayTime: String?
     let sdkVersion: SdkVersion
     var frequency: InappFrequency?
     let targeting: Targeting
@@ -17,6 +20,8 @@ struct InAppDTO: Decodable, Equatable {
 
     enum CodingKeys: CodingKey {
         case id
+        case isPriority
+        case delayTime
         case sdkVersion
         case frequency
         case targeting
@@ -28,6 +33,19 @@ extension InAppDTO {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
+        self.isPriority = (try? container.decode(Bool.self, forKey: .isPriority)) ?? false
+        
+        // Логирование для delayTime
+        do {
+            self.delayTime = try container.decodeIfPresent(String.self, forKey: .delayTime)
+            if let delayTime = self.delayTime {
+                Logger.common(message: "[DelayTime] In-app with ID '\(self.id)' has delayTime: \(delayTime)", level: .debug, category: .inAppMessages)
+            }
+        } catch {
+            Logger.common(message: "[[DelayTime] Failed to decode delayTime for in-app with ID '\(self.id)'.", level: .error, category: .inAppMessages)
+            self.delayTime = nil
+        }
+        
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
         self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
 
@@ -46,6 +64,8 @@ extension InAppDTO {
 
 struct InApp: Decodable, Equatable {
     let id: String
+    let isPriority: Bool
+    let delayTime: String?
     let sdkVersion: SdkVersion
     let targeting: Targeting
     var frequency: InappFrequency?

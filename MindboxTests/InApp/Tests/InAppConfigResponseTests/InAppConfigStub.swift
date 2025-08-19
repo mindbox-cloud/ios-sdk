@@ -115,7 +115,9 @@ extension InAppConfigStub {
                 viewCategory: operationType == .viewCategory ? .init(systemName: "Mobile.ViewCategory") : nil,
                 setCart: nil
             ),
-            ttl: nil, slidingExpiration: nil
+            ttl: nil, 
+            slidingExpiration: nil,
+            inapp: nil
         )
         
         // Mock method setupSettingsFromConfig.
@@ -132,6 +134,8 @@ extension InAppConfigStub {
 
     private func getInappDTO(with targeting: Targeting) throws -> [InAppDTO] {
         return [InAppDTO(id: "1",
+                         isPriority: false,
+                         delayTime: nil,
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
                          targeting: targeting,

@@ -44,4 +44,6 @@ class MockNetworkFetcher: NetworkFetcher {
             }
         }
     }
+    
+    func cancelAllTasks() {}
 }

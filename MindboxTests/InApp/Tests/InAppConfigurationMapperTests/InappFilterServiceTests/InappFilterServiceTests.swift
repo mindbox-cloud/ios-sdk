@@ -20,11 +20,11 @@ final class InappFilterServiceTests: XCTestCase {
         static let defaultSize: Double = 24
     }
 
-    var sut: InappFilterProtocol!
+    var sut: InappsFilterService!
 
     override func setUp() {
         super.setUp()
-        sut = DI.injectOrFail(InappFilterProtocol.self)
+        sut = DI.injectOrFail(InappFilterProtocol.self) as? InappsFilterService
     }
 
     override func tearDown() {
@@ -310,6 +310,97 @@ final class InappFilterServiceTests: XCTestCase {
         let inapps = sut.filter(inapps: config.inapps?.elements, abTests: config.abtests)
         XCTAssertEqual(inapps.count, 1)
         XCTAssertEqual(inapps.first?.id, Constants.defaultID)
+    }
+
+    func test_sortInappsByPriority_maintainsOrderForSamePriority() {
+        let inapps = [
+            createTestInApp(id: "1", isPriority: true),
+            createTestInApp(id: "2", isPriority: false),
+            createTestInApp(id: "3", isPriority: true),
+            createTestInApp(id: "4", isPriority: true),
+            createTestInApp(id: "5", isPriority: false)
+        ]
+        
+        let sortedInapps = sut.sortInappsByPriority(inapps)
+        
+        // Then: Priority in-apps should come first, maintaining original order within same priority
+        let expectedOrder = ["1", "3", "4", "2", "5"]
+        let actualOrder = sortedInapps.map { $0.id }
+        
+        XCTAssertEqual(actualOrder, expectedOrder, "In-apps should be sorted by priority with true values first, maintaining original order within same priority")
+        
+        XCTAssertTrue(sortedInapps[0].isPriority)
+        XCTAssertTrue(sortedInapps[1].isPriority)
+        XCTAssertTrue(sortedInapps[2].isPriority)
+        XCTAssertFalse(sortedInapps[3].isPriority)
+        XCTAssertFalse(sortedInapps[4].isPriority)
+    }
+    
+    func test_filterInapps_maintainsOrderForSamePriority() throws {
+        let config = try getConfig(name: "inappListWithPriority")
+        let sortedInapps = sut.filter(inapps: config.inapps?.elements, abTests: nil)
+        
+        let expectedOrder = ["1", "3", "5", "2", "4"]
+        let actualOrder = sortedInapps.map { $0.id }
+        
+        XCTAssertEqual(actualOrder, expectedOrder, "In-apps should be sorted by priority with true values first, maintaining original order within same priority")
+        
+        XCTAssertTrue(sortedInapps[0].isPriority)
+        XCTAssertTrue(sortedInapps[1].isPriority)
+        XCTAssertTrue(sortedInapps[2].isPriority)
+        XCTAssertFalse(sortedInapps[3].isPriority)
+        XCTAssertFalse(sortedInapps[4].isPriority)
+    }
+    
+    func test_sortInappsByPriority_allTruePriority() {
+        let inapps = [
+            createTestInApp(id: "1", isPriority: true),
+            createTestInApp(id: "2", isPriority: true),
+            createTestInApp(id: "3", isPriority: true)
+        ]
+        
+        let sortedInapps = sut.sortInappsByPriority(inapps)
+        
+        // Then: Order should remain the same
+        let expectedOrder = ["1", "2", "3"]
+        let actualOrder = sortedInapps.map { $0.id }
+        
+        XCTAssertEqual(actualOrder, expectedOrder, "Order should remain unchanged when all in-apps have same priority")
+    }
+    
+    func test_sortInappsByPriority_allFalsePriority() {
+        let inapps = [
+            createTestInApp(id: "1", isPriority: false),
+            createTestInApp(id: "2", isPriority: false),
+            createTestInApp(id: "3", isPriority: false)
+        ]
+        
+        let sortedInapps = sut.sortInappsByPriority(inapps)
+        
+        // Then: Order should remain the same
+        let expectedOrder = ["1", "2", "3"]
+        let actualOrder = sortedInapps.map { $0.id }
+        
+        XCTAssertEqual(actualOrder, expectedOrder, "Order should remain unchanged when all in-apps have same priority")
+    }
+
+    // MARK: - Helper Methods
+    
+    private func createTestInApp(id: String, isPriority: Bool) -> InApp {
+        let sdkVersion = SdkVersion(min: 8, max: nil)
+        let targeting = TrueTargeting()
+        let frequency = InappFrequency.once(OnceFrequency(kind: .session))
+        let form = InAppForm(variants: [])
+        
+        return InApp(
+            id: id,
+            isPriority: isPriority,
+            delayTime: nil,
+            sdkVersion: sdkVersion,
+            targeting: .true(targeting),
+            frequency: frequency,
+            form: form
+        )
     }
 
     private func getConfig(name: String) throws -> ConfigResponse {

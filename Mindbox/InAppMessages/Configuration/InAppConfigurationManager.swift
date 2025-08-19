@@ -154,6 +154,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             SessionTemporaryStorage.shared.viewProductOperation = viewProduct.systemName.lowercased()
         }
         
+        if let inappSettings = settings.inapp {
+            SessionTemporaryStorage.shared.inAppSettings = inappSettings
+        }
+        
         saveConfigSessionToCache(settings.slidingExpiration?.config)
     }
 

@@ -111,14 +111,24 @@ final class GuaranteedDeliveryManager: NSObject {
         guard !events.isEmpty else {
             state = .waitingForRetry
             Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)", level: .info, category: .delivery)
+            backgroundTaskManager.endBackgroundTask(success: false)
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
             return
         }
+        
         let completion = BlockOperation()
-        completion.completionBlock = { [weak self] in
+        completion.completionBlock = { [weak self, weak completion] in
+            guard let self = self, let completion = completion else { return }
+            
+            self.state = .idle
+            
+            guard !completion.isCancelled else {
+                Logger.common(message: "[GD] Queue was cancelled", level: .info, category: .background)
+                return
+            }
+            
             Logger.common(message: "[GD] Completion of GuaranteedDelivery queue with events count \(events.count)", level: .info, category: .background)
-            self?.state = .idle
-            self?.performScheduleIfNeeded()
+            self.performScheduleIfNeeded()
         }
         let delivery = events.map {
             DeliveryOperation(
@@ -139,6 +149,7 @@ final class GuaranteedDeliveryManager: NSObject {
     /// Cancels all queued and executing operations
     func cancelAllOperations() {
         queue.cancelAllOperations()
+        eventRepository.cancelAllRequests()
     }
 }
 
@@ -212,5 +223,20 @@ class AsyncOperation: Operation, @unchecked Sendable {
     func finish() {
         isExecuting = false
         isFinished = true
+    }
+}
+
+extension GuaranteedDeliveryManager {
+
+    func enqueueCheckNotificationsIfNeeded() {
+        semaphore.wait()
+        defer { semaphore.signal() }
+
+        guard !state.isDelivering else { return }
+
+        let op = CheckNotificationsOperation(
+            work: DI.injectOrFail(CheckNotifWork.self))
+        op.completionBlock = { [weak self] in self?.performScheduleIfNeeded() }
+        queue.addOperation(op)
     }
 }
