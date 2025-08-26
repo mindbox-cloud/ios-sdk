@@ -19,9 +19,14 @@ let package = Package(
     dependencies: [
     ],
     targets: [
+        .binaryTarget(
+            name: "MindboxCommon",
+            url: "https://github.com/mindbox-cloud/kmp-common-sdk/releases/download/1.0.3-rc/MindboxCommon.xcframework.zip",
+            checksum: "422dad4454addc735ea7469286dea5a828ee114c392b008af69188952ea004f4"
+        ),
         .target(
             name: "Mindbox",
-            dependencies: ["SDKVersionProvider", "MindboxLogger"],
+            dependencies: ["SDKVersionProvider", "MindboxLogger", "MindboxCommon"],
             path: "Mindbox",
             exclude: ["Info.plist"],
             resources: [

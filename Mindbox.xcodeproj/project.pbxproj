@@ -44,7 +44,6 @@
 		330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330D8CCA26579521005106D5 /* DiscountTypeRequest.swift */; };
 		330D8CCD26579581005106D5 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330D8CCC26579581005106D5 /* Channel.swift */; };
 		3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4126303F2F000A30D0 /* String+Regex.swift */; };
-		3333C1A12681D3CF00B60D84 /* MindboxNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3333C1982681D3CF00B60D84 /* MindboxNotifications.framework */; };
 		3333C1A82681D3CF00B60D84 /* MindboxNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 3333C19A2681D3CF00B60D84 /* MindboxNotifications.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3333C1AF2681D3DB00B60D84 /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
 		3333C1B22681D42000B60D84 /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1B12681D42000B60D84 /* Payload.swift */; };
@@ -287,7 +286,6 @@
 		A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E381299E5B7500F8F074 /* SDKLogsRequest.swift */; };
 		A15D701A29AF8142007131E7 /* SDKLogsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E382299E5B7500F8F074 /* SDKLogsManager.swift */; };
 		A15D704729AF81DC007131E7 /* MBLoggerCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E34F299E5B6D00F8F074 /* MBLoggerCoreDataManager.swift */; };
-		A170EDDC29B0883800CE547F /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		A170EDE229B08A2700CE547F /* MindboxLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = A170EDE129B08A2700CE547F /* MindboxLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A17853C629AF7E950072578F /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		A17853D429AF7EBE0072578F /* SDKLogsStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E37F299E5B7500F8F074 /* SDKLogsStatus.swift */; };
@@ -353,6 +351,9 @@
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
+		B4D36F4B2E5DBAED00AE450D /* MindboxCommon.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */; };
+		B4D36F4C2E5DBAED00AE450D /* MindboxCommon.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B4D36F532E5DD09F00AE450D /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		B4E438692D8AF94300603F3A /* WebviewContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */; };
 		B4E4386B2D8AF99100603F3A /* WebviewFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */; };
 		B4E4386D2D8AF9A700603F3A /* WebviewFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386C2D8AF9A700603F3A /* WebviewFormVariant.swift */; };
@@ -590,13 +591,6 @@
 			remoteGlobalIDString = 313B232F25ADEA0F00A1CB72;
 			remoteInfo = MindBox;
 		};
-		3333C1A22681D3CF00B60D84 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 313B232725ADEA0F00A1CB72 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 3333C1972681D3CF00B60D84;
-			remoteInfo = MindboxNotifications;
-		};
 		A1515DB429B228F40025E2EE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 313B232725ADEA0F00A1CB72 /* Project object */;
@@ -619,6 +613,20 @@
 			remoteInfo = MindboxLogger;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B47746BF2E2932CC00EC192E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				B4D36F4C2E5DBAED00AE450D /* MindboxCommon.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
@@ -972,6 +980,7 @@
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B4547EC92CFA0EC6001478AD /* TokenData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenData.swift; sourceTree = "<group>"; };
+		B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MindboxCommon.xcframework; path = Frameworks/MindboxCommon.xcframework; sourceTree = "<group>"; };
 		B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewFormVariantContent.swift; sourceTree = "<group>"; };
 		B4E4386C2D8AF9A700603F3A /* WebviewFormVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewFormVariant.swift; sourceTree = "<group>"; };
@@ -1214,7 +1223,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A170EDDC29B0883800CE547F /* MindboxLogger.framework in Frameworks */,
+				B4D36F532E5DD09F00AE450D /* MindboxLogger.framework in Frameworks */,
+				B4D36F4B2E5DBAED00AE450D /* MindboxCommon.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1238,7 +1248,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3333C1A12681D3CF00B60D84 /* MindboxNotifications.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1270,8 +1279,8 @@
 				3333C1A42681D3CF00B60D84 /* MindboxNotificationsTests */,
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
 				A17853BF29AF7E940072578F /* MindboxLogger */,
+				B47746B82E2932B500EC192E /* Frameworks */,
 				313B233125ADEA0F00A1CB72 /* Products */,
-				A1EDA815298A90B000BAEC92 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2490,9 +2499,10 @@
 			path = InAppTargetingChecker;
 			sourceTree = "<group>";
 		};
-		A1EDA815298A90B000BAEC92 /* Frameworks */ = {
+		B47746B82E2932B500EC192E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -3258,6 +3268,7 @@
 				313B232D25ADEA0F00A1CB72 /* Frameworks */,
 				313B232E25ADEA0F00A1CB72 /* Resources */,
 				3159FFB425B5AAF300EE80E9 /* Increment Build Number Script */,
+				B47746BF2E2932CC00EC192E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -3323,7 +3334,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				3333C1A32681D3CF00B60D84 /* PBXTargetDependency */,
 			);
 			name = MindboxNotificationsTests;
 			productName = MindboxNotificationsTests;
@@ -3407,6 +3417,8 @@
 				Base,
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
+			packageReferences = (
+			);
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -4123,11 +4135,6 @@
 			target = 313B232F25ADEA0F00A1CB72 /* Mindbox */;
 			targetProxy = 313B233B25ADEA0F00A1CB72 /* PBXContainerItemProxy */;
 		};
-		3333C1A32681D3CF00B60D84 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 3333C1972681D3CF00B60D84 /* MindboxNotifications */;
-			targetProxy = 3333C1A22681D3CF00B60D84 /* PBXContainerItemProxy */;
-		};
 		A1515DB529B228F40025E2EE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A17853BD29AF7E940072578F /* MindboxLogger */;
@@ -4349,6 +4356,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = MindboxTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4367,6 +4375,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = MindboxTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
