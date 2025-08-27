@@ -12,7 +12,7 @@ import UIKit
 
 internal struct ScheduledInapp {
     let inapp: InAppFormData
-    let workItem: DispatchWorkItem
+    let timer: DispatchSourceTimer
 }
 
 protocol InappScheduleManagerProtocol {
@@ -48,20 +48,24 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         let delay = getDelay(inapp.delayTime)
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
-        let workItem = DispatchWorkItem { [weak self] in
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
+        timer.schedule(deadline: .now() + delay, repeating: .never, leeway: .milliseconds(100))
+        timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
                 guard UIApplication.shared.applicationState == .active else {
                     Logger.common(message: "[InappScheduleManager] Skipping presentation of \(inapp.inAppId) because app is not active")
                     return
                 }
+                
                 self?.showEligibleInapp(presentationTime)
             }
         }
         
-        let scheduledInapp = ScheduledInapp(inapp: inapp, workItem: workItem)
-        self.queue.asyncAfter(deadline: .now() + delay, execute: workItem)
+        let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer)
+        
         queue.async {
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
+            timer.resume()
             Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
         }
     }
@@ -83,6 +87,10 @@ internal extension InappScheduleManager {
                                                            frequency: firstInapp.inapp.frequency,
                                                            id: firstInapp.inapp.inAppId) {
                 self.presentInapp(firstInapp.inapp)
+            }
+            
+            for scheduledInapp in scheduledInapps {
+                scheduledInapp.timer.cancel()
             }
             
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
@@ -147,6 +155,13 @@ internal extension InappScheduleManager {
             
             if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
                 if configExpirationTime < Date() {
+                    
+                    for scheduledInapps in self.inappsByPresentationTime.values {
+                        for scheduledInapp in scheduledInapps {
+                            scheduledInapp.timer.cancel()
+                        }
+                    }
+                    
                     self.inappsByPresentationTime = [:]
                     Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .debug, category: .inAppMessages)
                     return
@@ -159,6 +174,11 @@ internal extension InappScheduleManager {
                 self.showEligibleInapp(earliestInapp)
                 
                 for expiredInapp in expiredInapps where expiredInapp != earliestInapp {
+                    if let scheduledInapps = self.inappsByPresentationTime[expiredInapp] {
+                        for scheduledInapp in scheduledInapps {
+                            scheduledInapp.timer.cancel()
+                        }
+                    }
                     self.inappsByPresentationTime.removeValue(forKey: expiredInapp)
                 }
             }
