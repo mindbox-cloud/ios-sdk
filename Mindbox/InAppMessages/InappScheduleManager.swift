@@ -52,8 +52,8 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         timer.schedule(deadline: .now() + delay, repeating: .never, leeway: .milliseconds(100))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
-                guard UIApplication.shared.applicationState == .active else {
-                    Logger.common(message: "[InappScheduleManager] Skipping presentation of \(inapp.inAppId) because app is not active")
+                if UIApplication.shared.applicationState == .background {
+                    Logger.common(message: "[InappScheduleManager] Skipping presentation of \(inapp.inAppId) because app is in background.")
                     return
                 }
                 
