@@ -351,8 +351,7 @@
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
-		B4D36F4B2E5DBAED00AE450D /* MindboxCommon.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */; };
-		B4D36F4C2E5DBAED00AE450D /* MindboxCommon.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B4B224BB2E5E101200A7D779 /* MindboxCommon in Frameworks */ = {isa = PBXBuildFile; productRef = B4B224BA2E5E101200A7D779 /* MindboxCommon */; };
 		B4D36F532E5DD09F00AE450D /* MindboxLogger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17853BE29AF7E940072578F /* MindboxLogger.framework */; };
 		B4E438692D8AF94300603F3A /* WebviewContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */; };
 		B4E4386B2D8AF99100603F3A /* WebviewFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */; };
@@ -613,20 +612,6 @@
 			remoteInfo = MindboxLogger;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		B47746BF2E2932CC00EC192E /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				B4D36F4C2E5DBAED00AE450D /* MindboxCommon.xcframework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
@@ -980,7 +965,6 @@
 		B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PeriodTypeResponse.swift; sourceTree = "<group>"; };
 		B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LimitBenefitsResponse.swift; sourceTree = "<group>"; };
 		B4547EC92CFA0EC6001478AD /* TokenData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenData.swift; sourceTree = "<group>"; };
-		B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MindboxCommon.xcframework; path = Frameworks/MindboxCommon.xcframework; sourceTree = "<group>"; };
 		B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewFormVariantContent.swift; sourceTree = "<group>"; };
 		B4E4386C2D8AF9A700603F3A /* WebviewFormVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewFormVariant.swift; sourceTree = "<group>"; };
@@ -1224,7 +1208,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B4D36F532E5DD09F00AE450D /* MindboxLogger.framework in Frameworks */,
-				B4D36F4B2E5DBAED00AE450D /* MindboxCommon.xcframework in Frameworks */,
+				B4B224BB2E5E101200A7D779 /* MindboxCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2502,7 +2486,6 @@
 		B47746B82E2932B500EC192E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				B4D36F472E5DBA7E00AE450D /* MindboxCommon.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -3268,7 +3251,6 @@
 				313B232D25ADEA0F00A1CB72 /* Frameworks */,
 				313B232E25ADEA0F00A1CB72 /* Resources */,
 				3159FFB425B5AAF300EE80E9 /* Increment Build Number Script */,
-				B47746BF2E2932CC00EC192E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -3418,6 +3400,7 @@
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
 			packageReferences = (
+				B4B224B92E5E101200A7D779 /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */,
 			);
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
@@ -4667,6 +4650,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B4B224B92E5E101200A7D779 /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mindbox-cloud/kmp-common-sdk-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B4B224BA2E5E101200A7D779 /* MindboxCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B4B224B92E5E101200A7D779 /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */;
+			productName = MindboxCommon;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */ = {

@@ -13,8 +13,8 @@ Pod::Spec.new do |spec|
   spec.resource_bundles = { 
     'Mindbox' => ['Mindbox/**/*.xcassets', 'Mindbox/**/*.xcdatamodeld', 'Mindbox/**/*.xcprivacy']
   } 
-  spec.vendored_frameworks = 'Frameworks/MindboxCommon.xcframework'
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger', '2.14.0'
+  spec.dependency 'MindboxCommon', '1.0.4'
 
 end

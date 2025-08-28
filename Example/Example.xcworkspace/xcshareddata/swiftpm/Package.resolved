@@ -1,0 +1,15 @@
+{
+  "originHash" : "f3c79b92592a0fb761637b179ca9317347252cf4e6c068cd1ee3777413cf3d70",
+  "pins" : [
+    {
+      "identity" : "kmp-common-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mindbox-cloud/kmp-common-sdk",
+      "state" : {
+        "revision" : "8e24e4f48b3f1aa1399116d347e0a54fad9933ce",
+        "version" : "1.0.4"
+      }
+    }
+  ],
+  "version" : 3
+}
