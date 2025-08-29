@@ -353,6 +353,7 @@
 		B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F989268EEB360092EC3C /* PeriodTypeResponse.swift */; };
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
+		B4AD27D62E6259A6008AEFCD /* MindboxCommon in Frameworks */ = {isa = PBXBuildFile; productRef = B4AD27D52E6259A6008AEFCD /* MindboxCommon */; };
 		B4E438692D8AF94300603F3A /* WebviewContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */; };
 		B4E4386B2D8AF99100603F3A /* WebviewFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */; };
 		B4E4386D2D8AF9A700603F3A /* WebviewFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386C2D8AF9A700603F3A /* WebviewFormVariant.swift */; };
@@ -1215,6 +1216,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A170EDDC29B0883800CE547F /* MindboxLogger.framework in Frameworks */,
+				B4AD27D62E6259A6008AEFCD /* MindboxCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1271,7 +1273,6 @@
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
 				A17853BF29AF7E940072578F /* MindboxLogger */,
 				313B233125ADEA0F00A1CB72 /* Products */,
-				A1EDA815298A90B000BAEC92 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2490,13 +2491,6 @@
 			path = InAppTargetingChecker;
 			sourceTree = "<group>";
 		};
-		A1EDA815298A90B000BAEC92 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		B4E4386F2D8AFA5700603F3A /* WebView */ = {
 			isa = PBXGroup;
 			children = (
@@ -3407,6 +3401,9 @@
 				Base,
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
+			packageReferences = (
+				B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */,
+			);
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -4658,6 +4655,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mindbox-cloud/kmp-common-sdk-spm";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B4AD27D52E6259A6008AEFCD /* MindboxCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */;
+			productName = MindboxCommon;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */ = {

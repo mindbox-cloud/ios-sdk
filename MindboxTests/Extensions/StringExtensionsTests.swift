@@ -60,6 +60,7 @@ final class StringExtensionsTests: XCTestCase {
 
     func test_parseTimeSpanToMillisNegative() throws {
         let testCases: Array = [
+            "12345678901234567890.00:00:00.00",
             "6",
             "6:12",
             "1.6:12",
@@ -89,7 +90,7 @@ final class StringExtensionsTests: XCTestCase {
         for str in testCases {
             try XCTContext.runActivity(named: "string(\(str)) parse with error") { _ in
                 XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in
-                    XCTAssertEqual((error as NSError).domain, "Invalid timeSpan format")
+                    XCTAssertEqual((error as NSError).localizedDescription, "Invalid timeSpan format")
                 }
             }
         }
