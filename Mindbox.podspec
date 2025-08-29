@@ -15,5 +15,6 @@ Pod::Spec.new do |spec|
   } 
   spec.swift_version = "5"
   spec.dependency 'MindboxLogger', '2.14.0'
+  spec.dependency 'MindboxCommon', '1.0.4'
 
 end
