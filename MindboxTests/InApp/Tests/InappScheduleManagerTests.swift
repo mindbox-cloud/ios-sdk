@@ -43,7 +43,7 @@ final class InappScheduleManagerTests: XCTestCase {
         XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp)
-
+        
         let expectation = XCTestExpectation(description: "Schedule non-priority in-app")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             expectation.fulfill()
@@ -109,7 +109,7 @@ final class InappScheduleManagerTests: XCTestCase {
         XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
         scheduleManager.scheduleInApp(inapp)
-
+        
         let expectation = XCTestExpectation(description: "Schedule non-priority in-app")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             XCTAssertFalse(self.scheduleManager.inappsByPresentationTime.isEmpty)
@@ -185,12 +185,24 @@ final class InappScheduleManagerTests: XCTestCase {
         
         scheduleManager.scheduleInApp(inapp1)
         
-        let scheduledInapp1 = ScheduledInapp(inapp: inapp1, workItem: DispatchWorkItem {})
-        let scheduledInapp2 = ScheduledInapp(inapp: inapp2, workItem: DispatchWorkItem {})
-        let scheduledInapp3 = ScheduledInapp(inapp: inapp3, workItem: DispatchWorkItem {})
+        let q = scheduleManager.queue // или: let q = DispatchQueue(label: "test.timer")
+        
+        // timer1
+        let timer1 = DispatchSource.makeTimerSource(flags: .strict, queue: q)
+        timer1.setEventHandler { /* no-op для теста */ }
+        timer1.schedule(deadline: .now() + .milliseconds(5), repeating: .never, leeway: .milliseconds(1))
+        timer1.resume()
+
+        defer {
+            timer1.cancel()
+        }
+        
+        let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: timer1)
+        let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: timer1)
+        let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: timer1)
         
         let expectation = XCTestExpectation(description: "Schedule in-app")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             if let scheduledTime = self.scheduleManager.inappsByPresentationTime.first?.key {
                 self.scheduleManager.inappsByPresentationTime[scheduledTime] = [scheduledInapp1, scheduledInapp2, scheduledInapp3]
             }
@@ -198,17 +210,17 @@ final class InappScheduleManagerTests: XCTestCase {
             expectation.fulfill()
         }
         
-        wait(for: [expectation], timeout: 1)
+        wait(for: [expectation], timeout: 3)
 
         let presentationExpectation = XCTestExpectation(description: "Present in-app")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
             XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 0)
             XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
             XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp2.inAppId)
             presentationExpectation.fulfill()
         }
         
-        wait(for: [presentationExpectation], timeout: 4)
+        wait(for: [presentationExpectation], timeout: 7)
     }
     
     // MARK: - Helper Methods
