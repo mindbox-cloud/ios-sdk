@@ -8,8 +8,6 @@
 
 import Foundation
 
-// swiftlint:disable force_unwrapping
-
 extension String {
     var operationNameIsValid: Bool {
         let range = NSRange(location: 0, length: self.utf16.count)
@@ -32,12 +30,14 @@ extension String {
         let secondsRange = Range(match.range(at: 6), in: self)
         let fractionRange = Range(match.range(at: 8), in: self)
 
+        // swiftlint:disable force_unwrapping
         let sign = signRange != nil ? String(self[signRange!]) : ""
         let days = daysRange != nil ? String(self[daysRange!]) : "0"
         let hours = hoursRange != nil ? String(self[hoursRange!]) : "0"
         let minutes = minutesRange != nil ? String(self[minutesRange!]) : "0"
         let seconds = secondsRange != nil ? String(self[secondsRange!]) : "0"
         let fraction = fractionRange != nil ? String(self[fractionRange!]) : "0"
+        // swiftlint:enable force_unwrapping
 
         let daysCorrected = days.isEmpty ? "0" : days
         let fractionCorrected = fraction.isEmpty ? "0" : fraction
