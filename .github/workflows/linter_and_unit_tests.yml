@@ -19,7 +19,7 @@ jobs:
       image: ghcr.io/realm/swiftlint:latest   # или :latest
     steps:
       - uses: actions/checkout@v4
-      - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging
+      - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
   build:
     runs-on: macos-15
