@@ -10,8 +10,6 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-// swiftlint:disable all
-
 @objcMembers
 public class Mindbox: NSObject {
     /**
