@@ -9,8 +9,6 @@
 import Foundation
 import CoreData
 
-// swiftlint:disable force_unwrapping
-
 public extension NSManagedObjectContext {
 
     func executePerformAndWait<T>(_ block: () throws -> T) rethrows -> T {
@@ -49,7 +47,7 @@ public extension NSManagedObjectContext {
         if let e = error {
             return try rescue(e)
         } else {
-            return result!
+            return result! // swiftlint:disable:this force_unwrapping
         }
     }
 }

@@ -6,6 +6,7 @@ included: # paths to include during linting. `--path` is ignored if present.
 excluded: # paths to ignore during linting. Takes precedence over `included`.
 
 only_rules: # default rules
+  - blanket_disable_command
   - closing_brace
   - closure_parameter_position
   - colon
@@ -60,7 +61,7 @@ only_rules: # default rules
   - reduce_boolean
   - redundant_discardable_let
   - redundant_objc_attribute
-  - redundant_optional_initialization
+  - implicit_optional_initialization
   - redundant_set_access_control
   - redundant_string_enum_value
   - redundant_void_return
