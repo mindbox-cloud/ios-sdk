@@ -5,7 +5,7 @@ on:
     branches:
       - develop
       - mission/*
-      - *
+      - '**'
   pull_request:
     types:
       - opened
