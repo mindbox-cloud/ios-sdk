@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
-    - uses: cirruslabs/swiftlint-action@v1
+    - uses: norio-nomura/action-swiftlint@v3
       with:
         args: --config .swiftlint.yml
 
