@@ -1284,7 +1284,7 @@ extension JSON: Codable {
             Double.self,
             String.self,
             [JSON].self,
-            [String: JSON].self
+            [String: JSON].self,
         ]
     }
 
