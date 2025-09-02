@@ -13,12 +13,12 @@ on:
       
 jobs:
   SwiftLint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/realm/swiftlint:latest
     steps:
     - uses: actions/checkout@v4
-    - uses: cirruslabs/swiftlint-action@v1
-      with:
-        args: --config .swiftlint.yml
+    - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
   build:
     runs-on: macos-15

@@ -2,17 +2,20 @@
   "extends": [
     "config:recommended",
     ":disableDependencyDashboard",
-    "group:all"
+    "group:all",
+    "schedule:monthly"
   ],
   "separateMajorMinor": true,
   "automerge": true,
   "automergeType": "pr",
   "automergeStrategy": "squash",
+  "major": { "automerge": false },
 
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["* 11 * * 3L"]
+    "extends": [
+      "schedule:monthly"
+    ]
   },
-  "timezone": "Europe/Moscow",
-  "schedule": ["* 11 * * 3L"]
+  "timezone": "Europe/Moscow"
 }

@@ -27,7 +27,6 @@ import MindboxLogger
 
 // MARK: - Error
 
-// swiftlint:disable line_length
 public enum SwiftyJSONError: Int, Swift.Error {
     case unsupportedType = 999
     case indexOutOfBounds = 900
@@ -1377,3 +1376,4 @@ extension JSON: Codable {
         }
     }
 }
+// swiftlint:enable all
