@@ -3401,9 +3401,6 @@
 				Base,
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
-			packageReferences = (
-				B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */,
-			);
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -4655,25 +4652,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mindbox-cloud/kmp-common-sdk-spm";
-			requirement = {
-				kind = exactVersion;
-				version = 1.0.4;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B4AD27D52E6259A6008AEFCD /* MindboxCommon */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B4AD27D42E6259A6008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */;
-			productName = MindboxCommon;
-		};
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */ = {
