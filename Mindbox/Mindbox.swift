@@ -57,9 +57,6 @@ public class Mindbox: NSObject {
         }
     }
 
-    // TODO: Remove after the resolution of https://github.com/realm/SwiftLint/issues/6219
-    // swiftlint:disable line_length
-    
     /**
      A delegate for handling in-app messages.
 
@@ -75,7 +72,6 @@ public class Mindbox: NSObject {
             inappScheduleManager?.delegate = inAppMessagesDelegate
         }
     }
-    // swiftlint:enable line_length
 
     /**
      Method to instruct sdk of its initialization.
@@ -531,9 +527,6 @@ public class Mindbox: NSObject {
         return pushValidator.isValid(item: userInfo)
     }
 
-    // TODO: Remove after the resolution of https://github.com/realm/SwiftLint/issues/6219
-    // swiftlint:disable line_length
-    
     /**
      Converts a `UNNotification` to a `MBPushNotification` model for Mindbox push notifications.
 
@@ -548,7 +541,6 @@ public class Mindbox: NSObject {
     public func getMindboxPushData(userInfo: [AnyHashable: Any]) -> MBPushNotification? {
         return NotificationFormatter.formatNotification(userInfo)
     }
-    // swiftlint:enable line_length
 
     private var initError: Error?
 

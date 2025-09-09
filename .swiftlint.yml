@@ -52,7 +52,7 @@ only_rules: # default rules
   - ns_number_init_as_function_reference
   - nsobject_prefer_isequal
   - opening_brace
-  - operator_whitespace
+  - function_name_whitespace
   - optional_data_string_conversion
   - orphaned_doc_comment
   - prefer_type_checking
