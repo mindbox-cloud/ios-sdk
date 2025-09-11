@@ -573,6 +573,11 @@ extension MBLoggerCoreDataManager {
         set { self.context = newValue }
     }
     
+    var debugStorageState: StorageState {
+        get { self.storageState }
+        set { self.storageState = newValue }
+    }
+    
     // MARK: Initializors
     
     convenience init(debug: Bool) {

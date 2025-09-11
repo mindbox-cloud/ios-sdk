@@ -360,6 +360,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testTrim_CapsAtMaxFraction_WhenWayOverLimit() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 100
@@ -379,6 +381,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testTrim_NoOperation_WhenBelowOrEqualLimit() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 20
@@ -398,6 +402,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testTrim_RespectsMinFraction_WhenSlightlyOverLimit() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 100
@@ -405,16 +411,23 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         createMessages(range: 0..<total, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
         wait(for: [created]); MBLoggerCoreDataManager.drainQueue(manager)
 
-        // 129KB → fraction ≈ 0.1627 → remove 16, leaving 84
-        manager.debugSerialQueue.async { self.manager.debugTrimIfNeeded(precomputedSizeKB: 129) }
-        MBLoggerCoreDataManager.drainQueue(manager)
+        // (low-water 85%, min 5%, max 50%)
+        let limitKB = 128, sizeKB = 129
+        let lowWaterRatio = 0.85, minDeleteFraction = 0.05, maxDeleteFraction = 0.50
+        let targetKB = Int(Double(limitKB) * lowWaterRatio)           // 108
+        let raw = Double(sizeKB - targetKB) / Double(sizeKB)          // ~0.16279
+        let fraction = min(maxDeleteFraction, max(minDeleteFraction, raw)) // ~0.16279
 
+        try manager.deleteOldestLogs(fraction: fraction)
         let left = try manager.fetchPeriod(.distantPast, .distantFuture)
         XCTAssertEqual(left.count, 84)
-        XCTAssertEqual(left.first?.message, "Log: 16") // oldest 0…15 removed
+        XCTAssertEqual(left.first?.message, "Log: 16") // deleted 0…15
     }
 
+
     func testTrim_RoundingBehavior() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 3
@@ -434,6 +447,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testTrim_RespectsCooldown() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 40
@@ -463,6 +478,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
 
     func testTrim_DeleteOldestFirstThroughTrimIfNeeded() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
 
         let total = 10
@@ -480,6 +497,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
     }
     
     func testTrim_DeletesOldestFirst() throws {
+        XCTAssertTrue(manager.debugIsStoreLoaded)
+        manager.debugResetCooldown()
         manager.setImmediateWrite(true)
         let base = Date()
         // Old
@@ -573,7 +592,8 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         // given
         let m = MBLoggerCoreDataManager.makeIsolated()
         MBLoggerCoreDataManager.waitUntilReady(m)
-        m.debugContext = nil
+        m.debugSerialQueue.async { m.debugContext = nil }
+        MBLoggerCoreDataManager.drainQueue(m)
         let startCount  = m.debugLogBufferCount
         let startWrites = m.debugWriteCount
         

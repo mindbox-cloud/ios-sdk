@@ -39,6 +39,9 @@ extension MBLoggerCoreDataManager {
     static func makeIsolated() -> MBLoggerCoreDataManager {
         let m = MBLoggerCoreDataManager(debug: true)
 
+        MBLoggerCoreDataManager.waitUntilReady(m)
+        MBLoggerCoreDataManager.drainQueue(m)
+
         let c = makeEphemeralSQLiteContainer()
         m.debugPersistentContainer = c
 
@@ -47,9 +50,10 @@ extension MBLoggerCoreDataManager {
         ctx.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
         m.debugContext = ctx
 
+        m.debugStorageState = .enabled
         m.setImmediateWrite(false)
         m.debugResetWriteCount()
-
+        m.debugResetCooldown()
         return m
     }
 
