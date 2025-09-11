@@ -133,6 +133,7 @@
 		473A986D2C91E032005A3B94 /* MonitoringLogsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986C2C91E032005A3B94 /* MonitoringLogsError.json */; };
 		473A986F2C91E047005A3B94 /* MonitoringLogsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */; };
 		473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */; };
+		474230DC2E72236500282764 /* TestContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474230DB2E72236500282764 /* TestContainers.swift */; };
 		4747708B2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */; };
 		4747708F2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */; };
 		474770912C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */; };
@@ -754,6 +755,7 @@
 		473A986C2C91E032005A3B94 /* MonitoringLogsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsError.json; sourceTree = "<group>"; };
 		473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsTypeError.json; sourceTree = "<group>"; };
 		473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsElementsMixedError.json; sourceTree = "<group>"; };
+		474230DB2E72236500282764 /* TestContainers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestContainers.swift; sourceTree = "<group>"; };
 		4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInternalMethodsTests.swift; sourceTree = "<group>"; };
 		4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationServiceTests.swift; sourceTree = "<group>"; };
 		474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationContentTests.swift; sourceTree = "<group>"; };
@@ -1272,6 +1274,7 @@
 				3333C1A42681D3CF00B60D84 /* MindboxNotificationsTests */,
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
 				A17853BF29AF7E940072578F /* MindboxLogger */,
+				47D395612E72186600C44CFE /* Frameworks */,
 				313B233125ADEA0F00A1CB72 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -1801,6 +1804,13 @@
 			path = MigrationAbstractions;
 			sourceTree = "<group>";
 		};
+		47D395612E72186600C44CFE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		8400429F2614CDED00CA17C5 /* ClickNotificationManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -2291,6 +2301,7 @@
 			children = (
 				A154E333299E110E00F8F074 /* EventRepositoryMock.swift */,
 				47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */,
+				474230DB2E72236500282764 /* TestContainers.swift */,
 			);
 			path = Mocks;
 			sourceTree = "<group>";
@@ -3980,6 +3991,7 @@
 				A17958992978E04600609E91 /* InAppStub.swift in Sources */,
 				F39B67A72A3C6C6A005C0CCA /* SegmentationServiceTests.swift in Sources */,
 				476689C72C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift in Sources */,
+				474230DC2E72236500282764 /* TestContainers.swift in Sources */,
 				F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */,
 				F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */,
 				F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */,
