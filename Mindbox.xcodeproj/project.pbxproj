@@ -162,7 +162,13 @@
 		4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */; };
 		4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */; };
 		47980DB12E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */; };
-		47A220A52E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */; };
+		47A220A52E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A220A42E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift */; };
+		47A4FA6E2E7335A200569870 /* LoggerDatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */; };
+		47A4FA702E73421200569870 /* LoggerDBConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA6F2E73421200569870 /* LoggerDBConfig.swift */; };
+		47A4FA722E73565400569870 /* LogStoreTrimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA712E73565400569870 /* LogStoreTrimmer.swift */; };
+		47A4FA742E73569F00569870 /* SQLiteLogicalSizeMeasurer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA732E73569F00569870 /* SQLiteLogicalSizeMeasurer.swift */; };
+		47A4FA762E735C5200569870 /* LogStoreTrimmerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA752E735C5200569870 /* LogStoreTrimmerTests.swift */; };
+		47A4FA782E73741700569870 /* LoggerDatabaseLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA772E73741700569870 /* LoggerDatabaseLoaderTests.swift */; };
 		47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */; };
 		47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */; };
 		47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */; };
@@ -784,7 +790,13 @@
 		4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementError.json; sourceTree = "<group>"; };
 		4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementTypeError.json; sourceTree = "<group>"; };
 		47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNotificationsStatusOperation.swift; sourceTree = "<group>"; };
-		47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphermalSQLiteForMBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
+		47A220A42E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsolatedMBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
+		47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDatabaseLoader.swift; sourceTree = "<group>"; };
+		47A4FA6F2E73421200569870 /* LoggerDBConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDBConfig.swift; sourceTree = "<group>"; };
+		47A4FA712E73565400569870 /* LogStoreTrimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStoreTrimmer.swift; sourceTree = "<group>"; };
+		47A4FA732E73569F00569870 /* SQLiteLogicalSizeMeasurer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteLogicalSizeMeasurer.swift; sourceTree = "<group>"; };
+		47A4FA752E735C5200569870 /* LogStoreTrimmerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStoreTrimmerTests.swift; sourceTree = "<group>"; };
+		47A4FA772E73741700569870 /* LoggerDatabaseLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDatabaseLoaderTests.swift; sourceTree = "<group>"; };
 		47B90E2E2C625F9A00BD93E7 /* TestBaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestBaseMigrations.swift; sourceTree = "<group>"; };
 		47B90E302C626B9300BD93E7 /* TestProtocolMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestProtocolMigrations.swift; sourceTree = "<group>"; };
 		47BD5BFA2C578BC600F965C0 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
@@ -2292,6 +2304,8 @@
 				A154E332299E10F400F8F074 /* Mocks */,
 				A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */,
 				A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */,
+				47A4FA772E73741700569870 /* LoggerDatabaseLoaderTests.swift */,
+				47A4FA752E735C5200569870 /* LogStoreTrimmerTests.swift */,
 			);
 			path = MindboxLogger;
 			sourceTree = "<group>";
@@ -2300,7 +2314,7 @@
 			isa = PBXGroup;
 			children = (
 				A154E333299E110E00F8F074 /* EventRepositoryMock.swift */,
-				47A220A42E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift */,
+				47A220A42E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift */,
 				474230DB2E72236500282764 /* TestContainers.swift */,
 			);
 			path = Mocks;
@@ -2361,8 +2375,12 @@
 			children = (
 				A154E34D299E5B6D00F8F074 /* CDLogMessage.xcdatamodeld */,
 				A154E34F299E5B6D00F8F074 /* MBLoggerCoreDataManager.swift */,
+				47A4FA6F2E73421200569870 /* LoggerDBConfig.swift */,
 				A154E350299E5B6D00F8F074 /* MBPersistentContainer.swift */,
 				A154E351299E5B6D00F8F074 /* CDLogMessage+CoreDataClass.swift */,
+				47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */,
+				47A4FA712E73565400569870 /* LogStoreTrimmer.swift */,
+				47A4FA732E73569F00569870 /* SQLiteLogicalSizeMeasurer.swift */,
 			);
 			path = LoggerRepository;
 			sourceTree = "<group>";
@@ -3982,6 +4000,7 @@
 				F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */,
 				84FCD3B925CA109E00D1E574 /* MockNetworkFetcher.swift in Sources */,
 				9B9C9538292111A700BB29DA /* MockUUIDDebugService.swift in Sources */,
+				47A4FA782E73741700569870 /* LoggerDatabaseLoaderTests.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */,
@@ -4032,13 +4051,14 @@
 				A17958972978D2B300609E91 /* InAppTargetingCheckerTests.swift in Sources */,
 				F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */,
 				47B90E2F2C625F9A00BD93E7 /* TestBaseMigrations.swift in Sources */,
+				47A4FA762E735C5200569870 /* LogStoreTrimmerTests.swift in Sources */,
 				84A0CD5A260B021F004CD91B /* MockFailureNetworkFetcher.swift in Sources */,
 				475558C32C59300400CDA026 /* MigrationManagerTests.swift in Sources */,
 				84E1D6A9261D8D54002BF03A /* DatabaseLoaderTest.swift in Sources */,
 				840C38B825D13A7D00D50183 /* EventGenerator.swift in Sources */,
 				84CC79A525CAE14200C062BD /* EventRepositoryTestCase.swift in Sources */,
 				F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */,
-				47A220A52E2158A00001507C /* EphermalSQLiteForMBLoggerCoreDataManager.swift in Sources */,
+				47A220A52E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift in Sources */,
 				A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */,
 				F32E537D2C3FDB6D002C7CA0 /* DITestModuleReplaceableTests.swift in Sources */,
 				840C388525CD169400D50183 /* DatabaseRepositoryTestCase.swift in Sources */,
@@ -4092,6 +4112,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A17853E629AF7EE90072578F /* MBLogger.swift in Sources */,
+				47A4FA6E2E7335A200569870 /* LoggerDatabaseLoader.swift in Sources */,
 				A17853DC29AF7EDE0072578F /* String+Extensions.swift in Sources */,
 				F3B2A3A02A4C79E200E2CA25 /* ValidationError.swift in Sources */,
 				A17853E029AF7EDE0072578F /* URL+Extensions.swift in Sources */,
@@ -4100,10 +4121,13 @@
 				A17853EC29AF7EF30072578F /* CDLogMessage+CoreDataClass.swift in Sources */,
 				F397EEBE2A4489CE00D48CEC /* LoggerErrorModel.swift in Sources */,
 				A17853D429AF7EBE0072578F /* SDKLogsStatus.swift in Sources */,
+				47A4FA702E73421200569870 /* LoggerDBConfig.swift in Sources */,
 				A17853DF29AF7EDE0072578F /* MBLoggerUtilitiesFetcher.swift in Sources */,
 				F3B2A3982A4C79D900E2CA25 /* MindboxLogger.swift in Sources */,
+				47A4FA722E73565400569870 /* LogStoreTrimmer.swift in Sources */,
 				A17853DE29AF7EDE0072578F /* FileManager+Extensions.swift in Sources */,
 				A17853DA29AF7ED90072578F /* LogLevel.swift in Sources */,
+				47A4FA742E73569F00569870 /* SQLiteLogicalSizeMeasurer.swift in Sources */,
 				F3B2A39F2A4C79E200E2CA25 /* UnknownDecodable.swift in Sources */,
 				A17853EB29AF7EF30072578F /* MBPersistentContainer.swift in Sources */,
 				A17853D829AF7ED90072578F /* LogWriter.swift in Sources */,

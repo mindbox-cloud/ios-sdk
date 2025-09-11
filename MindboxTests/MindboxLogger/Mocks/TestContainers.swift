@@ -10,55 +10,51 @@ import Foundation
 import CoreData
 @testable import MindboxLogger
 
-private func makeTestModel() -> NSManagedObjectModel {
-    let bundle   = Bundle(for: MBLoggerCoreDataManager.self)
-    let url      = bundle.url(forResource: "CDLogMessage", withExtension: "momd")!
-    return NSManagedObjectModel(contentsOf: url)!
+final class AlwaysFailLoader: LoggerDatabaseLoading {
+    func loadContainer() throws -> (container: MBPersistentContainer, context: NSManagedObjectContext) {
+        struct E: Error {}
+        throw E()
+    }
+    func destroyIfExists() throws {}
 }
 
-/// Container: first load fails, second load succeeds (adds In-Memory store).
-final class TestContainerFailOnce: MBPersistentContainer, @unchecked Sendable {
-    private(set) var loadCalls = 0
-    private(set) var capturedDescription: NSPersistentStoreDescription?
+final class EphemeralSQLiteLoader: LoggerDatabaseLoading {
+    private let url: URL
+    private let modelName: String
 
-    init() {
-        super.init(name: "CDLogMessage", managedObjectModel: makeTestModel())
+    init(modelName: String = "CDLogMessage") {
+        self.modelName = modelName
+        self.url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("MB-Tests-\(UUID().uuidString).sqlite")
     }
 
-    override func loadPersistentStores(completionHandler block: @escaping (NSPersistentStoreDescription, Error?) -> Void) {
-        let desc = persistentStoreDescriptions.first!
-        capturedDescription = desc
-        loadCalls += 1
+    func loadContainer() throws -> (container: MBPersistentContainer, context: NSManagedObjectContext) {
+        MBPersistentContainer.applicationGroupIdentifier = nil
 
-        if loadCalls == 1 {
-            block(desc, NSError(domain: "test.fail.once", code: 1))
-        } else {
-            do {
-                try persistentStoreCoordinator.addPersistentStore(ofType: NSInMemoryStoreType,
-                                                                  configurationName: nil,
-                                                                  at: nil,
-                                                                  options: nil)
-                block(desc, nil)
-            } catch {
-                block(desc, error)
-            }
-        }
-    }
-}
+        let ownerBundle = Bundle(for: MBLoggerCoreDataManager.self)
+        guard
+            let bundleURL = ownerBundle.url(forResource: "MindboxLogger", withExtension: "bundle"),
+            let bundle = Bundle(url: bundleURL),
+            let modelURL = bundle.url(forResource: modelName, withExtension: "momd"),
+            let mom = NSManagedObjectModel(contentsOf: modelURL)
+        else { throw LoggerDatabaseLoaderError.modelNotFound(modelName: modelName) }
 
-/// Container: always fails.
-final class TestContainerAlwaysFail: MBPersistentContainer, @unchecked Sendable {
-    private(set) var loadCalls = 0
-    private(set) var capturedDescription: NSPersistentStoreDescription?
+        let container = MBPersistentContainer(name: modelName, managedObjectModel: mom)
+        let d = NSPersistentStoreDescription(url: url)
+        d.type = NSSQLiteStoreType
+        d.shouldAddStoreAsynchronously = false
+        d.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
+        container.persistentStoreDescriptions = [d]
 
-    init() {
-        super.init(name: "CDLogMessage", managedObjectModel: makeTestModel())
+        var err: Error?
+        container.loadPersistentStores { _, e in err = e }
+        if let err { throw err }
+
+        let ctx = container.newBackgroundContext()
+        ctx.automaticallyMergesChangesFromParent = true
+        ctx.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
+        return (container, ctx)
     }
 
-    override func loadPersistentStores(completionHandler block: @escaping (NSPersistentStoreDescription, Error?) -> Void) {
-        let desc = persistentStoreDescriptions.first!
-        capturedDescription = desc
-        loadCalls += 1
-        block(desc, NSError(domain: "test.always.fail", code: 2))
-    }
+    func destroyIfExists() throws {}
 }
