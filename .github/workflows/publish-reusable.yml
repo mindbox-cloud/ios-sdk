@@ -162,7 +162,7 @@ jobs:
       - name: Merge Pull Request
         run: |
           pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
-          gh pr merge $pr_number --merge
+          gh pr merge $pr_number --merge --auto
           
   message-to-loop-if-success:
     needs: [release-github]
