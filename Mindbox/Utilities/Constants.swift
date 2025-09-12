@@ -32,7 +32,7 @@ enum Constants {
     /// Mobile configuration sdkVersion.
     enum Versions {
 
-        static let sdkVersionNumeric = 9
+        static let sdkVersionNumeric = 11
     }
 
     /// Constants used for migration management.

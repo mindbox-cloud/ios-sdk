@@ -86,7 +86,7 @@
         {
             "id": "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
             "sdkVersion": {
-                "min": 10,
+                "min": 12,
                 "max": null
             },
             "salt": "c0e2682c-3d0f-4291-9308-9e48a16eb3c8",

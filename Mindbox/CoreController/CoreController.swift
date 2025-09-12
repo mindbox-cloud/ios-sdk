@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import MindboxLogger
+import MindboxCommon
 
 final class CoreController {
     private let persistenceStorage: PersistenceStorage
@@ -47,6 +48,7 @@ final class CoreController {
             Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
             Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
             Logger.common(message: "[DeviceUUID]: \(self.persistenceStorage.deviceUUID ?? "null")", level: .info, category: .general)
+            Logger.common(message: "[CommonSdkVersion]: \(MindboxCommon.shared.VERSION_NAME)", level: .info, category: .general)
         }
     }
 
