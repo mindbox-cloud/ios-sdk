@@ -145,7 +145,7 @@ final class MBLoggerCoreDataManagerTests: XCTestCase {
         XCTAssertEqual(r[1].timestamp, t2)
     }
 
-    func testFlushBufferWhenApplicationDidEnterBackgroundReturnInvalidInTestsAndChangeAppState() throws {
+    func testFlushBufferWhenApplicationDidEnterBackgroundReturnsInvalidInTestsAndChangesAppState() throws {
         XCTAssertFalse(manager.debugWritesImmediately)
 
         let half = expectation(description: "half-batch")
