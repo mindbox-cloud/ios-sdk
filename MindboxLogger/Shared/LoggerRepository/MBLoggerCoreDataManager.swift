@@ -8,25 +8,49 @@
 
 import Foundation
 import CoreData
-#if canImport(UIKit)
+import os
 import UIKit.UIApplication
-#endif
 
 public class MBLoggerCoreDataManager {
     
-    public static let shared = MBLoggerCoreDataManager()
+    public static let shared = MBLoggerCoreDataManager(
+        config: .default,
+        loader: LoggerDatabaseLoader(LoggerDatabaseLoaderConfig(
+            modelName: Constants.model,
+            applicationGroupId: MBLoggerUtilitiesFetcher().applicationGroupIdentifier,
+            storeURL: nil,
+            descriptions: nil
+        ))
+    )
+    
+    enum StorageState {
+        case initializing
+        case enabled
+        case disabled
+    }
+    private(set) var storageState: StorageState
+    
+    private let osLog = OSLogWriter(
+        subsystem: Bundle.main.bundleIdentifier ?? "cloud.Mindbox.UndefinedHostApplication",
+        category: LogCategory.loggerDatabase.rawValue
+    )
+    
+    private func log(_ level: LogLevel, _ msg: @autoclosure () -> String) {
+        guard level >= .error else {
+            return
+        }
+        osLog.writeMessage(msg(), logLevel: level)
+    }
     
     private enum Constants {
-        
-        enum UserDefaultsKeys {
-            static let previousDBSizeKey = "MBLoggerPersistenceStorage-previousDatabaseSize"
-        }
-        
         static let model = "CDLogMessage"
-        static let dbSizeLimitKB: Int = 10_240
-        static let batchSize = 15
-        static let limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired = 5
+        static let backgroundTaskName = "MB-BackgroundTask-writeLogsToCoreData-whenApplicationDidEnterBackground"
+        static let loggerQueueLabel = "com.Mindbox.loggerManager"
     }
+    
+    private let loader: LoggerDatabaseLoading
+    private var config: LoggerDBConfig
+    private var trimmer: LogStoreTrimming?
     
     private var logBuffer: [LogMessage]
     private let queue: DispatchQueue
@@ -35,65 +59,70 @@ public class MBLoggerCoreDataManager {
     
     private var writeCount = 0 {
         didSet {
-            if writeCount >= Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired && !writesImmediately {
+            if writeCount >= self.config.writesPerTrimCheck && !writesImmediately {
                 writeCount = 0
-                checkDatabaseSizeAndDeleteIfNeeded()
+                queue.async { [weak self] in
+                    self?.trimIfNeeded()
+                }
             }
         }
     }
     
     // MARK: CoreData objects
     
-    private lazy var persistentContainer: MBPersistentContainer = {
-        MBPersistentContainer.applicationGroupIdentifier = MBLoggerUtilitiesFetcher().applicationGroupIdentifier
-        
-        #if SWIFT_PACKAGE
-        guard let bundleURL = Bundle.module.url(forResource: Constants.model, withExtension: "momd"),
-              let mom = NSManagedObjectModel(contentsOf: bundleURL) else {
-            fatalError("Failed to initialize NSManagedObjectModel for \(Constants.model)")
-        }
-        let container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom)
-        #else
-        let podBundle = Bundle(for: MBLoggerCoreDataManager.self)
-        let container: MBPersistentContainer
-        if let url = podBundle.url(forResource: "MindboxLogger", withExtension: "bundle"),
-           let bundle = Bundle(url: url),
-           let modelURL = bundle.url(forResource: Constants.model, withExtension: "momd"),
-           let mom = NSManagedObjectModel(contentsOf: modelURL) {
-            container = MBPersistentContainer(name: Constants.model, managedObjectModel: mom)
-        } else {
-            container = MBPersistentContainer(name: Constants.model)
-        }
-        #endif
-        
-        let storeURL = FileManager.storeURL(for: MBLoggerUtilitiesFetcher().applicationGroupIdentifier, databaseName: Constants.model)
-        
-        let storeDescription = NSPersistentStoreDescription(url: storeURL)
-        storeDescription.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-        container.persistentStoreDescriptions = [storeDescription]
-        container.loadPersistentStores { _, error in
-            if let error = error {
-                fatalError("Failed to load persistent stores: \(error)")
-            }
-        }
-        
-        return container
-    }()
-    
-    private lazy var context: NSManagedObjectContext = {
-        let context = persistentContainer.newBackgroundContext()
-        context.automaticallyMergesChangesFromParent = true
-        context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
-        return context
-    }()
+    private var persistentContainer: MBPersistentContainer?
+    private var context: NSManagedObjectContext?
     
     // MARK: Initializer
     
-    private init() {
+    private init(config: LoggerDBConfig, loader: LoggerDatabaseLoading) {
+        self.config = config
+        self.loader = loader
+        
         self.logBuffer = []
-        self.logBuffer.reserveCapacity(Constants.batchSize)
-        self.queue = DispatchQueue(label: "com.Mindbox.loggerManager", qos: .utility)
-        checkDatabaseSizeAndDeleteIfNeededThroughInit()
+        self.queue = DispatchQueue(label: Constants.loggerQueueLabel, qos: .utility)
+        self.storageState = .initializing
+        
+        queue.async { [weak self] in self?.bootstrap() }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func bootstrap() {
+        do {
+            let loaded = try loader.loadContainer()
+            self.persistentContainer = loaded.container
+            self.context = loaded.context
+            
+            self.trimmer = LogStoreTrimmer(
+                config: config,
+                sizeMeasurer: SQLiteLogicalSizeMeasurer { [weak self] in
+                    self?.context?.persistentStoreCoordinator?.persistentStores.first?.url
+                }
+            )
+
+            self.logBuffer.reserveCapacity(config.batchSize)
+            self.storageState = .enabled
+
+            self.setupNotificationCenterObservers()
+            self.checkDatabaseSizeAndDeleteIfNeededThroughInit()
+        } catch {
+            self.context = nil
+            self.persistentContainer = nil
+            self.storageState = .disabled
+            log(.error, "[MBLoggerCDManager] bootstrap failed: \(error.localizedDescription)")
+        }
+    }
+    
+    private var hasPersistentStore: Bool {
+        guard let psc = persistentContainer?.persistentStoreCoordinator else { return false }
+        return !psc.persistentStores.isEmpty
+    }
+    
+    private var isStoreLoaded: Bool {
+        storageState == .enabled && hasPersistentStore && context != nil
     }
 }
 
@@ -106,13 +135,15 @@ public extension MBLoggerCoreDataManager {
     func create(message: String, timestamp: Date, completion: (() -> Void)? = nil) {
         queue.async { [weak self] in
             guard let self else { return }
+            guard self.isStoreLoaded else { completion?(); return }
+            
             let newLogMessage = LogMessage(timestamp: timestamp, message: message)
             
             if self.writesImmediately {
                 self.persist([newLogMessage])
             } else {
                 self.logBuffer.append(newLogMessage)
-                if self.logBuffer.count >= Constants.batchSize {
+                if self.logBuffer.count >= self.config.batchSize {
                     self.writeBufferToCoreData()
                 }
             }
@@ -127,6 +158,7 @@ public extension MBLoggerCoreDataManager {
     }
     
     private func persist(_ logs: [LogMessage]) {
+        guard storageState == .enabled, hasPersistentStore, let context else { return }
         guard !logs.isEmpty else { return }
         
         context.executePerformAndWait {
@@ -137,12 +169,7 @@ public extension MBLoggerCoreDataManager {
                 do {
                     try context.execute(batchInsertRequest)
                 } catch {
-                    let errorMessage = "Failed to batch insert logs: \(error.localizedDescription)"
-                    let errorLogData = [["message": errorMessage, "timestamp": Date()]]
-                    let errorLogInsertRequest = NSBatchInsertRequest(entityName: Constants.model, objects: errorLogData)
-                    do {
-                        try context.execute(errorLogInsertRequest)
-                    } catch { }
+                    log(.error, "[MBLoggerCDManager] batch insert failed: \(error.localizedDescription)")
                 }
             } else {
                 // iOS 12 fallback
@@ -151,7 +178,11 @@ public extension MBLoggerCoreDataManager {
                     entity.message   = log.message
                     entity.timestamp = log.timestamp
                 }
-                try? saveContext(context)
+                do {
+                    try saveContext(context)
+                } catch {
+                    log(.error, "[MBLoggerCDManager] save failed (iOS12 path): \(error.localizedDescription)")
+                }
             }
             
             writeCount += 1
@@ -169,6 +200,8 @@ public extension MBLoggerCoreDataManager {
     }
     
     private func fetchSingleLog(ascending: Bool) throws -> LogMessage? {
+        guard storageState == .enabled, hasPersistentStore, let context else { return nil }
+        
         var fetchedLogMessage: LogMessage?
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<CDLogMessage>(entityName: Constants.model)
@@ -182,6 +215,8 @@ public extension MBLoggerCoreDataManager {
     }
     
     func fetchPeriod(_ from: Date, _ to: Date, ascending: Bool = true) throws -> [LogMessage] {
+        guard storageState == .enabled, hasPersistentStore, let context else { return [] }
+        
         var fetchedLogs: [LogMessage] = []
         
         try context.executePerformAndWait {
@@ -208,26 +243,33 @@ public extension MBLoggerCoreDataManager {
     
     // MARK: Delete
     
-    func deleteTenPercentOfAllOldRecords() throws {
+    func deleteOldestLogs(fraction: Double) throws {
+        guard storageState == .enabled, hasPersistentStore, let context else { return }
+
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
-            
             let count = try context.count(for: fetchRequest)
-            let limit = Int((Double(count) * 0.1).rounded()) // 10% percent of all records should be removed
-            
-            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
-            fetchRequest.fetchLimit = limit
-            
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            deleteRequest.resultType = .resultTypeObjectIDs
-            
-            let batchDeleteResult = try context.execute(deleteRequest) as? NSBatchDeleteResult
-            if let objectIDs = batchDeleteResult?.result as? [NSManagedObjectID] {
-                let changes = [NSDeletedObjectsKey: objectIDs]
-                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
+            guard count > 0 else { return }
+
+            let toDelete = min(count, max(1, Int((Double(count) * fraction).rounded(.toNearestOrAwayFromZero))))
+
+            let idsReq = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
+            idsReq.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
+            idsReq.fetchLimit = toDelete
+            idsReq.resultType = .managedObjectIDResultType
+
+            let del = NSBatchDeleteRequest(fetchRequest: idsReq)
+            del.resultType = .resultTypeObjectIDs
+
+            if let res = try context.execute(del) as? NSBatchDeleteResult,
+               let ids = res.result as? [NSManagedObjectID] {
+                NSManagedObjectContext.mergeChanges(
+                    fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+                    into: [context]
+                )
             }
             
-            Logger.common(message: "[LoggerCDManager] Out of \(count) logs, \(limit) were deleted", level: .info, category: .loggerDatabase)
+            Logger.common(message: "[MBLoggerCDManager] Out of \(count) logs, \(toDelete) were deleted", level: .info, category: .loggerDatabase)
         }
     }
 }
@@ -235,11 +277,6 @@ public extension MBLoggerCoreDataManager {
 // MARK: - Public methods
 
 public extension MBLoggerCoreDataManager {
-    
-    @available(iOSApplicationExtension, unavailable)
-    func setUpAppLifeCycleObservers() {
-        setupNotificationCenterObservers()
-    }
     
     func setImmediateWrite(_ enabled: Bool = true) {
         queue.async {
@@ -252,6 +289,8 @@ public extension MBLoggerCoreDataManager {
 
 public extension MBLoggerCoreDataManager {
     func deleteAll() throws {
+        guard storageState == .enabled, hasPersistentStore, let context else { return }
+        
         self.logBuffer.removeAll(keepingCapacity: true)
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
@@ -270,7 +309,6 @@ public extension MBLoggerCoreDataManager {
 
 // MARK: - NotificationCenter observers setup
 
-@available(iOSApplicationExtension, unavailable)
 private extension MBLoggerCoreDataManager {
     func setupNotificationCenterObservers() {
         NotificationCenter.default.addObserver(self,
@@ -292,7 +330,7 @@ private extension MBLoggerCoreDataManager {
     @objc
     func applicationDidEnterBackground() {
         backgroundTaskID = UIApplication.shared.beginBackgroundTask(
-            withName: "MB-BackgroundTask-writeLogsToCoreData-whenApplicationDidEnterBackground"
+            withName: Constants.backgroundTaskName
         ) { [weak self] in
             guard let self else { return }
             UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
@@ -346,46 +384,23 @@ private extension MBLoggerCoreDataManager {
 // MARK: - Auxiliary private functions for checking the size of the database
 
 private extension MBLoggerCoreDataManager {
+    
     func checkDatabaseSizeAndDeleteIfNeededThroughInit() {
-        queue.async { [weak self] in
-            self?.checkDatabaseSizeAndDeleteIfNeeded()
+        queue.asyncAfter(deadline: .now() + .seconds(5)) { [weak self] in
+            self?.trimIfNeeded()
         }
     }
     
-    func checkDatabaseSizeAndDeleteIfNeeded() {
-        let currentDBFileSize = getDBFileSize()
-        let previousDBSize = loadPreviousDBSize()
-        
-        let isDatabaseSizeChanged: Bool = currentDBFileSize != previousDBSize
-        
-        if currentDBFileSize > Constants.dbSizeLimitKB && isDatabaseSizeChanged {
-            do {
-                try deleteTenPercentOfAllOldRecords()
-            } catch { }
+    func trimIfNeeded(precomputedSizeKB: Int? = nil) {
+        guard isStoreLoaded, let trimmer else { return }
+        do {
+            try trimmer.maybeTrim(precomputedSizeKB: precomputedSizeKB) { [weak self] fraction in
+                guard let self else { return }
+                try self.deleteOldestLogs(fraction: fraction)
+            }
+        } catch {
+            log(.error, "[MBLoggerCDManager] trim failed: \(error.localizedDescription)")
         }
-        
-        savePreviousDBSize(currentDBFileSize)
-    }
-    
-    func getDBFileSize() -> Int {
-        guard let url = context.persistentStoreCoordinator?.persistentStores.first?.url else {
-            return 0
-        }
-        let size = url.fileSize / 1024 // Bytes to Kilobytes
-        return Int(size)
-    }
-}
-
-// MARK: - UserDefaults for previousDatabaseSize
-
-private extension MBLoggerCoreDataManager {
-    
-    func savePreviousDBSize(_ size: Int) {
-        UserDefaults.standard.set(size, forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
-    }
-    
-    func loadPreviousDBSize() -> Int {
-        UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.previousDBSizeKey)
     }
 }
 
@@ -394,67 +409,59 @@ private extension MBLoggerCoreDataManager {
 #if DEBUG
 extension MBLoggerCoreDataManager {
     
-    // MARK: Properties
-    
-    var debugBatchSize: Int {
-        Constants.batchSize
+    convenience init(debug: Bool, config: LoggerDBConfig, loader: LoggerDatabaseLoading) {
+        self.init(config: config, loader: loader)
     }
     
-    var debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired: Int {
-        Constants.limitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired
+    // MARK: Introspection
+    
+    var debugBatchSize: Int { config.batchSize }
+    var debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired: Int { config.writesPerTrimCheck }
+
+    var debugWritesImmediately: Bool { writesImmediately }
+    var debugWriteCount: Int { writeCount }
+
+    var debugSerialQueue: DispatchQueue { queue }
+    var debugHasPersistentStore: Bool { hasPersistentStore }
+    var debugIsStoreLoaded: Bool { isStoreLoaded }
+
+    var debugLogBufferCount: Int { logBuffer.count }
+    var debugLogBufferCapacity: Int { logBuffer.capacity }
+
+    var debugContext: NSManagedObjectContext? {
+        get { context }
+        set { context = newValue }
     }
-    
-    var debugWritesImmediately: Bool {
-        self.writesImmediately
+
+    var debugStorageState: StorageState {
+        get { storageState }
+        set { storageState = newValue }
     }
-    
-    var debugWriteCount: Int {
-        self.writeCount
-    }
-    
-    var debugSerialQueue: DispatchQueue {
-        self.queue
-    }
-    
-    var debugPersistentContainer: MBPersistentContainer {
-        get {
-            self.persistentContainer
-        }
-        
-        set {
-            self.persistentContainer = newValue
-        }
-    }
-    
-    var debugContext: NSManagedObjectContext {
-        get {
-            self.context
-        }
-        
-        set {
-            self.context = newValue
-        }
-    }
-    
-    // MARK: Initializors
-    
-    convenience init(debug: Bool) {
-        self.init()
-    }
-    
-    // MARK: Methods
+
+    // MARK: Actions
     
     func debugWriteBufferToCD() {
-        queue.async {
-            self.writeBufferToCoreData()
-        }
+        queue.async { self.writeBufferToCoreData() }
     }
-    
-    @available(iOSApplicationExtension, unavailable)
+
     func debugFlushBufferInBackground() {
-        queue.async {
-            self.flushBufferInBackground()
-        }
+        queue.async { self.flushBufferInBackground() }
+    }
+
+    func debugTrimIfNeeded(precomputedSizeKB: Int?) {
+        self.trimIfNeeded(precomputedSizeKB: precomputedSizeKB)
+    }
+
+    func debugResetCooldown() {
+        queue.async { [weak self] in self?.trimmer?.resetCooldown() }
+    }
+
+    func debugResetWriteCount() {
+        queue.async { [weak self] in self?.writeCount = 0 }
+    }
+
+    func debugComputeTrimFraction(sizeKB: Int, limitKB: Int) -> Double? {
+        trimmer?.computeTrimFraction(sizeKB: sizeKB, limitKB: limitKB)
     }
 }
 #endif
