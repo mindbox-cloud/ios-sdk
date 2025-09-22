@@ -19,15 +19,15 @@ public enum MBDatabaseError: LocalizedError {
     public var errorDescription: String {
         switch self {
         case .unableCreateDatabaseModel:
-            return "[DataBaseLoader] Unable to create \(Constants.Database.mombName).xcdatamodel"
+            return "[DatabaseLoader] Unable to create \(Constants.Database.mombName).xcdatamodel"
         case .unableCreateManagedObjectModel(let url):
-            return "[DataBaseLoader] Unable to create NSManagedObjectModel from url: \(url)"
+            return "[DatabaseLoader] Unable to create NSManagedObjectModel from url: \(url)"
         case .unableToLoadPeristentStore(let localizedDescription):
-            return "[DataBaseLoader] Unable to load persistent store with error: \(localizedDescription)"
+            return "[DatabaseLoader] Unable to load persistent store with error: \(localizedDescription)"
         case .persistentStoreURLNotFound:
-            return "[DataBaseLoader] Unable to find persistentStoreURL"
+            return "[DatabaseLoader] Unable to find persistentStoreURL"
         case .persistentStoreNotExistsAtURL(let path):
-            return "[DataBaseLoader] Unable to find persistentStoreURL at path: \(path)"
+            return "[DatabaseLoader] Unable to find persistentStoreURL at path: \(path)"
         }
     }
 }

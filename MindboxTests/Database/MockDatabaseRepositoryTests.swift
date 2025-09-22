@@ -129,7 +129,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     func testProductionRepositoryUsesSQLiteStore() throws {
         // GIVEN
         // We load the real container in the same way as in the application
-        let loader = DI.injectOrFail(DataBaseLoader.self)
+        let loader = DI.injectOrFail(DatabaseLoading.self)
         let sqlContainer = try loader.loadPersistentContainer()
         let prodRepo = try MBDatabaseRepository(persistentContainer: sqlContainer)
         

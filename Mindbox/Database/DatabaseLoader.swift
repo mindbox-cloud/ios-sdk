@@ -10,107 +10,142 @@ import Foundation
 import CoreData
 import MindboxLogger
 
-class DataBaseLoader {
-
-    private let persistentStoreDescriptions: [NSPersistentStoreDescription]?
+final class DatabaseLoader {
+    
     private let persistentContainer: NSPersistentContainer
-    var persistentStoreDescription: NSPersistentStoreDescription?
-
-    var loadPersistentStoresError: Error?
-    var persistentStoreURL: URL?
-
+    
+    private var storeURL: URL? {
+        persistentContainer.persistentStoreCoordinator.persistentStores.first?.url
+    }
+    
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
+        
         let momdName = Constants.Database.mombName
-        var modelURL: URL?
-
+        let modelURL: URL? = {
         #if SWIFT_PACKAGE
-        if let modelURLSwift = Bundle.module.url(forResource: momdName, withExtension: "momd") {
-            modelURL = modelURLSwift
-        }
+            return Bundle.module.url(forResource: momdName, withExtension: "momd")
         #else
-
-        if let podBundle = Bundle(for: DataBaseLoader.self).url(forResource: "Mindbox", withExtension: "bundle"),
-           let modelURLPod = Bundle(url: podBundle)?.url(forResource: momdName, withExtension: "momd") {
-            modelURL = modelURLPod
-        } else if let modelURLAdditional = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") {
-            modelURL = modelURLAdditional
-        }
-
+            if let pod = Bundle(for: DatabaseLoader.self).url(forResource: "Mindbox", withExtension: "bundle"),
+               let url = Bundle(url: pod)?.url(forResource: momdName, withExtension: "momd") {
+                return url
+            }
+            return Bundle(for: DatabaseLoader.self).url(forResource: momdName, withExtension: "momd")
         #endif
-
-        guard let modelURL = modelURL else {
+        }()
+        
+        guard let modelURL, let model = NSManagedObjectModel(contentsOf: modelURL) else {
             Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
-
-        guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
-            Logger.common(message: MBDatabaseError.unableCreateManagedObjectModel(with: modelURL).errorDescription, level: .error, category: .database)
-            throw MBDatabaseError.unableCreateManagedObjectModel(with: modelURL)
+        
+        let container = MBPersistentContainer(name: momdName, managedObjectModel: model)
+        if let descs = persistentStoreDescriptions {
+            container.persistentStoreDescriptions = descs
         }
-        self.persistentContainer = MBPersistentContainer(
-            name: momdName,
-            managedObjectModel: managedObjectModel
-        )
+        
+        Self.applyStandardOptions(to: container.persistentStoreDescriptions)
+        self.persistentContainer = container
+    }
 
-        self.persistentStoreDescriptions = persistentStoreDescriptions
-        if let persistentStoreDescriptions = persistentStoreDescriptions {
-            persistentContainer.persistentStoreDescriptions = persistentStoreDescriptions
+    private func loadPersistentStores() throws -> NSPersistentContainer {
+        var capturedError: Error?
+        
+        persistentContainer.loadPersistentStores { persistentStoreDescription, error in
+            if let url = persistentStoreDescription.url {
+                Logger.common(message: "[DBLoader] Store URL: \(url.path)", level: .info, category: .database)
+            } else {
+                Logger.common(message: "[DBLoader] Store URL is nil (in-memory or misconfigured)", level: .info, category: .database)
+            }
+            capturedError = error
         }
-        persistentContainer.persistentStoreDescriptions.forEach {
+        if let capturedError {
+            Logger.common(message: "[DBLoader] Failed to load persistent stores: \(capturedError)", level: .error, category: .database)
+            throw capturedError
+        }
+        return persistentContainer
+    }
+    
+    private static func applyStandardOptions(to descriptions: [NSPersistentStoreDescription]) {
+        descriptions.forEach {
+            $0.shouldAddStoreAsynchronously = false
             $0.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
             $0.shouldMigrateStoreAutomatically = true
             $0.shouldInferMappingModelAutomatically = true
         }
     }
+}
 
+// MARK: - DataBaseLoading
+
+extension DatabaseLoader: DatabaseLoading {
+    
+    func makeInMemoryContainer() throws -> NSPersistentContainer {
+        let model = persistentContainer.managedObjectModel
+        let container = MBPersistentContainer(name: persistentContainer.name, managedObjectModel: model)
+
+        let description = NSPersistentStoreDescription()
+        description.type = NSInMemoryStoreType
+        Self.applyStandardOptions(to: [description])
+        container.persistentStoreDescriptions = [description]
+
+        var capturedError: Error?
+        container.loadPersistentStores { _, error in
+            capturedError = error
+        }
+        if let capturedError { throw capturedError }
+        return container
+    }
+    
     func loadPersistentContainer() throws -> NSPersistentContainer {
         do {
             return try loadPersistentStores()
         } catch {
-            do {
-                try destroy()
-                return try loadPersistentStores()
-            }
+            Logger.common(message: "[DBLoader] On-disk load failed: \(error)",
+                                      level: .error, category: .database)
         }
+        
+        do {
+            try destroy()
+            let retried = try loadPersistentStores()
+            Logger.common(message: "[DBLoader] On-disk retry succeeded after destroy", level: .info, category: .database)
+            return retried
+        } catch {
+            Logger.common(message: "[DBLoader] Retry after destroy failed: \(error)", level: .error, category: .database)
+        }
+    
+        Logger.common(message: "[DBLoader] Falling back to InMemory store", level: .error, category: .database)
+        return try makeInMemoryContainer()
     }
-
-    private func loadPersistentStores() throws -> NSPersistentContainer {
-        persistentContainer.loadPersistentStores { [weak self] persistentStoreDescription, error in
-            if persistentStoreDescription.url != nil {
-                Logger.common(message: "[DataBaseLoader] Persistent store URL successfully loaded", level: .info, category: .database)
-            } else {
-                Logger.common(message: "[DataBaseLoader] Persistent store URL is missing", level: .error, category: .database)
-            }
-            self?.persistentStoreURL = persistentStoreDescription.url
-            self?.loadPersistentStoresError = error
-            self?.persistentStoreDescription = persistentStoreDescription
-        }
-        if let error = loadPersistentStoresError {
-            Logger.common(message: "[DataBaseLoader] Failed to load persistent stores: \(error)", level: .error, category: .database)
-            throw error
-        }
-        return persistentContainer
-    }
-
+    
     func destroy() throws {
-        guard let persistentStoreURL = persistentStoreURL else {
+        let persistentStoreURL = storeURL ?? persistentContainer.persistentStoreDescriptions.first?.url
+        guard let persistentStoreURL else {
             Logger.common(message: MBDatabaseError.persistentStoreURLNotFound.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.persistentStoreURLNotFound
         }
 
-        Logger.common(message: "[DataBaseLoader] Removing database at url: \(persistentStoreURL.absoluteString)", level: .info, category: .database)
+        let psc = persistentContainer.persistentStoreCoordinator
+        Logger.common(message: "[DBLoader] Removing database at path: \(persistentStoreURL.path)",
+                          level: .info, category: .database)
 
-        guard FileManager.default.fileExists(atPath: persistentStoreURL.path) else {
-            Logger.common(message: MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path).errorDescription, level: .error, category: .database)
-            throw MBDatabaseError.persistentStoreNotExistsAtURL(path: persistentStoreURL.path)
-        }
         do {
-            try self.persistentContainer.persistentStoreCoordinator.destroyPersistentStore(at: persistentStoreURL, ofType: "sqlite", options: nil)
-            Logger.common(message: "[DataBaseLoader] Database has been removed", level: .info, category: .database)
+            if #available(iOS 15.0, *) {
+                try psc.destroyPersistentStore(at: persistentStoreURL, type: .sqlite)
+            } else {
+                try psc.destroyPersistentStore(at: persistentStoreURL, ofType: NSSQLiteStoreType)
+            }
+            
+            Logger.common(message: "[DBLoader] Database removed at \(persistentStoreURL.path)", level: .info, category: .database)
         } catch {
-            Logger.common(message: "[DataBaseLoader] Failed to remove database: \(error.localizedDescription)", level: .error, category: .database)
+            Logger.common(message: "[DBLoader] Failed to remove database: \(error.localizedDescription)", level: .error, category: .database)
             throw error
         }
     }
+}
+
+final class StubLoader: DatabaseLoading {
+    func loadPersistentContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
+    func makeInMemoryContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
+    func destroy() throws {}
 }

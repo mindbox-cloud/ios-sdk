@@ -36,12 +36,13 @@ extension MBContainer {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppTargetingChecker(persistenceStorage: persistenceStorage)
         }
-
-        register(DataBaseLoader.self) {
+        
+        register(DatabaseLoading.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-
-            guard let dbLoader = try? DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
-                fatalError("Failed to create DataBaseLoader")
+            
+            guard let dbLoader = try? DatabaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
+                assertionFailure("Failed to create DatabaseLoader")
+                return StubLoader()
             }
             return dbLoader
         }

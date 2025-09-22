@@ -49,7 +49,7 @@ final class MockDatabaseRepository: MBDatabaseRepository {
             
             try self.init(persistentContainer: container)
         } else {
-            let loader = DI.injectOrFail(DataBaseLoader.self)
+            let loader = DI.injectOrFail(DatabaseLoader.self)
             let container = try loader.loadPersistentContainer()
             try self.init(persistentContainer: container)
         }

@@ -36,7 +36,7 @@ extension MBContainer {
         }
 
         register(MBDatabaseRepository.self) {
-            let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
+            let databaseLoader = DI.injectOrFail(DatabaseLoading.self)
 
             guard let persistentContainer = try? databaseLoader.loadPersistentContainer(),
                     let dbRepository = try? MBDatabaseRepository(persistentContainer: persistentContainer) else {

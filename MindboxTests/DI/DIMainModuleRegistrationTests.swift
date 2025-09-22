@@ -118,7 +118,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testDataBaseLoaderIsRegistered() {
-        let loader: DataBaseLoader? = DI.inject(DataBaseLoader.self)
+        let loader: DatabaseLoading? = DI.inject(DatabaseLoading.self)
         XCTAssertNotNil(loader)
     }
 
