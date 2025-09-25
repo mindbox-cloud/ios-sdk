@@ -14,7 +14,7 @@ import MindboxCommon
 final class CoreController {
     private let persistenceStorage: PersistenceStorage
     private let utilitiesFetcher: UtilitiesFetcher
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepository
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let uuidDebugService: UUIDDebugService
     private var configValidation = ConfigValidation()
@@ -239,7 +239,7 @@ final class CoreController {
     init(
         persistenceStorage: PersistenceStorage,
         utilitiesFetcher: UtilitiesFetcher,
-        databaseRepository: MBDatabaseRepository,
+        databaseRepository: DatabaseRepository,
         guaranteedDeliveryManager: GuaranteedDeliveryManager,
         sessionManager: SessionManager,
         inAppMessagesManager: InAppCoreManagerProtocol,

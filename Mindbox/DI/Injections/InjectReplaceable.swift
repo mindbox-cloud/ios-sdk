@@ -34,15 +34,18 @@ extension MBContainer {
             }
             return MBPersistenceStorage(defaults: defaults)
         }
+        
+        register(DatabaseRepository.self) {
+            let loader = DI.injectOrFail(DatabaseLoading.self)
 
-        register(MBDatabaseRepository.self) {
-            let databaseLoader = DI.injectOrFail(DatabaseLoading.self)
-
-            guard let persistentContainer = try? databaseLoader.loadPersistentContainer(),
-                    let dbRepository = try? MBDatabaseRepository(persistentContainer: persistentContainer) else {
-                fatalError("Failed to create MBDatabaseRepository")
+            do {
+                let container = try loader.loadPersistentContainer()
+                let repo = try MBDatabaseRepository(persistentContainer: container)
+                return repo as DatabaseRepository
+            } catch {
+                assertionFailure("Failed to create MBDatabaseRepository: \(error)")
+                return NoopDatabaseRepository()
             }
-            return dbRepository
         }
 
         register(ImageDownloadServiceProtocol.self, scope: .container) {

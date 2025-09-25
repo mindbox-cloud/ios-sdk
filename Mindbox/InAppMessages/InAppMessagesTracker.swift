@@ -23,9 +23,9 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackPro
         let inappId: String
     }
 
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepository
 
-    init(databaseRepository: MBDatabaseRepository) {
+    init(databaseRepository: DatabaseRepository) {
         self.databaseRepository = databaseRepository
     }
 

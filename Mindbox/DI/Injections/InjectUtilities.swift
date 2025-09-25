@@ -71,7 +71,7 @@ extension MBContainer {
         }
 
         register(TrackVisitManagerProtocol.self) {
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepository.self)
             let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
             return TrackVisitManager(databaseRepository: databaseRepository, inappSessionManager: inappSessionManger)
         }
@@ -82,7 +82,7 @@ extension MBContainer {
         }
 
         register(ClickNotificationManager.self) {
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepository.self)
             return ClickNotificationManager(databaseRepository: databaseRepository)
         }
 

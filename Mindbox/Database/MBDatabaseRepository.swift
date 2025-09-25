@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import MindboxLogger
 
-class MBDatabaseRepository {
+class MBDatabaseRepository: DatabaseRepository {
 
     enum MetadataKey: String {
         case install = "ApplicationInstalledVersion"
@@ -79,7 +79,7 @@ class MBDatabaseRepository {
         }
     }
 
-    func read(by transactionId: String) throws -> CDEvent? {
+    private func read(by transactionId: String) throws -> CDEvent? {
         try context.executePerformAndWait {
             Logger.common(message: "[MBDBRepo] Reading event with transactionId: \(transactionId)", level: .info, category: .database)
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequest(by: transactionId)
@@ -90,6 +90,11 @@ class MBDatabaseRepository {
             Logger.common(message: "[MBDBRepo] Did read event with transactionId: \(entity.transactionId ?? "undefined")", level: .info, category: .database)
             return entity
         }
+    }
+    
+    func readEvent(by transactionId: String) throws -> Event? {
+        guard let entity = try read(by: transactionId) else { return nil }
+        return Event(entity)
     }
 
     func update(event: Event) throws {
@@ -118,7 +123,7 @@ class MBDatabaseRepository {
         }
     }
 
-    func query(fetchLimit: Int, retryDeadline: TimeInterval = 60) throws -> [Event] {
+    func query(fetchLimit: Int, retryDeadline: TimeInterval = Constants.Database.retryDeadline) throws -> [Event] {
         try context.executePerformAndWait {
             let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForSend(lifeLimitDate: lifeLimitDate, retryDeadLine: retryDeadline)
             request.fetchLimit = fetchLimit
@@ -164,14 +169,42 @@ class MBDatabaseRepository {
     }
 
     func erase() throws {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CDEvent")
-        let eraseRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        
         infoUpdateVersion = nil
-        installVersion = nil
+        installVersion    = nil
+
+        let entityName = "CDEvent"
+
+        if store.type == NSInMemoryStoreType {
+            let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+            fetch.includesPropertyValues = false
+
+            try context.executePerformAndWait {
+                let objects = try (context.fetch(fetch) as? [NSManagedObject]) ?? []
+                objects.forEach(context.delete)
+
+                if context.hasChanges {
+                    try context.save()
+                }
+                context.reset()
+            }
+            return
+        }
+
+        let fetch  = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+        let delete = NSBatchDeleteRequest(fetchRequest: fetch)
+        delete.resultType = .resultTypeObjectIDs
+
         try context.executePerformAndWait {
-            try context.execute(eraseRequest)
-            try saveEvent(withContext: context)
-            try countEvents()
+            if let result = try context.execute(delete) as? NSBatchDeleteResult,
+               let ids    = result.result as? [NSManagedObjectID],
+               !ids.isEmpty {
+                NSManagedObjectContext.mergeChanges(
+                    fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+                    into: [context]
+                )
+            }
+            context.reset()
         }
     }
 
@@ -277,4 +310,36 @@ private extension MBDatabaseRepository {
             Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
+}
+
+final class NoopDatabaseRepository: DatabaseRepository {
+    
+    var limit: Int { 10_000 }
+    var lifeLimitDate: Date?
+    var deprecatedLimit: Int { 0 }
+    var onObjectsDidChange: (() -> Void)?
+
+    var infoUpdateVersion: Int? {
+        get { nil }
+        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
+    }
+    var installVersion: Int? {
+        get { nil }
+        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
+    }
+    var instanceId: String? {
+        get { nil }
+        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
+    }
+
+    func create(event: Event) throws { /* no-op */ }
+    func readEvent(by transactionId: String) throws -> Event? { nil }
+    func update(event: Event) throws { /* no-op */ }
+    func delete(event: Event) throws { /* no-op */ }
+
+    func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event] { [] }
+    func removeDeprecatedEventsIfNeeded() throws { /* no-op */ }
+    func countDeprecatedEvents() throws -> Int { 0 }
+    func erase() throws { /* no-op */ }
+    func countEvents() throws -> Int { 0 }
 }

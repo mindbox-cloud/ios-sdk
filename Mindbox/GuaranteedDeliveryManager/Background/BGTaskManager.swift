@@ -24,7 +24,7 @@ final class BGTaskManager: BackgroundTaskManagerType {
     private var appGDProcessingTask: BGProcessingTask?
 
     private let persistenceStorage: PersistenceStorage
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepository
     
     // MARK: BGTasks synchronizer
     
@@ -48,7 +48,7 @@ final class BGTaskManager: BackgroundTaskManagerType {
     
     // MARK: Initializer
 
-    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+    init(persistenceStorage: PersistenceStorage, databaseRepository: DatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
     }

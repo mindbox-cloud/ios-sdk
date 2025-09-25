@@ -80,7 +80,7 @@ extension MBContainer {
 
     func registerInappPresentation() -> Self {
         register(InAppMessagesTracker.self) {
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepository.self)
             return InAppMessagesTracker(databaseRepository: databaseRepository)
         }
 

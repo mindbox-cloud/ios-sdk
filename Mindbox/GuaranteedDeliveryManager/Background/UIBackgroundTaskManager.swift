@@ -15,9 +15,9 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
     weak var gdManager: GuaranteedDeliveryManager?
 
     private let persistenceStorage: PersistenceStorage
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepository
 
-    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+    init(persistenceStorage: PersistenceStorage, databaseRepository: DatabaseRepository) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
     }
