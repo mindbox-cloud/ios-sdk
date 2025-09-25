@@ -39,7 +39,7 @@ class DIMainModuleReplaceableTests: XCTestCase {
     }
 
     func testDatabaseRepositoryIsRegistered() {
-        let repository: MBDatabaseRepository? = DI.inject(MBDatabaseRepository.self)
+        let repository: DatabaseRepository? = DI.inject(DatabaseRepository.self)
         XCTAssertNotNil(repository)
     }
 

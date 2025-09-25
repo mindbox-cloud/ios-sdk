@@ -312,6 +312,8 @@ private extension MBDatabaseRepository {
     }
 }
 
+// MARK: - NoopDatabaseRepository
+
 final class NoopDatabaseRepository: DatabaseRepository {
     
     var limit: Int { 10_000 }

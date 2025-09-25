@@ -29,7 +29,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     }
     
     func testRegisterMBDBRepoIsMock() {
-        XCTAssert(DI.injectOrFail(MBDatabaseRepository.self) is MockDatabaseRepository)
+        XCTAssert(DI.injectOrFail(DatabaseRepository.self) is MockDatabaseRepository)
     }
     
     func testCreateReadDeleteEvent() throws {
@@ -37,14 +37,14 @@ final class MockDatabaseRepositoryTests: XCTestCase {
         // creation
         try repo.create(event: event)
         // reading
-        let cd = try XCTUnwrap(repo.read(by: event.transactionId),
+        let cd = try XCTUnwrap(repo.readEvent(by: event.transactionId),
                                "Не смогли прочитать только что созданное событие")
         XCTAssertEqual(cd.transactionId, event.transactionId)
         XCTAssertEqual(cd.body, event.body)
         
         // deletion
         try repo.delete(event: event)
-        let afterDelete = try repo.read(by: event.transactionId)
+        let afterDelete = try repo.readEvent(by: event.transactionId)
         XCTAssertNil(afterDelete, "Событие должно быть удалено")
     }
     

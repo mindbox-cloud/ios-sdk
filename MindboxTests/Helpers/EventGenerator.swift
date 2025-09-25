@@ -32,7 +32,7 @@ struct EventGenerator {
             return MockEvent(
                 type: .installed,
                 body: UUID().uuidString,
-                isRetry: true
+                retryTimestamp: 100
             )
         }
     }

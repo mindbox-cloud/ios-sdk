@@ -15,7 +15,7 @@ class VersioningTestCase: XCTestCase {
     private var queues: [DispatchQueue] = []
 
     var persistenceStorage: PersistenceStorage!
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: DatabaseRepository!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
 
     override func setUp() {
@@ -24,7 +24,7 @@ class VersioningTestCase: XCTestCase {
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
 
-        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepository.self)
         try! databaseRepository.erase()
 
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
