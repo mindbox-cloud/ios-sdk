@@ -30,7 +30,8 @@ extension MBContainer {
         register(PersistenceStorage.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             guard let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier) else {
-                fatalError("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier). Check and set up your AppGroups correctly.")
+                assertionFailure("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier). Check and set up your AppGroups correctly.")
+                return MBPersistenceStorage(defaults: UserDefaults.standard)
             }
             return MBPersistenceStorage(defaults: defaults)
         }
