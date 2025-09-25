@@ -12,6 +12,21 @@ import MindboxLogger
 
 final class DatabaseLoader {
     
+    static var metadataKeysToPreserve: [String] {
+        [
+            MBDatabaseRepository.MetadataKey.install.rawValue,
+            MBDatabaseRepository.MetadataKey.infoUpdate.rawValue,
+            MBDatabaseRepository.MetadataKey.instanceId.rawValue
+        ]
+    }
+    
+    private let diskSpaceRepairThreshold: Int64 = 300 * 1024 * 1024 // 300 MB
+    
+    private var freeSize: Int64 {
+        let attrs = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
+        return (attrs?[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
+    }
+    
     private let persistentContainer: NSPersistentContainer
     
     private var storeURL: URL? {
@@ -74,6 +89,34 @@ final class DatabaseLoader {
             $0.shouldInferMappingModelAutomatically = true
         }
     }
+    
+    private func salvageMetadataFromOnDiskStore() -> [String: Any]? {
+        guard let url = persistentContainer.persistentStoreDescriptions.first?.url else { return nil }
+        let opts: [AnyHashable: Any] = [NSReadOnlyPersistentStoreOption: true]
+        do {
+            let raw = try NSPersistentStoreCoordinator.metadataForPersistentStore(
+                ofType: NSSQLiteStoreType,
+                at: url,
+                options: opts
+            )
+            let filtered = raw.filter { Self.metadataKeysToPreserve.contains($0.key) }
+            return filtered.isEmpty ? nil : filtered
+        } catch {
+            Logger.common(message: "[DBLoader] Can't read metadata for salvage (read-only): \(error)",
+                          level: .error, category: .database)
+            return nil
+        }
+    }
+
+    private func applyMetadata(_ preserved: [String: Any], to container: NSPersistentContainer) {
+        let psc = container.persistentStoreCoordinator
+        guard let store = psc.persistentStores.first, !preserved.isEmpty else { return }
+        var meta = psc.metadata(for: store)
+        preserved.forEach { meta[$0.key] = $0.value }
+        psc.setMetadata(meta, for: store)
+        Logger.common(message: "[DBLoader] Preserved metadata reapplied: \(Array(preserved.keys))",
+                      level: .info, category: .database)
+    }
 }
 
 // MARK: - DataBaseLoading
@@ -105,17 +148,26 @@ extension DatabaseLoader: DatabaseLoading {
                                       level: .error, category: .database)
         }
         
+        let preserved = salvageMetadataFromOnDiskStore()
+
+        let freeSize = freeSize
+        if freeSize < diskSpaceRepairThreshold {
+            Logger.common(message: "[DBLoader] Low disk space (\(freeSize)<\(diskSpaceRepairThreshold)); using InMemory without touching store", level: .error, category: .database)
+            let mem = try makeInMemoryContainer()
+            if let preserved { applyMetadata(preserved, to: mem) }
+            return mem
+        }
+        
         do {
             try destroy()
             let retried = try loadPersistentStores()
+            if let preserved { applyMetadata(preserved, to: retried) }
             Logger.common(message: "[DBLoader] On-disk retry succeeded after destroy", level: .info, category: .database)
             return retried
         } catch {
-            Logger.common(message: "[DBLoader] Retry after destroy failed: \(error)", level: .error, category: .database)
+            Logger.common(message: "[DBLoader] Repair attempt failed: \(error). Falling back to InMemory.", level: .error, category: .database)
+            return try makeInMemoryContainer()
         }
-    
-        Logger.common(message: "[DBLoader] Falling back to InMemory store", level: .error, category: .database)
-        return try makeInMemoryContainer()
     }
     
     func destroy() throws {
