@@ -30,7 +30,7 @@ final class DataBaseLoaderTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func makeLoader(dbName: String = "TestDB") throws -> (loader: DatabaseLoading, url: URL) {
+    private func makeLoader(dbName: String = "TestDB") throws -> (loader: DatabaseLoader, url: URL) {
         let url = tempDir.appendingPathComponent("\(dbName).sqlite")
         let desc = NSPersistentStoreDescription(url: url)
         desc.type = NSSQLiteStoreType
@@ -38,56 +38,55 @@ final class DataBaseLoaderTests: XCTestCase {
         return (loader, url)
     }
 
-    // MARK: - Tests
+    // MARK: - Existing flow tests
 
     func test_LoadsOnDiskStore_Succeeds() throws {
         let (loader, url) = try makeLoader()
         let container = try loader.loadPersistentContainer()
 
         let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first)
-        XCTAssertEqual(store.type, NSSQLiteStoreType)
-        XCTAssertTrue(fm.fileExists(atPath: url.path))
+        let store = try XCTUnwrap(psc.persistentStores.first, "Persistent store should be loaded")
+        XCTAssertEqual(store.type, NSSQLiteStoreType, "Store type must be SQLite")
+        XCTAssertTrue(fm.fileExists(atPath: url.path), "SQLite file must exist on disk")
     }
 
     func test_Destroy_DetachesStore_AndRecreateChangesStoreUUID() throws {
         let (loader, url) = try makeLoader()
         let container = try loader.loadPersistentContainer()
         let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first)
+        let store = try XCTUnwrap(psc.persistentStores.first, "Store should be present before destroy")
 
-        // UUID до destroy
+        // UUID before destroy
         let uuidBefore = psc.metadata(for: store)[NSStoreUUIDKey] as? String
 
-        // Уничтожаем
+        // Destroy
         try loader.destroy()
 
-        // Стор отвязан от координатора
+        // Store is detached from coordinator
         XCTAssertNil(psc.persistentStore(for: url), "Store should be detached after destroy")
 
-        // Перезагружаем — должен появиться новый стор
+        // Recreate
         let container2 = try loader.loadPersistentContainer()
         let psc2 = container2.persistentStoreCoordinator
-        let store2 = try XCTUnwrap(psc2.persistentStores.first)
-
+        let store2 = try XCTUnwrap(psc2.persistentStores.first, "Store should be recreated after destroy")
         let uuidAfter = psc2.metadata(for: store2)[NSStoreUUIDKey] as? String
         XCTAssertNotEqual(uuidBefore, uuidAfter, "Store UUID should change after destroy+recreate")
     }
 
     func test_Destroy_UsesDescriptionURL_WhenStoreNotLoaded() throws {
-        // Создаём мусорный файл по ожидаемому пути, не загружая стор
+        // Pre-create a garbage file at the expected URL without loading the store
         let (loader, url) = try makeLoader(dbName: "Precreated")
         try "garbage".data(using: .utf8)!.write(to: url)
-        XCTAssertTrue(fm.fileExists(atPath: url.path))
+        XCTAssertTrue(fm.fileExists(atPath: url.path), "Precreated file must exist")
 
-        // destroy должен расчистить путь так, чтобы затем можно было поднять базу
+        // Destroy should clear path so we can load a fresh store afterwards
         try loader.destroy()
 
-        // Если файл физически остался — это ок; главное, что база загружается
+        // The physical file may or may not remain; critical point is that a store loads fine
         let container = try loader.loadPersistentContainer()
         let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first)
-        XCTAssertEqual(store.type, NSSQLiteStoreType)
+        let store = try XCTUnwrap(psc.persistentStores.first, "Store should load after destroy using description URL")
+        XCTAssertEqual(store.type, NSSQLiteStoreType, "Store type must be SQLite")
     }
 
     func test_LoadPersistentContainer_RetryAfterDestroy_OnCorruptedFile() throws {
@@ -98,9 +97,9 @@ final class DataBaseLoaderTests: XCTestCase {
 
         let psc = container.persistentStoreCoordinator
         let store = psc.persistentStores.first
-        XCTAssertNotNil(store)
-        XCTAssertEqual(store?.type, NSSQLiteStoreType)
-        XCTAssertTrue(fm.fileExists(atPath: url.path))
+        XCTAssertNotNil(store, "Store should be available after repair retry")
+        XCTAssertEqual(store?.type, NSSQLiteStoreType, "Store type must be SQLite after repair")
+        XCTAssertTrue(fm.fileExists(atPath: url.path), "SQLite file must exist after repair")
     }
 
     func test_MakeInMemoryContainer_ReturnsInMemoryStore() throws {
@@ -108,15 +107,17 @@ final class DataBaseLoaderTests: XCTestCase {
         let mem = try loader.makeInMemoryContainer()
 
         let psc = mem.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first)
-        XCTAssertEqual(store.type, NSInMemoryStoreType)
+        let store = try XCTUnwrap(psc.persistentStores.first, "In-memory store should be present")
+        XCTAssertEqual(store.type, NSInMemoryStoreType, "Store type must be in-memory")
 
-        // На iOS URL in-memory стора может быть nil или file:///dev/null
+        // On iOS URL may be nil or /dev/null for in-memory store
         let urlString = store.url?.absoluteString
         XCTAssertTrue(urlString == nil || urlString == "file:///dev/null",
                       "In-memory URL should be nil or /dev/null, got: \(urlString ?? "nil")")
     }
 }
+
+// MARK: - Stub contract tests
 
 final class DataBaseLoading_StubLoaderContractTests: XCTestCase {
 
@@ -133,14 +134,14 @@ final class DataBaseLoading_StubLoaderContractTests: XCTestCase {
     }
 
     func test_loadPersistentContainer_throws() {
-        XCTAssertThrowsError(try loader.loadPersistentContainer())
+        XCTAssertThrowsError(try loader.loadPersistentContainer(), "StubLoader must throw on loadPersistentContainer()")
     }
 
     func test_makeInMemoryContainer_throws() {
-        XCTAssertThrowsError(try loader.makeInMemoryContainer())
+        XCTAssertThrowsError(try loader.makeInMemoryContainer(), "StubLoader must throw on makeInMemoryContainer()")
     }
 
     func test_destroy_doesNotThrow() {
-        XCTAssertNoThrow(try loader.destroy())
+        XCTAssertNoThrow(try loader.destroy(), "StubLoader destroy() must not throw")
     }
 }

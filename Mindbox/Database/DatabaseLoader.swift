@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import MindboxLogger
 
-final class DatabaseLoader {
+class DatabaseLoader: DatabaseLoading {
     
     static var metadataKeysToPreserve: [String] {
         [
@@ -22,7 +22,7 @@ final class DatabaseLoader {
     
     private let diskSpaceRepairThreshold: Int64 = 300 * 1024 * 1024 // 300 MB
     
-    private var freeSize: Int64 {
+    var freeSize: Int64 {
         let attrs = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
         return (attrs?[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
     }
@@ -62,8 +62,17 @@ final class DatabaseLoader {
         Self.applyStandardOptions(to: container.persistentStoreDescriptions)
         self.persistentContainer = container
     }
+    
+    private static func applyStandardOptions(to descriptions: [NSPersistentStoreDescription]) {
+        descriptions.forEach {
+            $0.shouldAddStoreAsynchronously = false
+            $0.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
+            $0.shouldMigrateStoreAutomatically = true
+            $0.shouldInferMappingModelAutomatically = true
+        }
+    }
 
-    private func loadPersistentStores() throws -> NSPersistentContainer {
+    func loadPersistentStores() throws -> NSPersistentContainer {
         var capturedError: Error?
         
         persistentContainer.loadPersistentStores { persistentStoreDescription, error in
@@ -81,16 +90,7 @@ final class DatabaseLoader {
         return persistentContainer
     }
     
-    private static func applyStandardOptions(to descriptions: [NSPersistentStoreDescription]) {
-        descriptions.forEach {
-            $0.shouldAddStoreAsynchronously = false
-            $0.setOption(FileProtectionType.none as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-            $0.shouldMigrateStoreAutomatically = true
-            $0.shouldInferMappingModelAutomatically = true
-        }
-    }
-    
-    private func salvageMetadataFromOnDiskStore() -> [String: Any]? {
+    func salvageMetadataFromOnDiskStore() -> [String: Any]? {
         guard let url = persistentContainer.persistentStoreDescriptions.first?.url else { return nil }
         let opts: [AnyHashable: Any] = [NSReadOnlyPersistentStoreOption: true]
         do {
@@ -108,7 +108,7 @@ final class DatabaseLoader {
         }
     }
 
-    private func applyMetadata(_ preserved: [String: Any], to container: NSPersistentContainer) {
+    func applyMetadata(_ preserved: [String: Any], to container: NSPersistentContainer) {
         let psc = container.persistentStoreCoordinator
         guard let store = psc.persistentStores.first, !preserved.isEmpty else { return }
         var meta = psc.metadata(for: store)
@@ -117,11 +117,8 @@ final class DatabaseLoader {
         Logger.common(message: "[DBLoader] Preserved metadata reapplied: \(Array(preserved.keys))",
                       level: .info, category: .database)
     }
-}
-
-// MARK: - DataBaseLoading
-
-extension DatabaseLoader: DatabaseLoading {
+    
+    // MARK: - DataBaseLoading
     
     func makeInMemoryContainer() throws -> NSPersistentContainer {
         let model = persistentContainer.managedObjectModel
