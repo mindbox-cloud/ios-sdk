@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit.UIApplication
 import CoreData
 import MindboxLogger
 
@@ -51,6 +52,9 @@ class MBDatabaseRepository: DatabaseRepository {
         get { getMetadata(forKey: .instanceId) }
         set { setMetadata(newValue, forKey: .instanceId) }
     }
+    
+    private var memoryWarningToken: NSObjectProtocol?
+    private var isPruningOnWarning = false
 
     init(persistentContainer: NSPersistentContainer) throws {
         self.persistentContainer = persistentContainer
@@ -63,10 +67,71 @@ class MBDatabaseRepository: DatabaseRepository {
         self.context = persistentContainer.newBackgroundContext()
         self.context.automaticallyMergesChangesFromParent = true
         self.context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
+        
+        startMemoryWarningObserverIfNeeded()
+        
         _ = try countEvents()
+    }
+    
+    deinit {
+        if let token = memoryWarningToken {
+            NotificationCenter.default.removeObserver(token)
+            memoryWarningToken = nil
+        }
+    }
+    
+    private func startMemoryWarningObserverIfNeeded() {
+        guard store.type == NSInMemoryStoreType, memoryWarningToken == nil else { return }
+        memoryWarningToken = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleMemoryWarning()
+        }
+        Logger.common(message: "[MBDBRepo] Memory warning observer is active (in-memory store).", level: .info, category: .database)
+    }
+    
+    private func handleMemoryWarning() {
+        guard store.type == NSInMemoryStoreType else { return }
+        if isPruningOnWarning { return }
+        isPruningOnWarning = true
+
+        let bg = persistentContainer.newBackgroundContext()
+        bg.mergePolicy = NSMergePolicy(merge: .mergeByPropertyStoreTrumpMergePolicyType)
+
+        bg.perform { [weak self] in
+            guard let self = self else { return }
+            do {
+                let req: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete(lifeLimitDate: nil)
+                req.includesPropertyValues = false
+
+                let objects = try bg.fetch(req)
+                objects.forEach(bg.delete)
+
+                if bg.hasChanges { try bg.save() }
+                bg.reset()
+
+                DispatchQueue.main.async { self.onObjectsDidChange?() }
+
+                Logger.common(
+                    message: "[MBDBRepo] Aggressive prune on memory warning: removed \(objects.count) events (in-memory).",
+                    level: .info,
+                    category: .database
+                )
+            } catch {
+                Logger.common(
+                    message: "[MBDBRepo] Aggressive prune failed on memory warning: \(error)",
+                    level: .error,
+                    category: .database
+                )
+            }
+            DispatchQueue.main.async { self.isPruningOnWarning = false }
+        }
     }
 
     // MARK: - CRUD operations
+    
     func create(event: Event) throws {
         try context.executePerformAndWait {
             let entity = CDEvent(context: context)

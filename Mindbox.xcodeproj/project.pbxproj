@@ -134,6 +134,7 @@
 		473A986F2C91E047005A3B94 /* MonitoringLogsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */; };
 		473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */; };
 		4741DAC42E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */; };
+		4741DAC62E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */; };
 		474230DC2E72236500282764 /* TestContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474230DB2E72236500282764 /* TestContainers.swift */; };
 		4747708B2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */; };
 		4747708F2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */; };
@@ -765,6 +766,7 @@
 		473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsTypeError.json; sourceTree = "<group>"; };
 		473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsElementsMixedError.json; sourceTree = "<group>"; };
 		4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderFlowTests.swift; sourceTree = "<group>"; };
+		4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepositoryMemoryWarningTests.swift; sourceTree = "<group>"; };
 		474230DB2E72236500282764 /* TestContainers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestContainers.swift; sourceTree = "<group>"; };
 		4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInternalMethodsTests.swift; sourceTree = "<group>"; };
 		4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationServiceTests.swift; sourceTree = "<group>"; };
@@ -1851,6 +1853,7 @@
 			children = (
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
 				84B09FB32611C74400B0A06E /* MockDatabaseRepository.swift */,
+				4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */,
 				84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */,
 				4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */,
 				47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */,
@@ -4038,6 +4041,7 @@
 				473A98332C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift in Sources */,
 				F3FEEAA62C25CB2E000E9D0F /* XCTestCase+Extensions.swift in Sources */,
 				84ECB42E25D27EF100DA8AC9 /* MockUNAuthorizationStatusProvider.swift in Sources */,
+				4741DAC62E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift in Sources */,
 				D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */,
 				F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */,
 				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,

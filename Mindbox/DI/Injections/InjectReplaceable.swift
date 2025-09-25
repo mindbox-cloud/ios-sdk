@@ -41,8 +41,7 @@ extension MBContainer {
 
             do {
                 let container = try loader.loadPersistentContainer()
-                let repo = try MBDatabaseRepository(persistentContainer: container)
-                return repo as DatabaseRepository
+                return try MBDatabaseRepository(persistentContainer: container)
             } catch {
                 assertionFailure("Failed to create MBDatabaseRepository: \(error)")
                 return NoopDatabaseRepository()
