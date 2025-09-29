@@ -116,32 +116,3 @@ final class DataBaseLoaderTests: XCTestCase {
                       "In-memory URL should be nil or /dev/null, got: \(urlString ?? "nil")")
     }
 }
-
-// MARK: - Stub contract tests
-
-final class DataBaseLoading_StubLoaderContractTests: XCTestCase {
-
-    private var loader: DatabaseLoading!
-
-    override func setUp() {
-        super.setUp()
-        loader = StubLoader()
-    }
-
-    override func tearDown() {
-        loader = nil
-        super.tearDown()
-    }
-
-    func test_loadPersistentContainer_throws() {
-        XCTAssertThrowsError(try loader.loadPersistentContainer(), "StubLoader must throw on loadPersistentContainer()")
-    }
-
-    func test_makeInMemoryContainer_throws() {
-        XCTAssertThrowsError(try loader.makeInMemoryContainer(), "StubLoader must throw on makeInMemoryContainer()")
-    }
-
-    func test_destroy_doesNotThrow() {
-        XCTAssertNoThrow(try loader.destroy(), "StubLoader destroy() must not throw")
-    }
-}

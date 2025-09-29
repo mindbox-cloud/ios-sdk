@@ -18,10 +18,8 @@ class MBDatabaseRepository: DatabaseRepository {
         case infoUpdate = "ApplicationInfoUpdatedVersion"
         case instanceId = "ApplicationInstanceId"
     }
-
-    let persistentContainer: NSPersistentContainer
-    private let context: NSManagedObjectContext
-    private let store: NSPersistentStore
+    
+    // MARK: DatabaseRepository properties - lifecycle / limits
 
     var limit: Int {
         return 10000
@@ -37,6 +35,8 @@ class MBDatabaseRepository: DatabaseRepository {
         }
         return monthLimitDate
     }
+    
+    // MARK: DatabaseRepository properties - metadata
 
     var infoUpdateVersion: Int? {
         get { getMetadata(forKey: .infoUpdate) }
@@ -53,8 +53,18 @@ class MBDatabaseRepository: DatabaseRepository {
         set { setMetadata(newValue, forKey: .instanceId) }
     }
     
+    // MARK: CoreData properties
+    
+    let persistentContainer: NSPersistentContainer
+    private let context: NSManagedObjectContext
+    private let store: NSPersistentStore
+    
+    // MARK: Private properties
+    
     private var memoryWarningToken: NSObjectProtocol?
     private var isPruningOnWarning = false
+    
+    // MARK: Initializer
 
     init(persistentContainer: NSPersistentContainer) throws {
         self.persistentContainer = persistentContainer
@@ -79,6 +89,8 @@ class MBDatabaseRepository: DatabaseRepository {
             memoryWarningToken = nil
         }
     }
+    
+    // MARK: Private methods
     
     private func startMemoryWarningObserverIfNeeded() {
         guard store.type == NSInMemoryStoreType, memoryWarningToken == nil else { return }
@@ -129,21 +141,7 @@ class MBDatabaseRepository: DatabaseRepository {
             DispatchQueue.main.async { self.isPruningOnWarning = false }
         }
     }
-
-    // MARK: - CRUD operations
     
-    func create(event: Event) throws {
-        try context.executePerformAndWait {
-            let entity = CDEvent(context: context)
-            entity.transactionId = event.transactionId
-            entity.timestamp = Date().timeIntervalSince1970
-            entity.type = event.type.rawValue
-            entity.body = event.body
-            Logger.common(message: "[MBDBRepo] Creating event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .info, category: .database)
-            try saveEvent(withContext: context)
-        }
-    }
-
     private func read(by transactionId: String) throws -> CDEvent? {
         try context.executePerformAndWait {
             Logger.common(message: "[MBDBRepo] Reading event with transactionId: \(transactionId)", level: .info, category: .database)
@@ -154,6 +152,58 @@ class MBDatabaseRepository: DatabaseRepository {
             }
             Logger.common(message: "[MBDBRepo] Did read event with transactionId: \(entity.transactionId ?? "undefined")", level: .info, category: .database)
             return entity
+        }
+    }
+    
+    private func cleanUp(count: Int) {
+        let fetchLimit = count - limit
+        guard fetchLimit > .zero else { return }
+
+        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete()
+        request.fetchLimit = fetchLimit
+        do {
+            try delete(by: request, withContext: context)
+        } catch {
+            Logger.common(message: "[MBDBRepo] Unable to remove elements", level: .error, category: .database)
+        }
+    }
+
+    private func delete(by request: NSFetchRequest<CDEvent>, withContext context: NSManagedObjectContext) throws {
+        try context.executePerformAndWait {
+            Logger.common(message: "[MBDBRepo] Finding elements to remove", level: .info, category: .database)
+
+            let events = try context.fetch(request)
+            guard !events.isEmpty else {
+                Logger.common(message: "[MBDBRepo] Elements to remove not found", level: .info, category: .database)
+                return
+            }
+            events.forEach {
+                Logger.common(message: "[MBDBRepo] Remove element `\(String(describing: $0.type))` with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))",
+                              level: .info, category: .database)
+                context.delete($0)
+            }
+            try saveEvent(withContext: context)
+        }
+    }
+
+    private func findEvent(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
+        try context.registeredObjects
+            .compactMap { $0 as? CDEvent }
+            .first(where: { !$0.isFault && request.predicate?.evaluate(with: $0) ?? false })
+        ?? context.fetch(request).first
+    }
+
+    // MARK: - DatabaseRepository: CRUD operations
+    
+    func create(event: Event) throws {
+        try context.executePerformAndWait {
+            let entity = CDEvent(context: context)
+            entity.transactionId = event.transactionId
+            entity.timestamp = Date().timeIntervalSince1970
+            entity.type = event.type.rawValue
+            entity.body = event.body
+            Logger.common(message: "[MBDBRepo] Creating event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .info, category: .database)
+            try saveEvent(withContext: context)
         }
     }
     
@@ -187,6 +237,8 @@ class MBDatabaseRepository: DatabaseRepository {
             try saveEvent(withContext: context)
         }
     }
+    
+    // MARK: - DatabaseRepository: queries and maintenance
 
     func query(fetchLimit: Int, retryDeadline: TimeInterval = Constants.Database.retryDeadline) throws -> [Event] {
         try context.executePerformAndWait {
@@ -287,47 +339,10 @@ class MBDatabaseRepository: DatabaseRepository {
             }
         }
     }
-
-    private func cleanUp(count: Int) {
-        let fetchLimit = count - limit
-        guard fetchLimit > .zero else { return }
-
-        let request: NSFetchRequest<CDEvent> = CDEvent.fetchRequestForDelete()
-        request.fetchLimit = fetchLimit
-        do {
-            try delete(by: request, withContext: context)
-        } catch {
-            Logger.common(message: "[MBDBRepo] Unable to remove elements", level: .error, category: .database)
-        }
-    }
-
-    private func delete(by request: NSFetchRequest<CDEvent>, withContext context: NSManagedObjectContext) throws {
-        try context.executePerformAndWait {
-            Logger.common(message: "[MBDBRepo] Finding elements to remove", level: .info, category: .database)
-
-            let events = try context.fetch(request)
-            guard !events.isEmpty else {
-                Logger.common(message: "[MBDBRepo] Elements to remove not found", level: .info, category: .database)
-                return
-            }
-            events.forEach {
-                Logger.common(message: "[MBDBRepo] Remove element `\(String(describing: $0.type))` with transactionId: \(String(describing: $0.transactionId)) and timestamp: \(Date(timeIntervalSince1970: $0.timestamp))",
-                              level: .info, category: .database)
-                context.delete($0)
-            }
-            try saveEvent(withContext: context)
-        }
-    }
-
-    private func findEvent(by request: NSFetchRequest<CDEvent>) throws -> CDEvent? {
-        try context.registeredObjects
-            .compactMap { $0 as? CDEvent }
-            .first(where: { !$0.isFault && request.predicate?.evaluate(with: $0) ?? false })
-        ?? context.fetch(request).first
-    }
 }
 
 // MARK: - ManagedObjectContext save processing
+
 private extension MBDatabaseRepository {
 
     func saveEvent(withContext context: NSManagedObjectContext) throws {
@@ -355,6 +370,7 @@ private extension MBDatabaseRepository {
 }
 
 // MARK: - Metadata processing
+
 private extension MBDatabaseRepository {
 
     func getMetadata<T>(forKey key: MetadataKey) -> T? {
@@ -375,38 +391,4 @@ private extension MBDatabaseRepository {
             Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
-}
-
-// MARK: - NoopDatabaseRepository
-
-final class NoopDatabaseRepository: DatabaseRepository {
-    
-    var limit: Int { 10_000 }
-    var lifeLimitDate: Date?
-    var deprecatedLimit: Int { 0 }
-    var onObjectsDidChange: (() -> Void)?
-
-    var infoUpdateVersion: Int? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-    var installVersion: Int? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-    var instanceId: String? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-
-    func create(event: Event) throws { /* no-op */ }
-    func readEvent(by transactionId: String) throws -> Event? { nil }
-    func update(event: Event) throws { /* no-op */ }
-    func delete(event: Event) throws { /* no-op */ }
-
-    func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event] { [] }
-    func removeDeprecatedEventsIfNeeded() throws { /* no-op */ }
-    func countDeprecatedEvents() throws -> Int { 0 }
-    func erase() throws { /* no-op */ }
-    func countEvents() throws -> Int { 0 }
 }

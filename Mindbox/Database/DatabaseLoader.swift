@@ -192,9 +192,3 @@ class DatabaseLoader: DatabaseLoading {
         }
     }
 }
-
-final class StubLoader: DatabaseLoading {
-    func loadPersistentContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
-    func makeInMemoryContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
-    func destroy() throws {}
-}

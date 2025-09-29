@@ -42,7 +42,7 @@ extension MBContainer {
             
             guard let dbLoader = try? DatabaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
                 assertionFailure("Failed to create DatabaseLoader")
-                return StubLoader()
+                return StubDatabaseLoader()
             }
             return dbLoader
         }
