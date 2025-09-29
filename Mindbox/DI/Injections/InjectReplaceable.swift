@@ -36,8 +36,8 @@ extension MBContainer {
             return MBPersistenceStorage(defaults: defaults)
         }
         
-        register(DatabaseRepository.self) {
-            let loader = DI.injectOrFail(DatabaseLoading.self)
+        register(DatabaseRepositoryProtocol.self) {
+            let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
 
             do {
                 let container = try loader.loadPersistentContainer()

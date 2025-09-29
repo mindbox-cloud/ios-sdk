@@ -1,5 +1,5 @@
 //
-//  DatabaseLoading.swift
+//  DatabaseLoaderProtocol.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 9/19/25.
@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 
-protocol DatabaseLoading {
+protocol DatabaseLoaderProtocol {
     func loadPersistentContainer() throws -> NSPersistentContainer
     func makeInMemoryContainer() throws -> NSPersistentContainer
     func destroy() throws

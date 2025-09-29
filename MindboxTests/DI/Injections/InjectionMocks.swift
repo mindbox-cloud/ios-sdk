@@ -29,7 +29,7 @@ extension MBContainer {
             MockPersistenceStorage()
         }
 
-        register(DatabaseRepository.self) {
+        register(DatabaseRepositoryProtocol.self) {
             return try! MockDatabaseRepository(inMemory: true)
         }
 

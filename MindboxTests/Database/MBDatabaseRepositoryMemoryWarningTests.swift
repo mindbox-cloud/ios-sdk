@@ -14,12 +14,12 @@ import UIKit
 final class MBDatabaseRepositoryMemoryWarningTests: XCTestCase {
     
     var eventGenerator: EventGenerator!
-    var dbLoader: DatabaseLoading!
+    var dbLoader: DatabaseLoaderProtocol!
     
     override func setUp() {
         super.setUp()
         eventGenerator = EventGenerator()
-        dbLoader = DI.injectOrFail(DatabaseLoading.self)
+        dbLoader = DI.injectOrFail(DatabaseLoaderProtocol.self)
     }
     
     override func tearDown() {

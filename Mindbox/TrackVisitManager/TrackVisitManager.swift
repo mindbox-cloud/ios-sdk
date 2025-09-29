@@ -22,11 +22,11 @@ protocol TrackVisitSpecificTrackProtocol {
 protocol TrackVisitManagerProtocol: TrackVisitCommonTrackProtocol, TrackVisitSpecificTrackProtocol {}
 
 final class TrackVisitManager: TrackVisitManagerProtocol {
-    private let databaseRepository: DatabaseRepository
+    private let databaseRepository: DatabaseRepositoryProtocol
     private let inappSessionManager: InappSessionManagerProtocol
 
     init(
-        databaseRepository: DatabaseRepository,
+        databaseRepository: DatabaseRepositoryProtocol,
         inappSessionManager: InappSessionManagerProtocol
     ) {
         self.databaseRepository = databaseRepository

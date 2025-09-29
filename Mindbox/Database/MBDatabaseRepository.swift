@@ -11,7 +11,7 @@ import UIKit.UIApplication
 import CoreData
 import MindboxLogger
 
-class MBDatabaseRepository: DatabaseRepository {
+class MBDatabaseRepository: DatabaseRepositoryProtocol {
 
     enum MetadataKey: String {
         case install = "ApplicationInstalledVersion"

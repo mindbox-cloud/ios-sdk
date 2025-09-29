@@ -37,16 +37,18 @@ extension MBContainer {
             return InAppTargetingChecker(persistenceStorage: persistenceStorage)
         }
         
-        register(DatabaseLoading.self) {
+        register(DatabaseLoaderProtocol.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             
-            guard let dbLoader = try? DatabaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
-                assertionFailure("Failed to create DatabaseLoader")
+            do {
+                let dbLoader = try DatabaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+                return dbLoader
+            } catch {
+                assertionFailure(" Failed to create DatabaseLoader: \(error.localizedDescription). Falling back to StubDBLoader - app in production will run in degraded mode (no on-disk persistence)")
                 return StubDatabaseLoader()
             }
-            return dbLoader
         }
-
+        
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }
@@ -71,7 +73,7 @@ extension MBContainer {
         }
 
         register(TrackVisitManagerProtocol.self) {
-            let databaseRepository = DI.injectOrFail(DatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
             let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
             return TrackVisitManager(databaseRepository: databaseRepository, inappSessionManager: inappSessionManger)
         }
@@ -82,7 +84,7 @@ extension MBContainer {
         }
 
         register(ClickNotificationManager.self) {
-            let databaseRepository = DI.injectOrFail(DatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
             return ClickNotificationManager(databaseRepository: databaseRepository)
         }
 

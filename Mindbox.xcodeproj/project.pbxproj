@@ -136,6 +136,7 @@
 		4741425C2E8A681600839AD8 /* StubDatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */; };
 		4741425E2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425D2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift */; };
 		474142602E8A692800839AD8 /* NoopDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */; };
+		474142622E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474142612E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift */; };
 		4741DAC42E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */; };
 		4741DAC62E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */; };
 		474230DC2E72236500282764 /* TestContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474230DB2E72236500282764 /* TestContainers.swift */; };
@@ -182,8 +183,8 @@
 		47C464EF2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C464EE2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift */; };
 		47D0BC2C2E093F8A00182DB2 /* ClockAndMockClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
-		47DCB76A2E82CEA90024FCC1 /* DatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DCB7692E82CEA90024FCC1 /* DatabaseRepository.swift */; };
-		47DF1FB02E7D6F90009BC4A0 /* DataBaseLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DF1FAF2E7D6F90009BC4A0 /* DataBaseLoading.swift */; };
+		47DCB76A2E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */; };
+		47DF1FB02E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */; };
 		47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DEE28D08897002C9CF0 /* SegmentationCheckResponse.swift */; };
 		47FDF0BA2C5BDAB80051F08C /* MigrationManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */; };
 		47FDF0BC2C5BE8BB0051F08C /* MigrationProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */; };
@@ -771,6 +772,7 @@
 		4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubDatabaseLoader.swift; sourceTree = "<group>"; };
 		4741425D2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBaseLoading_StubDatabaseLoaderContractTests.swift; sourceTree = "<group>"; };
 		4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoopDatabaseRepository.swift; sourceTree = "<group>"; };
+		474142612E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepository_NoopContractTests.swift; sourceTree = "<group>"; };
 		4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderFlowTests.swift; sourceTree = "<group>"; };
 		4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepositoryMemoryWarningTests.swift; sourceTree = "<group>"; };
 		474230DB2E72236500282764 /* TestContainers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestContainers.swift; sourceTree = "<group>"; };
@@ -816,8 +818,8 @@
 		47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepositoryTests.swift; sourceTree = "<group>"; };
 		47C464EE2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveBackgroundTaskDataMigrationTests.swift; sourceTree = "<group>"; };
 		47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockAndMockClock.swift; sourceTree = "<group>"; };
-		47DCB7692E82CEA90024FCC1 /* DatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepository.swift; sourceTree = "<group>"; };
-		47DF1FAF2E7D6F90009BC4A0 /* DataBaseLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBaseLoading.swift; sourceTree = "<group>"; };
+		47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryProtocol.swift; sourceTree = "<group>"; };
+		47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderProtocol.swift; sourceTree = "<group>"; };
 		47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManagerProtocol.swift; sourceTree = "<group>"; };
 		47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationProtocol.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
@@ -1858,6 +1860,7 @@
 			isa = PBXGroup;
 			children = (
 				840C388425CD169400D50183 /* DatabaseRepositoryTestCase.swift */,
+				474142612E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift */,
 				84B09FB32611C74400B0A06E /* MockDatabaseRepository.swift */,
 				4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */,
 				84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */,
@@ -2115,11 +2118,11 @@
 				84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */,
 				84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */,
 				4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */,
-				47DCB7692E82CEA90024FCC1 /* DatabaseRepository.swift */,
+				47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */,
 				84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */,
 				8410681225ECDC73004701C2 /* DatabaseLoader.swift */,
 				4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */,
-				47DF1FAF2E7D6F90009BC4A0 /* DataBaseLoading.swift */,
+				47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -3894,7 +3897,7 @@
 				A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */,
 				F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */,
 				33072F362664C4D7001F1AB2 /* RecommendationRequest.swift in Sources */,
-				47DCB76A2E82CEA90024FCC1 /* DatabaseRepository.swift in Sources */,
+				47DCB76A2E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift in Sources */,
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */,
 				F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */,
@@ -3911,7 +3914,7 @@
 				F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
 				F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */,
-				47DF1FB02E7D6F90009BC4A0 /* DataBaseLoading.swift in Sources */,
+				47DF1FB02E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift in Sources */,
 				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
@@ -4045,6 +4048,7 @@
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */,
 				BBAAC17C2BB2FC9100E1E25E /* MockEvent.swift in Sources */,
+				474142622E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift in Sources */,
 				47D0BC2C2E093F8A00182DB2 /* ClockAndMockClock.swift in Sources */,
 				84B09FB42611C74400B0A06E /* MockDatabaseRepository.swift in Sources */,
 				473A98262C918C3A005A3B94 /* ConfigParsingTests.swift in Sources */,

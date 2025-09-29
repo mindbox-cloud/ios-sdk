@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import MindboxLogger
 
-class DatabaseLoader: DatabaseLoading {
+class DatabaseLoader: DatabaseLoaderProtocol {
     
     static var metadataKeysToPreserve: [String] {
         [

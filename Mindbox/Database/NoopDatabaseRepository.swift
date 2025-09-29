@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class NoopDatabaseRepository: DatabaseRepository {
+final class NoopDatabaseRepository: DatabaseRepositoryProtocol {
     
     var limit: Int { 10_000 }
     var lifeLimitDate: Date?

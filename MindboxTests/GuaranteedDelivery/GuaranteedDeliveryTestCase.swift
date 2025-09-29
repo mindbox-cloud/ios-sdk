@@ -14,7 +14,7 @@ import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
 
-    var databaseRepository: DatabaseRepository!
+    var databaseRepository: DatabaseRepositoryProtocol!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     var persistenceStorage: PersistenceStorage!
     var eventGenerator: EventGenerator!
@@ -24,7 +24,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         super.setUp()
         Mindbox.logger.logLevel = .none
 
-        databaseRepository = DI.injectOrFail(DatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
@@ -51,7 +51,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: DI.injectOrFail(DatabaseRepository.self),
+            databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
@@ -135,7 +135,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: DI.injectOrFail(DatabaseRepository.self),
+            databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )

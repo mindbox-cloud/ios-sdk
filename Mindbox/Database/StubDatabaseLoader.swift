@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 
-final class StubDatabaseLoader: DatabaseLoading {
+final class StubDatabaseLoader: DatabaseLoaderProtocol {
     func loadPersistentContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
     func makeInMemoryContainer() throws -> NSPersistentContainer { throw MBDatabaseError.unableCreateDatabaseModel }
     func destroy() throws {}

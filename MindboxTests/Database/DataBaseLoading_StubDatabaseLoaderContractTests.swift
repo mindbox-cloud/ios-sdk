@@ -11,7 +11,7 @@ import XCTest
 
 final class DataBaseLoading_StubDatabaseLoaderContractTests: XCTestCase {
 
-    private var loader: DatabaseLoading!
+    private var loader: DatabaseLoaderProtocol!
 
     override func setUp() {
         super.setUp()

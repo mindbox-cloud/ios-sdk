@@ -1,5 +1,5 @@
 //
-//  DatabaseRepository.swift
+//  DatabaseRepositoryProtocol.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 9/23/25.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol DatabaseRepository: AnyObject {
+protocol DatabaseRepositoryProtocol: AnyObject {
     // lifecycle / limits
     var limit: Int { get }
     var lifeLimitDate: Date? { get }
@@ -36,7 +36,7 @@ protocol DatabaseRepository: AnyObject {
     func countEvents() throws -> Int
 }
 
-extension DatabaseRepository {
+extension DatabaseRepositoryProtocol {
     func query(fetchLimit: Int) throws -> [Event] {
         try query(fetchLimit: fetchLimit, retryDeadline: Constants.Database.retryDeadline)
     }

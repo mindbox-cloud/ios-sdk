@@ -31,7 +31,7 @@ final class MockDatabaseRepository: MBDatabaseRepository {
     /// - See also:
     ///   - [Setting up a Core Data store for unit tests (Donny Wals)](https://www.donnywals.com/setting-up-a-core-data-store-for-unit-tests/)
     convenience init(inMemory: Bool) throws {
-        let loader = DI.injectOrFail(DatabaseLoading.self)
+        let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
         let container: NSPersistentContainer = inMemory ? try loader.makeInMemoryContainer() : try loader.loadPersistentContainer()
         try self.init(persistentContainer: container)
     }

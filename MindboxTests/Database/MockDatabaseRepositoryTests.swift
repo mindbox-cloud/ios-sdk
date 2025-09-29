@@ -29,7 +29,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     }
     
     func testRegisterMBDBRepoIsMock() {
-        XCTAssert(DI.injectOrFail(DatabaseRepository.self) is MockDatabaseRepository)
+        XCTAssert(DI.injectOrFail(DatabaseRepositoryProtocol.self) is MockDatabaseRepository)
     }
     
     func testCreateReadDeleteEvent() throws {
@@ -129,7 +129,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     func testProductionRepositoryUsesSQLiteStore() throws {
         // GIVEN
         // We load the real container in the same way as in the application
-        let loader = DI.injectOrFail(DatabaseLoading.self)
+        let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
         let sqlContainer = try loader.loadPersistentContainer()
         let prodRepo = try MBDatabaseRepository(persistentContainer: sqlContainer)
         

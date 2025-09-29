@@ -12,107 +12,151 @@ import CoreData
 
 final class DataBaseLoaderTests: XCTestCase {
 
-    private var tempDir: URL!
-    private let fm = FileManager.default
+    private enum Constants {
+        static let testsFolderPrefix = "MindboxDBTests-"
+        static let sqliteExtension = "sqlite"
+        static let defaultDatabaseName = "TestDB"
+        static let precreatedDatabaseName = "Precreated"
+        static let corruptedDatabaseName = "Corrupted"
+        static let inMemoryDatabaseName = "InMemoryOnly"
+
+        static let nonSQLitePayload = "not a sqlite database"
+        static let garbagePayload = "garbage"
+        
+        static let devNullURLString = URL(fileURLWithPath: "/dev/null").absoluteString
+    }
+
+    private var temporaryDirectoryURL: URL!
+    private let fileManager: FileManager = .default
 
     override func setUp() {
         super.setUp()
-        let base = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        tempDir = base.appendingPathComponent("MindboxDBTests-\(UUID().uuidString)", isDirectory: true)
-        try? fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        let baseTemporaryDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        temporaryDirectoryURL = baseTemporaryDirectoryURL.appendingPathComponent(
+            Constants.testsFolderPrefix + UUID().uuidString,
+            isDirectory: true
+        )
+        try? fileManager.createDirectory(at: temporaryDirectoryURL, withIntermediateDirectories: true)
     }
 
     override func tearDown() {
-        if let tempDir { try? fm.removeItem(at: tempDir) }
-        tempDir = nil
+        if let temporaryDirectoryURL {
+            try? fileManager.removeItem(at: temporaryDirectoryURL)
+        }
+        temporaryDirectoryURL = nil
         super.tearDown()
     }
 
     // MARK: - Helpers
 
-    private func makeLoader(dbName: String = "TestDB") throws -> (loader: DatabaseLoader, url: URL) {
-        let url = tempDir.appendingPathComponent("\(dbName).sqlite")
-        let desc = NSPersistentStoreDescription(url: url)
-        desc.type = NSSQLiteStoreType
-        let loader = try DatabaseLoader(persistentStoreDescriptions: [desc], applicationGroupIdentifier: nil)
-        return (loader, url)
+    private func makeDatabaseLoader(databaseName: String = Constants.defaultDatabaseName)
+    throws -> (loader: DatabaseLoader, storeURL: URL) {
+        let storeURL = temporaryDirectoryURL.appendingPathComponent("\(databaseName).\(Constants.sqliteExtension)")
+        let persistentStoreDescription = NSPersistentStoreDescription(url: storeURL)
+        persistentStoreDescription.type = NSSQLiteStoreType
+        
+        let databaseLoader = try DatabaseLoader(
+            persistentStoreDescriptions: [persistentStoreDescription],
+            applicationGroupIdentifier: nil
+        )
+        return (databaseLoader, storeURL)
     }
 
-    // MARK: - Existing flow tests
+    // MARK: - Flow tests
 
     func test_LoadsOnDiskStore_Succeeds() throws {
-        let (loader, url) = try makeLoader()
-        let container = try loader.loadPersistentContainer()
+        let (databaseLoader, storeURL) = try makeDatabaseLoader()
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
 
-        let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first, "Persistent store should be loaded")
-        XCTAssertEqual(store.type, NSSQLiteStoreType, "Store type must be SQLite")
-        XCTAssertTrue(fm.fileExists(atPath: url.path), "SQLite file must exist on disk")
+        let persistentStoreCoordinator = persistentContainer.persistentStoreCoordinator
+        let persistentStore = try XCTUnwrap(
+            persistentStoreCoordinator.persistentStores.first,
+            "Persistent store should be loaded"
+        )
+        XCTAssertEqual(persistentStore.type, NSSQLiteStoreType, "Store type must be SQLite")
+        XCTAssertTrue(fileManager.fileExists(atPath: storeURL.path), "SQLite file must exist on disk")
     }
 
     func test_Destroy_DetachesStore_AndRecreateChangesStoreUUID() throws {
-        let (loader, url) = try makeLoader()
-        let container = try loader.loadPersistentContainer()
-        let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first, "Store should be present before destroy")
+        let (databaseLoader, storeURL) = try makeDatabaseLoader()
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
+        let persistentStoreCoordinator = persistentContainer.persistentStoreCoordinator
+        let persistentStore = try XCTUnwrap(
+            persistentStoreCoordinator.persistentStores.first,
+            "Store should be present before destroy"
+        )
 
         // UUID before destroy
-        let uuidBefore = psc.metadata(for: store)[NSStoreUUIDKey] as? String
+        let storeUUIDBefore = persistentStoreCoordinator.metadata(for: persistentStore)[NSStoreUUIDKey] as? String
 
         // Destroy
-        try loader.destroy()
+        try databaseLoader.destroy()
 
         // Store is detached from coordinator
-        XCTAssertNil(psc.persistentStore(for: url), "Store should be detached after destroy")
+        XCTAssertNil(
+            persistentStoreCoordinator.persistentStore(for: storeURL),
+            "Store should be detached after destroy"
+        )
 
         // Recreate
-        let container2 = try loader.loadPersistentContainer()
-        let psc2 = container2.persistentStoreCoordinator
-        let store2 = try XCTUnwrap(psc2.persistentStores.first, "Store should be recreated after destroy")
-        let uuidAfter = psc2.metadata(for: store2)[NSStoreUUIDKey] as? String
-        XCTAssertNotEqual(uuidBefore, uuidAfter, "Store UUID should change after destroy+recreate")
+        let recreatedContainer = try databaseLoader.loadPersistentContainer()
+        let recreatedCoordinator = recreatedContainer.persistentStoreCoordinator
+        let recreatedStore = try XCTUnwrap(
+            recreatedCoordinator.persistentStores.first,
+            "Store should be recreated after destroy"
+        )
+        let storeUUIDAfter = recreatedCoordinator.metadata(for: recreatedStore)[NSStoreUUIDKey] as? String
+        XCTAssertNotEqual(storeUUIDBefore, storeUUIDAfter, "Store UUID should change after destroy+recreate")
     }
 
     func test_Destroy_UsesDescriptionURL_WhenStoreNotLoaded() throws {
         // Pre-create a garbage file at the expected URL without loading the store
-        let (loader, url) = try makeLoader(dbName: "Precreated")
-        try "garbage".data(using: .utf8)!.write(to: url)
-        XCTAssertTrue(fm.fileExists(atPath: url.path), "Precreated file must exist")
+        let (databaseLoader, storeURL) = try makeDatabaseLoader(databaseName: Constants.precreatedDatabaseName)
+        try XCTUnwrap(Constants.garbagePayload.data(using: .utf8)).write(to: storeURL)
+        XCTAssertTrue(fileManager.fileExists(atPath: storeURL.path), "Precreated file must exist")
 
         // Destroy should clear path so we can load a fresh store afterwards
-        try loader.destroy()
+        try databaseLoader.destroy()
 
         // The physical file may or may not remain; critical point is that a store loads fine
-        let container = try loader.loadPersistentContainer()
-        let psc = container.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first, "Store should load after destroy using description URL")
-        XCTAssertEqual(store.type, NSSQLiteStoreType, "Store type must be SQLite")
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
+        let persistentStoreCoordinator = persistentContainer.persistentStoreCoordinator
+        let persistentStore = try XCTUnwrap(
+            persistentStoreCoordinator.persistentStores.first,
+            "Store should load after destroy using description URL"
+        )
+        XCTAssertEqual(persistentStore.type, NSSQLiteStoreType, "Store type must be SQLite")
     }
 
     func test_LoadPersistentContainer_RetryAfterDestroy_OnCorruptedFile() throws {
-        let (loader, url) = try makeLoader(dbName: "Corrupted")
-        try "not a sqlite database".data(using: .utf8)!.write(to: url)
+        let (databaseLoader, storeURL) = try makeDatabaseLoader(databaseName: Constants.corruptedDatabaseName)
+        try XCTUnwrap(Constants.nonSQLitePayload.data(using: .utf8)).write(to: storeURL)
 
-        let container = try loader.loadPersistentContainer()
+        let persistentContainer = try databaseLoader.loadPersistentContainer()
+        let persistentStoreCoordinator = persistentContainer.persistentStoreCoordinator
+        let persistentStore = persistentStoreCoordinator.persistentStores.first
 
-        let psc = container.persistentStoreCoordinator
-        let store = psc.persistentStores.first
-        XCTAssertNotNil(store, "Store should be available after repair retry")
-        XCTAssertEqual(store?.type, NSSQLiteStoreType, "Store type must be SQLite after repair")
-        XCTAssertTrue(fm.fileExists(atPath: url.path), "SQLite file must exist after repair")
+        XCTAssertNotNil(persistentStore, "Store should be available after repair retry")
+        XCTAssertEqual(persistentStore?.type, NSSQLiteStoreType, "Store type must be SQLite after repair")
+        XCTAssertTrue(fileManager.fileExists(atPath: storeURL.path), "SQLite file must exist after repair")
     }
 
     func test_MakeInMemoryContainer_ReturnsInMemoryStore() throws {
-        let (loader, _) = try makeLoader(dbName: "InMemoryOnly")
-        let mem = try loader.makeInMemoryContainer()
+        let (databaseLoader, _) = try makeDatabaseLoader(databaseName: Constants.inMemoryDatabaseName)
+        let inMemoryContainer = try databaseLoader.makeInMemoryContainer()
 
-        let psc = mem.persistentStoreCoordinator
-        let store = try XCTUnwrap(psc.persistentStores.first, "In-memory store should be present")
-        XCTAssertEqual(store.type, NSInMemoryStoreType, "Store type must be in-memory")
+        let persistentStoreCoordinator = inMemoryContainer.persistentStoreCoordinator
+        let inMemoryStore = try XCTUnwrap(
+            persistentStoreCoordinator.persistentStores.first,
+            "In-memory store should be present"
+        )
+        XCTAssertEqual(inMemoryStore.type, NSInMemoryStoreType, "Store type must be in-memory")
 
         // On iOS URL may be nil or /dev/null for in-memory store
-        let urlString = store.url?.absoluteString
-        XCTAssertTrue(urlString == nil || urlString == "file:///dev/null",
-                      "In-memory URL should be nil or /dev/null, got: \(urlString ?? "nil")")
+        let inMemoryURLString = inMemoryStore.url?.absoluteString
+        let isNilOrDevNull = (inMemoryURLString == nil ||
+                              inMemoryURLString == Constants.devNullURLString)
+        XCTAssertTrue(isNilOrDevNull,
+                      "In-memory URL should be nil or /dev/null, got: \(inMemoryURLString ?? "nil")")
     }
 }
