@@ -22,7 +22,7 @@ class EventRepositoryTestCase: XCTestCase {
         coreController = DI.injectOrFail(CoreController.self)
         controllerQueue = coreController.controllerQueue
         persistenceStorage.reset()
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
     }
 

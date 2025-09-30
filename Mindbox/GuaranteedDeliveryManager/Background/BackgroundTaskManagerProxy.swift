@@ -23,9 +23,9 @@ class BackgroundTaskManagerProxy {
     private var taskManagers: [BackgroundTaskManagerType] = []
 
     private let persistenceStorage: PersistenceStorage
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepositoryProtocol
 
-    init(persistenceStorage: PersistenceStorage, databaseRepository: MBDatabaseRepository) {
+    init(persistenceStorage: PersistenceStorage, databaseRepository: DatabaseRepositoryProtocol) {
         self.persistenceStorage = persistenceStorage
         self.databaseRepository = databaseRepository
         NotificationCenter.default.addObserver(

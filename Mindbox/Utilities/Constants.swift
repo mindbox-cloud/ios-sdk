@@ -21,6 +21,7 @@ enum Constants {
     enum Database {
 
         static let mombName = "MBDatabase"
+        static let retryDeadline: TimeInterval = 60
     }
 
     enum Notification {

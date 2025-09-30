@@ -12,12 +12,12 @@ import CoreData
 
 class DatabaseRepositoryTestCase: XCTestCase {
 
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: DatabaseRepositoryProtocol!
     var eventGenerator: EventGenerator!
 
     override func setUpWithError() throws {
         super.setUp()
-        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         eventGenerator = EventGenerator()
 
         try databaseRepository.erase()
@@ -47,7 +47,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         let event = eventGenerator.generateEvent()
         try databaseRepository.create(event: event)
 
-        let entity = try databaseRepository.read(by: event.transactionId)
+        let entity = try databaseRepository.readEvent(by: event.transactionId)
         XCTAssertNotNil(entity)
     }
 
@@ -57,13 +57,13 @@ class DatabaseRepositoryTestCase: XCTestCase {
         var updatedRetryTimeStamp: Double?
         try databaseRepository.create(event: event)
 
-        var entity = try databaseRepository.read(by: event.transactionId)
+        var entity = try databaseRepository.readEvent(by: event.transactionId)
         initialRetryTimeStamp = entity?.retryTimestamp
         XCTAssertNotNil(initialRetryTimeStamp)
 
         try databaseRepository.update(event: event)
 
-        entity = try databaseRepository.read(by: event.transactionId)
+        entity = try databaseRepository.readEvent(by: event.transactionId)
         XCTAssertNotNil(initialRetryTimeStamp)
         updatedRetryTimeStamp = entity?.retryTimestamp
 
@@ -185,7 +185,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
 
         try events.forEach {
-            let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
+            let fetchedEvent = try databaseRepository.readEvent(by: $0.transactionId)
             XCTAssertEqual(fetchedEvent?.retryTimestamp, 0.0)
         }
 
@@ -194,7 +194,7 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
 
         try eventsToRetry.forEach {
-            let fetchedEvent = try databaseRepository.read(by: $0.transactionId)
+            let fetchedEvent = try databaseRepository.readEvent(by: $0.transactionId)
             let retryTimestamp = try XCTUnwrap(fetchedEvent?.retryTimestamp)
             XCTAssertGreaterThan(retryTimestamp, 0.0)
         }

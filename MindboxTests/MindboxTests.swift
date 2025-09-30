@@ -23,13 +23,13 @@ class MindboxTests: XCTestCase {
     var coreController: CoreController!
     var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
     var persistenceStorage: PersistenceStorage!
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: DatabaseRepositoryProtocol!
 
     override func setUp() {
         super.setUp()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
-        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         Mindbox.shared.assembly()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
@@ -75,7 +75,7 @@ class MindboxTests: XCTestCase {
         XCTAssert(deviceUUID == deviceUUID2)
 
         persistenceStorage.reset()
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         coreController = DI.injectOrFail(CoreController.self)
 
