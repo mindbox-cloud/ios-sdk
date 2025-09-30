@@ -27,6 +27,7 @@ final class CoreController {
     func initialization(configuration: MBConfiguration) {
 
         controllerQueue.async {
+            MindboxUtils.Stopwatch.shared.start(tag: MindboxUtils.Stopwatch.shared.INIT_SDK)
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
@@ -38,6 +39,10 @@ final class CoreController {
                 self.primaryInitialization(with: configuration)
             } else {
                 self.repeatInitialization(with: configuration)
+            }
+            
+            if let duration = MindboxUtils.Stopwatch.shared.stop(tag: MindboxUtils.Stopwatch.shared.INIT_SDK) {
+                Mindbox.logger.log(level: .info, message: "Mindbox SDK initialised in \(duration). Version \(MindboxCommon.shared.VERSION)")
             }
 
             self.guaranteedDeliveryManager.canScheduleOperations = true
