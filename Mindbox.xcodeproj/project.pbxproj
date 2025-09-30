@@ -1795,6 +1795,27 @@
 			path = ABTestsJsonStubs;
 			sourceTree = "<group>";
 		};
+		476C2DB02E8BE725000EFF86 /* DatabaseRepository */ = {
+			isa = PBXGroup;
+			children = (
+				84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */,
+				4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */,
+				47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */,
+			);
+			path = DatabaseRepository;
+			sourceTree = "<group>";
+		};
+		476C2DB12E8BE75F000EFF86 /* DatabaseLoader */ = {
+			isa = PBXGroup;
+			children = (
+				84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */,
+				8410681225ECDC73004701C2 /* DatabaseLoader.swift */,
+				4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */,
+				47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */,
+			);
+			path = DatabaseLoader;
+			sourceTree = "<group>";
+		};
 		47B90E2D2C625F8A00BD93E7 /* TestsMigrations */ = {
 			isa = PBXGroup;
 			children = (
@@ -2114,15 +2135,10 @@
 		84DEE8A625CC02AF00C98CC7 /* Database */ = {
 			isa = PBXGroup;
 			children = (
+				476C2DB12E8BE75F000EFF86 /* DatabaseLoader */,
+				476C2DB02E8BE725000EFF86 /* DatabaseRepository */,
 				840C386525CC1A5300D50183 /* Entities */,
 				84DEE8A725CC031200C98CC7 /* MBDatabase.xcdatamodeld */,
-				84DEE8AC25CC036A00C98CC7 /* MBDatabaseRepository.swift */,
-				4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */,
-				47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */,
-				84DEE8B025CC042A00C98CC7 /* MBDatabaseError.swift */,
-				8410681225ECDC73004701C2 /* DatabaseLoader.swift */,
-				4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */,
-				47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
