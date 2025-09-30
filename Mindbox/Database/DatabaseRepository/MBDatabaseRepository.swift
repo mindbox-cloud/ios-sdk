@@ -199,7 +199,7 @@ class MBDatabaseRepository: DatabaseRepositoryProtocol {
         try context.executePerformAndWait {
             let entity = CDEvent(context: context)
             entity.transactionId = event.transactionId
-            entity.timestamp = Date().timeIntervalSince1970
+            entity.timestamp = event.enqueueTimeStamp
             entity.type = event.type.rawValue
             entity.body = event.body
             Logger.common(message: "[MBDBRepo] Creating event `\(event.type.rawValue)` with transactionId: \(event.transactionId)", level: .info, category: .database)
