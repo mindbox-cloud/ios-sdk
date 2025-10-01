@@ -57,12 +57,10 @@ final class DatabaseMetadataMigrationTests: XCTestCase {
                 XCTFail("No persistent store attached to MBDatabaseRepository.", file: file, line: line); return
             }
             var md = psc.metadata(for: store)
-            md[MDKey.infoUpdate.rawValue] = infoUpdate
-            md[MDKey.instanceId.rawValue] = instanceId
+            if let infoUpdate { md[MDKey.infoUpdate.rawValue] = infoUpdate }
+            if let instanceId { md[MDKey.instanceId.rawValue] = instanceId }
             psc.setMetadata(md, for: store)
-        } catch {
-            // already failed in repoFromDI
-        }
+        } catch { }
     }
 
     private func currentMetadata() -> [String: Any] {
@@ -79,16 +77,19 @@ final class DatabaseMetadataMigrationTests: XCTestCase {
 extension DatabaseMetadataMigrationTests {
 
     func test_run_performsMigrationWhenNeeded() throws {
+        let expectedInfoUpdate = 42
+        let expectedInstanceId = "abc"
+        
         // given
-        seedMetadata(infoUpdate: 42, instanceId: "abc")
+        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true when metadata exists and target fields are empty.")
 
         // when
         try migration.run()
 
         // then: values are migrated into PersistenceStorage
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, 42, "`applicationInfoUpdateVersion` should be migrated from Core Data metadata.")
-        XCTAssertEqual(storage.applicationInstanceId, "abc", "`applicationInstanceId` should be migrated from Core Data metadata.")
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be migrated from Core Data metadata.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should be migrated from Core Data metadata.")
 
         // and metadata is cleared
         let meta = currentMetadata()
@@ -99,38 +100,36 @@ extension DatabaseMetadataMigrationTests {
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false after successful migration.")
     }
 
-    func test_isNeeded_false_whenTargetAlreadyHasValues() {
-        // given: target fields already populated
+    func test_isNeeded_false_whenTargetAlreadyHasValues_andNoMetadata() {
+        // given: destination already has values
         storage.applicationInfoUpdateVersion = 7
         storage.applicationInstanceId = "already"
 
-        // even if metadata exists, isNeeded should be false
-        seedMetadata(infoUpdate: 99, instanceId: "should-not-matter")
-        XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false when target fields are already populated.")
-
-        // IMPORTANT: we do not call run() here since migration doesn't guard isNeeded internally.
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, 7, "`applicationInfoUpdateVersion` must remain unchanged when migration is skipped.")
-        XCTAssertEqual(storage.applicationInstanceId, "already", "`applicationInstanceId` must remain unchanged when migration is skipped.")
-
-        // Metadata remains intact on skip — that's fine.
-        let meta = currentMetadata()
-        XCTAssertEqual(meta[MDKey.infoUpdate.rawValue] as? Int, 99, "Metadata should remain unchanged when migration is skipped.")
-        XCTAssertEqual(meta[MDKey.instanceId.rawValue] as? String, "should-not-matter", "Metadata should remain unchanged when migration is skipped.")
+        // IMPORTANT: do NOT seed metadata here.
+        // With no source metadata, there's nothing to migrate or clean.
+        XCTAssertFalse(migration.isNeeded,
+                       "`isNeeded` should be false when targets are filled and no metadata exists.")
+        
+        // run() is intentionally not called
     }
 
+
     func test_run_isIdempotent_viaIsNeeded() throws {
+        let expectedInfoUpdate = 1
+        let expectedInstanceId = "abc"
+        
         // first run
-        seedMetadata(infoUpdate: 1, instanceId: "x")
+        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true before the first run.")
         try migration.run()
 
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, 1, "`applicationInfoUpdateVersion` should be set on first run.")
-        XCTAssertEqual(storage.applicationInstanceId, "x", "`applicationInstanceId` should be set on first run.")
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be set on first run.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should be set on first run.")
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should turn false after the first run.")
 
         // second run — not called (manager would skip), just assert stability
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, 1, "`applicationInfoUpdateVersion` should remain unchanged after migration.")
-        XCTAssertEqual(storage.applicationInstanceId, "x", "`applicationInstanceId` should remain unchanged after migration.")
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should remain unchanged after migration.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should remain unchanged after migration.")
 
         // metadata is cleared
         let meta = currentMetadata()
@@ -139,19 +138,22 @@ extension DatabaseMetadataMigrationTests {
     }
 
     func test_run_migratesOnlyMissingTargets_andClearsBothKeys() throws {
+        let expectedInfoUpdate = 11
+        let expectedInstanceId = "already-set"
+        
         // given: one target already populated
-        storage.applicationInstanceId = "already-set"
+        storage.applicationInstanceId = expectedInstanceId
         storage.applicationInfoUpdateVersion = nil
 
-        seedMetadata(infoUpdate: 11, instanceId: "from-meta")
+        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: "from-meta")
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true when at least one target field is missing and metadata exists.")
 
         // when
         try migration.run()
 
         // then: fill only the missing field; do not overwrite existing ones
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, 11, "`applicationInfoUpdateVersion` should be filled from metadata as it was missing.")
-        XCTAssertEqual(storage.applicationInstanceId, "already-set", "`applicationInstanceId` should not be overwritten if already set.")
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be filled from metadata as it was missing.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should not be overwritten if already set.")
 
         // but clear both metadata keys after run to avoid future re-triggers
         let meta = currentMetadata()
@@ -165,5 +167,35 @@ extension DatabaseMetadataMigrationTests {
         // given: both targets empty and no metadata was seeded
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false when there is nothing to migrate (no source metadata, empty targets).")
         // run() is not called
+    }
+    
+    func test_run_onlyCleansMetadata_whenTargetsAlreadyFilled() throws {
+        let expectedInfoUpdate = 10
+        let expectedInstanceId = "already"
+        
+        // given: target values are already set in the destination storage
+        storage.applicationInfoUpdateVersion = expectedInfoUpdate
+        storage.applicationInstanceId = expectedInstanceId
+
+        // and stale metadata remains in the Core Data store, which should be cleaned
+        seedMetadata(infoUpdate: 99, instanceId: "stale")
+
+        // isNeeded should be true due to the cleanup branch
+        XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true to perform metadata cleanup.")
+
+        // when
+        try migration.run()
+
+        // then: destination values must remain unchanged
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "Target value must not be overwritten during cleanup-only run.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "Target value must not be overwritten during cleanup-only run.")
+
+        // and the metadata keys must be cleared
+        let meta = currentMetadata()
+        XCTAssertNil(meta[MDKey.infoUpdate.rawValue], "Metadata 'ApplicationInfoUpdatedVersion' must be cleared during cleanup-only run.")
+        XCTAssertNil(meta[MDKey.instanceId.rawValue], "Metadata 'ApplicationInstanceId' must be cleared during cleanup-only run.")
+
+        // no subsequent migration should be needed
+        XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false after cleanup-only run.")
     }
 }

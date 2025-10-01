@@ -19,13 +19,16 @@ final class DatabaseMetadataMigration: MigrationProtocol {
     }
 
     var isNeeded: Bool {
-        let needInfoUpdate = persistenceStorage.applicationInfoUpdateVersion == nil
-                           && read(Int.self, .infoUpdate) != nil
+        let hasMDInfoUpdate = read(Int.self, .infoUpdate) != nil
+        let hasMDInstanceId = read(String.self, .instanceId) != nil
 
-        let needInstanceId = persistenceStorage.applicationInstanceId == nil
-                           && read(String.self, .instanceId) != nil
-        
-        return needInfoUpdate || needInstanceId
+        let needsCopyInfoUpdate = persistenceStorage.applicationInfoUpdateVersion == nil && hasMDInfoUpdate
+        let needsCopyInstanceId = persistenceStorage.applicationInstanceId == nil && hasMDInstanceId
+
+        let needsCleanup = (persistenceStorage.applicationInfoUpdateVersion != nil && hasMDInfoUpdate)
+                        || (persistenceStorage.applicationInstanceId != nil && hasMDInstanceId)
+
+        return needsCopyInfoUpdate || needsCopyInstanceId || needsCleanup
     }
 
     var version: Int {
