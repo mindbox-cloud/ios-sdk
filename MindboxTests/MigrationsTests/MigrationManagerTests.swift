@@ -30,8 +30,6 @@ final class MigrationManagerTests: XCTestCase {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1()
         ]
-        
-        setUpForRemoveBackgroundTaskDataMigration()
 
         migrationManager = MigrationManager(
             persistenceStorage: persistenceStorageMock,
@@ -46,16 +44,28 @@ final class MigrationManagerTests: XCTestCase {
         super.tearDown()
     }
 
-    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
+    @available(*, deprecated, message: "Suppress deprecated `shownInAppsIds` and `shownInappsDictionary` warning")
     func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
+        
+        setUpForRemoveBackgroundTaskDataMigration()
+        setUpForDatabaseMetadataMigration()
+        
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock)
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
+        XCTAssertNil(persistenceStorageMock.applicationInstanceId)
+        XCTAssertNil(persistenceStorageMock.applicationInfoUpdateVersion)
+        
         migrationManager.migrate()
+        
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == Constants.Migration.sdkVersionCode)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
-        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
+        
+        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after ShownInAppIDsMigration")
+        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after ShownInAppIDsMigration")
+        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after ShownInAppIDsMigration")
+        
+        XCTAssertNotNil(persistenceStorageMock.applicationInstanceId, "applicationInstanceId must NOT be nil after DatabaseMetadataMigration")
+        XCTAssertNotNil(persistenceStorageMock.applicationInfoUpdateVersion, "applicationInfoUpdateVersion must NOT be nil after DatabaseMetadataMigration")
         
         XCTAssertForRemoveBackgroundTaskDataMigration()
     }
@@ -79,6 +89,36 @@ final class MigrationManagerTests: XCTestCase {
 // MARK: - Additional functions for production migrations
 
 extension MigrationManagerTests {
+    
+    // MARK: DatabaseMetadataMigration setup (seed Core Data store metadata)
+    
+    private func setUpForDatabaseMetadataMigration(file: StaticString = #file, line: UInt = #line) {
+        let repoAny = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+        guard let repo = repoAny as? MBDatabaseRepository else {
+            XCTFail("DatabaseRepositoryProtocol from DI must be MBDatabaseRepository.", file: file, line: line)
+            return
+        }
+
+        let psc = repo.persistentContainer.persistentStoreCoordinator
+        guard let store = psc.persistentStores.first else {
+            XCTFail("No persistent store attached to MBDatabaseRepository.", file: file, line: line)
+            return
+        }
+
+        var meta = psc.metadata(for: store)
+        
+        meta[Constants.StoreMetadataKey.infoUpdate.rawValue] = 3
+        meta[Constants.StoreMetadataKey.instanceId.rawValue] = "test-instance-id"
+        psc.setMetadata(meta, for: store)
+
+        
+        persistenceStorageMock.applicationInfoUpdateVersion = nil
+        persistenceStorageMock.applicationInstanceId = nil
+    }
+    
+    
+    // MARK: RemoveBackgroundTaskDataMigration setup/assert
+    
     func XCTAssertForRemoveBackgroundTaskDataMigration() {
         XCTAssertNil(MBPersistenceStorage.defaults.value(forKey: "backgroundExecution"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))

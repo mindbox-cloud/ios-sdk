@@ -111,4 +111,8 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    var applicationInfoUpdateVersion: Int?
+    
+    var applicationInstanceId: String?
 }
