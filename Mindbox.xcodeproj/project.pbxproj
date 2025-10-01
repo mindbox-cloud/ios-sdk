@@ -375,6 +375,7 @@
 		B4E438702D8AFA5700603F3A /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386E2D8AFA5700603F3A /* WebViewController.swift */; };
 		B4E438722D8AFA6700603F3A /* WebViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438712D8AFA6700603F3A /* WebViewFactory.swift */; };
 		B4E438742D8AFAA700603F3A /* WebviewPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438732D8AFAA700603F3A /* WebviewPresentationStrategy.swift */; };
+		B4F2BA192E8BE7E100A89C73 /* MindboxCommon in Frameworks */ = {isa = PBXBuildFile; productRef = B4F2BA182E8BE7E100A89C73 /* MindboxCommon */; };
 		BB4D7CC72BDEC51D008E3AB8 /* Notification+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4D7CC62BDEC51D008E3AB8 /* Notification+Extensions.swift */; };
 		BB6563102BE3BA430090C473 /* UIApplication+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */; };
 		BBAAC17C2BB2FC9100E1E25E /* MockEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAAC17B2BB2FC9100E1E25E /* MockEvent.swift */; };
@@ -1247,6 +1248,7 @@
 			files = (
 				A170EDDC29B0883800CE547F /* MindboxLogger.framework in Frameworks */,
 				B4AD28942E66EC5D008AEFCD /* MindboxCommon in Frameworks */,
+				B4F2BA192E8BE7E100A89C73 /* MindboxCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3471,7 +3473,7 @@
 			);
 			mainGroup = 313B232625ADEA0F00A1CB72;
 			packageReferences = (
-				B4AD28922E66EC5D008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */,
+				B4F2BA172E8BE7E100A89C73 /* XCLocalSwiftPackageReference "../kmp-common-sdk" */,
 			);
 			productRefGroup = 313B233125ADEA0F00A1CB72 /* Products */;
 			projectDirPath = "";
@@ -4740,10 +4742,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		B4F2BA172E8BE7E100A89C73 /* XCLocalSwiftPackageReference "../kmp-common-sdk" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../kmp-common-sdk";
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
-		B4AD28922E66EC5D008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */ = {
+		B4AD28922E66EC5D008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mindbox-cloud/kmp-common-sdk-spm";
+			repositoryURL = "./kmp-common-sdk";
 			requirement = {
 				kind = exactVersion;
 				version = 1.0.4;
@@ -4754,7 +4763,11 @@
 /* Begin XCSwiftPackageProductDependency section */
 		B4AD28932E66EC5D008AEFCD /* MindboxCommon */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B4AD28922E66EC5D008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk-spm" */;
+			package = B4AD28922E66EC5D008AEFCD /* XCRemoteSwiftPackageReference "kmp-common-sdk" */;
+			productName = MindboxCommon;
+		};
+		B4F2BA182E8BE7E100A89C73 /* MindboxCommon */ = {
+			isa = XCSwiftPackageProductDependency;
 			productName = MindboxCommon;
 		};
 /* End XCSwiftPackageProductDependency section */
