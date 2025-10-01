@@ -53,8 +53,17 @@ protocol PersistenceStorage: AnyObject {
     /// does not match the `Constants.Migration.sdkVersionCode`, a `softReset()` is performed to
     /// ensure that the system remains in a consistent state.
     var versionCodeForMigration: Int? { get set }
+    
+    // Metadata from the `DatabaseRepository`. Check `DatabaseMetadataMigration`.
+    var applicationInfoUpdateVersion: Int? { get set }
+    
+    var applicationInstanceId: String? { get set }
+    
+    // Reset funtions
 
     func softReset()
+    
+    func eraseApplicationInfoUpdateVersionAndInstanceId()
 
     func reset()
 
@@ -70,6 +79,11 @@ protocol PersistenceStorage: AnyObject {
 }
 
 extension PersistenceStorage {
+    
+    func eraseApplicationInfoUpdateVersionAndInstanceId() {
+        applicationInstanceId = nil
+        applicationInfoUpdateVersion = nil
+    }
     
     func softReset() {
         configDownloadDate = nil
@@ -94,5 +108,7 @@ extension PersistenceStorage {
         configuration = nil
         isNotificationsEnabled = nil
         configDownloadDate = nil
+        applicationInstanceId = nil
+        applicationInfoUpdateVersion = nil
     }
 }

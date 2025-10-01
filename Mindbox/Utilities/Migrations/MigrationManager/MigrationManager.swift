@@ -51,9 +51,10 @@ final class MigrationManager {
         self.localSdkVersionCode = Constants.Migration.sdkVersionCode
 
         self.migrations = [
-            MigrationShownInAppsIds(),
-            MigrationShownInAppsDictionary(),
-            RemoveBackgroundTaskDataMigration()
+            ShownInAppsIDsMigration(),
+            ShownInAppsDictionaryMigration(),
+            RemoveBackgroundTaskDataMigration(),
+            DatabaseMetadataMigration()
         ]
     }
 }

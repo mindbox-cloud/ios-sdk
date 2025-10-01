@@ -65,4 +65,11 @@ enum Constants {
     enum MagicNumbers {
         static let daysToKeepInappShowTimes = 2
     }
+    
+    enum StoreMetadataKey: String {
+        case infoUpdate  = "ApplicationInfoUpdatedVersion"
+        case instanceId  = "ApplicationInstanceId"
+
+        static let preserved: [String] = [ Self.infoUpdate.rawValue, Self.instanceId.rawValue ]
+    }
 }

@@ -234,6 +234,13 @@ class MBPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+    
+    @UserDefaultsWrapper(key: .applicationInfoUpdateVersion, defaultValue: nil)
+    var applicationInfoUpdateVersion: Int?
+    
+    @UserDefaultsWrapper(key: .applicationInstanceId, defaultValue: nil)
+    var applicationInstanceId: String?
+    
     // MARK: - Deprecated Properties
     // These properties are deprecated and will be removed in future versions.
     // Please use the recommended alternatives instead.
@@ -268,6 +275,8 @@ extension MBPersistenceStorage {
             case userVisitCount = "MBPersistenceStorage-userVisitCount"
             case configDownloadDate = "MBPersistenceStorage-configDownloadDate"
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
+            case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
+            case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
 
             // MARK: - Deprecated Keys
             // These keys are deprecated and will be removed in future versions.

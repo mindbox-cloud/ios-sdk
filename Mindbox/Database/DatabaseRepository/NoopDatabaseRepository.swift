@@ -15,19 +15,6 @@ final class NoopDatabaseRepository: DatabaseRepositoryProtocol {
     var deprecatedLimit: Int { 0 }
     var onObjectsDidChange: (() -> Void)?
 
-    var infoUpdateVersion: Int? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-    var installVersion: Int? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-    var instanceId: String? {
-        get { nil }
-        set { /* no-op */ } // swiftlint:disable:this unused_setter_value
-    }
-
     func create(event: Event) throws { /* no-op */ }
     func readEvent(by transactionId: String) throws -> Event? { nil }
     func update(event: Event) throws { /* no-op */ }

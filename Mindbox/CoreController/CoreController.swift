@@ -162,7 +162,9 @@ final class CoreController {
     }
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
+        persistenceStorage.eraseApplicationInfoUpdateVersionAndInstanceId()
         try? databaseRepository.erase()
+        
         guaranteedDeliveryManager.cancelAllOperations()
         let newVersion = 0 // Variable from an older version of this framework
         persistenceStorage.deviceUUID = deviceUUID
@@ -171,7 +173,7 @@ final class CoreController {
         let apnsToken = persistenceStorage.apnsToken
         let isNotificationsEnabled = notificationStatus()
         let instanceId = UUID().uuidString
-        self.databaseRepository.instanceId = instanceId
+        self.persistenceStorage.applicationInstanceId = instanceId
         let encodable = MobileApplicationInstalled(
             token: apnsToken,
             isNotificationsEnabled: isNotificationsEnabled,
@@ -219,13 +221,13 @@ final class CoreController {
     }
 
     private func updateInfo(apnsToken: String?, isNotificationsEnabled: Bool, eventType: Constants.InfoUpdateVersions = .infoUpdated) {
-        let previousVersion = databaseRepository.infoUpdateVersion ?? 0
+        let previousVersion = persistenceStorage.applicationInfoUpdateVersion ?? 0
         let newVersion = previousVersion + 1
         let infoUpdated = MobileApplicationInfoUpdated(
             token: apnsToken,
             isNotificationsEnabled: isNotificationsEnabled,
             version: newVersion,
-            instanceId: databaseRepository.instanceId ?? ""
+            instanceId: persistenceStorage.applicationInstanceId ?? ""
         )
         let event = Event(
             type: eventType.operation,
@@ -233,7 +235,7 @@ final class CoreController {
         )
         do {
             try databaseRepository.create(event: event)
-            databaseRepository.infoUpdateVersion = newVersion
+            persistenceStorage.applicationInfoUpdateVersion = newVersion
             Logger.common(message: "[Core] Mobile application info has been updated", level: .default, category: .general)
             updateLastInfoUpdateDate()
         } catch {
