@@ -32,7 +32,7 @@ jobs:
       version2: ${{ steps.bump.outputs.version2 }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       
       - name: Bump version
         run: ./.github/git-release-branch-create.sh "${{ needs.extract_version.outputs.version }}"
@@ -48,7 +48,7 @@ jobs:
     needs: bump_version
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -70,7 +70,7 @@ jobs:
     needs: check_sdk_version
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
     
       - name: Create Pull Request
         run: |
