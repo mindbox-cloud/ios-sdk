@@ -42,7 +42,7 @@ final class CoreController {
             }
             
             if let duration = MindboxUtils.Stopwatch.shared.stop(tag: MindboxUtils.Stopwatch.shared.INIT_SDK) {
-                Mindbox.logger.log(level: .info, message: "Mindbox SDK initialised in \(duration). Version \(MindboxCommon.shared.VERSION)")
+                Logger.common(message: "Mindbox SDK initialized in \(duration). Version \(MindboxCommon.shared.VERSION)", level: .info, category: .general)
             }
 
             self.guaranteedDeliveryManager.canScheduleOperations = true
