@@ -9,6 +9,7 @@
 import XCTest
 import CoreData
 @testable import Mindbox
+@testable import MindboxLogger // MBPersistentContainer
 
 final class DatabaseMetadataMigrationTests: XCTestCase {
 
@@ -17,9 +18,11 @@ final class DatabaseMetadataMigrationTests: XCTestCase {
     private var migration: MigrationProtocol!
     private var storage: PersistenceStorage!
 
+    // MARK: - XCTest lifecycle
+
     override func setUp() {
         super.setUp()
-        // Use real dependencies from DI (same as other tests)
+
         storage = DI.injectOrFail(PersistenceStorage.self)
         storage.deviceUUID = "00000000-0000-0000-0000-000000000000"
         storage.installationDate = Date()
@@ -27,48 +30,118 @@ final class DatabaseMetadataMigrationTests: XCTestCase {
         storage.applicationInstanceId = nil
 
         migration = DatabaseMetadataMigration()
-        // Precondition: DatabaseRepositoryProtocol -> MBDatabaseRepository should be available in DI
-        _ = try? repoFromDI() // Fail fast if something is missing
     }
 
     override func tearDown() {
         migration = nil
         storage = nil
+
+        removeOnDiskStoresIfExist()
         super.tearDown()
     }
 
-    // MARK: - Helpers
+    // MARK: - Helpers (disk-based; does not depend on a live repository)
 
-    private func repoFromDI(file: StaticString = #file, line: UInt = #line) throws -> MBDatabaseRepository {
-        let repo = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-        guard let casted = repo as? MBDatabaseRepository else {
-            XCTFail("Expected MBDatabaseRepository from DI for DatabaseRepositoryProtocol.", file: file, line: line)
-            throw NSError(domain: "test", code: -1)
+    /// Full list of candidate store paths — must mirror the logic in the migration.
+    private func candidateStoreURLs() -> [URL] {
+        let fileName = "\(Constants.Database.mombName).sqlite"
+        var urls: [URL] = []
+        urls.append(MBPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
+        urls.append(NSPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
+        // Deduplicate
+        return Array(Set(urls.map { $0.standardizedFileURL }))
+    }
+
+    /// Creates a SQLite store, writes metadata, and ensures it is flushed to disk.
+    private func seedOnDiskMetadata(infoUpdate: Int?, instanceId: String?,
+                                    file: StaticString = #file, line: UInt = #line) {
+        let modelName = Constants.Database.mombName
+        let modelURLs = [
+            Bundle(for: MBDatabaseRepository.self).url(forResource: modelName, withExtension: "momd"),
+            Bundle.main.url(forResource: modelName, withExtension: "momd")
+        ].compactMap { $0 }
+        guard
+            let modelURL = modelURLs.first,
+            let model = NSManagedObjectModel(contentsOf: modelURL)
+        else {
+            return XCTFail("Unable to load Core Data model \(modelName).momd", file: file, line: line)
         }
-        return casted
-    }
 
-    private func seedMetadata(infoUpdate: Int?, instanceId: String?,
-                              file: StaticString = #file, line: UInt = #line) {
-        do {
-            let repo = try repoFromDI(file: file, line: line)
-            let psc = repo.persistentContainer.persistentStoreCoordinator
-            guard let store = psc.persistentStores.first else {
-                XCTFail("No persistent store attached to MBDatabaseRepository.", file: file, line: line); return
+        let fm = FileManager.default
+
+        for url in candidateStoreURLs() {
+            do {
+                // Ensure parent directory exists.
+                try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+                let psc = NSPersistentStoreCoordinator(managedObjectModel: model)
+                let store = try psc.addPersistentStore(
+                    ofType: NSSQLiteStoreType,
+                    configurationName: nil,
+                    at: url,
+                    options: nil
+                )
+
+                // Ensure parent directory exists.
+                var md = psc.metadata(for: store)
+                if let infoUpdate { md[MDKey.infoUpdate.rawValue] = infoUpdate }
+                if let instanceId { md[MDKey.instanceId.rawValue] = instanceId }
+                psc.setMetadata(md, for: store)
+
+                // Detach the store to flush metadata to disk.
+                try? psc.remove(store)
+
+                // As an extra safety measure, persist the same metadata via the class API (writes to the file header).
+                try NSPersistentStoreCoordinator.setMetadata(
+                    md,
+                    forPersistentStoreOfType: NSSQLiteStoreType,
+                    at: url,
+                    options: nil
+                )
+            } catch {
+                XCTFail("Failed to seed metadata at \(url): \(error)", file: file, line: line)
             }
-            var md = psc.metadata(for: store)
-            if let infoUpdate { md[MDKey.infoUpdate.rawValue] = infoUpdate }
-            if let instanceId { md[MDKey.instanceId.rawValue] = instanceId }
-            psc.setMetadata(md, for: store)
-        } catch { }
+        }
+
+        // Sanity check: verify the keys are visible from at least one candidate.
+        let merged = currentMergedMetadataFromDisk()
+        if let infoUpdate {
+            XCTAssertEqual(merged[MDKey.infoUpdate.rawValue] as? Int, infoUpdate,
+                           "Seeded on-disk infoUpdate is not visible.", file: file, line: line)
+        }
+        if let instanceId {
+            XCTAssertEqual(merged[MDKey.instanceId.rawValue] as? String, instanceId,
+                           "Seeded on-disk instanceId is not visible.", file: file, line: line)
+        }
     }
 
-    private func currentMetadata() -> [String: Any] {
-        (try? repoFromDI().persistentContainer.persistentStoreCoordinator)
-            .flatMap { psc in
-                guard let store = psc.persistentStores.first else { return [:] }
-                return psc.metadata(for: store)
-            } ?? [:]
+    /// Reads metadata from all candidates and merges it (last write wins).
+    private func currentMergedMetadataFromDisk() -> [String: Any] {
+        var result: [String: Any] = [:]
+        for url in candidateStoreURLs() {
+            if let md = try? NSPersistentStoreCoordinator.metadataForPersistentStore(
+                ofType: NSSQLiteStoreType,
+                at: url,
+                options: [NSReadOnlyPersistentStoreOption: true]
+            ) {
+                // Merge — allow later sources to overwrite keys.
+                for (k, v) in md { result[k] = v }
+            }
+        }
+        return result
+    }
+
+    /// Removes .sqlite and the related -wal/-shm files for all candidates.
+    private func removeOnDiskStoresIfExist() {
+        let fm = FileManager.default
+        for url in candidateStoreURLs() {
+            let paths = [
+                url,
+                url.deletingPathExtension().appendingPathExtension("sqlite-wal"),
+                url.deletingPathExtension().appendingPathExtension("sqlite-shm")
+            ]
+            for p in paths { try? fm.removeItem(at: p) }
+        }
     }
 }
 
@@ -79,60 +152,60 @@ extension DatabaseMetadataMigrationTests {
     func test_run_performsMigrationWhenNeeded() throws {
         let expectedInfoUpdate = 42
         let expectedInstanceId = "abc"
-        
-        // given
-        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
+
+        // given — seed metadata on disk (no live repository required)
+        seedOnDiskMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true when metadata exists and target fields are empty.")
 
         // when
         try migration.run()
 
-        // then: values are migrated into PersistenceStorage
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be migrated from Core Data metadata.")
-        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should be migrated from Core Data metadata.")
+        // then — values were copied into PersistenceStorage
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be migrated from on-disk metadata.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should be migrated from on-disk metadata.")
 
-        // and metadata is cleared
-        let meta = currentMetadata()
+        // and metadata got cleared across all store files
+        let meta = currentMergedMetadataFromDisk()
         XCTAssertNil(meta[MDKey.infoUpdate.rawValue], "Source metadata 'ApplicationInfoUpdatedVersion' should be cleared after migration.")
         XCTAssertNil(meta[MDKey.instanceId.rawValue], "Source metadata 'ApplicationInstanceId' should be cleared after migration.")
 
-        // and migration is no longer needed
+        // no subsequent migration should be needed
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false after successful migration.")
     }
 
     func test_isNeeded_false_whenTargetAlreadyHasValues_andNoMetadata() {
-        // given: destination already has values
+        // given: destination values are already set
         storage.applicationInfoUpdateVersion = 7
         storage.applicationInstanceId = "already"
 
-        // IMPORTANT: do NOT seed metadata here.
-        // With no source metadata, there's nothing to migrate or clean.
-        XCTAssertFalse(migration.isNeeded,
-                       "`isNeeded` should be false when targets are filled and no metadata exists.")
-        
-        // run() is intentionally not called
+        // do not seed any metadata — disk is empty
+        XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false when targets are filled and no metadata exists.")
     }
-
 
     func test_run_isIdempotent_viaIsNeeded() throws {
         let expectedInfoUpdate = 1
         let expectedInstanceId = "abc"
-        
+
         // first run
-        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
+        seedOnDiskMetadata(infoUpdate: expectedInfoUpdate, instanceId: expectedInstanceId)
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true before the first run.")
         try migration.run()
 
         XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be set on first run.")
         XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should be set on first run.")
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should turn false after the first run.")
+        
+        // simulate a fresh app launch (no cached state inside the migration)
+        migration = DatabaseMetadataMigration()
+        XCTAssertFalse(migration.isNeeded, "`isNeeded` must remain false on a fresh instance after cleanup.")
 
-        // second run — not called (manager would skip), just assert stability
-        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should remain unchanged after migration.")
-        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should remain unchanged after migration.")
+        // second run: calling run() again must be a no-op
+        XCTAssertNoThrow(try migration.run())
+        XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "Values must remain unchanged on a second run.")
+        XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "Values must remain unchanged on a second run.")
 
-        // metadata is cleared
-        let meta = currentMetadata()
+        // metadata remains cleared
+        let meta = currentMergedMetadataFromDisk()
         XCTAssertNil(meta[MDKey.infoUpdate.rawValue], "Metadata 'ApplicationInfoUpdatedVersion' should remain cleared after migration.")
         XCTAssertNil(meta[MDKey.instanceId.rawValue], "Metadata 'ApplicationInstanceId' should remain cleared after migration.")
     }
@@ -140,23 +213,23 @@ extension DatabaseMetadataMigrationTests {
     func test_run_migratesOnlyMissingTargets_andClearsBothKeys() throws {
         let expectedInfoUpdate = 11
         let expectedInstanceId = "already-set"
-        
-        // given: one target already populated
+
+        // given: one target is already populated
         storage.applicationInstanceId = expectedInstanceId
         storage.applicationInfoUpdateVersion = nil
 
-        seedMetadata(infoUpdate: expectedInfoUpdate, instanceId: "from-meta")
+        seedOnDiskMetadata(infoUpdate: expectedInfoUpdate, instanceId: "from-meta")
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true when at least one target field is missing and metadata exists.")
 
         // when
         try migration.run()
 
-        // then: fill only the missing field; do not overwrite existing ones
+        // then: fill only the missing field; do not overwrite existing values
         XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "`applicationInfoUpdateVersion` should be filled from metadata as it was missing.")
         XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "`applicationInstanceId` should not be overwritten if already set.")
 
-        // but clear both metadata keys after run to avoid future re-triggers
-        let meta = currentMetadata()
+        // clear both metadata keys to avoid future re-triggers
+        let meta = currentMergedMetadataFromDisk()
         XCTAssertNil(meta[MDKey.infoUpdate.rawValue], "Metadata 'ApplicationInfoUpdatedVersion' should be cleared after migration.")
         XCTAssertNil(meta[MDKey.instanceId.rawValue], "Metadata 'ApplicationInstanceId' should be cleared after migration.")
 
@@ -164,23 +237,20 @@ extension DatabaseMetadataMigrationTests {
     }
 
     func test_isNeeded_false_whenNoMetadataAndTargetsEmpty() {
-        // given: both targets empty and no metadata was seeded
+        // given: both targets are empty and no metadata was seeded
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false when there is nothing to migrate (no source metadata, empty targets).")
-        // run() is not called
     }
-    
+
     func test_run_onlyCleansMetadata_whenTargetsAlreadyFilled() throws {
         let expectedInfoUpdate = 10
         let expectedInstanceId = "already"
-        
-        // given: target values are already set in the destination storage
+
+        // given: destination values are already set
         storage.applicationInfoUpdateVersion = expectedInfoUpdate
         storage.applicationInstanceId = expectedInstanceId
 
-        // and stale metadata remains in the Core Data store, which should be cleaned
-        seedMetadata(infoUpdate: 99, instanceId: "stale")
-
-        // isNeeded should be true due to the cleanup branch
+        // and stale metadata still exists on disk — it should be cleaned up
+        seedOnDiskMetadata(infoUpdate: 99, instanceId: "stale")
         XCTAssertTrue(migration.isNeeded, "`isNeeded` should be true to perform metadata cleanup.")
 
         // when
@@ -190,12 +260,11 @@ extension DatabaseMetadataMigrationTests {
         XCTAssertEqual(storage.applicationInfoUpdateVersion, expectedInfoUpdate, "Target value must not be overwritten during cleanup-only run.")
         XCTAssertEqual(storage.applicationInstanceId, expectedInstanceId, "Target value must not be overwritten during cleanup-only run.")
 
-        // and the metadata keys must be cleared
-        let meta = currentMetadata()
+        // and the metadata keys must be removed across all stores
+        let meta = currentMergedMetadataFromDisk()
         XCTAssertNil(meta[MDKey.infoUpdate.rawValue], "Metadata 'ApplicationInfoUpdatedVersion' must be cleared during cleanup-only run.")
         XCTAssertNil(meta[MDKey.instanceId.rawValue], "Metadata 'ApplicationInstanceId' must be cleared during cleanup-only run.")
 
-        // no subsequent migration should be needed
         XCTAssertFalse(migration.isNeeded, "`isNeeded` should be false after cleanup-only run.")
     }
 }
