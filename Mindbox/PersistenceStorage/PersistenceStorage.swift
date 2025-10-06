@@ -59,12 +59,14 @@ protocol PersistenceStorage: AnyObject {
     
     var applicationInstanceId: String? { get set }
     
-    // Reset funtions
+    // Reset functions
 
     func softReset()
     
-    func eraseApplicationInfoUpdateVersionAndInstanceId()
+    /// Metadata: `ApplicationInfoUpdateVersion` and `InstanceId`
+    func eraseMetadata()
 
+    /// Hard reset for test purposes
     func reset()
 
     // MARK: - Deprecated Properties
@@ -80,7 +82,7 @@ protocol PersistenceStorage: AnyObject {
 
 extension PersistenceStorage {
     
-    func eraseApplicationInfoUpdateVersionAndInstanceId() {
+    func eraseMetadata() {
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
     }

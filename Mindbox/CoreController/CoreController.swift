@@ -162,7 +162,7 @@ final class CoreController {
     }
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
-        persistenceStorage.eraseApplicationInfoUpdateVersionAndInstanceId()
+        persistenceStorage.eraseMetadata()
         try? databaseRepository.erase()
         
         guaranteedDeliveryManager.cancelAllOperations()
