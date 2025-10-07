@@ -93,23 +93,6 @@ final class MockDatabaseRepositoryTests: XCTestCase {
         XCTAssertEqual(try repo2.countEvents(), 0)
     }
     
-    func testMetadataPersistenceAndErase() throws {
-        // check reading/writing metadata
-        repo.installVersion = 42
-        repo.infoUpdateVersion = 99
-        repo.instanceId = "foo"
-        
-        XCTAssertEqual(repo.installVersion, 42)
-        XCTAssertEqual(repo.infoUpdateVersion, 99)
-        XCTAssertEqual(repo.instanceId, "foo")
-        
-        // erase should clear metadata
-        try repo.erase()
-        XCTAssertNil(repo.installVersion)
-        XCTAssertNil(repo.infoUpdateVersion)
-        XCTAssertNotNil(repo.instanceId)
-    }
-    
     func testMockRepositoryUsesInMemoryStore() throws {
         // GIVEN
         let mockRepo = try MockDatabaseRepository(inMemory: true)

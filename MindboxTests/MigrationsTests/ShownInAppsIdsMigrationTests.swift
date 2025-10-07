@@ -34,7 +34,7 @@ final class ShownInAppsIdsMigrationTests: XCTestCase {
         super.setUp()
         
         // real migration object
-        migration = MigrationShownInAppsIds()
+        migration = ShownInAppsIDsMigration()
         
         // persistence stub from DI container
         storage = DI.injectOrFail(PersistenceStorage.self)

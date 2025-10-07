@@ -63,16 +63,6 @@ final class DatabaseRepository_NoopContractTests: XCTestCase {
         XCTAssertEqual(try repo.countDeprecatedEvents(), 0)
     }
 
-    func test_MetadataIgnored() {
-        repo.infoUpdateVersion = 123
-        repo.installVersion = 456
-        repo.instanceId = "abc"
-
-        XCTAssertNil(repo.infoUpdateVersion)
-        XCTAssertNil(repo.installVersion)
-        XCTAssertNil(repo.instanceId)
-    }
-
     func test_OnObjectsDidChange_NotFired() throws {
         var fired = false
         repo.onObjectsDidChange = { fired = true }

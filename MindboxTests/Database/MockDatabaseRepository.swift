@@ -106,9 +106,6 @@ final class FakeDatabaseRepository: MBDatabaseRepository {
             try bg.save()
         }
         
-        installVersion    = nil
-        infoUpdateVersion = nil
-        
         _ = try countEvents()
     }
     

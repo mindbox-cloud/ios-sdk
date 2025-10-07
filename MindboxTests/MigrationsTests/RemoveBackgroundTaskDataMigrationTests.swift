@@ -57,8 +57,11 @@ final class RemoveBackgroundTaskDataMigrationTests: XCTestCase {
         let stray = fileURL
         try? fm.removeItem(at: stray)
     }
-    
-    // MARK: - Tests
+}
+
+// MARK: - Scenarios
+
+extension RemoveBackgroundTaskDataMigrationTests {
     
     func test_isNeeded_true_ifUserDefaultsHasKey() {
         // given

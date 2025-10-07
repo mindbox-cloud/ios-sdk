@@ -26,7 +26,7 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
     @available(*, deprecated, message: "Suppress `deprecated` shownInappsDictionary warning")
     override func setUp() {
         super.setUp()
-        shownInAppsDictionaryMigration = MigrationShownInAppsDictionary()
+        shownInAppsDictionaryMigration = ShownInAppsDictionaryMigration()
 
         mbLoggerCDManager = MBLoggerCoreDataManager.shared
 
@@ -55,6 +55,8 @@ final class ShownInAppsDictionaryMigrationTests: XCTestCase {
         persistenceStorageMock = nil
         super.tearDown()
     }
+    
+    // MARK: - Scenarios
 
     @available(*, deprecated, message: "Suppress `deprecated` shownInappsDictionary warning")
     func test_ShownInAppsDictionaryMigration_withIsNeededTrue_shouldPerformSuccessfully() throws {

@@ -15,11 +15,6 @@ protocol DatabaseRepositoryProtocol: AnyObject {
     var deprecatedLimit: Int { get }
     var onObjectsDidChange: (() -> Void)? { get set }
 
-    // metadata
-    var infoUpdateVersion: Int? { get set }
-    var installVersion: Int? { get set }
-    var instanceId: String? { get set }
-
     // CRUD
     func create(event: Event) throws
     func readEvent(by transactionId: String) throws -> Event?

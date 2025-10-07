@@ -12,12 +12,6 @@ import CoreData
 import MindboxLogger
 
 class MBDatabaseRepository: DatabaseRepositoryProtocol {
-
-    enum MetadataKey: String {
-        case install = "ApplicationInstalledVersion"
-        case infoUpdate = "ApplicationInfoUpdatedVersion"
-        case instanceId = "ApplicationInstanceId"
-    }
     
     // MARK: DatabaseRepository properties - lifecycle / limits
 
@@ -34,23 +28,6 @@ class MBDatabaseRepository: DatabaseRepositoryProtocol {
             return nil
         }
         return monthLimitDate
-    }
-    
-    // MARK: DatabaseRepository properties - metadata
-
-    var infoUpdateVersion: Int? {
-        get { getMetadata(forKey: .infoUpdate) }
-        set { setMetadata(newValue, forKey: .infoUpdate) }
-    }
-
-    var installVersion: Int? {
-        get { getMetadata(forKey: .install) }
-        set { setMetadata(newValue, forKey: .install) }
-    }
-
-    var instanceId: String? {
-        get { getMetadata(forKey: .instanceId) }
-        set { setMetadata(newValue, forKey: .instanceId) }
     }
     
     // MARK: CoreData properties
@@ -286,9 +263,6 @@ class MBDatabaseRepository: DatabaseRepositoryProtocol {
     }
 
     func erase() throws {
-        
-        infoUpdateVersion = nil
-        installVersion    = nil
 
         let entityName = "CDEvent"
 
@@ -365,30 +339,6 @@ private extension MBDatabaseRepository {
                 Logger.common(message: "[MBDBRepo] Context did save failed with error: \(error)", level: .error, category: .database)
             }
             throw error
-        }
-    }
-}
-
-// MARK: - Metadata processing
-
-private extension MBDatabaseRepository {
-
-    func getMetadata<T>(forKey key: MetadataKey) -> T? {
-        let value = store.metadata[key.rawValue] as? T
-        Logger.common(message: "[MBDBRepo] Fetch metadata for key: \(key.rawValue) with value: \(String(describing: value))", level: .info, category: .database)
-        return value
-    }
-
-    func setMetadata<T>(_ value: T?, forKey key: MetadataKey) {
-        store.metadata[key.rawValue] = value
-        persistentContainer.persistentStoreCoordinator.setMetadata(store.metadata, for: store)
-        do {
-            try context.executePerformAndWait {
-                try saveContext(context)
-                Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) to: \(String(describing: value))", level: .info, category: .database)
-            }
-        } catch {
-            Logger.common(message: "[MBDBRepo] Did save metadata of \(key.rawValue) failed with error: \(error.localizedDescription)", level: .error, category: .database)
         }
     }
 }

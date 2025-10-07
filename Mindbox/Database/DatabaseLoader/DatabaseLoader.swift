@@ -12,13 +12,14 @@ import MindboxLogger
 
 class DatabaseLoader: DatabaseLoaderProtocol {
     
-    static var metadataKeysToPreserve: [String] {
-        [
-            MBDatabaseRepository.MetadataKey.install.rawValue,
-            MBDatabaseRepository.MetadataKey.infoUpdate.rawValue,
-            MBDatabaseRepository.MetadataKey.instanceId.rawValue
-        ]
-    }
+    /// Keys from the Core Data store metadata that must survive store repair or a fallback to an in-memory store.
+    ///
+    /// These keys are:
+    /// - read from the existing on-disk SQLite store in **read-only** mode by `salvageMetadataFromOnDiskStore()`
+    /// - merged into the newly loaded (on-disk or in-memory) store by `applyMetadata(_:to:)`
+    ///
+    /// Keep this list minimal to avoid dragging unrelated metadata across store lifecycles.
+    static var metadataKeysToPreserve: [String] { Constants.StoreMetadataKey.preserved }
     
     private let diskSpaceRepairThreshold: Int64 = 300 * 1024 * 1024 // 300 MB
     
@@ -90,6 +91,20 @@ class DatabaseLoader: DatabaseLoaderProtocol {
         return persistentContainer
     }
     
+    /// Attempts to **salvage** selected metadata keys directly from the **on-disk** SQLite store,
+    /// without opening/attaching the store to a context.
+    ///
+    /// This is used when:
+    /// - loading the persistent store fails (corruption, schema mismatch, etc.), or
+    /// - before we intentionally destroy the store as part of a repair attempt.
+    ///
+    /// The read is performed via `NSPersistentStoreCoordinator.metadataForPersistentStore`
+    /// with `NSReadOnlyPersistentStoreOption` to avoid modifying or locking the store.
+    ///
+    /// - Returns: A dictionary containing only the keys listed in `metadataKeysToPreserve`,
+    ///            or `nil` if nothing was read or an error occurred.
+    /// - Note: The returned values are raw metadata items (`[String: Any]`), ready to be
+    ///         merged into a new store by `applyMetadata(_:to:)`.
     func salvageMetadataFromOnDiskStore() -> [String: Any]? {
         guard let url = persistentContainer.persistentStoreDescriptions.first?.url else { return nil }
         let opts: [AnyHashable: Any] = [NSReadOnlyPersistentStoreOption: true]
@@ -108,6 +123,17 @@ class DatabaseLoader: DatabaseLoaderProtocol {
         }
     }
 
+    /// Merges previously preserved metadata into the specified container's first persistent store.
+    ///
+    /// Call this **after** you successfully created a new on-disk store or an in-memory fallback.
+    /// Only the provided keys are merged; existing unrelated metadata entries are left intact.
+    ///
+    /// - Parameters:
+    ///   - preserved: The dictionary returned by `salvageMetadataFromOnDiskStore()`.
+    ///   - container: The `NSPersistentContainer` that has already loaded its stores.
+    /// - Important: This method is a no-op if there is no store or `preserved` is empty.
+    /// - Effects: Persists the merged metadata to the target store via
+    ///            `NSPersistentStoreCoordinator.setMetadata(_:for:)`.
     func applyMetadata(_ preserved: [String: Any], to container: NSPersistentContainer) {
         let psc = container.persistentStoreCoordinator
         guard let store = psc.persistentStores.first, !preserved.isEmpty else { return }
