@@ -573,6 +573,7 @@
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F3DEB33B2D4377D000D0EFA4 /* InappSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */; };
 		F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */; };
+		F3E59D9D2E96440700A048F5 /* MindboxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E59D9C2E96440700A048F5 /* MindboxApp.swift */; };
 		F3EB95712DE44684000E221B /* InappPresentationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3EB95702DE44684000E221B /* InappPresentationValidator.swift */; };
 		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
@@ -1209,6 +1210,7 @@
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappSessionManager.swift; sourceTree = "<group>"; };
 		F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+Extensions.swift"; sourceTree = "<group>"; };
+		F3E59D9C2E96440700A048F5 /* MindboxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxApp.swift; sourceTree = "<group>"; };
 		F3EB95702DE44684000E221B /* InappPresentationValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappPresentationValidator.swift; sourceTree = "<group>"; };
 		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -1357,6 +1359,7 @@
 				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
 				84B625E725C989B100AB6228 /* Validators */,
+				F3E59D9C2E96440700A048F5 /* MindboxApp.swift */,
 			);
 			path = Mindbox;
 			sourceTree = "<group>";
@@ -3723,6 +3726,7 @@
 				F331DD162A840D1700222120 /* iFormVariant.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */,
+				F3E59D9D2E96440700A048F5 /* MindboxApp.swift in Sources */,
 				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,
