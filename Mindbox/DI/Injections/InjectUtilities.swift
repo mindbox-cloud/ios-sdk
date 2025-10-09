@@ -36,16 +36,19 @@ extension MBContainer {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppTargetingChecker(persistenceStorage: persistenceStorage)
         }
-
-        register(DataBaseLoader.self) {
+        
+        register(DatabaseLoaderProtocol.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-
-            guard let dbLoader = try? DataBaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier) else {
-                fatalError("Failed to create DataBaseLoader")
+            
+            do {
+                let dbLoader = try DatabaseLoader(applicationGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier)
+                return dbLoader
+            } catch {
+                assertionFailure(" Failed to create DatabaseLoader: \(error.localizedDescription). Falling back to StubDBLoader - app in production will run in degraded mode (no on-disk persistence)")
+                return StubDatabaseLoader()
             }
-            return dbLoader
         }
-
+        
         register(VariantImageUrlExtractorServiceProtocol.self, scope: .transient) {
             VariantImageUrlExtractorService()
         }
@@ -70,7 +73,7 @@ extension MBContainer {
         }
 
         register(TrackVisitManagerProtocol.self) {
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
             let inappSessionManger = DI.injectOrFail(InappSessionManagerProtocol.self)
             return TrackVisitManager(databaseRepository: databaseRepository, inappSessionManager: inappSessionManger)
         }
@@ -81,7 +84,7 @@ extension MBContainer {
         }
 
         register(ClickNotificationManager.self) {
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
             return ClickNotificationManager(databaseRepository: databaseRepository)
         }
 

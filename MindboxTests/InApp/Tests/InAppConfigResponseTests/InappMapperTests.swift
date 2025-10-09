@@ -23,7 +23,7 @@ class InappRemainingTargetingTests: XCTestCase {
         SessionTemporaryStorage.shared.erase()
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
 
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
 
         mockDataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade

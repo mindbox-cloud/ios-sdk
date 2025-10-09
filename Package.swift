@@ -19,7 +19,7 @@ let package = Package(
     dependencies: [ 
         .package(
             url: "https://github.com/mindbox-cloud/kmp-common-sdk-spm.git", 
-            .exact("1.0.4")
+            .exact("2.14.2")
         ) 
     ],
     targets: [

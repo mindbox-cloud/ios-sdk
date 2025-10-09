@@ -13,7 +13,7 @@ extension MBContainer {
         register(CoreController.self) {
             CoreController(persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
                            utilitiesFetcher: DI.injectOrFail(UtilitiesFetcher.self),
-                           databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
+                           databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
                            guaranteedDeliveryManager: DI.injectOrFail(GuaranteedDeliveryManager.self),
                            sessionManager: DI.injectOrFail(SessionManager.self),
                            inAppMessagesManager: DI.injectOrFail(InAppCoreManagerProtocol.self),
@@ -23,7 +23,7 @@ extension MBContainer {
 
         register(GuaranteedDeliveryManager.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
             let eventRepository = DI.injectOrFail(EventRepository.self)
             return GuaranteedDeliveryManager(
                 persistenceStorage: persistenceStorage,

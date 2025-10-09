@@ -29,7 +29,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     }
     
     func testRegisterMBDBRepoIsMock() {
-        XCTAssert(DI.injectOrFail(MBDatabaseRepository.self) is MockDatabaseRepository)
+        XCTAssert(DI.injectOrFail(DatabaseRepositoryProtocol.self) is MockDatabaseRepository)
     }
     
     func testCreateReadDeleteEvent() throws {
@@ -37,14 +37,14 @@ final class MockDatabaseRepositoryTests: XCTestCase {
         // creation
         try repo.create(event: event)
         // reading
-        let cd = try XCTUnwrap(repo.read(by: event.transactionId),
+        let cd = try XCTUnwrap(repo.readEvent(by: event.transactionId),
                                "Не смогли прочитать только что созданное событие")
         XCTAssertEqual(cd.transactionId, event.transactionId)
         XCTAssertEqual(cd.body, event.body)
         
         // deletion
         try repo.delete(event: event)
-        let afterDelete = try repo.read(by: event.transactionId)
+        let afterDelete = try repo.readEvent(by: event.transactionId)
         XCTAssertNil(afterDelete, "Событие должно быть удалено")
     }
     
@@ -93,23 +93,6 @@ final class MockDatabaseRepositoryTests: XCTestCase {
         XCTAssertEqual(try repo2.countEvents(), 0)
     }
     
-    func testMetadataPersistenceAndErase() throws {
-        // check reading/writing metadata
-        repo.installVersion = 42
-        repo.infoUpdateVersion = 99
-        repo.instanceId = "foo"
-        
-        XCTAssertEqual(repo.installVersion, 42)
-        XCTAssertEqual(repo.infoUpdateVersion, 99)
-        XCTAssertEqual(repo.instanceId, "foo")
-        
-        // erase should clear metadata
-        try repo.erase()
-        XCTAssertNil(repo.installVersion)
-        XCTAssertNil(repo.infoUpdateVersion)
-        XCTAssertNotNil(repo.instanceId)
-    }
-    
     func testMockRepositoryUsesInMemoryStore() throws {
         // GIVEN
         let mockRepo = try MockDatabaseRepository(inMemory: true)
@@ -129,7 +112,7 @@ final class MockDatabaseRepositoryTests: XCTestCase {
     func testProductionRepositoryUsesSQLiteStore() throws {
         // GIVEN
         // We load the real container in the same way as in the application
-        let loader = DI.injectOrFail(DataBaseLoader.self)
+        let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
         let sqlContainer = try loader.loadPersistentContainer()
         let prodRepo = try MBDatabaseRepository(persistentContainer: sqlContainer)
         

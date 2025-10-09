@@ -12,10 +12,10 @@ import MindboxLogger
 class DeliveryOperation: AsyncOperation, @unchecked Sendable {
     private let event: Event
 
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepositoryProtocol
     private let eventRepository: EventRepository
 
-    init(databaseRepository: MBDatabaseRepository, eventRepository: EventRepository, event: Event) {
+    init(databaseRepository: DatabaseRepositoryProtocol, eventRepository: EventRepository, event: Event) {
         self.databaseRepository = databaseRepository
         self.eventRepository = eventRepository
         self.event = event

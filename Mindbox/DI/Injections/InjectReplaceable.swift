@@ -30,19 +30,22 @@ extension MBContainer {
         register(PersistenceStorage.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             guard let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier) else {
-                fatalError("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier). Check and set up your AppGroups correctly.")
+                assertionFailure("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier). Check and set up your AppGroups correctly.")
+                return MBPersistenceStorage(defaults: UserDefaults.standard)
             }
             return MBPersistenceStorage(defaults: defaults)
         }
+        
+        register(DatabaseRepositoryProtocol.self) {
+            let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
 
-        register(MBDatabaseRepository.self) {
-            let databaseLoader = DI.injectOrFail(DataBaseLoader.self)
-
-            guard let persistentContainer = try? databaseLoader.loadPersistentContainer(),
-                    let dbRepository = try? MBDatabaseRepository(persistentContainer: persistentContainer) else {
-                fatalError("Failed to create MBDatabaseRepository")
+            do {
+                let container = try loader.loadPersistentContainer()
+                return try MBDatabaseRepository(persistentContainer: container)
+            } catch {
+                assertionFailure("Failed to create MBDatabaseRepository: \(error)")
+                return NoopDatabaseRepository()
             }
-            return dbRepository
         }
 
         register(ImageDownloadServiceProtocol.self, scope: .container) {

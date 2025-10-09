@@ -14,7 +14,7 @@ import MindboxLogger
 
 final class GuaranteedDeliveryManager: NSObject {
 
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepositoryProtocol
     private let eventRepository: EventRepository
 
     let backgroundTaskManager: BackgroundTaskManagerProxy
@@ -51,7 +51,7 @@ final class GuaranteedDeliveryManager: NSObject {
 
     init(
         persistenceStorage: PersistenceStorage,
-        databaseRepository: MBDatabaseRepository,
+        databaseRepository: DatabaseRepositoryProtocol,
         eventRepository: EventRepository,
         retryDeadline: TimeInterval = 60,
         fetchLimit: Int = 20

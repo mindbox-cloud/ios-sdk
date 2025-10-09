@@ -62,7 +62,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testDatabaseRepositoryIsRegistered() {
-        let repository: MBDatabaseRepository? = DI.inject(MBDatabaseRepository.self)
+        let repository: DatabaseRepositoryProtocol? = DI.inject(DatabaseRepositoryProtocol.self)
         XCTAssertNotNil(repository)
     }
 
@@ -118,7 +118,7 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     }
 
     func testDataBaseLoaderIsRegistered() {
-        let loader: DataBaseLoader? = DI.inject(DataBaseLoader.self)
+        let loader: DatabaseLoaderProtocol? = DI.inject(DatabaseLoaderProtocol.self)
         XCTAssertNotNil(loader)
     }
 

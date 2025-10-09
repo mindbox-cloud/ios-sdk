@@ -1,5 +1,5 @@
 //
-//  ShownInAppsIdsMigration.swift
+//  ShownInAppsIDsMigration.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 8/29/24.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MigrationShownInAppsIds: MigrationProtocol {
+final class ShownInAppsIDsMigration: MigrationProtocol {
 
     private var persistenceStorage: PersistenceStorage = DI.injectOrFail(PersistenceStorage.self)
 

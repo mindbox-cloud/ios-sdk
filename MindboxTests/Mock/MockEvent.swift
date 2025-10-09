@@ -30,7 +30,9 @@ struct MockEvent: EventProtocol {
 
     let type: Event.Operation
 
-    let isRetry: Bool
+    var isRetry: Bool { !retryTimestamp.isZero }
+    
+    let retryTimestamp: Double
 
     let body: String
 
@@ -40,7 +42,7 @@ struct MockEvent: EventProtocol {
         self.type = type
         self.body = body
         self.serialNumber = nil
-        self.isRetry = false
+        self.retryTimestamp = 0
         self.clock = SystemClock()
     }
 
@@ -61,7 +63,7 @@ struct MockEvent: EventProtocol {
         self.type = operation
         self.body = body
         self.serialNumber = event.objectID.uriRepresentation().lastPathComponent
-        self.isRetry = !event.retryTimestamp.isZero
+        self.retryTimestamp = event.retryTimestamp
     }
 }
 
@@ -69,7 +71,7 @@ extension MockEvent {
     init(type: Event.Operation,
          body: String,
          enqueueTimeStamp: Double = Date().timeIntervalSince1970,
-         isRetry: Bool = false,
+         retryTimestamp: Double = 0,
          clock: Clock = SystemClock(),
          serialNumber: String? = nil,
          transactionId: String = UUID().uuidString) {
@@ -79,6 +81,6 @@ extension MockEvent {
         self.type = type
         self.body = body
         self.serialNumber = serialNumber
-        self.isRetry = isRetry
+        self.retryTimestamp = retryTimestamp
     }
 }

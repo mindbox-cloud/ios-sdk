@@ -14,7 +14,7 @@ import XCTest
 
 class GuaranteedDeliveryTestCase: XCTestCase {
 
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: DatabaseRepositoryProtocol!
     var guaranteedDeliveryManager: GuaranteedDeliveryManager!
     var persistenceStorage: PersistenceStorage!
     var eventGenerator: EventGenerator!
@@ -24,7 +24,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         super.setUp()
         Mindbox.logger.logLevel = .none
 
-        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         eventGenerator = EventGenerator()
@@ -51,7 +51,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 3
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
+            databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )
@@ -86,6 +86,18 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
         XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
         XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
+        XCTAssertEqual(event.retryTimestamp, mockEvent.retryTimestamp, "Retry timestamps should be equal")
+    }
+    
+    func testEventRetryTimestampLogic() {
+        let type: Event.Operation = .installed
+        let body = UUID().uuidString
+
+        let event: EventProtocol = Event(type: type, body: body)
+        let mockEvent: EventProtocol = MockEvent(type: type, body: body, retryTimestamp: Date().timeIntervalSince1970)
+        
+        XCTAssertFalse(event.isRetry, "If `retryTimestamp` is zero, `isRetry` must be false")
+        XCTAssertTrue(mockEvent.isRetry, "if `retryTimestamp` is NOT zero, `isRetry` must be true")
     }
     
     func testDateTimeOffset_WhenNotRetry_isZero() {
@@ -108,7 +120,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             type: .installed,
             body: "baz",
             enqueueTimeStamp: fixedEnqueue,
-            isRetry: true,
+            retryTimestamp: 100,
             clock: clock
         )
         
@@ -123,7 +135,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         let retryDeadline: TimeInterval = 2
         guaranteedDeliveryManager = GuaranteedDeliveryManager(
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            databaseRepository: DI.injectOrFail(MBDatabaseRepository.self),
+            databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
             retryDeadline: retryDeadline
         )

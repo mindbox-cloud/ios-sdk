@@ -7,7 +7,9 @@
 //
 
 import XCTest
+import CoreData.NSPersistentContainer
 @testable import Mindbox
+@testable import MindboxLogger // MBPersistentContainer
 
 final class MigrationManagerTests: XCTestCase {
 
@@ -30,8 +32,6 @@ final class MigrationManagerTests: XCTestCase {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1()
         ]
-        
-        setUpForRemoveBackgroundTaskDataMigration()
 
         migrationManager = MigrationManager(
             persistenceStorage: persistenceStorageMock,
@@ -46,18 +46,28 @@ final class MigrationManagerTests: XCTestCase {
         super.tearDown()
     }
 
-    @available(*, deprecated, message: "Suppress `deprecated` shownInAppsIds warning")
+    @available(*, deprecated, message: "Suppress deprecated `shownInAppsIds` and `shownInappsDictionary` warning")
     func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
+        
+        setUpForRemoveBackgroundTaskDataMigration()
+        setUpForDatabaseMetadataMigration()
+        
         migrationManager = MigrationManager(persistenceStorage: persistenceStorageMock)
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == 0)
+        XCTAssertNil(persistenceStorageMock.applicationInstanceId)
+        XCTAssertNil(persistenceStorageMock.applicationInfoUpdateVersion)
+        
         migrationManager.migrate()
+        
         XCTAssertTrue(persistenceStorageMock.versionCodeForMigration == Constants.Migration.sdkVersionCode)
         XCTAssertNotNil(persistenceStorageMock.configDownloadDate, "Must NOT `softReset()` `persistenceStorage`")
-        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after MigrationShownInAppIds")
-        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after MigrationShownInAppIds")
+        
+        XCTAssertNil(persistenceStorageMock.shownInappsDictionary, "shownInappsDictionary must NOT be nil after ShownInAppIDsMigration")
+        XCTAssertNotNil(persistenceStorageMock.shownDatesByInApp, "shownDatesByInApp must NOT be nil after ShownInAppIDsMigration")
+        XCTAssertNil(persistenceStorageMock.shownInAppsIds, "shownInAppsIds must be nil after ShownInAppIDsMigration")
         
         XCTAssertForRemoveBackgroundTaskDataMigration()
+        XCTAssertDatabaseMetadataMigration()
     }
 
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {
@@ -79,6 +89,111 @@ final class MigrationManagerTests: XCTestCase {
 // MARK: - Additional functions for production migrations
 
 extension MigrationManagerTests {
+    
+    // MARK: Paths used by the migration (must mirror DatabaseMetadataMigration.candidateStoreURLs)
+    
+     private func candidateStoreURLs() -> [URL] {
+         let fileName = "\(Constants.Database.mombName).sqlite"
+         var urls: [URL] = []
+         urls.append(MBPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
+         urls.append(NSPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
+         // De-duplicate & standardize
+         return Array(Set(urls.map { $0.standardizedFileURL }))
+     }
+
+     private func removeOnDiskStoresIfExist() {
+         let fm = FileManager.default
+         for url in candidateStoreURLs() {
+             let paths = [
+                 url,
+                 url.deletingPathExtension().appendingPathExtension("sqlite-wal"),
+                 url.deletingPathExtension().appendingPathExtension("sqlite-shm")
+             ]
+             for p in paths { try? fm.removeItem(at: p) }
+         }
+     }
+
+     /// Seeds metadata directly into the SQLite file(s) the migration will read,
+     /// without going through the live repository.
+     private func setUpForDatabaseMetadataMigration(
+         infoUpdate: Int = 3,
+         instanceId: String = "test-instance-id",
+         file: StaticString = #file,
+         line: UInt = #line
+     ) {
+         // Reset destination so migration has work to do
+         persistenceStorageMock.applicationInfoUpdateVersion = nil
+         persistenceStorageMock.applicationInstanceId = nil
+
+         // Load the Core Data model so we can create a real store file
+         let modelName = Constants.Database.mombName
+         let modelURLs = [
+             Bundle(for: MBDatabaseRepository.self).url(forResource: modelName, withExtension: "momd"),
+             Bundle.main.url(forResource: modelName, withExtension: "momd")
+         ].compactMap { $0 }
+
+         guard
+             let modelURL = modelURLs.first,
+             let model = NSManagedObjectModel(contentsOf: modelURL)
+         else {
+             return XCTFail("Unable to load Core Data model \(modelName).momd", file: file, line: line)
+         }
+
+         let fm = FileManager.default
+
+         for url in candidateStoreURLs() {
+             do {
+                 try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+                 // Create a SQLite store
+                 let psc = NSPersistentStoreCoordinator(managedObjectModel: model)
+                 let store = try psc.addPersistentStore(
+                     ofType: NSSQLiteStoreType,
+                     configurationName: nil,
+                     at: url
+                 )
+
+                 // Merge & set metadata via PSC first
+                 var md = psc.metadata(for: store)
+                 md[Constants.StoreMetadataKey.infoUpdate.rawValue] = infoUpdate
+                 md[Constants.StoreMetadataKey.instanceId.rawValue] = instanceId
+                 psc.setMetadata(md, for: store)
+
+                 // Close the store to flush
+                 try? psc.remove(store)
+
+                 // And write the same metadata via the class API to the file path to be 100% sure
+                 try NSPersistentStoreCoordinator.setMetadata(
+                     md,
+                     forPersistentStoreOfType: NSSQLiteStoreType,
+                     at: url,
+                     options: nil
+                 )
+
+             } catch {
+                 XCTFail("Failed to seed metadata at \(url): \(error)", file: file, line: line)
+             }
+         }
+     }
+    
+    private func XCTAssertDatabaseMetadataMigration(file: StaticString = #file, line: UInt = #line) {
+        XCTAssertNotNil(persistenceStorageMock.applicationInstanceId, "applicationInstanceId must NOT be nil after DatabaseMetadataMigration")
+        XCTAssertNotNil(persistenceStorageMock.applicationInfoUpdateVersion, "applicationInfoUpdateVersion must NOT be nil after DatabaseMetadataMigration")
+        
+        for url in candidateStoreURLs() {
+            if let md = try? NSPersistentStoreCoordinator.metadataForPersistentStore(
+                ofType: NSSQLiteStoreType,
+                at: url,
+                options: [NSReadOnlyPersistentStoreOption: true]
+            ) {
+                XCTAssertNil(md[Constants.StoreMetadataKey.infoUpdate.rawValue], "infoUpdate must be removed. File: \(url)", file: file, line: line)
+                XCTAssertNil(md[Constants.StoreMetadataKey.instanceId.rawValue], "instanceId must be removed. File: \(url)", file: file, line: line)
+            }
+        }
+    }
+    
+    // MARK: RemoveBackgroundTaskDataMigration setup/assert
+    
     func XCTAssertForRemoveBackgroundTaskDataMigration() {
         XCTAssertNil(MBPersistenceStorage.defaults.value(forKey: "backgroundExecution"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))

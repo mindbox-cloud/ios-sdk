@@ -23,53 +23,17 @@ final class MockDatabaseRepository: MBDatabaseRepository {
         createsDeprecated ? Date() : super.lifeLimitDate
     }
     
-    /// For in-memory tests
+    /// Creates a Core Data stack for in-memory tests or persistent storage.
+    ///
+    /// - Parameter inMemory: Pass `true` to use an in-memory store (good for unit tests).
+    /// - Throws: Errors thrown while creating the underlying ``NSPersistentContainer``.
+    /// - Note: Useful for unit tests to avoid writing to disk.
+    /// - See also:
+    ///   - [Setting up a Core Data store for unit tests (Donny Wals)](https://www.donnywals.com/setting-up-a-core-data-store-for-unit-tests/)
     convenience init(inMemory: Bool) throws {
-        if inMemory {
-            let bundle = Bundle(for: CDEvent.self)
-            guard let model = NSManagedObjectModel.mergedModel(from: [bundle]) else {
-                fatalError("Could not find Core Data model in bundle")
-            }
-            let container = NSPersistentContainer(
-                name: Constants.Database.mombName,
-                managedObjectModel: model
-            )
-            let desc = NSPersistentStoreDescription()
-            // https://www.donnywals.com/setting-up-a-core-data-store-for-unit-tests/
-            // Instead of `desc.url = URL(fileURLWithPath: "/dev/null")`
-            desc.type = NSInMemoryStoreType
-            container.persistentStoreDescriptions = [desc]
-            
-            var loadError: Error?
-            container.loadPersistentStores { _, error in
-                loadError = error
-            }
-            
-            precondition(loadError == nil, "in-memory store didn't download: \(String(describing: loadError))")
-            
-            try self.init(persistentContainer: container)
-        } else {
-            let loader = DI.injectOrFail(DataBaseLoader.self)
-            let container = try loader.loadPersistentContainer()
-            try self.init(persistentContainer: container)
-        }
-    }
-    
-    override func erase() throws {
-        let bg = persistentContainer.newBackgroundContext()
-        try bg.mindboxPerformAndWait {
-            let fetch: NSFetchRequest<CDEvent> = NSFetchRequest<CDEvent>(entityName: "CDEvent")
-            let all = try bg.fetch(fetch)
-            for e in all {
-                bg.delete(e)
-            }
-            try bg.save()
-        }
-
-        installVersion    = nil
-        infoUpdateVersion = nil
-
-        _ = try countEvents()
+        let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
+        let container: NSPersistentContainer = inMemory ? try loader.makeInMemoryContainer() : try loader.loadPersistentContainer()
+        try self.init(persistentContainer: container)
     }
 }
 
@@ -141,9 +105,6 @@ final class FakeDatabaseRepository: MBDatabaseRepository {
             }
             try bg.save()
         }
-        
-        installVersion    = nil
-        infoUpdateVersion = nil
         
         _ = try countEvents()
     }

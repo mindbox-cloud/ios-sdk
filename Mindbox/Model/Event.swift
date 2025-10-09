@@ -9,19 +9,6 @@
 import Foundation
 import MindboxLogger
 
-protocol EventProtocol {
-    var transactionId: String { get }
-    var dateTimeOffset: Int64 { get }
-    var enqueueTimeStamp: Double { get }
-    var serialNumber: String? { get }
-    var type: Event.Operation { get }
-    var isRetry: Bool { get }
-    var body: String { get }
-
-    init(type: Event.Operation, body: String)
-    init?(_ event: CDEvent)
-}
-
 struct Event: EventProtocol {
 
     enum Operation: String {
@@ -59,7 +46,10 @@ struct Event: EventProtocol {
 
     let type: Operation
     // True if first attempt to send was failed
-    let isRetry: Bool
+    var isRetry: Bool { !retryTimestamp.isZero }
+    
+    let retryTimestamp: Double
+    
     // Data according to Operation
     let body: String
 
@@ -69,7 +59,7 @@ struct Event: EventProtocol {
         self.type = type
         self.body = body
         self.serialNumber = nil
-        self.isRetry = false
+        self.retryTimestamp = 0
     }
 
     init?(_ event: CDEvent) {
@@ -90,6 +80,22 @@ struct Event: EventProtocol {
         self.type = operation
         self.body = body
         self.serialNumber = event.objectID.uriRepresentation().lastPathComponent
-        self.isRetry = !event.retryTimestamp.isZero
+        self.retryTimestamp = event.retryTimestamp
     }
+}
+
+// MARK: For test purposes
+
+protocol EventProtocol {
+    var transactionId: String { get }
+    var dateTimeOffset: Int64 { get }
+    var enqueueTimeStamp: Double { get }
+    var serialNumber: String? { get }
+    var type: Event.Operation { get }
+    var isRetry: Bool { get }
+    var retryTimestamp: Double { get }
+    var body: String { get }
+
+    init(type: Event.Operation, body: String)
+    init?(_ event: CDEvent)
 }

@@ -11,10 +11,10 @@ import UserNotifications
 
 final class ClickNotificationManager {
 
-    private let databaseRepository: MBDatabaseRepository
+    private let databaseRepository: DatabaseRepositoryProtocol
 
     init(
-        databaseRepository: MBDatabaseRepository
+        databaseRepository: DatabaseRepositoryProtocol
     ) {
         self.databaseRepository = databaseRepository
     }

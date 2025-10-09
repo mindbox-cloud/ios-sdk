@@ -29,13 +29,13 @@ jobs:
     if: ${{ github.base_ref == 'master' && startsWith(github.head_ref, 'release/') }}
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: master
           path: master
           
       - name: Checkout release branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref }}
           path: release

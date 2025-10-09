@@ -23,13 +23,13 @@ class MindboxTests: XCTestCase {
     var coreController: CoreController!
     var controllerQueue = DispatchQueue(label: "test-core-controller-queue")
     var persistenceStorage: PersistenceStorage!
-    var databaseRepository: MBDatabaseRepository!
+    var databaseRepository: DatabaseRepositoryProtocol!
 
     override func setUp() {
         super.setUp()
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.reset()
-        databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         Mindbox.shared.assembly()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
@@ -75,7 +75,7 @@ class MindboxTests: XCTestCase {
         XCTAssert(deviceUUID == deviceUUID2)
 
         persistenceStorage.reset()
-        let databaseRepository = DI.injectOrFail(MBDatabaseRepository.self)
+        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         coreController = DI.injectOrFail(CoreController.self)
 
@@ -203,7 +203,7 @@ extension MindboxTests {
     func testSendKeepaliveAfterInstallation() {
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        XCTAssertNil(persistenceStorage.applicationInfoUpdateVersion)
         
         initializeCoreController()
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
@@ -216,8 +216,8 @@ extension MindboxTests {
         controllerQueue.sync { }
         
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented")
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 1, "InfoUpdate must be incremented")
         
         let result = try? databaseRepository.query(fetchLimit: 5)
         XCTAssertEqual(result?.count, 1)
@@ -227,7 +227,7 @@ extension MindboxTests {
     func testSendKeepaliveAfterInstallationAndInfoUpdate_whenExpired() {
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        XCTAssertNil(persistenceStorage.applicationInfoUpdateVersion)
         
         initializeCoreController()
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event")
@@ -243,8 +243,8 @@ extension MindboxTests {
         controllerQueue.sync { }
         
         XCTAssertNotNil(self.persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 2, "InfoUpdate must be incremented twice")
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 2, "InfoUpdate must be incremented twice")
         
         let result = try? databaseRepository.query(fetchLimit: 5)
         XCTAssertEqual(result?.count, 2)
@@ -257,15 +257,15 @@ extension MindboxTests {
         coreController = DI.injectOrFail(CoreController.self)
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        XCTAssertNil(persistenceStorage.applicationInfoUpdateVersion)
         
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
         controllerQueue.sync { }
         
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate, "It must be nil because we won't send an `InfoUpdate` before installation because the DB will be erased during installation")
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1)
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 1)
         XCTAssertEqual(try databaseRepository.countEvents(), 1)
         
         initializeCoreController()
@@ -279,8 +279,8 @@ extension MindboxTests {
         controllerQueue.sync { }
         
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented once")
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 1, "InfoUpdate must be incremented once")
         
         let result = try? databaseRepository.query(fetchLimit: 5)
         XCTAssertEqual(result?.count, 1)
@@ -291,7 +291,7 @@ extension MindboxTests {
     func test_PushTokenKeepalive_withLastInfoUpdateDateIsNil_shouldSendOperation() {
         XCTAssertFalse(persistenceStorage.isInstalled)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNil(databaseRepository.infoUpdateVersion)
+        XCTAssertNil(persistenceStorage.applicationInfoUpdateVersion)
         
         initializeCoreController()
         persistenceStorage.lastInfoUpdateDate = nil
@@ -304,8 +304,8 @@ extension MindboxTests {
         controllerQueue.sync { }
         
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate)
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented")
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 1, "InfoUpdate must be incremented")
         
         let result = try? databaseRepository.query(fetchLimit: 5)
         XCTAssertEqual(result?.count, 1)
@@ -369,7 +369,7 @@ private extension MindboxTests {
     func generalNegativeTestPushTokenKeepalive(with pushTokenKeepalive: String?, file: StaticString = #file, line: UInt = #line) {
         XCTAssertFalse(persistenceStorage.isInstalled, file: file, line: line)
         XCTAssertNil(persistenceStorage.lastInfoUpdateDate, file: file, line: line)
-        XCTAssertNil(databaseRepository.infoUpdateVersion, file: file, line: line)
+        XCTAssertNil(persistenceStorage.applicationInfoUpdateVersion, file: file, line: line)
         
         initializeCoreController()
         XCTAssertNotNil(persistenceStorage.lastInfoUpdateDate, "It should have been updated with the `ApplicationInstalled` event", file: file, line: line)
@@ -385,8 +385,8 @@ private extension MindboxTests {
         controllerQueue.sync { }
         
         XCTAssertNotNil(self.persistenceStorage.lastInfoUpdateDate, file: file, line: line)
-        XCTAssertNotNil(databaseRepository.infoUpdateVersion, file: file, line: line)
-        XCTAssertEqual(databaseRepository.infoUpdateVersion, 1, "InfoUpdate must be incremented only by apnsTokenDidUpdate", file: file, line: line)
+        XCTAssertNotNil(persistenceStorage.applicationInfoUpdateVersion, file: file, line: line)
+        XCTAssertEqual(persistenceStorage.applicationInfoUpdateVersion, 1, "InfoUpdate must be incremented only by apnsTokenDidUpdate", file: file, line: line)
         
         let result = try? databaseRepository.query(fetchLimit: 5)
         XCTAssertEqual(result?.count, 1, file: file, line: line)
