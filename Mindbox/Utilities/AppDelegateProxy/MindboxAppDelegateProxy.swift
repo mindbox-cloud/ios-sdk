@@ -25,8 +25,11 @@ internal enum AppDelegateSelector {
 }
 
 @available(iOS 11.0, *)
-internal final class MindboxAppDelegateProxy: NSObject {
+@available(iOS 11.0, *)
+internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
+    static let shared = MindboxAppDelegateProxy()
+    
     private static var originalIMPs: [Selector: IMP] = [:]
     private static var addedBySDK: [Selector: Bool] = [:]
     private static var hasInstalledSwizzles = false
@@ -68,23 +71,39 @@ internal final class MindboxAppDelegateProxy: NSObject {
         safeSwizzle(targetClass,
                     original: AppDelegateSelector.didReceiveRemoteNotification,
                     swizzled: #selector(mb_application(_:didReceiveRemoteNotification:fetchCompletionHandler:)))
-
-        if let unDelegate = UNUserNotificationCenter.current().delegate {
-            let unClass = type(of: unDelegate)
-            safeSwizzle(unClass,
-                        original: AppDelegateSelector.willPresent,
-                        swizzled: #selector(mb_userNotificationCenter(_:willPresent:withCompletionHandler:)))
-
-            safeSwizzle(unClass,
-                        original: AppDelegateSelector.didReceiveNotificationResponse,
-                        swizzled: #selector(mb_userNotificationCenter(_:didReceive:withCompletionHandler:)))
-        }
+        
+        setupUserNotificationCenterSwizzling()
 
         print("[Mindbox] ✅ All swizzles successfully installed")
     }
 
     private static var isRunningInExtension: Bool {
         Bundle.main.bundlePath.hasSuffix(".appex")
+    }
+    
+    private static func setupUserNotificationCenterSwizzling() {
+        let center = UNUserNotificationCenter.current()
+        let delegateToSwizzle: AnyObject
+
+        if let existing = center.delegate {
+            delegateToSwizzle = existing
+            print("[Mindbox] ℹ️ Existing UNUserNotificationCenter delegate detected — swizzling applied")
+        } else {
+            center.delegate = shared
+            delegateToSwizzle = shared
+            print("[Mindbox] 🧱 No UNUserNotificationCenter delegate found — Mindbox set as delegate")
+        }
+
+        let targetClass: any AnyObject.Type = type(of: delegateToSwizzle)
+
+        [
+            (AppDelegateSelector.willPresent,
+             #selector(mb_userNotificationCenter(_:willPresent:withCompletionHandler:))),
+            (AppDelegateSelector.didReceiveNotificationResponse,
+             #selector(mb_userNotificationCenter(_:didReceive:withCompletionHandler:)))
+        ].forEach { original, swizzled in
+            safeSwizzle(targetClass, original: original, swizzled: swizzled)
+        }
     }
 
     // MARK: - Safe Swizzler
