@@ -17,6 +17,17 @@ class MBLoggerUtilitiesFetcher {
     }()
 
     var applicationGroupIdentifier: String {
+        if let groups = Bundle.main.object(forInfoDictionaryKey: "com.apple.security.application-groups") as? [String],
+            let first = groups.first,
+               !first.isEmpty,
+               FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: first) != nil {
+                return first
+            }
+            if let explicit = Bundle.main.object(forInfoDictionaryKey: "MindboxApplicationGroup") as? String,
+               !explicit.isEmpty,
+               FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: explicit) != nil {
+            return explicit
+        }
         guard let hostApplicationName = hostApplicationName else {
             fatalError("CFBundleShortVersionString not found for host app")
         }
