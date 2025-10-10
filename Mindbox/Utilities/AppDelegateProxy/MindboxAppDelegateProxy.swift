@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MindboxLogger
 
 @available(iOS 11.0, *)
 internal enum AppDelegateSelector {
@@ -25,7 +26,6 @@ internal enum AppDelegateSelector {
 }
 
 @available(iOS 11.0, *)
-@available(iOS 11.0, *)
 internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     static let shared = MindboxAppDelegateProxy()
@@ -38,23 +38,26 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
     // MARK: - Public entry
     internal static func configure() {
         guard !hasInstalledSwizzles else {
-            print("[Mindbox] ⚠️ Swizzling already installed — skipping")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Swizzling already installed — skipping", level: .debug, category: .appDelegate)
             return
         }
         hasInstalledSwizzles = true
 
         guard !isRunningInExtension else {
-            print("[Mindbox] ℹ️ Running in NSE — skipping AppDelegate swizzling")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Running in NSE — skipping AppDelegate swizzling",
+                          level: .debug, category: .appDelegate)
             return
         }
 
         guard let delegate = UIApplication.shared.delegate else {
-            print("[Mindbox] ❌ UIApplication.shared.delegate not found")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Error] UIApplication.shared.delegate not found",
+                          level: .error, category: .appDelegate)
             return
         }
 
         let targetClass = type(of: delegate)
-        print("[Mindbox] 🧩 Installing swizzles on \(targetClass)")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Installing swizzles on \(targetClass)",
+                      level: .debug, category: .appDelegate)
 
         safeSwizzle(targetClass,
                     original: AppDelegateSelector.didRegisterForRemoteNotifications,
@@ -74,7 +77,8 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
         
         setupUserNotificationCenterSwizzling()
 
-        print("[Mindbox] ✅ All swizzles successfully installed")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] All swizzles successfully installed",
+                      level: .debug, category: .appDelegate)
     }
 
     private static var isRunningInExtension: Bool {
@@ -87,11 +91,13 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
 
         if let existing = center.delegate {
             delegateToSwizzle = existing
-            print("[Mindbox] ℹ️ Existing UNUserNotificationCenter delegate detected — swizzling applied")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Existing UNUserNotificationCenter delegate detected — swizzling applied",
+                          level: .debug, category: .appDelegate)
         } else {
             center.delegate = shared
             delegateToSwizzle = shared
-            print("[Mindbox] 🧱 No UNUserNotificationCenter delegate found — Mindbox set as delegate")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] No UNUserNotificationCenter delegate found — Mindbox set as delegate",
+                          level: .debug, category: .appDelegate)
         }
 
         let targetClass: any AnyObject.Type = type(of: delegateToSwizzle)
@@ -118,11 +124,13 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
                let types = method_getTypeEncoding(swizzledMethod),
                let blockIMP = defaultIMP(for: original),
                class_addMethod(targetClass, original, blockIMP, types) {
-                print("[Mindbox] 🧱 Added missing method: \(NSStringFromSelector(original))")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Swizzle] Added missing method: \(NSStringFromSelector(original))",
+                              level: .debug, category: .appDelegate)
                 addedBySDK[original] = true
                 method = class_getInstanceMethod(targetClass, original)
             } else {
-                print("[Mindbox] ⚠️ No method or default IMP for \(NSStringFromSelector(original)) — skipping")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Error] No method or default IMP for \(NSStringFromSelector(original)) — skipping",
+                              level: .error, category: .appDelegate)
                 return
             }
         }
@@ -133,23 +141,27 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
             let origEncoding = method_getTypeEncoding(originalMethod),
             let swizEncoding = method_getTypeEncoding(swizzledMethod)
         else {
-            print("[Mindbox] ⚠️ Cannot read type encodings — skipping \(NSStringFromSelector(original))")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Error] Cannot read type encodings — skipping \(NSStringFromSelector(original))",
+                          level: .error, category: .appDelegate)
             return
         }
 
         if strcmp(origEncoding, swizEncoding) != 0 {
-            print("[Mindbox] ⚠️ Type mismatch for \(NSStringFromSelector(original)) — skipping swizzle")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Error] Type mismatch for \(NSStringFromSelector(original)) — skipping swizzle",
+                          level: .error, category: .appDelegate)
             return
         }
 
         guard originalIMPs[original] == nil else {
-            print("[Mindbox] ⚠️ Method already swizzled: \(NSStringFromSelector(original))")
+            Logger.common(message: "[MindboxAppDelegateProxy] [Swizzle] Method already swizzled: \(NSStringFromSelector(original))",
+                          level: .debug, category: .appDelegate)
             return
         }
 
         originalIMPs[original] = method_getImplementation(originalMethod)
         method_exchangeImplementations(originalMethod, swizzledMethod)
-        print("[Mindbox] 🔄 Swizzled \(NSStringFromSelector(original))")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Swizzle] Swizzled \(NSStringFromSelector(original))",
+                      level: .debug, category: .appDelegate)
     }
 
     // MARK: - Default implementations
@@ -157,33 +169,38 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
         switch selector {
         case AppDelegateSelector.didRegisterForRemoteNotifications:
             let block: @convention(block) (Any, UIApplication, Data) -> Void = { _, _, _ in
-                print("[Mindbox] 🧱 Default: didRegisterForRemoteNotificationsWithDeviceToken")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] didRegisterForRemoteNotificationsWithDeviceToken",
+                              level: .debug, category: .appDelegate)
             }
             return imp_implementationWithBlock(block)
 
         case AppDelegateSelector.didFailToRegisterForRemoteNotifications:
             let block: @convention(block) (Any, UIApplication, Error) -> Void = { _, _, _ in
-                print("[Mindbox] 🧱 Default: didFailToRegisterForRemoteNotificationsWithError")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] didFailToRegisterForRemoteNotificationsWithError",
+                              level: .debug, category: .appDelegate)
             }
             return imp_implementationWithBlock(block)
 
         case AppDelegateSelector.performFetch:
             let block: @convention(block) (Any, UIApplication, @escaping (UIBackgroundFetchResult) -> Void) -> Void = { _, _, completion in
-                print("[Mindbox] 🧱 Default: performFetchWithCompletionHandler")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] performFetchWithCompletionHandler — no client implementation",
+                              level: .debug, category: .appDelegate)
                 completion(.noData)
             }
             return imp_implementationWithBlock(block)
 
         case AppDelegateSelector.didReceiveRemoteNotification:
             let block: @convention(block) (Any, UIApplication, [AnyHashable: Any], @escaping (UIBackgroundFetchResult) -> Void) -> Void = { _, _, _, completion in
-                print("[Mindbox] 🧱 Default: didReceiveRemoteNotification")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] didReceiveRemoteNotification — handled internally",
+                              level: .debug, category: .appDelegate)
                 completion(.noData)
             }
             return imp_implementationWithBlock(block)
 
         case AppDelegateSelector.willPresent:
             let block: @convention(block) (Any, UNUserNotificationCenter, UNNotification, @escaping (UNNotificationPresentationOptions) -> Void) -> Void = { _, _, notification, completion in
-                print("[Mindbox] 🧱 Default: willPresent \(notification.request.identifier)")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] willPresent notification: \(notification.request.identifier)",
+                              level: .debug, category: .appDelegate)
                 if #available(iOS 14.0, *) {
                     completion([.banner, .sound, .badge, .list])
                 } else {
@@ -194,7 +211,8 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
 
         case AppDelegateSelector.didReceiveNotificationResponse:
             let block: @convention(block) (Any, UNUserNotificationCenter, UNNotificationResponse, @escaping () -> Void) -> Void = { _, _, response, completion in
-                print("[Mindbox] 🧱 Default: didReceive response \(response.notification.request.identifier)")
+                Logger.common(message: "[MindboxAppDelegateProxy] [Default] didReceive notification response: \(response.notification.request.identifier)",
+                              level: .debug, category: .appDelegate)
                 completion()
             }
             return imp_implementationWithBlock(block)
@@ -212,12 +230,11 @@ extension MindboxAppDelegateProxy {
     @objc
     func mb_application(_ application: UIApplication,
                         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        print("[Mindbox] 🧩 didRegisterForRemoteNotificationsWithDeviceToken")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] didRegisterForRemoteNotificationsWithDeviceToken",
+                      level: .debug, category: .appDelegate)
         Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
         let selector = AppDelegateSelector.didRegisterForRemoteNotifications
-        guard Self.addedBySDK[selector] != true else {
-            return
-        }
+        guard Self.addedBySDK[selector] != true else { return }
         if let imp = Self.originalIMPs[selector] {
             typealias Original = @convention(c) (Any, Selector, UIApplication, Data) -> Void
             unsafeBitCast(imp, to: Original.self)(self, selector, application, deviceToken)
@@ -227,11 +244,10 @@ extension MindboxAppDelegateProxy {
     @objc
     func mb_application(_ application: UIApplication,
                         didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("[Mindbox] 🧩 didFailToRegisterForRemoteNotificationsWithError")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] didFailToRegisterForRemoteNotificationsWithError: \(error.localizedDescription)",
+                      level: .error, category: .appDelegate)
         let selector = AppDelegateSelector.didFailToRegisterForRemoteNotifications
-        guard Self.addedBySDK[selector] != true else {
-            return
-        }
+        guard Self.addedBySDK[selector] != true else { return }
         if let imp = Self.originalIMPs[selector] {
             typealias Original = @convention(c) (Any, Selector, UIApplication, Error) -> Void
             unsafeBitCast(imp, to: Original.self)(self, selector, application, error)
@@ -241,7 +257,8 @@ extension MindboxAppDelegateProxy {
     @objc
     func mb_application(_ application: UIApplication,
                         performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        print("[Mindbox] 🧩 performFetchWithCompletionHandler")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] performFetchWithCompletionHandler",
+                      level: .debug, category: .appDelegate)
         let selector = AppDelegateSelector.performFetch
         guard Self.addedBySDK[selector] != true else {
             Mindbox.shared.application(application, performFetchWithCompletionHandler: completionHandler)
@@ -259,7 +276,8 @@ extension MindboxAppDelegateProxy {
     func mb_application(_ application: UIApplication,
                         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
                         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        print("[Mindbox] 🧩 didReceiveRemoteNotification")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] didReceiveRemoteNotification",
+                      level: .debug, category: .appDelegate)
         let selector = AppDelegateSelector.didReceiveRemoteNotification
         guard Self.addedBySDK[selector] != true else {
             Mindbox.shared.application(application, performFetchWithCompletionHandler: completionHandler)
@@ -278,7 +296,8 @@ extension MindboxAppDelegateProxy {
     func mb_userNotificationCenter(_ center: UNUserNotificationCenter,
                                    willPresent notification: UNNotification,
                                    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("[Mindbox] 🧩 willPresent \(notification.request.identifier)")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] willPresent notification: \(notification.request.identifier)",
+                      level: .debug, category: .appDelegate)
         let selector = AppDelegateSelector.willPresent
         guard Self.addedBySDK[selector] != true else {
             notificationPresentation(completionHandler)
@@ -297,11 +316,15 @@ extension MindboxAppDelegateProxy {
     func mb_userNotificationCenter(_ center: UNUserNotificationCenter,
                                    didReceive response: UNNotificationResponse,
                                    withCompletionHandler completionHandler: @escaping () -> Void) {
-        print("[Mindbox] 🧩 didReceive response \(response.notification.request.identifier)")
+        Logger.common(message: "[MindboxAppDelegateProxy] [Delegate] didReceive notification response: \(response.notification.request.identifier)",
+                      level: .debug, category: .appDelegate)
         let selector = AppDelegateSelector.didReceiveNotificationResponse
         Mindbox.shared.pushClicked(response: response)
         Mindbox.shared.track(.push(response))
-        guard Self.addedBySDK[selector] != true else { completionHandler(); return }
+        guard Self.addedBySDK[selector] != true else {
+            completionHandler()
+            return
+        }
         if let imp = Self.originalIMPs[selector] {
             typealias Original = @convention(c)
                 (Any, Selector, UNUserNotificationCenter, UNNotificationResponse, @escaping () -> Void) -> Void
