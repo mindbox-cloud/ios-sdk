@@ -399,6 +399,7 @@
 		F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470952B96681F00E01E5C /* 27-TargetingRequests.json */; };
 		F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470972B9668F100E01E5C /* 31-TargetingRequests.json */; };
 		F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F315503E2BBB24E20072A071 /* TTLValidationService.swift */; };
+		F31909992E979D9E00373E2F /* MindboxAppDelegateProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31909982E979D9E00373E2F /* MindboxAppDelegateProxy.swift */; };
 		F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A94772BC6995500E6C978 /* InappFrequency.swift */; };
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
@@ -573,6 +574,7 @@
 		F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */; };
 		F3DEB33B2D4377D000D0EFA4 /* InappSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */; };
 		F3E3EEA62CFA27EC00AAC91A /* Tag+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */; };
+		F3E59D9D2E96440700A048F5 /* MindboxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E59D9C2E96440700A048F5 /* MindboxApp.swift */; };
 		F3EB95712DE44684000E221B /* InappPresentationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3EB95702DE44684000E221B /* InappPresentationValidator.swift */; };
 		F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */; };
 		F3EC93B92AF1041A0030D107 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */; };
@@ -1035,6 +1037,7 @@
 		F31470952B96681F00E01E5C /* 27-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "27-TargetingRequests.json"; sourceTree = "<group>"; };
 		F31470972B9668F100E01E5C /* 31-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "31-TargetingRequests.json"; sourceTree = "<group>"; };
 		F315503E2BBB24E20072A071 /* TTLValidationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTLValidationService.swift; sourceTree = "<group>"; };
+		F31909982E979D9E00373E2F /* MindboxAppDelegateProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxAppDelegateProxy.swift; sourceTree = "<group>"; };
 		F31A94772BC6995500E6C978 /* InappFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequency.swift; sourceTree = "<group>"; };
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
@@ -1209,6 +1212,7 @@
 		F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionImageDownloaderTests.swift; sourceTree = "<group>"; };
 		F3DEB33A2D4377D000D0EFA4 /* InappSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappSessionManager.swift; sourceTree = "<group>"; };
 		F3E3EEA52CFA27EC00AAC91A /* Tag+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+Extensions.swift"; sourceTree = "<group>"; };
+		F3E59D9C2E96440700A048F5 /* MindboxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxApp.swift; sourceTree = "<group>"; };
 		F3EB95702DE44684000E221B /* InappPresentationValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappPresentationValidator.swift; sourceTree = "<group>"; };
 		F3EC93B62AF0FDCD0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F3EC93B82AF1041A0030D107 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -1420,6 +1424,7 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				F31909972E979D8200373E2F /* AppDelegateProxy */,
 				47BD5BF82C578AD700F965C0 /* Migrations */,
 				F3D818AE2A3885A40002957C /* ABTestDeviceMixer */,
 				9B9C952E2921116F00BB29DA /* UUIDDebugService */,
@@ -2630,6 +2635,14 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		F31909972E979D8200373E2F /* AppDelegateProxy */ = {
+			isa = PBXGroup;
+			children = (
+				F31909982E979D9E00373E2F /* MindboxAppDelegateProxy.swift */,
+			);
+			path = AppDelegateProxy;
+			sourceTree = "<group>";
+		};
 		F31A94792BC69E0500E6C978 /* InappFrequency */ = {
 			isa = PBXGroup;
 			children = (
@@ -3012,6 +3025,7 @@
 			isa = PBXGroup;
 			children = (
 				F34A45AD2B7628B700634C8B /* MBPushNotification.swift */,
+				F3E59D9C2E96440700A048F5 /* MindboxApp.swift */,
 			);
 			path = PublicModels;
 			sourceTree = "<group>";
@@ -3723,6 +3737,7 @@
 				F331DD162A840D1700222120 /* iFormVariant.swift in Sources */,
 				84C65E6825D4FE41008996FA /* BodyEncoder.swift in Sources */,
 				9B33F3CD28D0986900A3FFF9 /* CustomerSegmentsAPI.swift in Sources */,
+				F3E59D9D2E96440700A048F5 /* MindboxApp.swift in Sources */,
 				B3F4F982268EEAC90092EC3C /* AmountBenefitsResponse.swift in Sources */,
 				31A20D4C25B6E0D700AAA0A3 /* MindboxErrors.swift in Sources */,
 				334F3ADF264C199900A6AC00 /* SubViewProductRequest.swift in Sources */,
@@ -3942,6 +3957,7 @@
 				47DF1FB02E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift in Sources */,
 				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
+				F31909992E979D9E00373E2F /* MindboxAppDelegateProxy.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
 				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
