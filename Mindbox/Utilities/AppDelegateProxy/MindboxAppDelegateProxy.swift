@@ -54,6 +54,7 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
                           level: .error, category: .appDelegate)
             return
         }
+        UIApplication.shared.registerForRemoteNotifications()
 
         let targetClass = type(of: delegate)
         Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Installing swizzles on \(targetClass)",
