@@ -36,7 +36,7 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
     private static let swizzleLock = NSObject()
 
     // MARK: - Public entry
-    internal static func configure() {
+    internal static func configure(launchOptions: [UIApplication.LaunchOptionsKey: Any]?, BGTasksNeeded: Bool) {
         guard !hasInstalledSwizzles else {
             Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Swizzling already installed — skipping", level: .debug, category: .appDelegate)
             return
@@ -48,13 +48,16 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
                           level: .debug, category: .appDelegate)
             return
         }
-
+        
         guard let delegate = UIApplication.shared.delegate else {
             Logger.common(message: "[MindboxAppDelegateProxy] [Error] UIApplication.shared.delegate not found",
                           level: .error, category: .appDelegate)
             return
         }
+        
         UIApplication.shared.registerForRemoteNotifications()
+        Mindbox.shared.track(.launch(launchOptions))
+        setupBGTasks(BGTasksNeeded: BGTasksNeeded)
 
         let targetClass = type(of: delegate)
         Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] Installing swizzles on \(targetClass)",
@@ -80,6 +83,17 @@ internal final class MindboxAppDelegateProxy: NSObject, UIApplicationDelegate, U
 
         Logger.common(message: "[MindboxAppDelegateProxy] [Lifecycle] All swizzles successfully installed",
                       level: .debug, category: .appDelegate)
+    }
+    
+    private static func setupBGTasks(BGTasksNeeded: Bool) {
+        guard BGTasksNeeded else {
+            return
+        }
+        
+        if #available(iOS 13.0, *) {
+            Mindbox.shared.registerBGTasks()
+        }
+        UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
     }
 
     private static var isRunningInExtension: Bool {

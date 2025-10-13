@@ -13,8 +13,8 @@ import UIKit
 public final class MindboxApp {
 
     @discardableResult
-    public static func configure() -> Bool {
-        MindboxAppDelegateProxy.configure()
+    public static func configure(launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil, BGTasksNeeded: Bool = true) -> Bool {
+        MindboxAppDelegateProxy.configure(launchOptions: launchOptions, BGTasksNeeded: BGTasksNeeded)
         return true
     }
 }
