@@ -249,7 +249,7 @@ public extension MBLoggerCoreDataManager {
         try context.executePerformAndWait {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Constants.model)
             let count = try context.count(for: fetchRequest)
-            guard count > 0 else { return }
+            guard count > .zero else { return }
 
             let toDelete = min(count, max(1, Int((Double(count) * fraction).rounded(.toNearestOrAwayFromZero))))
 
