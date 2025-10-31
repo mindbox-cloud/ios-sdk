@@ -39,6 +39,9 @@ grep "spec.version" $podspec_file
 sed -i '' "s/\(spec.dependency 'MindboxLogger', '\)[^']*\(\'\)/\1$version\2/g" "$podspec_file"
 echo "$podspec_file dependency on MindboxLogger updated to $version."
 
+sed -i '' "s/\(spec.dependency 'MindboxCommon', '\)[^']*\(\'\)/\1$version\2/g" "$podspec_file"
+echo "$podspec_file dependency on MindboxCommon updated to $version."
+
 sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
 
 echo "'Mindbox.podspec' After updating version:"
