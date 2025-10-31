@@ -181,7 +181,7 @@ public class Mindbox: NSObject {
         }
     }
 
-    /// Deprecated. Use ``refreshNotificationPermissionStatus()`` instead.
+    /// Deprecated. Use ``Mindbox/Mindbox/refreshNotificationPermissionStatus()`` instead.
     ///
     /// This method is kept for backward compatibility. The `granted` argument is ignored.
     /// The SDK reads the current system authorization status and, if it differs
