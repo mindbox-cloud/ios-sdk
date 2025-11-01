@@ -22,6 +22,7 @@ if [[ ! $current_branch =~ ^(release|support)/[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; 
 fi
 
 version=$1
+common_dependency_version=${2:-$version}  # Use second parameter if provided, otherwise fallback to version
 
 #Add changelog to the index and create a commit
 podspec_file="Mindbox.podspec"
@@ -38,6 +39,9 @@ grep "spec.version" $podspec_file
 
 sed -i '' "s/\(spec.dependency 'MindboxLogger', '\)[^']*\(\'\)/\1$version\2/g" "$podspec_file"
 echo "$podspec_file dependency on MindboxLogger updated to $version."
+
+sed -i '' "s/\(spec.dependency 'MindboxCommon', '\)[^']*\(\'\)/\1$common_dependency_version\2/g" "$podspec_file"
+echo "$podspec_file dependency on MindboxCommon updated to $common_dependency_version."
 
 sed -i '' "s/^\([[:space:]]*spec.version[[:space:]]*=[[:space:]]*\"\).*\(\"$\)/\1$version\2/" $podspec_file
 
@@ -97,4 +101,3 @@ if ! git push origin $current_branch; then
     echo "Failed to push changes to the origin $current_branch"
     exit 1
 fi
-
