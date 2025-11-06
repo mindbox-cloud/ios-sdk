@@ -76,7 +76,7 @@ final class AppDelegate: MindboxAppDelegate {
                 if let error = error {
                     print("NotificationsRequestAuthorization failed with error: \(error.localizedDescription)")
                 }
-                Mindbox.shared.notificationsRequestAuthorization(granted: granted)
+                Mindbox.shared.refreshNotificationPermissionStatus()
             }
         }
     }
