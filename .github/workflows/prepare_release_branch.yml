@@ -10,7 +10,7 @@ jobs:
   extract_version:
     if: github.event.created
     name: Extract Version
-    runs-on: macos-15
+    runs-on: macos-26
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
@@ -26,7 +26,7 @@ jobs:
           
   bump_version:
     name: Bump Version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: extract_version
     outputs:
       version2: ${{ steps.bump.outputs.version2 }}
@@ -44,7 +44,7 @@ jobs:
           
   check_sdk_version:
     name: Check SDK Version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: bump_version
     steps:
       - name: Checkout code

@@ -60,7 +60,7 @@ jobs:
 
   bump_and_branch:
     name: Create release branch & bump version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: validate-branches
     outputs:
       release_branch: ${{ steps.bump.outputs.release_branch }}
@@ -92,7 +92,7 @@ jobs:
 
   check_sdk_version:
     name: Check SDK Version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: bump_and_branch
     steps:
       - name: Checkout the release branch
