@@ -9,7 +9,6 @@ import UIKit
 
 @available(iOS 13.0, *)
 open class MindboxSceneDelegate: UIResponder, UIWindowSceneDelegate {
-    open var window: UIWindow?
 
     open func scene(
         _ scene: UIScene,
@@ -17,7 +16,6 @@ open class MindboxSceneDelegate: UIResponder, UIWindowSceneDelegate {
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         Mindbox.shared.track(.launchScene(connectionOptions))
-        guard (scene as? UIWindowScene) != nil else { return }
     }
 
     open func scene(

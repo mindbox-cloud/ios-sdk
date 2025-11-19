@@ -21,8 +21,8 @@ jobs:
     - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
   build:
-    runs-on: macos-15
-    timeout-minutes: 15
+    runs-on: macos-26
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@v5
     - uses: maxim-lobanov/setup-xcode@v1

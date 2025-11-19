@@ -6,6 +6,9 @@ on:
       release_version:
         description: 'Release version (e.g. 1.2.3 or 1.2.3-rc)'
         required: true
+      mindbox_common_version:
+        description: 'MindboxCommon version (defaults to release_version)'
+        required: false
       source_branch:
         description: 'Create branch from'
         required: true
@@ -57,7 +60,7 @@ jobs:
 
   bump_and_branch:
     name: Create release branch & bump version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: validate-branches
     outputs:
       release_branch: ${{ steps.bump.outputs.release_branch }}
@@ -72,6 +75,7 @@ jobs:
         id: bump
         run: |
           VERSION="${{ github.event.inputs.release_version }}"
+          VERSION_COMMON="${{ github.event.inputs.mindbox_common_version }}"
           SRC="${{ github.event.inputs.source_branch }}"
           REL="release/$VERSION"
 
@@ -79,17 +83,16 @@ jobs:
           git checkout -b "$REL"
 
           echo "→ Running bump script on $REL"
-          ./.github/git-release-branch-create.sh "$VERSION"
+          ./.github/git-release-branch-create.sh "$VERSION" "$VERSION_COMMON"
 
           echo "release_branch=$REL" >> $GITHUB_OUTPUT
 
       - name: Push release branch
-        run: |
-          git push origin "${{ steps.bump.outputs.release_branch }}"
+        run: git push origin "${{ steps.bump.outputs.release_branch }}"
 
   check_sdk_version:
     name: Check SDK Version
-    runs-on: macos-15
+    runs-on: macos-26
     needs: bump_and_branch
     steps:
       - name: Checkout the release branch

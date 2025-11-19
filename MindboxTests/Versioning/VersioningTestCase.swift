@@ -78,37 +78,33 @@ class VersioningTestCase: XCTestCase {
         }
     }
 
-    func testInfoUpdateVersioningByRequestAuthorization() {
+    @available(*, deprecated, message: "Suppress `deprecated` notificationsRequestAuthorization(granted:) warning")
+    func testInfoUpdateVersioningByDeprecatedMethod() {
+        setupCyclicStatusProvider()
         initConfiguration(delay: .default)
 
         self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
-        makeMockSequentialCall(limit: infoUpdateLimit) { index in
-            Mindbox.shared.notificationsRequestAuthorization(granted: index % 2 == 0)
+        makeMockSequentialCall(limit: infoUpdateLimit) { _ in
+            Mindbox.shared.notificationsRequestAuthorization(granted: true)
         }
 
-        delay(of: .default)
+        verifyVersioning(limit: infoUpdateLimit)
+    }
+    
+    func testInfoUpdateVersioningByRefreshNotificationPermissionStatus() {
+        setupCyclicStatusProvider()
+        initConfiguration(delay: .default)
 
-        do {
-            let events = try self.databaseRepository.query(fetchLimit: infoUpdateLimit)
-            XCTAssertNotEqual(events.count, 0)
-            XCTAssertEqual(events.count, infoUpdateLimit)
+        self.guaranteedDeliveryManager.canScheduleOperations = false
+        let infoUpdateLimit = 50
 
-            events.forEach({
-                XCTAssertTrue($0.type == .infoUpdated)
-            })
-            events
-                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
-                .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
-                .enumerated()
-                .makeIterator()
-                .forEach { offset, element in
-                    XCTAssertEqual(offset + 1, element.version, "Element version mismatch at offset \(offset + 1)")
-                }
-        } catch {
-            XCTFail(error.localizedDescription)
+        makeMockSequentialCall(limit: infoUpdateLimit) { _ in
+            Mindbox.shared.refreshNotificationPermissionStatus()
         }
+
+        verifyVersioning(limit: infoUpdateLimit)
     }
 }
 
@@ -226,5 +222,42 @@ private extension VersioningTestCase {
         }
 
         wait(for: [delayExpectation], timeout: of.timeInterval * 2)
+    }
+    
+    /// Sets up CyclicUNAuthorizationStatusProvider for versioning tests.
+    /// Must use .container scope (singleton) to preserve state between calls.
+    func setupCyclicStatusProvider() {
+        MBInject.container.register(
+            UNAuthorizationStatusProviding.self,
+            scope: .container
+        ) {
+            let seq: [UNAuthorizationStatus] = [.authorized, .denied]
+            return CyclicUNAuthorizationStatusProvider(sequence: seq)
+        }
+    }
+    
+    /// Verifies that events are properly versioned with sequential version numbers.
+    func verifyVersioning(limit: Int, file: StaticString = #file, line: UInt = #line) {
+        delay(of: .default)
+
+        do {
+            let events = try self.databaseRepository.query(fetchLimit: limit)
+            XCTAssertNotEqual(events.count, 0, file: file, line: line)
+            XCTAssertEqual(events.count, limit, file: file, line: line)
+
+            events.forEach({
+                XCTAssertTrue($0.type == .infoUpdated, file: file, line: line)
+            })
+            events
+                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
+                .enumerated()
+                .makeIterator()
+                .forEach { offset, element in
+                    XCTAssertEqual(offset + 1, element.version, "Element version mismatch at offset \(offset + 1)", file: file, line: line)
+                }
+        } catch {
+            XCTFail(error.localizedDescription, file: file, line: line)
+        }
     }
 }

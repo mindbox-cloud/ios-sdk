@@ -181,9 +181,26 @@ public class Mindbox: NSObject {
         }
     }
 
-    /// Use this method to notify Mindbox for notification request authorization changes.
+    /// Deprecated. Use ``Mindbox/Mindbox/refreshNotificationPermissionStatus()`` instead.
+    ///
+    /// This method is kept for backward compatibility. The `granted` argument is ignored.
+    /// The SDK reads the current system authorization status and, if it differs
+    /// from the last known value, sends an update to the backend.
+    @available(*, deprecated, message: "Use refreshNotificationPermissionStatus() instead.", renamed: "refreshNotificationPermissionStatus()")
     public func notificationsRequestAuthorization(granted: Bool) {
-        coreController?.checkNotificationStatus(granted: granted)
+        coreController?.checkNotificationStatus()
+    }
+    
+    /// Checks the current system authorization status for push notifications
+    /// and reports any changes to Mindbox.
+    ///
+    /// The SDK retrieves the current `UNAuthorizationStatus` from
+    /// `UNUserNotificationCenter`, compares it with the last known value,
+    /// and, if it has changed, sends the update to the backend.
+    /// 
+    /// - Important: This method does **not** prompt the system permission alert.
+    public func refreshNotificationPermissionStatus() {
+        coreController?.checkNotificationStatus()
     }
 
     /**

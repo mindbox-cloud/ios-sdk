@@ -7,10 +7,10 @@
 //
 
 import Foundation
-import UIKit
+import UserNotifications
 @testable import Mindbox
 
-class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
+final class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
 
     func getStatus(result: @escaping (Bool) -> Void) {
         result(status.rawValue == UNAuthorizationStatus.authorized.rawValue)
@@ -20,5 +20,24 @@ class MockUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
 
     init(status: UNAuthorizationStatus) {
         self.status = status
+    }
+}
+
+final class CyclicUNAuthorizationStatusProvider: UNAuthorizationStatusProviding {
+    private let sequence: [UNAuthorizationStatus]
+    private var index = 0
+
+    init(sequence: [UNAuthorizationStatus]) {
+        precondition(!sequence.isEmpty, "Sequence must not be empty")
+        self.sequence = sequence
+    }
+
+    func getStatus(result: @escaping (Bool) -> Void) {
+        let current = sequence[index % sequence.count]
+        index += 1
+
+        var granted: [UNAuthorizationStatus] = [.authorized]
+        if #available(iOS 12.0, *) { granted.append(.provisional) }
+        result(granted.contains(current))
     }
 }
