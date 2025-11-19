@@ -9,7 +9,7 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
         with:
@@ -56,7 +56,7 @@ jobs:
 
   publish-MindboxLogger:
     needs: [set-tag]
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
         with:
@@ -81,7 +81,7 @@ jobs:
       
   check-podspecs-with-retry:
     needs: [delay]
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
         with:
@@ -102,7 +102,7 @@ jobs:
           
   publish-MindboxNotifications:
     needs: [check-podspecs-with-retry]
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
         with:
@@ -129,7 +129,7 @@ jobs:
   
   publish-Mindbox:
     needs: [second-delay]
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
         with:
