@@ -1,490 +1,417 @@
 //
-//  InappMapperTests.swift
+//  InappRemainingTargetingTests.swift
 //  MindboxTests
 //
 //  Created by vailence on 14.11.2024.
-//  Copyright © 2024 Mindbox. All rights reserved.
+//  Updated to Swift Testing by Serge & ChatGPT
 //
 
-import XCTest
+import Testing
 @testable import Mindbox
 
-// swiftlint:disable all
+fileprivate enum InappTargetingConfig: String, Configurable {
+    typealias DecodeType = ConfigResponse
 
-class InappRemainingTargetingTests: XCTestCase {
+    case oneTargeting                  = "1-Targeting"
+    case threeFourFiveRequests         = "3-4-5-TargetingRequests"
+    case sevenRequests                 = "7-TargetingRequests"
+    case eightRequests                 = "8-TargetingRequests"
+    case nineRequests                  = "9-TargetingRequests"
+    case fourteenRequests              = "14-TargetingRequests"
+    case fifteenTargeting              = "15-Targeting"
+    case sixteenSeventeenRequests      = "16-17-TargetingRequests"
+    case twentySevenRequests           = "27-TargetingRequests"
+    case thirtyOneRequests             = "31-TargetingRequests"
+    case fortyFourTargeting            = "44-Targeting"
+    case fortyFiveTargeting            = "45-Targeting"
+    case fortySixTargeting             = "46-Targeting"
+}
 
-    private var targetingChecker: InAppTargetingCheckerProtocol!
-    private var mockDataFacade: MockInAppConfigurationDataFacade!
-    private var mapper: InappMapperProtocol!
-    private var persistenceStorage: PersistenceStorage!
+// MARK: - Suite
 
-    override func setUp() {
-        super.setUp()
+@Suite("In-app remaining targeting tests")
+struct InappRemainingTargetingTests {
+
+    private var targetingChecker: InAppTargetingCheckerProtocol
+    private var mockDataFacade: MockInAppConfigurationDataFacade
+    private var mapper: InappMapperProtocol
+    private var persistenceStorage: PersistenceStorage
+
+    init() {
+        // Common test DI configuration
+        TestConfiguration.configure()
+
+        // Clear temporary in-app state
         SessionTemporaryStorage.shared.erase()
-        targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+
+        self.targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
 
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-        try! databaseRepository.erase()
+        try? databaseRepository.erase()
 
-        mockDataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade
-        mockDataFacade.cleanTargetingArray()
+        // We require the mock facade here. If DI is misconfigured, fail fast.
+        let facade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)
+        guard let mock = facade as? MockInAppConfigurationDataFacade else {
+            fatalError("Expected MockInAppConfigurationDataFacade from DI. Check test DI configuration.")
+        }
+        self.mockDataFacade = mock
+        self.mockDataFacade.cleanTargetingArray()
 
-        mapper = DI.injectOrFail(InappMapperProtocol.self)
-        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        persistenceStorage.shownDatesByInApp = [:]
+        self.mapper = DI.injectOrFail(InappMapperProtocol.self)
+        self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        self.persistenceStorage.shownDatesByInApp = [:]
     }
 
-    override func tearDown() {
-        mockDataFacade = nil
-        targetingChecker = nil
-        mapper = nil
-        super.tearDown()
+    // MARK: - Helpers
+
+    /// Wrapper around `mapper.handleInapps` that exposes async/await
+    /// instead of using XCTestExpectation-based callbacks.
+    @discardableResult
+    private func handleInapps(
+        event: ApplicationEvent?,
+        config: ConfigResponse
+    ) async -> InAppFormData? {
+        await withCheckedContinuation { continuation in
+            mapper.handleInapps(event, config) { formData in
+                continuation.resume(returning: formData)
+            }
+        }
     }
 
-    func test_InappTrue_NotShownBefore() { // 1
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+    /// Asserts that the given in-app ID is present in `showArray`
+    /// and therefore is expected to be shown.
+    private func assertTargetingShows(id: String) {
+        #expect(
+            mockDataFacade.showArray.contains(id),
+            "ID \(id) is expected to be shown"
+        )
+    }
 
-        let config = getConfig(name: "1-Targeting")
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
+    /// Asserts that the collected targeting IDs match the expected set,
+    /// ignoring ordering.
+    private func assertTargetingEquals(ids: [String]) {
+        #expect(
+            Set(mockDataFacade.targetingArray) == Set(ids),
+            "Targeting array does not match the expected IDs. Expected: \(ids), actual: \(mockDataFacade.targetingArray)"
+        )
+    }
+
+    /// Small helper to wait until the async logic populates `targetingArray`.
+    /// Preferable to hard-coded `DispatchQueue.main.asyncAfter` in XCTest-style tests.
+    private func waitForTargetingArray(
+        expectedCount: Int,
+        timeout: TimeInterval = 5
+    ) async {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if mockDataFacade.targetingArray.count >= expectedCount {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
         }
 
-        wait(for: [expectation], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1"])
+        Issue.record("Timed out waiting for targetingArray to reach count \(expectedCount). Current: \(mockDataFacade.targetingArray)")
     }
 
-    func test_TwoInappsTrue_NotShownBefore() { // 3
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+    // MARK: - Tests
 
-        let config = getConfig(name: "3-4-5-TargetingRequests")
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1", "2"])
+    @Test("True in-app, not shown before → should be shown", .tags(.remainingTargeting))
+    func inappTrue_notShownBefore() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1"])
     }
 
-    func test_TwoInappsTrue_FirstShownBefore() { // 4
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+    @Test("Two true in-apps, none shown before", .tags(.remainingTargeting))
+    func twoInappsTrue_notShownBefore() async throws {
+        let config = try InappTargetingConfig.threeFourFiveRequests.getConfig()
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1", "2"])
+    }
+
+    @Test("Two true in-apps, first already shown", .tags(.remainingTargeting))
+    func twoInappsTrue_firstShownBefore() async throws {
+        let config = try InappTargetingConfig.threeFourFiveRequests.getConfig()
         persistenceStorage.shownDatesByInApp = ["1": [Date()]]
-        let config = getConfig(name: "3-4-5-TargetingRequests")
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
 
-        wait(for: [expectation], timeout: 1)
-        targetingShow(id: "2")
-        targetingEqual(ids: ["2", "1"])
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "2")
+        assertTargetingEquals(ids: ["2", "1"])
     }
 
-    func test_TwoInappsTrue_BothAlreadyShown() { // 5
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        persistenceStorage.shownDatesByInApp = ["1": [Date()],
+    @Test("Two true in-apps, both already shown", .tags(.remainingTargeting))
+    func twoInappsTrue_bothAlreadyShown() async throws {
+        let config = try InappTargetingConfig.threeFourFiveRequests.getConfig()
+        persistenceStorage.shownDatesByInApp = [
+            "1": [Date()],
             "2": [Date()]
         ]
 
-        let config = getConfig(name: "3-4-5-TargetingRequests")
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
+        await handleInapps(event: nil, config: config)
 
-        wait(for: [expectation], timeout: 1)
-        XCTAssertTrue(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
-        targetingEqual(ids: ["1", "2"])
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+        assertTargetingEquals(ids: ["1", "2"])
     }
 
-    func test_OneInappGeo_NotShownBefore() { // 7
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "7-TargetingRequests")
+    @Test("Single geo in-app, not shown before", .tags(.remainingTargeting, .geoTargeting))
+    func oneInappGeo_notShownBefore() async throws {
+        let config = try InappTargetingConfig.sevenRequests.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
 
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1"])
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1"])
     }
 
-    func test_OneTrue_OneGeo_NotShownBefore() { // 8
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "8-TargetingRequests")
+    @Test("One true + one geo in-app, none shown before", .tags(.remainingTargeting, .geoTargeting))
+    func oneTrue_oneGeo_notShownBefore() async throws {
+        let config = try InappTargetingConfig.eightRequests.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
 
-        wait(for: [expectation], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1", "2"])
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1", "2"])
     }
 
-    func test_TrueShown_OperationTest_TrueNotShown_Geo_Segment() { // 9
-        let expectationForsendRemainingInappsTargeting = XCTestExpectation(description: "Waiting for first sendRemainingInappsTargeting to complete")
-        let expectationForhandleInapps = XCTestExpectation(description: "Waiting for handleInapps to complete")
+    @Test("True shown, operation and geo+segment in-app", .tags(.remainingTargeting, .geoTargeting))
+    func trueShown_operationTest_trueNotShown_geo_segment() async throws {
+        let config = try InappTargetingConfig.nineRequests.getConfig()
+
         persistenceStorage.shownDatesByInApp = ["1": [Date()]]
-
-        let config = getConfig(name: "9-TargetingRequests")
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
 
-        targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)]
+        targetingChecker.checkedSegmentations = [
+            .init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)
+        ]
         SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
 
-        mapper.handleInapps(nil, config) { _ in
-            expectationForsendRemainingInappsTargeting.fulfill()
-        }
-
-        wait(for: [expectationForsendRemainingInappsTargeting], timeout: 1)
-
-        targetingShow(id: "3")
-        targetingEqual(ids: ["3", "1", "4", "5"])
+        // First pass (no event)
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "3")
+        assertTargetingEquals(ids: ["3", "1", "4", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
+        // Second pass (with event)
         let event = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(event, config) { _ in
-            expectationForhandleInapps.fulfill()
-        }
-
-        wait(for: [expectationForhandleInapps], timeout: 1)
-        targetingEqual(ids: ["2"])
+        await handleInapps(event: event, config: config)
+        assertTargetingEquals(ids: ["2"])
     }
 
-    func test_OneInappTwoOperations1OR2() { // 14
-        let expectationTest = XCTestExpectation(description: "Operation 1")
-        let expectationTest2 = XCTestExpectation(description: "Operation 2")
+    @Test("One in-app for operation 1 OR 2", .tags(.remainingTargeting))
+    func oneInapp_twoOperations1Or2() async throws {
+        let config = try InappTargetingConfig.fourteenRequests.getConfig()
 
-        let config = getConfig(name: "14-TargetingRequests")
-        let testEvent = ApplicationEvent(name: "1", model: nil)
-        mapper.handleInapps(testEvent, config) { _ in
-            expectationTest.fulfill()
-        }
-
-        wait(for: [expectationTest], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1"])
+        // Operation "1"
+        let event1 = ApplicationEvent(name: "1", model: nil)
+        await handleInapps(event: event1, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let test2Event = ApplicationEvent(name: "2", model: nil)
-        mapper.handleInapps(test2Event, config) { _ in
-            expectationTest2.fulfill()
-        }
-
-        wait(for: [expectationTest2], timeout: 1)
-        targetingEqual(ids: ["1"])
+        // Operation "2"
+        let event2 = ApplicationEvent(name: "2", model: nil)
+        await handleInapps(event: event2, config: config)
+        assertTargetingEquals(ids: ["1"])
     }
 
-    func test_OneInappForOperationAndSegment() { // 15
-        let expectationTest = XCTestExpectation(description: "Operation 1")
-        let expectationTest2 = XCTestExpectation(description: "Operation 2")
+    @Test("One in-app for operation and segment", .tags(.remainingTargeting))
+    func oneInapp_forOperationAndSegment() async throws {
+        let config = try InappTargetingConfig.fifteenTargeting.getConfig()
 
-        targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)]
+        targetingChecker.checkedSegmentations = [
+            .init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)
+        ]
         SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
 
-        let config = getConfig(name: "15-Targeting")
-        mapper.handleInapps(nil, config) { _ in
-            expectationTest.fulfill()
-        }
-
-        wait(for: [expectationTest], timeout: 1)
-        targetingEqual(ids: [])
+        // No event
+        await handleInapps(event: nil, config: config)
+        assertTargetingEquals(ids: [])
 
         mockDataFacade.cleanTargetingArray()
 
-        let test2Event = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(test2Event, config) { _ in
-            expectationTest2.fulfill()
-        }
-
-        wait(for: [expectationTest2], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1"])
+        // With event "test"
+        let event = ApplicationEvent(name: "test", model: nil)
+        await handleInapps(event: event, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1"])
     }
 
-    func test_True_OperationTest() { // 16
-        let expectationTrue = XCTestExpectation(description: "True")
-        let expectationTest = XCTestExpectation(description: "Operation test")
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+    @Test("True + operation test", .tags(.remainingTargeting))
+    func true_operationTest() async throws {
+        let config = try InappTargetingConfig.sixteenSeventeenRequests.getConfig()
 
-        let config = getConfig(name: "16-17-TargetingRequests")
-        mapper.handleInapps(nil, config) { _ in
-            expectationTrue.fulfill()
-        }
-
-        wait(for: [expectationTrue], timeout: 1)
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1"])
+        // First, true-targeting in-app
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1"])
 
         mockDataFacade.cleanTargetingArray()
 
+        // First "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(testEvent, config) { _ in
-            expectationTest.fulfill()
-        }
+        await handleInapps(event: testEvent, config: config)
+        assertTargetingEquals(ids: ["2"])
 
-        wait(for: [expectationTest], timeout: 1)
-        targetingEqual(ids: ["2"])
+        mockDataFacade.cleanTargetingArray()
+
+        // Second "test" event
+        let testAgain = ApplicationEvent(name: "test", model: nil)
+        await handleInapps(event: testAgain, config: config)
+        assertTargetingEquals(ids: ["2"])
+    }
+
+    @Test("Unknown in-app + lower SDK + true in-app", .tags(.remainingTargeting))
+    func unknownInapp_lowerSDK_trueInapp() async throws {
+        let config = try InappTargetingConfig.twentySevenRequests.getConfig()
+        await handleInapps(event: nil, config: config)
+        assertTargetingEquals(ids: ["3"])
+    }
+
+    // MARK: - A/B tests (31-TargetingRequests)
+
+    @Test("Four in-apps with A/B tests, device variant 1", .tags(.remainingTargeting, .abTesting))
+    func fourInappsWithABTests_variant1() async throws {
+        let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
+        persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // variant 1
+        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+        SessionTemporaryStorage.shared.geoRequestCompleted = true
+
+        // Initial request
+        await handleInapps(event: nil, config: config)
+
+        // We wait until the facade accumulates targetings (previously there was asyncAfter + expectation here)
+        await waitForTargetingArray(expectedCount: 3)
+        assertTargetingEquals(ids: ["1", "2", "3"])
+
+        mockDataFacade.cleanTargetingArray()
+
+        // Event "test" → A/B-result
+        let testEventAgain = ApplicationEvent(name: "test", model: nil)
+        await handleInapps(event: testEventAgain, config: config)
+        assertTargetingEquals(ids: ["4"])
+    }
+
+    @Test("Four in-apps with A/B tests, device variant 2", .tags(.remainingTargeting, .abTesting))
+    func fourInappsWithABTests_variant2() async throws {
+        let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
+        persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // variant 2
+        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+        SessionTemporaryStorage.shared.geoRequestCompleted = true
+
+        await handleInapps(event: nil, config: config)
+        await waitForTargetingArray(expectedCount: 3)
+        assertTargetingEquals(ids: ["1", "2", "3"])
 
         mockDataFacade.cleanTargetingArray()
 
         let testEventAgain = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(testEventAgain, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 1)
-        targetingEqual(ids: ["2"])
+        await handleInapps(event: testEventAgain, config: config)
+        assertTargetingEquals(ids: ["4"])
     }
 
-    func test_unknownInapp_lowerSDK_trueInapp() { // 27
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "27-TargetingRequests")
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1)
-        targetingEqual(ids: ["3"])
-    }
-
-    func test_fourInappsWithABTests_variant1() { // 31 - 1
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-
-        let config = getConfig(name: "31-TargetingRequests")
-        persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // 1 вариант
+    @Test("Four in-apps with A/B tests, device variant 3", .tags(.remainingTargeting, .abTesting))
+    func fourInappsWithABTests_variant3() async throws {
+        let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
+        persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // variant 3
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
 
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
-            expectationForArray.fulfill()
-        })
-
-        wait(for: [expectationForArray], timeout: 3)
-        targetingEqual(ids: ["1", "2", "3"])
+        await handleInapps(event: nil, config: config)
+        await waitForTargetingArray(expectedCount: 3)
+        assertTargetingEquals(ids: ["1", "2", "3"])
 
         mockDataFacade.cleanTargetingArray()
 
         let testEventAgain = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(testEventAgain, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 3)
-        targetingEqual(ids: ["4"])
+        await handleInapps(event: testEventAgain, config: config)
+        assertTargetingEquals(ids: ["4"])
     }
 
-    func test_A_fourInappsWithABTests_variant2() { // 31 - 2
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
+    // MARK: - Geo + operations (44 / 45 / 46)
 
-        let config = getConfig(name: "31-TargetingRequests")
-        persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // 2 вариант
+    @Test("geoFitOrTest + test + test2, initial geo", .tags(.remainingTargeting, .geoTargeting))
+    func geoFitOrTest_operationTest_operationTest_operationTest2_geo() async throws {
+        let config = try InappTargetingConfig.fortyFourTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
 
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
-            expectationForArray.fulfill()
-        })
-
-        wait(for: [expectationForArray], timeout: 3)
-        targetingEqual(ids: ["1", "2", "3"])
+        // Initial geo-based call
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let testEventAgain = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(testEventAgain, config) { _ in
-
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 3)
-        targetingEqual(ids: ["4"])
-    }
-
-    func test_fourInappsWithABTests_variant3() {
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
-        let expectationForArray = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-
-        let config = getConfig(name: "31-TargetingRequests")
-
-        persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // 3 вариант
-        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
-            expectationForArray.fulfill()
-        })
-
-        wait(for: [expectationForArray], timeout: 3)
-        targetingEqual(ids: ["1", "2", "3"])
-
-        mockDataFacade.cleanTargetingArray()
-
-        let testEventAgain = ApplicationEvent(name: "test", model: nil)
-        mapper.handleInapps(testEventAgain, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 2)
-        targetingEqual(ids: ["4"])
-    }
-
-    func test_geoFitOrTest_OperationTest_OperationTest_OperationTest2_Geo() { // 44
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "44-Targeting")
-        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1)
-
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1", "5"])
-
-        mockDataFacade.cleanTargetingArray()
-
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
-
-        mapper.handleInapps(testEvent, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 1)
-        targetingEqual(ids: ["1", "2", "3"])
+        await handleInapps(event: testEvent, config: config)
+        assertTargetingEquals(ids: ["1", "2", "3"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let expectationTest2 = XCTestExpectation(description: "Operation test2 ")
+        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
-
-        mapper.handleInapps(testEvent2, config) { _ in
-            expectationTest2.fulfill()
-        }
-
-        wait(for: [expectationTest2], timeout: 1)
-        targetingEqual(ids: ["4"])
+        await handleInapps(event: testEvent2, config: config)
+        assertTargetingEquals(ids: ["4"])
     }
 
-    func test_geo_OperationTest_OperationTest_OperationTest2_geoFitOrTest() { // 45
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "45-Targeting")
+    @Test("geo + test + test2 + geoFitOrTest", .tags(.remainingTargeting, .geoTargeting))
+    func geo_operationTest_operationTest_operationTest2_geoFitOrTest() async throws {
+        let config = try InappTargetingConfig.fortyFiveTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
 
-        wait(for: [expectation], timeout: 1)
-
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1", "5"])
+        // Initial geo-based call
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
-
-        mapper.handleInapps(testEvent, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 1)
-        targetingEqual(ids: ["2", "3", "5"])
+        await handleInapps(event: testEvent, config: config)
+        assertTargetingEquals(ids: ["2", "3", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let expectationTest2 = XCTestExpectation(description: "Operation test2 ")
+        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
-
-        mapper.handleInapps(testEvent2, config) { _ in
-            expectationTest2.fulfill()
-        }
-
-        wait(for: [expectationTest2], timeout: 1)
-        targetingEqual(ids: ["4"])
+        await handleInapps(event: testEvent2, config: config)
+        assertTargetingEquals(ids: ["4"])
     }
 
-    func test_geoFitOrTest_OperationTest_OperationTest_OperationTest2_geoFitOrTest() { // 46
-        let expectation = XCTestExpectation(description: "Waiting for sendRemainingInappsTargeting to complete")
-        let config = getConfig(name: "46-Targeting")
+    @Test("geoFitOrTest + test + test2 + geoFitOrTest", .tags(.remainingTargeting, .geoTargeting))
+    func geoFitOrTest_operationTest_operationTest_operationTest2_geoFitOrTest() async throws {
+        let config = try InappTargetingConfig.fortySixTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestCompleted = true
-        mapper.handleInapps(nil, config) { _ in
-            expectation.fulfill()
-        }
 
-        wait(for: [expectation], timeout: 1)
-
-        targetingShow(id: "1")
-        targetingEqual(ids: ["1", "5"])
+        // Initial geo-based call
+        await handleInapps(event: nil, config: config)
+        assertTargetingShows(id: "1")
+        assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let expectationTestAgain = XCTestExpectation(description: "Operation test again")
+        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
-
-        mapper.handleInapps(testEvent, config) { _ in
-            expectationTestAgain.fulfill()
-        }
-
-        wait(for: [expectationTestAgain], timeout: 1)
-        targetingEqual(ids: ["1", "2", "3", "5"])
+        await handleInapps(event: testEvent, config: config)
+        assertTargetingEquals(ids: ["1", "2", "3", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        let expectationTest2 = XCTestExpectation(description: "Operation test2 ")
+        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
-
-        mapper.handleInapps(testEvent2, config) { _ in
-            expectationTest2.fulfill()
-        }
-
-        wait(for: [expectationTest2], timeout: 1)
-        targetingEqual(ids: ["4"])
-    }
-
-    private func getConfig(name: String) -> ConfigResponse {
-        let bundle = Bundle(for: InappRemainingTargetingTests.self)
-        let fileURL = bundle.url(forResource: name, withExtension: "json")!
-        let data = try! Data(contentsOf: fileURL)
-        return try! JSONDecoder().decode(ConfigResponse.self, from: data)
-    }
-}
-
-private extension InappRemainingTargetingTests {
-    func targetingShow(id: String) {
-        XCTAssertTrue(mockDataFacade.showArray.contains(id), "ID \(id) is expected to be shown")
-    }
-
-    func targetingEqual(ids: [String]) {
-        XCTAssertEqual(Set(mockDataFacade.targetingArray), Set(ids), "Targeting array does not match the expected IDs")
+        await handleInapps(event: testEvent2, config: config)
+        assertTargetingEquals(ids: ["4"])
     }
 }
