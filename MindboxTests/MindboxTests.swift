@@ -364,6 +364,8 @@ private extension MindboxTests {
         coreController.initialization(configuration: configuration1)
         waitForInitializationFinished()
         DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
+        
+        try? databaseRepository.erase()
     }
     
     func generalNegativeTestPushTokenKeepalive(with pushTokenKeepalive: String?, file: StaticString = #file, line: UInt = #line) {
