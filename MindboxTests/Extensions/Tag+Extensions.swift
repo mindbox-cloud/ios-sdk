@@ -19,4 +19,8 @@ extension Tag {
     @Tag static var decoding: Self
     
     @Tag static var inAppSchedule: Self
+    
+    @Tag static var remainingTargeting: Self
+    @Tag static var abTesting: Self
+    @Tag static var geoTargeting: Self
 }
