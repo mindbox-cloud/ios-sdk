@@ -9,59 +9,88 @@
 import XCTest
 @testable import Mindbox
 
-// swiftlint:disable force_unwrapping
+fileprivate enum TrueTargetingConfig: String, Configurable {
+    typealias DecodeType = TrueTargeting
+
+    case valid = "TrueTargetingModelValid"
+}
+
+fileprivate enum AndTargetingConfig: String, Configurable {
+    typealias DecodeType = AndTargeting
+
+    case valid = "AndTargetingModelValid"
+    case fromTrueTargeting = "TrueTargetingModelValid"
+}
+
+fileprivate enum OrTargetingConfig: String, Configurable {
+    typealias DecodeType = OrTargeting
+
+    case valid = "OrTargetingModelValid"
+    case fromTrueTargeting = "TrueTargetingModelValid"
+}
+
+fileprivate enum SegmentTargetingConfig: String, Configurable {
+    typealias DecodeType = SegmentTargeting
+
+    case valid = "SegmentTargetingModelValid"
+    case fromOrTargeting = "OrTargetingModelValid"
+}
+
+fileprivate enum CityTargetingConfig: String, Configurable {
+    typealias DecodeType = CityTargeting
+
+    case valid = "GeoTargetingModelValid"
+    case fromSegmentTargeting = "SegmentTargetingModelValid"
+}
+
+fileprivate enum VisitTargetingConfig: String, Configurable {
+    typealias DecodeType = VisitTargeting
+
+    case valid = "VisitTargetingModelValid"
+    case negativeValue = "VisitTargetingNegativeValueModel"
+    case fromSegmentTargeting = "SegmentTargetingModelValid"
+}
+
+fileprivate enum TargetingConfig: String, Configurable {
+    typealias DecodeType = Targeting
+
+    case allTargetingsValid = "AllTargetingsModelValid"
+    case unknown = "UnknownTargetingsModel"
+}
 
 final class InAppResponseModelTests: XCTestCase {
 
-    func test_TrueTargeting_valid() {
-        let config: TrueTargeting? = getConfig(resourceName: "TrueTargetingModelValid")
+    func test_TrueTargeting_valid() throws {
+        let config = try TrueTargetingConfig.valid.getConfig()
         XCTAssertNotNil(config)
     }
 
     func test_AndTargeting_invalid() {
-        let config: AndTargeting? = getConfig(resourceName: "TrueTargetingModelValid")
-        XCTAssertNil(config)
+        XCTAssertThrowsError(try AndTargetingConfig.fromTrueTargeting.getConfig())
     }
 
-    func test_AndTargeting_valid() {
-        guard let config: AndTargeting = getConfig(resourceName: "AndTargetingModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
-
-        XCTAssertNotNil(config)
+    func test_AndTargeting_valid() throws {
+        let config = try AndTargetingConfig.valid.getConfig()
         XCTAssertFalse(config.nodes.isEmpty)
         XCTAssertEqual(config.nodes.count, 1)
     }
 
     func test_OrTargeting_invalid() {
-        let config: OrTargeting? = getConfig(resourceName: "TrueTargetingModelValid")
-        XCTAssertNil(config)
+        XCTAssertThrowsError(try OrTargetingConfig.fromTrueTargeting.getConfig())
     }
 
-    func test_OrTargeting_valid() {
-        guard let config: OrTargeting = getConfig(resourceName: "AndTargetingModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
-
-        XCTAssertNotNil(config)
+    func test_OrTargeting_valid() throws {
+        let config = try OrTargetingConfig.valid.getConfig()
         XCTAssertFalse(config.nodes.isEmpty)
         XCTAssertEqual(config.nodes.count, 1)
     }
 
     func test_SegmentTargeting_invalid() {
-        let config: SegmentTargeting? = getConfig(resourceName: "OrTargetingModelValid")
-        XCTAssertNil(config)
+        XCTAssertThrowsError(try SegmentTargetingConfig.fromOrTargeting.getConfig())
     }
 
-    func test_SegmentTargeting_valid() {
-        guard let config: SegmentTargeting = getConfig(resourceName: "SegmentTargetingModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
-
-        XCTAssertNotNil(config)
+    func test_SegmentTargeting_valid() throws {
+        let config = try SegmentTargetingConfig.valid.getConfig()
         XCTAssertEqual(config.kind, .positive)
         XCTAssertEqual(config.segmentationExternalId, "00000000-0000-0000-0000-000000000001")
         XCTAssertEqual(config.segmentationInternalId, "00000000-0000-0000-0000-000000000002")
@@ -69,17 +98,11 @@ final class InAppResponseModelTests: XCTestCase {
     }
 
     func test_CityTargeting_invalid() {
-        let config: CityTargeting? = getConfig(resourceName: "SegmentTargetingModelValid")
-        XCTAssertNil(config)
+        XCTAssertThrowsError(try CityTargetingConfig.fromSegmentTargeting.getConfig())
     }
 
-    func test_CityTargeting_valid() {
-        guard let config: CityTargeting = getConfig(resourceName: "GeoTargetingModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
-
-        XCTAssertNotNil(config)
+    func test_CityTargeting_valid() throws {
+        let config = try CityTargetingConfig.valid.getConfig()
         XCTAssertEqual(config.kind, .negative)
         XCTAssertFalse(config.ids.isEmpty)
         XCTAssertEqual(config.ids.count, 3)
@@ -87,83 +110,53 @@ final class InAppResponseModelTests: XCTestCase {
     }
 
     func test_visit_targeting_valid() throws {
-        guard let config: VisitTargeting = getConfig(resourceName: "VisitTargetingModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
-
-        XCTAssertNotNil(config)
+        let config = try VisitTargetingConfig.valid.getConfig()
         XCTAssertEqual(config.kind, .equals)
         XCTAssertEqual(config.value, 1)
     }
-    
-    func test_visit_targeting_negativeValue_false() throws {
-        guard let config: VisitTargeting = getConfig(resourceName: "VisitTargetingNegativeValueModel") else {
-            XCTAssertTrue(true)
-            return
-        }
-        
-        XCTAssertFalse(false)
+
+    func test_visit_targeting_negativeValue_throws() {
+        XCTAssertThrowsError(try VisitTargetingConfig.negativeValue.getConfig())
     }
 
     func test_visit_targeting_invalid() {
-        let config: VisitTargeting? = getConfig(resourceName: "SegmentTargetingModelValid")
-        XCTAssertNil(config)
+        XCTAssertThrowsError(try VisitTargetingConfig.fromSegmentTargeting.getConfig())
     }
 
-    func test_CommonTargeting_valid() {
-        guard let andJSON: Targeting = getConfig(resourceName: "AllTargetingsModelValid") else {
-            assertionFailure("config is Nil")
-            return
-        }
+    func test_CommonTargeting_valid() throws {
+        let config = try TargetingConfig.allTargetingsValid.getConfig()
 
-        XCTAssertNotNil(andJSON)
-
-        switch andJSON {
+        switch config {
         case .and(let andTargeting):
             XCTAssertEqual(andTargeting.nodes.count, 1)
-            let orJSON = andTargeting.nodes[0]
-            switch orJSON {
+            let firstNode = andTargeting.nodes[0]
+            switch firstNode {
             case .or(let orTargeting):
                 XCTAssertEqual(orTargeting.nodes.count, 3)
-                let geoJSON = orTargeting.nodes[2]
-                switch geoJSON {
+                let thirdNode = orTargeting.nodes[2]
+                switch thirdNode {
                 case .city(let cityTargeting):
                     XCTAssertEqual(cityTargeting.kind, .negative)
                     XCTAssertEqual(cityTargeting.ids, [1, 2, 3])
                 default:
-                    assertionFailure("Wrong type")
+                    XCTFail("Expected city targeting")
                 }
             default:
-                assertionFailure("Wrong type")
+                XCTFail("Expected or targeting")
             }
         default:
-            assertionFailure("Wrong type")
+            XCTFail("Expected and targeting")
         }
     }
 
-    func test_unknown_targeting() {
-        guard let unknownConfig: Targeting = getConfig(resourceName: "UnknownTargetingsModel") else {
-            assertionFailure("config is Nil")
-            return
-        }
+    func test_unknown_targeting() throws {
+        let config = try TargetingConfig.unknown.getConfig()
 
-        switch unknownConfig {
+        switch config {
         case .unknown:
-            XCTAssertTrue(true)
+            break
         default:
-            assertionFailure("Wrong type")
-        }
-    }
-
-    private func getConfig<T: Decodable>(resourceName: String) -> T? {
-        do {
-            let bundle = Bundle(for: InAppResponseModelTests.self)
-            let fileURL = bundle.url(forResource: resourceName, withExtension: "json")!
-            let data = try Data(contentsOf: fileURL)
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            return nil
+            XCTFail("Expected unknown targeting")
         }
     }
 }
