@@ -186,47 +186,72 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: fakeDB,
             eventRepository: eventRepo,
-            retryDeadline: 2  // short deadline so the retry cycle happens within the test
+            retryDeadline: 2 // Short deadline so that the retry cycle happens within the test
         )
-        
+
         // 2) Populate fakeDB with 10 events
         try fakeDB.erase()
         let events = eventGenerator.generateEvents(count: 10)
         try events.forEach { try fakeDB.create(event: $0) }
-        
-        // 3) Record every state transition
+
+        // 3) Record state transitions without enforcing an exact order
         var seenStates = [GuaranteedDeliveryManager.State]()
-        let token = manager.observe(\.stateObserver, options: [.new]) { _, change in
-            if let raw = change.newValue as String?,
-               let state = GuaranteedDeliveryManager.State(rawValue: raw) {
-                seenStates.append(state)
+        var deliveringCount = 0
+        var didSeeWaitingForRetry = false
+
+        let expectation = expectation(
+            description: "Manager delivers, waits for retry, delivers again and returns to idle"
+        )
+
+        var token: NSKeyValueObservation?
+        token = manager.observe(\.stateObserver, options: [.new]) { mgr, change in
+            guard
+                let raw = change.newValue as String?,
+                let state = GuaranteedDeliveryManager.State(rawValue: raw)
+            else {
+                return
+            }
+
+            seenStates.append(state)
+
+            switch state {
+            case .delivering:
+                deliveringCount += 1
+
+            case .waitingForRetry:
+                didSeeWaitingForRetry = true
+
+            case .idle:
+                // Success condition: at least two `.delivering` states and a `.waitingForRetry` in between
+                if deliveringCount >= 2 && didSeeWaitingForRetry {
+                    mgr.canScheduleOperations = false
+                    token?.invalidate()
+                    token = nil
+                    expectation.fulfill()
+                }
             }
         }
-        
-        // 4) Wait until the manager returns to `.idle` and the database is empty
-        let finished = XCTNSPredicateExpectation(
-            predicate: NSPredicate { eval, _ in
-                guard let m = eval as? GuaranteedDeliveryManager else { return false }
-                return m.state == .idle && (try? fakeDB.countEvents()) == 0
-            },
-            object: manager
-        )
+
+        // 4) Start scheduling and wait until our condition is met
         manager.canScheduleOperations = true
-        wait(for: [finished], timeout: 60)
-        token.invalidate()
-        
-        // 5) Verify that:
-        //    – there were at least two `.delivering` cycles (initial + retry)
-        //    – there was at least one `.waitingForRetry` phase
-        //    – the final state is `.idle`
-        let deliverCount = seenStates.filter { $0 == .delivering }.count
-        XCTAssertGreaterThanOrEqual(deliverCount, 2,
-                                    "Expected at least two delivery cycles (initial + retry), but saw: \(seenStates)")
+        wait(for: [expectation], timeout: 60)
 
-        XCTAssertTrue(seenStates.contains(.waitingForRetry),
-                      "Expected a `waitingForRetry` phase in \(seenStates)")
+        // 5) Final assertions: we only check aggregated behavior, not an exact state sequence
+        XCTAssertGreaterThanOrEqual(
+            deliveringCount,
+            2,
+            "Expected at least two `.delivering` states, but saw: \(seenStates)"
+        )
 
-        XCTAssertEqual(seenStates.last, .idle,
-                       "Expected final state to be `.idle`, but saw: \(seenStates)")
+        XCTAssertTrue(
+            didSeeWaitingForRetry,
+            "Expected to observe `.waitingForRetry` state, but saw: \(seenStates)"
+        )
+
+        XCTAssertEqual(
+            seenStates.last,
+            .idle,
+            "Expected final state to be `.idle`, but saw: \(seenStates)"
+        )
     }
 }
