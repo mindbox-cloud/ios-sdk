@@ -30,7 +30,6 @@ class InappConfigurationTests {
         self.stub = InAppConfigStub()
     }
 
-    @available(iOS 13.0, *)
     @Test("Первый инапп не подходит по версии SDK.", .tags(.sdkVersion))
     func first_inapp_doesnt_fit_sdk_return_second() async throws {
         let response = try InappConfig.configWithTwoInapps.getConfig()
@@ -46,7 +45,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "2")
     }
 
-    @available(iOS 13.0, *)
     @Test("Оба инаппа подходят по версии SDK.", .tags(.sdkVersion))
     func first_inapp_fit_sdk_return_first() async throws {
         let response = try InappConfig.configWithTwoInapps.getConfig()
@@ -62,7 +60,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("Оба инаппа не подходят по версии SDK.", .tags(.sdkVersion))
     func both_inapps_doesnt_fit_sdk_return_nil() async throws {
         let response = try InappConfig.configWithTwoInapps.getConfig()
@@ -78,7 +75,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("Пустое имя кастомной операции", .tags(.customOperations))
     func operation_empty_operatonName() async throws {
         let response = try InappConfig.configWithOperationInapp.getConfig()
@@ -92,7 +88,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("Неправильное имя кастомной операции", .tags(.customOperations))
     func operation_wrong_operatonName() async throws {
         let response = try InappConfig.configWithOperationInapp.getConfig()
@@ -106,7 +101,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("Правильное имя кастомной операции", .tags(.customOperations))
     func operation_right_operatonName() async throws {
         let response = try InappConfig.configWithOperationInapp.getConfig()
@@ -120,7 +114,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("Пустая модель в viewCategory", .tags(.categoryID))
     func categoryID_emptyModel_returnNil() async throws {
         let response = try stub.getCategoryID_Substring()
@@ -136,7 +129,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
     
-    @available(iOS 13.0, *)
     @Test("Неправильное системное имя операции по продукту", .tags(.productID))
     func wrongSystemName_product_return_nil() async throws {
         let response = try stub.getProductID_substring()
@@ -154,7 +146,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("Правильное системное имя операции по продукту", .tags(.productID))
     func wrongSystemName_product_return_inapp() async throws {
         let response = try stub.getProductID_substring()
@@ -172,7 +163,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
     
-    @available(iOS 13.0, *)
     @Test("Неправильное системное имя операции по категории", .tags(.categoryID))
     func wrongSystemName_category_true() async throws {
         let response = try stub.getCategoryID_Substring()
@@ -191,7 +181,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
     
-    @available(iOS 13.0, *)
     @Test("Правильное системное имя операции по категории", .tags(.categoryID))
     func correctSystemName_category_true() async throws {
         let response = try stub.getCategoryID_Substring()
@@ -210,7 +199,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Правильный substring категории", .tags(.categoryID))
     func categoryID_substring_true() async throws {
         let response = try stub.getCategoryID_Substring()
@@ -229,7 +217,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Неправильный substring категории", .tags(.categoryID))
     func categoryID_substring_false() async throws {
         let response = try stub.getCategoryID_Substring()
@@ -248,7 +235,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Правильный notSubstring категории", .tags(.categoryID))
     func categoryID_notSubstring_true() async throws {
         let response = try stub.getCategoryID_notSubstring()
@@ -267,7 +253,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Неправильный notSubstring категории", .tags(.categoryID))
     func categoryID_notSubstring_false() async throws {
         let response = try stub.getCategoryID_notSubstring()
@@ -286,7 +271,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("3.Правильный startWith категории", .tags(.categoryID))
     func categoryID_startWith_true() async throws {
         let response = try stub.getCategoryID_startWith()
@@ -305,7 +289,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("3.Неправильный startWith категории", .tags(.categoryID))
     func categoryID_startWith_false() async throws {
         let response = try stub.getCategoryID_startWith()
@@ -324,7 +307,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("4.Правильный endWith категории", .tags(.categoryID))
     func categoryID_endWith_true() async throws {
         let response = try stub.getCategoryID_endWith()
@@ -343,7 +325,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("4.Неправильный endWith категории", .tags(.categoryID))
     func categoryID_endWith_false() async throws {
         let response = try stub.getCategoryID_endWith()
@@ -362,7 +343,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Правильная categoryID_In any", .tags(.categoryID_In))
     func categoryID_In_any_true() async throws {
         let response = try stub.getCategoryIDIn_Any()
@@ -379,7 +359,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Неправильная categoryID_In any", .tags(.categoryID_In))
     func categoryID_In_any_false() async throws {
         let response = try stub.getCategoryIDIn_Any()
@@ -396,7 +375,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Правильная categoryID_In none", .tags(.categoryID_In))
     func categoryID_In_none_true() async throws {
         let response = try stub.getCategoryIDIn_None()
@@ -413,7 +391,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Неправильная categoryID_In none", .tags(.categoryID_In))
     func categoryID_In_none_false() async throws {
         let response = try stub.getCategoryIDIn_None()
@@ -430,7 +407,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("Пустая модель productID", .tags(.productID))
     func productID_emptyModel_nil() async throws {
         let response = try stub.getProductID_substring()
@@ -445,7 +421,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Правильный productID substring", .tags(.productID))
     func productID_substring_true() async throws {
         let response = try stub.getProductID_substring()
@@ -463,7 +438,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Неправильный productID substring", .tags(.productID))
     func productID_substring_false() async throws {
         let response = try stub.getProductID_substring()
@@ -481,7 +455,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Правильный productID notSubstring", .tags(.productID))
     func productID_notSubstring_true() async throws {
         let response = try stub.getProductID_notSubstring()
@@ -499,7 +472,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Неправильный productID notSubstring", .tags(.productID))
     func productID_notSubstring_false() async throws {
         let response = try stub.getProductID_notSubstring()
@@ -517,7 +489,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("3.Правильный productID startWith", .tags(.productID))
     func productID_startWith_true() async throws {
         let response = try stub.getProductID_startWith()
@@ -535,7 +506,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("3.Неправильный productID startWith", .tags(.productID))
     func productID_startWith_false() async throws {
         let response = try stub.getProductID_startWith()
@@ -553,7 +523,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("4.Правильный productID endWith", .tags(.productID))
     func productID_endWith_true() async throws {
         let response = try stub.getProductID_endWith()
@@ -571,7 +540,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("4.Неправильный productID endWith", .tags(.productID))
     func productID_endWith_false() async throws {
         let response = try stub.getProductID_endWith()
@@ -589,7 +557,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Правильный productSegment positive", .tags(.productSegment))
     func productSegment_positive_true() async throws {
         let response = try stub.getProductSegment_Positive()
@@ -619,7 +586,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("1.Неправильный productSegment positive", .tags(.productSegment))
     func productSegment_positive_false() async throws {
         let response = try stub.getProductSegment_Positive()
@@ -636,7 +602,6 @@ class InappConfigurationTests {
         #expect(result == nil)
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Правильный productSegment negative", .tags(.productSegment))
     func productSegment_negative_true() async throws {
         let response = try stub.getProductSegment_Negative()
@@ -658,7 +623,6 @@ class InappConfigurationTests {
         #expect(result?.inAppId == "1")
     }
 
-    @available(iOS 13.0, *)
     @Test("2.Неправильный productSegment negative", .tags(.productSegment))
     func productSegment_negateive_false() async throws {
         let response = try stub.getProductSegment_Negative()

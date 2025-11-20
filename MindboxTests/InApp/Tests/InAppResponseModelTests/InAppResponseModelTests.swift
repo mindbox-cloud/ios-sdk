@@ -6,7 +6,7 @@
 //  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import Mindbox
 
 fileprivate enum TrueTargetingConfig: String, Configurable {
@@ -58,105 +58,139 @@ fileprivate enum TargetingConfig: String, Configurable {
     case unknown = "UnknownTargetingsModel"
 }
 
-final class InAppResponseModelTests: XCTestCase {
+@Suite("InApp Response Model Tests")
+struct InAppResponseModelTests {
 
-    func test_TrueTargeting_valid() throws {
-        let config = try TrueTargetingConfig.valid.getConfig()
-        XCTAssertNotNil(config)
+    @Test("TrueTargeting decodes from valid JSON")
+    func trueTargeting_valid() throws {
+        try TrueTargetingConfig.valid.getConfig()
     }
 
-    func test_AndTargeting_invalid() {
-        XCTAssertThrowsError(try AndTargetingConfig.fromTrueTargeting.getConfig())
+    @Test("AndTargeting fails to decode from TrueTargeting JSON")
+    func andTargeting_invalid() {
+        #expect(throws: (any Error).self) {
+            try AndTargetingConfig.fromTrueTargeting.getConfig()
+        }
     }
 
-    func test_AndTargeting_valid() throws {
+    @Test("AndTargeting decodes from valid JSON")
+    func andTargeting_valid() throws {
         let config = try AndTargetingConfig.valid.getConfig()
-        XCTAssertFalse(config.nodes.isEmpty)
-        XCTAssertEqual(config.nodes.count, 1)
+        #expect(!config.nodes.isEmpty)
+        #expect(config.nodes.count == 1)
     }
 
-    func test_OrTargeting_invalid() {
-        XCTAssertThrowsError(try OrTargetingConfig.fromTrueTargeting.getConfig())
+    @Test("OrTargeting fails to decode from TrueTargeting JSON")
+    func orTargeting_invalid() {
+        #expect(throws: (any Error).self) {
+            try OrTargetingConfig.fromTrueTargeting.getConfig()
+        }
     }
 
-    func test_OrTargeting_valid() throws {
+    @Test("OrTargeting decodes from valid JSON")
+    func orTargeting_valid() throws {
         let config = try OrTargetingConfig.valid.getConfig()
-        XCTAssertFalse(config.nodes.isEmpty)
-        XCTAssertEqual(config.nodes.count, 1)
+        #expect(!config.nodes.isEmpty)
+        #expect(config.nodes.count == 1)
     }
 
-    func test_SegmentTargeting_invalid() {
-        XCTAssertThrowsError(try SegmentTargetingConfig.fromOrTargeting.getConfig())
+    @Test("SegmentTargeting fails to decode from OrTargeting JSON")
+    func segmentTargeting_invalid() {
+        #expect(throws: (any Error).self) {
+            try SegmentTargetingConfig.fromOrTargeting.getConfig()
+        }
     }
 
-    func test_SegmentTargeting_valid() throws {
+    @Test("SegmentTargeting decodes from valid JSON")
+    func segmentTargeting_valid() throws {
         let config = try SegmentTargetingConfig.valid.getConfig()
-        XCTAssertEqual(config.kind, .positive)
-        XCTAssertEqual(config.segmentationExternalId, "00000000-0000-0000-0000-000000000001")
-        XCTAssertEqual(config.segmentationInternalId, "00000000-0000-0000-0000-000000000002")
-        XCTAssertEqual(config.segmentExternalId, "00000000-0000-0000-0000-000000000003")
+        #expect(config.kind == .positive)
+        #expect(config.segmentationExternalId == "00000000-0000-0000-0000-000000000001")
+        #expect(config.segmentationInternalId == "00000000-0000-0000-0000-000000000002")
+        #expect(config.segmentExternalId == "00000000-0000-0000-0000-000000000003")
     }
 
-    func test_CityTargeting_invalid() {
-        XCTAssertThrowsError(try CityTargetingConfig.fromSegmentTargeting.getConfig())
+    @Test("CityTargeting fails to decode from SegmentTargeting JSON")
+    func cityTargeting_invalid() {
+        #expect(throws: (any Error).self) {
+            try CityTargetingConfig.fromSegmentTargeting.getConfig()
+        }
     }
 
-    func test_CityTargeting_valid() throws {
+    @Test("CityTargeting decodes from valid JSON")
+    func cityTargeting_valid() throws {
         let config = try CityTargetingConfig.valid.getConfig()
-        XCTAssertEqual(config.kind, .negative)
-        XCTAssertFalse(config.ids.isEmpty)
-        XCTAssertEqual(config.ids.count, 3)
-        XCTAssertEqual(config.ids[0], 1)
+        #expect(config.kind == .negative)
+        #expect(!config.ids.isEmpty)
+        #expect(config.ids.count == 3)
+        #expect(config.ids[0] == 1)
     }
 
-    func test_visit_targeting_valid() throws {
+    @Test("VisitTargeting decodes from valid JSON")
+    func visitTargeting_valid() throws {
         let config = try VisitTargetingConfig.valid.getConfig()
-        XCTAssertEqual(config.kind, .equals)
-        XCTAssertEqual(config.value, 1)
+        #expect(config.kind == .equals)
+        #expect(config.value == 1)
     }
 
-    func test_visit_targeting_negativeValue_throws() {
-        XCTAssertThrowsError(try VisitTargetingConfig.negativeValue.getConfig())
+    @Test("VisitTargeting with negative value fails to decode")
+    func visitTargeting_negativeValue_throws() {
+        #expect(throws: (any Error).self) {
+            try VisitTargetingConfig.negativeValue.getConfig()
+        }
     }
 
-    func test_visit_targeting_invalid() {
-        XCTAssertThrowsError(try VisitTargetingConfig.fromSegmentTargeting.getConfig())
+    @Test("VisitTargeting fails to decode from SegmentTargeting JSON")
+    func visitTargeting_invalid() {
+        #expect(throws: (any Error).self) {
+            try VisitTargetingConfig.fromSegmentTargeting.getConfig()
+        }
     }
 
-    func test_CommonTargeting_valid() throws {
+    @Test("Composite Targeting (And/Or/City) decodes correctly from AllTargetingsModelValid")
+    func commonTargeting_valid() throws {
         let config = try TargetingConfig.allTargetingsValid.getConfig()
 
         switch config {
         case .and(let andTargeting):
-            XCTAssertEqual(andTargeting.nodes.count, 1)
+            #expect(andTargeting.nodes.count == 1)
             let firstNode = andTargeting.nodes[0]
+
             switch firstNode {
             case .or(let orTargeting):
-                XCTAssertEqual(orTargeting.nodes.count, 3)
+                #expect(orTargeting.nodes.count == 3)
                 let thirdNode = orTargeting.nodes[2]
+
                 switch thirdNode {
                 case .city(let cityTargeting):
-                    XCTAssertEqual(cityTargeting.kind, .negative)
-                    XCTAssertEqual(cityTargeting.ids, [1, 2, 3])
+                    #expect(cityTargeting.kind == .negative)
+                    #expect(cityTargeting.ids == [1, 2, 3])
                 default:
-                    XCTFail("Expected city targeting")
+                    Issue.record("Expected city targeting")
+                    return
                 }
+
             default:
-                XCTFail("Expected or targeting")
+                Issue.record("Expected or targeting")
+                return
             }
+
         default:
-            XCTFail("Expected and targeting")
+            Issue.record("Expected and targeting")
+            return
         }
     }
 
-    func test_unknown_targeting() throws {
+    @Test("Unknown targeting decodes to .unknown case")
+    func unknown_targeting() throws {
         let config = try TargetingConfig.unknown.getConfig()
 
         switch config {
         case .unknown:
             break
         default:
-            XCTFail("Expected unknown targeting")
+            Issue.record("Expected unknown targeting")
+            return
         }
     }
 }
