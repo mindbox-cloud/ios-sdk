@@ -21,7 +21,7 @@ class Fastfile: LaneFile {
              scheme: "Mindbox",
              onlyTesting: ["MindboxTests"],
              clean: true,
-             xcodebuildFormatter: "xcpretty",
+             xcodebuildFormatter: "xcbeautify",
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
