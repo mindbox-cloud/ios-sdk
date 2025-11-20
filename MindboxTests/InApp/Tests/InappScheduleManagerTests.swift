@@ -6,300 +6,320 @@
 //  Copyright © 2025 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import Mindbox
 
-final class InappScheduleManagerTests: XCTestCase {
-    
-    private var scheduleManager: InappScheduleManager!
-    private var presentationManagerMock: InAppPresentationManagerMock!
-    private var trackingServiceMock: InAppTrackingServiceMock!
-    
-    override func setUp() {
-        super.setUp()
+@Suite("In-app schedule manager tests")
+struct InappScheduleManagerTests {
+
+    private var scheduleManager: InappScheduleManager
+    private var presentationManagerMock: InAppPresentationManagerMock
+    private var trackingServiceMock: InAppTrackingServiceMock
+
+    init() {
+        TestConfiguration.configure()
+
         presentationManagerMock = InAppPresentationManagerMock()
         trackingServiceMock = InAppTrackingServiceMock()
-        
+
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
             trackingService: trackingServiceMock
         )
-        
+
         SessionTemporaryStorage.shared.erase()
     }
-    
-    override func tearDown() {
-        scheduleManager = nil
-        presentationManagerMock = nil
-        trackingServiceMock = nil
-        SessionTemporaryStorage.shared.erase()
-        super.tearDown()
-    }
-    
-    func test_scheduleInapp_noDelay_schedulesCorrectly() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - No delay
+
+    @Test("In-app without delay is scheduled and presented immediately", .tags(.inAppSchedule))
+    func scheduleInapp_noDelay_schedulesCorrectly() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp)
-        
+
         var presentationTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
+
             let storedInapp = self.scheduleManager.inappsByPresentationTime.values.first?.first?.inapp
-            XCTAssertEqual(storedInapp?.inAppId, inapp.inAppId)
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 0)
+            #expect(storedInapp?.inAppId == inapp.inAppId)
+            #expect(self.presentationManagerMock.presentCallsCount == 0)
         }
-        
-        XCTAssertNotNil(presentationTime)
-        
-        let expectation = expectation(description: "In-app without delay is presented")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp.inAppId)
-            XCTAssertTrue(self.scheduleManager.inappsByPresentationTime.isEmpty)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 1.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
     }
-    
-    func test_scheduleInApp_smallDelay_schedulesCorrectly() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - Small delay (logic-level, not real time)
+
+    @Test("In-app with small delay is scheduled and presented when eligible", .tags(.inAppSchedule))
+    func scheduleInApp_smallDelay_schedulesCorrectly() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
         scheduleManager.scheduleInApp(inapp)
-        
+
         var presentationTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
+
             let storedInapp = self.scheduleManager.inappsByPresentationTime.values.first?.first?.inapp
-            XCTAssertEqual(storedInapp?.inAppId, inapp.inAppId)
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 0)
+            #expect(storedInapp?.inAppId == inapp.inAppId)
+            #expect(self.presentationManagerMock.presentCallsCount == 0)
         }
-        
-        XCTAssertNotNil(presentationTime)
-        
-        let expectation = expectation(description: "In-app with small delay is presented when eligible")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp.inAppId)
-            XCTAssertTrue(self.scheduleManager.inappsByPresentationTime.isEmpty)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 1.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
     }
-    
-    func test_scheduleMultipleInapp_smallDelay_schedulesCorrectly() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - Multiple in-apps with different times
+
+    @Test("Multiple in-apps with different delays schedule correctly and only earliest is shown", .tags(.inAppSchedule))
+    func scheduleMultipleInapp_smallDelay_schedulesCorrectly() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp1 = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
         let inapp2 = createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03")
         let inapp3 = createInAppFormData(id: "3", isPriority: true, delayTime: "00:00:04")
-        
+
         scheduleManager.scheduleInApp(inapp1)
         scheduleManager.scheduleInApp(inapp2)
         scheduleManager.scheduleInApp(inapp3)
-        
+
         var entries: [(time: TimeInterval, inappId: String)] = []
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 3)
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 0)
-            
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 3)
+            #expect(self.presentationManagerMock.presentCallsCount == 0)
+
             for (time, scheduled) in self.scheduleManager.inappsByPresentationTime {
                 guard let first = scheduled.first else {
-                    XCTFail("Expected at least one scheduled in-app for time \(time)")
+                    Issue.record("Expected at least one scheduled in-app for time \(time)")
                     continue
                 }
                 entries.append((time: time, inappId: first.inapp.inAppId))
             }
         }
-        
-        XCTAssertEqual(entries.count, 3)
-        
-        let earliest = entries.min(by: { $0.time < $1.time })
-        XCTAssertEqual(earliest?.inappId, inapp1.inAppId)
-        
+
+        #expect(entries.count == 3)
+
+        let earliest = entries.min { $0.time < $1.time }
+        #expect(earliest?.inappId == inapp1.inAppId)
+
         let sortedTimes = entries.map { $0.time }.sorted()
         for time in sortedTimes {
             scheduleManager.showEligibleInapp(time)
         }
-        
-        let expectation = expectation(description: "Only first scheduled in-app is presented")
-        scheduleManager.queue.async {
-            XCTAssertTrue(self.scheduleManager.inappsByPresentationTime.isEmpty)
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp1.inAppId)
-            expectation.fulfill()
+
+        scheduleManager.queue.sync {
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp1.inAppId)
         }
-        
-        wait(for: [expectation], timeout: 1.0)
     }
-    
-    func test_scheduleInapp_successShow_recordsDeleted() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - Records deletion
+
+    @Test("Scheduled entries are removed after in-app is shown", .tags(.inAppSchedule))
+    func scheduleInapp_successShow_recordsDeleted() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
         scheduleManager.scheduleInApp(inapp)
-        
+
         var presentationTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertFalse(self.scheduleManager.inappsByPresentationTime.isEmpty)
+            #expect(!self.scheduleManager.inappsByPresentationTime.isEmpty)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
         }
-        
-        XCTAssertNotNil(presentationTime)
-        
-        let expectation = expectation(description: "Scheduled in-app entries are removed after presentation")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertTrue(self.scheduleManager.inappsByPresentationTime.isEmpty)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 5.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
     }
-    
-    func test_scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
-        XCTAssertEqual(scheduleManager.getDelay("invalid_time"), 0)
-        
+
+    // MARK: - Invalid / zero delay
+
+    @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))
+    func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
+        #expect(scheduleManager.getDelay("invalid_time") == 0)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp)
-        
+
         var presentationTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
         }
-        
-        XCTAssertNotNil(presentationTime)
-        
-        let expectation = expectation(description: "In-app with invalid delay uses default delay and is presented")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp.inAppId)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 5.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+        }
     }
-    
-    func test_scheduleInapp_withZeroDelay_schedulesCorrectly() {
-        XCTAssertEqual(scheduleManager.getDelay("00:00:00"), 0)
-        
+
+    @Test("Zero delay is treated as immediate and in-app is presented", .tags(.inAppSchedule))
+    func scheduleInapp_withZeroDelay_schedulesCorrectly() {
+        #expect(scheduleManager.getDelay("00:00:00") == 0)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp)
-        
+
         var presentationTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
         }
-        
-        XCTAssertNotNil(presentationTime)
-        
-        let expectation = expectation(description: "In-app with zero delay is presented")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp.inAppId)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 1.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+        }
     }
-    
-    func test_scheduleInApp_withLargeDelay_schedulesCorrectly() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - Large delay
+
+    @Test("In-app with large delay is scheduled at expected time", .tags(.inAppSchedule))
+    func scheduleInApp_withLargeDelay_schedulesCorrectly() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "01:00:00")
         let start = Date().timeIntervalSince1970
-        
+
         scheduleManager.scheduleInApp(inapp)
-        
+
         var scheduledTime: TimeInterval?
+
         scheduleManager.queue.sync {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             scheduledTime = self.scheduleManager.inappsByPresentationTime.keys.first
+
             let scheduledInapp = self.scheduleManager.inappsByPresentationTime.values.first?.first?.inapp
-            XCTAssertEqual(scheduledInapp?.inAppId, inapp.inAppId)
+            #expect(scheduledInapp?.inAppId == inapp.inAppId)
         }
-        
-        XCTAssertNotNil(scheduledTime)
-        
+
+        guard let time = scheduledTime else {
+            Issue.record("Expected scheduledTime to be set")
+            return
+        }
+
         let oneHour: TimeInterval = 3600
         let tolerance: TimeInterval = 1
-        
-        XCTAssertGreaterThanOrEqual(scheduledTime!, start + oneHour - tolerance)
-        XCTAssertLessThanOrEqual(scheduledTime!, start + oneHour + tolerance)
+
+        #expect(time >= start + oneHour - tolerance)
+        #expect(time <= start + oneHour + tolerance)
     }
-    
-    func test_multipleInAppsOnSameTime_schedulesCorrectly_shownSecond() {
-        XCTAssertTrue(scheduleManager.inappsByPresentationTime.isEmpty)
-        
+
+    // MARK: - Priority selection
+
+    @Test("When multiple in-apps share the same time, priority one is shown", .tags(.inAppSchedule))
+    func multipleInAppsOnSameTime_schedulesCorrectly_shownSecond() {
+        #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+
         let inapp1 = createInAppFormData(id: "1", isPriority: false, delayTime: "01:00:00")
         let inapp2 = createInAppFormData(id: "2", isPriority: true, delayTime: "01:00:00")
         let inapp3 = createInAppFormData(id: "3", isPriority: false, delayTime: "01:00:00")
-        
+
         scheduleManager.scheduleInApp(inapp1)
-        
+
         var presentationTime: TimeInterval?
-        var baseTimer: DispatchSourceTimer?
-        
+
         scheduleManager.queue.sync {
-            guard let entry = self.scheduleManager.inappsByPresentationTime.first,
-                  let existingScheduled = entry.value.first else {
-                XCTFail("Expected one scheduled in-app")
+            guard
+                let entry = self.scheduleManager.inappsByPresentationTime.first,
+                let existingScheduled = entry.value.first
+            else {
+                Issue.record("Expected one scheduled in-app")
                 return
             }
-            
+
             presentationTime = entry.key
-            baseTimer = existingScheduled.timer
-            
+
             let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: existingScheduled.timer)
             let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: existingScheduled.timer)
             let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: existingScheduled.timer)
-            
-            self.scheduleManager.inappsByPresentationTime[presentationTime!] = [
+
+            self.scheduleManager.inappsByPresentationTime[entry.key] = [
                 scheduledInapp1,
                 scheduledInapp2,
                 scheduledInapp3
             ]
         }
-        
-        XCTAssertNotNil(presentationTime)
-        XCTAssertNotNil(baseTimer)
-        
-        let expectation = expectation(description: "Priority in-app is presented when several scheduled at the same time")
-        scheduleManager.showEligibleInapp(presentationTime!)
-        
-        scheduleManager.queue.async {
-            XCTAssertEqual(self.scheduleManager.inappsByPresentationTime.count, 0)
-            XCTAssertEqual(self.presentationManagerMock.presentCallsCount, 1)
-            XCTAssertEqual(self.presentationManagerMock.receivedInAppUIModel?.inAppId, inapp2.inAppId)
-            expectation.fulfill()
+
+        guard let time = presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
         }
-        
-        wait(for: [expectation], timeout: 7.0)
+
+        scheduleManager.showEligibleInapp(time)
+
+        scheduleManager.queue.sync {
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp2.inAppId)
+        }
     }
-    
+
+    // MARK: - Helpers
+
     private func createInAppFormData(id: String, isPriority: Bool, delayTime: String?) -> InAppFormData {
         let modalVariant = ModalFormVariant(content: createMockContent())
         let content: MindboxFormVariant = .modal(modalVariant)
         let onceFrequency = OnceFrequency(kind: .session)
         let frequency: InappFrequency = .once(onceFrequency)
-        
+
         return InAppFormData(
             inAppId: id,
             isPriority: isPriority,
@@ -310,7 +330,7 @@ final class InappScheduleManagerTests: XCTestCase {
             frequency: frequency
         )
     }
-    
+
     private func createMockContent() -> InappFormVariantContent {
         let background = ContentBackground(layers: [])
         return InappFormVariantContent(background: background, elements: nil)

@@ -17,4 +17,6 @@ extension Tag {
     @Tag static var productSegment: Self
     
     @Tag static var decoding: Self
+    
+    @Tag static var inAppSchedule: Self
 }
