@@ -61,47 +61,47 @@ fileprivate enum TargetingConfig: String, Configurable {
 @Suite("InApp Response Model Tests")
 struct InAppResponseModelTests {
 
-    @Test("TrueTargeting decodes from valid JSON")
+    @Test("TrueTargeting decodes from valid JSON", .tags(.decoding))
     func trueTargeting_valid() throws {
         try TrueTargetingConfig.valid.getConfig()
     }
 
-    @Test("AndTargeting fails to decode from TrueTargeting JSON")
+    @Test("AndTargeting fails to decode from TrueTargeting JSON", .tags(.decoding))
     func andTargeting_invalid() {
         #expect(throws: (any Error).self) {
             try AndTargetingConfig.fromTrueTargeting.getConfig()
         }
     }
 
-    @Test("AndTargeting decodes from valid JSON")
+    @Test("AndTargeting decodes from valid JSON", .tags(.decoding))
     func andTargeting_valid() throws {
         let config = try AndTargetingConfig.valid.getConfig()
         #expect(!config.nodes.isEmpty)
         #expect(config.nodes.count == 1)
     }
 
-    @Test("OrTargeting fails to decode from TrueTargeting JSON")
+    @Test("OrTargeting fails to decode from TrueTargeting JSON", .tags(.decoding))
     func orTargeting_invalid() {
         #expect(throws: (any Error).self) {
             try OrTargetingConfig.fromTrueTargeting.getConfig()
         }
     }
 
-    @Test("OrTargeting decodes from valid JSON")
+    @Test("OrTargeting decodes from valid JSON", .tags(.decoding))
     func orTargeting_valid() throws {
         let config = try OrTargetingConfig.valid.getConfig()
         #expect(!config.nodes.isEmpty)
         #expect(config.nodes.count == 1)
     }
 
-    @Test("SegmentTargeting fails to decode from OrTargeting JSON")
+    @Test("SegmentTargeting fails to decode from OrTargeting JSON", .tags(.decoding))
     func segmentTargeting_invalid() {
         #expect(throws: (any Error).self) {
             try SegmentTargetingConfig.fromOrTargeting.getConfig()
         }
     }
 
-    @Test("SegmentTargeting decodes from valid JSON")
+    @Test("SegmentTargeting decodes from valid JSON", .tags(.decoding))
     func segmentTargeting_valid() throws {
         let config = try SegmentTargetingConfig.valid.getConfig()
         #expect(config.kind == .positive)
@@ -110,14 +110,14 @@ struct InAppResponseModelTests {
         #expect(config.segmentExternalId == "00000000-0000-0000-0000-000000000003")
     }
 
-    @Test("CityTargeting fails to decode from SegmentTargeting JSON")
+    @Test("CityTargeting fails to decode from SegmentTargeting JSON", .tags(.decoding))
     func cityTargeting_invalid() {
         #expect(throws: (any Error).self) {
             try CityTargetingConfig.fromSegmentTargeting.getConfig()
         }
     }
 
-    @Test("CityTargeting decodes from valid JSON")
+    @Test("CityTargeting decodes from valid JSON", .tags(.decoding))
     func cityTargeting_valid() throws {
         let config = try CityTargetingConfig.valid.getConfig()
         #expect(config.kind == .negative)
@@ -126,28 +126,28 @@ struct InAppResponseModelTests {
         #expect(config.ids[0] == 1)
     }
 
-    @Test("VisitTargeting decodes from valid JSON")
+    @Test("VisitTargeting decodes from valid JSON", .tags(.decoding))
     func visitTargeting_valid() throws {
         let config = try VisitTargetingConfig.valid.getConfig()
         #expect(config.kind == .equals)
         #expect(config.value == 1)
     }
 
-    @Test("VisitTargeting with negative value fails to decode")
+    @Test("VisitTargeting with negative value fails to decode", .tags(.decoding))
     func visitTargeting_negativeValue_throws() {
         #expect(throws: (any Error).self) {
             try VisitTargetingConfig.negativeValue.getConfig()
         }
     }
 
-    @Test("VisitTargeting fails to decode from SegmentTargeting JSON")
+    @Test("VisitTargeting fails to decode from SegmentTargeting JSON", .tags(.decoding))
     func visitTargeting_invalid() {
         #expect(throws: (any Error).self) {
             try VisitTargetingConfig.fromSegmentTargeting.getConfig()
         }
     }
 
-    @Test("Composite Targeting (And/Or/City) decodes correctly from AllTargetingsModelValid")
+    @Test("Composite Targeting (And/Or/City) decodes correctly from AllTargetingsModelValid", .tags(.decoding))
     func commonTargeting_valid() throws {
         let config = try TargetingConfig.allTargetingsValid.getConfig()
 
@@ -181,7 +181,7 @@ struct InAppResponseModelTests {
         }
     }
 
-    @Test("Unknown targeting decodes to .unknown case")
+    @Test("Unknown targeting decodes to .unknown case", .tags(.decoding))
     func unknown_targeting() throws {
         let config = try TargetingConfig.unknown.getConfig()
 
