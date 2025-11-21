@@ -19,6 +19,7 @@ class Fastfile: LaneFile {
         desc("Run unit tests")
         scan(project: .userDefined(project),
              scheme: "Mindbox",
+             prelaunchSimulator: .userDefined(true),
              onlyTesting: ["MindboxTests"],
              clean: true,
              xcodebuildFormatter: "xcbeautify",
