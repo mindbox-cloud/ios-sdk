@@ -10,10 +10,14 @@ import Foundation
 
 protocol Configurable: RawRepresentable where RawValue == String {
     associatedtype DecodeType: Decodable
+    
+    @discardableResult
     func getConfig() throws -> DecodeType
 }
 
 extension Configurable {
+    
+    @discardableResult
     func getConfig() throws -> DecodeType {
         try decodeConfig(name: self.rawValue) as DecodeType
     }

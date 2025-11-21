@@ -474,7 +474,6 @@
 		F349756A2DEF2C8400BEC667 /* InappTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975692DEF2C8400BEC667 /* InappTrackingService.swift */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
-		F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */; };
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
 		F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1C12CE5F23A0053423E /* InappMapperTests.swift */; };
 		F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C32CE60CA90053423E /* 1-Targeting.json */; };
@@ -1112,7 +1111,6 @@
 		F34975692DEF2C8400BEC667 /* InappTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappTrackingService.swift; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
-		F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTestsXCTestCase.swift; sourceTree = "<group>"; };
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
 		F351F1C12CE5F23A0053423E /* InappMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapperTests.swift; sourceTree = "<group>"; };
 		F351F1C32CE60CA90053423E /* 1-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "1-Targeting.json"; sourceTree = "<group>"; };
@@ -2336,7 +2334,6 @@
 				F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */,
 				F351F1C12CE5F23A0053423E /* InappMapperTests.swift */,
 				F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */,
-				F34A89B72CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift */,
 			);
 			path = InAppConfigResponseTests;
 			sourceTree = "<group>";
@@ -4060,7 +4057,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F34A89B82CFF2889000BB3B6 /* InappConfigurationTestsXCTestCase.swift in Sources */,
 				F349753A2DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift in Sources */,
 				4766A8AE2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift in Sources */,
 				F3FEEA9F2C25AF39000E9D0F /* StubContainer.swift in Sources */,
@@ -4457,6 +4453,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = MindboxTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -4475,6 +4472,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = MindboxTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
