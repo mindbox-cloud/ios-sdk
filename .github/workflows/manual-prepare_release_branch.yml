@@ -38,7 +38,7 @@ jobs:
     needs: validate-input
     steps:
       - name: Checkout minimal repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -66,7 +66,7 @@ jobs:
       release_branch: ${{ steps.bump.outputs.release_branch }}
     steps:
       - name: Checkout source branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.source_branch }}
           fetch-depth: 0
@@ -96,7 +96,7 @@ jobs:
     needs: bump_and_branch
     steps:
       - name: Checkout the release branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.bump_and_branch.outputs.release_branch }}
           fetch-depth: 0
