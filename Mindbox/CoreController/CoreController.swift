@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 import MindboxLogger
-import MindboxCommon
 
 final class CoreController {
     private let persistenceStorage: PersistenceStorage
@@ -27,7 +26,6 @@ final class CoreController {
     func initialization(configuration: MBConfiguration) {
 
         controllerQueue.async {
-            MindboxUtils.Stopwatch.shared.start(tag: MindboxUtils.Stopwatch.shared.INIT_SDK)
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
@@ -40,10 +38,6 @@ final class CoreController {
             } else {
                 self.repeatInitialization(with: configuration)
             }
-            
-            if let duration = MindboxUtils.Stopwatch.shared.stop(tag: MindboxUtils.Stopwatch.shared.INIT_SDK) {
-                Logger.common(message: "Mindbox SDK initialized in \(duration). Version \(MindboxCommon.shared.VERSION)", level: .info, category: .general)
-            }
 
             self.guaranteedDeliveryManager.canScheduleOperations = true
 
@@ -53,7 +47,6 @@ final class CoreController {
             Logger.common(message: "[SDK Version]: \(self.utilitiesFetcher.sdkVersion ?? "null")", level: .info, category: .general)
             Logger.common(message: "[APNS Token]: \(self.persistenceStorage.apnsToken ?? "null")", level: .info, category: .general)
             Logger.common(message: "[DeviceUUID]: \(self.persistenceStorage.deviceUUID ?? "null")", level: .info, category: .general)
-            Logger.common(message: "[CommonSdkVersion]: \(MindboxCommon.shared.VERSION_NAME)", level: .info, category: .general)
         }
     }
 
