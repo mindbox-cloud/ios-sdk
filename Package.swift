@@ -16,19 +16,14 @@ let package = Package(
             name: "MindboxNotificationsContent",
             targets: ["MindboxNotifications"])
     ],
-    dependencies: [ 
-        .package(
-            url: "https://github.com/mindbox-cloud/kmp-common-sdk-spm.git", 
-            .exact("2.14.4")
-        )
+    dependencies: [
     ],
     targets: [
         .target(
             name: "Mindbox",
             dependencies: [
                 "SDKVersionProvider",
-                "MindboxLogger",
-                .product(name: "MindboxCommon", package: "kmp-common-sdk-spm")
+                "MindboxLogger"
             ],
             path: "Mindbox",
             exclude: ["Info.plist"],

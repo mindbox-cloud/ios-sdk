@@ -90,7 +90,7 @@ final class StringExtensionsTests: XCTestCase {
         for str in testCases {
             try XCTContext.runActivity(named: "string(\(str)) parse with error") { _ in
                 XCTAssertThrowsError(try String(str).parseTimeSpanToMillis()) { error in
-                    XCTAssertEqual((error as NSError).localizedDescription, "Invalid timeSpan format")
+                    XCTAssertEqual((error as NSError).domain, "Invalid timeSpan format")
                 }
             }
         }
