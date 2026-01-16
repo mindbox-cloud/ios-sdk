@@ -1,5 +1,5 @@
 //
-//  ModalViewController.swift
+//  WebViewController.swift
 //  Mindbox
 //
 //  Created by Egor Kitselyuk on 19.03.2025.
@@ -112,7 +112,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
     }
 
-    private var transparentWebView: TransparentWebView?
+    private var transparentWebView: TransparentView?
 
     // MARK: Init
 
@@ -150,7 +150,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentWebView(frame: .zero, params: webviewLayer.params)
+                let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent())
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)
@@ -205,5 +205,15 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     @objc
     private func onTapDimmedView() {
         onClose()
+    }
+    
+    private func createUserAgent() -> String {
+        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
+        let appVersion = utilitiesFetcher.appVerson ?? "unknown"
+        let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
+
+        return "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
     }
 }
