@@ -387,6 +387,7 @@
 		F30005442CFF3F7D004BE915 /* ABTestStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30005432CFF3F7D004BE915 /* ABTestStubs.swift */; };
 		F306291A2BD27D7500EF6609 /* InappFrequencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */; };
 		F30654BB2F1A83520058808C /* MindboxTestWebViewFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30654BA2F1A83520058808C /* MindboxTestWebViewFacade.swift */; };
+		F30654BD2F1A83DD0058808C /* MindboxWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30654BC2F1A83DD0058808C /* MindboxWebView.swift */; };
 		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
 		F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */; };
@@ -1025,6 +1026,7 @@
 		F30005432CFF3F7D004BE915 /* ABTestStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestStubs.swift; sourceTree = "<group>"; };
 		F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyTests.swift; sourceTree = "<group>"; };
 		F30654BA2F1A83520058808C /* MindboxTestWebViewFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxTestWebViewFacade.swift; sourceTree = "<group>"; };
+		F30654BC2F1A83DD0058808C /* MindboxWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxWebView.swift; sourceTree = "<group>"; };
 		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "3-4-5-TargetingRequests.json"; sourceTree = "<group>"; };
@@ -2574,6 +2576,7 @@
 				F30654B92F1A83430058808C /* Debug */,
 				B4E4386E2D8AFA5700603F3A /* WebViewController.swift */,
 				F332D2622CC27AC700A65F39 /* TransparentView.swift */,
+				F30654BC2F1A83DD0058808C /* MindboxWebView.swift */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -3974,6 +3977,7 @@
 				F33608122A8A151C00C7C9B7 /* ContentPosition.swift in Sources */,
 				337A474026553938000DC613 /* Sex.swift in Sources */,
 				F3A8B9922A3A408C00E9C055 /* SDKVersionValidator.swift in Sources */,
+				F30654BD2F1A83DD0058808C /* MindboxWebView.swift in Sources */,
 				F31A94782BC6995500E6C978 /* InappFrequency.swift in Sources */,
 				F3482F212A65DC2C002A41EC /* URLInappMessageDelegate.swift in Sources */,
 				BB6563102BE3BA430090C473 /* UIApplication+Extensions.swift in Sources */,
