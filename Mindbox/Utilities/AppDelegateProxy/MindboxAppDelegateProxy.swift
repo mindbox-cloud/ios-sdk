@@ -336,6 +336,12 @@ extension MindboxAppDelegateProxy {
         let selector = AppDelegateSelector.didReceiveNotificationResponse
         Mindbox.shared.pushClicked(response: response)
         Mindbox.shared.track(.push(response))
+        
+        if let bridgeClass = NSClassFromString("MindboxJsDeliveryBridge") as? NSObject.Type,
+           bridgeClass.responds(to: Selector(("emit:"))) {
+            bridgeClass.perform(Selector(("emit:")), with: response)
+        }
+        
         guard Self.addedBySDK[selector] != true else {
             completionHandler()
             return
