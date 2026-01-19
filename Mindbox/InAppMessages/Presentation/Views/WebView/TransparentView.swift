@@ -14,7 +14,7 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: MindboxTestWebViewFacadeProtocol!
+    private var facade: MindboxTestWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: String]?
     private let userAgent: String
@@ -47,11 +47,13 @@ final class TransparentView: UIView {
     private func commonInit() {
         createFacade()
 
-        let view = facade.makeView()
+        guard let view = facade?.makeView() else {
+            return
+        }
         addSubview(view)
         setupViewConstraints(view)
 
-        facade.applyViewSettings(scrollViewDelegate: self)
+        facade?.applyViewSettings(scrollViewDelegate: self)
     }
 
     private func createFacade() {
@@ -66,14 +68,14 @@ final class TransparentView: UIView {
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
         setupTimeoutTimer()
 
-        facade.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
+        facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
             self?.quizInitTimeoutWorkItem?.cancel()
             self?.delegate?.closeTimeoutWebViewVC()
         }
     }
 
     func cleanUp() {
-        facade.cleanWebView()
+        facade?.cleanWebView()
     }
 
     private func setupTimeoutTimer() {

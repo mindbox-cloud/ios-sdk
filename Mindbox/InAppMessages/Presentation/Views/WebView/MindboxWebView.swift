@@ -53,7 +53,6 @@ final class MindboxWebView: WKWebView {
         contentController.addUserScript(userScript)
 
         let config = WKWebViewConfiguration()
-        config.preferences = Self.makePreferences()
         config.userContentController = contentController
         config.applicationNameForUserAgent = userAgent
 
@@ -71,16 +70,6 @@ final class MindboxWebView: WKWebView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    // MARK: - Helpers
-    private static func makePreferences() -> WKPreferences {
-        let prefs = WKPreferences()
-        prefs.javaScriptEnabled = true
-        #if DEBUG
-        prefs.setValue(true, forKey: "developerExtrasEnabled")
-        #endif
-        return prefs
     }
 
     private static func buildSdkBridgeParams(
@@ -102,12 +91,13 @@ final class MindboxWebView: WKWebView {
             uniqueKeysWithValues: mindboxParams.map { ($0.key.lowercased(), $0.value) }
         )
 
-        if let data = try? JSONSerialization.data(withJSONObject: lowercased),
-           let json = String(data: data, encoding: .utf8) {
-            return json
+        
+        guard let data = try? JSONSerialization.data(withJSONObject: lowercased),
+              let json = String(data: data, encoding: .utf8) else {
+            return "{}"
         }
-
-        return "{}"
+        
+        return json
     }
 
     static func fetchHTMLContent(
