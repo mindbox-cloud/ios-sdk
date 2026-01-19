@@ -91,7 +91,6 @@ final class MindboxWebView: WKWebView {
             uniqueKeysWithValues: mindboxParams.map { ($0.key.lowercased(), $0.value) }
         )
 
-        
         guard let data = try? JSONSerialization.data(withJSONObject: lowercased),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
