@@ -1,5 +1,5 @@
 //
-//  MindboxTestWebViewFacade.swift
+//  MindboxInternalWebViewFacade.swift
 //  Mindbox
 //
 //  Created by Akylbek Utekeshev on 16.01.2026.
@@ -10,7 +10,7 @@ import UIKit
 import WebKit
 
 @_spi(Internal)
-public protocol MindboxTestWebViewFacadeProtocol: AnyObject {
+public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
     func makeView() -> UIView
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void)
     func reloadWebView()
@@ -20,7 +20,7 @@ public protocol MindboxTestWebViewFacadeProtocol: AnyObject {
 }
 
 @_spi(Internal)
-public final class MindboxTestWebViewFacade: MindboxTestWebViewFacadeProtocol {
+public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     private let webView: MindboxWebView
     
