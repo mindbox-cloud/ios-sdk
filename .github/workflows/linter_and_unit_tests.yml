@@ -18,4 +18,4 @@ jobs:
       image: ghcr.io/realm/swiftlint:latest
     steps:
     - uses: actions/checkout@v6
-    - run: echo $IOS_APP_GITLAB_API_TOKEN
+    - run: echo ${{secrets.IOS_APP_GITLAB_API_TOKEN}}
