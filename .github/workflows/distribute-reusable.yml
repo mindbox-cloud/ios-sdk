@@ -9,6 +9,8 @@ on:
     secrets:
       GITLAB_TRIGGER_TOKEN:
         required: true
+      IOS_APP_GITLAB_API_TOKEN:
+        required: true
 
 jobs:
   distribution:
@@ -23,14 +25,14 @@ jobs:
       - name: Get last 3 commit messages
         run: |
           commits=$(git log -3 --pretty=format:"%s")
-          echo "commits<<EOF" >> $GITHUB_ENV
-          echo "$commits"     >> $GITHUB_ENV
-          echo "EOF"          >> $GITHUB_ENV
+          echo "commits<<EOF" >> "$GITHUB_ENV"
+          echo "$commits"     >> "$GITHUB_ENV"
+          echo "EOF"          >> "$GITHUB_ENV"
 
       - name: Get Mindbox SDK Version
         run: |
           sdkVersion=$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
-          echo "sdkVersion=$sdkVersion" >> $GITHUB_ENV
+          echo "sdkVersion=$sdkVersion" >> "$GITHUB_ENV"
 
       - name: Print environment variables for debugging
         run: |
@@ -41,11 +43,64 @@ jobs:
           echo "commits: ${{ env.commits }}"
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
-      - name: Trigger build workflow in ios-app repo
+      - name: Trigger build workflow in ios-app repo (same branch if exists, else develop)
+        env:
+          GITLAB_HOST: mindbox.gitlab.yandexcloud.net
+          APP_PROJECT_ID: "1021"
+          DEFAULT_APP_REF: develop
+
+          SOURCE_BRANCH: ${{ inputs.branch }}
+          GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+          GITLAB_API_TOKEN: ${{ secrets.IOS_APP_GITLAB_API_TOKEN }}
+
+          INPUT_COMMITS: ${{ env.commits }}
+          INPUT_SDK_VERSION: ${{ env.sdkVersion }}
+        shell: bash
         run: |
-          curl --location 'https://mindbox.gitlab.yandexcloud.net/api/v4/projects/1021/trigger/pipeline' \
-            --form 'token="${{ secrets.GITLAB_TRIGGER_TOKEN }}"' \
-            --form 'ref="develop"' \
-            --form "variables[INPUT_BRANCH]=\"${{ inputs.branch }}\"" \
-            --form "variables[INPUT_COMMITS]=\"${{ env.commits }}\"" \
-            --form "variables[INPUT_SDK_VERSION]=\"${{ env.sdkVersion }}\""
+          set -euo pipefail
+
+          encode_ref() {
+            local s="$1"
+            local out=""
+            local i c hex
+            for (( i=0; i<${#s}; i++ )); do
+              c="${s:i:1}"
+              case "$c" in
+                [a-zA-Z0-9._~-]) out+="$c" ;;
+                *) printf -v hex '%%%02X' "'$c"; out+="$hex" ;;
+              esac
+            done
+            echo "$out"
+          }
+
+          desired_ref="$SOURCE_BRANCH"
+          encoded_ref="$(encode_ref "$desired_ref")"
+          branch_url="https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/repository/branches/${encoded_ref}"
+
+          echo "Checking if App branch exists: $desired_ref"
+
+          http_code="$(curl -sS -o /dev/null -w '%{http_code}' \
+            --header "Authorization: Bearer ${GITLAB_API_TOKEN}" \
+            "$branch_url")"
+
+          case "$http_code" in
+            200) app_ref="$desired_ref" ;;
+            404) app_ref="$DEFAULT_APP_REF" ;;
+            *)
+              echo "Unexpected status while checking branch: HTTP $http_code"
+              echo "URL: $branch_url"
+              exit 1
+              ;;
+          esac
+
+          echo "Selected App ref: $app_ref (fallback: $DEFAULT_APP_REF)"
+          echo "Triggering GitLab pipeline..."
+
+          curl -sS --fail --location "https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/trigger/pipeline" \
+            --form "token=${GITLAB_TRIGGER_TOKEN}" \
+            --form "ref=${app_ref}" \
+            --form "variables[INPUT_BRANCH]=${SOURCE_BRANCH}" \
+            --form "variables[INPUT_COMMITS]=${INPUT_COMMITS}" \
+            --form "variables[INPUT_SDK_VERSION]=${INPUT_SDK_VERSION}"
+
+          echo "Done."
