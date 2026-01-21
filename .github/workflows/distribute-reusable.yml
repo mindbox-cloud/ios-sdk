@@ -40,6 +40,7 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.ref: ${{ github.ref }}"
           echo "github.head_ref: ${{ github.head_ref }}"
+          echo "inputs.branch: ${{ inputs.branch }}"
           echo "commits: ${{ env.commits }}"
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
@@ -78,25 +79,46 @@ jobs:
           branch_url="https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/repository/branches/${encoded_ref}"
 
           echo "Checking if App branch exists: $desired_ref"
+          echo "Branch check URL: $branch_url"
 
-          http_code="$(curl -sS -o /dev/null -w '%{http_code}' \
+          tmp_body="$(mktemp)"
+          http_code="$(curl -sS -o "$tmp_body" -w '%{http_code}' \
             --header "Authorization: Bearer ${GITLAB_API_TOKEN}" \
             "$branch_url")"
 
+          # If your GitLab ever rejects Bearer tokens, switch header to:
+          # --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}"
+
+          echo "Branch check HTTP: $http_code"
+
           case "$http_code" in
-            200) app_ref="$desired_ref" ;;
-            404) app_ref="$DEFAULT_APP_REF" ;;
+            200)
+              app_ref="$desired_ref"
+              ;;
+            404)
+              app_ref="$DEFAULT_APP_REF"
+              ;;
+            401|403)
+              echo "Auth error while checking branch (HTTP $http_code). Response:"
+              cat "$tmp_body" || true
+              exit 1
+              ;;
             *)
               echo "Unexpected status while checking branch: HTTP $http_code"
-              echo "URL: $branch_url"
+              echo "Response:"
+              cat "$tmp_body" || true
               exit 1
               ;;
           esac
 
+          rm -f "$tmp_body" || true
+
           echo "Selected App ref: $app_ref (fallback: $DEFAULT_APP_REF)"
           echo "Triggering GitLab pipeline..."
 
-          curl -sS --fail --location "https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/trigger/pipeline" \
+          curl -sS --fail --location \
+            --retry 3 --retry-all-errors --retry-delay 2 \
+            "https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/trigger/pipeline" \
             --form "token=${GITLAB_TRIGGER_TOKEN}" \
             --form "ref=${app_ref}" \
             --form "variables[INPUT_BRANCH]=${SOURCE_BRANCH}" \
