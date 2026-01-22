@@ -95,6 +95,11 @@ jobs:
             echo "Trigger HTTP: $code (ref=$ref)"
             echo "Response body:"
             echo "$body"
+            
+            web_url="$(printf '%s\n' "$body" | sed -n 's/.*"web_url":"\([^"]*\)".*/\1/p')"
+            if [[ -n "${web_url:-}" ]]; then
+              echo "Pipeline URL: $web_url"
+            fi
 
             if [[ "$code" == "200" || "$code" == "201" ]]; then
               return 0
@@ -148,7 +153,7 @@ jobs:
             fi
 
             if [[ "$rc" == "2" ]]; then
-              echo "ERROR: App ref not found: $APP_REF_OVERRIDE"
+              echo "ERROR: App ref not found: $APP_REF_OVERRIDE (GitLab returned 'Reference not found')"
               exit 1
             fi
 
