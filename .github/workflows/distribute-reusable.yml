@@ -74,19 +74,22 @@ jobs:
 
             echo "Trigger HTTP: $code (ref=$ref)"
 
+            local body
+            body="$(cat "$tmp_body" 2>/dev/null || true)"
+
             if [[ "$code" == "200" || "$code" == "201" ]]; then
-              cat "$tmp_body"
+              echo "$body"
               rm -f "$tmp_body"
               return 0
             fi
 
             echo "Trigger failed. Response body:"
-            cat "$tmp_body" || true
+            echo "$body"
 
-            # Fallback only when GitLab says the ref does not exist.
+            # Fallback ONLY when ref is missing.
             # Your GitLab returns: {"message":{"base":["Reference not found"]}}
             if [[ "$code" == "400" || "$code" == "404" ]]; then
-              if grep -qiE 'reference not found|ref(erence)? .*not found|does not exist' "$tmp_body"; then
+              if [[ "$body" == *"Reference not found"* ]]; then
                 rm -f "$tmp_body"
                 return 2
               fi
@@ -100,13 +103,16 @@ jobs:
           fallback_ref="$DEFAULT_APP_REF"
 
           echo "Trying to trigger pipeline on ref: $desired_ref"
+          trigger_pipeline "$desired_ref" || rc=$?
 
-          if trigger_pipeline "$desired_ref"; then
+          # If success, rc is unset; normalize it
+          rc="${rc:-0}"
+
+          if [[ "$rc" == "0" ]]; then
             echo "Triggered on desired ref."
             exit 0
           fi
 
-          rc=$?
           if [[ "$rc" == "2" ]]; then
             echo "Desired ref not found. Falling back to: $fallback_ref"
             trigger_pipeline "$fallback_ref"
