@@ -9,8 +9,6 @@ on:
     secrets:
       GITLAB_TRIGGER_TOKEN:
         required: true
-      IOS_APP_GITLAB_API_TOKEN:
-        required: true
 
 jobs:
   distribution:
@@ -44,7 +42,7 @@ jobs:
           echo "commits: ${{ env.commits }}"
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
-      - name: Trigger build workflow in ios-app repo (same branch if exists, else develop)
+      - name: Trigger build workflow in ios-app repo (try same branch, fallback to develop)
         env:
           GITLAB_HOST: mindbox.gitlab.yandexcloud.net
           APP_PROJECT_ID: "1021"
@@ -52,7 +50,6 @@ jobs:
 
           SOURCE_BRANCH: ${{ inputs.branch }}
           GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
-          GITLAB_API_TOKEN: ${{ secrets.IOS_APP_GITLAB_API_TOKEN }}
 
           INPUT_COMMITS: ${{ env.commits }}
           INPUT_SDK_VERSION: ${{ env.sdkVersion }}
@@ -60,69 +57,62 @@ jobs:
         run: |
           set -euo pipefail
 
-          encode_ref() {
-            local s="$1"
-            local out=""
-            local i c hex
-            for (( i=0; i<${#s}; i++ )); do
-              c="${s:i:1}"
-              case "$c" in
-                [a-zA-Z0-9._~-]) out+="$c" ;;
-                *) printf -v hex '%%%02X' "'$c"; out+="$hex" ;;
-              esac
-            done
-            echo "$out"
+          trigger_pipeline() {
+            local ref="$1"
+            local tmp_body
+            tmp_body="$(mktemp)"
+
+            # Важно: НЕ используем --fail, чтобы самим обработать HTTP-код
+            local code
+            code="$(curl -sS -o "$tmp_body" -w '%{http_code}' --location \
+              --retry 3 --retry-all-errors --retry-delay 2 \
+              "https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/trigger/pipeline" \
+              --form "token=${GITLAB_TRIGGER_TOKEN}" \
+              --form "ref=${ref}" \
+              --form "variables[INPUT_BRANCH]=${SOURCE_BRANCH}" \
+              --form "variables[INPUT_COMMITS]=${INPUT_COMMITS}" \
+              --form "variables[INPUT_SDK_VERSION]=${INPUT_SDK_VERSION}")"
+
+            echo "Trigger HTTP: $code (ref=$ref)"
+
+            if [[ "$code" == "200" || "$code" == "201" ]]; then
+              cat "$tmp_body"
+              rm -f "$tmp_body"
+              return 0
+            fi
+
+            echo "Trigger failed. Response body:"
+            cat "$tmp_body" || true
+
+            # Missing ref usually comes as 400 (sometimes 404). We fallback only for that.
+            if [[ "$code" == "400" || "$code" == "404" ]]; then
+              if grep -qiE 'ref|branch|not exist|does not exist|not found' "$tmp_body"; then
+                rm -f "$tmp_body"
+                return 2
+              fi
+            fi
+
+            rm -f "$tmp_body"
+            return 1
           }
 
           desired_ref="$SOURCE_BRANCH"
-          encoded_ref="$(encode_ref "$desired_ref")"
-          branch_url="https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/repository/branches/${encoded_ref}"
+          fallback_ref="$DEFAULT_APP_REF"
 
-          echo "Checking if App branch exists: $desired_ref"
-          echo "Branch check URL: $branch_url"
+          echo "Trying to trigger pipeline on ref: $desired_ref"
 
-          tmp_body="$(mktemp)"
-          http_code="$(curl -sS -o "$tmp_body" -w '%{http_code}' \
-            --header "Authorization: Bearer ${GITLAB_API_TOKEN}" \
-            "$branch_url")"
+          if trigger_pipeline "$desired_ref"; then
+            echo "Triggered on desired ref."
+            exit 0
+          fi
 
-          # If your GitLab ever rejects Bearer tokens, switch header to:
-          # --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}"
+          rc=$?
+          if [[ "$rc" == "2" ]]; then
+            echo "Desired ref not found. Falling back to: $fallback_ref"
+            trigger_pipeline "$fallback_ref"
+            echo "Triggered on fallback ref."
+            exit 0
+          fi
 
-          echo "Branch check HTTP: $http_code"
-
-          case "$http_code" in
-            200)
-              app_ref="$desired_ref"
-              ;;
-            404)
-              app_ref="$DEFAULT_APP_REF"
-              ;;
-            401|403)
-              echo "Auth error while checking branch (HTTP $http_code). Response:"
-              cat "$tmp_body" || true
-              exit 1
-              ;;
-            *)
-              echo "Unexpected status while checking branch: HTTP $http_code"
-              echo "Response:"
-              cat "$tmp_body" || true
-              exit 1
-              ;;
-          esac
-
-          rm -f "$tmp_body" || true
-
-          echo "Selected App ref: $app_ref (fallback: $DEFAULT_APP_REF)"
-          echo "Triggering GitLab pipeline..."
-
-          curl -sS --fail --location \
-            --retry 3 --retry-all-errors --retry-delay 2 \
-            "https://${GITLAB_HOST}/api/v4/projects/${APP_PROJECT_ID}/trigger/pipeline" \
-            --form "token=${GITLAB_TRIGGER_TOKEN}" \
-            --form "ref=${app_ref}" \
-            --form "variables[INPUT_BRANCH]=${SOURCE_BRANCH}" \
-            --form "variables[INPUT_COMMITS]=${INPUT_COMMITS}" \
-            --form "variables[INPUT_SDK_VERSION]=${INPUT_SDK_VERSION}"
-
-          echo "Done."
+          echo "Trigger failed for reasons other than missing ref."
+          exit 1
