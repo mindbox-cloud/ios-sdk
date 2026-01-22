@@ -72,19 +72,23 @@ jobs:
               --form "variables[INPUT_COMMITS]=${INPUT_COMMITS}" \
               --form "variables[INPUT_SDK_VERSION]=${INPUT_SDK_VERSION}")"
 
-            echo "Trigger HTTP: $code (ref=$ref)"
-
             local body
             body="$(cat "$tmp_body" 2>/dev/null || true)"
 
+            echo "Trigger HTTP: $code (ref=$ref)"
+            echo "Response body:"
+            echo "$body"
+
             if [[ "$code" == "200" || "$code" == "201" ]]; then
-              echo "$body"
               rm -f "$tmp_body"
               return 0
             fi
 
-            echo "Trigger failed. Response body:"
-            echo "$body"
+            if [[ "$code" == "401" || "$code" == "403" ]]; then
+              echo "Auth error (HTTP $code). Check that GITLAB_TRIGGER_TOKEN is valid and has access to project ${APP_PROJECT_ID}."
+              rm -f "$tmp_body"
+              return 1
+            fi
 
             # Fallback ONLY when ref is missing.
             # Your GitLab returns: {"message":{"base":["Reference not found"]}}
@@ -93,8 +97,24 @@ jobs:
                 rm -f "$tmp_body"
                 return 2
               fi
+
+              echo "Got HTTP $code but it's NOT 'Reference not found'."
+              echo "This can happen if pipelines are blocked for triggers by workflow:rules or job rules when CI_PIPELINE_SOURCE == 'trigger'."
+              echo "Check the App repo .gitlab-ci.yml for patterns like:"
+              echo "  workflow: rules:"
+              echo "    - if: \$CI_PIPELINE_SOURCE == \"trigger\""
+              echo "      when: never"
+              rm -f "$tmp_body"
+              return 1
             fi
 
+            if [[ "$code" =~ ^5[0-9][0-9]$ ]]; then
+              echo "Server error (HTTP $code). GitLab/proxy might be temporarily unavailable."
+              rm -f "$tmp_body"
+              return 1
+            fi
+
+            echo "Unexpected HTTP status: $code"
             rm -f "$tmp_body"
             return 1
           }
@@ -104,8 +124,6 @@ jobs:
 
           echo "Trying to trigger pipeline on ref: $desired_ref"
           trigger_pipeline "$desired_ref" || rc=$?
-
-          # If success, rc is unset; normalize it
           rc="${rc:-0}"
 
           if [[ "$rc" == "0" ]]; then
