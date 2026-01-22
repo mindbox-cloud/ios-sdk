@@ -62,7 +62,6 @@ jobs:
             local tmp_body
             tmp_body="$(mktemp)"
 
-            # Важно: НЕ используем --fail, чтобы самим обработать HTTP-код
             local code
             code="$(curl -sS -o "$tmp_body" -w '%{http_code}' --location \
               --retry 3 --retry-all-errors --retry-delay 2 \
@@ -84,9 +83,10 @@ jobs:
             echo "Trigger failed. Response body:"
             cat "$tmp_body" || true
 
-            # Missing ref usually comes as 400 (sometimes 404). We fallback only for that.
+            # Fallback only when GitLab says the ref does not exist.
+            # Your GitLab returns: {"message":{"base":["Reference not found"]}}
             if [[ "$code" == "400" || "$code" == "404" ]]; then
-              if grep -qiE 'ref|branch|not exist|does not exist|not found' "$tmp_body"; then
+              if grep -qiE 'reference not found|ref(erence)? .*not found|does not exist' "$tmp_body"; then
                 rm -f "$tmp_body"
                 return 2
               fi
