@@ -14,7 +14,6 @@ on:
       GITLAB_TRIGGER_TOKEN:
         required: true
 
-
 jobs:
   distribution:
     runs-on: macos-26
@@ -26,19 +25,25 @@ jobs:
           fetch-depth: 0
 
       - name: Get last 3 commit messages
+        shell: bash
         run: |
-          commits=$(git log -3 --pretty=format:"%s")
+          set -euo pipefail
+          commits="$(git log -3 --pretty=format:"%s")"
           echo "commits<<EOF" >> "$GITHUB_ENV"
           echo "$commits"     >> "$GITHUB_ENV"
           echo "EOF"          >> "$GITHUB_ENV"
 
       - name: Get Mindbox SDK Version
+        shell: bash
         run: |
-          sdkVersion=$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
+          set -euo pipefail
+          sdkVersion="$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')"
           echo "sdkVersion=$sdkVersion" >> "$GITHUB_ENV"
 
       - name: Print environment variables for debugging
+        shell: bash
         run: |
+          set -euo pipefail
           echo "Debugging variables:"
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.ref: ${{ github.ref }}"
@@ -53,7 +58,7 @@ jobs:
           APP_PROJECT_ID: "1021"
           DEFAULT_APP_REF: develop
 
-          SOURCE_BRANCH: ${{ inputs.branch }}   # ветка SDK (и "same branch" для App)
+          SOURCE_BRANCH: ${{ inputs.branch }}
           APP_REF_OVERRIDE: ${{ inputs.app_ref }}
 
           GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
@@ -122,21 +127,26 @@ jobs:
           }
 
           echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
+
+          # Trim spaces in override (so "   " becomes empty)
+          APP_REF_OVERRIDE="$(printf '%s' "${APP_REF_OVERRIDE:-}" | xargs)"
           echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
+
           echo "Default App ref: $DEFAULT_APP_REF"
 
           # Build ordered list of refs to try:
           # - if override is set: override -> same -> develop
           # - else: same -> develop
-          refs_to_try=()
+          declare -a refs_to_try=()
+          declare -a uniq_refs=()
+
           if [[ -n "${APP_REF_OVERRIDE:-}" ]]; then
             refs_to_try+=("$APP_REF_OVERRIDE")
           fi
           refs_to_try+=("$SOURCE_BRANCH")
           refs_to_try+=("$DEFAULT_APP_REF")
 
-          # Deduplicate while preserving order (in case override == source branch, etc.)
-          uniq_refs=()
+          # Deduplicate while preserving order
           for r in "${refs_to_try[@]}"; do
             skip=0
             for u in "${uniq_refs[@]}"; do
@@ -145,7 +155,10 @@ jobs:
                 break
               fi
             done
-            [[ "$skip" == "0" ]] && uniq_refs+=("$r")
+
+            if [[ "$skip" == "0" ]]; then
+              uniq_refs+=("$r")
+            fi
           done
 
           echo "Will try App refs in order:"
