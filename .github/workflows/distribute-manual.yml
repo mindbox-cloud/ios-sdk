@@ -2,10 +2,16 @@ name: Distribute PushOk (manual)
 
 on:
   workflow_dispatch:
+    inputs:
+      app_ref:
+        description: "GitLab App branch to try first (optional)"
+        required: false
+        default: ""
 
 jobs:
   call-reusable:
     uses: ./.github/workflows/distribute-reusable.yml
     with:
-      branch: ${{ github.ref_name }}
+      branch: ${{ github.ref_name }}     # SDK branch = current branch
+      app_ref: ${{ inputs.app_ref }}     # optional override for GitLab ref
     secrets: inherit

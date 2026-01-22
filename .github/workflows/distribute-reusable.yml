@@ -6,9 +6,14 @@ on:
       branch:
         required: true
         type: string
+      app_ref:
+        required: false
+        type: string
+        default: ""
     secrets:
       GITLAB_TRIGGER_TOKEN:
         required: true
+
 
 jobs:
   distribution:
@@ -42,13 +47,15 @@ jobs:
           echo "commits: ${{ env.commits }}"
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
-      - name: Trigger build workflow in ios-app repo (try same branch, fallback to develop)
+      - name: Trigger build workflow in ios-app repo (override -> same -> develop)
         env:
           GITLAB_HOST: mindbox.gitlab.yandexcloud.net
           APP_PROJECT_ID: "1021"
           DEFAULT_APP_REF: develop
 
-          SOURCE_BRANCH: ${{ inputs.branch }}
+          SOURCE_BRANCH: ${{ inputs.branch }}   # ветка SDK (и "same branch" для App)
+          APP_REF_OVERRIDE: ${{ inputs.app_ref }}
+
           GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
 
           INPUT_COMMITS: ${{ env.commits }}
@@ -90,8 +97,7 @@ jobs:
               return 1
             fi
 
-            # Fallback ONLY when ref is missing.
-            # Your GitLab returns: {"message":{"base":["Reference not found"]}}
+            # Missing ref: GitLab returns 400 + "Reference not found"
             if [[ "$code" == "400" || "$code" == "404" ]]; then
               if [[ "$body" == *"Reference not found"* ]]; then
                 rm -f "$tmp_body"
@@ -100,10 +106,6 @@ jobs:
 
               echo "Got HTTP $code but it's NOT 'Reference not found'."
               echo "This can happen if pipelines are blocked for triggers by workflow:rules or job rules when CI_PIPELINE_SOURCE == 'trigger'."
-              echo "Check the App repo .gitlab-ci.yml for patterns like:"
-              echo "  workflow: rules:"
-              echo "    - if: \$CI_PIPELINE_SOURCE == \"trigger\""
-              echo "      when: never"
               rm -f "$tmp_body"
               return 1
             fi
@@ -119,24 +121,53 @@ jobs:
             return 1
           }
 
-          desired_ref="$SOURCE_BRANCH"
-          fallback_ref="$DEFAULT_APP_REF"
+          echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
+          echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
+          echo "Default App ref: $DEFAULT_APP_REF"
 
-          echo "Trying to trigger pipeline on ref: $desired_ref"
-          trigger_pipeline "$desired_ref" || rc=$?
-          rc="${rc:-0}"
-
-          if [[ "$rc" == "0" ]]; then
-            echo "Triggered on desired ref."
-            exit 0
+          # Build ordered list of refs to try:
+          # - if override is set: override -> same -> develop
+          # - else: same -> develop
+          refs_to_try=()
+          if [[ -n "${APP_REF_OVERRIDE:-}" ]]; then
+            refs_to_try+=("$APP_REF_OVERRIDE")
           fi
+          refs_to_try+=("$SOURCE_BRANCH")
+          refs_to_try+=("$DEFAULT_APP_REF")
 
-          if [[ "$rc" == "2" ]]; then
-            echo "Desired ref not found. Falling back to: $fallback_ref"
-            trigger_pipeline "$fallback_ref"
-            echo "Triggered on fallback ref."
-            exit 0
-          fi
+          # Deduplicate while preserving order (in case override == source branch, etc.)
+          uniq_refs=()
+          for r in "${refs_to_try[@]}"; do
+            skip=0
+            for u in "${uniq_refs[@]}"; do
+              if [[ "$u" == "$r" ]]; then
+                skip=1
+                break
+              fi
+            done
+            [[ "$skip" == "0" ]] && uniq_refs+=("$r")
+          done
 
-          echo "Trigger failed for reasons other than missing ref."
+          echo "Will try App refs in order:"
+          for r in "${uniq_refs[@]}"; do
+            echo " - $r"
+          done
+
+          for r in "${uniq_refs[@]}"; do
+            echo "Trying to trigger pipeline on ref: $r"
+            trigger_pipeline "$r" && {
+              echo "Triggered successfully on ref: $r"
+              exit 0
+            }
+            rc=$?
+            if [[ "$rc" == "2" ]]; then
+              echo "Ref not found: $r (continuing...)"
+              continue
+            fi
+
+            echo "Trigger failed for reasons other than missing ref (rc=$rc)."
+            exit 1
+          done
+
+          echo "All refs not found. Nothing triggered."
           exit 1
