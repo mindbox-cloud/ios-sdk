@@ -48,17 +48,21 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.ref: ${{ github.ref }}"
           echo "github.head_ref: ${{ github.head_ref }}"
-          echo "inputs.branch: ${{ inputs.branch }}"
+          echo "inputs.branch (SDK): ${{ inputs.branch }}"
+          echo "inputs.app_ref (App override): ${{ inputs.app_ref }}"
           echo "commits: ${{ env.commits }}"
           echo "sdkVersion: ${{ env.sdkVersion }}"
 
-      - name: Trigger build workflow in ios-app repo (override -> same -> develop)
+      - name: Trigger build workflow in ios-app repo (override strict; else same->develop)
         env:
           GITLAB_HOST: mindbox.gitlab.yandexcloud.net
           APP_PROJECT_ID: "1021"
           DEFAULT_APP_REF: develop
 
+          # SDK branch (passed to GitLab as INPUT_BRANCH)
           SOURCE_BRANCH: ${{ inputs.branch }}
+
+          # Optional App ref override (manual)
           APP_REF_OVERRIDE: ${{ inputs.app_ref }}
 
           GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
@@ -86,101 +90,91 @@ jobs:
 
             local body
             body="$(cat "$tmp_body" 2>/dev/null || true)"
+            rm -f "$tmp_body"
 
             echo "Trigger HTTP: $code (ref=$ref)"
             echo "Response body:"
             echo "$body"
 
             if [[ "$code" == "200" || "$code" == "201" ]]; then
-              rm -f "$tmp_body"
               return 0
             fi
 
             if [[ "$code" == "401" || "$code" == "403" ]]; then
               echo "Auth error (HTTP $code). Check that GITLAB_TRIGGER_TOKEN is valid and has access to project ${APP_PROJECT_ID}."
-              rm -f "$tmp_body"
               return 1
             fi
 
             # Missing ref: GitLab returns 400 + "Reference not found"
             if [[ "$code" == "400" || "$code" == "404" ]]; then
               if [[ "$body" == *"Reference not found"* ]]; then
-                rm -f "$tmp_body"
                 return 2
               fi
 
               echo "Got HTTP $code but it's NOT 'Reference not found'."
               echo "This can happen if pipelines are blocked for triggers by workflow:rules or job rules when CI_PIPELINE_SOURCE == 'trigger'."
-              rm -f "$tmp_body"
+              echo "Check the App repo .gitlab-ci.yml for patterns like:"
+              echo "  workflow: rules:"
+              echo "    - if: \$CI_PIPELINE_SOURCE == \"trigger\""
+              echo "      when: never"
               return 1
             fi
 
             if [[ "$code" =~ ^5[0-9][0-9]$ ]]; then
               echo "Server error (HTTP $code). GitLab/proxy might be temporarily unavailable."
-              rm -f "$tmp_body"
               return 1
             fi
 
             echo "Unexpected HTTP status: $code"
-            rm -f "$tmp_body"
             return 1
           }
 
           echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
 
-          # Trim spaces in override (so "   " becomes empty)
+          # Trim override so "   " becomes empty
           APP_REF_OVERRIDE="$(printf '%s' "${APP_REF_OVERRIDE:-}" | xargs)"
           echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
-
           echo "Default App ref: $DEFAULT_APP_REF"
 
-          # Build ordered list of refs to try:
-          # - if override is set: override -> same -> develop
-          # - else: same -> develop
-          declare -a refs_to_try=()
-          declare -a uniq_refs=()
+          # If override is provided: try ONLY override; if missing ref -> fail
+          if [[ -n "$APP_REF_OVERRIDE" ]]; then
+            echo "Override provided -> trying ONLY App ref: $APP_REF_OVERRIDE"
+            trigger_pipeline "$APP_REF_OVERRIDE" || rc=$?
+            rc="${rc:-0}"
 
-          if [[ -n "${APP_REF_OVERRIDE:-}" ]]; then
-            refs_to_try+=("$APP_REF_OVERRIDE")
-          fi
-          refs_to_try+=("$SOURCE_BRANCH")
-          refs_to_try+=("$DEFAULT_APP_REF")
-
-          # Deduplicate while preserving order
-          for r in "${refs_to_try[@]}"; do
-            skip=0
-            for u in "${uniq_refs[@]}"; do
-              if [[ "$u" == "$r" ]]; then
-                skip=1
-                break
-              fi
-            done
-
-            if [[ "$skip" == "0" ]]; then
-              uniq_refs+=("$r")
-            fi
-          done
-
-          echo "Will try App refs in order:"
-          for r in "${uniq_refs[@]}"; do
-            echo " - $r"
-          done
-
-          for r in "${uniq_refs[@]}"; do
-            echo "Trying to trigger pipeline on ref: $r"
-            trigger_pipeline "$r" && {
-              echo "Triggered successfully on ref: $r"
+            if [[ "$rc" == "0" ]]; then
+              echo "Triggered on override ref."
               exit 0
-            }
-            rc=$?
-            if [[ "$rc" == "2" ]]; then
-              echo "Ref not found: $r (continuing...)"
-              continue
             fi
 
-            echo "Trigger failed for reasons other than missing ref (rc=$rc)."
-            exit 1
-          done
+            if [[ "$rc" == "2" ]]; then
+              echo "ERROR: App ref not found: $APP_REF_OVERRIDE"
+              exit 1
+            fi
 
-          echo "All refs not found. Nothing triggered."
+            echo "ERROR: Trigger failed for reasons other than missing ref."
+            exit 1
+          fi
+
+          # No override: same branch -> fallback develop
+          desired_ref="$SOURCE_BRANCH"
+          fallback_ref="$DEFAULT_APP_REF"
+
+          echo "No override -> trying App ref: $desired_ref"
+          trigger_pipeline "$desired_ref" || rc=$?
+          rc="${rc:-0}"
+
+          if [[ "$rc" == "0" ]]; then
+            echo "Triggered on same branch."
+            exit 0
+          fi
+
+          if [[ "$rc" == "2" ]]; then
+            echo "Same branch not found. Falling back to: $fallback_ref"
+            trigger_pipeline "$fallback_ref"
+            echo "Triggered on fallback ref."
+            exit 0
+          fi
+
+          echo "Trigger failed for reasons other than missing ref."
           exit 1

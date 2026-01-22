@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       app_ref:
-        description: "GitLab App branch to try first (optional)"
+        description: "GitLab App branch"
         required: false
         default: ""
 
