@@ -6,6 +6,7 @@ on:
     branches:
       - develop
       - mission/*
+      - feature/*
   pull_request:
     types:
       - opened
