@@ -48,8 +48,10 @@ jobs:
           defaults write dev.biscuit.yeetd killapsd true
           yeetd &
 
-    - name: Reset simulators
+    - name: Reset CoreSimulator (avoid stuck boots)
       run: |
+          killall -9 com.apple.CoreSimulator.CoreSimulatorService || true
+          killall -9 Simulator || true
           xcrun simctl shutdown all || true
 
     - name: Run unit tests
