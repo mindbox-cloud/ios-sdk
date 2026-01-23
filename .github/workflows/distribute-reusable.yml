@@ -16,10 +16,10 @@ on:
 
 jobs:
   distribution:
-    runs-on: macos-26
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
           fetch-depth: 3
@@ -40,20 +40,34 @@ jobs:
           sdkVersion="$(grep 'static let sdkVersion' SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')"
           echo "sdkVersion=$sdkVersion" >> "$GITHUB_ENV"
 
-      - name: Print environment variables for debugging
+      - name: Debug payload that will be sent to GitLab
         shell: bash
+        env:
+          SOURCE_BRANCH: ${{ inputs.branch }}
+          APP_REF_OVERRIDE: ${{ inputs.app_ref }}
+          DEFAULT_APP_REF: develop
+          INPUT_COMMITS: ${{ env.commits }}
+          INPUT_SDK_VERSION: ${{ env.sdkVersion }}
         run: |
           set -euo pipefail
-          echo "Debugging variables:"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.ref: ${{ github.ref }}"
-          echo "github.head_ref: ${{ github.head_ref }}"
-          echo "inputs.branch (SDK): ${{ inputs.branch }}"
-          echo "inputs.app_ref (App override): ${{ inputs.app_ref }}"
-          echo "commits: ${{ env.commits }}"
-          echo "sdkVersion: ${{ env.sdkVersion }}"
+
+          APP_REF_OVERRIDE="$(printf '%s' "${APP_REF_OVERRIDE:-}" | xargs)"
+
+          echo "---- DEBUG (GitHub -> GitLab trigger payload) ----"
+          echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
+          echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
+          echo "Default App ref: $DEFAULT_APP_REF"
+          echo "SDK version (INPUT_SDK_VERSION): ${INPUT_SDK_VERSION:-<empty>}"
+          echo ""
+          echo "RAW INPUT_COMMITS (cat -A):"
+          printf '%s' "${INPUT_COMMITS:-}" | cat -A
+          echo ""
+          echo "RAW INPUT_COMMITS (printf %q):"
+          printf '%q\n' "${INPUT_COMMITS:-}"
+          echo "--------------------------------------------------"
 
       - name: Trigger build workflow in ios-app repo (override strict; else same->develop)
+        shell: bash
         env:
           GITLAB_HOST: mindbox.gitlab.yandexcloud.net
           APP_PROJECT_ID: "1021"
@@ -69,9 +83,34 @@ jobs:
 
           INPUT_COMMITS: ${{ env.commits }}
           INPUT_SDK_VERSION: ${{ env.sdkVersion }}
-        shell: bash
         run: |
           set -euo pipefail
+
+          # Trim override so "   " becomes empty
+          APP_REF_OVERRIDE="$(printf '%s' "${APP_REF_OVERRIDE:-}" | xargs)"
+
+          # Normalize commits:
+          # - CRLF -> LF
+          # - expand literal "\n" into real newlines
+          normalize_commits() {
+            local raw="${1:-}"
+            raw="$(printf '%s' "$raw" | tr -d '\r')"
+            if [[ "$raw" == *"\\n"* ]]; then
+              raw="$(printf '%b' "$raw")"
+            fi
+            printf '%s' "$raw"
+          }
+
+          COMMITS_TO_SEND="$(normalize_commits "${INPUT_COMMITS:-}")"
+
+          echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
+          echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
+          echo "Default App ref: $DEFAULT_APP_REF"
+          echo "SDK version (INPUT_SDK_VERSION): ${INPUT_SDK_VERSION:-<empty>}"
+          echo ""
+          echo "COMMITS_TO_SEND preview (cat -A):"
+          printf '%s' "$COMMITS_TO_SEND" | cat -A
+          echo ""
 
           trigger_pipeline() {
             local ref="$1"
@@ -85,7 +124,7 @@ jobs:
               --form "token=${GITLAB_TRIGGER_TOKEN}" \
               --form "ref=${ref}" \
               --form "variables[INPUT_BRANCH]=${SOURCE_BRANCH}" \
-              --form "variables[INPUT_COMMITS]=${INPUT_COMMITS}" \
+              --form "variables[INPUT_COMMITS]=${COMMITS_TO_SEND}" \
               --form "variables[INPUT_SDK_VERSION]=${INPUT_SDK_VERSION}")"
 
             local body
@@ -95,18 +134,18 @@ jobs:
             echo "Trigger HTTP: $code (ref=$ref)"
             echo "Response body:"
             echo "$body"
-            
-            web_url="$(
-              printf '%s\n' "$body" |
-              grep -o '"web_url":"[^"]*"' |
-              head -n 1 |
-              cut -d'"' -f4
-            )"
-            if [[ -n "${web_url:-}" ]]; then
-              echo "Pipeline URL: $web_url"
-            fi
 
             if [[ "$code" == "200" || "$code" == "201" ]]; then
+              local web_url
+              web_url="$(
+                printf '%s\n' "$body" |
+                grep -o '"web_url":"[^"]*"' |
+                head -n 1 |
+                cut -d'"' -f4
+              )"
+              if [[ -n "${web_url:-}" ]]; then
+                echo "Pipeline URL: $web_url"
+              fi
               return 0
             fi
 
@@ -120,13 +159,9 @@ jobs:
               if [[ "$body" == *"Reference not found"* ]]; then
                 return 2
               fi
-
               echo "Got HTTP $code but it's NOT 'Reference not found'."
               echo "This can happen if pipelines are blocked for triggers by workflow:rules or job rules when CI_PIPELINE_SOURCE == 'trigger'."
-              echo "Check the App repo .gitlab-ci.yml for patterns like:"
-              echo "  workflow: rules:"
-              echo "    - if: \$CI_PIPELINE_SOURCE == \"trigger\""
-              echo "      when: never"
+              echo "Check the target repo .gitlab-ci.yml rules/workflow:rules."
               return 1
             fi
 
@@ -138,13 +173,6 @@ jobs:
             echo "Unexpected HTTP status: $code"
             return 1
           }
-
-          echo "SDK branch (INPUT_BRANCH): $SOURCE_BRANCH"
-
-          # Trim override so "   " becomes empty
-          APP_REF_OVERRIDE="$(printf '%s' "${APP_REF_OVERRIDE:-}" | xargs)"
-          echo "Manual App ref override: ${APP_REF_OVERRIDE:-<empty>}"
-          echo "Default App ref: $DEFAULT_APP_REF"
 
           # If override is provided: try ONLY override; if missing ref -> fail
           if [[ -n "$APP_REF_OVERRIDE" ]]; then
