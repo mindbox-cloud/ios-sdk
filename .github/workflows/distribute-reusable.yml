@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch }}
-          fetch-depth: 0
+          fetch-depth: 3
 
       - name: Get last 3 commit messages
         shell: bash
