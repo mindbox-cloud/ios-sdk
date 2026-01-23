@@ -1,6 +1,7 @@
 name: SwiftLint & UnitTests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
@@ -35,8 +36,14 @@ jobs:
       run: bundle install
     - name: Install yeetd
       run: |
-          wget https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
-          sudo installer -pkg yeetd-normal.pkg -target /
+          sudo launchctl bootout system/com.apple.PerfPowerServices || true
+          sudo launchctl bootout system/com.apple.metadata.mds || true
+
+          curl -L https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg -o /tmp/yeetd.pkg
+          sudo installer -pkg /tmp/yeetd.pkg -target /
+          defaults write dev.biscuit.yeetd killapsd true
           yeetd &
+
+          rm -rf ~/Library/Caches/org.swift.swiftpm/artifacts
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
