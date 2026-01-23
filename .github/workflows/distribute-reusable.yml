@@ -96,7 +96,12 @@ jobs:
             echo "Response body:"
             echo "$body"
             
-            web_url="$(printf '%s\n' "$body" | sed -n 's/.*"web_url":"\([^"]*\)".*/\1/p')"
+            web_url="$(
+              printf '%s\n' "$body" |
+              grep -o '"web_url":"[^"]*"' |
+              head -n 1 |
+              cut -d'"' -f4
+            )"
             if [[ -n "${web_url:-}" ]]; then
               echo "Pipeline URL: $web_url"
             fi
