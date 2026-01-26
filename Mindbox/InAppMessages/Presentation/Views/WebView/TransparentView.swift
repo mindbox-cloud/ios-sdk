@@ -175,12 +175,8 @@ extension TransparentView: UIScrollViewDelegate {
 
 protocol WebViewAction: AnyObject {
     func onInit()
-
     func onCompleted(data: String)
-
     func onClose()
-
     func onHide()
-    
     func onLog(message: String)
 }

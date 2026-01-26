@@ -567,6 +567,7 @@
 		F3B2A3A02A4C79E200E2CA25 /* ValidationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39B2A4C79E200E2CA25 /* ValidationError.swift */; };
 		F3B2A3A12A4C79E200E2CA25 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */; };
 		F3B2A3A22A4C79E200E2CA25 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */; };
+		F3BD9F822F273BCD00647BAF /* BridgeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */; };
 		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
@@ -1206,6 +1207,7 @@
 		F3B2A39B2A4C79E200E2CA25 /* ValidationError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ValidationError.swift; sourceTree = "<group>"; };
 		F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
+		F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessage.swift; sourceTree = "<group>"; };
 		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
@@ -2573,6 +2575,7 @@
 		B4E4386F2D8AFA5700603F3A /* WebView */ = {
 			isa = PBXGroup;
 			children = (
+				F3BD9F802F273BC800647BAF /* Bridge */,
 				F30654B92F1A83430058808C /* Debug */,
 				B4E4386E2D8AFA5700603F3A /* WebViewController.swift */,
 				F332D2622CC27AC700A65F39 /* TransparentView.swift */,
@@ -3245,6 +3248,14 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
+		F3BD9F802F273BC800647BAF /* Bridge */ = {
+			isa = PBXGroup;
+			children = (
+				F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */,
+			);
+			path = Bridge;
+			sourceTree = "<group>";
+		};
 		F3D818AE2A3885A40002957C /* ABTestDeviceMixer */ = {
 			isa = PBXGroup;
 			children = (
@@ -3732,6 +3743,7 @@
 				BB4D7CC72BDEC51D008E3AB8 /* Notification+Extensions.swift in Sources */,
 				F39116F52AA9AF7A00852298 /* InappFilter.swift in Sources */,
 				F331DD032A83A56500222120 /* ModalPresentationStrategy.swift in Sources */,
+				F3BD9F822F273BCD00647BAF /* BridgeMessage.swift in Sources */,
 				A17958792978AEC600609E91 /* GeoTargetingChecker.swift in Sources */,
 				33BEE80D2681EB7700993720 /* NotificationDecoder.swift in Sources */,
 				472179A72C80755A00C15E7F /* ShownInAppsIDsMigration.swift in Sources */,
