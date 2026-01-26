@@ -139,7 +139,7 @@ public struct BridgeMessage: Codable {
     public let id: UUID
     public let timestamp: Int64
 
-    init(
+    public init(
         version: Int = 1,
         type: MessageType,
         action: String,
@@ -205,7 +205,7 @@ public struct BridgeMessage: Codable {
         return json
     }
 
-    static func currentTimestampMs() -> Int64 {
+    public static func currentTimestampMs() -> Int64 {
         Int64(Date().timeIntervalSince1970 * 1000)
     }
 }

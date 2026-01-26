@@ -11,7 +11,7 @@ import WebKit
 
 @_spi(Internal)
 public protocol WebBridgeDelegate: AnyObject {
-    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: BridgeMessage)
+    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage)
 }
 
 @_spi(Internal)
@@ -50,11 +50,12 @@ public final class WebBridge: NSObject {
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else { return }
 
-        let script = """
-        window.__nativeBridge && window.__nativeBridge.receive(\(json));
-        """
+        let script = "window.receiveFromSDK(\(json));"
 
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        webView.evaluateJavaScript(script) { _, error in
+            if let error {
+            }
+        }
     }
 }
 
@@ -62,13 +63,12 @@ extension WebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
 
+        delegate?.webBridge(self, didReceiveFromJS: message)
         guard message.name == handlerName,
               let bridgeMessage = BridgeMessage.from(body: message.body)
         else {
             return
         }
-
-        delegate?.webBridge(self, didReceiveFromJS: bridgeMessage)
     }
 }
 
@@ -92,7 +92,6 @@ extension WebBridge: WKNavigationDelegate {
                         withError error: Error) {
         navigationDelegate?.webBridge(self, didFailProvisionalNavigation: webView.url, error: error)
     }
-    
     
     public func webView(_ webView: WKWebView,
                         decidePolicyFor navigationAction: WKNavigationAction,

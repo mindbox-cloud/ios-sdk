@@ -22,18 +22,32 @@ public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
 }
 
+
+public typealias WebViewLog = (String) -> Void
+public typealias WebViewLogError = (String) -> Void
+
 @_spi(Internal)
 public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 
     private let webView: MindboxWebView
     private let bridge: WebBridge
 
-    public init(params: [String: String]?, userAgent: String) {
+    private let log: WebViewLog
+    private let logError: WebViewLogError
+
+    public init(
+        params: [String: String]?,
+        userAgent: String,
+        log: @escaping WebViewLog = { _ in },
+        logError: @escaping WebViewLogError = { _ in }
+    ) {
         let webView = MindboxWebView(params: params, userAgent: userAgent)
         let bridge = WebBridge(webView: webView, handlerName: MindboxWebView.sdkBridgeHandlerName)
 
         self.webView = webView
         self.bridge = bridge
+        self.log = log
+        self.logError = logError
     }
 
     public func setBridgeDelegate(_ delegate: WebBridgeDelegate?) {
@@ -98,6 +112,7 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
 }
 
 extension MindboxInternalWebViewFacade {
+
     private func fetchHTML(
         from urlString: String,
         completion: @escaping (String?) -> Void
@@ -112,19 +127,35 @@ extension MindboxInternalWebViewFacade {
         config.urlCache = nil
 
         let session = URLSession(configuration: config)
-        session.dataTask(with: url) { data, response, error in
-            guard
-                error == nil,
-                let http = response as? HTTPURLResponse,
-                (200...299).contains(http.statusCode),
-                let data,
-                let html = String(data: data, encoding: .utf8)
-            else {
+
+        log("Fetching HTML from \(url.absoluteString)")
+
+        let task = session.dataTask(with: url) { data, response, error in
+            if let error {
+                self.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
 
-            completion(html)
-        }.resume()
+            guard
+                let httpResponse = response as? HTTPURLResponse,
+                (200...299).contains(httpResponse.statusCode)
+            else {
+                self.logError("Incorrect HTTP response")
+                completion(nil)
+                return
+            }
+
+            guard let data, let htmlString = String(data: data, encoding: .utf8) else {
+                self.logError("Failed to decode HTML data")
+                completion(nil)
+                return
+            }
+
+            self.log("HTML loaded successfully (\(htmlString.count) chars)")
+            completion(htmlString)
+        }
+
+        task.resume()
     }
 }
