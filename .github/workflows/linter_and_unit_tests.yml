@@ -54,5 +54,8 @@ jobs:
           killall -9 Simulator || true
           xcrun simctl shutdown all || true
 
+    - name: Disable spotlight
+      run : sudo mdutil -a -i off &
+
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
