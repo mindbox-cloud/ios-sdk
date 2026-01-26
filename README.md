@@ -50,3 +50,5 @@ This library is available as open source under the explicit terms of the [Licens
 For a better understanding of these content, we suggest reading the referenced [iOS SDK](https://developers.mindbox.ru/docs/ios-sdk-integration) documentation. 
 
 ## HelloWorld
+
+Hello everyone
