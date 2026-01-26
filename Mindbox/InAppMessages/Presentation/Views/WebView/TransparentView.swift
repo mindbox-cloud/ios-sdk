@@ -57,12 +57,8 @@ final class TransparentView: UIView {
     }
 
     private func createFacade() {
-        facade = MindboxInternalWebViewFacade(
-            params: params,
-            userAgent: userAgent,
-            messageHandler: self,
-            navigationDelegate: self
-        )
+        facade = MindboxInternalWebViewFacade(params: params, userAgent: userAgent)
+        facade?.setBridgeDelegate(self)
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
@@ -104,35 +100,45 @@ extension TransparentView {
     }
 }
 
-// MARK: - WKScriptMessageHandler
-extension TransparentView: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        let name = message.name
-        
-        if name == "SdkBridge", let messageBody = message.body as? [String: String] {
-            let action = messageBody["action"] ?? "unknown"
-            let data = messageBody["data"] ?? ""
-            
-            Logger.common(message: "[WebView] TransparentWebView: SdkBridge - received \(action) \(data)", category: .webViewInAppMessages)
-            
-            switch action {
-            case "close":
-                quizInitTimeoutWorkItem?.cancel()
-                webViewAction?.onClose()
-            case "init":
-                quizInitTimeoutWorkItem?.cancel()
-                webViewAction?.onInit()
-            case "click":
-                webViewAction?.onCompleted(data: data)
-            case "hide":
-                webViewAction?.onHide()
-            case "log":
-                webViewAction?.onLog(message: data)
-            case "userAgent":
-                print("TransparentWebView: UserAgent: \(data)")
-            default:
-                Logger.common(message: "[WebView] TransparentWebView: action: \(action) with \(data)", category: .webViewInAppMessages)
-            }
+extension TransparentView: WebBridgeDelegate {
+    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: BridgeMessage) {
+        let action = message.action
+        let data = message.payloadAny as? String ?? ""
+
+        Logger.common(
+            message: "[WebView] Bridge: received \(action) \(data)",
+            category: .webViewInAppMessages
+        )
+
+        switch action {
+        case "close":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onClose()
+
+        case "init":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onInit()
+
+        case "click":
+            webViewAction?.onCompleted(data: data)
+
+        case "hide":
+            webViewAction?.onHide()
+
+        case "log":
+            webViewAction?.onLog(message: data)
+
+        case "userAgent":
+            Logger.common(
+                message: "[WebView] UserAgent: \(data)",
+                category: .webViewInAppMessages
+            )
+
+        default:
+            Logger.common(
+                message: "[WebView] Unknown action: \(action) with \(data)",
+                category: .webViewInAppMessages
+            )
         }
     }
 }

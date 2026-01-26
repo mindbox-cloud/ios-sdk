@@ -125,7 +125,7 @@ enum JSONValue: Codable, Equatable {
     }
 }
 
-struct BridgeMessage: Codable {
+public struct BridgeMessage: Codable {
     enum MessageType: String, Codable {
         case request
         case response

@@ -2581,7 +2581,6 @@
 				F30654B92F1A83430058808C /* Debug */,
 				B4E4386E2D8AFA5700603F3A /* WebViewController.swift */,
 				F332D2622CC27AC700A65F39 /* TransparentView.swift */,
-				F30654BC2F1A83DD0058808C /* MindboxWebView.swift */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -3255,6 +3254,7 @@
 			children = (
 				F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */,
 				F3BDA0372F27444500647BAF /* WebViewJSBridge.swift */,
+				F30654BC2F1A83DD0058808C /* MindboxWebView.swift */,
 			);
 			path = Bridge;
 			sourceTree = "<group>";

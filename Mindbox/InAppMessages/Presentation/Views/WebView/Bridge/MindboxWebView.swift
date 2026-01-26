@@ -14,14 +14,11 @@ final class MindboxWebView: WKWebView {
 
     init(
         params: [String: String]?,
-        userAgent: String,
-        messageHandler: WKScriptMessageHandler,
-        navigationDelegate: WKNavigationDelegate?
+        userAgent: String
     ) {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
 
         let contentController = WKUserContentController()
-        contentController.add(messageHandler, name: Self.sdkBridgeHandlerName)
 
         let sdkBridgeParamsObjectString = Self.buildSdkBridgeParams(
             params: params,
@@ -29,11 +26,6 @@ final class MindboxWebView: WKWebView {
         )
 
         let jsObserver: String = """
-        window.webkit.messageHandlers.SdkBridge.postMessage({
-            'action': 'userAgent',
-            'data': navigator.userAgent
-        });
-
         window.sdkBridgeParams = \(sdkBridgeParamsObjectString);
 
         window.SdkBridge = {
@@ -57,8 +49,6 @@ final class MindboxWebView: WKWebView {
         config.applicationNameForUserAgent = userAgent
 
         super.init(frame: .zero, configuration: config)
-
-        self.navigationDelegate = navigationDelegate
 
         #if DEBUG
         if #available(iOS 16.4, *) {
@@ -97,42 +87,5 @@ final class MindboxWebView: WKWebView {
         }
         
         return json
-    }
-
-    static func fetchHTMLContent(
-        from urlString: String,
-        completion: @escaping (String?) -> Void
-    ) {
-        guard let url = URL(string: urlString) else {
-            completion(nil)
-            return
-        }
-
-        let config = URLSessionConfiguration.ephemeral
-        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        config.urlCache = nil
-
-        let session = URLSession(configuration: config)
-        let task = session.dataTask(with: url) { data, response, error in
-            if error != nil {
-                completion(nil)
-                return
-            }
-
-            guard let http = response as? HTTPURLResponse,
-                  (200...299).contains(http.statusCode) else {
-                completion(nil)
-                return
-            }
-
-            if let data,
-               let html = String(data: data, encoding: .utf8) {
-                completion(html)
-            } else {
-                completion(nil)
-            }
-        }
-
-        task.resume()
     }
 }
