@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum JSONValue: Codable, Equatable {
+public enum JSONValue: Codable, Equatable {
     case string(String)
     case int(Int)
     case double(Double)
@@ -17,7 +17,7 @@ enum JSONValue: Codable, Equatable {
     case array([JSONValue])
     case null
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
@@ -41,7 +41,7 @@ enum JSONValue: Codable, Equatable {
         }
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .string(let value):
@@ -126,18 +126,18 @@ enum JSONValue: Codable, Equatable {
 }
 
 public struct BridgeMessage: Codable {
-    enum MessageType: String, Codable {
+    public enum MessageType: String, Codable {
         case request
         case response
         case error
     }
 
-    let version: Int
-    let type: MessageType
-    let action: String
-    let payload: JSONValue?
-    let id: UUID
-    let timestamp: Int64
+    public let version: Int
+    public let type: MessageType
+    public let action: String
+    public let payload: JSONValue?
+    public let id: UUID
+    public let timestamp: Int64
 
     init(
         version: Int = 1,
@@ -178,7 +178,7 @@ public struct BridgeMessage: Codable {
         self.timestamp = timestamp
     }
 
-    var payloadAny: Any? {
+    public var payloadAny: Any? {
         payload?.anyValue
     }
 
