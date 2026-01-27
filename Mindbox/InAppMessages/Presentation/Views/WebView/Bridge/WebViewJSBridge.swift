@@ -16,6 +16,11 @@ public protocol WebBridgeScriptDelegate: AnyObject {
 }
 
 @_spi(Internal)
+public protocol WebBridgeMessageDelegate: AnyObject {
+    func webBridge(_ bridge: WebBridge, didReceiveBridgeMessage message: BridgeMessage)
+}
+
+@_spi(Internal)
 public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: WebBridge, didStartProvisionalNavigation url: URL?)
     func webBridge(_ bridge: WebBridge, didFinishNavigation url: URL?)
@@ -27,6 +32,7 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
 public final class WebBridge: NSObject {
 
     weak var delegate: WebBridgeScriptDelegate?
+    weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
 
     private let webView: WKWebView
@@ -85,6 +91,7 @@ extension WebBridge: WKScriptMessageHandler {
         case .response:
             if pendingRequestIds.contains(bridgeMessage.id) {
                 pendingRequestIds.remove(bridgeMessage.id)
+                messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
                 Logger.common(
                     message: "[WebView] Bridge: response matched id \(bridgeMessage.id)",
                     category: .webViewInAppMessages

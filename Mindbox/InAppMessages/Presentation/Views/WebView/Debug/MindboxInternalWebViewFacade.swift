@@ -19,6 +19,7 @@ public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
     
     func sendToJS(_ message: BridgeMessage)
     func setBridgeDelegate(_ delegate: WebBridgeScriptDelegate?)
+    func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
 }
 
@@ -52,6 +53,10 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
 
     public func setBridgeDelegate(_ delegate: WebBridgeScriptDelegate?) {
         bridge.delegate = delegate
+    }
+
+    public func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {
+        bridge.messageDelegate = delegate
     }
     
     public func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {

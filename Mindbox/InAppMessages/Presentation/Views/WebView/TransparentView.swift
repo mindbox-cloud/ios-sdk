@@ -58,7 +58,7 @@ final class TransparentView: UIView {
 
     private func createFacade() {
         facade = MindboxInternalWebViewFacade(params: params, userAgent: userAgent)
-        facade?.setBridgeDelegate(self)
+        facade?.setBridgeMessageDelegate(self)
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
@@ -100,46 +100,56 @@ extension TransparentView {
     }
 }
 
-extension TransparentView: WebBridgeScriptDelegate {
-    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage) {
-//        let action = message.action
-//        let data = message.payloadAny as? String ?? ""
-//
-//        Logger.common(
-//            message: "[WebView] Bridge: received \(action) \(data)",
-//            category: .webViewInAppMessages
-//        )
-//
-//        switch action {
-//        case "close":
-//            quizInitTimeoutWorkItem?.cancel()
-//            webViewAction?.onClose()
-//
-//        case "init":
-//            quizInitTimeoutWorkItem?.cancel()
-//            webViewAction?.onInit()
-//
-//        case "click":
-//            webViewAction?.onCompleted(data: data)
-//
-//        case "hide":
-//            webViewAction?.onHide()
-//
-//        case "log":
-//            webViewAction?.onLog(message: data)
-//
-//        case "userAgent":
-//            Logger.common(
-//                message: "[WebView] UserAgent: \(data)",
-//                category: .webViewInAppMessages
-//            )
-//
-//        default:
-//            Logger.common(
-//                message: "[WebView] Unknown action: \(action) with \(data)",
-//                category: .webViewInAppMessages
-//            )
-//        }
+extension TransparentView: WebBridgeMessageDelegate {
+    func webBridge(_ bridge: WebBridge, didReceiveBridgeMessage message: BridgeMessage) {
+        let action = message.action
+        let data: String
+
+        if let payload = message.payload,
+           let payloadData = try? JSONEncoder().encode(payload),
+           let payloadString = String(data: payloadData, encoding: .utf8) {
+            data = payloadString
+        } else {
+            data = ""
+        }
+
+        Logger.common(
+            message: "[WebView] Bridge: received \(action) \(data)",
+            category: .webViewInAppMessages
+        )
+        
+        // TODO: - Create plugin-based handlers
+
+        switch action {
+        case "close":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onClose()
+
+        case "init":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onInit()
+
+        case "click":
+            webViewAction?.onCompleted(data: data)
+
+        case "hide":
+            webViewAction?.onHide()
+
+        case "log":
+            webViewAction?.onLog(message: data)
+
+        case "userAgent":
+            Logger.common(
+                message: "[WebView] UserAgent: \(data)",
+                category: .webViewInAppMessages
+            )
+
+        default:
+            Logger.common(
+                message: "[WebView] Unknown action: \(action) with \(data)",
+                category: .webViewInAppMessages
+            )
+        }
     }
 }
 
