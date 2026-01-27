@@ -9,7 +9,9 @@
 import Foundation
 import WebKit
 import MindboxLogger
+import UIKit
 
+// MARK: - WebBridgeScriptDelegate is a test delegate, need only for internal testing
 @_spi(Internal)
 public protocol WebBridgeScriptDelegate: AnyObject {
     func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage)
@@ -61,12 +63,21 @@ public final class WebBridge: NSObject {
 
         if message.type == .request {
             pendingRequestIds.insert(message.id)
+        } else if message.type == .response {
+            pendingRequestIds.remove(message.id)
         }
 
         let script = "window.receiveFromSDK(\(json));"
 
-        webView.evaluateJavaScript(script) { _, error in
-            if let error {
+        webView.evaluateJavaScript(script) { result, error in
+            guard error == nil else {
+                self.pendingRequestIds.remove(message.id)
+                return
+            }
+
+            guard let isSuccess = result as? Bool, isSuccess else {
+                self.pendingRequestIds.remove(message.id)
+                return
             }
         }
     }
@@ -80,30 +91,37 @@ extension WebBridge: WKScriptMessageHandler {
               let bridgeMessage = BridgeMessage.from(body: message.body) else {
             return
         }
-
+        
         guard bridgeMessage.version == bridgeVersion else {
             return
         }
-
+        
         switch bridgeMessage.type {
-        case .request:
-            break
-        case .response:
-            if pendingRequestIds.contains(bridgeMessage.id) {
-                pendingRequestIds.remove(bridgeMessage.id)
+            case .request:
+                pendingRequestIds.insert(bridgeMessage.id)
                 messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
-                Logger.common(
-                    message: "[WebView] Bridge: response matched id \(bridgeMessage.id)",
-                    category: .webViewInAppMessages
-                )
-            } else {
-                Logger.common(
-                    message: "[WebView] Bridge: response id \(bridgeMessage.id) not found. message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
-                    category: .webViewInAppMessages
-                )
-            }
-        case .error:
-            break
+                
+                // MARK: - Add logic here in next iterations.
+            case .response:
+                if pendingRequestIds.contains(bridgeMessage.id) {
+                    pendingRequestIds.remove(bridgeMessage.id)
+                    messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
+                    Logger.common(
+                        message: "[WebView] Bridge: response matched id \(bridgeMessage.id)",
+                        category: .webViewInAppMessages
+                    )
+                } else {
+                    Logger.common(
+                        message: "[WebView] Bridge: response id \(bridgeMessage.id) not found. message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
+                        category: .webViewInAppMessages
+                    )
+                }
+            case .error:
+                if pendingRequestIds.contains(bridgeMessage.id) {
+                    pendingRequestIds.remove(bridgeMessage.id)
+                }
+                
+                // MARK: - Add logic here in next iterations.
         }
     }
 }

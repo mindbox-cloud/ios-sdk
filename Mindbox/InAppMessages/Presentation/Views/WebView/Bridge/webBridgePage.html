@@ -1,331 +1,316 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Page for in-app</title>
-    <link rel="icon" href="data:,">
-    <style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mindbox Custom Page</title>
+  <style>
     html, body {
-        margin: 0;
-        padding: 0;
-        background-color: red;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #0f0f12;
+      color: #ffffff;
     }
-</style>
+
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100%;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px 20px;
+      box-sizing: border-box;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 4px 0 6px 0;
+    }
+
+    .block-title {
+      width: 100%;
+      max-width: 520px;
+      font-size: 11px;
+      opacity: 0.55;
+      margin: 2px 0 4px 0;
+    }
+
+    .block {
+      width: 100%;
+      max-width: 520px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .controls input,
+    .controls textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+    }
+
+    .controls textarea {
+      resize: vertical;
+      min-height: 56px;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 520px;
+      height: 1px;
+      margin: 6px 0 8px 0;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255,255,255,0.2),
+        transparent
+      );
+    }
+
+.mode-switch {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mode-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+    .controls button {
+      margin-top: 2px;
+      padding: 9px;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .green { color: #4ade80; }
+    .yellow { color: #facc15; }
+    .dim { opacity: 0.6; }
+    .error { color: #f87171; }
+  </style>
 </head>
 <body>
-<script>
-    // js-sdk-bridge for quizzes
-    const p=()=>Date.now().toString(36)+Math.random().toString(36).substring(2);class l{constructor(s){this.transport=s}onMessage(s,r){const a=t=>{if("command"in t&&t.command===s){const d={resolve:n=>{const e={id:t.id,ts:Date.now(),status:"success",data:n};this.transport.postMessage(e)},reject:n=>{const e={id:t.id,ts:Date.now(),status:"error",error:n};this.transport.postMessage(e)}};r(t.payload,d)}},i=this.transport.addListener(a);return{remove:()=>i.remove()}}sendMessage(s,r,a){const{needResponse:i=!1}=a,t={id:p(),ts:Date.now(),command:s,payload:r};if(!i){this.transport.postMessage(t);return}return new Promise((d,n)=>{let e;const h=o=>{!("command"in o)&&o.id===t.id&&(o.status==="success"?d(o.data):n(o.error),e==null||e.remove())};e=this.transport.addListener(h),this.transport.postMessage(t)})}}class u{constructor(){this.handlers=[]}postMessage(s){this.handlers.forEach(r=>{r(s)})}addListener(s){return this.handlers.push(s),{remove:()=>{this.handlers=this.handlers.filter(r=>r!==s)}}}}const m=new u;window.sdkBridge=new l(m);
-</script>
-<script>
-    window.isPopUpFormShown = false;
-    window.isQuizReadyChecked = false;
-    window.isQuizInitSent = false;
-    
-    window.isCircularReplacerEnabled = false;
-    window.isQuiz = false;
+  <div class="container">
+    <div class="badge">Mindbox</div>
+    <div class="title">Custom HTML Page</div>
 
-    createCircularReplacer = function() {
-        const seen = new WeakSet();
-        return function(key, value) {
-            if (typeof value === 'object' && value !== null) {
-                if (seen.has(value)) {
-                    return '[Circular]';
-                }
-                seen.add(value);
-            }
-            return value;
-        };
-    };
+    <div class="block-title">SDK → JS (receiveFromSDK)</div>
+    <div class="block">
+      <div id="incoming" class="dim">Waiting…</div>
+    </div>
 
-    window.stringify = function(value) {
-        try {
-            if (window.isCircularReplacerEnabled) {
-                return JSON.stringify(value, createCircularReplacer());
-            }
-            return JSON.stringify(value);
-        } catch (error) {
-            return 'Unserializable Object';
-        }
-    };
+    <div class="block-title">JS → SDK (sendToSDK)</div>
+    <div class="block">
+      <div id="outgoing" class="dim">Waiting…</div>
+    </div>
 
-    window.trySendInit = function () {
-      console.log('trySendInit called with isQuizInitSent=' + window.isQuizInitSent + ' and isPopUpFormShown=' + window.isPopUpFormShown + ' and isQuizReadyChecked=' + window.isQuizReadyChecked);
-        if (window.isQuizInitSent) {
-            return;
-        }
-        if (window.isPopUpFormShown && window.isQuizReadyChecked) {
-            window.isQuizInitSent = true;
-            sendToSdk('init', 'checkReadyToShow');
-            console.log('quizzes.init sent after onFormShow and checkReadyToShow');
-        }
-    };
+    <div class="divider"></div>
 
-    window.sdkBridge.onMessage('quizzes.ready', () => {
-      console.log('quizzes.ready called!')
-      window.sdkBridge.onMessage('quizzes.closed', () => {
-        console.log('quizzes.closed called!')
-        sendToSdk('hide', 'final');
-        setTimeout(() => {
-            sendToSdk('close', 'final');
-        }, 1000)
-      });
-      
-      window.sdkBridge.onMessage('quizzes.finalBtnClicked', ({ final }) => {
-          console.log(final);
-          action = {
-              intentPayload: "",
-              value: final.data.button.href,
-              $type: 'redirectUrl',
-          };
-          sendToSdk('click', JSON.stringify(action));
-          sendToSdk('close', 'after-click');
-      });
+<div class="mode-switch">
+  <button type="button" class="mode-btn active" data-mode="request">request</button>
+  <button type="button" class="mode-btn" data-mode="response">response</button>
+</div>
 
-      const checkReadyToShow = async () => window.sdkBridge.sendMessage('quizzes.checkReadyToShow', {}, { needResponse: true });
-      checkReadyToShow().then((data) => {
-        window.isQuizReadyChecked = true;
-        console.log('quizzes.checkReadyToShow respond received! ' + window.stringify(data));
-        window.trySendInit();
-      }).catch((error) => {
-        str = JSON.stringify(error)
-        if (window.isQuiz == 'true') {
-            sendToSdk('close', 'error: ' + str);
-        }
-        console.log('quizzes.checkReadyToShow respond error!', str)
-      })
+    <div class="controls">
+      <input id="actionInput" placeholder="action" />
+      <textarea id="payloadInput">{}</textarea>
+      <button id="sendBtn">sendToSDK</button>
+    </div>
+  </div>
+
+  <script>
+  const incomingEl = document.getElementById('incoming');
+  const outgoingEl = document.getElementById('outgoing');
+  const actionInput = document.getElementById('actionInput');
+  const payloadInput = document.getElementById('payloadInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  let currentModeValue = 'request';
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentModeValue = btn.dataset.mode;
     });
-</script>
-<script>
-    // Send message to Mobile SDK
-    function sendToSdk(action, data) {
-        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.SdkBridge) {
-            const message = {
-                action: action,
-                data: data
-            };
-            window.webkit.messageHandlers.SdkBridge.postMessage(message);
-        } else if (window.SdkBridge && typeof window.SdkBridge.postMessage === 'function') {
-            window.SdkBridge.postMessage(action, data);
-        } else if (window.__originalConsoleLog) {
-            window.__originalConsoleLog('SdkBridge is not found');
-        }
-    }
-</script>
+  });
 
-<script>
-    // Override console.log to send messages to Mobile SDK
-    (function(originalLog) {
-        window.__originalConsoleLog = originalLog;
+  function currentMode() {
+    return currentModeValue;
+  }
 
-        console.log = function() {
-            const message = Array.prototype.slice.call(arguments).map(function(arg) {
-                if (typeof arg === 'object' && arg !== null) {
-                    return window.stringify(arg);
-                }
-                return String(arg);
-            }).join(' ');
-
-            sendToSdk('log', message);
-            originalLog.apply(console, arguments);
-        };
-    })(console.log);
-</script>
-
-<script>
-    const sdkBridge = window.SdkBridge;
-
-    if (!sdkBridge || typeof sdkBridge.receiveParam !== 'function') {
-        console.log('SdkBridge.receiveParam is not available');
-    } else {
-        const params = {
-            sdkVersion: sdkBridge.receiveParam('sdkVersion'),
-            endpointId: sdkBridge.receiveParam('endpointId'),
-            popUpEndpointId: sdkBridge.receiveParam('popUpEndpointId'),
-            deviceUuid: sdkBridge.receiveParam('deviceUuid'),
-            popUpId: sdkBridge.receiveParam('popUpId'),
-            wizardId: sdkBridge.receiveParam('wizardId'),
-            sdkVersionNumeric: sdkBridge.receiveParam('sdkVersionNumeric'),
-            contentUrl: sdkBridge.receiveParam('contentUrl'),
-            baseUrl: sdkBridge.receiveParam('baseUrl'),
-            isQuiz: sdkBridge.receiveParam('isQuiz')
-        };
-
-        console.log('Mobile SDK params: ' + JSON.stringify(params, null, 2));
-
-        document.cookie = 'mindboxDeviceUUID=' + params.deviceUuid;
-        window.localStorage.setItem('mindboxDeviceUUID', params.deviceUuid);
-
-        let endpointId = params.endpointId;
-        const deviceUuid = params.deviceUuid;
-        const popUpId = params.popUpId;
-        window.isQuiz = params.isQuiz == 'true' || params.wizardId
-
-        if (params.popUpEndpointId) {
-            console.log('popUpEndpointId is set: ' + params.popUpEndpointId);
-            endpointId = params.popUpEndpointId;
-        } else {
-            console.log('popUpEndpointId is not set. Use default endpointId: ' + endpointId);
-        }
-
-        console.log('Call window.PopMechanic = window.PopMechanic || {}');
-        window.PopMechanic = window.PopMechanic || {};
-
-        if (popUpId) {
-            window.PopMechanic.onLoad = function() {
-                console.log('PopMechanic onLoad');
-
-                // Check form
-                const form = PopMechanic.getModel(popUpId);
-                if (!form) {
-                    console.log('Form ' + popUpId + ' not found for popUpId');
-                    sendToSdk('close', 'form not found');
-                } else {
-                    if (!isQuiz) {
-                        window.isQuizReadyChecked = true
-                    }
-                    console.log('Call PopMechanic.show for ' + popUpId);
-                    window.PopMechanic.show(popUpId, true);
-                }
-            }
-        } else if (params.wizardId) { 
-            window.PopMechanic.onLoad = function() {
-                console.log('PopMechanic onLoad');
-
-                // Check form
-                const form = PopMechanic.getModel(popUpId);
-                console.log('Call quizzes.show for ' + params.wizardId);
-                mindbox("quizzes.show", { id: params.wizardId });
-            }
-        } else {
-            console.log('popUpId and wizardId are not set');
-            sendToSdk('close', 'popUpId is not set');
-        }
-
-        window.PopMechanic.onFormShow = function(data) {
-            window.isPopUpFormShown = true;
-            console.log('PopMechanic onFormShow: ' + data.form.id);
-            if (typeof window.trySendInit === 'function') {
-                window.trySendInit();
-            }
-        };
-
-        window.PopMechanic.onFormClose = function(success, data) {
-            console.log('PopMechanic onFormClose: ' + window.stringify(data));
-            sendToSdk('hide', 'final');
-            setTimeout(() => {
-                sendToSdk('close', 'final');
-            }, 1000)
-        };
-
-        window.PopMechanic.onFormError = function(data) {
-            console.log('PopMechanic onFormError: ' + window.stringify(data));
-            sendToSdk('close', 'error');
-        };
-
-        mindbox = window.mindbox || function() { mindbox.queue.push(arguments); };
-        mindbox.queue = mindbox.queue || [];
-        mindbox('create', {
-            endpointId: endpointId,
-            deviceUUID: deviceUuid
-        });
-    }
-    
-</script>
-<script src="https://api.mindbox.ru/scripts/v1/tracker.js"></script>
-<script>
-    const BRIDGE_VERSION = 1;
-
-    function generateBridgeId() {
-        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-            return window.crypto.randomUUID();
-        }
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+  function formatMessage(obj) {
+    if (!obj || typeof obj !== 'object') {
+      return String(obj);
     }
 
-    function postBridgeMessage(message) {
-        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.SdkBridge) {
-            window.webkit.messageHandlers.SdkBridge.postMessage(message);
-        } else if (window.__originalConsoleLog) {
-            window.__originalConsoleLog('SdkBridge is not found');
-        }
+    const lines = [];
+
+    if ('action' in obj) {
+      lines.push(`<span class="green">action</span>: <span class="green">${obj.action}</span>`);
     }
 
-    function sendBridgeRequest(action, payload) {
-        const message = {
-            version: BRIDGE_VERSION,
-            type: 'request',
-            action: action,
-            payload: payload ?? null,
-            id: generateBridgeId(),
-            timestamp: Date.now()
-        };
-        postBridgeMessage(message);
-        return message.id;
+    if ('id' in obj) {
+      lines.push(`<span class="yellow">id</span>: <span class="yellow">${obj.id}</span>`);
     }
 
-    function sendBridgeResponse(requestMessage, payload, actionOverride) {
-        if (!requestMessage || !requestMessage.id) {
-            console.log('Bridge response skipped: missing request id');
-            return;
-        }
-        const message = {
-            version: BRIDGE_VERSION,
-            type: 'response',
-            action: actionOverride ?? requestMessage.action,
-            payload: payload ?? null,
-            id: requestMessage.id,
-            timestamp: Date.now()
-        };
-        postBridgeMessage(message);
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === 'action' || k === 'id') continue;
+      lines.push(`${k}: ${escapeHtml(JSON.stringify(v, null, 2))}`);
     }
 
-    window.receiveFromSDK = function(raw) {
-        let message;
+    return lines.join('\n');
+  }
 
-        try {
-            message = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        } catch (e) {
-            console.log('Invalid message from SDK:', raw);
-            return;
-        }
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 
-        if (message.type === 'request' && message.action === 'alert') {
-            document.documentElement.style.backgroundColor = 'yellow';
-            document.body.style.backgroundColor = 'yellow';
+  const BRIDGE_VERSION = 1;
 
-            if (message.payload) {
-                const banner = document.getElementById('__sdk_alert__') || (function () {
-                    const el = document.createElement('div');
-                    el.id = '__sdk_alert__';
-                    el.style.position = 'fixed';
-                    el.style.top = '0';
-                    el.style.left = '0';
-                    el.style.right = '0';
-                    el.style.padding = '12px';
-                    el.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-                    el.style.fontSize = '14px';
-                    el.style.background = 'rgba(0,0,0,0.8)';
-                    el.style.color = 'white';
-                    el.style.zIndex = '9999';
-                    document.body.appendChild(el);
-                    return el;
-                })();
+  function generateBridgeId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
-                banner.textContent = String(message.payload);
-            }
-
-            sendBridgeResponse(message, {
-                receivedPayload: message.payload ?? null,
-                pageUrl: window.location.href
-            }, 'js.alertDisplayed');
-        }
+  function buildBridgeMessage({ type, action, payload, id }) {
+    return {
+      version: BRIDGE_VERSION,
+      type: type ?? 'request',
+      action,
+      payload: payload ?? null,
+      id: id ?? generateBridgeId(),
+      timestamp: Date.now()
     };
+  }
+
+  function sendToSdk(bridgeMessage) {
+    if (!bridgeMessage || typeof bridgeMessage !== 'object') {
+      outgoingEl.classList.remove('dim');
+      outgoingEl.classList.add('error');
+      outgoingEl.textContent = 'BridgeMessage is required';
+      return;
+    }
+
+    outgoingEl.classList.remove('dim', 'error');
+    outgoingEl.innerHTML = formatMessage(bridgeMessage);
+
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.SdkBridge) {
+      window.webkit.messageHandlers.SdkBridge.postMessage(bridgeMessage);
+    } else if (window.SdkBridge && typeof window.SdkBridge.postMessage === 'function') {
+      window.SdkBridge.postMessage(bridgeMessage);
+    } else {
+      outgoingEl.classList.add('error');
+      outgoingEl.textContent = 'SdkBridge not found';
+    }
+  }
+
+  window.receiveFromSDK = function(raw) {
+    let message;
+
+    try {
+      message = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch {
+      incomingEl.classList.remove('dim');
+      incomingEl.textContent = String(raw);
+      return;
+    }
+
+    incomingEl.classList.remove('dim');
+    incomingEl.innerHTML = formatMessage(message);
+  };
+
+  sendBtn.addEventListener('click', () => {
+    const action = actionInput.value.trim();
+    const raw = payloadInput.value.trim();
+
+    if (!action) {
+      outgoingEl.classList.remove('dim');
+      outgoingEl.classList.add('error');
+      outgoingEl.textContent = 'Action is required';
+      return;
+    }
+
+    let payload = raw;
+    if (raw) {
+      try { payload = JSON.parse(raw); } catch {}
+    }
+
+    const mode = currentMode();
+
+    const message = buildBridgeMessage({
+      type: mode,
+      action,
+      payload
+    });
+
+    sendToSdk(message);
+  });
+
+  sendToSdk(buildBridgeMessage({
+    type: 'request',
+    action: 'ready',
+    payload: 'html-loaded'
+  }));
 </script>
 </body>
 </html>
