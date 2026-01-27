@@ -8,6 +8,7 @@
 
 import Foundation
 import WebKit
+import MindboxLogger
 
 @_spi(Internal)
 public protocol WebBridgeScriptDelegate: AnyObject {
@@ -30,6 +31,8 @@ public final class WebBridge: NSObject {
 
     private let webView: WKWebView
     private let handlerName: String
+    private let bridgeVersion = 1
+    private var pendingRequestIds = Set<UUID>()
 
     init(webView: WKWebView, handlerName: String = "SdkBridge") {
         self.webView = webView
@@ -50,6 +53,10 @@ public final class WebBridge: NSObject {
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else { return }
 
+        if message.type == .request {
+            pendingRequestIds.insert(message.id)
+        }
+
         let script = "window.receiveFromSDK(\(json));"
 
         webView.evaluateJavaScript(script) { _, error in
@@ -68,6 +75,30 @@ extension WebBridge: WKScriptMessageHandler {
               let bridgeMessage = BridgeMessage.from(body: message.body)
         else {
             return
+        }
+
+        guard bridgeMessage.version == bridgeVersion else {
+            return
+        }
+
+        switch bridgeMessage.type {
+        case .request:
+            break
+        case .response:
+            if pendingRequestIds.contains(bridgeMessage.id) {
+                pendingRequestIds.remove(bridgeMessage.id)
+                Logger.common(
+                    message: "[WebView] Bridge: response matched id \(bridgeMessage.id)",
+                    category: .webViewInAppMessages
+                )
+            } else {
+                Logger.common(
+                    message: "[WebView] Bridge: response id \(bridgeMessage.id) not found",
+                    category: .webViewInAppMessages
+                )
+            }
+        case .error:
+            break
         }
     }
 }

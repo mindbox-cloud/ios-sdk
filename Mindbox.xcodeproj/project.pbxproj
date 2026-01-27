@@ -486,6 +486,7 @@
 		F36128492BA3193E000382D9 /* PresentationClickTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36128482BA3193E000382D9 /* PresentationClickTracker.swift */; };
 		F361284B2BA31AC4000382D9 /* ActionUseCaseFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */; };
 		F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */; };
+		F36600542F2886FA0029F4E0 /* webBridgePage.html in Resources */ = {isa = PBXBuildFile; fileRef = F36600532F2886FA0029F4E0 /* webBridgePage.html */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
 		F36B63422E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */; };
@@ -1127,6 +1128,7 @@
 		F36128482BA3193E000382D9 /* PresentationClickTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationClickTracker.swift; sourceTree = "<group>"; };
 		F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionUseCaseFactory.swift; sourceTree = "<group>"; };
 		F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionActionUseCase.swift; sourceTree = "<group>"; };
+		F36600532F2886FA0029F4E0 /* webBridgePage.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = webBridgePage.html; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
 		F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppIsPriorityInvalid.json; sourceTree = "<group>"; };
@@ -3252,6 +3254,7 @@
 		F3BD9F802F273BC800647BAF /* Bridge */ = {
 			isa = PBXGroup;
 			children = (
+				F36600532F2886FA0029F4E0 /* webBridgePage.html */,
 				F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */,
 				F3BDA0372F27444500647BAF /* WebViewJSBridge.swift */,
 				F30654BC2F1A83DD0058808C /* MindboxWebView.swift */,
@@ -3536,6 +3539,7 @@
 			files = (
 				F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */,
 				A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */,
+				F36600542F2886FA0029F4E0 /* webBridgePage.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
