@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 @_spi(Internal)
-public protocol WebBridgeDelegate: AnyObject {
+public protocol WebBridgeScriptDelegate: AnyObject {
     func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage)
 }
 
@@ -25,7 +25,7 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
 @_spi(Internal)
 public final class WebBridge: NSObject {
 
-    weak var delegate: WebBridgeDelegate?
+    weak var delegate: WebBridgeScriptDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
 
     private let webView: WKWebView

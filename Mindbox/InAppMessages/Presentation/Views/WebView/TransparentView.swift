@@ -100,7 +100,7 @@ extension TransparentView {
     }
 }
 
-extension TransparentView: WebBridgeDelegate {
+extension TransparentView: WebBridgeScriptDelegate {
     func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage) {
 //        let action = message.action
 //        let data = message.payloadAny as? String ?? ""

@@ -12,10 +12,7 @@ import MindboxLogger
 final class MindboxWebView: WKWebView {
     static let sdkBridgeHandlerName = "SdkBridge"
 
-    init(
-        params: [String: String]?,
-        userAgent: String
-    ) {
+    init(params: [String: String]?, userAgent: String) {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
 
         let contentController = WKUserContentController()
@@ -26,93 +23,21 @@ final class MindboxWebView: WKWebView {
         )
 
         let jsObserver: String = """
-        (function () {
-            // JS -> iOS: initial handshake
-            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.SdkBridge) {
-                window.webkit.messageHandlers.SdkBridge.postMessage({
-                    action: 'userAgent',
-                    data: navigator.userAgent
-                });
-            }
-
-            // Params from native
-            window.sdkBridgeParams = \(sdkBridgeParamsObjectString);
-
-            window.SdkBridge = {
-                receiveParam: function (paramName) {
-                    if (typeof paramName !== 'string') return;
-                    return window.sdkBridgeParams[paramName.toLowerCase()];
-                },
-
-                // Explicit JS -> iOS channel
-                send: function (action, data) {
-                    if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.SdkBridge) {
-                        return;
-                    }
-                    window.webkit.messageHandlers.SdkBridge.postMessage({
-                        action: action,
-                        data: data
-                    });
-                }
-            };
-
-            // iOS -> JS channel
-            window.__nativeBridge = {
-                receive: function (message) {
-                    try {
-                        if (!message || !message.action) return;
-
-                        switch (message.action) {
-                        case 'showText':
-                            var text = '';
-                            if (message.payload !== undefined && message.payload !== null) {
-                                if (typeof message.payload === 'string') {
-                                    text = message.payload;
-                                } else {
-                                    try {
-                                        text = JSON.stringify(message.payload);
-                                    } catch (_) {
-                                        text = String(message.payload);
-                                    }
-                                }
-                            }
-
-                            var el = document.getElementById('__native_text');
-                            if (!el) {
-                                el = document.createElement('div');
-                                el.id = '__native_text';
-                                el.style.position = 'fixed';
-                                el.style.left = '0';
-                                el.style.right = '0';
-                                el.style.bottom = '0';
-                                el.style.padding = '12px';
-                                el.style.background = 'rgba(0,0,0,0.8)';
-                                el.style.color = 'white';
-                                el.style.fontSize = '14px';
-                                el.style.zIndex = '999999';
-                                el.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-                                document.body.appendChild(el);
-                            }
-
-                            el.textContent = text;
-                            break;
-
-                        default:
-                            console.log('Native message:', message);
-                            window.SdkBridge.send('nativeMessage', message.action);
-                            break;
-                        }
-                    } catch (e) {
-                        console.error('Native bridge error:', e);
-                        window.SdkBridge.send('nativeError', String(e));
-                    }
-                }
-            };
-
-            // Notify readiness
-            window.SdkBridge.send('ready', null);
-        })();
-        """
+             // Send UserAgent to native code
+             window.webkit.messageHandlers.SdkBridge.postMessage({
+                 'action': 'userAgent',
+                 'data': navigator.userAgent
+             });
+         
+             window.sdkBridgeParams = \(sdkBridgeParamsObjectString);
+             
+             window.SdkBridge = {
+                 receiveParam: function(paramName) {
+                     if (typeof paramName !== 'string') return;
+                     return window.sdkBridgeParams[paramName.toLowerCase()];
+                 }
+             };
+         """
 
         let userScript = WKUserScript(
             source: jsObserver,

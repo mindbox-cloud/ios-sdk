@@ -18,7 +18,7 @@ public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     
     func sendToJS(_ message: BridgeMessage)
-    func setBridgeDelegate(_ delegate: WebBridgeDelegate?)
+    func setBridgeDelegate(_ delegate: WebBridgeScriptDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
 }
 
@@ -50,7 +50,7 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
         self.logError = logError
     }
 
-    public func setBridgeDelegate(_ delegate: WebBridgeDelegate?) {
+    public func setBridgeDelegate(_ delegate: WebBridgeScriptDelegate?) {
         bridge.delegate = delegate
     }
     
