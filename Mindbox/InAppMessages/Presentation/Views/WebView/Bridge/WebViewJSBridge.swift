@@ -69,11 +69,9 @@ public final class WebBridge: NSObject {
 extension WebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
-
         delegate?.webBridge(self, didReceiveFromJS: message)
         guard message.name == handlerName,
-              let bridgeMessage = BridgeMessage.from(body: message.body)
-        else {
+              let bridgeMessage = BridgeMessage.from(body: message.body) else {
             return
         }
 
@@ -93,7 +91,7 @@ extension WebBridge: WKScriptMessageHandler {
                 )
             } else {
                 Logger.common(
-                    message: "[WebView] Bridge: response id \(bridgeMessage.id) not found",
+                    message: "[WebView] Bridge: response id \(bridgeMessage.id) not found. message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
                     category: .webViewInAppMessages
                 )
             }
