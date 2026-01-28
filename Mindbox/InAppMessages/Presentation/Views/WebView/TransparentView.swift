@@ -101,7 +101,7 @@ extension TransparentView {
 }
 
 extension TransparentView: WebBridgeMessageDelegate {
-    func webBridge(_ bridge: WebBridge, didReceiveBridgeMessage message: BridgeMessage) {
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
         let action = message.action
         let data: String
 

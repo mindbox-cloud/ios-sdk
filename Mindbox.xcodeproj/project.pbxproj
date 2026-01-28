@@ -459,6 +459,7 @@
 		F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */; };
 		F33608302A8E167100C7C9B7 /* SnackbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082F2A8E167100C7C9B7 /* SnackbarView.swift */; };
 		F338028E2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F338028D2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift */; };
+		F33802902F29F3AF00F83D2F /* BridgeMessageDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -569,7 +570,7 @@
 		F3B2A3A12A4C79E200E2CA25 /* MindboxError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */; };
 		F3B2A3A22A4C79E200E2CA25 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */; };
 		F3BD9F822F273BCD00647BAF /* BridgeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */; };
-		F3BDA0382F27444500647BAF /* WebViewJSBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BDA0372F27444500647BAF /* WebViewJSBridge.swift */; };
+		F3BDA0382F27444500647BAF /* MindboxWebBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */; };
 		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
@@ -1101,6 +1102,7 @@
 		F336082C2A8E15D500C7C9B7 /* ImageLayerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLayerFactory.swift; sourceTree = "<group>"; };
 		F336082F2A8E167100C7C9B7 /* SnackbarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SnackbarView.swift; sourceTree = "<group>"; };
 		F338028D2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebBridgeWKScriptMessageDelegate.swift; sourceTree = "<group>"; };
+		F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessageDispatcher.swift; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -1211,7 +1213,7 @@
 		F3B2A39C2A4C79E200E2CA25 /* MindboxError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxError.swift; sourceTree = "<group>"; };
 		F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessage.swift; sourceTree = "<group>"; };
-		F3BDA0372F27444500647BAF /* WebViewJSBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewJSBridge.swift; sourceTree = "<group>"; };
+		F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxWebBridge.swift; sourceTree = "<group>"; };
 		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
@@ -3256,8 +3258,9 @@
 			isa = PBXGroup;
 			children = (
 				F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */,
-				F3BDA0372F27444500647BAF /* WebViewJSBridge.swift */,
+				F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */,
 				F30654BC2F1A83DD0058808C /* MindboxWebView.swift */,
+				F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */,
 			);
 			path = Bridge;
 			sourceTree = "<group>";
@@ -3808,6 +3811,7 @@
 				84F7053B26120199009C7A07 /* Constants.swift in Sources */,
 				A17958782978AEC600609E91 /* SegmentTargetingChecker.swift in Sources */,
 				847F580B25C88CAF00147A9A /* Route.swift in Sources */,
+				F33802902F29F3AF00F83D2F /* BridgeMessageDispatcher.swift in Sources */,
 				6FDD145D266F7CCE00A50C35 /* PossibleDiscountsResponse.swift in Sources */,
 				9B9C95322921116F00BB29DA /* PasteboardUUIDDebugService.swift in Sources */,
 				B4E4386D2D8AF9A700603F3A /* WebviewFormVariant.swift in Sources */,
@@ -3973,7 +3977,7 @@
 				B4E438702D8AFA5700603F3A /* WebViewController.swift in Sources */,
 				3337E6A92664C16A006949EB /* CustomerResponse.swift in Sources */,
 				F3FEEAA42C25B765000E9D0F /* InjectUtilities.swift in Sources */,
-				F3BDA0382F27444500647BAF /* WebViewJSBridge.swift in Sources */,
+				F3BDA0382F27444500647BAF /* MindboxWebBridge.swift in Sources */,
 				84EAEDFC25C8B18B00726063 /* DeviceModelHelper.swift in Sources */,
 				84DC4A0725D27D6000D5D758 /* UNAuthorizationStatusProvider.swift in Sources */,
 				F331DCC82A80993600222120 /* ContentBackgroundLayer.swift in Sources */,

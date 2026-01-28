@@ -1,5 +1,5 @@
 //
-//  WebViewJSBridge.swift
+//  MindboxWebBridge.swift
 //  Mindbox
 //
 //  Created by Akylbek Utekeshev on 26.01.2026.
@@ -13,23 +13,33 @@ import UIKit
 
 @_spi(Internal)
 public protocol WebBridgeMessageDelegate: AnyObject {
-    func webBridge(_ bridge: WebBridge, didReceiveBridgeMessage message: BridgeMessage)
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage)
 }
 
 @_spi(Internal)
 public protocol WebBridgeNavigationDelegate: AnyObject {
-    func webBridge(_ bridge: WebBridge, didStartProvisionalNavigation url: URL?)
-    func webBridge(_ bridge: WebBridge, didFinishNavigation url: URL?)
-    func webBridge(_ bridge: WebBridge, didFailProvisionalNavigation url: URL?, error: Error)
-    func webBridge(_ bridge: WebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
+    func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?)
+    func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?)
+    func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
+    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
+}
+
+protocol BridgePendingStore: AnyObject {
+    func addPending(_ id: UUID)
+    func removePending(_ id: UUID)
+    func containsPending(_ id: UUID) -> Bool
 }
 
 @_spi(Internal)
-public final class WebBridge: NSObject {
+public final class MindboxWebBridge: NSObject {
 
-    weak var wkScriptMessagedelegate: WebBridgeWKScriptMessageDelegate?
+    weak var delegate: WebBridgeWKScriptMessageDelegate?
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
+    
+    private lazy var dispatcher = BridgeMessageDispatcher(handlers: [RequestMessageHandler(),
+                                                                     ResponseMessageHandler(),
+                                                                     ErrorMessageHandler()])
 
     private let webView: WKWebView
     private let handlerName = "SdkBridge"
@@ -76,61 +86,23 @@ public final class WebBridge: NSObject {
     }
 }
 
-extension WebBridge: WKScriptMessageHandler {
+extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
-        wkScriptMessagedelegate?.webBridge(self, didReceiveFromJS: message)
-        
+        delegate?.webBridge(self, didReceiveFromJS: message)
+
         guard message.name == handlerName,
-              let bridgeMessage = BridgeMessage.from(body: message.body) else {
+              let bridgeMessage = BridgeMessage.from(body: message.body),
+              bridgeMessage.version == bridgeVersion
+        else {
             return
         }
-        
-        guard bridgeMessage.version == bridgeVersion else {
-            return
-        }
-        
-        switch bridgeMessage.type {
-            case .request:
-                pendingRequestIds.insert(bridgeMessage.id)
-                Logger.common(
-                    message: "[WebView] Bridge: request received id \(bridgeMessage.id). message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
-                    category: .webViewInAppMessages
-                )
-                messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
-                
-                // MARK: - Add logic here in next iterations.
-            case .response:
-                if pendingRequestIds.contains(bridgeMessage.id) {
-                    pendingRequestIds.remove(bridgeMessage.id)
-                    messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
-                    Logger.common(
-                        message: "[WebView] Bridge: response matched id \(bridgeMessage.id)",
-                        category: .webViewInAppMessages
-                    )
-                } else {
-                    Logger.common(
-                        message: "[WebView] Bridge: response id \(bridgeMessage.id) not found. message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
-                        category: .webViewInAppMessages
-                    )
-                }
-            case .error:
-                let hadPending = pendingRequestIds.contains(bridgeMessage.id)
-                if hadPending {
-                    pendingRequestIds.remove(bridgeMessage.id)
-                }
-                
-                Logger.common(
-                    message: "[WebView] Bridge: error received id \(bridgeMessage.id) pending=\(hadPending). message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
-                    category: .webViewInAppMessages
-                )
-                
-                // MARK: - Add logic here in next iterations.
-        }
+
+        dispatcher.dispatch(bridgeMessage, in: self)
     }
 }
 
-extension WebBridge: WKNavigationDelegate {
+extension MindboxWebBridge: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationDelegate?.webBridge(self, didStartProvisionalNavigation: webView.url)
     }
@@ -155,5 +127,19 @@ extension WebBridge: WKNavigationDelegate {
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         navigationDelegate?.webBridge(self, decidePolicyFor: navigationAction.request.url, decisionHandler: decisionHandler)
+    }
+}
+
+extension MindboxWebBridge: BridgePendingStore {
+    func addPending(_ id: UUID) {
+        pendingRequestIds.insert(id)
+    }
+
+    func removePending(_ id: UUID) {
+        pendingRequestIds.remove(id)
+    }
+
+    func containsPending(_ id: UUID) -> Bool {
+        pendingRequestIds.contains(id)
     }
 }

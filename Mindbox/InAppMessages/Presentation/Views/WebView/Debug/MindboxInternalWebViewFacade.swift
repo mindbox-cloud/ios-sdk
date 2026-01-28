@@ -35,7 +35,7 @@ public typealias WebViewLogError = (String) -> Void
 public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     private let webView: MindboxWebView
-    private let bridge: WebBridge
+    private let bridge: MindboxWebBridge
     
     private let log: WebViewLog
     private let logError: WebViewLogError
@@ -45,7 +45,7 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         let webView = MindboxWebView(params: params, userAgent: userAgent)
-        let bridge = WebBridge(webView: webView, handlerName: MindboxWebView.sdkBridgeHandlerName)
+        let bridge = MindboxWebBridge(webView: webView)
         
         self.webView = webView
         self.bridge = bridge

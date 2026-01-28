@@ -15,5 +15,5 @@ import WebKit
 /// and must not be used by production code or relied upon as part of the SDK API contract.
 @_spi(Internal)
 public protocol WebBridgeWKScriptMessageDelegate : AnyObject {
-    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage)
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveFromJS message: WKScriptMessage)
 }
