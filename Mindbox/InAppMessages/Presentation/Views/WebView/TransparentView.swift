@@ -196,3 +196,4 @@ protocol WebViewAction: AnyObject {
     func onHide()
     func onLog(message: String)
 }
+

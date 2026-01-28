@@ -17,6 +17,7 @@ public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
     func cleanWebView()
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     
+    func start()
     func sendToJS(_ message: BridgeMessage)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
@@ -36,6 +37,7 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
     
     private let webView: MindboxWebView
     private let bridge: MindboxWebBridge
+    private let params: [String: String]?
     
     private let log: WebViewLog
     private let logError: WebViewLogError
@@ -44,11 +46,12 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
                 userAgent: String,
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        let webView = MindboxWebView(params: params, userAgent: userAgent)
+        let webView = MindboxWebView(userAgent: userAgent)
         let bridge = MindboxWebBridge(webView: webView)
         
         self.webView = webView
         self.bridge = bridge
+        self.params = params
         self.log = log
         self.logError = logError
     }
@@ -99,6 +102,16 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
     
+    #warning("We did not set start method for the inapps.")
+    public func start() {
+        let message = BridgeMessage(
+            type: .request,
+            action: "start",
+            payload: buildStartPayload()
+        )
+        bridge.send(message)
+    }
+    
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
     }
@@ -117,6 +130,24 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
 }
 
 extension MindboxInternalWebViewFacade {
+    private func buildStartPayload() -> JSONValue {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        
+        var mindboxParams: [String: String] = [
+            "sdkVersion": Mindbox.shared.sdkVersion,
+            "endpointId": persistenceStorage.configuration?.endpoint ?? "",
+            "deviceUuid": persistenceStorage.deviceUUID ?? "",
+            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)"
+        ]
+
+        if let params, !params.isEmpty {
+            mindboxParams.merge(params) { _, new in new }
+        }
+
+        let payloadObject = mindboxParams.mapValues { JSONValue.string($0) }
+        return .object(payloadObject)
+    }
+    
     private func fetchHTML(from urlString: String,
                            completion: @escaping (String?) -> Void) {
         guard let url = URL(string: urlString) else {
