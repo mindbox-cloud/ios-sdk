@@ -10,18 +10,22 @@ import UIKit
 import WebKit
 
 @_spi(Internal)
-public protocol MindboxInternalWebViewFacadeProtocol: AnyObject {
+public protocol InappWebViewFacadeProtocol: AnyObject {
     func makeView() -> UIView
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void)
-    func reloadWebView()
-    func cleanWebView()
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
-    
-    func start()
+    func cleanWebView()
+
     func sendToJS(_ message: BridgeMessage)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
-    
+}
+
+@_spi(Internal)
+public protocol MindboxInternalWebViewFacadeProtocol: InappWebViewFacadeProtocol {
+    func reloadWebView()
+    func cleanWebView()
+
     /// Test-only hook used by internal test apps to observe raw incoming `WKScriptMessage` objects.
     ///
     /// This is meant purely for visual/debug purposes (e.g. to display the unparsed message payload),
@@ -33,7 +37,7 @@ public typealias WebViewLog = (String) -> Void
 public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
-public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadeProtocol {
+public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
@@ -111,14 +115,6 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
     }
     
     #warning("We did not set start method for the inapps.")
-    public func start() {
-        let message = BridgeMessage(
-            type: .request,
-            action: "start",
-            payload: buildStartPayload()
-        )
-        bridge.send(message)
-    }
     
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
@@ -137,7 +133,16 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
     }
 }
 
-extension MindboxInternalWebViewFacade {
+extension MindboxWebViewFacade {
+    private func start() {
+        let message = BridgeMessage(
+            type: .request,
+            action: "start",
+            payload: buildStartPayload()
+        )
+        bridge.send(message)
+    }
+    
     private func buildStartPayload() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         

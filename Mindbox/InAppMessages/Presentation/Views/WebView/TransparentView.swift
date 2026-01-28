@@ -14,7 +14,7 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: MindboxInternalWebViewFacadeProtocol?
+    private var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: String]?
     private let userAgent: String
@@ -57,7 +57,7 @@ final class TransparentView: UIView {
     }
 
     private func createFacade() {
-        facade = MindboxInternalWebViewFacade(params: params, userAgent: userAgent)
+        facade = MindboxWebViewFacade(params: params, userAgent: userAgent)
         facade?.setBridgeMessageDelegate(self)
     }
 
@@ -196,4 +196,3 @@ protocol WebViewAction: AnyObject {
     func onHide()
     func onLog(message: String)
 }
-
