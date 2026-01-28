@@ -35,7 +35,7 @@ public typealias WebViewLogError = (String) -> Void
 @_spi(Internal)
 public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
-    private let webView: MindboxWebView
+    private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let params: [String: String]?
     
@@ -46,7 +46,15 @@ public final class MindboxInternalWebViewFacade: MindboxInternalWebViewFacadePro
                 userAgent: String,
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        let webView = MindboxWebView(userAgent: userAgent)
+        let config = WKWebViewConfiguration()
+        config.applicationNameForUserAgent = userAgent
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        #if DEBUG
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
+        #endif
         let bridge = MindboxWebBridge(webView: webView)
         
         self.webView = webView
