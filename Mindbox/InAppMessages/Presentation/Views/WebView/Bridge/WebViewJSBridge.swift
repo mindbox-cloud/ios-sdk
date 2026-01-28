@@ -11,12 +11,6 @@ import WebKit
 import MindboxLogger
 import UIKit
 
-// MARK: - WebBridgeScriptDelegate is a test delegate, need only for internal testing
-@_spi(Internal)
-public protocol WebBridgeScriptDelegate: AnyObject {
-    func webBridge(_ bridge: WebBridge, didReceiveFromJS message: WKScriptMessage)
-}
-
 @_spi(Internal)
 public protocol WebBridgeMessageDelegate: AnyObject {
     func webBridge(_ bridge: WebBridge, didReceiveBridgeMessage message: BridgeMessage)
@@ -33,18 +27,17 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
 @_spi(Internal)
 public final class WebBridge: NSObject {
 
-    weak var delegate: WebBridgeScriptDelegate?
+    weak var wkScriptMessagedelegate: WebBridgeWKScriptMessageDelegate?
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
 
     private let webView: WKWebView
-    private let handlerName: String
+    private let handlerName = "SdkBridge"
     private let bridgeVersion = 1
     private var pendingRequestIds = Set<UUID>()
 
-    init(webView: WKWebView, handlerName: String = "SdkBridge") {
+    init(webView: WKWebView) {
         self.webView = webView
-        self.handlerName = handlerName
         super.init()
 
         let controller = webView.configuration.userContentController
@@ -86,7 +79,8 @@ public final class WebBridge: NSObject {
 extension WebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
-        delegate?.webBridge(self, didReceiveFromJS: message)
+        wkScriptMessagedelegate?.webBridge(self, didReceiveFromJS: message)
+        
         guard message.name == handlerName,
               let bridgeMessage = BridgeMessage.from(body: message.body) else {
             return
@@ -99,6 +93,10 @@ extension WebBridge: WKScriptMessageHandler {
         switch bridgeMessage.type {
             case .request:
                 pendingRequestIds.insert(bridgeMessage.id)
+                Logger.common(
+                    message: "[WebView] Bridge: request received id \(bridgeMessage.id). message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
+                    category: .webViewInAppMessages
+                )
                 messageDelegate?.webBridge(self, didReceiveBridgeMessage: bridgeMessage)
                 
                 // MARK: - Add logic here in next iterations.
@@ -117,9 +115,15 @@ extension WebBridge: WKScriptMessageHandler {
                     )
                 }
             case .error:
-                if pendingRequestIds.contains(bridgeMessage.id) {
+                let hadPending = pendingRequestIds.contains(bridgeMessage.id)
+                if hadPending {
                     pendingRequestIds.remove(bridgeMessage.id)
                 }
+                
+                Logger.common(
+                    message: "[WebView] Bridge: error received id \(bridgeMessage.id) pending=\(hadPending). message: version=\(bridgeMessage.version) type=\(bridgeMessage.type.rawValue) action=\(bridgeMessage.action) payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)",
+                    category: .webViewInAppMessages
+                )
                 
                 // MARK: - Add logic here in next iterations.
         }
