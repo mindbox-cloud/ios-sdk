@@ -47,10 +47,23 @@ final class RequestMessageHandler: BridgeMessageHandler {
 
         pending.addPending(message.id)
 
+        let requestLogMessage = "[WebView] Bridge: request received id \(message.id). " +
+            "message: version=\(message.version) type=\(message.type.rawValue) " +
+            "action=\(message.action) payload=\(String(describing: message.payloadAny)) " +
+            "timestamp=\(message.timestamp)"
         Logger.common(
-            message: "[WebView] Bridge: request received id \(message.id). message: version=\(message.version) type=\(message.type.rawValue) action=\(message.action) payload=\(String(describing: message.payloadAny)) timestamp=\(message.timestamp)",
+            message: requestLogMessage,
             category: .webViewInAppMessages
         )
+
+        let response = BridgeMessage(
+            version: message.version,
+            type: .response,
+            action: message.action,
+            payload: .object(["success": .bool(true)]),
+            id: message.id
+        )
+        bridge.send(response)
 
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
@@ -75,8 +88,12 @@ final class ResponseMessageHandler: BridgeMessageHandler {
                 category: .webViewInAppMessages
             )
         } else {
+            let responseLogMessage = "[WebView] Bridge: response id \(message.id) not found. " +
+                "message: version=\(message.version) type=\(message.type.rawValue) " +
+                "action=\(message.action) payload=\(String(describing: message.payloadAny)) " +
+                "timestamp=\(message.timestamp)"
             Logger.common(
-                message: "[WebView] Bridge: response id \(message.id) not found. message: version=\(message.version) type=\(message.type.rawValue) action=\(message.action) payload=\(String(describing: message.payloadAny)) timestamp=\(message.timestamp)",
+                message: responseLogMessage,
                 category: .webViewInAppMessages
             )
         }
@@ -98,8 +115,12 @@ final class ErrorMessageHandler: BridgeMessageHandler {
             pending.removePending(message.id)
         }
 
+        let errorLogMessage = "[WebView] Bridge: error received id \(message.id) pending=\(hadPending). " +
+            "message: version=\(message.version) type=\(message.type.rawValue) " +
+            "action=\(message.action) payload=\(String(describing: message.payloadAny)) " +
+            "timestamp=\(message.timestamp)"
         Logger.common(
-            message: "[WebView] Bridge: error received id \(message.id) pending=\(hadPending). message: version=\(message.version) type=\(message.type.rawValue) action=\(message.action) payload=\(String(describing: message.payloadAny)) timestamp=\(message.timestamp)",
+            message: errorLogMessage,
             category: .webViewInAppMessages
         )
     }

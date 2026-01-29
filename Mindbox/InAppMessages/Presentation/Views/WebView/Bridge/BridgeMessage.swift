@@ -65,30 +65,31 @@ public enum JSONValue: Codable, Equatable {
         guard let any else {
             return nil
         }
-        if any is NSNull {
+        switch any {
+        case is NSNull:
             self = .null
-        } else if let value = any as? JSONValue {
+        case let value as JSONValue:
             self = value
-        } else if let value = any as? String {
+        case let value as String:
             self = .string(value)
-        } else if let value = any as? Bool {
+        case let value as Bool:
             self = .bool(value)
-        } else if let value = any as? Int {
+        case let value as Int:
             self = .int(value)
-        } else if let value = any as? Int64 {
+        case let value as Int64:
             self = .int(Int(value))
-        } else if let value = any as? Double {
+        case let value as Double:
             self = .double(value)
-        } else if let value = any as? Float {
+        case let value as Float:
             self = .double(Double(value))
-        } else if let value = any as? [String: Any] {
+        case let value as [String: Any]:
             var object: [String: JSONValue] = [:]
             for (key, entry) in value {
                 guard let jsonValue = JSONValue(any: entry) else { return nil }
                 object[key] = jsonValue
             }
             self = .object(object)
-        } else if let value = any as? [Any] {
+        case let value as [Any]:
             var array: [JSONValue] = []
             array.reserveCapacity(value.count)
             for entry in value {
@@ -96,7 +97,7 @@ public enum JSONValue: Codable, Equatable {
                 array.append(jsonValue)
             }
             self = .array(array)
-        } else {
+        default:
             return nil
         }
     }

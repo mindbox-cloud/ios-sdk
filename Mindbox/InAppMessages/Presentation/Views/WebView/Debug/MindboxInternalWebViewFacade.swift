@@ -115,7 +115,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     }
     
     #warning("We did not set start method for the inapps.")
-    
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
     }

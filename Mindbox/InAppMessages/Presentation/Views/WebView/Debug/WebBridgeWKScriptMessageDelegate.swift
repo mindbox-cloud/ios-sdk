@@ -14,6 +14,6 @@ import WebKit
 /// This is meant purely for visual/debug purposes (e.g. to display the unparsed message payload),
 /// and must not be used by production code or relied upon as part of the SDK API contract.
 @_spi(Internal)
-public protocol WebBridgeWKScriptMessageDelegate : AnyObject {
+public protocol WebBridgeWKScriptMessageDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveFromJS message: WKScriptMessage)
 }
