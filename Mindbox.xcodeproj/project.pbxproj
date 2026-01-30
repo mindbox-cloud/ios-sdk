@@ -459,7 +459,6 @@
 		F33608302A8E167100C7C9B7 /* SnackbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F336082F2A8E167100C7C9B7 /* SnackbarView.swift */; };
 		F338028E2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F338028D2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift */; };
 		F33802902F29F3AF00F83D2F /* BridgeMessageDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */; };
-		F33802E32F2A065800F83D2F /* MindboxCustomPage.html in Resources */ = {isa = PBXBuildFile; fileRef = F33802E22F2A065800F83D2F /* MindboxCustomPage.html */; };
 		F3482F172A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */; };
 		F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */; };
 		F3482F1B2A65DC01002A41EC /* DefaultInappMessageDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */; };
@@ -1102,7 +1101,6 @@
 		F336082F2A8E167100C7C9B7 /* SnackbarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SnackbarView.swift; sourceTree = "<group>"; };
 		F338028D2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebBridgeWKScriptMessageDelegate.swift; sourceTree = "<group>"; };
 		F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessageDispatcher.swift; sourceTree = "<group>"; };
-		F33802E22F2A065800F83D2F /* MindboxCustomPage.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = MindboxCustomPage.html; sourceTree = "<group>"; };
 		F3482F162A65DBB7002A41EC /* MindboxURLHandlerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxURLHandlerDelegate.swift; sourceTree = "<group>"; };
 		F3482F182A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPayloadCopierDelegate.swift; sourceTree = "<group>"; };
 		F3482F1A2A65DC01002A41EC /* DefaultInappMessageDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInappMessageDelegate.swift; sourceTree = "<group>"; };
@@ -2618,7 +2616,6 @@
 		F30654B92F1A83430058808C /* Debug */ = {
 			isa = PBXGroup;
 			children = (
-				F33802E22F2A065800F83D2F /* MindboxCustomPage.html */,
 				F30654BA2F1A83520058808C /* MindboxInternalWebViewFacade.swift */,
 				F338028D2F29EC8800F83D2F /* WebBridgeWKScriptMessageDelegate.swift */,
 			);
@@ -3541,7 +3538,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F3EC93B72AF0FDCD0030D107 /* PrivacyInfo.xcprivacy in Resources */,
-				F33802E32F2A065800F83D2F /* MindboxCustomPage.html in Resources */,
 				A179589E2979708B00609E91 /* MindBoxAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

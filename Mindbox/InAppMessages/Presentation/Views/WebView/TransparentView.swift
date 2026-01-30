@@ -126,6 +126,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             webViewAction?.onClose()
 
         case "init":
+            facade?.start()
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onInit()
 

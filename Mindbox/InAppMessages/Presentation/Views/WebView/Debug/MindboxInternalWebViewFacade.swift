@@ -16,6 +16,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     func cleanWebView()
 
+    func start()
     func sendToJS(_ message: BridgeMessage)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
@@ -114,7 +115,15 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
     
-    #warning("We did not set start method for the inapps.")
+    public func start() {
+        let message = BridgeMessage(
+            type: .request,
+            action: "start",
+            payload: buildStartPayload()
+        )
+        bridge.send(message)
+    }
+    
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
     }
@@ -133,15 +142,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 }
 
 extension MindboxWebViewFacade {
-    private func start() {
-        let message = BridgeMessage(
-            type: .request,
-            action: "start",
-            payload: buildStartPayload()
-        )
-        bridge.send(message)
-    }
-    
     private func buildStartPayload() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         
