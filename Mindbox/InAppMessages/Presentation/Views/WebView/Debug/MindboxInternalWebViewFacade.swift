@@ -16,7 +16,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     func cleanWebView()
 
-    func start()
+    func sendReadyEvent()
     func sendToJS(_ message: BridgeMessage)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
@@ -115,10 +115,10 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
     
-    public func start() {
+    public func sendReadyEvent() {
         let message = BridgeMessage(
-            type: .request,
-            action: "start",
+            type: .response,
+            action: "ready",
             payload: buildStartPayload()
         )
         bridge.send(message)

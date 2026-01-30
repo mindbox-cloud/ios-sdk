@@ -63,7 +63,8 @@ final class RequestMessageHandler: BridgeMessageHandler {
             payload: .object(["success": .bool(true)]),
             id: message.id
         )
-        bridge.send(response)
+    // MARK: - Тут какая то фигня, с текущей страницей цикл происходит запросов, request - response. Пока закомментировал
+//        bridge.send(response)
 
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }

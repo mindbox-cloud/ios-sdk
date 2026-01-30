@@ -59,6 +59,7 @@ final class TransparentView: UIView {
     private func createFacade() {
         facade = MindboxWebViewFacade(params: params, userAgent: userAgent)
         facade?.setBridgeMessageDelegate(self)
+        facade?.setNavigationDelegate(self)
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
@@ -126,7 +127,6 @@ extension TransparentView: WebBridgeMessageDelegate {
             webViewAction?.onClose()
 
         case "init":
-            facade?.start()
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onInit()
 
@@ -144,6 +144,9 @@ extension TransparentView: WebBridgeMessageDelegate {
                 message: "[WebView] UserAgent: \(data)",
                 category: .webViewInAppMessages
             )
+                
+        case "ready":
+            facade?.sendReadyEvent()
 
         default:
             Logger.common(
@@ -156,31 +159,24 @@ extension TransparentView: WebBridgeMessageDelegate {
 
 // MARK: - WKNavigationDelegate
 
-extension TransparentView: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+extension TransparentView: WebBridgeNavigationDelegate {
+    func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
+        Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
     }
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+    
+    func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
+        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
     }
-
-    func webView(
-        _ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-        decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
-    ) {
-        if let url = navigationAction.request.url {
+    
+    func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
+        Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
+    }
+    
+    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let url = url {
             Logger.common(message: "[WebView] WKNavigationDelegate: Navigating by URL \(url.absoluteString)", category: .webViewInAppMessages)
         }
         decisionHandler(.allow)
-    }
-
-    func webView(
-        _ webView: WKWebView,
-        didFailProvisionalNavigation navigation: WKNavigation!,
-        withError error: any Error
-    ) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
     }
 }
 
