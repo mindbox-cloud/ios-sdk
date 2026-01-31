@@ -257,7 +257,7 @@ GEM
     os (1.1.4)
     ostruct (0.6.3)
     plist (3.7.2)
-    prism (1.7.0)
+    prism (1.9.0)
     public_suffix (4.0.7)
     rake (13.3.1)
     representable (3.2.0)
