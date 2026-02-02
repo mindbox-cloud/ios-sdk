@@ -57,7 +57,6 @@ final class RequestMessageHandler: BridgeMessageHandler {
         )
 
         let response = BridgeMessage(
-            version: message.version,
             type: .response,
             action: message.action,
             payload: .object(["success": .bool(true)]),

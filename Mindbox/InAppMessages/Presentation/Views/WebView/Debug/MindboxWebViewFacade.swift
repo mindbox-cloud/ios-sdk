@@ -1,5 +1,5 @@
 //
-//  MindboxInternalWebViewFacade.swift
+//  MindboxWebViewFacade.swift
 //  Mindbox
 //
 //  Created by Akylbek Utekeshev on 16.01.2026.
@@ -18,6 +18,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
 
     func sendReadyEvent()
     func sendToJS(_ message: BridgeMessage)
+    func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
 }
@@ -34,7 +35,9 @@ public protocol MindboxInternalWebViewFacadeProtocol: InappWebViewFacadeProtocol
     func setWKScriptMessageDelegate(_ delegate: WebBridgeWKScriptMessageDelegate?)
 }
 
+@_spi(Internal)
 public typealias WebViewLog = (String) -> Void
+@_spi(Internal)
 public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
@@ -126,6 +129,19 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
+    }
+
+    public func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {
+        DispatchQueue.main.async { [weak webView] in
+            guard let webView else { return }
+            webView.evaluateJavaScript(script) { result, error in
+                if let error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(result))
+                }
+            }
+        }
     }
     
     public func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {

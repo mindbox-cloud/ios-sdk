@@ -43,7 +43,6 @@ public final class MindboxWebBridge: NSObject {
 
     private let webView: WKWebView
     private let handlerName = "SdkBridge"
-    private let bridgeVersion = 1
     private var pendingRequestIds = Set<UUID>()
 
     init(webView: WKWebView) {
@@ -93,7 +92,7 @@ extension MindboxWebBridge: WKScriptMessageHandler {
 
         guard message.name == handlerName,
               let bridgeMessage = BridgeMessage.from(body: message.body),
-              bridgeMessage.version == bridgeVersion
+              bridgeMessage.version == Constants.Versions.webBridgeVersion
         else {
             return
         }

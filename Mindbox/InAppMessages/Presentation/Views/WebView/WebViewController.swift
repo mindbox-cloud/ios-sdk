@@ -11,6 +11,7 @@ import MindboxLogger
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
+    func closeJSReadyMissingWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -160,6 +161,16 @@ extension WebViewController: WebVCDelegate {
         isTimeoutClose = true
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
+        onClose()
+    }
+
+    func closeJSReadyMissingWebViewVC(reason: String) {
+        isTimeoutClose = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        Logger.common(
+            message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
+            category: .webViewInAppMessages
+        )
         onClose()
     }
 }

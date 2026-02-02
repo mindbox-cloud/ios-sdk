@@ -32,7 +32,7 @@ enum Constants {
 
     /// Mobile configuration sdkVersion.
     enum Versions {
-
+        static let webBridgeVersion = 1
         static let sdkVersionNumeric = 11
     }
 

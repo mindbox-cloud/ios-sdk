@@ -18,6 +18,8 @@ final class TransparentView: UIView {
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: String]?
     private let userAgent: String
+    private var lastReadyCheckedUrl: String?
+    private var isReadyCheckInFlight = false
 
     init(frame: CGRect, params: [String: String], userAgent: String) {
         self.params = params
@@ -162,10 +164,45 @@ extension TransparentView: WebBridgeMessageDelegate {
 extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+        // Reset per-navigation checks (e.g. redirects / re-loads).
+        lastReadyCheckedUrl = nil
+        isReadyCheckInFlight = false
     }
     
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+        let urlString = url?.absoluteString ?? "unknown"
+        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
+
+        // Avoid duplicate checks on multiple didFinish calls for the same URL.
+        guard !isReadyCheckInFlight else { return }
+        guard lastReadyCheckedUrl != urlString else { return }
+        lastReadyCheckedUrl = urlString
+        isReadyCheckInFlight = true
+
+        let script = "(() => typeof window.ready === 'function')()"
+        facade?.evaluateJavaScript(script) { [weak self] result in
+            guard let self else { return }
+            self.isReadyCheckInFlight = false
+
+            switch result {
+            case .success(let anyValue):
+                let hasReady = (anyValue as? Bool) ?? false
+                Logger.common(
+                    message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",
+                    category: .webViewInAppMessages
+                )
+                if !hasReady {
+                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.ready is missing for URL \(urlString)")
+                }
+
+            case .failure(let error):
+                Logger.common(
+                    message: "[WebView] JS ready check failed for URL \(urlString). Error: \(error.localizedDescription)",
+                    category: .webViewInAppMessages
+                )
+                self.delegate?.closeJSReadyMissingWebViewVC(reason: "evaluateJavaScript error for URL \(urlString): \(error.localizedDescription)")
+            }
+        }
     }
     
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {

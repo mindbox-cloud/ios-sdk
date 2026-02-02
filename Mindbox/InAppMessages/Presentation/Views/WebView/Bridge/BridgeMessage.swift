@@ -8,6 +8,7 @@
 
 import Foundation
 
+@_spi(Internal)
 public enum JSONValue: Codable, Equatable {
     case string(String)
     case int(Int)
@@ -126,6 +127,7 @@ public enum JSONValue: Codable, Equatable {
     }
 }
 
+@_spi(Internal)
 public struct BridgeMessage: Codable {
     public enum MessageType: String, Codable {
         case request
@@ -141,14 +143,13 @@ public struct BridgeMessage: Codable {
     public let timestamp: Int64
 
     public init(
-        version: Int = 1,
         type: MessageType,
         action: String,
         payload: JSONValue?,
         id: UUID = UUID(),
         timestamp: Int64 = BridgeMessage.currentTimestampMs()
     ) {
-        self.version = version
+        self.version = Constants.Versions.webBridgeVersion
         self.type = type
         self.action = action
         self.payload = payload
@@ -157,7 +158,6 @@ public struct BridgeMessage: Codable {
     }
 
     init?(
-        version: Int = 1,
         type: MessageType,
         action: String,
         payload: Any?,
@@ -172,7 +172,7 @@ public struct BridgeMessage: Codable {
             return nil
         }
 
-        self.version = version
+        self.version = Constants.Versions.webBridgeVersion
         self.type = type
         self.action = action
         self.id = id
