@@ -127,7 +127,6 @@ extension TransparentView: WebBridgeMessageDelegate {
         case "close":
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onClose()
-
         case "init":
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onInit()
@@ -179,7 +178,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
         lastReadyCheckedUrl = urlString
         isReadyCheckInFlight = true
 
-        let script = "(() => typeof window.ready === 'function')()"
+        let script = Constants.WebViewBridgeJS.receiveFromSDKReadyCheck
         facade?.evaluateJavaScript(script) { [weak self] result in
             guard let self else { return }
             self.isReadyCheckInFlight = false

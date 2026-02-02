@@ -42,21 +42,21 @@ public final class MindboxWebBridge: NSObject {
                                                                      ErrorMessageHandler()])
 
     private let webView: WKWebView
-    private let handlerName = "SdkBridge"
     private var pendingRequestIds = Set<UUID>()
+    private var contentURL: URL?
 
     init(webView: WKWebView) {
         self.webView = webView
         super.init()
 
         let controller = webView.configuration.userContentController
-        controller.add(self, name: handlerName)
+        controller.add(self, name: Constants.WebViewBridgeJS.handlerName)
         webView.navigationDelegate = self
     }
 
     deinit {
         let controller = webView.configuration.userContentController
-        controller.removeScriptMessageHandler(forName: handlerName)
+        controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         webView.navigationDelegate = nil
     }
 
@@ -69,7 +69,7 @@ public final class MindboxWebBridge: NSObject {
             pendingRequestIds.remove(message.id)
         }
 
-        let script = "window.receiveFromSDK(\(json));"
+        let script = Constants.WebViewBridgeJS.sendScript(json: json)
 
         webView.evaluateJavaScript(script) { result, error in
             guard error == nil else {
@@ -83,20 +83,23 @@ public final class MindboxWebBridge: NSObject {
             }
         }
     }
+
+    func updateContentURL(_ url: URL?) {
+        contentURL = url
+    }
 }
 
 extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
-        delegate?.webBridge(self, didReceiveFromJS: message)
-
-        guard message.name == handlerName,
+        guard message.name == Constants.WebViewBridgeJS.handlerName,
               let bridgeMessage = BridgeMessage.from(body: message.body),
-              bridgeMessage.version == Constants.Versions.webBridgeVersion
+              bridgeMessage.version >= Constants.Versions.webBridgeVersion
         else {
             return
         }
-
+        
+        delegate?.webBridge(self, didReceiveFromJS: message) // Проверить что в нужном месте стоит.
         dispatcher.dispatch(bridgeMessage, in: self)
     }
 }
@@ -107,7 +110,7 @@ extension MindboxWebBridge: WKNavigationDelegate {
     }
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        navigationDelegate?.webBridge(self, didFinishNavigation: webView.url)
+        navigationDelegate?.webBridge(self, didFinishNavigation: contentURL ?? webView.url)
     }
 
     public func webView(_ webView: WKWebView,

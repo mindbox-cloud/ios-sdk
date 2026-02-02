@@ -80,6 +80,8 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                          contentUrl: String,
                          onFailure: @escaping () -> Void) {
         let url = URL(string: baseUrl)
+        let contentURL = URL(string: contentUrl)
+        bridge.updateContentURL(contentURL)
         
         fetchHTML(from: contentUrl) { [weak webView] html in
             guard let webView else { return }
@@ -160,7 +162,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 extension MindboxWebViewFacade {
     private func buildStartPayload() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        
+
         var mindboxParams: [String: String] = [
             "sdkVersion": Mindbox.shared.sdkVersion,
             "endpointId": persistenceStorage.configuration?.endpoint ?? "",
@@ -172,8 +174,14 @@ extension MindboxWebViewFacade {
             mindboxParams.merge(params) { _, new in new }
         }
 
-        let payloadObject = mindboxParams.mapValues { JSONValue.string($0) }
-        return .object(payloadObject)
+        do {
+            let data = try JSONEncoder().encode(mindboxParams)
+            let jsonString = String(decoding: data, as: UTF8.self)
+            return .string(jsonString)
+        } catch {
+            logError("[WebView] Failed to encode start payload to JSON string: \(error)")
+            return .string("{}")
+        }
     }
     
     private func fetchHTML(from urlString: String,

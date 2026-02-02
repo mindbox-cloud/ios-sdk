@@ -36,6 +36,16 @@ enum Constants {
         static let sdkVersionNumeric = 11
     }
 
+    enum WebViewBridgeJS {
+        static let handlerName = "SdkBridge"
+        static let receiveFromSDK = "window.receiveFromSDK"
+        static func sendScript(json: String) -> String {
+            "\(receiveFromSDK)(\(json));"
+        }
+
+        static let receiveFromSDKReadyCheck = "(() => typeof \(receiveFromSDK) === 'function')()"
+    }
+
     /// Constants used for migration management.
     enum Migration {
 

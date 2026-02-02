@@ -137,7 +137,7 @@ public struct BridgeMessage: Codable {
 
     public let version: Int
     public let type: MessageType
-    public let action: String
+    public let action: String // TODO: - Можно сделать Enum
     public let payload: JSONValue?
     public let id: UUID
     public let timestamp: Int64
