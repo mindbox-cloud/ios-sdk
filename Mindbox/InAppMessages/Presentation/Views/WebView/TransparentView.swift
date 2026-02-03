@@ -191,7 +191,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
                     category: .webViewInAppMessages
                 )
                 if !hasReady {
-                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.ready is missing for URL \(urlString)")
+                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.receiveFromSDK is missing for URL \(urlString)")
                 }
 
             case .failure(let error):
