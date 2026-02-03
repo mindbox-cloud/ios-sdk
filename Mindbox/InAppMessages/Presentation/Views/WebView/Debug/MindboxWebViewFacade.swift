@@ -176,7 +176,12 @@ extension MindboxWebViewFacade {
 
         do {
             let data = try JSONEncoder().encode(mindboxParams)
-            let jsonString = String(decoding: data, as: UTF8.self)
+
+            guard let jsonString = String(bytes: data, encoding: .utf8) else {
+                logError("[WebView] Failed to convert JSON data to UTF-8 string")
+                return .string("{}")
+            }
+
             return .string(jsonString)
         } catch {
             logError("[WebView] Failed to encode start payload to JSON string: \(error)")
