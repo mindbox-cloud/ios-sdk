@@ -63,9 +63,7 @@ final class RequestMessageHandler: BridgeMessageHandler {
             id: message.id
         )
         
-        // TODO: - Тут какая то фигня, с текущей страницей цикл происходит запросов, request - response. Пока закомментировал
-        // bridge.send(response)
-
+        bridge.send(response)
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 }

@@ -63,12 +63,15 @@ public final class MindboxWebBridge: NSObject {
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else { return }
 
-        if message.type == .request {
-            pendingRequestIds.insert(message.id)
-        } else if message.type == .response {
-            pendingRequestIds.remove(message.id)
+        switch message.type {
+            case .request:
+                pendingRequestIds.insert(message.id)
+            case .response:
+                pendingRequestIds.remove(message.id)
+            case .error:
+                pendingRequestIds.remove(message.id)
         }
-
+        
         let script = Constants.WebViewBridgeJS.sendScript(json: json)
 
         webView.evaluateJavaScript(script) { result, error in
