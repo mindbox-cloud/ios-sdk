@@ -14,10 +14,12 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: MindboxInternalWebViewFacadeProtocol?
+    private var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: String]?
     private let userAgent: String
+    private var lastReadyCheckedUrl: String?
+    private var isReadyCheckInFlight = false
 
     init(frame: CGRect, params: [String: String], userAgent: String) {
         self.params = params
@@ -57,12 +59,9 @@ final class TransparentView: UIView {
     }
 
     private func createFacade() {
-        facade = MindboxInternalWebViewFacade(
-            params: params,
-            userAgent: userAgent,
-            messageHandler: self,
-            navigationDelegate: self
-        )
+        facade = MindboxWebViewFacade(params: params, userAgent: userAgent)
+        facade?.setBridgeMessageDelegate(self)
+        facade?.setNavigationDelegate(self)
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
@@ -104,66 +103,116 @@ extension TransparentView {
     }
 }
 
-// MARK: - WKScriptMessageHandler
-extension TransparentView: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        let name = message.name
+extension TransparentView: WebBridgeMessageDelegate {
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
+        let action = message.action
+        let data: String
+
+        if let payload = message.payload,
+           let payloadData = try? JSONEncoder().encode(payload),
+           let payloadString = String(data: payloadData, encoding: .utf8) {
+            data = payloadString
+        } else {
+            data = ""
+        }
+
+        Logger.common(
+            message: "[WebView] Bridge: received \(action) \(data)",
+            category: .webViewInAppMessages
+        )
         
-        if name == "SdkBridge", let messageBody = message.body as? [String: String] {
-            let action = messageBody["action"] ?? "unknown"
-            let data = messageBody["data"] ?? ""
-            
-            Logger.common(message: "[WebView] TransparentWebView: SdkBridge - received \(action) \(data)", category: .webViewInAppMessages)
-            
-            switch action {
-            case "close":
-                quizInitTimeoutWorkItem?.cancel()
-                webViewAction?.onClose()
-            case "init":
-                quizInitTimeoutWorkItem?.cancel()
-                webViewAction?.onInit()
-            case "click":
-                webViewAction?.onCompleted(data: data)
-            case "hide":
-                webViewAction?.onHide()
-            case "log":
-                webViewAction?.onLog(message: data)
-            case "userAgent":
-                print("TransparentWebView: UserAgent: \(data)")
-            default:
-                Logger.common(message: "[WebView] TransparentWebView: action: \(action) with \(data)", category: .webViewInAppMessages)
-            }
+        // TODO: - Create plugin-based handlers
+
+        switch action {
+        case "close":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onClose()
+        case "init":
+            quizInitTimeoutWorkItem?.cancel()
+            webViewAction?.onInit()
+
+        case "click":
+            webViewAction?.onCompleted(data: data)
+
+        case "hide":
+            webViewAction?.onHide()
+
+        case "log":
+            webViewAction?.onLog(message: data)
+
+        case "userAgent":
+            Logger.common(
+                message: "[WebView] UserAgent: \(data)",
+                category: .webViewInAppMessages
+            )
+                
+        case "ready":
+            facade?.sendReadyEvent()
+
+        default:
+            Logger.common(
+                message: "[WebView] Unknown action: \(action) with \(data)",
+                category: .webViewInAppMessages
+            )
         }
     }
 }
 
 // MARK: - WKNavigationDelegate
 
-extension TransparentView: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+extension TransparentView: WebBridgeNavigationDelegate {
+    func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
+        Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+        // Reset per-navigation checks (e.g. redirects / re-loads).
+        lastReadyCheckedUrl = nil
+        isReadyCheckInFlight = false
     }
+    
+    func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
+        let urlString = url?.absoluteString ?? "unknown"
+        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(webView.url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
+        // Avoid duplicate checks on multiple didFinish calls for the same URL.
+        guard !isReadyCheckInFlight else { return }
+        guard lastReadyCheckedUrl != urlString else { return }
+        lastReadyCheckedUrl = urlString
+        isReadyCheckInFlight = true
+
+        let script = Constants.WebViewBridgeJS.receiveFromSDKReadyCheck
+        facade?.evaluateJavaScript(script) { [weak self] result in
+            guard let self else { return }
+            self.isReadyCheckInFlight = false
+
+            switch result {
+            case .success(let anyValue):
+                let hasReady = (anyValue as? Bool) ?? false
+                Logger.common(
+                    message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",
+                    category: .webViewInAppMessages
+                )
+                if !hasReady {
+                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.receiveFromSDK is missing for URL \(urlString)")
+                }
+
+            case .failure(let error):
+                Logger.common(
+                    message: "[WebView] JS ready check failed for URL \(urlString). Error: \(error.localizedDescription)",
+                    category: .webViewInAppMessages
+                )
+                self.delegate?.closeJSReadyMissingWebViewVC(reason: "evaluateJavaScript error for URL \(urlString): \(error.localizedDescription)")
+            }
+        }
     }
-
-    func webView(
-        _ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-        decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
-    ) {
-        if let url = navigationAction.request.url {
+    
+    func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
+        Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
+    }
+    
+    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let url = url {
             Logger.common(message: "[WebView] WKNavigationDelegate: Navigating by URL \(url.absoluteString)", category: .webViewInAppMessages)
         }
         decisionHandler(.allow)
-    }
-
-    func webView(
-        _ webView: WKWebView,
-        didFailProvisionalNavigation navigation: WKNavigation!,
-        withError error: any Error
-    ) {
-        Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
     }
 }
 
@@ -175,12 +224,8 @@ extension TransparentView: UIScrollViewDelegate {
 
 protocol WebViewAction: AnyObject {
     func onInit()
-
     func onCompleted(data: String)
-
     func onClose()
-
     func onHide()
-    
     func onLog(message: String)
 }

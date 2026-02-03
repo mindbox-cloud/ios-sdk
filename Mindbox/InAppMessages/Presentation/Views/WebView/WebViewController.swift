@@ -11,74 +11,7 @@ import MindboxLogger
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
-}
-
-extension WebViewController: WebVCDelegate {
-    func closeTapWebViewVC() {
-        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
-        onClose()
-    }
-    
-    func closeTimeoutWebViewVC() {
-        isTimeoutClose = true
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        onClose()
-    }
-}
-
-extension WebViewController: WebViewAction {
-
-    func onInit() {
-        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
-        DispatchQueue.main.async {
-            if let window = UIApplication.shared.windows.first(where: {
-                $0.rootViewController is WebViewController
-            }) {
-                window.isUserInteractionEnabled = true
-                UIView.animate(withDuration: 0.3) {
-                    window.alpha = 1.0
-                }
-                window.makeKeyAndVisible()
-                Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
-            }
-        }
-    }
-
-    func onCompleted(data: String) {
-        Logger.common(message: "[WebView] WebViewVC completedWebView \(data)", category: .webViewInAppMessages)
-        do {
-            let jsonData = data.data(using: .utf8) ?? Data()
-            let action = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
-            let service = LayerActionFilterService()
-            let layer = try service.filter(action)
-            onTapAction(layer)
-        } catch {
-            Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
-            onTapAction(nil)
-        }
-    }
-
-    func onClose() {
-        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
-        onCloseInApp()
-    }
-
-    func onHide() {
-        DispatchQueue.main.async {
-            if let window = UIApplication.shared.windows.first(where: {
-                $0.rootViewController is WebViewController
-            }) {
-                window.isUserInteractionEnabled = false
-                window.alpha = 0.00
-                Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
-            }
-        }
-    }
-    
-    func onLog(message: String) {
-        Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
-    }
+    func closeJSReadyMissingWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -215,5 +148,83 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
 
         return "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
+    }
+}
+
+extension WebViewController: WebVCDelegate {
+    func closeTapWebViewVC() {
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onClose()
+    }
+    
+    func closeTimeoutWebViewVC() {
+        isTimeoutClose = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
+        onClose()
+    }
+
+    func closeJSReadyMissingWebViewVC(reason: String) {
+        isTimeoutClose = true
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+        Logger.common(
+            message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
+            category: .webViewInAppMessages
+        )
+        onClose()
+    }
+}
+
+extension WebViewController: WebViewAction {
+
+    func onInit() {
+        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
+        DispatchQueue.main.async {
+            if let window = UIApplication.shared.windows.first(where: {
+                $0.rootViewController is WebViewController
+            }) {
+                window.isUserInteractionEnabled = true
+                UIView.animate(withDuration: 0.3) {
+                    window.alpha = 1.0
+                }
+                window.makeKeyAndVisible()
+                Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
+            }
+        }
+    }
+
+    func onCompleted(data: String) {
+        Logger.common(message: "[WebView] WebViewVC completedWebView \(data)", category: .webViewInAppMessages)
+        do {
+            let jsonData = data.data(using: .utf8) ?? Data()
+            let action = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
+            let service = LayerActionFilterService()
+            let layer = try service.filter(action)
+            onTapAction(layer)
+        } catch {
+            Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
+            onTapAction(nil)
+        }
+    }
+
+    func onClose() {
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onCloseInApp()
+    }
+
+    func onHide() {
+        DispatchQueue.main.async {
+            if let window = UIApplication.shared.windows.first(where: {
+                $0.rootViewController is WebViewController
+            }) {
+                window.isUserInteractionEnabled = false
+                window.alpha = 0.00
+                Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
+            }
+        }
+    }
+    
+    func onLog(message: String) {
+        Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
     }
 }
