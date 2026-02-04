@@ -131,7 +131,11 @@ extension MindboxWebBridge: WKNavigationDelegate {
     public func webView(_ webView: WKWebView,
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        navigationDelegate?.webBridge(self, decidePolicyFor: navigationAction.request.url, decisionHandler: decisionHandler)
+        if let navigationDelegate = navigationDelegate {
+            navigationDelegate.webBridge(self, decidePolicyFor: navigationAction.request.url, decisionHandler: decisionHandler)
+        } else {
+            decisionHandler(.allow)
+        }
     }
 }
 

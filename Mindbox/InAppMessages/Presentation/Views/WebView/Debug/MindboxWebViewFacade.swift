@@ -84,8 +84,13 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         bridge.updateContentURL(contentURL)
         
         fetchHTML(from: contentUrl) { [weak webView] html in
-            guard let webView else { return }
-            
+            guard let webView else {
+                DispatchQueue.main.async {
+                    onFailure()
+                }
+                return
+            }
+
             if let html {
                 DispatchQueue.main.async {
                     webView.loadHTMLString(html, baseURL: url)
@@ -135,7 +140,16 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 
     public func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {
         DispatchQueue.main.async { [weak webView] in
-            guard let webView else { return }
+            guard let webView else {
+                let error = MindboxError.internalError(
+                    InternalError(
+                        errorKey: .general,
+                        reason: "WebView was deallocated before JavaScript execution"
+                    )
+                )
+                completion(.failure(error))
+                return
+            }
             webView.evaluateJavaScript(script) { result, error in
                 if let error {
                     completion(.failure(error))
