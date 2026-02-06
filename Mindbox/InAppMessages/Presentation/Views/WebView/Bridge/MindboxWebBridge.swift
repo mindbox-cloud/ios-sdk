@@ -61,7 +61,21 @@ public final class MindboxWebBridge: NSObject {
     }
 
     func send(_ message: BridgeMessage) {
-        guard let json = message.jsonString() else { return }
+        guard let json = message.jsonString() else {
+            Logger.common(
+                message: "[WebView] Bridge: failed to serialize message to JSON",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
+        let sendLogMessage = "[WebView] Bridge -> JS: sending \(message.type.rawValue) id \(message.id). " +
+            "message: version=\(message.version) action=\(message.action) " +
+            "payload=\(String(describing: message.payloadAny)) timestamp=\(message.timestamp)"
+        Logger.common(
+            message: sendLogMessage,
+            category: .webViewInAppMessages
+        )
 
         switch message.type {
             case .request:
@@ -71,19 +85,32 @@ public final class MindboxWebBridge: NSObject {
             case .error:
                 pendingRequestIds.remove(message.id)
         }
-        
+
         let script = Constants.WebViewBridgeJS.sendScript(json: json)
 
         webView.evaluateJavaScript(script) { result, error in
-            guard error == nil else {
+            if let error = error {
+                Logger.common(
+                    message: "[WebView] Bridge: failed to send \(message.type.rawValue) id \(message.id) to JS. Error: \(error.localizedDescription)",
+                    category: .webViewInAppMessages
+                )
                 self.pendingRequestIds.remove(message.id)
                 return
             }
 
             guard let isSuccess = result as? Bool, isSuccess else {
+                Logger.common(
+                    message: "[WebView] Bridge: JS rejected \(message.type.rawValue) id \(message.id). Result: \(String(describing: result))",
+                    category: .webViewInAppMessages
+                )
                 self.pendingRequestIds.remove(message.id)
                 return
             }
+
+            Logger.common(
+                message: "[WebView] Bridge: \(message.type.rawValue) id \(message.id) delivered to JS successfully",
+                category: .webViewInAppMessages
+            )
         }
     }
 
@@ -95,14 +122,39 @@ public final class MindboxWebBridge: NSObject {
 extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
-        guard message.name == Constants.WebViewBridgeJS.handlerName,
-              let bridgeMessage = BridgeMessage.from(body: message.body),
-              bridgeMessage.version >= Constants.Versions.webBridgeVersion
-        else {
+        guard message.name == Constants.WebViewBridgeJS.handlerName else {
+            Logger.common(
+                message: "[WebView] Bridge: received message with wrong handler name: \(message.name)",
+                category: .webViewInAppMessages
+            )
             return
         }
-        
-        delegate?.webBridge(self, didReceiveFromJS: message) // Проверить что в нужном месте стоит.
+
+        guard let bridgeMessage = BridgeMessage.from(body: message.body) else {
+            Logger.common(
+                message: "[WebView] Bridge: failed to parse message from JS. Body: \(String(describing: message.body))",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
+        guard bridgeMessage.version >= Constants.Versions.webBridgeVersion else {
+            Logger.common(
+                message: "[WebView] Bridge: received message with unsupported version \(bridgeMessage.version), expected >= \(Constants.Versions.webBridgeVersion)",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
+        let receiveLogMessage = "[WebView] Bridge <- JS: received \(bridgeMessage.type.rawValue) id \(bridgeMessage.id). " +
+            "message: version=\(bridgeMessage.version) action=\(bridgeMessage.action) " +
+            "payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)"
+        Logger.common(
+            message: receiveLogMessage,
+            category: .webViewInAppMessages
+        )
+
+        delegate?.webBridge(self, didReceiveFromJS: message)
         dispatcher.dispatch(bridgeMessage, in: self)
     }
 }
