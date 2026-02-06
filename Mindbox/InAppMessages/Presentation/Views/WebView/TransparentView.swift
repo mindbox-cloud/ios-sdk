@@ -147,7 +147,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             )
                 
         case "ready":
-            facade?.sendReadyEvent()
+            facade?.sendReadyEvent(id: message.id)
 
         default:
             Logger.common(
