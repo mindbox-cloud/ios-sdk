@@ -56,14 +56,18 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: .object(["success": .bool(true)]),
-            id: message.id
-        )
-        
-        bridge.send(response)
+        // Don't send automatic response for "ready" action - delegate will send custom response
+        if message.action != "ready" {
+            let response = BridgeMessage(
+                type: .response,
+                action: message.action,
+                payload: .object(["success": .bool(true)]),
+                id: message.id
+            )
+
+            bridge.send(response)
+        }
+
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 }
