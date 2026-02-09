@@ -42,11 +42,11 @@ public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
 public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
-    
+
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let params: [String: String]?
-    
+
     private let log: WebViewLog
     private let logError: WebViewLogError
     
@@ -64,14 +64,14 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         }
         #endif
         let bridge = MindboxWebBridge(webView: webView)
-        
+
         self.webView = webView
         self.bridge = bridge
         self.params = params
         self.log = log
         self.logError = logError
     }
-    
+
     public func makeView() -> UIView {
         webView
     }
@@ -219,31 +219,31 @@ extension MindboxWebViewFacade {
         
         log("Fetching HTML from \(url.absoluteString)")
         
-        let task = session.dataTask(with: url) { data, response, error in
+        let task = session.dataTask(with: url) { [weak self] data, response, error in
             if let error {
-                self.logError("Error fetching HTML: \(error.localizedDescription)")
+                self?.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
-            
+
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
-                self.logError("Incorrect HTTP response")
+                self?.logError("Incorrect HTTP response")
                 completion(nil)
                 return
             }
-            
+
             guard let data,
                   let htmlString = String(data: data, encoding: .utf8) else {
-                self.logError("Failed to decode HTML data")
+                self?.logError("Failed to decode HTML data")
                 completion(nil)
                 return
             }
-            
-            self.log("HTML loaded successfully (\(htmlString.count) chars)")
+
+            self?.log("HTML loaded successfully (\(htmlString.count) chars)")
             completion(htmlString)
         }
-        
+
         task.resume()
     }
 }

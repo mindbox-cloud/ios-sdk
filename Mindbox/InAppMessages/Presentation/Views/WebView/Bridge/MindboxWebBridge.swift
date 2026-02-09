@@ -36,12 +36,12 @@ public final class MindboxWebBridge: NSObject {
     weak var delegate: WebBridgeWKScriptMessageDelegate?
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
-    
+
     private lazy var dispatcher = BridgeMessageDispatcher(handlers: [RequestMessageHandler(),
                                                                      ResponseMessageHandler(),
                                                                      ErrorMessageHandler()])
 
-    private let webView: WKWebView
+    private weak var webView: WKWebView?
     private var pendingRequestIds = Set<UUID>()
     private var contentURL: URL?
 
@@ -55,9 +55,8 @@ public final class MindboxWebBridge: NSObject {
     }
 
     deinit {
-        let controller = webView.configuration.userContentController
-        controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
-        webView.navigationDelegate = nil
+        webView?.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+        webView?.navigationDelegate = nil
     }
 
     func send(_ message: BridgeMessage) {
@@ -87,6 +86,15 @@ public final class MindboxWebBridge: NSObject {
         }
 
         let script = Constants.WebViewBridgeJS.sendScript(json: json)
+
+        guard let webView = webView else {
+            Logger.common(
+                message: "[WebView] Bridge: webView deallocated, cannot send message",
+                category: .webViewInAppMessages
+            )
+            pendingRequestIds.remove(message.id)
+            return
+        }
 
         webView.evaluateJavaScript(script) { result, error in
             if let error = error {
