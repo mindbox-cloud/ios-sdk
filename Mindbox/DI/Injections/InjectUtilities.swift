@@ -88,6 +88,17 @@ extension MBContainer {
             return ClickNotificationManager(databaseRepository: databaseRepository)
         }
 
+        register(PermissionProvider.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return MBPermissionProvider(persistenceStorage: persistenceStorage)
+        }
+
+        register(SystemInfoProvider.self) {
+            let permissionProvider = DI.injectOrFail(PermissionProvider.self)
+            let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+            return MBSystemInfoProvider(permissionProvider: permissionProvider, utilitiesFetcher: utilitiesFetcher)
+        }
+
         return self
     }
 }

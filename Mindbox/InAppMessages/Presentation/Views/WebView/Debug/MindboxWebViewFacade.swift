@@ -9,6 +9,30 @@
 import UIKit
 import WebKit
 
+private enum PayloadKey {
+    static let sdkVersion = "sdkVersion"
+    static let sdkVersionNumeric = "sdkVersionNumeric"
+    static let endpointId = "endpointId"
+    static let deviceUuid = "deviceUuid"
+    static let userVisitCount = "userVisitCount"
+
+    static let operationName = "operationName"
+    static let operationBody = "operationBody"
+
+    static let trackVisitSource = "trackVisitSource"
+    static let trackVisitRequestUrl = "trackVisitRequestUrl"
+
+    static let permissions = "permissions"
+
+    enum Insets {
+        static let key = "insets"
+        static let top = "top"
+        static let left = "left"
+        static let bottom = "bottom"
+        static let right = "right"
+    }
+}
+
 @_spi(Internal)
 public protocol InappWebViewFacadeProtocol: AnyObject {
     func makeView() -> UIView
@@ -60,11 +84,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         config.applicationNameForUserAgent = userAgent
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        #if DEBUG
+        // TODO: Turn on DEBUG IF after 2.15.0-RC
+//        #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
-        #endif
+//        #endif
         let bridge = MindboxWebBridge(webView: webView)
 
         self.webView = webView
@@ -180,39 +205,65 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 extension MindboxWebViewFacade {
     private func buildStartPayload() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)
 
-        var mindboxParams: [String: String] = [
-            "sdkVersion": Mindbox.shared.sdkVersion,
-            "endpointId": persistenceStorage.configuration?.endpoint ?? "",
-            "deviceUuid": persistenceStorage.deviceUUID ?? "",
-            "userVisitCount": "\(persistenceStorage.userVisitCount ?? 0)",
-            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)",
+        var mindboxParams: [String: Any] = [
+            PayloadKey.sdkVersion: Mindbox.shared.sdkVersion,
+            PayloadKey.endpointId: persistenceStorage.configuration?.endpoint ?? "",
+            PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
+            PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
+            PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)"
         ]
+
+        // Add system info (theme, platform, locale, version)
+        let systemInfo = systemInfoProvider.getBasicSystemInfo()
+        mindboxParams.merge(systemInfo) { _, new in new }
+
+        // Add safe area insets
+        let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
+        mindboxParams[PayloadKey.Insets.key] = [
+            PayloadKey.Insets.top: insets.top,
+            PayloadKey.Insets.left: insets.left,
+            PayloadKey.Insets.bottom: insets.bottom,
+            PayloadKey.Insets.right: insets.right
+        ]
+
+        // Add granted permissions
+        let permissions = systemInfoProvider.getGrantedPermissions()
+        if !permissions.isEmpty {
+            var permissionsDict: [String: Any] = [:]
+            for (key, status) in permissions {
+                permissionsDict[key] = status.toDictionary()
+            }
+            mindboxParams[PayloadKey.permissions] = permissionsDict
+        }
 
         // Merge params from configuration
         if let params, !params.isEmpty {
-            mindboxParams.merge(params) { _, new in new }
+            for (key, value) in params {
+                mindboxParams[key] = value
+            }
         }
 
         // Add operation data
         if let operation {
-            mindboxParams["operationName"] = operation.name
-            mindboxParams["operationBody"] = operation.body
+            mindboxParams[PayloadKey.operationName] = operation.name
+            mindboxParams[PayloadKey.operationBody] = operation.body
         }
 
         // Add last track-visit data
         if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
             if let source = lastTrackVisit.source {
-                mindboxParams["trackVisitSource"] = source.rawValue
+                mindboxParams[PayloadKey.trackVisitSource] = source.rawValue
             }
             if let requestUrl = lastTrackVisit.requestUrl {
-                mindboxParams["trackVisitRequestUrl"] = requestUrl
+                mindboxParams[PayloadKey.trackVisitRequestUrl] = requestUrl
             }
         }
 
         // Serialize to JSON string
         do {
-            let data = try JSONEncoder().encode(mindboxParams)
+            let data = try JSONSerialization.data(withJSONObject: mindboxParams, options: [])
             guard let jsonString = String(bytes: data, encoding: .utf8) else {
                 logError("[WebView] Failed to convert JSON data to UTF-8 string")
                 return .string("{}")

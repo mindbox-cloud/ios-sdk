@@ -182,6 +182,11 @@
 		47BD5BFE2C578FB400F965C0 /* BaseMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */; };
 		47C38A312E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */; };
 		47C464EF2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C464EE2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift */; };
+		47CFDAAF2F3A04110034F310 /* PermissionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CFDAAE2F3A04110034F310 /* PermissionStatus.swift */; };
+		47CFDAB12F3A04190034F310 /* PermissionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CFDAB02F3A04190034F310 /* PermissionProvider.swift */; };
+		47CFDAB32F3A04200034F310 /* MBPermissionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CFDAB22F3A04200034F310 /* MBPermissionProvider.swift */; };
+		47CFDAB92F3A05430034F310 /* SystemInfoProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CFDAB72F3A05430034F310 /* SystemInfoProvider.swift */; };
+		47CFDABB2F3A054A0034F310 /* MBSystemInfoProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CFDABA2F3A054A0034F310 /* MBSystemInfoProvider.swift */; };
 		47D0BC2C2E093F8A00182DB2 /* ClockAndMockClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */; };
 		47D63E2B2C2EABDF0055E7D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3EC93BA2AF105DA0030D107 /* PrivacyInfo.xcprivacy */; };
 		47DCB76A2E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */; };
@@ -825,6 +830,11 @@
 		47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseMigration.swift; sourceTree = "<group>"; };
 		47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDatabaseRepositoryTests.swift; sourceTree = "<group>"; };
 		47C464EE2E0EB88C00F50B21 /* RemoveBackgroundTaskDataMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveBackgroundTaskDataMigrationTests.swift; sourceTree = "<group>"; };
+		47CFDAAE2F3A04110034F310 /* PermissionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionStatus.swift; sourceTree = "<group>"; };
+		47CFDAB02F3A04190034F310 /* PermissionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionProvider.swift; sourceTree = "<group>"; };
+		47CFDAB22F3A04200034F310 /* MBPermissionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPermissionProvider.swift; sourceTree = "<group>"; };
+		47CFDAB72F3A05430034F310 /* SystemInfoProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemInfoProvider.swift; sourceTree = "<group>"; };
+		47CFDABA2F3A054A0034F310 /* MBSystemInfoProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSystemInfoProvider.swift; sourceTree = "<group>"; };
 		47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockAndMockClock.swift; sourceTree = "<group>"; };
 		47DCB7692E82CEA90024FCC1 /* DatabaseRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepositoryProtocol.swift; sourceTree = "<group>"; };
 		47DF1FAF2E7D6F90009BC4A0 /* DatabaseLoaderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderProtocol.swift; sourceTree = "<group>"; };
@@ -1337,6 +1347,7 @@
 		313B233225ADEA0F00A1CB72 /* Mindbox */ = {
 			isa = PBXGroup;
 			children = (
+				47CFDAAC2F3A03C20034F310 /* Permissions */,
 				F3F5BB882B79F2430022AC3F /* PushNotifications */,
 				F34A45AC2B76286D00634C8B /* PublicModels */,
 				F37613DF2A6A8CFF009F2EE4 /* Extensions */,
@@ -1428,6 +1439,7 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				47CFDAB82F3A05430034F310 /* SystemInfo */,
 				F31909972E979D8200373E2F /* AppDelegateProxy */,
 				47BD5BF82C578AD700F965C0 /* Migrations */,
 				F3D818AE2A3885A40002957C /* ABTestDeviceMixer */,
@@ -1868,6 +1880,25 @@
 				47BD5BFD2C578FB400F965C0 /* BaseMigration.swift */,
 			);
 			path = MigrationAbstractions;
+			sourceTree = "<group>";
+		};
+		47CFDAAC2F3A03C20034F310 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				47CFDAAE2F3A04110034F310 /* PermissionStatus.swift */,
+				47CFDAB02F3A04190034F310 /* PermissionProvider.swift */,
+				47CFDAB22F3A04200034F310 /* MBPermissionProvider.swift */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
+		47CFDAB82F3A05430034F310 /* SystemInfo */ = {
+			isa = PBXGroup;
+			children = (
+				47CFDAB72F3A05430034F310 /* SystemInfoProvider.swift */,
+				47CFDABA2F3A054A0034F310 /* MBSystemInfoProvider.swift */,
+			);
+			path = SystemInfo;
 			sourceTree = "<group>";
 		};
 		47D395612E72186600C44CFE /* Frameworks */ = {
@@ -3824,6 +3855,7 @@
 				47BD5BFB2C578BC600F965C0 /* MigrationManager.swift in Sources */,
 				84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */,
 				A17958772978AEC600609E91 /* TrueTargetingChecker.swift in Sources */,
+				47CFDAB12F3A04190034F310 /* PermissionProvider.swift in Sources */,
 				B4E438742D8AFAA700603F3A /* WebviewPresentationStrategy.swift in Sources */,
 				B3F4F98A268EEB360092EC3C /* PeriodTypeResponse.swift in Sources */,
 				6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */,
@@ -3901,6 +3933,7 @@
 				A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */,
 				F361284B2BA31AC4000382D9 /* ActionUseCaseFactory.swift in Sources */,
 				9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */,
+				47CFDABB2F3A054A0034F310 /* MBSystemInfoProvider.swift in Sources */,
 				F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */,
 				33072F482664CCBA001F1AB2 /* PoolResponse.swift in Sources */,
 				0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */,
@@ -3968,6 +4001,7 @@
 				84DC49CC25D1832300D5D758 /* EventWrapper.swift in Sources */,
 				F39116FA2AA9B32E00852298 /* LayersFilter.swift in Sources */,
 				F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */,
+				47CFDAB32F3A04200034F310 /* MBPermissionProvider.swift in Sources */,
 				84DC4A0225D27D0500D5D758 /* UNAuthorizationStatusProviding.swift in Sources */,
 				F3FEEAAD2C25FD1F000E9D0F /* InjectABTestUtilities.swift in Sources */,
 				6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */,
@@ -3986,6 +4020,7 @@
 				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				F31909992E979D9E00373E2F /* MindboxAppDelegateProxy.swift in Sources */,
+				47CFDAB92F3A05430034F310 /* SystemInfoProvider.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
 				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
 				334F3AF0264C199900A6AC00 /* DiscountRequest.swift in Sources */,
@@ -4057,6 +4092,7 @@
 				337C7952265646D10092B580 /* OperationBodyRequestType.swift in Sources */,
 				9B9C95312921116F00BB29DA /* UUIDDebugService.swift in Sources */,
 				6FDD1443266F7C1600A50C35 /* BalanceTypeReponse.swift in Sources */,
+				47CFDAAF2F3A04110034F310 /* PermissionStatus.swift in Sources */,
 				337C7954265652A80092B580 /* ProductCategoryRequest.swift in Sources */,
 				F331DCBF2A80993600222120 /* ContentElementSize.swift in Sources */,
 				334F3AF1264C199900A6AC00 /* PoolRequest.swift in Sources */,
