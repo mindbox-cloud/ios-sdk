@@ -68,9 +68,16 @@ public final class MindboxWebBridge: NSObject {
             return
         }
 
+        #if DEBUG
+        let payloadDescription = message.prettyPayloadDescription()
+        let sendLogMessage = "[WebView] Bridge -> JS: sending \(message.type.rawValue) id \(message.id). " +
+            "message: version=\(message.version) action=\(message.action) timestamp=\(message.timestamp)\n" +
+            "payload:\n\(payloadDescription)"
+        #else
         let sendLogMessage = "[WebView] Bridge -> JS: sending \(message.type.rawValue) id \(message.id). " +
             "message: version=\(message.version) action=\(message.action) " +
             "payload=\(String(describing: message.payloadAny)) timestamp=\(message.timestamp)"
+        #endif
         Logger.common(
             message: sendLogMessage,
             category: .webViewInAppMessages
@@ -154,9 +161,16 @@ extension MindboxWebBridge: WKScriptMessageHandler {
             return
         }
 
+        #if DEBUG
+        let payloadDescription = bridgeMessage.prettyPayloadDescription()
+        let receiveLogMessage = "[WebView] Bridge <- JS: received \(bridgeMessage.type.rawValue) id \(bridgeMessage.id). " +
+            "message: version=\(bridgeMessage.version) action=\(bridgeMessage.action) timestamp=\(bridgeMessage.timestamp)\n" +
+            "payload:\n\(payloadDescription)"
+        #else
         let receiveLogMessage = "[WebView] Bridge <- JS: received \(bridgeMessage.type.rawValue) id \(bridgeMessage.id). " +
             "message: version=\(bridgeMessage.version) action=\(bridgeMessage.action) " +
             "payload=\(String(describing: bridgeMessage.payloadAny)) timestamp=\(bridgeMessage.timestamp)"
+        #endif
         Logger.common(
             message: receiveLogMessage,
             category: .webViewInAppMessages
