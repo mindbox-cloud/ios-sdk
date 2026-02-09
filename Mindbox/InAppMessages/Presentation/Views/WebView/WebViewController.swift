@@ -150,7 +150,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         let appVersion = utilitiesFetcher.appVerson ?? "unknown"
         let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
 
-        return "\(appName)/\(appVersion) mindbox.sdk/\(sdkVersion)"
+        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
     }
 }
 
