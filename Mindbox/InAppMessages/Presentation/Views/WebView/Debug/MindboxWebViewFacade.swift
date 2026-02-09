@@ -200,6 +200,16 @@ extension MindboxWebViewFacade {
             mindboxParams["operationBody"] = operation.body
         }
 
+        // Add last track-visit data
+        if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
+            if let source = lastTrackVisit.source {
+                mindboxParams["trackVisitSource"] = source.rawValue
+            }
+            if let requestUrl = lastTrackVisit.requestUrl {
+                mindboxParams["trackVisitRequestUrl"] = requestUrl
+            }
+        }
+
         // Serialize to JSON string
         do {
             let data = try JSONEncoder().encode(mindboxParams)

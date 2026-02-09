@@ -59,12 +59,14 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
 
     func trackForeground() throws {
         let encodable = TrackVisit()
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: nil, requestUrl: nil)
         Logger.common(message: "Tracked Visit event type foreground", level: .info, category: .visit)
         try sendTrackVisit(encodable)
     }
 
     func trackDirect() throws {
         let encodable = TrackVisit(source: .direct)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .direct, requestUrl: nil)
         Logger.common(message: "Tracked Visit event type direct", level: .info, category: .visit)
         try sendTrackVisit(encodable)
     }
@@ -82,12 +84,14 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
 
     private func handleUniversalLink(_ userActivity: NSUserActivity) throws {
         let encodable = TrackVisit(url: userActivity.webpageURL, source: .link)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .link, requestUrl: userActivity.webpageURL?.absoluteString)
         try sendTrackVisit(encodable)
         Logger.common(message: "Tracked Visit event type: universal link", level: .info, category: .visit)
     }
 
     private func handlePush(_ response: UNNotificationResponse) throws {
         let encodable = TrackVisit(source: .push)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .push, requestUrl: nil)
         try sendTrackVisit(encodable)
         Logger.common(message: "Tracked Visit event type: push", level: .info, category: .visit)
     }

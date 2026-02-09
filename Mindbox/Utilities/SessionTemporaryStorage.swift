@@ -33,6 +33,9 @@ final class SessionTemporaryStorage {
     
     var lastInappClickedID: String?
 
+    /// Last track-visit data (source and requestUrl only)
+    var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
+
     var expiredConfigSession: String?
     var isUserVisitSaved = false
     var inAppSettings: Settings.InAppSettings?
@@ -54,6 +57,7 @@ final class SessionTemporaryStorage {
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
+        lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
