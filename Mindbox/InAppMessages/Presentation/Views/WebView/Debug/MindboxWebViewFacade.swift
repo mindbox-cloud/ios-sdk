@@ -46,11 +46,13 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let params: [String: String]?
+    private let operation: (name: String, body: String)?
 
     private let log: WebViewLog
     private let logError: WebViewLogError
-    
+
     public init(params: [String: String]?,
+                operation: (name: String, body: String)? = nil,
                 userAgent: String,
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
@@ -68,6 +70,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         self.webView = webView
         self.bridge = bridge
         self.params = params
+        self.operation = operation
         self.log = log
         self.logError = logError
     }
@@ -185,18 +188,24 @@ extension MindboxWebViewFacade {
             "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)"
         ]
 
+        // Merge params from configuration
         if let params, !params.isEmpty {
             mindboxParams.merge(params) { _, new in new }
         }
 
+        // Add operation data
+        if let operation {
+            mindboxParams["operationName"] = operation.name
+            mindboxParams["operationBody"] = operation.body
+        }
+
+        // Serialize to JSON string
         do {
             let data = try JSONEncoder().encode(mindboxParams)
-
             guard let jsonString = String(bytes: data, encoding: .utf8) else {
                 logError("[WebView] Failed to convert JSON data to UTF-8 string")
                 return .string("{}")
             }
-
             return .string(jsonString)
         } catch {
             logError("[WebView] Failed to encode start payload to JSON string: \(error)")

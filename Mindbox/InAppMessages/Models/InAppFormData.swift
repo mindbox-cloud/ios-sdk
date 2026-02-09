@@ -18,6 +18,7 @@ struct InAppFormData {
     let firstImageValue: String
     let content: MindboxFormVariant
     let frequency: InappFrequency?
+    let operation: (name: String, body: String)?
 }
 
 // TODO: - Need to remove this struct and use only InappFormData.

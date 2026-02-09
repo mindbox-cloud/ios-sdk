@@ -33,6 +33,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let model: WebviewFormVariant
     private let id: String
     private let imagesDict: [String: UIImage]
+    private let operation: (name: String, body: String)?
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
@@ -55,11 +56,13 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
         onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
-        onCloseInApp: @escaping () -> Void
+        onCloseInApp: @escaping () -> Void,
+        operation: (name: String, body: String)?
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
+        self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
         self.onTapAction = onTapAction
@@ -83,7 +86,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-                let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent())
+            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)

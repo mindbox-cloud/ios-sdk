@@ -41,7 +41,8 @@ final class PresentationDisplayUseCase {
                                                firstImageValue: model.firstImageValue,
                                                onPresented: onPresented,
                                                onTapAction: onTapAction,
-                                               onClose: onClose)
+                                               onClose: onClose,
+                                               operation: model.operation)
 
         guard let viewController = factory.create(with: parameters) else {
             return

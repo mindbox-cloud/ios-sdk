@@ -131,7 +131,7 @@ class InappMapper: InappMapperProtocol {
                 
                 // For the webview case, we skip downloading images
                 if case .webview = inapp.content {
-                    formData = InAppFormData(inAppId: inapp.inAppId, isPriority: inapp.isPriority, delayTime: inapp.delayTime, imagesDict: [:], firstImageValue: "", content: inapp.content, frequency: inapp.frequency)
+                    formData = InAppFormData(inAppId: inapp.inAppId, isPriority: inapp.isPriority, delayTime: inapp.delayTime, imagesDict: [:], firstImageValue: "", content: inapp.content, frequency: inapp.frequency, operation: self.getOperation())
                     continue
                 }
                 
@@ -165,7 +165,8 @@ class InappMapper: InappMapperProtocol {
                                                  imagesDict: imageDict,
                                                  firstImageValue: firstImageValue,
                                                  content: inapp.content,
-                                                 frequency: inapp.frequency)
+                                                 frequency: inapp.frequency,
+                                                 operation: self.getOperation())
                     }
                 }
             }
@@ -185,6 +186,23 @@ class InappMapper: InappMapperProtocol {
 
     private func getEventHashValue() -> Int {
         return applicationEvent?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
+    }
+
+    private func getOperation() -> (name: String, body: String)? {
+        guard let event = applicationEvent else { return nil }
+
+        let name = event.name
+        let body: String
+
+        if let model = event.model,
+           let data = try? JSONEncoder().encode(model),
+           let jsonString = String(data: data, encoding: .utf8) {
+            body = jsonString
+        } else {
+            body = "{}"
+        }
+
+        return (name: name, body: body)
     }
 
     func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
