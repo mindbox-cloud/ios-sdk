@@ -185,7 +185,8 @@ extension MindboxWebViewFacade {
             "sdkVersion": Mindbox.shared.sdkVersion,
             "endpointId": persistenceStorage.configuration?.endpoint ?? "",
             "deviceUuid": persistenceStorage.deviceUUID ?? "",
-            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)"
+            "userVisitCount": "\(persistenceStorage.userVisitCount ?? 0)",
+            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)",
         ]
 
         // Merge params from configuration
