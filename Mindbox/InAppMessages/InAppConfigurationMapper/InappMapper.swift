@@ -131,7 +131,16 @@ class InappMapper: InappMapperProtocol {
                 
                 // For the webview case, we skip downloading images
                 if case .webview = inapp.content {
-                    formData = InAppFormData(inAppId: inapp.inAppId, isPriority: inapp.isPriority, delayTime: inapp.delayTime, imagesDict: [:], firstImageValue: "", content: inapp.content, frequency: inapp.frequency, operation: self.getOperation())
+                    formData = InAppFormData(
+                        inAppId: inapp.inAppId,
+                        isPriority: inapp.isPriority,
+                        delayTime: inapp.delayTime,
+                        imagesDict: [:],
+                        firstImageValue: "",
+                        content: inapp.content,
+                        frequency: inapp.frequency,
+                        operation: self.getOperation()
+                    )
                     continue
                 }
                 
