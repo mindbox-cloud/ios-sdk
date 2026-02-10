@@ -83,6 +83,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         let config = WKWebViewConfiguration()
         config.applicationNameForUserAgent = userAgent
         config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
 
         let webView = WKWebView(frame: .zero, configuration: config)
         // TODO: Turn on DEBUG IF after 2.15.0-RC
