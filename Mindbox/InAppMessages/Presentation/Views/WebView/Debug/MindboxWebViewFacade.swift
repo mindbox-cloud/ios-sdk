@@ -82,6 +82,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 logError: @escaping WebViewLogError = { _ in }) {
         let config = WKWebViewConfiguration()
         config.applicationNameForUserAgent = userAgent
+        config.allowsInlineMediaPlayback = true
 
         let webView = WKWebView(frame: .zero, configuration: config)
         // TODO: Turn on DEBUG IF after 2.15.0-RC
