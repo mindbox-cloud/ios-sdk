@@ -18,7 +18,27 @@ struct InAppFormData {
     let firstImageValue: String
     let content: MindboxFormVariant
     let frequency: InappFrequency?
-    let operation: (name: String, body: String)?
+    var operation: (name: String, body: String)?
+
+    init(
+        inAppId: String,
+        isPriority: Bool,
+        delayTime: String?,
+        imagesDict: [String: UIImage],
+        firstImageValue: String,
+        content: MindboxFormVariant,
+        frequency: InappFrequency?,
+        operation: (name: String, body: String)? = nil
+    ) {
+        self.inAppId = inAppId
+        self.isPriority = isPriority
+        self.delayTime = delayTime
+        self.imagesDict = imagesDict
+        self.firstImageValue = firstImageValue
+        self.content = content
+        self.frequency = frequency
+        self.operation = operation
+    }
 }
 
 // TODO: - Need to remove this struct and use only InappFormData.
