@@ -17,12 +17,14 @@ final class TransparentView: UIView {
     private var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: String]?
+    private var operation: (name: String, body: String)?
     private let userAgent: String
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
 
-    init(frame: CGRect, params: [String: String], userAgent: String) {
+    init(frame: CGRect, params: [String: String], userAgent: String, operation: (name: String, body: String)?) {
         self.params = params
+        self.operation = operation
         self.userAgent = userAgent
         super.init(frame: frame)
         commonInit()
@@ -30,6 +32,7 @@ final class TransparentView: UIView {
 
     override init(frame: CGRect) {
         self.params = nil
+        self.operation = nil
         self.userAgent = ""
         super.init(frame: frame)
         commonInit()
@@ -37,6 +40,7 @@ final class TransparentView: UIView {
 
     required init?(coder: NSCoder) {
         self.params = nil
+        self.operation = nil
         self.userAgent = ""
         super.init(coder: coder)
         commonInit()
@@ -59,7 +63,7 @@ final class TransparentView: UIView {
     }
 
     private func createFacade() {
-        facade = MindboxWebViewFacade(params: params, userAgent: userAgent)
+        facade = MindboxWebViewFacade(params: params, operation: operation, userAgent: userAgent)
         facade?.setBridgeMessageDelegate(self)
         facade?.setNavigationDelegate(self)
     }

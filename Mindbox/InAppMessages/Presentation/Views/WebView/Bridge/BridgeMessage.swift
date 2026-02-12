@@ -209,4 +209,44 @@ public struct BridgeMessage: Codable {
     public static func currentTimestampMs() -> Int64 {
         Int64(Date().timeIntervalSince1970 * 1000)
     }
+
+    func prettyPayloadDescription() -> String {
+        guard let payload = payload else {
+            return "nil"
+        }
+
+        // Helper to format JSON with pretty print
+        func prettyJSON(from data: Data) -> String? {
+            guard let jsonObject = try? JSONSerialization.jsonObject(with: data),
+                  let prettyData = try? JSONSerialization.data(
+                    withJSONObject: jsonObject,
+                    options: [.prettyPrinted, .sortedKeys]
+                  ),
+                  let prettyString = String(data: prettyData, encoding: .utf8) else {
+                return nil
+            }
+            return prettyString
+        }
+
+        switch payload {
+        case .string(let stringValue):
+            // If it's a JSON string, try to parse and pretty print it
+            if let data = stringValue.data(using: .utf8),
+               let pretty = prettyJSON(from: data) {
+                return pretty
+            }
+            return stringValue
+
+        case .object, .array:
+            // Serialize JSONValue to pretty JSON
+            if let data = try? JSONEncoder().encode(payload),
+               let pretty = prettyJSON(from: data) {
+                return pretty
+            }
+            return String(describing: payloadAny)
+
+        default:
+            return String(describing: payloadAny)
+        }
+    }
 }

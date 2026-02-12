@@ -9,6 +9,30 @@
 import UIKit
 import WebKit
 
+private enum PayloadKey {
+    static let sdkVersion = "sdkVersion"
+    static let sdkVersionNumeric = "sdkVersionNumeric"
+    static let endpointId = "endpointId"
+    static let deviceUuid = "deviceUuid"
+    static let userVisitCount = "userVisitCount"
+
+    static let operationName = "operationName"
+    static let operationBody = "operationBody"
+
+    static let trackVisitSource = "trackVisitSource"
+    static let trackVisitRequestUrl = "trackVisitRequestUrl"
+
+    static let permissions = "permissions"
+
+    enum Insets {
+        static let key = "insets"
+        static let top = "top"
+        static let left = "left"
+        static let bottom = "bottom"
+        static let right = "right"
+    }
+}
+
 @_spi(Internal)
 public protocol InappWebViewFacadeProtocol: AnyObject {
     func makeView() -> UIView
@@ -42,36 +66,42 @@ public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
 public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
-    
+
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let params: [String: String]?
-    
+    private let operation: (name: String, body: String)?
+
     private let log: WebViewLog
     private let logError: WebViewLogError
-    
+
     public init(params: [String: String]?,
+                operation: (name: String, body: String)? = nil,
                 userAgent: String,
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         let config = WKWebViewConfiguration()
         config.applicationNameForUserAgent = userAgent
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        #if DEBUG
+        // TODO: Turn on DEBUG IF after 2.15.0-RC
+//        #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
-        #endif
+//        #endif
         let bridge = MindboxWebBridge(webView: webView)
-        
+
         self.webView = webView
         self.bridge = bridge
         self.params = params
+        self.operation = operation
         self.log = log
         self.logError = logError
     }
-    
+
     public func makeView() -> UIView {
         webView
     }
@@ -177,26 +207,69 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 extension MindboxWebViewFacade {
     private func buildStartPayload() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)
 
-        var mindboxParams: [String: String] = [
-            "sdkVersion": Mindbox.shared.sdkVersion,
-            "endpointId": persistenceStorage.configuration?.endpoint ?? "",
-            "deviceUuid": persistenceStorage.deviceUUID ?? "",
-            "sdkVersionNumeric": "\(Constants.Versions.sdkVersionNumeric)"
+        var mindboxParams: [String: Any] = [
+            PayloadKey.sdkVersion: Mindbox.shared.sdkVersion,
+            PayloadKey.endpointId: persistenceStorage.configuration?.endpoint ?? "",
+            PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
+            PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
+            PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)"
         ]
 
-        if let params, !params.isEmpty {
-            mindboxParams.merge(params) { _, new in new }
+        // Add system info (theme, platform, locale, version)
+        let systemInfo = systemInfoProvider.getBasicSystemInfo()
+        mindboxParams.merge(systemInfo) { _, new in new }
+
+        // Add safe area insets
+        let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
+        mindboxParams[PayloadKey.Insets.key] = [
+            PayloadKey.Insets.top: insets.top,
+            PayloadKey.Insets.left: insets.left,
+            PayloadKey.Insets.bottom: insets.bottom,
+            PayloadKey.Insets.right: insets.right
+        ]
+
+        // Add granted permissions
+        let permissions = systemInfoProvider.getGrantedPermissions()
+        if !permissions.isEmpty {
+            var permissionsDict: [String: Any] = [:]
+            for (key, status) in permissions {
+                permissionsDict[key] = status.toDictionary()
+            }
+            mindboxParams[PayloadKey.permissions] = permissionsDict
         }
 
-        do {
-            let data = try JSONEncoder().encode(mindboxParams)
+        // Merge params from configuration
+        if let params, !params.isEmpty {
+            for (key, value) in params {
+                mindboxParams[key] = value
+            }
+        }
 
+        // Add operation data
+        if let operation {
+            mindboxParams[PayloadKey.operationName] = operation.name
+            mindboxParams[PayloadKey.operationBody] = operation.body
+        }
+
+        // Add last track-visit data
+        if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
+            if let source = lastTrackVisit.source {
+                mindboxParams[PayloadKey.trackVisitSource] = source.rawValue
+            }
+            if let requestUrl = lastTrackVisit.requestUrl {
+                mindboxParams[PayloadKey.trackVisitRequestUrl] = requestUrl
+            }
+        }
+
+        // Serialize to JSON string
+        do {
+            let data = try JSONSerialization.data(withJSONObject: mindboxParams, options: [])
             guard let jsonString = String(bytes: data, encoding: .utf8) else {
                 logError("[WebView] Failed to convert JSON data to UTF-8 string")
                 return .string("{}")
             }
-
             return .string(jsonString)
         } catch {
             logError("[WebView] Failed to encode start payload to JSON string: \(error)")
@@ -219,31 +292,31 @@ extension MindboxWebViewFacade {
         
         log("Fetching HTML from \(url.absoluteString)")
         
-        let task = session.dataTask(with: url) { data, response, error in
+        let task = session.dataTask(with: url) { [weak self] data, response, error in
             if let error {
-                self.logError("Error fetching HTML: \(error.localizedDescription)")
+                self?.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
-            
+
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
-                self.logError("Incorrect HTTP response")
+                self?.logError("Incorrect HTTP response")
                 completion(nil)
                 return
             }
-            
+
             guard let data,
                   let htmlString = String(data: data, encoding: .utf8) else {
-                self.logError("Failed to decode HTML data")
+                self?.logError("Failed to decode HTML data")
                 completion(nil)
                 return
             }
-            
-            self.log("HTML loaded successfully (\(htmlString.count) chars)")
+
+            self?.log("HTML loaded successfully (\(htmlString.count) chars)")
             completion(htmlString)
         }
-        
+
         task.resume()
     }
 }

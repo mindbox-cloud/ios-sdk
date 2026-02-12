@@ -17,6 +17,7 @@ struct ViewFactoryParameters {
     let onPresented: () -> Void
     let onTapAction: (ContentBackgroundLayerAction?) -> Void
     let onClose: () -> Void
+    let operation: (name: String, body: String)?
 }
 
 protocol ViewFactoryProtocol {
