@@ -19,6 +19,11 @@ private enum PermissionKey {
     static let location = "location"
 }
 
+private enum DetailsKey {
+    static let access = "access"
+    static let limited = "limited"
+}
+
 /// iOS implementation of PermissionProvider
 final class MBPermissionProvider: PermissionProvider {
 
@@ -46,12 +51,22 @@ final class MBPermissionProvider: PermissionProvider {
     }
 
     func getPhotoLibraryPermissionStatus() -> PermissionStatus {
-        let status = PHPhotoLibrary.authorizationStatus()
+        var status: PHAuthorizationStatus
+        if #available(iOS 14, *) {
+            status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        } else {
+            status = PHPhotoLibrary.authorizationStatus()
+        }
         return mapPHAuthorizationStatus(status)
     }
 
     func getLocationPermissionStatus() -> PermissionStatus {
-        let status = CLLocationManager.authorizationStatus()
+        let status: CLAuthorizationStatus
+        if #available(iOS 14, *) {
+            status = CLLocationManager().authorizationStatus
+        } else {
+            status = CLLocationManager.authorizationStatus()
+        }
         return mapCLAuthorizationStatus(status)
     }
 
@@ -101,7 +116,7 @@ final class MBPermissionProvider: PermissionProvider {
         case .restricted:
             return PermissionStatus(status: .restricted)
         case .limited:
-            return PermissionStatus(status: .limited)
+            return PermissionStatus(status: .granted, details: [DetailsKey.access: DetailsKey.limited])
         @unknown default:
             return PermissionStatus(status: .notDetermined)
         }
