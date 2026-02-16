@@ -69,13 +69,13 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
-    private let params: [String: String]?
+    private let params: [String: JSONValue]?
     private let operation: (name: String, body: String)?
 
     private let log: WebViewLog
     private let logError: WebViewLogError
 
-    public init(params: [String: String]?,
+    public init(params: [String: JSONValue]?,
                 operation: (name: String, body: String)? = nil,
                 userAgent: String,
                 log: @escaping WebViewLog = { _ in },
@@ -243,7 +243,7 @@ extension MindboxWebViewFacade {
         // Merge params from configuration
         if let params, !params.isEmpty {
             for (key, value) in params {
-                mindboxParams[key] = value
+                mindboxParams[key] = value.anyValue ?? NSNull()
             }
         }
 

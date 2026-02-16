@@ -129,8 +129,8 @@ class InappMapper: InappMapperProtocol {
 
                 Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 
-                // For the webview case, we skip downloading images
-                if case .webview = inapp.content {
+                if case .modal(let modal) = inapp.content,
+                   modal.content.background.layers.contains(where: { $0.layerType == .webview }) {
                     formData = InAppFormData(
                         inAppId: inapp.inAppId,
                         isPriority: inapp.isPriority,
@@ -143,7 +143,7 @@ class InappMapper: InappMapperProtocol {
                     )
                     continue
                 }
-                
+
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)

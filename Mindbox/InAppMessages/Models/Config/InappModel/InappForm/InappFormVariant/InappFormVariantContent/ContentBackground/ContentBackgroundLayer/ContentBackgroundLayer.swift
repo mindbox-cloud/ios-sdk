@@ -95,6 +95,7 @@ enum ContentBackgroundLayer: Decodable, Hashable, Equatable {
     static func == (lhs: ContentBackgroundLayer, rhs: ContentBackgroundLayer) -> Bool {
         switch (lhs, rhs) {
             case (.image, .image): return true
+            case (.webview, .webview): return true
             case (.unknown, .unknown): return true
             default: return false
         }
