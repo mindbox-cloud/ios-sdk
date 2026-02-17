@@ -21,5 +21,8 @@
       "maxInappsPerSession": 1,
       "maxInappsPerDay": 1,
       "minIntervalBetweenShows": "0.00:00:10"
+  },
+  "featureToggles": {
+      "shouldSendInAppShowError": true
   }
 }
