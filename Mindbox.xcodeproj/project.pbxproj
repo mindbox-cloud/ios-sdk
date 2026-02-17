@@ -184,6 +184,10 @@
 		4731A8392F447C3100CBE1E5 /* SettingsInAppSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C42F447C3100CBE1E5 /* SettingsInAppSettingsError.json */; };
 		4731A83C2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A83A2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json */; };
 		4731A83D2F44822500CBE1E5 /* InAppWebviewValid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A83B2F44822500CBE1E5 /* InAppWebviewValid.json */; };
+		4731A8D22F4489ED00CBE1E5 /* webviewAndImageLayers.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */; };
+		4731A8D32F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */; };
+		4731A8D42F4489ED00CBE1E5 /* webviewLayerValid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */; };
+		4731A8D52F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */; };
 		473A98262C918C3A005A3B94 /* ConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A98252C918C3A005A3B94 /* ConfigParsingTests.swift */; };
 		473A982D2C91A38C005A3B94 /* SettingsConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */; };
 		473A98332C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A98322C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift */; };
@@ -860,6 +864,10 @@
 		4731A7E82F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsAllValid.json; sourceTree = "<group>"; };
 		4731A83A2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppWebviewParamsTypeError.json; sourceTree = "<group>"; };
 		4731A83B2F44822500CBE1E5 /* InAppWebviewValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppWebviewValid.json; sourceTree = "<group>"; };
+		4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewAndImageLayers.json; sourceTree = "<group>"; };
+		4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerMissingBaseUrl.json; sourceTree = "<group>"; };
+		4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerMissingContentUrl.json; sourceTree = "<group>"; };
+		4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerValid.json; sourceTree = "<group>"; };
 		473A98252C918C3A005A3B94 /* ConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigParsingTests.swift; sourceTree = "<group>"; };
 		473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsConfigParsingTests.swift; sourceTree = "<group>"; };
 		473A98322C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringConfigParsingTests.swift; sourceTree = "<group>"; };
@@ -3346,6 +3354,10 @@
 				F39117122AB4BD8500852298 /* emptyLayersSection.json */,
 				F39117102AB4BD4500852298 /* missingBackgroundSection.json */,
 				F391170E2AB4B31800852298 /* unknownVariantType.json */,
+				4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */,
+				4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */,
+				4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */,
+				4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */,
 			);
 			path = "JSON ";
 			sourceTree = "<group>";
@@ -3826,6 +3838,10 @@
 				4731A81D2F447C3100CBE1E5 /* InAppFrequencyError.json in Resources */,
 				4731A81E2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json in Resources */,
 				4731A81F2F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json in Resources */,
+				4731A8D22F4489ED00CBE1E5 /* webviewAndImageLayers.json in Resources */,
+				4731A8D32F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json in Resources */,
+				4731A8D42F4489ED00CBE1E5 /* webviewLayerValid.json in Resources */,
+				4731A8D52F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json in Resources */,
 				4731A8202F447C3100CBE1E5 /* MonitoringLogsOneElementError.json in Resources */,
 				4731A8212F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json in Resources */,
 				4731A8222F447C3100CBE1E5 /* InAppSdkVersionTypeError.json in Resources */,
