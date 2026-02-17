@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 // swiftlint:disable force_try
 
@@ -281,8 +281,21 @@ final class InAppConfigParsingTests: XCTestCase {
         XCTAssertEqual(webviewLayer.baseUrl, "https://inapp.local/popup")
         XCTAssertEqual(webviewLayer.contentUrl,
                        "https://api-staging.mindbox.ru/mobile/byendpoint/webview/stable/inapp-dev-v2.html")
-        XCTAssertNotNil(webviewLayer.params)
-        XCTAssertFalse(webviewLayer.params!.isEmpty, "Webview params should not be empty")
+        let params = webviewLayer.params!
+        XCTAssertEqual(params.count, 5)
+
+        // Simple string values
+        XCTAssertEqual(params["formId"], .string("143364"))
+        XCTAssertEqual(params["popUpId"], .string("143364"))
+        XCTAssertEqual(params["popUpEndpointId"], .string("Mpush-test.inapp-quiz-migration"))
+
+        // Nested object
+        XCTAssertEqual(params["test"], .object(["lalala": .string("123")]))
+
+        // Array of objects
+        XCTAssertEqual(params["someObject"], .array([
+            .object(["lalala": .int(123), "blaBla": .bool(true)])
+        ]))
     }
 
     func test_InApp_withWebviewParamsTypeError_shouldSkipInApp() {
