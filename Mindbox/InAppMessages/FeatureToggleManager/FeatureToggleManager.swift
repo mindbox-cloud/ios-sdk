@@ -9,22 +9,31 @@
 import Foundation
 import MindboxLogger
 
-protocol FeatureToggleManagerProtocol {
-    func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?)
-    func shouldSendInAppShowError() -> Bool
+enum FeatureFlag {
+    case shouldSendInAppShowError
+
+    var defaultValue: Bool {
+        switch self {
+        case .shouldSendInAppShowError:
+            return true
+        }
+    }
 }
 
-final class FeatureToggleManager: FeatureToggleManagerProtocol {
+final class FeatureToggleManager {
     
     public static let shared = FeatureToggleManager()
     
-    private var featureToggles: Settings.FeatureToggles? = nil
+    private var featureToggles: Settings.FeatureToggles?
 
     func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?) {
         self.featureToggles = featureToggles
     }
     
-    func shouldSendInAppShowError() -> Bool {
-        featureToggles?.shouldSendInAppShowError ?? true
+    func isFeatureEnabled(_ feature: FeatureFlag) -> Bool {
+        switch feature {
+        case .shouldSendInAppShowError:
+            return featureToggles?.shouldSendInAppShowError ?? feature.defaultValue
+        }
     }
 }

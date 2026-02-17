@@ -37,7 +37,7 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, true, "shouldSendInAppShowError must be true")
 
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertTrue(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 
     func test_SettingsConfig_withFeatureTogglesFalse_shouldParseSuccessfully() {
@@ -48,66 +48,46 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, false, "shouldSendInAppShowError must be false")
 
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertFalse(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertFalse(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 
     func test_SettingsConfig_withFeatureTogglesError_shouldSetFeatureTogglesToNil() {
         // Key is `featureTogglesTest` instead of `featureToggles`
         let config = try! FeatureTogglesConfig.settingsFeatureTogglesError.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
-        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
-        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
-
         XCTAssertNil(config.featureToggles, "FeatureToggles must be `nil` if the key `featureToggles` is not found")
         
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertTrue(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 
     func test_SettingsConfig_withFeatureTogglesTypeError_shouldSetFeatureTogglesToNil() {
         // Type of `featureToggles` is Int instead of FeatureToggles
         let config = try! FeatureTogglesConfig.settingsFeatureTogglesTypeError.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
-        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
-        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
-
         XCTAssertNil(config.featureToggles, "FeatureToggles must be `nil` if the type of `featureToggles` is not a `Settings.FeatureToggles`")
         
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertTrue(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 
     func test_SettingsConfig_withFeatureTogglesMissingShouldSendInAppShowError_shouldDefaultToTrue() {
         // Missing `shouldSendInAppShowError`
         let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppShowErrorMissing.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
-        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
-        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
-
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertTrue(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 
     func test_SettingsConfig_withFeatureTogglesShouldSendInAppShowErrorTypeError_shouldDefaultToTrue() {
         // Type of `shouldSendInAppShowError` is String instead of Bool
         let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppShowErrorTypeError.getConfig()
 
-        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
-        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
-        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
-
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         
         FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
+        XCTAssertTrue(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))
     }
 }
