@@ -165,7 +165,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         
         // TODO: - Remove this log after QA check build
         Logger.common(
-            message: "[FeatureToggles] shouldSendInAppShowError: \(featureToggleManager.shouldSendInAppShowError())",
+            message: "[FeatureToggles] MobileSdkShouldSendInAppShowError: \(featureToggleManager.shouldSendInAppShowError())",
             level: .info,
             category: .general
         )

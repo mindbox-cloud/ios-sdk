@@ -12,8 +12,8 @@ extension Settings {
     struct FeatureToggles: Decodable, Equatable {
         let shouldSendInAppShowError: Bool?
 
-        enum CodingKeys: CodingKey {
-            case shouldSendInAppShowError
+        enum CodingKeys: String, CodingKey {
+            case shouldSendInAppShowError = "MobileSdkShouldSendInAppShowError"
         }
     }
 }
