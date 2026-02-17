@@ -1,0 +1,50 @@
+{
+  "inapps": [
+    {
+      "id": "test-valid-inapp-id",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "action": {
+                      "intentPayload": "",
+                      "value": "",
+                      "$type": "redirectUrl"
+                    },
+                    "source": {
+                      "value": "https://example.com/image.png",
+                      "$type": "url"
+                    },
+                    "$type": "image"
+                  }
+                ]
+              }
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      }
+    }
+  ]
+}
