@@ -55,6 +55,11 @@ fileprivate enum InAppConfig: String, Configurable {
     case inAppLayersTypeError = "InAppLayersTypeError" // background.layers is Int instead of array
     case inAppLayerMissingType = "InAppLayerMissingType" // layer has no $type field
     case inAppLayerUnknownType = "InAppLayerUnknownType" // layer.$type is unknown
+
+    // MARK: - Webview layer
+
+    case inAppWebviewValid = "InAppWebviewValid" // Valid webview InApp with params
+    case inAppWebviewParamsTypeError = "InAppWebviewParamsTypeError" // webview params is Int instead of object
 }
 
 final class InAppConfigParsingTests: XCTestCase {
@@ -242,5 +247,49 @@ final class InAppConfigParsingTests: XCTestCase {
             return
         }
         XCTAssertEqual(inapp.id, "test-valid-inapp-id")
+    }
+
+    // MARK: - Webview layer
+
+    func test_InApp_withWebviewValid_shouldParseWebviewLayer() {
+        let config = try! InAppConfig.inAppWebviewValid.getConfig()
+        XCTAssertNotNil(config.inapps)
+        guard let inapp = config.inapps?.elements.first else {
+            XCTFail("Valid webview InApp should be parsed successfully")
+            return
+        }
+        XCTAssertEqual(inapp.id, "webview-inapp-id")
+
+        guard let variant = inapp.form.variants?.first else {
+            XCTFail("Webview InApp should have a form variant")
+            return
+        }
+        guard case .modal(let modal) = variant else {
+            XCTFail("Variant should be modal")
+            return
+        }
+        guard let content = modal.content,
+              let background = content.background,
+              let layer = background.layers?.first else {
+            XCTFail("Modal should have a background layer")
+            return
+        }
+        guard case .webview(let webviewLayer) = layer else {
+            XCTFail("Layer should be webview type")
+            return
+        }
+        XCTAssertEqual(webviewLayer.baseUrl, "https://inapp.local/popup")
+        XCTAssertEqual(webviewLayer.contentUrl,
+                       "https://api-staging.mindbox.ru/mobile/byendpoint/webview/stable/inapp-dev-v2.html")
+        XCTAssertNotNil(webviewLayer.params)
+        XCTAssertFalse(webviewLayer.params!.isEmpty, "Webview params should not be empty")
+    }
+
+    func test_InApp_withWebviewParamsTypeError_shouldSkipInApp() {
+        // params = Int(123) instead of object → WebviewContentBackgroundLayerDTO fails → InApp skipped
+        let config = try! InAppConfig.inAppWebviewParamsTypeError.getConfig()
+        XCTAssertNotNil(config.inapps)
+        XCTAssertTrue(config.inapps!.elements.isEmpty,
+                      "InApp must be skipped when webview params has wrong type")
     }
 }
