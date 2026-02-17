@@ -1,0 +1,28 @@
+{
+  "operations": {
+    "viewProduct": {
+      "systemName": "viewProduct"
+    },
+    "viewCategory": {
+      "systemName": "viewCategory"
+    },
+    "setCart": {
+      "systemName": "setCart"
+    }
+  },
+  "ttl": {
+    "inapps": "2.00:00:00"
+  },
+  "slidingExpirationTest": {
+    "config": "2.00:00:00",
+    "pushTokenKeepalive": "14.00:00:00"
+  },
+  "inapp": {
+    "maxInappsPerSession": 1,
+    "maxInappsPerDay": 1,
+    "minIntervalBetweenShows": "0.00:00:10"
+  },
+  "featureToggles": {
+    "MobileSdkShouldSendInAppShowError": false
+  }
+}
