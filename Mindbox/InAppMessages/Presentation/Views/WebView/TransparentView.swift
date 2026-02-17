@@ -16,13 +16,13 @@ final class TransparentView: UIView {
 
     private var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
-    private var params: [String: String]?
+    private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
     private let userAgent: String
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
 
-    init(frame: CGRect, params: [String: String], userAgent: String, operation: (name: String, body: String)?) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent

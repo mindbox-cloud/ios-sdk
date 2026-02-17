@@ -12,7 +12,7 @@ class WebViewFactory: ViewFactoryProtocol {
     weak var myViewController: UIViewController?
 
     func create(with params: ViewFactoryParameters) -> UIViewController? {
-        if case .webview(let modalFormVariant) = params.model {
+        if case .modal(let modalFormVariant) = params.model {
             let viewController = WebViewController(model: modalFormVariant,
                                                      id: params.id,
                                                      imagesDict: params.imagesDict,
