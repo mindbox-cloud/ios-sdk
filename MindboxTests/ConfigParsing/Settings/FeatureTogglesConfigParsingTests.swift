@@ -36,9 +36,8 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, true, "shouldSendInAppShowError must be true")
 
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 
     func test_SettingsConfig_withFeatureTogglesFalse_shouldParseSuccessfully() {
@@ -48,9 +47,8 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, false, "shouldSendInAppShowError must be false")
 
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertFalse(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertFalse(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 
     func test_SettingsConfig_withFeatureTogglesError_shouldSetFeatureTogglesToNil() {
@@ -64,9 +62,8 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.featureToggles, "FeatureToggles must be `nil` if the key `featureToggles` is not found")
         
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 
     func test_SettingsConfig_withFeatureTogglesTypeError_shouldSetFeatureTogglesToNil() {
@@ -80,9 +77,8 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
 
         XCTAssertNil(config.featureToggles, "FeatureToggles must be `nil` if the type of `featureToggles` is not a `Settings.FeatureToggles`")
         
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 
     func test_SettingsConfig_withFeatureTogglesMissingShouldSendInAppShowError_shouldDefaultToTrue() {
@@ -96,9 +92,8 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 
     func test_SettingsConfig_withFeatureTogglesShouldSendInAppShowErrorTypeError_shouldDefaultToTrue() {
@@ -112,8 +107,7 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         
-        let featureToggleManager = FeatureToggleManager()
-        featureToggleManager.applyFeatureToggles(config.featureToggles)
-        XCTAssertTrue(featureToggleManager.shouldSendInAppShowError())
+        FeatureToggleManager.shared.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(FeatureToggleManager.shared.shouldSendInAppShowError())
     }
 }

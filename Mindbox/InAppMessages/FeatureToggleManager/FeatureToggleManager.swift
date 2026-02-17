@@ -16,6 +16,8 @@ protocol FeatureToggleManagerProtocol {
 
 final class FeatureToggleManager: FeatureToggleManagerProtocol {
     
+    public static let shared = FeatureToggleManager()
+    
     private var featureToggles: Settings.FeatureToggles? = nil
 
     func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?) {
