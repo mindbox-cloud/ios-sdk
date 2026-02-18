@@ -489,7 +489,6 @@
 		F331DD1C2A84B5EF00222120 /* ImageContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD1B2A84B5EF00222120 /* ImageContentBackgroundLayer.swift */; };
 		F331DD1F2A84B62200222120 /* RedirectUrlLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD1E2A84B62200222120 /* RedirectUrlLayerAction.swift */; };
 		F331DD232A84BFDE00222120 /* CustomDecodingError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD222A84BFDE00222120 /* CustomDecodingError.swift */; };
-		F331DD292A84C4BC00222120 /* InappActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD282A84C4BC00222120 /* InappActionHandler.swift */; };
 		F331DD2E2A84CA8900222120 /* UrlLayerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD2D2A84CA8900222120 /* UrlLayerSource.swift */; };
 		F331DD312A84CCA800222120 /* CloseButtonElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD302A84CCA800222120 /* CloseButtonElement.swift */; };
 		F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */; };
@@ -1170,7 +1169,6 @@
 		F331DD1B2A84B5EF00222120 /* ImageContentBackgroundLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		F331DD1E2A84B62200222120 /* RedirectUrlLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedirectUrlLayerAction.swift; sourceTree = "<group>"; };
 		F331DD222A84BFDE00222120 /* CustomDecodingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDecodingError.swift; sourceTree = "<group>"; };
-		F331DD282A84C4BC00222120 /* InappActionHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InappActionHandler.swift; sourceTree = "<group>"; };
 		F331DD2D2A84CA8900222120 /* UrlLayerSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UrlLayerSource.swift; sourceTree = "<group>"; };
 		F331DD302A84CCA800222120 /* CloseButtonElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloseButtonElement.swift; sourceTree = "<group>"; };
 		F331DD322A84D57800222120 /* VariantImageUrlExtractorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariantImageUrlExtractorService.swift; sourceTree = "<group>"; };
@@ -3151,7 +3149,6 @@
 		F331DD272A84C4BC00222120 /* ActionHandler */ = {
 			isa = PBXGroup;
 			children = (
-				F331DD282A84C4BC00222120 /* InappActionHandler.swift */,
 				F361284A2BA31AC4000382D9 /* ActionUseCaseFactory.swift */,
 			);
 			path = ActionHandler;
@@ -4160,7 +4157,6 @@
 				33072F342664C3E1001F1AB2 /* ProductResponse.swift in Sources */,
 				33072F3E2664C7B5001F1AB2 /* DiscountCardResponse.swift in Sources */,
 				F336082D2A8E15D500C7C9B7 /* ImageLayerFactory.swift in Sources */,
-				F331DD292A84C4BC00222120 /* InappActionHandler.swift in Sources */,
 				F3DEB33B2D4377D000D0EFA4 /* InappSessionManager.swift in Sources */,
 				F331DD0A2A83A56500222120 /* InAppImageOnlyView.swift in Sources */,
 				8410681325ECDC73004701C2 /* DatabaseLoader.swift in Sources */,

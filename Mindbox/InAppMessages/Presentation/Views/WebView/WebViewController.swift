@@ -37,7 +37,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
-    private let onClickAction: InAppMessageTapAction?
+    private let onTapAction: InAppMessageTapAction
     var isTimeoutClose = false
 
     private var viewWillAppearWasCalled = false
@@ -55,7 +55,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
-        onClickAction: InAppMessageTapAction?,
+        onTapAction: @escaping InAppMessageTapAction,
         onCloseInApp: @escaping () -> Void,
         operation: (name: String, body: String)?
     ) {
@@ -65,7 +65,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
-        self.onClickAction = onClickAction
+        self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -216,7 +216,7 @@ extension WebViewController: WebViewAction {
                 payload = ""
             }
 
-            onClickAction?(url, payload)
+            onTapAction(url, payload)
         } catch {
             Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
         }

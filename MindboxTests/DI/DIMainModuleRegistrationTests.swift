@@ -236,16 +236,6 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(useCase)
     }
 
-    func testUseCaseFactoryIsRegistered() {
-        let factory: UseCaseFactoryProtocol? = DI.inject(UseCaseFactoryProtocol.self)
-        XCTAssertNotNil(factory)
-    }
-
-    func testInAppActionHandlerIsRegistered() {
-        let handler: InAppActionHandlerProtocol? = DI.inject(InAppActionHandlerProtocol.self)
-        XCTAssertNotNil(handler)
-    }
-
     func testInAppPresentationManagerIsRegistered() {
         let manager: InAppPresentationManagerProtocol? = DI.inject(InAppPresentationManagerProtocol.self)
         XCTAssertNotNil(manager)
