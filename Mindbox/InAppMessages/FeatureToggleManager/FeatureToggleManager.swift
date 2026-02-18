@@ -21,9 +21,7 @@ enum FeatureFlag {
 }
 
 final class FeatureToggleManager {
-    
-    public static let shared = FeatureToggleManager()
-    
+
     private var featureToggles: Settings.FeatureToggles?
 
     func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?) {

@@ -32,17 +32,20 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
+    private let featureToggleManager: FeatureToggleManager
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inappMapper: InappMapperProtocol?,
-        persistenceStorage: PersistenceStorage
+        persistenceStorage: PersistenceStorage,
+        featureToggleManager: FeatureToggleManager
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.persistenceStorage = persistenceStorage
+        self.featureToggleManager = featureToggleManager
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -158,11 +161,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             SessionTemporaryStorage.shared.inAppSettings = inappSettings
         }
 
-        FeatureToggleManager.shared.applyFeatureToggles(settings.featureToggles)
+        featureToggleManager.applyFeatureToggles(settings.featureToggles)
         
         // TODO: - Remove this log after QA check build
         Logger.common(
-            message: "[FeatureToggles] MobileSdkShouldSendInAppShowError: \(FeatureToggleManager.shared.isFeatureEnabled(.shouldSendInAppShowError))",
+            message: "[FeatureToggles] MobileSdkShouldSendInAppShowError: \(featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError))",
             level: .info,
             category: .general
         )

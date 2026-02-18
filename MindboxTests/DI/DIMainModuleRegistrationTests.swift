@@ -225,6 +225,11 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(filter)
     }
 
+    func testFeatureToggleManagerIsRegistered() {
+        let manager: FeatureToggleManager? = DI.inject(FeatureToggleManager.self)
+        XCTAssertNotNil(manager)
+    }
+
     // Тесты для InappPresentation
     func testInAppMessagesTrackerIsRegistered() {
         let tracker: InAppMessagesTracker? = DI.inject(InAppMessagesTracker.self)
