@@ -95,7 +95,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
             webView.webViewAction = self
             webView.loadHTMLPage(
                 baseUrl: webviewLayer.baseUrl,
-                contentUrl: webviewLayer.contentUrl
+                contentUrl: "https://api-staging.mindbox.ru/mobile/byendpoint/webview/staging/v1/index.html"
             )
 
             self.transparentWebView = webView
@@ -164,7 +164,7 @@ extension WebViewController: WebVCDelegate {
         isTimeoutClose = true
         SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        onClose()
+        //onClose()
     }
 
     func closeJSReadyMissingWebViewVC(reason: String) {

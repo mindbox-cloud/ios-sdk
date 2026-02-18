@@ -38,12 +38,12 @@ enum Constants {
 
     enum WebViewBridgeJS {
         static let handlerName = "SdkBridge"
-        static let receiveFromSDK = "window.receiveFromSDK"
+        static let receiveFromSDK = "window.bridgeMessagesHandlers.emit"
         static func sendScript(json: String) -> String {
-            "\(receiveFromSDK)(\(json));"
+            "(()=>{try{\(receiveFromSDK)(\(json));return!0}catch(_){return!1}})()"
         }
 
-        static let receiveFromSDKReadyCheck = "(() => typeof \(receiveFromSDK) === 'function')()"
+        static let receiveFromSDKReadyCheck = "typeof \(receiveFromSDK) === 'function'"
     }
 
     /// Constants used for migration management.
