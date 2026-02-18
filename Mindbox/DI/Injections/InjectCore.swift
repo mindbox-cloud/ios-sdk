@@ -42,11 +42,13 @@ extension MBContainer {
 
         register(InAppConfigurationManagerProtocol.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
             return InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-                persistenceStorage: persistenceStorage)
+                persistenceStorage: persistenceStorage,
+                featureToggleManager: featureToggleManager)
         }
         
         register(CheckNotifWork.self) {
