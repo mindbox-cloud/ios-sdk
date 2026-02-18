@@ -201,22 +201,10 @@ extension WebViewController: WebViewAction {
         do {
             let jsonData = data.data(using: .utf8) ?? Data()
             let dto = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
-            let url: URL?
-            let payload: String
+            let action = try LayerActionFilterService().filter(dto)
 
-            switch dto {
-            case .redirectUrl(let model):
-                url = URL(string: model.value ?? "")
-                payload = model.intentPayload ?? ""
-            case .pushPermission(let model):
-                url = nil
-                payload = model.intentPayload ?? ""
-            case .unknown:
-                url = nil
-                payload = ""
-            }
-
-            onTapAction(url, payload)
+            guard let tapData = action.handleTap() else { return }
+            onTapAction(tapData.url, tapData.payload)
         } catch {
             Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
         }
