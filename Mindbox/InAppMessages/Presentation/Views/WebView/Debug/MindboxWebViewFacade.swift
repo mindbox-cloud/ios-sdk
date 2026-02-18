@@ -16,6 +16,7 @@ private enum PayloadKey {
     static let deviceUuid = "deviceUuid"
     static let userVisitCount = "userVisitCount"
 
+    static let inAppId = "inAppId"
     static let operationName = "operationName"
     static let operationBody = "operationBody"
 
@@ -71,6 +72,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     private let bridge: MindboxWebBridge
     private let params: [String: JSONValue]?
     private let operation: (name: String, body: String)?
+    private let inAppId: String
 
     private let log: WebViewLog
     private let logError: WebViewLogError
@@ -78,6 +80,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     public init(params: [String: JSONValue]?,
                 operation: (name: String, body: String)? = nil,
                 userAgent: String,
+                inAppId: String = "",
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         let config = WKWebViewConfiguration()
@@ -98,6 +101,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         self.bridge = bridge
         self.params = params
         self.operation = operation
+        self.inAppId = inAppId
         self.log = log
         self.logError = logError
     }
@@ -158,7 +162,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     public func sendReadyEvent(id: UUID) {
         let message = BridgeMessage(
             type: .response,
-            action: "ready",
+            action: BridgeMessage.Action.ready,
             payload: buildStartPayload(),
             id: id
         )
@@ -214,7 +218,8 @@ extension MindboxWebViewFacade {
             PayloadKey.endpointId: persistenceStorage.configuration?.endpoint ?? "",
             PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
             PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
-            PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)"
+            PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)",
+            PayloadKey.inAppId: inAppId
         ]
 
         // Add system info (theme, platform, locale, version)

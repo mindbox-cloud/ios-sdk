@@ -19,13 +19,15 @@ final class TransparentView: UIView {
     private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
     private let userAgent: String
+    private let inAppId: String
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
+        self.inAppId = inAppId
         super.init(frame: frame)
         commonInit()
     }
@@ -34,6 +36,7 @@ final class TransparentView: UIView {
         self.params = nil
         self.operation = nil
         self.userAgent = ""
+        self.inAppId = ""
         super.init(frame: frame)
         commonInit()
     }
@@ -42,6 +45,7 @@ final class TransparentView: UIView {
         self.params = nil
         self.operation = nil
         self.userAgent = ""
+        self.inAppId = ""
         super.init(coder: coder)
         commonInit()
     }
@@ -63,7 +67,7 @@ final class TransparentView: UIView {
     }
 
     private func createFacade() {
-        facade = MindboxWebViewFacade(params: params, operation: operation, userAgent: userAgent)
+        facade = MindboxWebViewFacade(params: params, operation: operation, userAgent: userAgent, inAppId: inAppId)
         facade?.setBridgeMessageDelegate(self)
         facade?.setNavigationDelegate(self)
     }
@@ -112,9 +116,11 @@ extension TransparentView: WebBridgeMessageDelegate {
         let action = message.action
         let data: String
 
-        if let payload = message.payload,
-           let payloadData = try? JSONEncoder().encode(payload),
-           let payloadString = String(data: payloadData, encoding: .utf8) {
+        if case .string(let stringValue) = message.payload {
+            data = stringValue
+        } else if let payload = message.payload,
+                  let payloadData = try? JSONEncoder().encode(payload),
+                  let payloadString = String(data: payloadData, encoding: .utf8) {
             data = payloadString
         } else {
             data = ""
@@ -127,31 +133,39 @@ extension TransparentView: WebBridgeMessageDelegate {
         
         // TODO: - Create plugin-based handlers
 
+        typealias Action = BridgeMessage.Action
+
         switch action {
-        case "close":
+        case Action.close:
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onClose()
-        case "init":
+        case Action.`init`:
             quizInitTimeoutWorkItem?.cancel()
             webViewAction?.onInit()
 
-        case "click":
+        case Action.click:
             webViewAction?.onCompleted(data: data)
 
-        case "hide":
+        case Action.hide:
             webViewAction?.onHide()
 
-        case "log":
+        case Action.log:
             webViewAction?.onLog(message: data)
 
-        case "userAgent":
+        case Action.userAgent:
             Logger.common(
                 message: "[WebView] UserAgent: \(data)",
                 category: .webViewInAppMessages
             )
-                
-        case "ready":
+
+        case Action.ready:
             facade?.sendReadyEvent(id: message.id)
+
+        case Action.asyncOperation:
+            handleAsyncOperation(message: message)
+
+        case Action.syncOperation:
+            handleSyncOperation(message: message)
 
         default:
             Logger.common(
@@ -217,6 +231,100 @@ extension TransparentView: WebBridgeNavigationDelegate {
             Logger.common(message: "[WebView] WKNavigationDelegate: Navigating by URL \(url.absoluteString)", category: .webViewInAppMessages)
         }
         decisionHandler(.allow)
+    }
+}
+
+// MARK: - Operation Handlers
+
+extension TransparentView {
+
+    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: String)? {
+        guard case .string(let str) = message.payload,
+              let data = str.data(using: .utf8),
+              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
+              case .string(let operation) = dict["operation"],
+              let body = dict["body"],
+              let bodyData = try? JSONEncoder().encode(body),
+              let bodyString = String(data: bodyData, encoding: .utf8) else {
+            return nil
+        }
+
+        return (operation, bodyString)
+    }
+
+    private func sendBridgeError(_ errorMessage: String, action: String, id: UUID) {
+        let errorPayload: JSONValue = .object(["error": .string(errorMessage)])
+        let response = BridgeMessage(type: .error, action: action, payload: errorPayload, id: id)
+        facade?.sendToJS(response)
+    }
+
+    private func handleAsyncOperation(message: BridgeMessage) {
+        guard let params = extractOperationParams(from: message) else {
+            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+            return
+        }
+
+        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+
+        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+        do {
+            try databaseRepository.create(event: event)
+            Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
+        } catch {
+            Logger.common(message: "[WebView] asyncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
+            sendBridgeError("Failed to queue operation: \(error.localizedDescription)", action: message.action, id: message.id)
+            return
+        }
+
+        let successResponse = BridgeMessage(
+            type: .response,
+            action: message.action,
+            payload: .object(["success": .bool(true)]),
+            id: message.id
+        )
+        facade?.sendToJS(successResponse)
+    }
+
+    private func handleSyncOperation(message: BridgeMessage) {
+        guard let params = extractOperationParams(from: message) else {
+            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+            return
+        }
+
+        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+
+        Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
+
+        eventRepository.send(type: OperationResponse.self, event: event) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
+                    let responseJSON = response.createJSON()
+                    let successResponse = BridgeMessage(
+                        type: .response,
+                        action: message.action,
+                        payload: .string(responseJSON),
+                        id: message.id
+                    )
+                    self?.facade?.sendToJS(successResponse)
+
+                case .failure(let error):
+                    Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
+                    let errorJSON = error.createJSON()
+                    let errorResponse = BridgeMessage(
+                        type: .error,
+                        action: message.action,
+                        payload: .string(errorJSON),
+                        id: message.id
+                    )
+                    self?.facade?.sendToJS(errorResponse)
+                }
+            }
+        }
     }
 }
 
