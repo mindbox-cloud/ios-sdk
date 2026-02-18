@@ -10,13 +10,11 @@ import Foundation
 struct WebviewContentBackgroundLayerDTO: ContentBackgroundLayerProtocol {
     let baseUrl: String?
     let contentUrl: String?
-    let type: String?
-    let params: [String: String]?
+    let params: [String: JSONValue]?
 }
 
 struct WebviewContentBackgroundLayer: ContentBackgroundLayerProtocol {
     let baseUrl: String
     let contentUrl: String
-    let type: String?
-    let params: [String: String]
+    let params: [String: JSONValue]
 }

@@ -36,8 +36,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     ]
 
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
-        .image: ImageLayerFactory(),
-        .webview: ImageLayerFactory()
+        .image: ImageLayerFactory()
     ]
 
     // MARK: Private properties

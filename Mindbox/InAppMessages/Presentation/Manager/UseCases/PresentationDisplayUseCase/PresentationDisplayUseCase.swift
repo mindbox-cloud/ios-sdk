@@ -87,15 +87,17 @@ final class PresentationDisplayUseCase {
 
     private func changeType(model: MindboxFormVariant) {
         switch model {
-            case .modal:
-                self.presentationStrategy = ModalPresentationStrategy()
-                self.factory = ModalViewFactory()
+            case .modal(let modalVariant):
+                if modalVariant.content.background.layers.contains(where: { $0.layerType == .webview }) {
+                    self.presentationStrategy = WebviewPresentationStrategy()
+                    self.factory = WebViewFactory()
+                } else {
+                    self.presentationStrategy = ModalPresentationStrategy()
+                    self.factory = ModalViewFactory()
+                }
             case .snackbar:
                 self.presentationStrategy = SnackbarPresentationStrategy()
                 self.factory = SnackbarViewFactory()
-            case .webview:
-                self.presentationStrategy = WebviewPresentationStrategy()
-                self.factory = WebViewFactory()
             default:
                 break
         }

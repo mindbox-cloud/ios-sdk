@@ -1,0 +1,63 @@
+{
+  "inapps": [
+    {
+      "id": "webview-inapp-id",
+      "isPriority": null,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 9,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "gte",
+            "value": 2,
+            "$type": "visit"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://api-staging.mindbox.ru/mobile/byendpoint/webview/stable/inapp-dev-v2.html",
+                    "params": {
+                      "formId": "143364",
+                      "popUpId": "143364",
+                      "popUpEndpointId": "Mpush-test.inapp-quiz-migration",
+                      "test": {
+                        "lalala": "123"
+                      },
+                      "someObject": [
+                        {
+                          "lalala": 123,
+                          "blaBla": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "modal"
+          }
+        ]
+      }
+    }
+  ]
+}

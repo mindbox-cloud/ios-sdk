@@ -30,7 +30,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: Private properties
 
-    private let model: WebviewFormVariant
+    private let model: ModalFormVariant
     private let id: String
     private let imagesDict: [String: UIImage]
     private let operation: (name: String, body: String)?
@@ -51,7 +51,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     // MARK: Init
 
     init(
-        model: WebviewFormVariant,
+        model: ModalFormVariant,
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,

@@ -94,6 +94,7 @@
 		33C81EA4264145CD00863380 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C81EA3264145CD00863380 /* TimerManager.swift */; };
 		33E42E5C268323E60046CBCB /* CashdeskRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E42E5B268323E60046CBCB /* CashdeskRequest.swift */; };
 		33EBF0B0264E6283002A35D5 /* MBSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */; };
+		3FB93AC126964AD3A061B4A7 /* FeatureToggleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */; };
 		472179A72C80755A00C15E7F /* ShownInAppsIDsMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472179A62C80755A00C15E7F /* ShownInAppsIDsMigration.swift */; };
 		472765522E0D52A500A5A060 /* RemoveBackgroundTaskDataMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472765512E0D52A500A5A060 /* RemoveBackgroundTaskDataMigration.swift */; };
 		472F549E2C6E272A0008C465 /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F549D2C6E272A0008C465 /* MBPushNotification.swift */; };
@@ -102,38 +103,95 @@
 		472F54A72C6E28030008C465 /* NotificationFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A62C6E28030008C465 /* NotificationFormatter.swift */; };
 		472F54AA2C6E294F0008C465 /* PushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54A92C6E294F0008C465 /* PushValidator.swift */; };
 		472F54AC2C6E29E50008C465 /* MindboxPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 472F54AB2C6E29E50008C465 /* MindboxPushNotification.swift */; };
+		4731A6DF2F447B7600CBE1E5 /* InAppConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4731A6DE2F447B7600CBE1E5 /* InAppConfigParsingTests.swift */; };
+		4731A7EB2F447C3100CBE1E5 /* SettingsSlidingExpirationTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DF2F447C3100CBE1E5 /* SettingsSlidingExpirationTypeError.json */; };
+		4731A7EC2F447C3100CBE1E5 /* InAppIdError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AE2F447C3100CBE1E5 /* InAppIdError.json */; };
+		4731A7ED2F447C3100CBE1E5 /* SettingsConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E62F447C3100CBE1E5 /* SettingsConfig.json */; };
+		4731A7EE2F447C3100CBE1E5 /* ConfigABTestsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7992F447C3100CBE1E5 /* ConfigABTestsTypeError.json */; };
+		4731A7EF2F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D02F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartError.json */; };
+		4731A7F02F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D62F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameError.json */; };
+		4731A7F12F447C3100CBE1E5 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C72F447C3100CBE1E5 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */; };
+		4731A7F22F447C3100CBE1E5 /* InAppIdTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AF2F447C3100CBE1E5 /* InAppIdTypeError.json */; };
+		4731A7F32F447C3100CBE1E5 /* SettingsSlidingExpirationError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DC2F447C3100CBE1E5 /* SettingsSlidingExpirationError.json */; };
+		4731A7F42F447C3100CBE1E5 /* SettingsAllOperationsWithErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7CC2F447C3100CBE1E5 /* SettingsAllOperationsWithErrors.json */; };
+		4731A7F52F447C3100CBE1E5 /* SettingsAllOperationsWithTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7CD2F447C3100CBE1E5 /* SettingsAllOperationsWithTypeErrors.json */; };
+		4731A7F62F447C3100CBE1E5 /* SettingsInAppSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C92F447C3100CBE1E5 /* SettingsInAppSettingsTypeError.json */; };
+		4731A7F72F447C3100CBE1E5 /* SettingsOperationsViewProductTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D82F447C3100CBE1E5 /* SettingsOperationsViewProductTypeError.json */; };
+		4731A7F82F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DD2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveError.json */; };
+		4731A7F92F447C3100CBE1E5 /* InAppFormVariantUnknownType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A92F447C3100CBE1E5 /* InAppFormVariantUnknownType.json */; };
+		4731A7FA2F447C3100CBE1E5 /* SettingsOperationsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7CF2F447C3100CBE1E5 /* SettingsOperationsTypeError.json */; };
+		4731A7FB2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DA2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigError.json */; };
+		4731A7FC2F447C3100CBE1E5 /* InAppTargetingTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B72F447C3100CBE1E5 /* InAppTargetingTypeError.json */; };
+		4731A7FD2F447C3100CBE1E5 /* InAppDelayTimeTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A42F447C3100CBE1E5 /* InAppDelayTimeTypeError.json */; };
+		4731A7FE2F447C3100CBE1E5 /* MonitoringLogsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C12F447C3100CBE1E5 /* MonitoringLogsTypeError.json */; };
+		4731A7FF2F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C52F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */; };
+		4731A8002F447C3100CBE1E5 /* ABTestsConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A78D2F447C3100CBE1E5 /* ABTestsConfig.json */; };
+		4731A8012F447C3100CBE1E5 /* ConfigInAppsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79C2F447C3100CBE1E5 /* ConfigInAppsTypeError.json */; };
+		4731A8022F447C3100CBE1E5 /* SettingsSlidingExpirationConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DB2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigTypeError.json */; };
+		4731A8032F447C3100CBE1E5 /* ConfigSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79F2F447C3100CBE1E5 /* ConfigSettingsError.json */; };
+		4731A8042F447C3100CBE1E5 /* MonitoringLogsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BC2F447C3100CBE1E5 /* MonitoringLogsError.json */; };
+		4731A8052F447C3100CBE1E5 /* SettingsOperationsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7CE2F447C3100CBE1E5 /* SettingsOperationsError.json */; };
+		4731A8062F447C3100CBE1E5 /* ConfigMonitoringTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79E2F447C3100CBE1E5 /* ConfigMonitoringTypeError.json */; };
+		4731A8072F447C3100CBE1E5 /* MonitoringLogsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BE2F447C3100CBE1E5 /* MonitoringLogsOneElementTypeError.json */; };
+		4731A8082F447C3100CBE1E5 /* SettingsInAppSettingsTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7CA2F447C3100CBE1E5 /* SettingsInAppSettingsTypeErrors.json */; };
+		4731A8092F447C3100CBE1E5 /* InAppFormTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A62F447C3100CBE1E5 /* InAppFormTypeError.json */; };
+		4731A80A2F447C3100CBE1E5 /* ABTestsIdConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7902F447C3100CBE1E5 /* ABTestsIdConfigError.json */; };
+		4731A80B2F447C3100CBE1E5 /* ABTestsConfigNegativeUpperModulus.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A78F2F447C3100CBE1E5 /* ABTestsConfigNegativeUpperModulus.json */; };
+		4731A80C2F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D32F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */; };
+		4731A80D2F447C3100CBE1E5 /* SettingsTtlInappsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E32F447C3100CBE1E5 /* SettingsTtlInappsTypeError.json */; };
+		4731A80E2F447C3100CBE1E5 /* InAppFormError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A52F447C3100CBE1E5 /* InAppFormError.json */; };
+		4731A80F2F447C3100CBE1E5 /* InAppFrequencyNil.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AB2F447C3100CBE1E5 /* InAppFrequencyNil.json */; };
+		4731A8102F447C3100CBE1E5 /* ConfigWithSettingsABTestsMonitoringInapps.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A12F447C3100CBE1E5 /* ConfigWithSettingsABTestsMonitoringInapps.json */; };
+		4731A8112F447C3100CBE1E5 /* MonitoringLogsTwoElementsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BF2F447C3100CBE1E5 /* MonitoringLogsTwoElementsError.json */; };
+		4731A8122F447C3100CBE1E5 /* SettingsTtlError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E12F447C3100CBE1E5 /* SettingsTtlError.json */; };
+		4731A8132F447C3100CBE1E5 /* InAppLayerUnknownType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B22F447C3100CBE1E5 /* InAppLayerUnknownType.json */; };
+		4731A8142F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D12F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */; };
+		4731A8152F447C3100CBE1E5 /* MonitoringLogsTwoElementsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C02F447C3100CBE1E5 /* MonitoringLogsTwoElementsTypeError.json */; };
+		4731A8162F447C3100CBE1E5 /* InAppLayersTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B12F447C3100CBE1E5 /* InAppLayersTypeError.json */; };
+		4731A8172F447C3100CBE1E5 /* InAppLayerMissingType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B02F447C3100CBE1E5 /* InAppLayerMissingType.json */; };
+		4731A8182F447C3100CBE1E5 /* ConfigABTestsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7972F447C3100CBE1E5 /* ConfigABTestsOneElementError.json */; };
+		4731A8192F447C3100CBE1E5 /* InAppFormVariantMissingType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A72F447C3100CBE1E5 /* InAppFormVariantMissingType.json */; };
+		4731A81A2F447C3100CBE1E5 /* ConfigMonitoringError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79D2F447C3100CBE1E5 /* ConfigMonitoringError.json */; };
+		4731A81B2F447C3100CBE1E5 /* ConfigSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A02F447C3100CBE1E5 /* ConfigSettingsTypeError.json */; };
+		4731A81C2F447C3100CBE1E5 /* MonitoringConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BA2F447C3100CBE1E5 /* MonitoringConfig.json */; };
+		4731A81D2F447C3100CBE1E5 /* InAppFrequencyError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AA2F447C3100CBE1E5 /* InAppFrequencyError.json */; };
+		4731A81E2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BB2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json */; };
+		4731A81F2F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E82F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json */; };
+		4731A8202F447C3100CBE1E5 /* MonitoringLogsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7BD2F447C3100CBE1E5 /* MonitoringLogsOneElementError.json */; };
+		4731A8212F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7932F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json */; };
+		4731A8222F447C3100CBE1E5 /* InAppSdkVersionTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B52F447C3100CBE1E5 /* InAppSdkVersionTypeError.json */; };
+		4731A8232F447C3100CBE1E5 /* SettingsInAppSettingsPartialError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C82F447C3100CBE1E5 /* SettingsInAppSettingsPartialError.json */; };
+		4731A8242F447C3100CBE1E5 /* SettingsTtlTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E42F447C3100CBE1E5 /* SettingsTtlTypeError.json */; };
+		4731A8252F447C3100CBE1E5 /* ABTestsConfigNegativeLowerModulus.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A78E2F447C3100CBE1E5 /* ABTestsConfigNegativeLowerModulus.json */; };
+		4731A8262F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C62F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */; };
+		4731A8272F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D42F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */; };
+		4731A8282F447C3100CBE1E5 /* ConfigInAppIsPriorityInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79A2F447C3100CBE1E5 /* ConfigInAppIsPriorityInvalid.json */; };
+		4731A8292F447C3100CBE1E5 /* ConfigABTestsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7962F447C3100CBE1E5 /* ConfigABTestsError.json */; };
+		4731A82A2F447C3100CBE1E5 /* InAppSdkVersionError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B42F447C3100CBE1E5 /* InAppSdkVersionError.json */; };
+		4731A82B2F447C3100CBE1E5 /* ABTestsIdConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7912F447C3100CBE1E5 /* ABTestsIdConfigTypeError.json */; };
+		4731A82C2F447C3100CBE1E5 /* InAppFormVariantsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A82F447C3100CBE1E5 /* InAppFormVariantsTypeError.json */; };
+		4731A82D2F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7922F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json */; };
+		4731A82E2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */; };
+		4731A82F2F447C3100CBE1E5 /* InAppOneCorrupted.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B32F447C3100CBE1E5 /* InAppOneCorrupted.json */; };
+		4731A8302F447C3100CBE1E5 /* SettingsOperationsViewProductError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D52F447C3100CBE1E5 /* SettingsOperationsViewProductError.json */; };
+		4731A8312F447C3100CBE1E5 /* InAppTargetingError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B62F447C3100CBE1E5 /* InAppTargetingError.json */; };
+		4731A8322F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7DE2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveTypeError.json */; };
+		4731A8332F447C3100CBE1E5 /* InAppFrequencyTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AC2F447C3100CBE1E5 /* InAppFrequencyTypeError.json */; };
+		4731A8342F447C3100CBE1E5 /* ConfigABTestsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7982F447C3100CBE1E5 /* ConfigABTestsOneElementTypeError.json */; };
+		4731A8352F447C3100CBE1E5 /* SettingsTtlInappsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7E22F447C3100CBE1E5 /* SettingsTtlInappsError.json */; };
+		4731A8362F447C3100CBE1E5 /* ConfigInAppsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A79B2F447C3100CBE1E5 /* ConfigInAppsError.json */; };
+		4731A8372F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D22F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */; };
+		4731A8382F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D72F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameTypeError.json */; };
+		4731A8392F447C3100CBE1E5 /* SettingsInAppSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7C42F447C3100CBE1E5 /* SettingsInAppSettingsError.json */; };
+		4731A83C2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A83A2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json */; };
+		4731A83D2F44822500CBE1E5 /* InAppWebviewValid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A83B2F44822500CBE1E5 /* InAppWebviewValid.json */; };
+		4731A8D22F4489ED00CBE1E5 /* webviewAndImageLayers.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */; };
+		4731A8D32F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */; };
+		4731A8D42F4489ED00CBE1E5 /* webviewLayerValid.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */; };
+		4731A8D52F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */; };
 		473A98262C918C3A005A3B94 /* ConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A98252C918C3A005A3B94 /* ConfigParsingTests.swift */; };
-		473A982D2C91A38C005A3B94 /* SettingsConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */; };
-		F3FT000017022025005A3B94 /* FeatureTogglesConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3FT000117022025005A3B94 /* FeatureTogglesConfigParsingTests.swift */; };
 		473A98332C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A98322C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift */; };
 		473A98362C91A7AB005A3B94 /* GetConfigFunc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473A98352C91A7AB005A3B94 /* GetConfigFunc.swift */; };
-		473A98382C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98372C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json */; };
-		473A983A2C91ABF5005A3B94 /* SettingsConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98392C91ABF5005A3B94 /* SettingsConfig.json */; };
-		473A983C2C91ABFB005A3B94 /* MonitoringConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A983B2C91ABFB005A3B94 /* MonitoringConfig.json */; };
-		473A98412C91AD85005A3B94 /* SettingsTtlInappsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98402C91AD85005A3B94 /* SettingsTtlInappsError.json */; };
-		473A98432C91AD8A005A3B94 /* SettingsTtlInappsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98422C91AD89005A3B94 /* SettingsTtlInappsTypeError.json */; };
-		473A98452C91B309005A3B94 /* SettingsTtlError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98442C91B309005A3B94 /* SettingsTtlError.json */; };
-		473A98472C91B323005A3B94 /* SettingsTtlTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98462C91B323005A3B94 /* SettingsTtlTypeError.json */; };
-		473A984B2C91B606005A3B94 /* SettingsOperationsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A984A2C91B606005A3B94 /* SettingsOperationsError.json */; };
-		473A984D2C91B620005A3B94 /* SettingsOperationsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A984C2C91B620005A3B94 /* SettingsOperationsTypeError.json */; };
-		473A984F2C91B641005A3B94 /* SettingsOperationsViewProductError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A984E2C91B641005A3B94 /* SettingsOperationsViewProductError.json */; };
-		473A98512C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98502C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json */; };
-		473A98532C91B68D005A3B94 /* SettingsOperationsViewProductSystemNameTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98522C91B68D005A3B94 /* SettingsOperationsViewProductSystemNameTypeError.json */; };
-		473A98552C91B6B6005A3B94 /* SettingsOperationsViewProductTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98542C91B6B6005A3B94 /* SettingsOperationsViewProductTypeError.json */; };
-		473A98572C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98562C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json */; };
-		473A98592C91BB1B005A3B94 /* SettingsAllOperationsWithTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98582C91BB1B005A3B94 /* SettingsAllOperationsWithTypeErrors.json */; };
-		473A985B2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A985A2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json */; };
-		473A985D2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A985C2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */; };
-		473A985F2C91D20B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A985E2C91D20B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */; };
-		473A98612C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98602C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */; };
-		473A98632C91D256005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98622C91D256005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */; };
-		473A98652C91DFB5005A3B94 /* MonitoringLogsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98642C91DFB5005A3B94 /* MonitoringLogsOneElementError.json */; };
-		473A98672C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98662C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json */; };
-		473A98692C91DFEA005A3B94 /* MonitoringLogsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98682C91DFEA005A3B94 /* MonitoringLogsOneElementTypeError.json */; };
-		473A986B2C91E010005A3B94 /* MonitoringLogsTwoElementsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986A2C91E010005A3B94 /* MonitoringLogsTwoElementsTypeError.json */; };
-		473A986D2C91E032005A3B94 /* MonitoringLogsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986C2C91E032005A3B94 /* MonitoringLogsError.json */; };
-		473A986F2C91E047005A3B94 /* MonitoringLogsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */; };
-		473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */ = {isa = PBXBuildFile; fileRef = 473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */; };
 		4741425C2E8A681600839AD8 /* StubDatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */; };
 		4741425E2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425D2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift */; };
 		474142602E8A692800839AD8 /* NoopDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */; };
@@ -152,22 +210,7 @@
 		476689C72C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476689C62C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift */; };
 		4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */; };
 		4766A8962C92FF3A002D15A4 /* TimeToLiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */; };
-		4766A8992C931B30002D15A4 /* ConfigSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8982C931B30002D15A4 /* ConfigSettingsError.json */; };
-		4766A89B2C931B51002D15A4 /* ConfigSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A89A2C931B51002D15A4 /* ConfigSettingsTypeError.json */; };
-		4766A89D2C931BD6002D15A4 /* ConfigMonitoringError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A89C2C931BD6002D15A4 /* ConfigMonitoringError.json */; };
-		4766A89F2C931BEC002D15A4 /* ConfigMonitoringTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A89E2C931BEC002D15A4 /* ConfigMonitoringTypeError.json */; };
-		4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8A02C931CDA002D15A4 /* ConfigABTestsError.json */; };
-		4766A8A32C931CF8002D15A4 /* ConfigABTestsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8A22C931CF8002D15A4 /* ConfigABTestsTypeError.json */; };
-		4766A8A52C931E27002D15A4 /* ConfigInAppsError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8A42C931E27002D15A4 /* ConfigInAppsError.json */; };
-		4766A8A72C931E40002D15A4 /* ConfigInAppsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8A62C931E40002D15A4 /* ConfigInAppsTypeError.json */; };
 		4766A8AE2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4766A8AD2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift */; };
-		4766A8B02C932624002D15A4 /* ABTestsConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8AF2C932624002D15A4 /* ABTestsConfig.json */; };
-		4766A8B22C932A3C002D15A4 /* ABTestsIdConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8B12C932A3C002D15A4 /* ABTestsIdConfigError.json */; };
-		4766A8B42C932C79002D15A4 /* ABTestsIdConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8B32C932C79002D15A4 /* ABTestsIdConfigTypeError.json */; };
-		4766A8B62C932D92002D15A4 /* ABTestsSdkVersionConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8B52C932D92002D15A4 /* ABTestsSdkVersionConfigError.json */; };
-		4766A8B82C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8B72C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json */; };
-		4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */; };
-		4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */; };
 		47980DB12E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */; };
 		47A220A52E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A220A42E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift */; };
 		47A4FA6E2E7335A200569870 /* LoggerDatabaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */; };
@@ -377,8 +420,6 @@
 		B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F98D268EEB4B0092EC3C /* LimitBenefitsResponse.swift */; };
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
 		B4E438692D8AF94300603F3A /* WebviewContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */; };
-		B4E4386B2D8AF99100603F3A /* WebviewFormVariantContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386A2D8AF99100603F3A /* WebviewFormVariantContent.swift */; };
-		B4E4386D2D8AF9A700603F3A /* WebviewFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386C2D8AF9A700603F3A /* WebviewFormVariant.swift */; };
 		B4E438702D8AFA5700603F3A /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386E2D8AFA5700603F3A /* WebViewController.swift */; };
 		B4E438722D8AFA6700603F3A /* WebViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438712D8AFA6700603F3A /* WebViewFactory.swift */; };
 		B4E438742D8AFAA700603F3A /* WebviewPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438732D8AFAA700603F3A /* WebviewPresentationStrategy.swift */; };
@@ -390,6 +431,7 @@
 		D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */; };
 		D2F7E24A2BADC2AB00B24BB8 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */; };
 		D2F7E24C2BADC4CA00B24BB8 /* MockSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */; };
+		DEC482157E5249DBBFAEFC9A /* FeatureTogglesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9778038796A8426ABDED1E97 /* FeatureTogglesModel.swift */; };
 		F30005442CFF3F7D004BE915 /* ABTestStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30005432CFF3F7D004BE915 /* ABTestStubs.swift */; };
 		F306291A2BD27D7500EF6609 /* InappFrequencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */; };
 		F30654BB2F1A83520058808C /* MindboxWebViewFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30654BA2F1A83520058808C /* MindboxWebViewFacade.swift */; };
@@ -474,11 +516,16 @@
 		F3482F232A65DC37002A41EC /* InAppMessagesDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */; };
 		F3482F2A2A65DCFC002A41EC /* String+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3482F292A65DCFC002A41EC /* String+Extensions.swift */; };
 		F349401C2E373CF900D295BE /* VisitTargetingNegativeValueModel.json in Resources */ = {isa = PBXBuildFile; fileRef = F349401B2E373CF900D295BE /* VisitTargetingNegativeValueModel.json */; };
-		F34940232E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json in Resources */ = {isa = PBXBuildFile; fileRef = F34940222E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json */; };
-		F34940252E374AEE00D295BE /* ABTestsConfigNegativeLowerModulus.json in Resources */ = {isa = PBXBuildFile; fileRef = F34940242E374AEE00D295BE /* ABTestsConfigNegativeLowerModulus.json */; };
 		F34975382DEE2C6A00BEC667 /* ShownInAppsDictionaryMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975372DEE2C6A00BEC667 /* ShownInAppsDictionaryMigration.swift */; };
 		F349753A2DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975392DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift */; };
 		F349756A2DEF2C8400BEC667 /* InappTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34975692DEF2C8400BEC667 /* InappTrackingService.swift */; };
+		F34A103C2F455B840065392A /* SettingsConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A103B2F455B840065392A /* SettingsConfigParsingTests.swift */; };
+		F34A103D2F455B840065392A /* FeatureTogglesConfigParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A103A2F455B840065392A /* FeatureTogglesConfigParsingTests.swift */; };
+		F34A10442F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A10402F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */; };
+		F34A10452F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A103F2F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */; };
+		F34A10462F455C5B0065392A /* SettingsFeatureTogglesError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A103E2F455C5B0065392A /* SettingsFeatureTogglesError.json */; };
+		F34A10472F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A10412F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */; };
+		F34A10482F455C5B0065392A /* SettingsFeatureTogglesTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A10422F455C5B0065392A /* SettingsFeatureTogglesTypeError.json */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
@@ -495,7 +542,6 @@
 		F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
-		F36B63422E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */; };
 		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F382F20B2BAC50D000BC97FF /* VisitTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */; };
@@ -544,20 +590,13 @@
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
 		F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */; };
 		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
-		F3A49BF52DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */; };
-		F3A49BF62DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */; };
-		F3A49BF72DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */; };
-		F3A49BF82DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */; };
-		F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */; };
-		F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */; };
-		F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */; };
-		DEC482157E5249DBBFAEFC9A /* FeatureTogglesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9778038796A8426ABDED1E97 /* FeatureTogglesModel.swift */; };
-		3FB93AC126964AD3A061B4A7 /* FeatureToggleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */; };
-		0428711117EC4255935484B0 /* SettingsFeatureTogglesError.json in Resources */ = {isa = PBXBuildFile; fileRef = AF030041CEF54B3E89BB3910 /* SettingsFeatureTogglesError.json */; };
-		D45949FDF47C4479B1004C20 /* SettingsFeatureTogglesTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = A848AE480514448E827E9BB9 /* SettingsFeatureTogglesTypeError.json */; };
-		D6B120976F334E349FD00A14 /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json in Resources */ = {isa = PBXBuildFile; fileRef = 80054D88135B4972BABA829A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */; };
-		7629F64298C14FE8A9C2AA8C /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = D98DDC4EA0844E868A0F66E1 /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */; };
-		BAFE0A542C184F8DBCAD23B7 /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json in Resources */ = {isa = PBXBuildFile; fileRef = 702502AEB67F4EEFAAC38AFA /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */; };
+		F3A49BF52DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BF62DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BF72DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BF82DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BF92DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BFA2DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F3A49BFB2DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
@@ -750,6 +789,7 @@
 		33C81EA3264145CD00863380 /* TimerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
+		3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureToggleManager.swift; sourceTree = "<group>"; };
 		472179A62C80755A00C15E7F /* ShownInAppsIDsMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIDsMigration.swift; sourceTree = "<group>"; };
 		472765512E0D52A500A5A060 /* RemoveBackgroundTaskDataMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveBackgroundTaskDataMigration.swift; sourceTree = "<group>"; };
 		472F549D2C6E272A0008C465 /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
@@ -758,38 +798,95 @@
 		472F54A62C6E28030008C465 /* NotificationFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatter.swift; sourceTree = "<group>"; };
 		472F54A92C6E294F0008C465 /* PushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushValidator.swift; sourceTree = "<group>"; };
 		472F54AB2C6E29E50008C465 /* MindboxPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushNotification.swift; sourceTree = "<group>"; };
+		4731A6DE2F447B7600CBE1E5 /* InAppConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigParsingTests.swift; sourceTree = "<group>"; };
+		4731A78D2F447C3100CBE1E5 /* ABTestsConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsConfig.json; sourceTree = "<group>"; };
+		4731A78E2F447C3100CBE1E5 /* ABTestsConfigNegativeLowerModulus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsConfigNegativeLowerModulus.json; sourceTree = "<group>"; };
+		4731A78F2F447C3100CBE1E5 /* ABTestsConfigNegativeUpperModulus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsConfigNegativeUpperModulus.json; sourceTree = "<group>"; };
+		4731A7902F447C3100CBE1E5 /* ABTestsIdConfigError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsIdConfigError.json; sourceTree = "<group>"; };
+		4731A7912F447C3100CBE1E5 /* ABTestsIdConfigTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsIdConfigTypeError.json; sourceTree = "<group>"; };
+		4731A7922F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsSdkVersionConfigError.json; sourceTree = "<group>"; };
+		4731A7932F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsSdkVersionConfigTypeError.json; sourceTree = "<group>"; };
+		4731A7962F447C3100CBE1E5 /* ConfigABTestsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigABTestsError.json; sourceTree = "<group>"; };
+		4731A7972F447C3100CBE1E5 /* ConfigABTestsOneElementError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigABTestsOneElementError.json; sourceTree = "<group>"; };
+		4731A7982F447C3100CBE1E5 /* ConfigABTestsOneElementTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigABTestsOneElementTypeError.json; sourceTree = "<group>"; };
+		4731A7992F447C3100CBE1E5 /* ConfigABTestsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigABTestsTypeError.json; sourceTree = "<group>"; };
+		4731A79A2F447C3100CBE1E5 /* ConfigInAppIsPriorityInvalid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppIsPriorityInvalid.json; sourceTree = "<group>"; };
+		4731A79B2F447C3100CBE1E5 /* ConfigInAppsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppsError.json; sourceTree = "<group>"; };
+		4731A79C2F447C3100CBE1E5 /* ConfigInAppsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppsTypeError.json; sourceTree = "<group>"; };
+		4731A79D2F447C3100CBE1E5 /* ConfigMonitoringError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigMonitoringError.json; sourceTree = "<group>"; };
+		4731A79E2F447C3100CBE1E5 /* ConfigMonitoringTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigMonitoringTypeError.json; sourceTree = "<group>"; };
+		4731A79F2F447C3100CBE1E5 /* ConfigSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigSettingsError.json; sourceTree = "<group>"; };
+		4731A7A02F447C3100CBE1E5 /* ConfigSettingsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigSettingsTypeError.json; sourceTree = "<group>"; };
+		4731A7A12F447C3100CBE1E5 /* ConfigWithSettingsABTestsMonitoringInapps.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigWithSettingsABTestsMonitoringInapps.json; sourceTree = "<group>"; };
+		4731A7A42F447C3100CBE1E5 /* InAppDelayTimeTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppDelayTimeTypeError.json; sourceTree = "<group>"; };
+		4731A7A52F447C3100CBE1E5 /* InAppFormError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFormError.json; sourceTree = "<group>"; };
+		4731A7A62F447C3100CBE1E5 /* InAppFormTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFormTypeError.json; sourceTree = "<group>"; };
+		4731A7A72F447C3100CBE1E5 /* InAppFormVariantMissingType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFormVariantMissingType.json; sourceTree = "<group>"; };
+		4731A7A82F447C3100CBE1E5 /* InAppFormVariantsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFormVariantsTypeError.json; sourceTree = "<group>"; };
+		4731A7A92F447C3100CBE1E5 /* InAppFormVariantUnknownType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFormVariantUnknownType.json; sourceTree = "<group>"; };
+		4731A7AA2F447C3100CBE1E5 /* InAppFrequencyError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyError.json; sourceTree = "<group>"; };
+		4731A7AB2F447C3100CBE1E5 /* InAppFrequencyNil.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyNil.json; sourceTree = "<group>"; };
+		4731A7AC2F447C3100CBE1E5 /* InAppFrequencyTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyTypeError.json; sourceTree = "<group>"; };
+		4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyUnknownType.json; sourceTree = "<group>"; };
+		4731A7AE2F447C3100CBE1E5 /* InAppIdError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppIdError.json; sourceTree = "<group>"; };
+		4731A7AF2F447C3100CBE1E5 /* InAppIdTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppIdTypeError.json; sourceTree = "<group>"; };
+		4731A7B02F447C3100CBE1E5 /* InAppLayerMissingType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppLayerMissingType.json; sourceTree = "<group>"; };
+		4731A7B12F447C3100CBE1E5 /* InAppLayersTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppLayersTypeError.json; sourceTree = "<group>"; };
+		4731A7B22F447C3100CBE1E5 /* InAppLayerUnknownType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppLayerUnknownType.json; sourceTree = "<group>"; };
+		4731A7B32F447C3100CBE1E5 /* InAppOneCorrupted.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppOneCorrupted.json; sourceTree = "<group>"; };
+		4731A7B42F447C3100CBE1E5 /* InAppSdkVersionError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppSdkVersionError.json; sourceTree = "<group>"; };
+		4731A7B52F447C3100CBE1E5 /* InAppSdkVersionTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppSdkVersionTypeError.json; sourceTree = "<group>"; };
+		4731A7B62F447C3100CBE1E5 /* InAppTargetingError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppTargetingError.json; sourceTree = "<group>"; };
+		4731A7B72F447C3100CBE1E5 /* InAppTargetingTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppTargetingTypeError.json; sourceTree = "<group>"; };
+		4731A7BA2F447C3100CBE1E5 /* MonitoringConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringConfig.json; sourceTree = "<group>"; };
+		4731A7BB2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsElementsMixedError.json; sourceTree = "<group>"; };
+		4731A7BC2F447C3100CBE1E5 /* MonitoringLogsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsError.json; sourceTree = "<group>"; };
+		4731A7BD2F447C3100CBE1E5 /* MonitoringLogsOneElementError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsOneElementError.json; sourceTree = "<group>"; };
+		4731A7BE2F447C3100CBE1E5 /* MonitoringLogsOneElementTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsOneElementTypeError.json; sourceTree = "<group>"; };
+		4731A7BF2F447C3100CBE1E5 /* MonitoringLogsTwoElementsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsTwoElementsError.json; sourceTree = "<group>"; };
+		4731A7C02F447C3100CBE1E5 /* MonitoringLogsTwoElementsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsTwoElementsTypeError.json; sourceTree = "<group>"; };
+		4731A7C12F447C3100CBE1E5 /* MonitoringLogsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MonitoringLogsTypeError.json; sourceTree = "<group>"; };
+		4731A7C42F447C3100CBE1E5 /* SettingsInAppSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsError.json; sourceTree = "<group>"; };
+		4731A7C52F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerDay.json; sourceTree = "<group>"; };
+		4731A7C62F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerSession.json; sourceTree = "<group>"; };
+		4731A7C72F447C3100CBE1E5 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMinIntervalBetweenShows.json; sourceTree = "<group>"; };
+		4731A7C82F447C3100CBE1E5 /* SettingsInAppSettingsPartialError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsPartialError.json; sourceTree = "<group>"; };
+		4731A7C92F447C3100CBE1E5 /* SettingsInAppSettingsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeError.json; sourceTree = "<group>"; };
+		4731A7CA2F447C3100CBE1E5 /* SettingsInAppSettingsTypeErrors.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeErrors.json; sourceTree = "<group>"; };
+		4731A7CC2F447C3100CBE1E5 /* SettingsAllOperationsWithErrors.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsAllOperationsWithErrors.json; sourceTree = "<group>"; };
+		4731A7CD2F447C3100CBE1E5 /* SettingsAllOperationsWithTypeErrors.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsAllOperationsWithTypeErrors.json; sourceTree = "<group>"; };
+		4731A7CE2F447C3100CBE1E5 /* SettingsOperationsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsError.json; sourceTree = "<group>"; };
+		4731A7CF2F447C3100CBE1E5 /* SettingsOperationsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsTypeError.json; sourceTree = "<group>"; };
+		4731A7D02F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartError.json; sourceTree = "<group>"; };
+		4731A7D12F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameError.json; sourceTree = "<group>"; };
+		4731A7D22F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json; sourceTree = "<group>"; };
+		4731A7D32F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json; sourceTree = "<group>"; };
+		4731A7D42F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartTypeError.json; sourceTree = "<group>"; };
+		4731A7D52F447C3100CBE1E5 /* SettingsOperationsViewProductError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewProductError.json; sourceTree = "<group>"; };
+		4731A7D62F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewProductSystemNameError.json; sourceTree = "<group>"; };
+		4731A7D72F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewProductSystemNameTypeError.json; sourceTree = "<group>"; };
+		4731A7D82F447C3100CBE1E5 /* SettingsOperationsViewProductTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsOperationsViewProductTypeError.json; sourceTree = "<group>"; };
+		4731A7DA2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationConfigError.json; sourceTree = "<group>"; };
+		4731A7DB2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationConfigTypeError.json; sourceTree = "<group>"; };
+		4731A7DC2F447C3100CBE1E5 /* SettingsSlidingExpirationError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationError.json; sourceTree = "<group>"; };
+		4731A7DD2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationPushTokenKeepaliveError.json; sourceTree = "<group>"; };
+		4731A7DE2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationPushTokenKeepaliveTypeError.json; sourceTree = "<group>"; };
+		4731A7DF2F447C3100CBE1E5 /* SettingsSlidingExpirationTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsSlidingExpirationTypeError.json; sourceTree = "<group>"; };
+		4731A7E12F447C3100CBE1E5 /* SettingsTtlError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsTtlError.json; sourceTree = "<group>"; };
+		4731A7E22F447C3100CBE1E5 /* SettingsTtlInappsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsTtlInappsError.json; sourceTree = "<group>"; };
+		4731A7E32F447C3100CBE1E5 /* SettingsTtlInappsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsTtlInappsTypeError.json; sourceTree = "<group>"; };
+		4731A7E42F447C3100CBE1E5 /* SettingsTtlTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsTtlTypeError.json; sourceTree = "<group>"; };
+		4731A7E62F447C3100CBE1E5 /* SettingsConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsConfig.json; sourceTree = "<group>"; };
+		4731A7E82F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsAllValid.json; sourceTree = "<group>"; };
+		4731A83A2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppWebviewParamsTypeError.json; sourceTree = "<group>"; };
+		4731A83B2F44822500CBE1E5 /* InAppWebviewValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppWebviewValid.json; sourceTree = "<group>"; };
+		4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewAndImageLayers.json; sourceTree = "<group>"; };
+		4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerMissingBaseUrl.json; sourceTree = "<group>"; };
+		4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerMissingContentUrl.json; sourceTree = "<group>"; };
+		4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = webviewLayerValid.json; sourceTree = "<group>"; };
 		473A98252C918C3A005A3B94 /* ConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigParsingTests.swift; sourceTree = "<group>"; };
-		473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsConfigParsingTests.swift; sourceTree = "<group>"; };
-		F3FT000117022025005A3B94 /* FeatureTogglesConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTogglesConfigParsingTests.swift; sourceTree = "<group>"; };
 		473A98322C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringConfigParsingTests.swift; sourceTree = "<group>"; };
 		473A98352C91A7AB005A3B94 /* GetConfigFunc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetConfigFunc.swift; sourceTree = "<group>"; };
-		473A98372C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigWithSettingsABTestsMonitoringInapps.json; sourceTree = "<group>"; };
-		473A98392C91ABF5005A3B94 /* SettingsConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsConfig.json; sourceTree = "<group>"; };
-		473A983B2C91ABFB005A3B94 /* MonitoringConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringConfig.json; sourceTree = "<group>"; };
-		473A98402C91AD85005A3B94 /* SettingsTtlInappsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsTtlInappsError.json; sourceTree = "<group>"; };
-		473A98422C91AD89005A3B94 /* SettingsTtlInappsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsTtlInappsTypeError.json; sourceTree = "<group>"; };
-		473A98442C91B309005A3B94 /* SettingsTtlError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsTtlError.json; sourceTree = "<group>"; };
-		473A98462C91B323005A3B94 /* SettingsTtlTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsTtlTypeError.json; sourceTree = "<group>"; };
-		473A984A2C91B606005A3B94 /* SettingsOperationsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsError.json; sourceTree = "<group>"; };
-		473A984C2C91B620005A3B94 /* SettingsOperationsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsTypeError.json; sourceTree = "<group>"; };
-		473A984E2C91B641005A3B94 /* SettingsOperationsViewProductError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewProductError.json; sourceTree = "<group>"; };
-		473A98502C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewProductSystemNameError.json; sourceTree = "<group>"; };
-		473A98522C91B68D005A3B94 /* SettingsOperationsViewProductSystemNameTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewProductSystemNameTypeError.json; sourceTree = "<group>"; };
-		473A98542C91B6B6005A3B94 /* SettingsOperationsViewProductTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewProductTypeError.json; sourceTree = "<group>"; };
-		473A98562C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsAllOperationsWithErrors.json; sourceTree = "<group>"; };
-		473A98582C91BB1B005A3B94 /* SettingsAllOperationsWithTypeErrors.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsAllOperationsWithTypeErrors.json; sourceTree = "<group>"; };
-		473A985A2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartError.json; sourceTree = "<group>"; };
-		473A985C2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartTypeError.json; sourceTree = "<group>"; };
-		473A985E2C91D20B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameError.json; sourceTree = "<group>"; };
-		473A98602C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json; sourceTree = "<group>"; };
-		473A98622C91D256005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json; sourceTree = "<group>"; };
-		473A98642C91DFB5005A3B94 /* MonitoringLogsOneElementError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsOneElementError.json; sourceTree = "<group>"; };
-		473A98662C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsTwoElementsError.json; sourceTree = "<group>"; };
-		473A98682C91DFEA005A3B94 /* MonitoringLogsOneElementTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsOneElementTypeError.json; sourceTree = "<group>"; };
-		473A986A2C91E010005A3B94 /* MonitoringLogsTwoElementsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsTwoElementsTypeError.json; sourceTree = "<group>"; };
-		473A986C2C91E032005A3B94 /* MonitoringLogsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsError.json; sourceTree = "<group>"; };
-		473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsTypeError.json; sourceTree = "<group>"; };
-		473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MonitoringLogsElementsMixedError.json; sourceTree = "<group>"; };
 		4741425B2E8A681600839AD8 /* StubDatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubDatabaseLoader.swift; sourceTree = "<group>"; };
 		4741425D2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBaseLoading_StubDatabaseLoaderContractTests.swift; sourceTree = "<group>"; };
 		4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoopDatabaseRepository.swift; sourceTree = "<group>"; };
@@ -808,22 +905,7 @@
 		476689C62C85B6AE0066BB12 /* ShownInAppsIdsMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIdsMigrationTests.swift; sourceTree = "<group>"; };
 		4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOperationsModel.swift; sourceTree = "<group>"; };
 		4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeToLiveModel.swift; sourceTree = "<group>"; };
-		4766A8982C931B30002D15A4 /* ConfigSettingsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigSettingsError.json; sourceTree = "<group>"; };
-		4766A89A2C931B51002D15A4 /* ConfigSettingsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigSettingsTypeError.json; sourceTree = "<group>"; };
-		4766A89C2C931BD6002D15A4 /* ConfigMonitoringError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigMonitoringError.json; sourceTree = "<group>"; };
-		4766A89E2C931BEC002D15A4 /* ConfigMonitoringTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigMonitoringTypeError.json; sourceTree = "<group>"; };
-		4766A8A02C931CDA002D15A4 /* ConfigABTestsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsError.json; sourceTree = "<group>"; };
-		4766A8A22C931CF8002D15A4 /* ConfigABTestsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsTypeError.json; sourceTree = "<group>"; };
-		4766A8A42C931E27002D15A4 /* ConfigInAppsError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigInAppsError.json; sourceTree = "<group>"; };
-		4766A8A62C931E40002D15A4 /* ConfigInAppsTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigInAppsTypeError.json; sourceTree = "<group>"; };
 		4766A8AD2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestsConfigParsingTests.swift; sourceTree = "<group>"; };
-		4766A8AF2C932624002D15A4 /* ABTestsConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsConfig.json; sourceTree = "<group>"; };
-		4766A8B12C932A3C002D15A4 /* ABTestsIdConfigError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsIdConfigError.json; sourceTree = "<group>"; };
-		4766A8B32C932C79002D15A4 /* ABTestsIdConfigTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsIdConfigTypeError.json; sourceTree = "<group>"; };
-		4766A8B52C932D92002D15A4 /* ABTestsSdkVersionConfigError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsSdkVersionConfigError.json; sourceTree = "<group>"; };
-		4766A8B72C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ABTestsSdkVersionConfigTypeError.json; sourceTree = "<group>"; };
-		4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementError.json; sourceTree = "<group>"; };
-		4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ConfigABTestsOneElementTypeError.json; sourceTree = "<group>"; };
 		47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNotificationsStatusOperation.swift; sourceTree = "<group>"; };
 		47A220A42E2158A00001507C /* IsolatedMBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsolatedMBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
 		47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDatabaseLoader.swift; sourceTree = "<group>"; };
@@ -928,6 +1010,7 @@
 		84FCD3B425CA0FD300D1E574 /* MockPersistenceStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPersistenceStorage.swift; sourceTree = "<group>"; };
 		84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkFetcher.swift; sourceTree = "<group>"; };
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
+		9778038796A8426ABDED1E97 /* FeatureTogglesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTogglesModel.swift; sourceTree = "<group>"; };
 		9B24FAAB28C74B8300F10B5D /* InAppConfigurationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationRepository.swift; sourceTree = "<group>"; };
 		9B24FAAD28C74BA500F10B5D /* InAppCoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppCoreManager.swift; sourceTree = "<group>"; };
 		9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationManager.swift; sourceTree = "<group>"; };
@@ -1129,11 +1212,16 @@
 		F3482F222A65DC37002A41EC /* InAppMessagesDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesDelegate.swift; sourceTree = "<group>"; };
 		F3482F292A65DCFC002A41EC /* String+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		F349401B2E373CF900D295BE /* VisitTargetingNegativeValueModel.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VisitTargetingNegativeValueModel.json; sourceTree = "<group>"; };
-		F34940222E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsConfigNegativeUpperModulus.json; sourceTree = "<group>"; };
-		F34940242E374AEE00D295BE /* ABTestsConfigNegativeLowerModulus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ABTestsConfigNegativeLowerModulus.json; sourceTree = "<group>"; };
 		F34975372DEE2C6A00BEC667 /* ShownInAppsDictionaryMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsDictionaryMigration.swift; sourceTree = "<group>"; };
 		F34975392DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsDictionaryMigrationTests.swift; sourceTree = "<group>"; };
 		F34975692DEF2C8400BEC667 /* InappTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappTrackingService.swift; sourceTree = "<group>"; };
+		F34A103A2F455B840065392A /* FeatureTogglesConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTogglesConfigParsingTests.swift; sourceTree = "<group>"; };
+		F34A103B2F455B840065392A /* SettingsConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsConfigParsingTests.swift; sourceTree = "<group>"; };
+		F34A103E2F455C5B0065392A /* SettingsFeatureTogglesError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesError.json; sourceTree = "<group>"; };
+		F34A103F2F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json; sourceTree = "<group>"; };
+		F34A10402F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json; sourceTree = "<group>"; };
+		F34A10412F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json; sourceTree = "<group>"; };
+		F34A10422F455C5B0065392A /* SettingsFeatureTogglesTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesTypeError.json; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
@@ -1150,7 +1238,6 @@
 		F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionActionUseCase.swift; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
-		F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConfigInAppIsPriorityInvalid.json; sourceTree = "<group>"; };
 		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargeting.swift; sourceTree = "<group>"; };
@@ -1199,21 +1286,7 @@
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
 		F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManager.swift; sourceTree = "<group>"; };
 		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
-		F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsError.json; sourceTree = "<group>"; };
-		F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerDay.json; sourceTree = "<group>"; };
-		F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMaxInappsPerSession.json; sourceTree = "<group>"; };
-		F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsMissingMinIntervalBetweenShows.json; sourceTree = "<group>"; };
-		F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsPartialError.json; sourceTree = "<group>"; };
-		F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeError.json; sourceTree = "<group>"; };
-		F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsInAppSettingsTypeErrors.json; sourceTree = "<group>"; };
 		F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingExpirationModel.swift; sourceTree = "<group>"; };
-		9778038796A8426ABDED1E97 /* FeatureTogglesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTogglesModel.swift; sourceTree = "<group>"; };
-		3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureToggleManager.swift; sourceTree = "<group>"; };
-		AF030041CEF54B3E89BB3910 /* SettingsFeatureTogglesError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesError.json; sourceTree = "<group>"; };
-		A848AE480514448E827E9BB9 /* SettingsFeatureTogglesTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesTypeError.json; sourceTree = "<group>"; };
-		80054D88135B4972BABA829A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json; sourceTree = "<group>"; };
-		D98DDC4EA0844E868A0F66E1 /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json; sourceTree = "<group>"; };
-		702502AEB67F4EEFAAC38AFA /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
 		F3A8B9572A389D9D00E9C055 /* GeoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoService.swift; sourceTree = "<group>"; };
 		F3A8B95B2A389EAD00E9C055 /* GeoServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoServiceTests.swift; sourceTree = "<group>"; };
@@ -1277,7 +1350,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
-		F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SlidingExpirationsError; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -1332,6 +1404,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0467029F545149E4A2101390 /* FeatureToggleManager */ = {
+			isa = PBXGroup;
+			children = (
+				3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */,
+			);
+			path = FeatureToggleManager;
+			sourceTree = "<group>";
+		};
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
@@ -1672,44 +1752,227 @@
 			path = PushNotificationFormatStrategies;
 			sourceTree = "<group>";
 		};
+		4731A6DD2F447B6800CBE1E5 /* InApp */ = {
+			isa = PBXGroup;
+			children = (
+				4731A6DE2F447B7600CBE1E5 /* InAppConfigParsingTests.swift */,
+			);
+			path = InApp;
+			sourceTree = "<group>";
+		};
+		4731A7942F447C3100CBE1E5 /* ABTestsJsonStubs */ = {
+			isa = PBXGroup;
+			children = (
+				4731A78D2F447C3100CBE1E5 /* ABTestsConfig.json */,
+				4731A78E2F447C3100CBE1E5 /* ABTestsConfigNegativeLowerModulus.json */,
+				4731A78F2F447C3100CBE1E5 /* ABTestsConfigNegativeUpperModulus.json */,
+				4731A7902F447C3100CBE1E5 /* ABTestsIdConfigError.json */,
+				4731A7912F447C3100CBE1E5 /* ABTestsIdConfigTypeError.json */,
+				4731A7922F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json */,
+				4731A7932F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json */,
+			);
+			path = ABTestsJsonStubs;
+			sourceTree = "<group>";
+		};
+		4731A7952F447C3100CBE1E5 /* ABTests */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7942F447C3100CBE1E5 /* ABTestsJsonStubs */,
+			);
+			path = ABTests;
+			sourceTree = "<group>";
+		};
+		4731A7A22F447C3100CBE1E5 /* ConfigJsonStub */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7962F447C3100CBE1E5 /* ConfigABTestsError.json */,
+				4731A7972F447C3100CBE1E5 /* ConfigABTestsOneElementError.json */,
+				4731A7982F447C3100CBE1E5 /* ConfigABTestsOneElementTypeError.json */,
+				4731A7992F447C3100CBE1E5 /* ConfigABTestsTypeError.json */,
+				4731A79A2F447C3100CBE1E5 /* ConfigInAppIsPriorityInvalid.json */,
+				4731A79B2F447C3100CBE1E5 /* ConfigInAppsError.json */,
+				4731A79C2F447C3100CBE1E5 /* ConfigInAppsTypeError.json */,
+				4731A79D2F447C3100CBE1E5 /* ConfigMonitoringError.json */,
+				4731A79E2F447C3100CBE1E5 /* ConfigMonitoringTypeError.json */,
+				4731A79F2F447C3100CBE1E5 /* ConfigSettingsError.json */,
+				4731A7A02F447C3100CBE1E5 /* ConfigSettingsTypeError.json */,
+				4731A7A12F447C3100CBE1E5 /* ConfigWithSettingsABTestsMonitoringInapps.json */,
+			);
+			path = ConfigJsonStub;
+			sourceTree = "<group>";
+		};
+		4731A7A32F447C3100CBE1E5 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7A22F447C3100CBE1E5 /* ConfigJsonStub */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		4731A7B82F447C3100CBE1E5 /* InAppJsonStubs */ = {
+			isa = PBXGroup;
+			children = (
+				4731A83A2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json */,
+				4731A83B2F44822500CBE1E5 /* InAppWebviewValid.json */,
+				4731A7A42F447C3100CBE1E5 /* InAppDelayTimeTypeError.json */,
+				4731A7A52F447C3100CBE1E5 /* InAppFormError.json */,
+				4731A7A62F447C3100CBE1E5 /* InAppFormTypeError.json */,
+				4731A7A72F447C3100CBE1E5 /* InAppFormVariantMissingType.json */,
+				4731A7A82F447C3100CBE1E5 /* InAppFormVariantsTypeError.json */,
+				4731A7A92F447C3100CBE1E5 /* InAppFormVariantUnknownType.json */,
+				4731A7AA2F447C3100CBE1E5 /* InAppFrequencyError.json */,
+				4731A7AB2F447C3100CBE1E5 /* InAppFrequencyNil.json */,
+				4731A7AC2F447C3100CBE1E5 /* InAppFrequencyTypeError.json */,
+				4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */,
+				4731A7AE2F447C3100CBE1E5 /* InAppIdError.json */,
+				4731A7AF2F447C3100CBE1E5 /* InAppIdTypeError.json */,
+				4731A7B02F447C3100CBE1E5 /* InAppLayerMissingType.json */,
+				4731A7B12F447C3100CBE1E5 /* InAppLayersTypeError.json */,
+				4731A7B22F447C3100CBE1E5 /* InAppLayerUnknownType.json */,
+				4731A7B32F447C3100CBE1E5 /* InAppOneCorrupted.json */,
+				4731A7B42F447C3100CBE1E5 /* InAppSdkVersionError.json */,
+				4731A7B52F447C3100CBE1E5 /* InAppSdkVersionTypeError.json */,
+				4731A7B62F447C3100CBE1E5 /* InAppTargetingError.json */,
+				4731A7B72F447C3100CBE1E5 /* InAppTargetingTypeError.json */,
+			);
+			path = InAppJsonStubs;
+			sourceTree = "<group>";
+		};
+		4731A7B92F447C3100CBE1E5 /* InApp */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7B82F447C3100CBE1E5 /* InAppJsonStubs */,
+			);
+			path = InApp;
+			sourceTree = "<group>";
+		};
+		4731A7C22F447C3100CBE1E5 /* MonitoringJsonStubs */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7BA2F447C3100CBE1E5 /* MonitoringConfig.json */,
+				4731A7BB2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json */,
+				4731A7BC2F447C3100CBE1E5 /* MonitoringLogsError.json */,
+				4731A7BD2F447C3100CBE1E5 /* MonitoringLogsOneElementError.json */,
+				4731A7BE2F447C3100CBE1E5 /* MonitoringLogsOneElementTypeError.json */,
+				4731A7BF2F447C3100CBE1E5 /* MonitoringLogsTwoElementsError.json */,
+				4731A7C02F447C3100CBE1E5 /* MonitoringLogsTwoElementsTypeError.json */,
+				4731A7C12F447C3100CBE1E5 /* MonitoringLogsTypeError.json */,
+			);
+			path = MonitoringJsonStubs;
+			sourceTree = "<group>";
+		};
+		4731A7C32F447C3100CBE1E5 /* Monitoring */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7C22F447C3100CBE1E5 /* MonitoringJsonStubs */,
+			);
+			path = Monitoring;
+			sourceTree = "<group>";
+		};
+		4731A7CB2F447C3100CBE1E5 /* InappError */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7C42F447C3100CBE1E5 /* SettingsInAppSettingsError.json */,
+				4731A7C52F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */,
+				4731A7C62F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */,
+				4731A7C72F447C3100CBE1E5 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */,
+				4731A7C82F447C3100CBE1E5 /* SettingsInAppSettingsPartialError.json */,
+				4731A7C92F447C3100CBE1E5 /* SettingsInAppSettingsTypeError.json */,
+				4731A7CA2F447C3100CBE1E5 /* SettingsInAppSettingsTypeErrors.json */,
+			);
+			path = InappError;
+			sourceTree = "<group>";
+		};
+		4731A7D92F447C3100CBE1E5 /* OperationsErrors */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7CC2F447C3100CBE1E5 /* SettingsAllOperationsWithErrors.json */,
+				4731A7CD2F447C3100CBE1E5 /* SettingsAllOperationsWithTypeErrors.json */,
+				4731A7CE2F447C3100CBE1E5 /* SettingsOperationsError.json */,
+				4731A7CF2F447C3100CBE1E5 /* SettingsOperationsTypeError.json */,
+				4731A7D02F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartError.json */,
+				4731A7D12F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */,
+				4731A7D22F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */,
+				4731A7D32F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */,
+				4731A7D42F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */,
+				4731A7D52F447C3100CBE1E5 /* SettingsOperationsViewProductError.json */,
+				4731A7D62F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameError.json */,
+				4731A7D72F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameTypeError.json */,
+				4731A7D82F447C3100CBE1E5 /* SettingsOperationsViewProductTypeError.json */,
+			);
+			path = OperationsErrors;
+			sourceTree = "<group>";
+		};
+		4731A7E02F447C3100CBE1E5 /* SlidingExpirationsError */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7DA2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigError.json */,
+				4731A7DB2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigTypeError.json */,
+				4731A7DC2F447C3100CBE1E5 /* SettingsSlidingExpirationError.json */,
+				4731A7DD2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveError.json */,
+				4731A7DE2F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveTypeError.json */,
+				4731A7DF2F447C3100CBE1E5 /* SettingsSlidingExpirationTypeError.json */,
+			);
+			path = SlidingExpirationsError;
+			sourceTree = "<group>";
+		};
+		4731A7E52F447C3100CBE1E5 /* TtlErrors */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7E12F447C3100CBE1E5 /* SettingsTtlError.json */,
+				4731A7E22F447C3100CBE1E5 /* SettingsTtlInappsError.json */,
+				4731A7E32F447C3100CBE1E5 /* SettingsTtlInappsTypeError.json */,
+				4731A7E42F447C3100CBE1E5 /* SettingsTtlTypeError.json */,
+			);
+			path = TtlErrors;
+			sourceTree = "<group>";
+		};
+		4731A7E72F447C3100CBE1E5 /* SettingsJsonStubs */ = {
+			isa = PBXGroup;
+			children = (
+				F34A10432F455C5B0065392A /* FeatureTogglesError */,
+				4731A7CB2F447C3100CBE1E5 /* InappError */,
+				4731A7D92F447C3100CBE1E5 /* OperationsErrors */,
+				4731A7E02F447C3100CBE1E5 /* SlidingExpirationsError */,
+				4731A7E52F447C3100CBE1E5 /* TtlErrors */,
+				4731A7E62F447C3100CBE1E5 /* SettingsConfig.json */,
+			);
+			path = SettingsJsonStubs;
+			sourceTree = "<group>";
+		};
+		4731A7E92F447C3100CBE1E5 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7E72F447C3100CBE1E5 /* SettingsJsonStubs */,
+				4731A7E82F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		4731A7EA2F447C3100CBE1E5 /* stubs */ = {
+			isa = PBXGroup;
+			children = (
+				4731A7952F447C3100CBE1E5 /* ABTests */,
+				4731A7A32F447C3100CBE1E5 /* Config */,
+				4731A7B92F447C3100CBE1E5 /* InApp */,
+				4731A7C32F447C3100CBE1E5 /* Monitoring */,
+				4731A7E92F447C3100CBE1E5 /* Settings */,
+			);
+			path = stubs;
+			sourceTree = "<group>";
+		};
 		473A98242C918C32005A3B94 /* ConfigParsing */ = {
 			isa = PBXGroup;
 			children = (
+				4731A6DD2F447B6800CBE1E5 /* InApp */,
 				473A98342C91A68D005A3B94 /* Helpers */,
 				4766A8A82C932473002D15A4 /* Config */,
 				473A983F2C91ACCD005A3B94 /* Monitoring */,
 				473A983E2C91ACAF005A3B94 /* Settings */,
 				4766A8A92C932484002D15A4 /* ABTests */,
+				4731A7EA2F447C3100CBE1E5 /* stubs */,
 			);
 			path = ConfigParsing;
-			sourceTree = "<group>";
-		};
-		473A982A2C919226005A3B94 /* SettingsJsonStubs */ = {
-			isa = PBXGroup;
-			children = (
-				F3A49BF42DDF0BD400C52AB6 /* InappError */,
-				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
-				473A98492C91B5E6005A3B94 /* OperationsErrors */,
-				473A98482C91B5D8005A3B94 /* TtlErrors */,
-				227FA278330A496D95BFBF2B /* FeatureTogglesError */,
-				473A98392C91ABF5005A3B94 /* SettingsConfig.json */,
-			);
-			path = SettingsJsonStubs;
-			sourceTree = "<group>";
-		};
-		473A982B2C919229005A3B94 /* MonitoringJsonStubs */ = {
-			isa = PBXGroup;
-			children = (
-				473A983B2C91ABFB005A3B94 /* MonitoringConfig.json */,
-				473A986C2C91E032005A3B94 /* MonitoringLogsError.json */,
-				473A986E2C91E047005A3B94 /* MonitoringLogsTypeError.json */,
-				473A98642C91DFB5005A3B94 /* MonitoringLogsOneElementError.json */,
-				473A98662C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json */,
-				473A98682C91DFEA005A3B94 /* MonitoringLogsOneElementTypeError.json */,
-				473A986A2C91E010005A3B94 /* MonitoringLogsTwoElementsTypeError.json */,
-				473A98702C91E629005A3B94 /* MonitoringLogsElementsMixedError.json */,
-			);
-			path = MonitoringJsonStubs;
 			sourceTree = "<group>";
 		};
 		473A98342C91A68D005A3B94 /* Helpers */ = {
@@ -1723,9 +1986,8 @@
 		473A983E2C91ACAF005A3B94 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				473A982A2C919226005A3B94 /* SettingsJsonStubs */,
-				473A982C2C91A38C005A3B94 /* SettingsConfigParsingTests.swift */,
-				F3FT000117022025005A3B94 /* FeatureTogglesConfigParsingTests.swift */,
+				F34A103A2F455B840065392A /* FeatureTogglesConfigParsingTests.swift */,
+				F34A103B2F455B840065392A /* SettingsConfigParsingTests.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -1733,41 +1995,9 @@
 		473A983F2C91ACCD005A3B94 /* Monitoring */ = {
 			isa = PBXGroup;
 			children = (
-				473A982B2C919229005A3B94 /* MonitoringJsonStubs */,
 				473A98322C91A4B3005A3B94 /* MonitoringConfigParsingTests.swift */,
 			);
 			path = Monitoring;
-			sourceTree = "<group>";
-		};
-		473A98482C91B5D8005A3B94 /* TtlErrors */ = {
-			isa = PBXGroup;
-			children = (
-				473A98442C91B309005A3B94 /* SettingsTtlError.json */,
-				473A98462C91B323005A3B94 /* SettingsTtlTypeError.json */,
-				473A98402C91AD85005A3B94 /* SettingsTtlInappsError.json */,
-				473A98422C91AD89005A3B94 /* SettingsTtlInappsTypeError.json */,
-			);
-			path = TtlErrors;
-			sourceTree = "<group>";
-		};
-		473A98492C91B5E6005A3B94 /* OperationsErrors */ = {
-			isa = PBXGroup;
-			children = (
-				473A984A2C91B606005A3B94 /* SettingsOperationsError.json */,
-				473A984C2C91B620005A3B94 /* SettingsOperationsTypeError.json */,
-				473A984E2C91B641005A3B94 /* SettingsOperationsViewProductError.json */,
-				473A98542C91B6B6005A3B94 /* SettingsOperationsViewProductTypeError.json */,
-				473A98502C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json */,
-				473A98522C91B68D005A3B94 /* SettingsOperationsViewProductSystemNameTypeError.json */,
-				473A98562C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json */,
-				473A98582C91BB1B005A3B94 /* SettingsAllOperationsWithTypeErrors.json */,
-				473A985A2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json */,
-				473A985C2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json */,
-				473A985E2C91D20B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json */,
-				473A98602C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json */,
-				473A98622C91D256005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json */,
-			);
-			path = OperationsErrors;
 			sourceTree = "<group>";
 		};
 		474770892C6B813700C36FC8 /* Utilities */ = {
@@ -1791,29 +2021,9 @@
 			path = MigrationsTests;
 			sourceTree = "<group>";
 		};
-		4766A8972C931AEE002D15A4 /* ConfigJsonStub */ = {
-			isa = PBXGroup;
-			children = (
-				F36B63412E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json */,
-				473A98372C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json */,
-				4766A8982C931B30002D15A4 /* ConfigSettingsError.json */,
-				4766A89A2C931B51002D15A4 /* ConfigSettingsTypeError.json */,
-				4766A89C2C931BD6002D15A4 /* ConfigMonitoringError.json */,
-				4766A89E2C931BEC002D15A4 /* ConfigMonitoringTypeError.json */,
-				4766A8A02C931CDA002D15A4 /* ConfigABTestsError.json */,
-				4766A8A22C931CF8002D15A4 /* ConfigABTestsTypeError.json */,
-				4766A8A42C931E27002D15A4 /* ConfigInAppsError.json */,
-				4766A8A62C931E40002D15A4 /* ConfigInAppsTypeError.json */,
-				4766A8BB2C9332ED002D15A4 /* ConfigABTestsOneElementError.json */,
-				4766A8BD2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json */,
-			);
-			path = ConfigJsonStub;
-			sourceTree = "<group>";
-		};
 		4766A8A82C932473002D15A4 /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				4766A8972C931AEE002D15A4 /* ConfigJsonStub */,
 				473A98252C918C3A005A3B94 /* ConfigParsingTests.swift */,
 			);
 			path = Config;
@@ -1822,24 +2032,9 @@
 		4766A8A92C932484002D15A4 /* ABTests */ = {
 			isa = PBXGroup;
 			children = (
-				4766A8AA2C9324D8002D15A4 /* ABTestsJsonStubs */,
 				4766A8AD2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift */,
 			);
 			path = ABTests;
-			sourceTree = "<group>";
-		};
-		4766A8AA2C9324D8002D15A4 /* ABTestsJsonStubs */ = {
-			isa = PBXGroup;
-			children = (
-				4766A8AF2C932624002D15A4 /* ABTestsConfig.json */,
-				F34940222E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json */,
-				F34940242E374AEE00D295BE /* ABTestsConfigNegativeLowerModulus.json */,
-				4766A8B12C932A3C002D15A4 /* ABTestsIdConfigError.json */,
-				4766A8B32C932C79002D15A4 /* ABTestsIdConfigTypeError.json */,
-				4766A8B52C932D92002D15A4 /* ABTestsSdkVersionConfigError.json */,
-				4766A8B72C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json */,
-			);
-			path = ABTestsJsonStubs;
 			sourceTree = "<group>";
 		};
 		476C2DB02E8BE725000EFF86 /* DatabaseRepository */ = {
@@ -3085,6 +3280,18 @@
 			path = CommonProtocols;
 			sourceTree = "<group>";
 		};
+		F34A10432F455C5B0065392A /* FeatureTogglesError */ = {
+			isa = PBXGroup;
+			children = (
+				F34A103E2F455C5B0065392A /* SettingsFeatureTogglesError.json */,
+				F34A103F2F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */,
+				F34A10402F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */,
+				F34A10412F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */,
+				F34A10422F455C5B0065392A /* SettingsFeatureTogglesTypeError.json */,
+			);
+			path = FeatureTogglesError;
+			sourceTree = "<group>";
+		};
 		F34A45AC2B76286D00634C8B /* PublicModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -3193,6 +3400,10 @@
 				F39117122AB4BD8500852298 /* emptyLayersSection.json */,
 				F39117102AB4BD4500852298 /* missingBackgroundSection.json */,
 				F391170E2AB4B31800852298 /* unknownVariantType.json */,
+				4731A8CE2F4489ED00CBE1E5 /* webviewAndImageLayers.json */,
+				4731A8CF2F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json */,
+				4731A8D02F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json */,
+				4731A8D12F4489ED00CBE1E5 /* webviewLayerValid.json */,
 			);
 			path = "JSON ";
 			sourceTree = "<group>";
@@ -3235,32 +3446,6 @@
 				F30005432CFF3F7D004BE915 /* ABTestStubs.swift */,
 			);
 			path = ABTesting;
-			sourceTree = "<group>";
-		};
-		227FA278330A496D95BFBF2B /* FeatureTogglesError */ = {
-			isa = PBXGroup;
-			children = (
-				AF030041CEF54B3E89BB3910 /* SettingsFeatureTogglesError.json */,
-				A848AE480514448E827E9BB9 /* SettingsFeatureTogglesTypeError.json */,
-				80054D88135B4972BABA829A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */,
-				D98DDC4EA0844E868A0F66E1 /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */,
-				702502AEB67F4EEFAAC38AFA /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json */,
-			);
-			path = FeatureTogglesError;
-			sourceTree = "<group>";
-		};
-		F3A49BF42DDF0BD400C52AB6 /* InappError */ = {
-			isa = PBXGroup;
-			children = (
-				F3A49BED2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json */,
-				F3A49BEE2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json */,
-				F3A49BEF2DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json */,
-				F3A49BF02DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json */,
-				F3A49BF12DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json */,
-				F3A49BF22DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json */,
-				F3A49BF32DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json */,
-			);
-			path = InappError;
 			sourceTree = "<group>";
 		};
 		F3A8B9552A389D8300E9C055 /* InAppConfigurationMapper */ = {
@@ -3342,14 +3527,6 @@
 				F3A8B9442A38870100E9C055 /* MixerUUIDS.json */,
 			);
 			path = ABTests;
-			sourceTree = "<group>";
-		};
-		0467029F545149E4A2101390 /* FeatureToggleManager */ = {
-			isa = PBXGroup;
-			children = (
-				3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */,
-			);
-			path = FeatureToggleManager;
 			sourceTree = "<group>";
 		};
 		F3DEB3392D4377B800D0EFA4 /* InappSessionManager */ = {
@@ -3465,7 +3642,6 @@
 			fileSystemSynchronizedGroups = (
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
-				F3A4EFF32D522A4E00DB96A8 /* SlidingExpirationsError */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 			);
 			name = MindboxTests;
@@ -3619,98 +3795,146 @@
 			files = (
 				F3FAFB222E05629C004A6065 /* inappListWithPriority.json in Resources */,
 				A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */,
-				473A985D2C91D1CE005A3B94 /* SettingsOperationsViewCategoryAndSetCartTypeError.json in Resources */,
-				F34940232E37490700D295BE /* ABTestsConfigNegativeUpperModulus.json in Resources */,
 				F3F9E3572BB19A9500340045 /* VisitTargetingModelValid.json in Resources */,
-				473A98692C91DFEA005A3B94 /* MonitoringLogsOneElementTypeError.json in Resources */,
 				F351F1C62CE626450053423E /* 15-Targeting.json in Resources */,
 				F3FAD8782AB8685D00D98C03 /* closeButtonMarginBelowZero.json in Resources */,
-				4766A89F2C931BEC002D15A4 /* ConfigMonitoringTypeError.json in Resources */,
 				F39117132AB4BD8500852298 /* emptyLayersSection.json in Resources */,
 				F351F1CB2CE72D460053423E /* 46-Targeting.json in Resources */,
 				F351F1CC2CE72D460053423E /* 45-Targeting.json in Resources */,
 				31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */,
 				F39117192AB4C02500852298 /* unknownActionLayerType.json in Resources */,
-				4766A8A32C931CF8002D15A4 /* ConfigABTestsTypeError.json in Resources */,
 				F39117152AB4BEB900852298 /* unknownLayerType.json in Resources */,
 				A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */,
-				473A984D2C91B620005A3B94 /* SettingsOperationsTypeError.json in Resources */,
-				4766A8B62C932D92002D15A4 /* ABTestsSdkVersionConfigError.json in Resources */,
-				473A985B2C91D1B3005A3B94 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */,
 				F351F1C82CE72B300053423E /* 44-Targeting.json in Resources */,
 				F31470942B96632100E01E5C /* 16-17-TargetingRequests.json in Resources */,
 				31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */,
 				F39117172AB4BF2700852298 /* knownImageUnknownPictureLayerType.json in Resources */,
-				473A985F2C91D20B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json in Resources */,
 				31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */,
-				473A984F2C91B641005A3B94 /* SettingsOperationsViewProductError.json in Resources */,
-				473A986D2C91E032005A3B94 /* MonitoringLogsError.json in Resources */,
-				473A983C2C91ABFB005A3B94 /* MonitoringConfig.json in Resources */,
 				F3FAD8722AB8673100D98C03 /* missingMarginFieldInSection.json in Resources */,
 				84CC79AB25CAEBBB00C062BD /* TestEventConfig.plist in Resources */,
-				473A984B2C91B606005A3B94 /* SettingsOperationsError.json in Resources */,
-				473A98672C91DFD1005A3B94 /* MonitoringLogsTwoElementsError.json in Resources */,
 				A17958902978BE7000609E91 /* GeoTargetingModelValid.json in Resources */,
 				F31470982B9668F100E01E5C /* 31-TargetingRequests.json in Resources */,
 				F314708C2B96464900E01E5C /* 7-TargetingRequests.json in Resources */,
-				4766A8B02C932624002D15A4 /* ABTestsConfig.json in Resources */,
-				473A983A2C91ABF5005A3B94 /* SettingsConfig.json in Resources */,
-				473A986F2C91E047005A3B94 /* MonitoringLogsTypeError.json in Resources */,
 				F3FAD86C2AB8642C00D98C03 /* twoCloseButtonsInApp.json in Resources */,
 				F31470922B96624F00E01E5C /* 14-TargetingRequests.json in Resources */,
-				473A98632C91D256005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json in Resources */,
 				F3FAD8742AB8678900D98C03 /* negativeCloseButtonSizeValues.json in Resources */,
 				F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */,
 				F391171B2AB4C07900852298 /* redirectUrlValueNumberInsteadOfString.json in Resources */,
 				A179588D2978BE7000609E91 /* SegmentTargetingModelValid.json in Resources */,
 				F3FAD8702AB866B600D98C03 /* unknownSizeKind.json in Resources */,
-				473A98652C91DFB5005A3B94 /* MonitoringLogsOneElementError.json in Resources */,
 				F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */,
 				F39117292AB4C2EF00852298 /* missingElementsSection.json in Resources */,
-				4766A8A72C931E40002D15A4 /* ConfigInAppsTypeError.json in Resources */,
-				473A98712C91E629005A3B94 /* MonitoringLogsElementsMixedError.json in Resources */,
 				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
-				F3A49BF52DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */,
-				F3A49BF62DDF0BD400C52AB6 /* SettingsInAppSettingsPartialError.json in Resources */,
-				F3A49BF72DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */,
-				F3A49BF82DDF0BD400C52AB6 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */,
-				F3A49BF92DDF0BD400C52AB6 /* SettingsInAppSettingsTypeError.json in Resources */,
-				F3A49BFA2DDF0BD400C52AB6 /* SettingsInAppSettingsError.json in Resources */,
-				F3A49BFB2DDF0BD400C52AB6 /* SettingsInAppSettingsTypeErrors.json in Resources */,
-				0428711117EC4255935484B0 /* SettingsFeatureTogglesError.json in Resources */,
-				D45949FDF47C4479B1004C20 /* SettingsFeatureTogglesTypeError.json in Resources */,
-				D6B120976F334E349FD00A14 /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json in Resources */,
-				7629F64298C14FE8A9C2AA8C /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */,
-				BAFE0A542C184F8DBCAD23B7 /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json in Resources */,
-				4766A8BE2C933416002D15A4 /* ConfigABTestsOneElementTypeError.json in Resources */,
+				F3A49BF52DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BF62DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BF72DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BF82DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BF92DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BFA2DDF0BD400C52AB6 /* (null) in Resources */,
+				F3A49BFB2DDF0BD400C52AB6 /* (null) in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
-				F34940252E374AEE00D295BE /* ABTestsConfigNegativeLowerModulus.json in Resources */,
-				4766A8A12C931CDA002D15A4 /* ConfigABTestsError.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
-				473A98432C91AD8A005A3B94 /* SettingsTtlInappsTypeError.json in Resources */,
 				F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */,
 				A179588F2978BE7000609E91 /* TrueTargetingModelValid.json in Resources */,
-				473A986B2C91E010005A3B94 /* MonitoringLogsTwoElementsTypeError.json in Resources */,
-				473A98452C91B309005A3B94 /* SettingsTtlError.json in Resources */,
+				4731A7EB2F447C3100CBE1E5 /* SettingsSlidingExpirationTypeError.json in Resources */,
+				4731A7EC2F447C3100CBE1E5 /* InAppIdError.json in Resources */,
+				4731A7ED2F447C3100CBE1E5 /* SettingsConfig.json in Resources */,
+				4731A7EE2F447C3100CBE1E5 /* ConfigABTestsTypeError.json in Resources */,
+				4731A7EF2F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartError.json in Resources */,
+				4731A7F02F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameError.json in Resources */,
+				4731A7F12F447C3100CBE1E5 /* SettingsInAppSettingsMissingMinIntervalBetweenShows.json in Resources */,
+				4731A7F22F447C3100CBE1E5 /* InAppIdTypeError.json in Resources */,
+				4731A7F32F447C3100CBE1E5 /* SettingsSlidingExpirationError.json in Resources */,
+				4731A7F42F447C3100CBE1E5 /* SettingsAllOperationsWithErrors.json in Resources */,
+				4731A7F52F447C3100CBE1E5 /* SettingsAllOperationsWithTypeErrors.json in Resources */,
+				4731A7F62F447C3100CBE1E5 /* SettingsInAppSettingsTypeError.json in Resources */,
+				4731A7F72F447C3100CBE1E5 /* SettingsOperationsViewProductTypeError.json in Resources */,
+				4731A7F82F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveError.json in Resources */,
+				4731A7F92F447C3100CBE1E5 /* InAppFormVariantUnknownType.json in Resources */,
+				4731A7FA2F447C3100CBE1E5 /* SettingsOperationsTypeError.json in Resources */,
+				4731A7FB2F447C3100CBE1E5 /* SettingsSlidingExpirationConfigError.json in Resources */,
+				4731A7FC2F447C3100CBE1E5 /* InAppTargetingTypeError.json in Resources */,
+				F34A10442F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json in Resources */,
+				F34A10452F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorFalse.json in Resources */,
+				F34A10462F455C5B0065392A /* SettingsFeatureTogglesError.json in Resources */,
+				F34A10472F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */,
+				F34A10482F455C5B0065392A /* SettingsFeatureTogglesTypeError.json in Resources */,
+				4731A7FD2F447C3100CBE1E5 /* InAppDelayTimeTypeError.json in Resources */,
+				4731A7FE2F447C3100CBE1E5 /* MonitoringLogsTypeError.json in Resources */,
+				4731A7FF2F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */,
+				4731A8002F447C3100CBE1E5 /* ABTestsConfig.json in Resources */,
+				4731A8012F447C3100CBE1E5 /* ConfigInAppsTypeError.json in Resources */,
+				4731A8022F447C3100CBE1E5 /* SettingsSlidingExpirationConfigTypeError.json in Resources */,
+				4731A8032F447C3100CBE1E5 /* ConfigSettingsError.json in Resources */,
+				4731A8042F447C3100CBE1E5 /* MonitoringLogsError.json in Resources */,
+				4731A8052F447C3100CBE1E5 /* SettingsOperationsError.json in Resources */,
+				4731A8062F447C3100CBE1E5 /* ConfigMonitoringTypeError.json in Resources */,
+				4731A8072F447C3100CBE1E5 /* MonitoringLogsOneElementTypeError.json in Resources */,
+				4731A8082F447C3100CBE1E5 /* SettingsInAppSettingsTypeErrors.json in Resources */,
+				4731A8092F447C3100CBE1E5 /* InAppFormTypeError.json in Resources */,
+				4731A80A2F447C3100CBE1E5 /* ABTestsIdConfigError.json in Resources */,
+				4731A80B2F447C3100CBE1E5 /* ABTestsConfigNegativeUpperModulus.json in Resources */,
+				4731A80C2F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json in Resources */,
+				4731A83C2F44822500CBE1E5 /* InAppWebviewParamsTypeError.json in Resources */,
+				4731A83D2F44822500CBE1E5 /* InAppWebviewValid.json in Resources */,
+				4731A80D2F447C3100CBE1E5 /* SettingsTtlInappsTypeError.json in Resources */,
+				4731A80E2F447C3100CBE1E5 /* InAppFormError.json in Resources */,
+				4731A80F2F447C3100CBE1E5 /* InAppFrequencyNil.json in Resources */,
+				4731A8102F447C3100CBE1E5 /* ConfigWithSettingsABTestsMonitoringInapps.json in Resources */,
+				4731A8112F447C3100CBE1E5 /* MonitoringLogsTwoElementsError.json in Resources */,
+				4731A8122F447C3100CBE1E5 /* SettingsTtlError.json in Resources */,
+				4731A8132F447C3100CBE1E5 /* InAppLayerUnknownType.json in Resources */,
+				4731A8142F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameError.json in Resources */,
+				4731A8152F447C3100CBE1E5 /* MonitoringLogsTwoElementsTypeError.json in Resources */,
+				4731A8162F447C3100CBE1E5 /* InAppLayersTypeError.json in Resources */,
+				4731A8172F447C3100CBE1E5 /* InAppLayerMissingType.json in Resources */,
+				4731A8182F447C3100CBE1E5 /* ConfigABTestsOneElementError.json in Resources */,
+				4731A8192F447C3100CBE1E5 /* InAppFormVariantMissingType.json in Resources */,
+				4731A81A2F447C3100CBE1E5 /* ConfigMonitoringError.json in Resources */,
+				4731A81B2F447C3100CBE1E5 /* ConfigSettingsTypeError.json in Resources */,
+				4731A81C2F447C3100CBE1E5 /* MonitoringConfig.json in Resources */,
+				4731A81D2F447C3100CBE1E5 /* InAppFrequencyError.json in Resources */,
+				4731A81E2F447C3100CBE1E5 /* MonitoringLogsElementsMixedError.json in Resources */,
+				4731A81F2F447C3100CBE1E5 /* SettingsInAppSettingsAllValid.json in Resources */,
+				4731A8D22F4489ED00CBE1E5 /* webviewAndImageLayers.json in Resources */,
+				4731A8D32F4489ED00CBE1E5 /* webviewLayerMissingContentUrl.json in Resources */,
+				4731A8D42F4489ED00CBE1E5 /* webviewLayerValid.json in Resources */,
+				4731A8D52F4489ED00CBE1E5 /* webviewLayerMissingBaseUrl.json in Resources */,
+				4731A8202F447C3100CBE1E5 /* MonitoringLogsOneElementError.json in Resources */,
+				4731A8212F447C3100CBE1E5 /* ABTestsSdkVersionConfigTypeError.json in Resources */,
+				4731A8222F447C3100CBE1E5 /* InAppSdkVersionTypeError.json in Resources */,
+				4731A8232F447C3100CBE1E5 /* SettingsInAppSettingsPartialError.json in Resources */,
+				4731A8242F447C3100CBE1E5 /* SettingsTtlTypeError.json in Resources */,
+				4731A8252F447C3100CBE1E5 /* ABTestsConfigNegativeLowerModulus.json in Resources */,
+				4731A8262F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerSession.json in Resources */,
+				4731A8272F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartTypeError.json in Resources */,
+				4731A8282F447C3100CBE1E5 /* ConfigInAppIsPriorityInvalid.json in Resources */,
+				4731A8292F447C3100CBE1E5 /* ConfigABTestsError.json in Resources */,
+				4731A82A2F447C3100CBE1E5 /* InAppSdkVersionError.json in Resources */,
+				4731A82B2F447C3100CBE1E5 /* ABTestsIdConfigTypeError.json in Resources */,
+				4731A82C2F447C3100CBE1E5 /* InAppFormVariantsTypeError.json in Resources */,
+				4731A82D2F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json in Resources */,
+				4731A82E2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json in Resources */,
+				4731A82F2F447C3100CBE1E5 /* InAppOneCorrupted.json in Resources */,
+				4731A8302F447C3100CBE1E5 /* SettingsOperationsViewProductError.json in Resources */,
+				4731A8312F447C3100CBE1E5 /* InAppTargetingError.json in Resources */,
+				4731A8322F447C3100CBE1E5 /* SettingsSlidingExpirationPushTokenKeepaliveTypeError.json in Resources */,
+				4731A8332F447C3100CBE1E5 /* InAppFrequencyTypeError.json in Resources */,
+				4731A8342F447C3100CBE1E5 /* ConfigABTestsOneElementTypeError.json in Resources */,
+				4731A8352F447C3100CBE1E5 /* SettingsTtlInappsError.json in Resources */,
+				4731A8362F447C3100CBE1E5 /* ConfigInAppsError.json in Resources */,
+				4731A8372F447C3100CBE1E5 /* SettingsOperationsViewCategoryAndSetCartSystemNameMixedError.json in Resources */,
+				4731A8382F447C3100CBE1E5 /* SettingsOperationsViewProductSystemNameTypeError.json in Resources */,
+				4731A8392F447C3100CBE1E5 /* SettingsInAppSettingsError.json in Resources */,
 				F31470902B96514E00E01E5C /* 9-TargetingRequests.json in Resources */,
 				F391172B2AB4C4AD00852298 /* invalidCloseButtonColor.json in Resources */,
 				31ED2DFA25C4459500301FAD /* TestConfig_Invalid_4.plist in Resources */,
-				473A98612C91D22B005A3B94 /* SettingsOperationsViewCategoryAndSetCartSystemNameTypeError.json in Resources */,
-				4766A8B82C932EFC002D15A4 /* ABTestsSdkVersionConfigTypeError.json in Resources */,
-				4766A89D2C931BD6002D15A4 /* ConfigMonitoringError.json in Resources */,
-				4766A8BC2C9332ED002D15A4 /* ConfigABTestsOneElementError.json in Resources */,
 				84FCD3BD25CA10F600D1E574 /* SuccessResponse.json in Resources */,
-				473A98472C91B323005A3B94 /* SettingsTtlTypeError.json in Resources */,
 				F39117212AB4C20200852298 /* emptyVariantsArray.json in Resources */,
 				F39117252AB4C27B00852298 /* missingValueInSourceLayer.json in Resources */,
 				F391171D2AB4C0BE00852298 /* missingIntentPayloadInActionLayer.json in Resources */,
-				4766A8992C931B30002D15A4 /* ConfigSettingsError.json in Resources */,
 				F39117112AB4BD4500852298 /* missingBackgroundSection.json in Resources */,
-				473A98592C91BB1B005A3B94 /* SettingsAllOperationsWithTypeErrors.json in Resources */,
-				473A98412C91AD85005A3B94 /* SettingsTtlInappsError.json in Resources */,
-				473A98552C91B6B6005A3B94 /* SettingsOperationsViewProductTypeError.json in Resources */,
-				4766A8A52C931E27002D15A4 /* ConfigInAppsError.json in Resources */,
 				F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */,
 				F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
@@ -3719,19 +3943,11 @@
 				F39117232AB4C23900852298 /* unknownSourceType.json in Resources */,
 				F391171F2AB4C1C100852298 /* missingSourceSection.json in Resources */,
 				F39117272AB4C2AA00852298 /* missingImageLinkInSourceLayerValue.json in Resources */,
-				4766A89B2C931B51002D15A4 /* ConfigSettingsTypeError.json in Resources */,
 				F349401C2E373CF900D295BE /* VisitTargetingNegativeValueModel.json in Resources */,
-				4766A8B42C932C79002D15A4 /* ABTestsIdConfigTypeError.json in Resources */,
 				31A20D4925B6CBE000AAA0A3 /* TestConfig1.plist in Resources */,
-				473A98532C91B68D005A3B94 /* SettingsOperationsViewProductSystemNameTypeError.json in Resources */,
-				473A98382C91ABD9005A3B94 /* ConfigWithSettingsABTestsMonitoringInapps.json in Resources */,
 				F3FAD86A2AB863CD00D98C03 /* missingCloseButtonColorLineWidthSize.json in Resources */,
 				F314708E2B964BFF00E01E5C /* 8-TargetingRequests.json in Resources */,
-				473A98512C91B66B005A3B94 /* SettingsOperationsViewProductSystemNameError.json in Resources */,
-				4766A8B22C932A3C002D15A4 /* ABTestsIdConfigError.json in Resources */,
 				9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */,
-				F36B63422E02C00400DAB1A8 /* ConfigInAppIsPriorityInvalid.json in Resources */,
-				473A98572C91BB02005A3B94 /* SettingsAllOperationsWithErrors.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3887,7 +4103,6 @@
 				F33802902F29F3AF00F83D2F /* BridgeMessageDispatcher.swift in Sources */,
 				6FDD145D266F7CCE00A50C35 /* PossibleDiscountsResponse.swift in Sources */,
 				9B9C95322921116F00BB29DA /* PasteboardUUIDDebugService.swift in Sources */,
-				B4E4386D2D8AF9A700603F3A /* WebviewFormVariant.swift in Sources */,
 				F331DCC42A80993600222120 /* ContentElementPositionMargin.swift in Sources */,
 				F331DD0D2A83A56500222120 /* ModalViewFactory.swift in Sources */,
 				A1A916DF29C9032700D59D9E /* CategoryIDInTargeting.swift in Sources */,
@@ -3910,7 +4125,6 @@
 				334F3AF7264C199900A6AC00 /* CustomerActionRequest.swift in Sources */,
 				F39B67A22A3C6AF4005C0CCA /* SegmentationService.swift in Sources */,
 				334F3AEC264C199900A6AC00 /* RequestedPromotionRequest.swift in Sources */,
-				B4E4386B2D8AF99100603F3A /* WebviewFormVariantContent.swift in Sources */,
 				84DEE8B125CC042A00C98CC7 /* MBDatabaseError.swift in Sources */,
 				F39117072AA9C69A00852298 /* ContentPositionFilter.swift in Sources */,
 				A179587C2978AED800609E91 /* GeoTargeting.swift in Sources */,
@@ -4219,6 +4433,7 @@
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
 				F32E53792C3FD64A002C7CA0 /* DIMainModuleRegistrationTests.swift in Sources */,
+				4731A6DF2F447B7600CBE1E5 /* InAppConfigParsingTests.swift in Sources */,
 				848A895E2620C54900EDFB6D /* VersioningTestCase.swift in Sources */,
 				A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */,
 				313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */,
@@ -4227,8 +4442,6 @@
 				31ED2DEC25C444C400301FAD /* MBConfigurationTestCase.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
 				4741DAC42E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift in Sources */,
-				473A982D2C91A38C005A3B94 /* SettingsConfigParsingTests.swift in Sources */,
-				F3FT000017022025005A3B94 /* FeatureTogglesConfigParsingTests.swift in Sources */,
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				47C38A312E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
@@ -4253,6 +4466,8 @@
 				F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
 				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
+				F34A103C2F455B840065392A /* SettingsConfigParsingTests.swift in Sources */,
+				F34A103D2F455B840065392A /* FeatureTogglesConfigParsingTests.swift in Sources */,
 				F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */,
 				F39B67AC2A3C7315005C0CCA /* MockImageDownloadService.swift in Sources */,
 				F30005442CFF3F7D004BE915 /* ABTestStubs.swift in Sources */,
