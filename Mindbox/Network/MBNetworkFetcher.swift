@@ -16,20 +16,28 @@ class MBNetworkFetcher: NetworkFetcher {
     private let session: URLSession
 
     init(utilitiesFetcher: UtilitiesFetcher, persistenceStorage: PersistenceStorage) {
+        self.persistenceStorage = persistenceStorage
+        session = MBNetworkFetcher.makeSession(utilitiesFetcher: utilitiesFetcher)
+    }
+
+    init(persistenceStorage: PersistenceStorage, session: URLSession) {
+        self.persistenceStorage = persistenceStorage
+        self.session = session
+    }
+
+    private static func makeSession(utilitiesFetcher: UtilitiesFetcher) -> URLSession {
         let sessionConfiguration: URLSessionConfiguration = .default
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
         let appVersion = utilitiesFetcher.appVerson ?? "unknow"
         let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
         let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
         sessionConfiguration.httpAdditionalHeaders = [
-
             "Mindbox-Integration": "iOS-SDK",
             "Mindbox-Integration-Version": sdkVersion,
             "User-Agent": userAgent,
             "Content-Type": "application/json; charset=utf-8"
         ]
-        self.persistenceStorage = persistenceStorage
-        session = URLSession(configuration: sessionConfiguration)
+        return URLSession(configuration: sessionConfiguration)
     }
 
     func request<T>(
@@ -151,6 +159,14 @@ class MBNetworkFetcher: NetworkFetcher {
 
         // Trying to handle data if exist
         if let data = data {
+            if !needBaseResponse, statusCode == .serverError {
+                completion(.failure(.serverError(.init(
+                    status: .internalServerError,
+                    errorMessage: "Internal Server error",
+                    httpStatusCode: httpResponse.statusCode
+                ))))
+                return
+            }
             do {
                 if needBaseResponse {
                     // Decoding to structure with `status` field
