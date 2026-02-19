@@ -74,6 +74,11 @@ extension MBContainer {
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
             return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
         }
+        
+        register(InappShowFailureManagerProtocol.self) {
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+            return InappShowFailureManager(databaseRepository: databaseRepository)
+        }
 
         return self
     }

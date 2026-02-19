@@ -281,4 +281,9 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         let manager: InappScheduleManagerProtocol? = DI.inject(InappScheduleManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
+    
+    func testInappShowFailureManagerIsRegistered() {
+        let manager: InappShowFailureManagerProtocol? = DI.inject(InappShowFailureManagerProtocol.self)
+        XCTAssertNotNil(manager)
+    }
 }
