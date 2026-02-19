@@ -10,16 +10,22 @@ import XCTest
 
 final class InappShowFailureManagerTests: XCTestCase {
     private var databaseRepository: InappShowFailureDatabaseRepositoryMock!
+    private var featureToggleManager: FeatureToggleManager!
     private var manager: InappShowFailureManager!
 
     override func setUp() {
         super.setUp()
         databaseRepository = InappShowFailureDatabaseRepositoryMock()
-        manager = InappShowFailureManager(databaseRepository: databaseRepository)
+        featureToggleManager = FeatureToggleManager()
+        manager = InappShowFailureManager(
+            databaseRepository: databaseRepository,
+            featureToggleManager: featureToggleManager
+        )
     }
 
     override func tearDown() {
         manager = nil
+        featureToggleManager = nil
         databaseRepository = nil
         super.tearDown()
     }
@@ -121,6 +127,26 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.sendFailures()
         XCTAssertEqual(databaseRepository.createdEvents.count, 1)
     }
+    
+    func testSendFailures_whenFeatureDisabled_doesNotSendAndKeepsBufferedFailures() throws {
+        manager.addFailure(
+            inappId: "inapp-toggle-disabled",
+            reason: .presentationFailed,
+            details: "disabled"
+        )
+        applyFeatureToggle(shouldSendInAppShowError: false)
+        
+        manager.sendFailures()
+        XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
+        
+        applyFeatureToggle(shouldSendInAppShowError: true)
+        manager.sendFailures()
+        
+        XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.inappId, "inapp-toggle-disabled")
+    }
 }
 
 private extension InappShowFailureManagerTests {
@@ -138,6 +164,19 @@ private extension InappShowFailureManagerTests {
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
         return formatter
+    }
+    
+    func applyFeatureToggle(shouldSendInAppShowError: Bool) {
+        let settingsJSON = """
+        {
+          "featureToggles": {
+            "MobileSdkShouldSendInAppShowError": \(shouldSendInAppShowError ? "true" : "false")
+          }
+        }
+        """
+        let settingsData = settingsJSON.data(using: .utf8) ?? Data()
+        let settings = try? JSONDecoder().decode(Settings.self, from: settingsData)
+        featureToggleManager.applyFeatureToggles(settings?.featureToggles)
     }
 }
 

@@ -20,11 +20,14 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     private let databaseRepository: DatabaseRepositoryProtocol
+    private let featureToggleManager: FeatureToggleManager
     private let queue = DispatchQueue(label: "com.Mindbox.InappShowFailureManager.queue")
     private var failures: [InAppShowFailure] = []
 
-    init(databaseRepository: DatabaseRepositoryProtocol) {
+    init(databaseRepository: DatabaseRepositoryProtocol,
+         featureToggleManager: FeatureToggleManager) {
         self.databaseRepository = databaseRepository
+        self.featureToggleManager = featureToggleManager
     }
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
@@ -51,6 +54,10 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     func sendFailures() {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            return
+        }
+        
         queue.sync {
             guard !failures.isEmpty else {
                 return

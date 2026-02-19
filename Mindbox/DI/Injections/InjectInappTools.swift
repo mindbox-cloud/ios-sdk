@@ -77,7 +77,11 @@ extension MBContainer {
         
         register(InappShowFailureManagerProtocol.self) {
             let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-            return InappShowFailureManager(databaseRepository: databaseRepository)
+            let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+            return InappShowFailureManager(
+                databaseRepository: databaseRepository,
+                featureToggleManager: featureToggleManager
+            )
         }
 
         return self
