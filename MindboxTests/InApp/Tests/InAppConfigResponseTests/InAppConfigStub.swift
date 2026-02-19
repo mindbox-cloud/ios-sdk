@@ -117,7 +117,8 @@ extension InAppConfigStub {
             ),
             ttl: nil, 
             slidingExpiration: nil,
-            inapp: nil
+            inapp: nil,
+            featureToggles: nil
         )
         
         // Mock method setupSettingsFromConfig.

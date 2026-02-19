@@ -13,9 +13,10 @@ struct Settings: Decodable, Equatable {
     let ttl: TimeToLive?
     let slidingExpiration: SlidingExpiration?
     let inapp: InAppSettings?
+    let featureToggles: FeatureToggles?
 
     enum CodingKeys: CodingKey {
-        case operations, ttl, slidingExpiration, inapp
+        case operations, ttl, slidingExpiration, inapp, featureToggles
     }
 }
 
@@ -26,5 +27,6 @@ extension Settings {
         self.ttl = try? container.decodeIfPresent(TimeToLive.self, forKey: .ttl)
         self.slidingExpiration = try? container.decodeIfPresent(SlidingExpiration.self, forKey: .slidingExpiration)
         self.inapp = try? container.decodeIfPresent(InAppSettings.self, forKey: .inapp)
+        self.featureToggles = try? container.decodeIfPresent(FeatureToggles.self, forKey: .featureToggles)
     }
 }

@@ -17,7 +17,7 @@ class WebViewFactory: ViewFactoryProtocol {
                                                      id: params.id,
                                                      imagesDict: params.imagesDict,
                                                      onPresented: params.onPresented,
-                                                     onTapAction: params.onTapAction,
+                                                     onClickAction: params.onClickAction,
                                                      onCloseInApp: params.onClose,
                                                      operation: params.operation)
             myViewController = viewController

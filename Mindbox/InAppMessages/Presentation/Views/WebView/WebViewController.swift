@@ -65,7 +65,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
-        self.onTapAction = onTapAction
+        self.onClickAction = onClickAction
         super.init(nibName: nil, bundle: nil)
     }
 
