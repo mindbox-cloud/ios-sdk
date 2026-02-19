@@ -10,16 +10,6 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-struct InAppMessageUIModel {
-    struct InAppRedirect {
-        let redirectUrl: String
-        let payload: String
-    }
-    let inAppId: String
-    let image: UIImage
-    let redirect: InAppRedirect
-}
-
 protocol InAppPresentationManagerProtocol: AnyObject {
     func present(
         inAppFormData: InAppFormData,
@@ -88,7 +78,8 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 self.actionHandler.handleAction(action, for: inAppFormData.inAppId, onTap: onTapAction, close: {
                     self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
                 })
-            }, onClose: {
+            }, onClickAction: onTapAction,
+            onClose: {
                 self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
             })
         }

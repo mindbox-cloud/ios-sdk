@@ -37,7 +37,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
-    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    private let onClickAction: InAppMessageTapAction?
     var isTimeoutClose = false
 
     private var viewWillAppearWasCalled = false
@@ -55,7 +55,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
+        onClickAction: InAppMessageTapAction?,
         onCloseInApp: @escaping () -> Void,
         operation: (name: String, body: String)?
     ) {
@@ -65,7 +65,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
-        self.onTapAction = onTapAction
+        self.onClickAction = onClickAction
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -86,7 +86,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation)
+            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)
@@ -200,13 +200,25 @@ extension WebViewController: WebViewAction {
         Logger.common(message: "[WebView] WebViewVC completedWebView \(data)", category: .webViewInAppMessages)
         do {
             let jsonData = data.data(using: .utf8) ?? Data()
-            let action = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
-            let service = LayerActionFilterService()
-            let layer = try service.filter(action)
-            onTapAction(layer)
+            let dto = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
+            let url: URL?
+            let payload: String
+
+            switch dto {
+            case .redirectUrl(let model):
+                url = URL(string: model.value ?? "")
+                payload = model.intentPayload ?? ""
+            case .pushPermission(let model):
+                url = nil
+                payload = model.intentPayload ?? ""
+            case .unknown:
+                url = nil
+                payload = ""
+            }
+
+            onClickAction?(url, payload)
         } catch {
             Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
-            onTapAction(nil)
         }
     }
 

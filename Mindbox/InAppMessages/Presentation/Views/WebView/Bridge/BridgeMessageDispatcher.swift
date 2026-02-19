@@ -56,8 +56,7 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        // Don't send automatic response for "ready" action - delegate will send custom response
-        if message.action != "ready" {
+        if !BridgeMessage.Action.deferredActions.contains(message.action) {
             let response = BridgeMessage(
                 type: .response,
                 action: message.action,

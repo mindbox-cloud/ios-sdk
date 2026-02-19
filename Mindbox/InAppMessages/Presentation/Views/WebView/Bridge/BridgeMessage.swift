@@ -135,9 +135,24 @@ public struct BridgeMessage: Codable {
         case error
     }
 
+    enum Action {
+        static let close = "close"
+        static let `init` = "init"
+        static let click = "click"
+        static let hide = "hide"
+        static let log = "log"
+        static let userAgent = "userAgent"
+        static let ready = "ready"
+        static let asyncOperation = "asyncOperation"
+        static let syncOperation = "syncOperation"
+
+        /// Actions that send their own bridge responses (no auto-response from dispatcher)
+        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation]
+    }
+
     public let version: Int
     public let type: MessageType
-    public let action: String // TODO: - Можно сделать Enum
+    public let action: String
     public let payload: JSONValue?
     public let id: UUID
     public let timestamp: Int64

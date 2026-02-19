@@ -21,7 +21,7 @@ final class PresentationDisplayUseCase {
         self.tracker = tracker
     }
 
-    func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) {
+    func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClickAction: InAppMessageTapAction?, onClose: @escaping () -> Void) {
 
         changeType(model: model.content)
 
@@ -41,6 +41,7 @@ final class PresentationDisplayUseCase {
                                                firstImageValue: model.firstImageValue,
                                                onPresented: onPresented,
                                                onTapAction: onTapAction,
+                                               onClickAction: onClickAction,
                                                onClose: onClose,
                                                operation: model.operation)
 
