@@ -133,88 +133,179 @@ class MBNetworkFetcher: NetworkFetcher {
     ) {
         Logger.response(data: data, response: response, error: error)
 
+        guard let responseContext = makeResponseContext(response: response, error: error, completion: completion) else {
+            return
+        }
+
+        if let data = data {
+            handleResponseData(
+                data,
+                context: responseContext,
+                emptyData: emptyData,
+                needBaseResponse: needBaseResponse,
+                completion: completion
+            )
+            return
+        }
+
+        handleMissingData(
+            error: error,
+            context: responseContext,
+            completion: completion
+        )
+    }
+
+    private typealias ResponseContext = (
+        response: URLResponse,
+        httpResponse: HTTPURLResponse,
+        statusCode: HTTPURLResponseStatusCodeValidator.StatusCodes
+    )
+
+    private func makeResponseContext(
+        response: URLResponse?,
+        error: Error?,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) -> ResponseContext? {
         // Check if we have any response at all
         guard let response = response else {
             completion(.failure(.connectionError))
-            return
+            return nil
         }
 
         // Make sure we got the correct response type
         guard let httpResponse = response as? HTTPURLResponse else {
             completion(.failure(.invalidResponse(response)))
-            return
+            return nil
         }
 
         // Make sure response has status code
         guard let statusCode = HTTPURLResponseStatusCodeValidator.StatusCodes(statusCode: httpResponse.statusCode) else {
             if error != nil {
-                completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Unknown status code", httpStatusCode: httpResponse.statusCode))))
+                completion(.failure(.serverError(.init(
+                    status: .internalServerError,
+                    errorMessage: "Unknown status code",
+                    httpStatusCode: httpResponse.statusCode
+                ))))
             } else {
                 completion(.failure(.invalidResponse(response)))
             }
+            return nil
+        }
+
+        return (response: response, httpResponse: httpResponse, statusCode: statusCode)
+    }
+
+    private func handleResponseData(
+        _ data: Data,
+        context: ResponseContext,
+        emptyData: Bool,
+        needBaseResponse: Bool,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) {
+        if !needBaseResponse, context.statusCode == .serverError {
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
+            return
+        }
+
+        do {
+            try decodeResponseData(
+                data,
+                context: context,
+                needBaseResponse: needBaseResponse,
+                completion: completion
+            )
+        } catch let decodingError {
+            handleDecodingError(
+                decodingError,
+                data: data,
+                context: context,
+                emptyData: emptyData,
+                completion: completion
+            )
+        }
+    }
+
+    private func decodeResponseData(
+        _ data: Data,
+        context: ResponseContext,
+        needBaseResponse: Bool,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) throws {
+        if !needBaseResponse {
+            completion(.success(data))
             return
         }
 
         let decoder = JSONDecoder()
+        // Decoding to structure with `status` field
+        let base = try decoder.decode(BaseResponse.self, from: data)
+        // Figure out what server returned
+        switch base.status {
+        case .success, .transactionAlreadyProcessed:
+            completion(.success(data))
+        case .validationError:
+            let error = try decoder.decode(ValidationError.self, from: data)
+            completion(.failure(.validationError(error)))
+        case .protocolError:
+            let error = try decoder.decode(ProtocolError.self, from: data)
+            completion(.failure(.protocolError(error)))
+        case .internalServerError:
+            let error = try decoder.decode(ProtocolError.self, from: data)
+            completion(.failure(.serverError(error)))
+        case .unknown:
+            completion(.failure(.invalidResponse(context.response)))
+        }
+    }
 
-        // Trying to handle data if exist
-        if let data = data {
-            if !needBaseResponse, statusCode == .serverError {
-                completion(.failure(.serverError(.init(
-                    status: .internalServerError,
-                    errorMessage: "Internal Server error",
-                    httpStatusCode: httpResponse.statusCode
+    private func handleDecodingError(
+        _ decodingError: Error,
+        data: Data,
+        context: ResponseContext,
+        emptyData: Bool,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) {
+        switch context.statusCode {
+        case .serverError:
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
+        default:
+            if emptyData {
+                completion(.success(data))
+            } else if context.httpResponse.statusCode == 404 {
+                completion(.failure(.protocolError(.init(
+                    status: .protocolError,
+                    errorMessage: "Invalid request url",
+                    httpStatusCode: context.httpResponse.statusCode
                 ))))
-                return
+            } else {
+                completion(.failure(.internalError(.init(errorKey: .parsing, rawError: decodingError))))
             }
-            do {
-                if needBaseResponse {
-                    // Decoding to structure with `status` field
-                    let base = try decoder.decode(BaseResponse.self, from: data)
-                    // Figure out what server returned
-                    switch base.status {
-                    case .success, .transactionAlreadyProcessed:
-                        completion(.success(data))
-                    case .validationError:
-                        let error = try decoder.decode(ValidationError.self, from: data)
-                        completion(.failure(.validationError(error)))
-                    case .protocolError:
-                        let error = try decoder.decode(ProtocolError.self, from: data)
-                        completion(.failure(.protocolError(error)))
-                    case .internalServerError:
-                        let error = try decoder.decode(ProtocolError.self, from: data)
-                        completion(.failure(.serverError(error)))
-                    case .unknown:
-                        completion(.failure(.invalidResponse(response)))
-                    }
-                } else {
-                    completion(.success(data))
-                }
-            } catch let decodingError {
-                switch statusCode {
-                case .serverError:
-                    completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: httpResponse.statusCode))))
-                default:
-                     if emptyData {
-                        completion(.success(data))
-                    } else if httpResponse.statusCode == 404 {
-                        completion(.failure(.protocolError(.init(status: .protocolError, errorMessage: "Invalid request url", httpStatusCode: httpResponse.statusCode))))
-                    } else {
-                        completion(.failure(.internalError(.init(errorKey: .parsing, rawError: decodingError))))
-                    }
-                }
-            }
-        } else if let error = error {
+        }
+    }
+
+    private func handleMissingData(
+        error: Error?,
+        context: ResponseContext,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) {
+        if let error = error {
             // Handle server errors
-            switch statusCode {
+            switch context.statusCode {
             case .serverError:
-                completion(.failure(.serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: httpResponse.statusCode))))
+                completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
             default:
                 completion(.failure(.unknown(error)))
             }
         } else {
-            completion(.failure(.invalidResponse(response)))
+            completion(.failure(.invalidResponse(context.response)))
         }
+    }
+
+    private func internalServerError(httpStatusCode: Int) -> MindboxError {
+        .serverError(.init(
+            status: .internalServerError,
+            errorMessage: "Internal Server error",
+            httpStatusCode: httpStatusCode
+        ))
     }
     
     /// Cancels all ongoing network tasks started by this fetcher.
