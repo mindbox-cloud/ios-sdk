@@ -98,6 +98,10 @@ extension MBContainer {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
             return MBSystemInfoProvider(permissionProvider: permissionProvider, utilitiesFetcher: utilitiesFetcher)
         }
+        
+        register(FeatureToggleManager.self) {
+            FeatureToggleManager()
+        }
 
         return self
     }

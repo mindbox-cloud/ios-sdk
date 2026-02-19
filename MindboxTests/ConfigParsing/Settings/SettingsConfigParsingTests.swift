@@ -64,6 +64,7 @@ fileprivate enum SettingsConfig: String, Configurable {
     case settingsInAppSettingsMissingMaxInappsPerDay = "SettingsInAppSettingsMissingMaxInappsPerDay" // Missing maxInappsPerDay
     case settingsInAppSettingsMissingMinIntervalBetweenShows = "SettingsInAppSettingsMissingMinIntervalBetweenShows" // Missing minIntervalBetweenShows
     case settingsInAppSettingsTypeErrors = "SettingsInAppSettingsTypeErrors" // All parameters have incorrect types
+
 }
 
 final class SettingsConfigParsingTests: XCTestCase {
@@ -89,6 +90,9 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.inapp?.maxInappsPerSession, 1, "maxInappsPerSession must be parsed correctly")
         XCTAssertEqual(config.inapp?.maxInappsPerDay, 1, "maxInappsPerDay must be parsed correctly")
         XCTAssertEqual(config.inapp?.minIntervalBetweenShows, "0.00:00:10", "minIntervalBetweenShows must be parsed correctly")
+
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+        XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, true, "shouldSendInAppShowError must be parsed correctly")
     }
 
     // MARK: - Operations
@@ -525,4 +529,5 @@ final class SettingsConfigParsingTests: XCTestCase {
         XCTAssertNil(config.inapp?.maxInappsPerDay, "maxInappsPerDay must be nil due to type error")
         XCTAssertNil(config.inapp?.minIntervalBetweenShows, "minIntervalBetweenShows must be nil due to type error")
     }
+
 }

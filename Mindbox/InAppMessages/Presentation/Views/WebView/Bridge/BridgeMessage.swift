@@ -150,10 +150,13 @@ public struct BridgeMessage: Codable {
         static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation]
     }
 
+<<<<<<< semko/MOBILEWEBVIEW-54
     enum CodingKeys: String, CodingKey {
         case version, type, action, payload, id, timestamp
     }
 
+=======
+>>>>>>> mission/webView-inApp
     public let version: Int
     public let type: MessageType
     public let action: String
