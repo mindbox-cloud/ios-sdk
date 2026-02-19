@@ -135,12 +135,61 @@ public struct BridgeMessage: Codable {
         case error
     }
 
+    enum Action {
+        static let close = "close"
+        static let `init` = "init"
+        static let click = "click"
+        static let hide = "hide"
+        static let log = "log"
+        static let userAgent = "userAgent"
+        static let ready = "ready"
+        static let asyncOperation = "asyncOperation"
+        static let syncOperation = "syncOperation"
+
+        /// Actions that send their own bridge responses (no auto-response from dispatcher)
+        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation]
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case version, type, action, payload, id, timestamp
+    }
+
     public let version: Int
     public let type: MessageType
-    public let action: String // TODO: - Можно сделать Enum
+    public let action: String
     public let payload: JSONValue?
     public let id: UUID
     public let timestamp: Int64
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(version, forKey: .version)
+        try container.encode(type, forKey: .type)
+        try container.encode(action, forKey: .action)
+
+        // JS bridge protocol requires payload as a JSON string (JS does JSON.parse(message.payload))
+        if let payload {
+            switch payload {
+            case .string(let value):
+                try container.encode(value, forKey: .payload)
+            case .null:
+                try container.encodeNil(forKey: .payload)
+            default:
+                if let data = try? JSONEncoder().encode(payload),
+                   let str = String(data: data, encoding: .utf8) {
+                    try container.encode(str, forKey: .payload)
+                } else {
+                    try container.encode("", forKey: .payload)
+                }
+            }
+        } else {
+            try container.encodeNil(forKey: .payload)
+        }
+
+        // JS generates lowercase UUIDs; Map lookup is case-sensitive
+        try container.encode(id.uuidString.lowercased(), forKey: .id)
+        try container.encode(timestamp, forKey: .timestamp)
+    }
 
     public init(
         type: MessageType,

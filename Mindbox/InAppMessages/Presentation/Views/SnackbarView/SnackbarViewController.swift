@@ -58,7 +58,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     private let firstImageValue: String
 
     private let onPresented: () -> Void
-    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    private let onTapAction: InAppMessageTapAction
+    private let onClose: () -> Void
 
     private var hasSetupLayers = false
     private var hasSetupElements = false
@@ -71,7 +72,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         snackbarView: SnackbarView,
         firstImageValue: String,
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void
+        onTapAction: @escaping InAppMessageTapAction,
+        onClose: @escaping () -> Void
     ) {
         self.model = model
         self.imagesDict = imagesDict
@@ -79,6 +81,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         self.firstImageValue = firstImageValue
         self.onPresented = onPresented
         self.onTapAction = onTapAction
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -212,13 +215,14 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
 extension SnackbarViewController: GestureHandler {
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? InAppImageOnlyView else {
-            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
+        guard let imageView = sender.view as? InAppImageOnlyView,
+              let action = imageView.action,
+              let tapData = action.handleTap() else {
             return
         }
 
-        let action = imageView.action
-        onTapAction(action)
+        onTapAction(tapData.url, tapData.payload)
+        onClose()
     }
 
     @objc
