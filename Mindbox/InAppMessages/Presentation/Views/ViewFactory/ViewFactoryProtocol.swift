@@ -15,7 +15,7 @@ struct ViewFactoryParameters {
     let imagesDict: [String: UIImage]
     let firstImageValue: String
     let onPresented: () -> Void
-    let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    let onTapAction: InAppMessageTapAction
     let onClose: () -> Void
     let operation: (name: String, body: String)?
 }

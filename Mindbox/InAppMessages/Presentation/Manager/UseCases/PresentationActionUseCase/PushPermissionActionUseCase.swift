@@ -11,46 +11,51 @@ import MindboxLogger
 import UserNotifications
 import UIKit
 
+extension ContentBackgroundLayerAction {
+    /// Delegates to `ActionUseCaseFactory` to extract URL/payload and handle side effects.
+    /// Returns `nil` for `.unknown` or empty redirect actions (no callback should be invoked).
+    func handleTap() -> (url: URL?, payload: String)? {
+        guard let useCase = ActionUseCaseFactory.createUseCase(action: self) else {
+            return nil
+        }
+        return useCase.execute()
+    }
+}
+
 final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
 
-    private let tracker: PresentationClickTracker
     private let model: PushPermissionLayerAction
 
-    init(tracker: PresentationClickTracker, model: PushPermissionLayerAction) {
-        self.tracker = tracker
+    init(model: PushPermissionLayerAction) {
         self.model = model
     }
 
-    func onTapAction(
-        id: String,
-        onTap: @escaping InAppMessageTapAction,
-        close: @escaping () -> Void
-    ) {
-        tracker.trackClick(id: id)
-        Logger.common(message: "In-app with push permission | ID: \(id)", level: .debug, category: .inAppMessages)
-        requestOrOpenSettingsForNotifications()
-        onTap(nil, model.intentPayload)
-        close()
+    func execute() -> (url: URL?, payload: String)? {
+        PushPermissionHelper.requestOrOpenSettings()
+        return (nil, model.intentPayload)
     }
+}
 
-    func requestOrOpenSettingsForNotifications() {
+enum PushPermissionHelper {
+
+    static func requestOrOpenSettings() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(message: "Status of notification permission: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
             switch settings.authorizationStatus {
-                case .notDetermined:
-                    self.pushNotificationRequest()
-                case .denied:
-                    self.openPushNotificationSettings()
-                case .authorized, .provisional, .ephemeral:
-                    return
-                @unknown default:
-                    Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
-                    return
+            case .notDetermined:
+                pushNotificationRequest()
+            case .denied:
+                openPushNotificationSettings()
+            case .authorized, .provisional, .ephemeral:
+                return
+            @unknown default:
+                Logger.common(message: "Encountered an unknown notification authorization status: \(settings.authorizationStatus.description)", level: .debug, category: .inAppMessages)
+                return
             }
         }
     }
 
-    private func pushNotificationRequest() {
+    private static func pushNotificationRequest() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
                 Logger.common(message: "Error requesting notification permissions: \(error)", level: .error, category: .inAppMessages)
@@ -68,7 +73,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
         }
     }
 
-    private func openPushNotificationSettings() {
+    private static func openPushNotificationSettings() {
         DispatchQueue.main.async {
             let settingsUrl: URL?
             if #available(iOS 16.0, *) {
@@ -84,7 +89,6 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
 
             if UIApplication.shared.canOpenURL(settingsUrl) {
                 UIApplication.shared.open(settingsUrl)
-
                 Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
             }
         }

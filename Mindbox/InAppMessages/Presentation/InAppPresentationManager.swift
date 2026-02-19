@@ -10,16 +10,6 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-struct InAppMessageUIModel {
-    struct InAppRedirect {
-        let redirectUrl: String
-        let payload: String
-    }
-    let inAppId: String
-    let image: UIImage
-    let redirect: InAppRedirect
-}
-
 protocol InAppPresentationManagerProtocol: AnyObject {
     func present(
         inAppFormData: InAppFormData,
@@ -40,12 +30,9 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
-    private let actionHandler: InAppActionHandlerProtocol
     private let displayUseCase: PresentationDisplayUseCase
 
-    init(actionHandler: InAppActionHandlerProtocol,
-         displayUseCase: PresentationDisplayUseCase) {
-        self.actionHandler = actionHandler
+    init(displayUseCase: PresentationDisplayUseCase) {
         self.displayUseCase = displayUseCase
 
         addObserverToDismissInApp()
@@ -79,16 +66,8 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
-            }, onTapAction: { [weak self] action in
-                guard let self = self,
-                      let action = action else {
-                    return
-                }
-
-                self.actionHandler.handleAction(action, for: inAppFormData.inAppId, onTap: onTapAction, close: {
-                    self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
-                })
-            }, onClose: {
+            }, onTapAction: onTapAction,
+            onClose: {
                 self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
             })
         }

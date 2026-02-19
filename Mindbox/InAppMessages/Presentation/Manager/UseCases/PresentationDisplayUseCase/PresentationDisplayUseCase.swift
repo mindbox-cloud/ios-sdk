@@ -15,13 +15,14 @@ final class PresentationDisplayUseCase {
     private var presentedVC: UIViewController?
     private var model: InAppFormData?
     private var factory: ViewFactoryProtocol?
-    private var tracker: InAppMessagesTrackerProtocol
+    private let tracker: InAppMessagesTrackerProtocol
+    private lazy var clickTracker = PresentationClickTracker(tracker: tracker)
 
     init(tracker: InAppMessagesTrackerProtocol) {
         self.tracker = tracker
     }
 
-    func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void, onClose: @escaping () -> Void) {
+    func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping InAppMessageTapAction, onClose: @escaping () -> Void) {
 
         changeType(model: model.content)
 
@@ -35,12 +36,22 @@ final class PresentationDisplayUseCase {
             return
         }
 
+        let wrappedTapAction: InAppMessageTapAction
+        if factory is WebViewFactory {
+            wrappedTapAction = onTapAction
+        } else {
+            wrappedTapAction = { [weak self] url, payload in
+                self?.clickTracker.trackClick(id: model.inAppId)
+                onTapAction(url, payload)
+            }
+        }
+
         let parameters = ViewFactoryParameters(model: model.content,
                                                id: model.inAppId,
                                                imagesDict: model.imagesDict,
                                                firstImageValue: model.firstImageValue,
                                                onPresented: onPresented,
-                                               onTapAction: onTapAction,
+                                               onTapAction: wrappedTapAction,
                                                onClose: onClose,
                                                operation: model.operation)
 

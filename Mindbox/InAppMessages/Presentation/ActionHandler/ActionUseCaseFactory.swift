@@ -8,25 +8,16 @@
 
 import Foundation
 
-protocol UseCaseFactoryProtocol {
-    func createUseCase(action: ContentBackgroundLayerAction) -> PresentationActionUseCaseProtocol?
-}
+enum ActionUseCaseFactory {
 
-class ActionUseCaseFactory: UseCaseFactoryProtocol {
-    private let clickTracker: PresentationClickTracker
-
-    init(tracker: InAppMessagesTrackerProtocol) {
-        clickTracker = PresentationClickTracker(tracker: tracker)
-    }
-
-    func createUseCase(action: ContentBackgroundLayerAction) -> PresentationActionUseCaseProtocol? {
+    static func createUseCase(action: ContentBackgroundLayerAction) -> PresentationActionUseCaseProtocol? {
         switch action {
-            case .pushPermission(let pushPermissionModel):
-                return PushPermissionActionUseCase(tracker: clickTracker, model: pushPermissionModel)
-            case .redirectUrl(let redirectModel):
-                return RedirectURLActionUseCase(tracker: clickTracker, model: redirectModel)
-            case .unknown:
-                return nil
+        case .redirectUrl(let model):
+            return RedirectURLActionUseCase(model: model)
+        case .pushPermission(let model):
+            return PushPermissionActionUseCase(model: model)
+        case .unknown:
+            return nil
         }
     }
 }
