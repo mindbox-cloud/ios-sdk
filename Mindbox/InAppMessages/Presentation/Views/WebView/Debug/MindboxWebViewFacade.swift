@@ -13,7 +13,7 @@ private enum PayloadKey {
     static let sdkVersion = "sdkVersion"
     static let sdkVersionNumeric = "sdkVersionNumeric"
     static let endpointId = "endpointId"
-    static let deviceUuid = "deviceUuid"
+    static let deviceUuid = "deviceUUID"
     static let userVisitCount = "userVisitCount"
 
     static let inAppId = "inAppId"
