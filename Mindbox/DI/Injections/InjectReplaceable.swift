@@ -65,11 +65,13 @@ extension MBContainer {
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
             let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+            let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
 
             return InAppConfigurationDataFacade(segmentationService: segmentationSevice,
                                                 targetingChecker: targetingChecker,
                                                 imageService: imageService,
-                                                tracker: tracker)
+                                                tracker: tracker,
+                                                failureManager: failureManager)
         }
 
         register(SessionManager.self) {

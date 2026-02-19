@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol GeoServiceProtocol {
-    func geoRequest(completion: @escaping (InAppGeoResponse?) -> Void)
+    func geoRequest(completion: @escaping (Result<InAppGeoResponse?, MindboxError>) -> Void)
 }
 
 class GeoService: GeoServiceProtocol {
@@ -23,21 +23,24 @@ class GeoService: GeoServiceProtocol {
         self.targetingChecker = targetingChecker
     }
 
-    func geoRequest(completion: @escaping (InAppGeoResponse?) -> Void) {
-        if SessionTemporaryStorage.shared.geoRequestCompleted {
-            completion(targetingChecker.geoModels)
+    func geoRequest(completion: @escaping (Result<InAppGeoResponse?, MindboxError>) -> Void) {
+        if let cachedResult = SessionTemporaryStorage.shared.geoRequestResult {
+            completion(cachedResult)
             return
         }
 
         let route = FetchInAppGeoRoute()
         fetcher.request(type: InAppGeoResponse.self, route: route, needBaseResponse: false) { response in
-            SessionTemporaryStorage.shared.geoRequestCompleted = true
             switch response {
             case .success(let result):
-                completion(result)
+                SessionTemporaryStorage.shared.geoRequestResult = .success(result)
+                self.targetingChecker.geoModels = result
+                completion(.success(result))
             case .failure(let error):
+                SessionTemporaryStorage.shared.geoRequestResult = .failure(error)
+                self.targetingChecker.geoModels = nil
                 Logger.error(error.asLoggerError())
-                completion(nil)
+                completion(.failure(error))
             }
         }
     }

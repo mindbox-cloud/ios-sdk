@@ -9,8 +9,8 @@
 import Foundation
 
 struct CustomerSegmentsAPI {
-    var fetchSegments: (_ segmentationCheckRequest: SegmentationCheckRequest, _ completion: @escaping (SegmentationCheckResponse?) -> Void) -> Void
-    var fetchProductSegments: (_ segmentationCheckRequest: InAppProductSegmentRequest, _ completion: @escaping (InAppProductSegmentResponse?) -> Void) -> Void
+    var fetchSegments: (_ segmentationCheckRequest: SegmentationCheckRequest, _ completion: @escaping (Result<SegmentationCheckResponse, MindboxError>) -> Void) -> Void
+    var fetchProductSegments: (_ segmentationCheckRequest: InAppProductSegmentRequest, _ completion: @escaping (Result<InAppProductSegmentResponse, MindboxError>) -> Void) -> Void
 }
 
 extension CustomerSegmentsAPI {
@@ -21,12 +21,7 @@ extension CustomerSegmentsAPI {
                 operationBody: segmentationCheckRequest,
                 customResponseType: SegmentationCheckResponse.self,
                 completion: { result in
-                    switch result {
-                    case .success(let response):
-                        completion(response)
-                    case .failure:
-                        completion(nil)
-                    }
+                    completion(result)
                 }
             )
         }, fetchProductSegments: { segmentationCheckRequest, completion in
@@ -35,12 +30,7 @@ extension CustomerSegmentsAPI {
                 operationBody: segmentationCheckRequest,
                 customResponseType: InAppProductSegmentResponse.self,
                 completion: { result in
-                    switch result {
-                    case .success(let response):
-                        completion(response)
-                    case .failure:
-                        completion(nil)
-                    }
+                    completion(result)
                 }
             )
         }

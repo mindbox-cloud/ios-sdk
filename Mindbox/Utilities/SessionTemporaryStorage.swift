@@ -17,7 +17,7 @@ final class SessionTemporaryStorage {
     var observedCustomOperations: Set<String> = []
     var viewProductOperation: String?
     var viewCategoryOperation: String?
-    var geoRequestCompleted = false
+    var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
     var checkSegmentsRequestCompleted = false
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
@@ -51,7 +51,7 @@ final class SessionTemporaryStorage {
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil
-        geoRequestCompleted = false
+        geoRequestResult = nil
         checkSegmentsRequestCompleted = false
         isPresentingInAppMessage = false
         sessionShownInApps = []

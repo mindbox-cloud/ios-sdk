@@ -13,6 +13,7 @@ final class SegmentTargetingChecker: InternalTargetingChecker<SegmentTargeting> 
 
     override func prepareInternal(id: String, targeting: SegmentTargeting, context: inout PreparationContext) {
         context.segments.append(targeting.segmentationExternalId)
+        context.segmentInapps.insert(id)
     }
 
     override func checkInternal(targeting: SegmentTargeting) -> Bool {

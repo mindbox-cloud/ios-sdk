@@ -31,7 +31,11 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         self.tracker = tracker
     }
 
-    func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
+    func fetchDependencies(
+        model: InappOperationJSONModel?,
+        shouldCollectFailures: Bool,
+        _ completion: @escaping () -> Void
+    ) {
         completion()
     }
 

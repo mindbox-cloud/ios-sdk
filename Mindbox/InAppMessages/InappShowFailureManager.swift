@@ -36,19 +36,29 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             return
         }
         
-        queue.async { [self] in
-            guard !failures.contains(where: { $0.inappId == inappId }) else {
+            if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
+                guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
+                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
+                    return
+                }
+                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
+                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
                 return
             }
 
-            let failure = InAppShowFailure(
-                inappId: inappId,
-                failureReason: reason,
-                errorDetails: details,
-                dateTimeUtc: Date().toString(withFormat: .utc)
-            )
+        queue.async { [self] in
+            if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
+                guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
+                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
+                    return
+                }
+                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
+                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
+                return
+            }
 
-            failures.append(failure)
+            failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
+            print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
         }
     }
 
@@ -68,7 +78,6 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             guard !failures.isEmpty else {
                 return
             }
-
             let eventBody = InAppShowFailuresBody(failures: failures)
             let event = Event(type: .inAppShowFailureEvent, body: BodyEncoder(encodable: eventBody).body)
 
@@ -82,6 +91,39 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                     category: .inAppMessages
                 )
             }
+        }
+    }
+
+    private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?) -> InAppShowFailure {
+        InAppShowFailure(
+            inappId: inappId,
+            failureReason: reason,
+            errorDetails: details,
+            dateTimeUtc: Date().toString(withFormat: .utc)
+        )
+    }
+
+    private func shouldReplaceFailure(currentReason: InAppShowFailureReason, newReason: InAppShowFailureReason) -> Bool {
+        guard
+            let currentPriority = targetingFailurePriority(for: currentReason),
+            let newPriority = targetingFailurePriority(for: newReason)
+        else {
+            return false
+        }
+
+        return newPriority > currentPriority
+    }
+
+    private func targetingFailurePriority(for reason: InAppShowFailureReason) -> Int? {
+        switch reason {
+        case .customerSegmentRequestFailed:
+            return 3
+        case .geoTargetingFailed:
+            return 2
+        case .productSegmentRequestFailed:
+            return 1
+        default:
+            return nil
         }
     }
 }

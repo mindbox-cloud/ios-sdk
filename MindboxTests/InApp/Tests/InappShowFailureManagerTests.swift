@@ -88,6 +88,58 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "first")
     }
 
+    func testAddFailure_targetingFailure_priorityReplacesExisting() throws {
+        manager.addFailure(
+            inappId: "inapp-priority",
+            reason: .productSegmentRequestFailed,
+            details: "product"
+        )
+        manager.addFailure(
+            inappId: "inapp-priority",
+            reason: .geoTargetingFailed,
+            details: "geo"
+        )
+        manager.addFailure(
+            inappId: "inapp-priority",
+            reason: .customerSegmentRequestFailed,
+            details: "segment"
+        )
+
+        manager.sendFailures()
+
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failures = try XCTUnwrap(decodeFailures(from: event))
+        XCTAssertEqual(failures.count, 1)
+        XCTAssertEqual(failures[0].failureReason, .customerSegmentRequestFailed)
+        XCTAssertEqual(failures[0].errorDetails, "segment")
+    }
+
+    func testAddFailure_targetingFailure_priorityDoesNotDowngrade() throws {
+        manager.addFailure(
+            inappId: "inapp-priority-no-downgrade",
+            reason: .customerSegmentRequestFailed,
+            details: "segment"
+        )
+        manager.addFailure(
+            inappId: "inapp-priority-no-downgrade",
+            reason: .geoTargetingFailed,
+            details: "geo"
+        )
+        manager.addFailure(
+            inappId: "inapp-priority-no-downgrade",
+            reason: .productSegmentRequestFailed,
+            details: "product"
+        )
+
+        manager.sendFailures()
+
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failures = try XCTUnwrap(decodeFailures(from: event))
+        XCTAssertEqual(failures.count, 1)
+        XCTAssertEqual(failures[0].failureReason, .customerSegmentRequestFailed)
+        XCTAssertEqual(failures[0].errorDetails, "segment")
+    }
+
     func testClearFailures_removesBufferedFailures() {
         manager.addFailure(
             inappId: "inapp-clear",

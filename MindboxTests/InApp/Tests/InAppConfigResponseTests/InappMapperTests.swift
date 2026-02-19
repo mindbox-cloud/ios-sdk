@@ -160,7 +160,7 @@ struct InappRemainingTargetingTests {
     func oneInappGeo_notShownBefore() async throws {
         let config = try InappTargetingConfig.sevenRequests.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
@@ -171,7 +171,7 @@ struct InappRemainingTargetingTests {
     func oneTrue_oneGeo_notShownBefore() async throws {
         let config = try InappTargetingConfig.eightRequests.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
@@ -184,7 +184,7 @@ struct InappRemainingTargetingTests {
 
         persistenceStorage.shownDatesByInApp = ["1": [Date()]]
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         targetingChecker.checkedSegmentations = [
             .init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)
@@ -282,7 +282,7 @@ struct InappRemainingTargetingTests {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
         persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // variant 1
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         // Initial request
         await handleInapps(event: nil, config: config)
@@ -304,7 +304,7 @@ struct InappRemainingTargetingTests {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
         persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // variant 2
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         await handleInapps(event: nil, config: config)
         await waitForTargetingArray(expectedCount: 3)
@@ -322,7 +322,7 @@ struct InappRemainingTargetingTests {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
         persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // variant 3
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         await handleInapps(event: nil, config: config)
         await waitForTargetingArray(expectedCount: 3)
@@ -341,7 +341,7 @@ struct InappRemainingTargetingTests {
     func geoFitOrTest_operationTest_operationTest_operationTest2_geo() async throws {
         let config = try InappTargetingConfig.fortyFourTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         // Initial geo-based call
         await handleInapps(event: nil, config: config)
@@ -367,7 +367,7 @@ struct InappRemainingTargetingTests {
     func geo_operationTest_operationTest_operationTest2_geoFitOrTest() async throws {
         let config = try InappTargetingConfig.fortyFiveTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         // Initial geo-based call
         await handleInapps(event: nil, config: config)
@@ -393,7 +393,7 @@ struct InappRemainingTargetingTests {
     func geoFitOrTest_operationTest_operationTest_operationTest2_geoFitOrTest() async throws {
         let config = try InappTargetingConfig.fortySixTargeting.getConfig()
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
         // Initial geo-based call
         await handleInapps(event: nil, config: config)

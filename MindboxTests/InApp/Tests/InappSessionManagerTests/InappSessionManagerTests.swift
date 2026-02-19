@@ -168,7 +168,7 @@ final class InappSessionManagerTests: XCTestCase {
 
         SessionTemporaryStorage.shared.observedCustomOperations = ["Test"]
         SessionTemporaryStorage.shared.viewProductOperation = "Test2"
-        SessionTemporaryStorage.shared.geoRequestCompleted = true
+        SessionTemporaryStorage.shared.geoRequestResult = .success(nil)
         SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.sessionShownInApps = ["1"]
@@ -187,7 +187,7 @@ final class InappSessionManagerTests: XCTestCase {
         
         XCTAssertEqual(SessionTemporaryStorage.shared.observedCustomOperations, [])
         XCTAssertEqual(SessionTemporaryStorage.shared.viewProductOperation, nil)
-        XCTAssertEqual(SessionTemporaryStorage.shared.geoRequestCompleted, false)
+        XCTAssertNil(SessionTemporaryStorage.shared.geoRequestResult)
         XCTAssertEqual(SessionTemporaryStorage.shared.checkSegmentsRequestCompleted, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])

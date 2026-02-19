@@ -20,12 +20,12 @@ final class SegmentationServiceTests: XCTestCase {
 
         sut = DI.injectOrFail(SegmentationServiceProtocol.self) as? SegmentationService
         let customerSegmentAPI = CustomerSegmentsAPI { _, completion in
-            completion(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
-                                                                             segment: .init(ids: .init(externalId: "2")))]))
+            completion(.success(.init(status: .success, customerSegmentations: [.init(segmentation: .init(ids: .init(externalId: "1")),
+                                                                                      segment: .init(ids: .init(externalId: "2")))])))
         } fetchProductSegments: { _, completion in
-            completion(.init(status: .success, products: [.init(ids: ["Hello": "World"],
-                                                                segmentations: [.init(ids: .init(externalId: "123"),
-                                                                                      segment: .init(ids: .init(externalId: "456")))])]))
+            completion(.success(.init(status: .success, products: [.init(ids: ["Hello": "World"],
+                                                                         segmentations: [.init(ids: .init(externalId: "123"),
+                                                                                               segment: .init(ids: .init(externalId: "456")))])])))
         }
 
         sut.customerSegmentsAPI = customerSegmentAPI
@@ -46,8 +46,10 @@ final class SegmentationServiceTests: XCTestCase {
 
         let expectations = expectation(description: "test_checkSegmentation_requestCompleted")
         var result: [SegmentationCheckResponse.CustomerSegmentation]?
-        sut.checkSegmentationRequest { segmentations in
-            result = segmentations
+        sut.checkSegmentationRequest { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
@@ -62,8 +64,10 @@ final class SegmentationServiceTests: XCTestCase {
     func test_checkSegmentation_segmentsEmpty_returnNil() throws {
         var result: [SegmentationCheckResponse.CustomerSegmentation]?
         let expectations = expectation(description: "test_checkSegmentation_segmentsEmpty_returnNil")
-        sut.checkSegmentationRequest { segmentations in
-            result = segmentations
+        sut.checkSegmentationRequest { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
@@ -80,8 +84,10 @@ final class SegmentationServiceTests: XCTestCase {
         targetingChecker.context.segments.append("123")
         let expectations = expectation(description: "test_checkSegmentation_request_valid")
 
-        sut.checkSegmentationRequest { segmentations in
-            result = segmentations
+        sut.checkSegmentationRequest { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
@@ -94,8 +100,10 @@ final class SegmentationServiceTests: XCTestCase {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         let expectations = expectation(description: "test_checkProductSegmentation_isPresentingInAppMessage")
         var result: [InAppProductSegmentResponse.CustomerSegmentation]?
-        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { segmentations in
-            result = segmentations
+        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
@@ -106,8 +114,10 @@ final class SegmentationServiceTests: XCTestCase {
     func test_checkProductSegmentation_segmentsEmpty_returnNil() throws {
         var result: [InAppProductSegmentResponse.CustomerSegmentation]?
         let expectations = expectation(description: "test_checkProductSegmentation_segmentsEmpty_returnNil")
-        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { segmentations in
-            result = segmentations
+        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
@@ -126,13 +136,75 @@ final class SegmentationServiceTests: XCTestCase {
         targetingChecker.context.productSegments.append("0000")
         let expectations = expectation(description: "test_geo_request")
 
-        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { segmentations in
-            result = segmentations
+        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { response in
+            if case .success(let segmentations) = response {
+                result = segmentations
+            }
             expectations.fulfill()
         }
 
         waitForExpectations(timeout: 1)
 
         XCTAssertEqual(result, expectedModel)
+    }
+
+    func test_checkSegmentation_request_serverError_returnsFailure() {
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            completion(.failure(.serverError(.init(
+                status: .internalServerError,
+                errorMessage: "Internal Server error",
+                httpStatusCode: 500
+            ))))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+        targetingChecker.context.segments.append("123")
+        let expectation = expectation(description: "segmentation request should return server error")
+        var receivedError: MindboxError?
+
+        sut.checkSegmentationRequest { result in
+            if case .failure(let error) = result {
+                receivedError = error
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        guard case .serverError(let protocolError) = receivedError else {
+            XCTFail("Expected serverError")
+            return
+        }
+        XCTAssertEqual(protocolError.httpStatusCode, 500)
+    }
+
+    func test_checkProductSegmentation_request_serverError_returnsFailure() {
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            completion(.success(.init(status: .success, customerSegmentations: [])))
+        } fetchProductSegments: { _, completion in
+            completion(.failure(.serverError(.init(
+                status: .internalServerError,
+                errorMessage: "Internal Server error",
+                httpStatusCode: 500
+            ))))
+        }
+        targetingChecker.context.productSegments.append("0000")
+        let expectation = expectation(description: "product segmentation request should return server error")
+        var receivedError: MindboxError?
+
+        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { result in
+            if case .failure(let error) = result {
+                receivedError = error
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        guard case .serverError(let protocolError) = receivedError else {
+            XCTFail("Expected serverError")
+            return
+        }
+        XCTAssertEqual(protocolError.httpStatusCode, 500)
     }
 }
