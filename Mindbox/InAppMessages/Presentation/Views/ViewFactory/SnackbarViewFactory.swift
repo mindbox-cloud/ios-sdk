@@ -26,14 +26,16 @@ class SnackbarViewFactory: ViewFactoryProtocol {
                                                                        snackbarView: snackbarView,
                                                                        firstImageValue: params.firstImageValue,
                                                                        onPresented: params.onPresented,
-                                                                       onTapAction: params.onTapAction)
+                                                                       onTapAction: params.onTapAction,
+                                                                       onClose: params.onClose)
                     case .bottom:
                     snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant,
                                                                           imagesDict: params.imagesDict,
                                                                           snackbarView: snackbarView,
                                                                           firstImageValue: params.firstImageValue,
                                                                           onPresented: params.onPresented,
-                                                                          onTapAction: params.onTapAction)
+                                                                          onTapAction: params.onTapAction,
+                                                                          onClose: params.onClose)
                     default:
                         Logger.common(message: "SnackbarViewFactory controller is nil.")
                         return nil

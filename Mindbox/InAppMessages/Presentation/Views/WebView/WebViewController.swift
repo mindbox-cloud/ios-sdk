@@ -37,7 +37,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
-    private let onClickAction: InAppMessageTapAction?
+    private let onTapAction: InAppMessageTapAction
     var isTimeoutClose = false
 
     private var viewWillAppearWasCalled = false
@@ -55,7 +55,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
-        onClickAction: InAppMessageTapAction?,
+        onTapAction: @escaping InAppMessageTapAction,
         onCloseInApp: @escaping () -> Void,
         operation: (name: String, body: String)?
     ) {
@@ -65,7 +65,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
-        self.onClickAction = onClickAction
+        self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -201,22 +201,10 @@ extension WebViewController: WebViewAction {
         do {
             let jsonData = data.data(using: .utf8) ?? Data()
             let dto = try JSONDecoder().decode(ContentBackgroundLayerActionDTO.self, from: jsonData)
-            let url: URL?
-            let payload: String
+            let action = try LayerActionFilterService().filter(dto)
 
-            switch dto {
-            case .redirectUrl(let model):
-                url = URL(string: model.value ?? "")
-                payload = model.intentPayload ?? ""
-            case .pushPermission(let model):
-                url = nil
-                payload = model.intentPayload ?? ""
-            case .unknown:
-                url = nil
-                payload = ""
-            }
-
-            onClickAction?(url, payload)
+            guard let tapData = action.handleTap() else { return }
+            onTapAction(tapData.url, tapData.payload)
         } catch {
             Logger.common(message: "[WebView] WebViewVC completedWebView. Error on decoding or filtering action. Error: \(error)", category: .webViewInAppMessages)
         }
