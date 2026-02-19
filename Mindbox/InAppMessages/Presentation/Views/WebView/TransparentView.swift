@@ -196,7 +196,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
         lastReadyCheckedUrl = urlString
         isReadyCheckInFlight = true
 
-        let script = Constants.WebViewBridgeJS.receiveFromSDKReadyCheck
+        let script = Constants.WebViewBridgeJS.bridgeFunctionReadyCheck
         facade?.evaluateJavaScript(script) { [weak self] result in
             guard let self else { return }
             self.isReadyCheckInFlight = false
@@ -209,7 +209,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
                     category: .webViewInAppMessages
                 )
                 if !hasReady {
-                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.receiveFromSDK is missing for URL \(urlString)")
+                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.bridgeMessagesHandlers.emit is missing for URL \(urlString)")
                 }
 
             case .failure(let error):
