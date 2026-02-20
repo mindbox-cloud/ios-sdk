@@ -14,7 +14,7 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var presentCallsCount = 0
     var receivedOnPresent: (() -> Void)?
     var receivedOnPresentationCompleted: (() -> Void)?
-    var receivedOnError: ((InAppPresentationError?) -> Void)?
+    var receivedOnError: ((InAppPresentationError) -> Void)?
 
     func present(inAppFormData: InAppFormData,
                  onPresented: @escaping () -> Void,
@@ -25,5 +25,6 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
         receivedInAppUIModel = inAppFormData
         receivedOnPresent = onPresented
         receivedOnPresentationCompleted = onPresentationCompleted
+        receivedOnError = onError
     }
 }

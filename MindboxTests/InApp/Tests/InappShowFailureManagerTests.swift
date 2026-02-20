@@ -39,7 +39,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
         manager.sendFailures()
 
-        XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+        assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         XCTAssertEqual(event.type, .inAppShowFailureEvent)
 
@@ -59,6 +59,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
         manager.sendFailures()
 
+        assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
         XCTAssertFalse(failure.dateTimeUtc.isEmpty)
@@ -79,6 +80,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
         manager.sendFailures()
 
+        assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failures = try XCTUnwrap(decodeFailures(from: event))
         XCTAssertEqual(failures.count, 1)
@@ -93,10 +95,9 @@ final class InappShowFailureManagerTests: XCTestCase {
             details: "clear me"
         )
         manager.clearFailures()
-
         manager.sendFailures()
 
-        XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
+        assertCreatedEventsCountEventually(0)
     }
 
     func testSendFailures_success_clearsBufferedFailures() {
@@ -109,7 +110,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.sendFailures()
         manager.sendFailures()
 
-        XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+        assertCreatedEventsCountEventually(1)
     }
 
     func testSendFailures_createEventFails_keepsBufferedFailures() {
@@ -121,11 +122,26 @@ final class InappShowFailureManagerTests: XCTestCase {
         databaseRepository.createError = InappShowFailureRepositoryError.createFailed
 
         manager.sendFailures()
-        XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
+        assertCreatedEventsCountEventually(0)
 
         databaseRepository.createError = nil
         manager.sendFailures()
-        XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+        assertCreatedEventsCountEventually(1)
+    }
+    
+    func testAddFailure_whenFeatureDisabled_doesNotBufferFailure() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+        
+        manager.addFailure(
+            inappId: "inapp-add-disabled",
+            reason: .presentationFailed,
+            details: "should be ignored"
+        )
+        
+        applyFeatureToggle(shouldSendInAppShowError: true)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(0)
     }
     
     func testSendFailures_whenFeatureDisabled_doesNotSendAndKeepsBufferedFailures() throws {
@@ -135,14 +151,14 @@ final class InappShowFailureManagerTests: XCTestCase {
             details: "disabled"
         )
         applyFeatureToggle(shouldSendInAppShowError: false)
-        
+
         manager.sendFailures()
-        XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
-        
+        assertCreatedEventsCountEventually(0)
+
         applyFeatureToggle(shouldSendInAppShowError: true)
         manager.sendFailures()
-        
-        XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+
+        assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
         XCTAssertEqual(failure.inappId, "inapp-toggle-disabled")
@@ -178,6 +194,39 @@ private extension InappShowFailureManagerTests {
         let settings = try? JSONDecoder().decode(Settings.self, from: settingsData)
         featureToggleManager.applyFeatureToggles(settings?.featureToggles)
     }
+
+    func assertCreatedEventsCountEventually(
+        _ expectedCount: Int,
+        timeout: TimeInterval = 1,
+        settleTime: TimeInterval = 0.05,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        _ = waitUntil(timeout: timeout) {
+            databaseRepository.createdEvents.count == expectedCount
+        }
+
+        // Let pending async tasks finish and verify count is stable.
+        RunLoop.current.run(until: Date().addingTimeInterval(settleTime))
+        XCTAssertEqual(databaseRepository.createdEvents.count, expectedCount, file: file, line: line)
+    }
+
+    @discardableResult
+    func waitUntil(
+        timeout: TimeInterval,
+        pollInterval: TimeInterval = 0.01,
+        condition: () -> Bool
+    ) -> Bool {
+        let timeoutDate = Date().addingTimeInterval(timeout)
+        while Date() < timeoutDate {
+            if condition() {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(pollInterval))
+        }
+
+        return condition()
+    }
 }
 
 private enum InappShowFailureRepositoryError: Error {
@@ -190,14 +239,26 @@ private final class InappShowFailureDatabaseRepositoryMock: DatabaseRepositoryPr
     var deprecatedLimit: Int = 0
     var onObjectsDidChange: (() -> Void)?
 
-    var createError: Error?
-    private(set) var createdEvents: [Event] = []
+    private let stateQueue = DispatchQueue(label: "com.Mindbox.InappShowFailureDatabaseRepositoryMock.state")
+    private var _createError: Error?
+    private var _createdEvents: [Event] = []
+
+    var createError: Error? {
+        get { stateQueue.sync { _createError } }
+        set { stateQueue.sync { _createError = newValue } }
+    }
+
+    var createdEvents: [Event] {
+        stateQueue.sync { _createdEvents }
+    }
 
     func create(event: Event) throws {
-        if let createError {
-            throw createError
+        try stateQueue.sync {
+            if let createError = _createError {
+                throw createError
+            }
+            _createdEvents.append(event)
         }
-        createdEvents.append(event)
     }
 
     func readEvent(by transactionId: String) throws -> Event? {
@@ -219,7 +280,9 @@ private final class InappShowFailureDatabaseRepositoryMock: DatabaseRepositoryPr
     }
 
     func erase() throws {
-        createdEvents.removeAll()
+        stateQueue.sync {
+            _createdEvents.removeAll()
+        }
     }
 
     func countEvents() throws -> Int {

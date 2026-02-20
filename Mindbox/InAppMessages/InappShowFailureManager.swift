@@ -31,7 +31,16 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
-        queue.sync {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            Logger.common(
+                message: "[InappShowFailureManager] addFailure ignored, feature is disabled",
+                level: .debug,
+                category: .inAppMessages
+            )
+            return
+        }
+        
+        queue.async { [self] in
             guard !failures.contains(where: { $0.inappId == inappId }) else {
                 return
             }
@@ -48,17 +57,22 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     func clearFailures() {
-        queue.sync {
+        queue.async { [self] in
             failures.removeAll()
         }
     }
 
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            Logger.common(
+                message: "[InappShowFailureManager] sendFailures ignored, feature is disabled",
+                level: .debug,
+                category: .inAppMessages
+            )
             return
         }
         
-        queue.sync {
+        queue.async { [self] in
             guard !failures.isEmpty else {
                 return
             }
