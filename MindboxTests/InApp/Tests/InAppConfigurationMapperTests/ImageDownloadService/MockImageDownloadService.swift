@@ -7,16 +7,24 @@
 //
 
 import UIKit
-import MindboxLogger
 @testable import Mindbox
 
 class MockImageDownloadService: ImageDownloadServiceProtocol {
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
+    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         if url == "https://example.com/image.jpg" {
             completion(.success(UIImage()))
         } else {
-            let error = NSError(domain: "", code: NSURLErrorCannotDecodeContentData, userInfo: nil)
-            completion(.failure(error))
+            completion(
+                .failure(
+                    MindboxError.protocolError(
+                        ProtocolError(
+                            status: Status.protocolError,
+                            errorMessage: "Mock image download failed",
+                            httpStatusCode: 404
+                        )
+                    )
+                )
+            )
         }
     }
 }
