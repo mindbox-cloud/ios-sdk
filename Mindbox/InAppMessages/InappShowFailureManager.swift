@@ -32,7 +32,11 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            print("❌ [InappShowFailureManager] addFailure ignored. Feature is disabled")
+            Logger.common(
+                message: "[InappShowFailureManager] addFailure ignored, feature is disabled",
+                level: .debug,
+                category: .inAppMessages
+            )
             return
         }
         
@@ -60,7 +64,11 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            print("❌ [InappShowFailureManager] sendFailures not called. Feature is disabled")
+            Logger.common(
+                message: "[InappShowFailureManager] sendFailures ignored, feature is disabled",
+                level: .debug,
+                category: .inAppMessages
+            )
             return
         }
         

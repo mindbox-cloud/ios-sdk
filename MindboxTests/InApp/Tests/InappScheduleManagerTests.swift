@@ -15,18 +15,20 @@ struct InappScheduleManagerTests {
     private var scheduleManager: InappScheduleManager
     private var presentationManagerMock: InAppPresentationManagerMock
     private var trackingServiceMock: InAppTrackingServiceMock
+    private var failureManagerMock: InappShowFailureManagerMock
 
     init() {
         TestConfiguration.configure()
 
         presentationManagerMock = InAppPresentationManagerMock()
         trackingServiceMock = InAppTrackingServiceMock()
+        failureManagerMock = InappShowFailureManagerMock()
 
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
             trackingService: trackingServiceMock,
-            failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self)
+            failureManager: failureManagerMock
         )
 
         SessionTemporaryStorage.shared.erase()
@@ -312,6 +314,30 @@ struct InappScheduleManagerTests {
             #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp2.inAppId)
         }
     }
+    
+    @Test("In-app success callback clears buffered failures", .tags(.inAppSchedule))
+    func presentInapp_onPresented_clearsFailures() {
+        let inapp = createInAppFormData(id: "success-id", isPriority: false, delayTime: nil)
+
+        scheduleManager.presentInapp(inapp)
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(failureManagerMock.clearFailuresCallCount == 0)
+
+        presentationManagerMock.receivedOnPresent?()
+        #expect(failureManagerMock.clearFailuresCallCount == 1)
+    }
+    
+    @Test("In-app error callback sends buffered failures", .tags(.inAppSchedule))
+    func presentInapp_onError_sendsFailures() {
+        let inapp = createInAppFormData(id: "error-id", isPriority: false, delayTime: nil)
+
+        scheduleManager.presentInapp(inapp)
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
+
+        presentationManagerMock.receivedOnError?(.failedToLoadWindow)
+        #expect(failureManagerMock.sendFailuresCallCount == 1)
+    }
 
     // MARK: - Helpers
 
@@ -350,5 +376,23 @@ class InAppTrackingServiceMock: InAppTrackingServiceProtocol {
     
     func saveInappStateChange() {
         saveInappStateChangeCallCount += 1
+    }
+}
+
+final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
+    private(set) var addFailureCallCount = 0
+    private(set) var clearFailuresCallCount = 0
+    private(set) var sendFailuresCallCount = 0
+
+    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
+        addFailureCallCount += 1
+    }
+
+    func clearFailures() {
+        clearFailuresCallCount += 1
+    }
+
+    func sendFailures() {
+        sendFailuresCallCount += 1
     }
 }
