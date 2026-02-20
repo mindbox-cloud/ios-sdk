@@ -93,7 +93,6 @@ final class InappShowFailureManagerTests: XCTestCase {
             details: "clear me"
         )
         manager.clearFailures()
-
         manager.sendFailures()
 
         XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
@@ -126,6 +125,21 @@ final class InappShowFailureManagerTests: XCTestCase {
         databaseRepository.createError = nil
         manager.sendFailures()
         XCTAssertEqual(databaseRepository.createdEvents.count, 1)
+    }
+    
+    func testAddFailure_whenFeatureDisabled_doesNotBufferFailure() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+        
+        manager.addFailure(
+            inappId: "inapp-add-disabled",
+            reason: .presentationFailed,
+            details: "should be ignored"
+        )
+        
+        applyFeatureToggle(shouldSendInAppShowError: true)
+        manager.sendFailures()
+        
+        XCTAssertTrue(databaseRepository.createdEvents.isEmpty)
     }
     
     func testSendFailures_whenFeatureDisabled_doesNotSendAndKeepsBufferedFailures() throws {

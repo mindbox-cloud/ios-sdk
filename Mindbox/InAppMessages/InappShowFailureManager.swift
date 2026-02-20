@@ -31,6 +31,11 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            print("❌ [InappShowFailureManager] addFailure ignored. Feature is disabled")
+            return
+        }
+        
         queue.sync {
             guard !failures.contains(where: { $0.inappId == inappId }) else {
                 return
@@ -55,6 +60,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            print("❌ [InappShowFailureManager] sendFailures not called. Feature is disabled")
             return
         }
         
