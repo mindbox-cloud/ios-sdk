@@ -39,10 +39,11 @@ final class SegmentationServiceTests: XCTestCase {
     }
 
     func test_checkSegmentation_requestCompleted() throws {
-        targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "Completed")),
-                                                       segment: .init(ids: .init(externalId: "Completed")))]
-
-        SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
+        let expectedModel: [SegmentationCheckResponse.CustomerSegmentation] = [
+            .init(segmentation: .init(ids: .init(externalId: "Completed")),
+                  segment: .init(ids: .init(externalId: "Completed")))
+        ]
+        SessionTemporaryStorage.shared.segmentationRequestResult = .success(expectedModel)
 
         let expectations = expectation(description: "test_checkSegmentation_requestCompleted")
         var result: [SegmentationCheckResponse.CustomerSegmentation]?
@@ -52,9 +53,6 @@ final class SegmentationServiceTests: XCTestCase {
             }
             expectations.fulfill()
         }
-
-        let expectedModel: [SegmentationCheckResponse.CustomerSegmentation] = [.init(segmentation: .init(ids: .init(externalId: "Completed")),
-                                                                                     segment: .init(ids: .init(externalId: "Completed")))]
 
         waitForExpectations(timeout: 1)
 
@@ -176,6 +174,114 @@ final class SegmentationServiceTests: XCTestCase {
             return
         }
         XCTAssertEqual(protocolError.httpStatusCode, 500)
+    }
+
+    func test_checkSegmentation_whenPreviousRequestSucceeded_returnsCachedSuccess() {
+        var requestCallCount = 0
+        let expectedModel: [SegmentationCheckResponse.CustomerSegmentation] = [
+            .init(segmentation: .init(ids: .init(externalId: "cached")),
+                  segment: .init(ids: .init(externalId: "success")))
+        ]
+
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.success(.init(status: .success, customerSegmentations: expectedModel)))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+        targetingChecker.context.segments.append("123")
+
+        let expectation = expectation(description: "segmentation request should use cached success")
+        expectation.expectedFulfillmentCount = 2
+        var firstResult: [SegmentationCheckResponse.CustomerSegmentation]?
+        var secondResult: [SegmentationCheckResponse.CustomerSegmentation]?
+
+        sut.checkSegmentationRequest { result in
+            if case .success(let segmentations) = result {
+                firstResult = segmentations
+            }
+            expectation.fulfill()
+        }
+
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.failure(.serverError(.init(
+                status: .internalServerError,
+                errorMessage: "Should not be called",
+                httpStatusCode: 500
+            ))))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+
+        sut.checkSegmentationRequest { result in
+            if case .success(let segmentations) = result {
+                secondResult = segmentations
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        XCTAssertEqual(firstResult, expectedModel)
+        XCTAssertEqual(secondResult, expectedModel)
+        XCTAssertEqual(requestCallCount, 1)
+    }
+
+    func test_checkSegmentation_whenPreviousRequestFailed_returnsCachedFailure() {
+        var requestCallCount = 0
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.failure(.serverError(.init(
+                status: .internalServerError,
+                errorMessage: "Internal Server error",
+                httpStatusCode: 500
+            ))))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+        targetingChecker.context.segments.append("123")
+
+        let expectation = expectation(description: "segmentation request should use cached failure")
+        expectation.expectedFulfillmentCount = 2
+        var firstError: MindboxError?
+        var secondError: MindboxError?
+
+        sut.checkSegmentationRequest { result in
+            if case .failure(let error) = result {
+                firstError = error
+            }
+            expectation.fulfill()
+        }
+
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.success(.init(status: .success, customerSegmentations: [])))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+
+        sut.checkSegmentationRequest { result in
+            if case .failure(let error) = result {
+                secondError = error
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        guard case .serverError(let firstProtocolError) = firstError else {
+            XCTFail("Expected cached serverError on first call")
+            return
+        }
+        guard case .serverError(let secondProtocolError) = secondError else {
+            XCTFail("Expected cached serverError on second call")
+            return
+        }
+
+        XCTAssertEqual(firstProtocolError.httpStatusCode, 500)
+        XCTAssertEqual(secondProtocolError.httpStatusCode, 500)
+        XCTAssertEqual(requestCallCount, 1)
     }
 
     func test_checkProductSegmentation_request_serverError_returnsFailure() {

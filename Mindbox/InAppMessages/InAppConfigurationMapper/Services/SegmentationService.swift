@@ -32,8 +32,8 @@ class SegmentationService: SegmentationServiceProtocol {
     func checkSegmentationRequest(
         completion: @escaping (Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>) -> Void
     ) {
-        if SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
-            completion(.success(targetingChecker.checkedSegmentations))
+        if let cachedResult = SessionTemporaryStorage.shared.segmentationRequestResult {
+            completion(cachedResult)
             return
         }
 
@@ -50,19 +50,21 @@ class SegmentationService: SegmentationServiceProtocol {
         let model = SegmentationCheckRequest(segmentations: segments)
 
         customerSegmentsAPI.fetchSegments(model) { result in
-            SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
             switch result {
             case .success(let response):
                 guard response.status == .success else {
                     Logger.common(message: "Customer Segment does not exist, or response status not equal to Success. Status: \(response.status).", level: .debug, category: .inAppMessages)
+                    SessionTemporaryStorage.shared.segmentationRequestResult = .success(nil)
                     completion(.success(nil))
                     return
                 }
 
                 Logger.common(message: "Customer Segment response: \n\(response)")
+                SessionTemporaryStorage.shared.segmentationRequestResult = .success(response.customerSegmentations)
                 completion(.success(response.customerSegmentations))
             case .failure(let error):
                 Logger.error(error.asLoggerError())
+                SessionTemporaryStorage.shared.segmentationRequestResult = .failure(error)
                 completion(.failure(error))
             }
         }

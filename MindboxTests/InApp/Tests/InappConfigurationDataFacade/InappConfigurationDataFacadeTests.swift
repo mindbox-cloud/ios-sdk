@@ -232,6 +232,67 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
     }
 
+    func test_addFailure_whenSegmentationRequestFailedBefore_returnsCachedFailureOnNextFetch() {
+        SessionTemporaryStorage.shared.segmentationRequestResult = nil
+        let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        targetingChecker.eraseCache()
+        targetingChecker.context.segmentInapps = ["inapp-segment"]
+        targetingChecker.context.segments = ["segment-id"]
+
+        let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
+        let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+        let localFailureManager = MockInappShowFailureManager()
+
+        var requestCallCount = 0
+        var shouldReturnFailure = true
+        let segmentationService = SegmentationService(
+            customerSegmentsAPI: CustomerSegmentsAPI(
+                fetchSegments: { _, completion in
+                    requestCallCount += 1
+                    if shouldReturnFailure {
+                        completion(.failure(.serverError(.init(
+                            status: .internalServerError,
+                            errorMessage: "Internal Server error",
+                            httpStatusCode: 500
+                        ))))
+                    } else {
+                        completion(.success(.init(status: .success, customerSegmentations: [])))
+                    }
+                },
+                fetchProductSegments: { _, completion in
+                    completion(.success(.init(status: .success, products: nil)))
+                }
+            ),
+            targetingChecker: targetingChecker
+        )
+
+        let facade = InAppConfigurationDataFacade(
+            segmentationService: segmentationService,
+            targetingChecker: targetingChecker,
+            imageService: imageService,
+            tracker: tracker,
+            failureManager: localFailureManager
+        )
+
+        let firstExpectation = expectation(description: "first fetch dependencies")
+        facade.fetchDependencies(model: nil) {
+            firstExpectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+
+        shouldReturnFailure = false
+        let secondExpectation = expectation(description: "second fetch dependencies")
+        facade.fetchDependencies(model: nil) {
+            secondExpectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+
+        XCTAssertEqual(requestCallCount, 1)
+        XCTAssertEqual(localFailureManager.failures.count, 2)
+        XCTAssertTrue(localFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
+        XCTAssertEqual(localFailureManager.failures.map { $0.inappId }, ["inapp-segment", "inapp-segment"])
+    }
+
     func test_addFailure_whenGeoReturnsServerError() {
         let networkFetcher = DI.injectOrFail(NetworkFetcher.self) as? MockNetworkFetcher
         networkFetcher?.error = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))

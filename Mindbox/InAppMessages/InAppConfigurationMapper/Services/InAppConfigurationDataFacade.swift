@@ -86,24 +86,22 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
 extension InAppConfigurationDataFacade {
     private func fetchSegmentationIfNeeded(shouldCollectFailures: Bool) {
-        if !SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
-            dispatchGroup.enter()
-            segmentationService.checkSegmentationRequest { result in
-                switch result {
-                case .success(let response):
-                    self.targetingChecker.checkedSegmentations = response
-                case .failure(let error):
-                    self.targetingChecker.checkedSegmentations = nil
-                    if shouldCollectFailures {
-                        self.addTargetingFailureIfNeeded(
-                            for: error,
-                            reason: .customerSegmentRequestFailed,
-                            inappIds: self.targetingChecker.context.segmentInapps
-                        )
-                    }
+        dispatchGroup.enter()
+        segmentationService.checkSegmentationRequest { result in
+            switch result {
+            case .success(let response):
+                self.targetingChecker.checkedSegmentations = response
+            case .failure(let error):
+                self.targetingChecker.checkedSegmentations = nil
+                if shouldCollectFailures {
+                    self.addTargetingFailureIfNeeded(
+                        for: error,
+                        reason: .customerSegmentRequestFailed,
+                        inappIds: self.targetingChecker.context.segmentInapps
+                    )
                 }
-                self.dispatchGroup.leave()
             }
+            self.dispatchGroup.leave()
         }
     }
 

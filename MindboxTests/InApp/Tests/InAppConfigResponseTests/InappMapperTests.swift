@@ -189,7 +189,7 @@ struct InappRemainingTargetingTests {
         targetingChecker.checkedSegmentations = [
             .init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)
         ]
-        SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
+        SessionTemporaryStorage.shared.segmentationRequestResult = .success(targetingChecker.checkedSegmentations)
 
         // First pass (no event)
         await handleInapps(event: nil, config: config)
@@ -229,7 +229,7 @@ struct InappRemainingTargetingTests {
         targetingChecker.checkedSegmentations = [
             .init(segmentation: .init(ids: .init(externalId: "0000000")), segment: nil)
         ]
-        SessionTemporaryStorage.shared.checkSegmentsRequestCompleted = true
+        SessionTemporaryStorage.shared.segmentationRequestResult = .success(targetingChecker.checkedSegmentations)
 
         // No event
         await handleInapps(event: nil, config: config)
