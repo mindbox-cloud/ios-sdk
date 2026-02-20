@@ -308,7 +308,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
 
         XCTAssertEqual(mockFailureManager.failures.count, 1)
         XCTAssertEqual(mockFailureManager.failures.first?.inappId, "inapp-geo")
-        XCTAssertEqual(mockFailureManager.failures.first?.reason, .geoTargetingFailed)
+        XCTAssertEqual(mockFailureManager.failures.first?.reason, .geoRequestFailed)
     }
 
     func test_addFailure_whenGeoRequestFailedBefore_returnsCachedFailureOnNextFetch() {
@@ -331,7 +331,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         waitForExpectations(timeout: 1)
 
         XCTAssertEqual(mockFailureManager.failures.count, 2)
-        XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .geoTargetingFailed })
+        XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .geoRequestFailed })
         XCTAssertEqual(mockFailureManager.failures.map { $0.inappId }, ["inapp-geo", "inapp-geo"])
     }
     

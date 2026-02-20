@@ -7,6 +7,7 @@
 //
 
 import Testing
+import Foundation
 @testable import Mindbox
 
 fileprivate enum InappTargetingConfig: String, Configurable {
@@ -56,6 +57,7 @@ struct InappRemainingTargetingTests {
         }
         self.mockDataFacade = mock
         self.mockDataFacade.cleanTargetingArray()
+        self.mockDataFacade.cleanImageDownloadFailures()
 
         self.mapper = DI.injectOrFail(InappMapperProtocol.self)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -154,6 +156,44 @@ struct InappRemainingTargetingTests {
 
         #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
         assertTargetingEquals(ids: ["1", "2"])
+    }
+    
+    @Test("Image download error adds in-app show failure", .tags(.remainingTargeting))
+    func imageDownloadError_addsFailure() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let imageError = MindboxError.serverError(
+            .init(
+                status: .internalServerError,
+                errorMessage: "image download failed",
+                httpStatusCode: 500
+            )
+        )
+        mockDataFacade.downloadImageError = imageError
+        mockDataFacade.cleanImageDownloadFailures()
+        
+        _ = await handleInapps(event: nil, config: config)
+        
+        #expect(mockDataFacade.imageDownloadFailures.count == 1)
+        #expect(mockDataFacade.imageDownloadFailures.first?.inappId == "1")
+        #expect(mockDataFacade.imageDownloadFailures.first?.details == imageError.localizedDescription)
+    }
+    
+    @Test("Image download non-5xx error does not add in-app show failure", .tags(.remainingTargeting))
+    func imageDownloadNon5xxError_doesNotAddFailure() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let imageError = MindboxError.protocolError(
+            .init(
+                status: .protocolError,
+                errorMessage: "not found",
+                httpStatusCode: 404
+            )
+        )
+        mockDataFacade.downloadImageError = imageError
+        mockDataFacade.cleanImageDownloadFailures()
+        
+        _ = await handleInapps(event: nil, config: config)
+        
+        #expect(mockDataFacade.imageDownloadFailures.isEmpty)
     }
 
     @Test("Single geo in-app, not shown before", .tags(.remainingTargeting, .geoTargeting))
