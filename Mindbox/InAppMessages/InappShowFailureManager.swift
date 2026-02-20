@@ -36,7 +36,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             return
         }
         
-        queue.sync {
+        queue.async { [self] in
             guard !failures.contains(where: { $0.inappId == inappId }) else {
                 return
             }
@@ -53,7 +53,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     func clearFailures() {
-        queue.sync {
+        queue.async { [self] in
             failures.removeAll()
         }
     }
@@ -64,7 +64,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             return
         }
         
-        queue.sync {
+        queue.async { [self] in
             guard !failures.isEmpty else {
                 return
             }
