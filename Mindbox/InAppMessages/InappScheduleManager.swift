@@ -25,16 +25,19 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
     let trackingService: InAppTrackingServiceProtocol
+    let failureManager: InappShowFailureManagerProtocol
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
          presentationValidator: InAppPresentationValidatorProtocol,
-         trackingService: InAppTrackingServiceProtocol) {
+         trackingService: InAppTrackingServiceProtocol,
+         failureManager: InappShowFailureManagerProtocol) {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
         self.trackingService = trackingService
+        self.failureManager = failureManager
         addObserver()
     }
     
@@ -102,12 +105,13 @@ internal extension InappScheduleManager {
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         
         Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
-        
+
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
                 self.trackingService.trackInAppShown(id: inapp.inAppId)
                 self.trackingService.saveInappStateChange()
+                self.failureManager.clearFailures()
             },
             onTapAction: { [delegate] url, payload in
                 delegate?.inAppMessageTapAction(
@@ -129,6 +133,8 @@ internal extension InappScheduleManager {
                         level: .debug, category: .inAppMessages
                     )
                 }
+                
+                self.failureManager.sendFailures()
             }
         )
     }

@@ -25,7 +25,8 @@ struct InappScheduleManagerTests {
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: trackingServiceMock
+            trackingService: trackingServiceMock,
+            failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self)
         )
 
         SessionTemporaryStorage.shared.erase()
