@@ -150,13 +150,17 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     }
 
     private func onReceivedInAppResponse(inapp: InAppFormData?, completion: @escaping () -> Void) {
+        let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
         guard let inapp = inapp else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
+            failureManager.sendFailures()
             completion()
             return
         }
         
         inappScheduler.scheduleInApp(inapp)
+        // TODO: - нам не нужен вызов тут, он будет дальше по логике
+        failureManager.sendFailures()
         completion()
     }
 

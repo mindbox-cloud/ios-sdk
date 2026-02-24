@@ -13,6 +13,9 @@ struct PreparationContext {
     var isNeedGeoRequest: Bool = false
     var productSegments: [String] = []
     var operationInapps: [String: Set<String>] = [:]
+    var segmentInapps: Set<String> = []
+    var geoInapps: Set<String> = []
+    var productSegmentInapps: Set<String> = []
 }
 
 protocol ITargetingChecker: AnyObject {
