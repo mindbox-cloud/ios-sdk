@@ -39,24 +39,18 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
         
         queue.async { [self] in
-            guard !failures.contains(where: { $0.inappId == inappId }) else {
+            if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
+                guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
+                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
+                    return
+                }
+                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
+                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
                 return
             }
             
-            queue.async { [self] in
-                if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
-                    guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
-                        print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
-                        return
-                    }
-                    failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
-                    print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
-                    return
-                }
-                
-                failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
-                print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
-            }
+            failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
+            print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
         }
     }
     
