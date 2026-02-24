@@ -29,48 +29,50 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         self.databaseRepository = databaseRepository
         self.featureToggleManager = featureToggleManager
     }
-
+    
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            print("❌ [InappShowFailureManager] addFailure ignored. Feature is disabled")
+            Logger.common(message: "[InappShowFailureManager] addFailure ignored, feature is disabled",
+                          level: .debug,
+                          category: .inAppMessages)
             return
         }
         
-            if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
-                guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
-                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
-                    return
-                }
-                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
-                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
-                return
-            }
-
         queue.async { [self] in
-            if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
-                guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
-                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
-                    return
-                }
-                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
-                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
+            guard !failures.contains(where: { $0.inappId == inappId }) else {
                 return
             }
-
-            failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
-            print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
+            
+            queue.async { [self] in
+                if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
+                    guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
+                        print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
+                        return
+                    }
+                    failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
+                    print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
+                    return
+                }
+                
+                failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
+                print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
+            }
         }
     }
-
+    
     func clearFailures() {
         queue.async { [self] in
             failures.removeAll()
         }
     }
-
+    
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            print("❌ [InappShowFailureManager] sendFailures not called. Feature is disabled")
+            Logger.common(
+                message: "[InappShowFailureManager] sendFailures ignored, feature is disabled",
+                level: .debug,
+                category: .inAppMessages
+            )
             return
         }
         
@@ -93,7 +95,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             }
         }
     }
-
+    
     private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?) -> InAppShowFailure {
         InAppShowFailure(
             inappId: inappId,
