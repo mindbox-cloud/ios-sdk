@@ -106,6 +106,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         )
 
         manager.sendFailures()
+        assertCreatedEventsCountEventually(1)
 
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failures = try XCTUnwrap(decodeFailures(from: event))
@@ -132,6 +133,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         )
 
         manager.sendFailures()
+        assertCreatedEventsCountEventually(1)
 
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failures = try XCTUnwrap(decodeFailures(from: event))
