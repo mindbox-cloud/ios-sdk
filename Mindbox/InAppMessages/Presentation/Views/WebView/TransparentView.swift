@@ -7,8 +7,10 @@
 
 import UIKit
 import WebKit
+import SafariServices
 import MindboxLogger
 
+// swiftlint:disable file_length
 final class TransparentView: UIView {
 
     weak var delegate: WebVCDelegate?
@@ -167,6 +169,9 @@ extension TransparentView: WebBridgeMessageDelegate {
         case Action.syncOperation:
             handleSyncOperation(message: message)
 
+        case Action.navigate:
+            handleNavigate(message: message)
+
         default:
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
@@ -226,11 +231,41 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
     }
     
-    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let url = url {
-            Logger.common(message: "[WebView] WKNavigationDelegate: Navigating by URL \(url.absoluteString)", category: .webViewInAppMessages)
+    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        let urlString = url?.absoluteString ?? "unknown"
+
+        switch navigationType {
+        case .other, .reload, .backForward:
+            Logger.common(
+                message: "[WebView] WKNavigationDelegate: allowing navigation (\(navigationType.debugLabel)) to URL \(urlString)",
+                category: .webViewInAppMessages
+            )
+            decisionHandler(.allow)
+
+        case .linkActivated, .formSubmitted, .formResubmitted:
+            Logger.common(
+                message: "[WebView] WKNavigationDelegate: blocking navigation (\(navigationType.debugLabel)) to URL \(urlString). Forwarding to JS.",
+                category: .webViewInAppMessages
+            )
+            decisionHandler(.cancel)
+
+            if let url = url {
+                let payload: JSONValue = .object(["url": .string(url.absoluteString)])
+                let event = BridgeMessage(
+                    type: .request,
+                    action: BridgeMessage.Action.linkActivated,
+                    payload: payload
+                )
+                facade?.sendToJS(event)
+            }
+
+        @unknown default:
+            Logger.common(
+                message: "[WebView] WKNavigationDelegate: blocking unknown navigation type (\(navigationType.rawValue)) to URL \(urlString)",
+                category: .webViewInAppMessages
+            )
+            decisionHandler(.cancel)
         }
-        decisionHandler(.allow)
     }
 }
 
@@ -324,6 +359,156 @@ extension TransparentView {
                     self?.facade?.sendToJS(errorResponse)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Navigate Handler
+
+extension TransparentView {
+
+    private func handleNavigate(message: BridgeMessage) {
+        guard let urlString = extractNavigateURL(from: message) else {
+            sendBridgeError("Invalid payload: missing or empty 'url' field", action: message.action, id: message.id)
+            return
+        }
+
+        guard let url = URL(string: urlString) else {
+            sendBridgeError("Invalid URL: '\(urlString)' could not be parsed", action: message.action, id: message.id)
+            return
+        }
+
+        let scheme = url.scheme?.lowercased()
+
+        if scheme == "http" || scheme == "https" {
+            Logger.common(
+                message: "[WebView] navigate: trying universal link first for \(urlString)",
+                level: .info,
+                category: .webViewInAppMessages
+            )
+            openAsUniversalLinkOrSafari(url: url, message: message)
+        } else {
+            Logger.common(
+                message: "[WebView] navigate: opening via UIApplication \(urlString)",
+                level: .info,
+                category: .webViewInAppMessages
+            )
+            openViaUIApplication(url: url, message: message)
+        }
+    }
+
+    private func openAsUniversalLinkOrSafari(url: URL, message: BridgeMessage) {
+        DispatchQueue.main.async { [weak self] in
+            UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { opened in
+                DispatchQueue.main.async {
+                    if opened {
+                        Logger.common(
+                            message: "[WebView] navigate: opened as universal link \(url.absoluteString)",
+                            level: .info,
+                            category: .webViewInAppMessages
+                        )
+                        let response = BridgeMessage(
+                            type: .response,
+                            action: message.action,
+                            payload: .object(["success": .bool(true)]),
+                            id: message.id
+                        )
+                        self?.facade?.sendToJS(response)
+                    } else {
+                        Logger.common(
+                            message: "[WebView] navigate: not a universal link, falling back to SFSafariViewController for \(url.absoluteString)",
+                            level: .info,
+                            category: .webViewInAppMessages
+                        )
+                        self?.openInSafariViewController(url: url, message: message)
+                    }
+                }
+            }
+        }
+    }
+
+    private func openInSafariViewController(url: URL, message: BridgeMessage) {
+        guard let presentingVC = delegate as? UIViewController else {
+            Logger.common(
+                message: "[WebView] navigate: no presenting view controller found",
+                level: .default,
+                category: .webViewInAppMessages
+            )
+            sendBridgeError("Failed to open URL: no presenting view controller", action: message.action, id: message.id)
+            return
+        }
+
+        let safariVC = SFSafariViewController(url: url)
+        presentingVC.present(safariVC, animated: true) { [weak self] in
+            Logger.common(
+                message: "[WebView] navigate: SFSafariViewController presented for \(url.absoluteString)",
+                level: .info,
+                category: .webViewInAppMessages
+            )
+            let response = BridgeMessage(
+                type: .response,
+                action: message.action,
+                payload: .object(["success": .bool(true)]),
+                id: message.id
+            )
+            self?.facade?.sendToJS(response)
+        }
+    }
+
+    private func openViaUIApplication(url: URL, message: BridgeMessage) {
+        DispatchQueue.main.async { [weak self] in
+            UIApplication.shared.open(url, options: [:]) { success in
+                DispatchQueue.main.async {
+                    if success {
+                        Logger.common(
+                            message: "[WebView] navigate: successfully opened \(url.absoluteString)",
+                            level: .info,
+                            category: .webViewInAppMessages
+                        )
+                        let response = BridgeMessage(
+                            type: .response,
+                            action: message.action,
+                            payload: .object(["success": .bool(true)]),
+                            id: message.id
+                        )
+                        self?.facade?.sendToJS(response)
+                    } else {
+                        Logger.common(
+                            message: "[WebView] navigate: failed to open \(url.absoluteString)",
+                            level: .default,
+                            category: .webViewInAppMessages
+                        )
+                        self?.sendBridgeError("Failed to open URL: '\(url.absoluteString)'", action: message.action, id: message.id)
+                    }
+                }
+            }
+        }
+    }
+
+    private func extractNavigateURL(from message: BridgeMessage) -> String? {
+        guard case .string(let str) = message.payload,
+              let data = str.data(using: .utf8),
+              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
+              case .string(let urlString) = dict["url"],
+              !urlString.isEmpty else {
+            return nil
+        }
+        return urlString
+    }
+}
+
+// MARK: - WKNavigationType Debug Label
+
+private extension WKNavigationType {
+    var debugLabel: String {
+        switch self {
+        case .linkActivated:    return "linkActivated"
+        case .formSubmitted:    return "formSubmitted"
+        case .backForward:      return "backForward"
+        case .reload:           return "reload"
+        case .formResubmitted:  return "formResubmitted"
+        case .other:            return "other"
+        @unknown default:       return "unknown(\(rawValue))"
         }
     }
 }

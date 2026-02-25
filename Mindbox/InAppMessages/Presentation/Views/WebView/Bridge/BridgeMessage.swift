@@ -145,9 +145,11 @@ public struct BridgeMessage: Codable {
         static let ready = "ready"
         static let asyncOperation = "asyncOperation"
         static let syncOperation = "syncOperation"
+        static let navigate = "navigate"
+        static let linkActivated = "linkActivated"
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher)
-        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation]
+        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, navigate]
     }
 
     enum CodingKeys: String, CodingKey {
