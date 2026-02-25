@@ -114,7 +114,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         switch reason {
         case .customerSegmentRequestFailed:
             return 3
-        case .geoTargetingFailed:
+        case .geoRequestFailed:
             return 2
         case .productSegmentRequestFailed:
             return 1

@@ -96,7 +96,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         )
         manager.addFailure(
             inappId: "inapp-priority",
-            reason: .geoTargetingFailed,
+            reason: .geoRequestFailed,
             details: "geo"
         )
         manager.addFailure(
@@ -123,7 +123,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         )
         manager.addFailure(
             inappId: "inapp-priority-no-downgrade",
-            reason: .geoTargetingFailed,
+            reason: .geoRequestFailed,
             details: "geo"
         )
         manager.addFailure(

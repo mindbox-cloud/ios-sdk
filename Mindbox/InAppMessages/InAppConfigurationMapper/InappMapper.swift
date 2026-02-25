@@ -148,7 +148,7 @@ class InappMapper: InappMapperProtocol {
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.dataFacade.downloadImage(withUrl: imageValue) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId) { result in
                         defer {
                             group.leave()
                         }

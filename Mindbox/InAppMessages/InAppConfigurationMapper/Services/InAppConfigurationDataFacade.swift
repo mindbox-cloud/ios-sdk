@@ -16,7 +16,7 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void)
+    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?)
 }
 
@@ -66,8 +66,15 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
+            if case .failure(let error) = result, case .serverError = error {
+                self.failureManager.addFailure(
+                    inappId: inappId,
+                    reason: .imageDownloadFailed,
+                    details: error.localizedDescription
+                )
+            }
             completion(result)
         }
     }
@@ -118,7 +125,7 @@ extension InAppConfigurationDataFacade {
                     if shouldCollectFailures {
                         self.addTargetingFailureIfNeeded(
                             for: error,
-                            reason: .geoTargetingFailed,
+                            reason: .geoRequestFailed,
                             inappIds: self.targetingChecker.context.geoInapps
                         )
                     }
