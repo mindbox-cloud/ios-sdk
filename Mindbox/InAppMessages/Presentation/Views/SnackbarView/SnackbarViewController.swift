@@ -216,8 +216,12 @@ extension SnackbarViewController: GestureHandler {
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? InAppImageOnlyView,
-              let action = imageView.action,
-              let tapData = action.handleTap() else {
+              let action = imageView.action else {
+            return
+        }
+
+        guard let tapData = action.handleTap() else {
+            onTapAction(nil, "")
             return
         }
 
