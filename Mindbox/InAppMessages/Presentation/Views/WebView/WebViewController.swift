@@ -42,8 +42,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onTapAction: InAppMessageTapAction
     var isTimeoutClose = false
     private var hasReportedTerminalError = false
-
-    private var viewWillAppearWasCalled = false
+    private var hasOnPresentedBeenCalled = false
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
@@ -138,14 +137,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         setupWebView()
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        guard !viewWillAppearWasCalled else { return }
-        viewWillAppearWasCalled = true
-        // TODO: - Перенести эту логику дальше ниже в onInit
-        onPresented()
-    }
-
     // MARK: Private methods
 
     @objc
@@ -208,6 +199,7 @@ extension WebViewController: WebViewAction {
                     window.alpha = 1.0
                 }
                 window.makeKeyAndVisible()
+                self.notifyPresentedIfNeeded()
                 Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
             }
         }
@@ -250,6 +242,14 @@ extension WebViewController: WebViewAction {
 }
 
 private extension WebViewController {
+    func notifyPresentedIfNeeded() {
+        guard !hasOnPresentedBeenCalled else {
+            return
+        }
+        hasOnPresentedBeenCalled = true
+        onPresented()
+    }
+
     func reportErrorAndClose(_ error: InAppPresentationError) {
         guard !hasReportedTerminalError else {
             return
