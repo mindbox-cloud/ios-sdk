@@ -339,6 +339,58 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.sendFailuresCallCount == 1)
     }
 
+    @Test("In-app error callback maps error to show failure payload", .tags(.inAppSchedule))
+    func presentInapp_onError_mapsToFailureReasonAndDetails() {
+        let cases: [(InAppPresentationError, InAppShowFailureReason, String)] = [
+            (.failedToLoadImages, .presentationFailed, "[InAppPresentationError] Failed to load images."),
+            (.failedToLoadWindow, .presentationFailed, "[InAppPresentationError] Failed to load window."),
+            (.failed("presentation-failed-details"), .presentationFailed, "presentation-failed-details"),
+            (.webviewLoadFailed("webview-load-details"), .webviewLoadFailed, "webview-load-details"),
+            (.webviewPresentationFailed("webview-presentation-details"), .webviewPresentationFailed, "webview-presentation-details")
+        ]
+
+        for (index, testCase) in cases.enumerated() {
+            let (error, expectedReason, expectedDetails) = testCase
+            let inapp = createInAppFormData(id: "error-map-\(index)", isPriority: false, delayTime: nil)
+
+            scheduleManager.presentInapp(inapp)
+            presentationManagerMock.receivedOnError?(error)
+
+            #expect(failureManagerMock.addFailureCallCount == index + 1)
+            #expect(failureManagerMock.sendFailuresCallCount == index + 1)
+
+            let call = failureManagerMock.addFailureCalls[index]
+            #expect(call.inappId == inapp.inAppId)
+            #expect(call.reason == expectedReason)
+            #expect(call.details == expectedDetails)
+        }
+    }
+
+    @Test("In-app error callback resets presenting flag", .tags(.inAppSchedule))
+    func presentInapp_onError_resetsPresentingFlag() {
+        let inapp = createInAppFormData(id: "error-reset-flag", isPriority: false, delayTime: nil)
+
+        scheduleManager.presentInapp(inapp)
+        #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
+
+        presentationManagerMock.receivedOnError?(.failed("any-error"))
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("In-app error callback is handled once per presentation", .tags(.inAppSchedule))
+    func presentInapp_onError_isSingleShot() {
+        let inapp = createInAppFormData(id: "single-shot-id", isPriority: false, delayTime: nil)
+
+        scheduleManager.presentInapp(inapp)
+
+        presentationManagerMock.receivedOnError?(.failed("first-error"))
+        presentationManagerMock.receivedOnError?(.failed("second-error"))
+
+        #expect(failureManagerMock.addFailureCallCount == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 1)
+        #expect(failureManagerMock.addFailureCalls.first?.details == "first-error")
+    }
+
     // MARK: - Helpers
 
     private func createInAppFormData(id: String, isPriority: Bool, delayTime: String?) -> InAppFormData {
@@ -380,12 +432,20 @@ class InAppTrackingServiceMock: InAppTrackingServiceProtocol {
 }
 
 final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
+    struct AddFailureCall {
+        let inappId: String
+        let reason: InAppShowFailureReason
+        let details: String?
+    }
+
     private(set) var addFailureCallCount = 0
     private(set) var clearFailuresCallCount = 0
     private(set) var sendFailuresCallCount = 0
+    private(set) var addFailureCalls: [AddFailureCall] = []
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
         addFailureCallCount += 1
+        addFailureCalls.append(AddFailureCall(inappId: inappId, reason: reason, details: details))
     }
 
     func clearFailures() {

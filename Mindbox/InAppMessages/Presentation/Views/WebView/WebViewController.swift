@@ -11,6 +11,7 @@ import MindboxLogger
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
+    func closeLoadFailedWebViewVC(reason: String)
     func closeJSReadyMissingWebViewVC(reason: String)
 }
 
@@ -37,8 +38,10 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
+    private let onError: (InAppPresentationError) -> Void
     private let onTapAction: InAppMessageTapAction
     var isTimeoutClose = false
+    private var hasReportedTerminalError = false
 
     private var viewWillAppearWasCalled = false
 
@@ -57,6 +60,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
         onCloseInApp: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void,
         operation: (name: String, body: String)?
     ) {
         self.model = model
@@ -65,6 +69,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.operation = operation
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
+        self.onError = onError
         self.onTapAction = onTapAction
         super.init(nibName: nil, bundle: nil)
     }
@@ -80,7 +85,9 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private func setupWebView() {
         guard let layer = model.content.background.layers.first else {
-            closeTapWebViewVC()
+            reportErrorAndClose(
+                .webviewPresentationFailed("[WebView] Missing background layer for in-app id \(id).")
+            )
             return
         }
 
@@ -100,7 +107,9 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
             self.transparentWebView = webView
         default:
-            closeTapWebViewVC()
+            reportErrorAndClose(
+                .webviewPresentationFailed("[WebView] Invalid background layer type for in-app id \(id).")
+            )
             return
         }
     }
@@ -133,6 +142,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         super.viewWillAppear(animated)
         guard !viewWillAppearWasCalled else { return }
         viewWillAppearWasCalled = true
+        // TODO: - Перенести эту логику дальше ниже в onInit
         onPresented()
     }
 
@@ -161,20 +171,27 @@ extension WebViewController: WebVCDelegate {
     }
     
     func closeTimeoutWebViewVC() {
-        isTimeoutClose = true
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        onClose()
+        reportErrorAndClose(
+            .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(id).")
+        )
+    }
+
+    func closeLoadFailedWebViewVC(reason: String) {
+        Logger.common(message: "[WebView] WebViewVC closeLoadFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
+        reportErrorAndClose(
+            .webviewLoadFailed(reason)
+        )
     }
 
     func closeJSReadyMissingWebViewVC(reason: String) {
-        isTimeoutClose = true
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = false
         Logger.common(
             message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
             category: .webViewInAppMessages
         )
-        onClose()
+        reportErrorAndClose(
+            .webviewPresentationFailed(reason)
+        )
     }
 }
 
@@ -229,5 +246,17 @@ extension WebViewController: WebViewAction {
     
     func onLog(message: String) {
         Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
+    }
+}
+
+private extension WebViewController {
+    func reportErrorAndClose(_ error: InAppPresentationError) {
+        guard !hasReportedTerminalError else {
+            return
+        }
+        hasReportedTerminalError = true
+        isTimeoutClose = true
+        onError(error)
+        onClose()
     }
 }

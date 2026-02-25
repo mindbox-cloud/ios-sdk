@@ -17,6 +17,7 @@ struct ViewFactoryParameters {
     let onPresented: () -> Void
     let onTapAction: InAppMessageTapAction
     let onClose: () -> Void
+    let onError: (InAppPresentationError) -> Void
     let operation: (name: String, body: String)?
 }
 

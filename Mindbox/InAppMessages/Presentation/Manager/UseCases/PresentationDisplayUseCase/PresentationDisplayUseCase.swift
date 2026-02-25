@@ -22,17 +22,30 @@ final class PresentationDisplayUseCase {
         self.tracker = tracker
     }
 
-    func presentInAppUIModel(model: InAppFormData, onPresented: @escaping () -> Void, onTapAction: @escaping InAppMessageTapAction, onClose: @escaping () -> Void) {
+    func presentInAppUIModel(
+        model: InAppFormData,
+        onPresented: @escaping () -> Void,
+        onTapAction: @escaping InAppMessageTapAction,
+        onClose: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
+    ) {
 
         changeType(model: model.content)
 
-        guard let window = presentationStrategy?.getWindow() else {
+        guard let presentationStrategy = presentationStrategy else {
+            onError(.failed("[PresentationDisplayUseCase] Presentation strategy is not configured."))
+            return
+        }
+
+        guard let window = presentationStrategy.getWindow() else {
             Logger.common(message: "[PresentationDisplayUseCase] In-app window creating failed")
+            onError(.failedToLoadWindow)
             return
         }
 
         guard let factory = self.factory else {
             Logger.common(message: "[PresentationDisplayUseCase] Factory does not exists.", level: .error, category: .general)
+            onError(.failed("[PresentationDisplayUseCase] Factory does not exist."))
             return
         }
 
@@ -53,19 +66,24 @@ final class PresentationDisplayUseCase {
                                                onPresented: onPresented,
                                                onTapAction: wrappedTapAction,
                                                onClose: onClose,
+                                               onError: onError,
                                                operation: model.operation)
 
         guard let viewController = factory.create(with: parameters) else {
+            onError(.failed("[PresentationDisplayUseCase] Failed to create in-app view controller."))
+            return
+        }
+
+        if let image = model.imagesDict[model.firstImageValue] {
+            presentationStrategy.setupWindowFrame(model: model.content, imageSize: image.size)
+        }
+
+        guard presentationStrategy.present(id: model.inAppId, in: window, using: viewController) else {
+            onError(.failed("[PresentationDisplayUseCase] Failed to present in-app view controller."))
             return
         }
 
         presentedVC = viewController
-
-        if let image = model.imagesDict[model.firstImageValue] {
-            presentationStrategy?.setupWindowFrame(model: model.content, imageSize: image.size)
-        }
-
-        presentationStrategy?.present(id: model.inAppId, in: window, using: viewController)
     }
 
     func dismissInAppUIModel(onClose: @escaping () -> Void) {

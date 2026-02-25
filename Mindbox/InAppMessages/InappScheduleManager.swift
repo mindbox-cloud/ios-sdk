@@ -103,7 +103,8 @@ internal extension InappScheduleManager {
     func presentInapp(_ inapp: InAppFormData) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
-        
+        var didHandleOnError = false
+
         Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
 
         presentationManager.present(
@@ -126,14 +127,17 @@ internal extension InappScheduleManager {
                 self.trackingService.saveInappStateChange()
             },
             onError: { error in
-                if case .failedToLoadWindow = error {
-                    SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                    Logger.common(
-                        message: "[InappScheduleManager] Failed to show window",
-                        level: .debug, category: .inAppMessages
-                    )
+                guard !didHandleOnError else {
+                    return
                 }
-                
+                didHandleOnError = true
+
+                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                self.failureManager.addFailure(
+                    inappId: inapp.inAppId,
+                    reason: error.failureReason,
+                    details: error.failureDetails
+                )
                 self.failureManager.sendFailures()
             }
         )
