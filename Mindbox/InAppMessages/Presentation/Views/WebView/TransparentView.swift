@@ -169,7 +169,7 @@ extension TransparentView: WebBridgeMessageDelegate {
         case Action.syncOperation:
             handleSyncOperation(message: message)
 
-        case Action.navigate:
+        case Action.openLink:
             handleNavigate(message: message)
 
         default:
@@ -253,7 +253,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
                 let payload: JSONValue = .object(["url": .string(url.absoluteString)])
                 let event = BridgeMessage(
                     type: .request,
-                    action: BridgeMessage.Action.linkActivated,
+                    action: BridgeMessage.Action.navigationIntercepted,
                     payload: payload
                 )
                 facade?.sendToJS(event)
