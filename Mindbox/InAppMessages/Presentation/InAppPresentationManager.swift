@@ -56,9 +56,9 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
-    private let displayUseCase: PresentationDisplayUseCase
+    private let displayUseCase: PresentationDisplayUseCaseProtocol
 
-    init(displayUseCase: PresentationDisplayUseCase) {
+    init(displayUseCase: PresentationDisplayUseCaseProtocol) {
         self.displayUseCase = displayUseCase
 
         addObserverToDismissInApp()

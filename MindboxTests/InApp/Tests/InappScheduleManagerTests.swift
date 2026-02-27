@@ -176,6 +176,30 @@ struct InappScheduleManagerTests {
         }
     }
 
+    @Test("Eligible in-app cleanup clears buffered failures", .tags(.inAppSchedule))
+    func showEligibleInapp_clearsFailuresAfterCleanup() {
+        let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: nil)
+        scheduleManager.scheduleInApp(inapp)
+
+        var presentationTime: TimeInterval?
+        scheduleManager.queue.sync {
+            presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
+        }
+
+        guard let presentationTime else {
+            Issue.record("Expected presentationTime to be set")
+            return
+        }
+
+        #expect(failureManagerMock.clearFailuresCallCount == 0)
+        scheduleManager.showEligibleInapp(presentationTime)
+
+        scheduleManager.queue.sync {
+            #expect(self.failureManagerMock.clearFailuresCallCount == 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
+    }
+
     // MARK: - Invalid / zero delay
 
     @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))

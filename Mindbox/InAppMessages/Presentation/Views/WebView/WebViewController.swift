@@ -40,6 +40,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onCloseInApp: () -> Void
     private let onError: (InAppPresentationError) -> Void
     private let onTapAction: InAppMessageTapAction
+    private let windowProvider: () -> UIWindow?
     var isTimeoutClose = false
     private var hasReportedTerminalError = false
     private var hasOnPresentedBeenCalled = false
@@ -60,6 +61,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onTapAction: @escaping InAppMessageTapAction,
         onCloseInApp: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void,
+        windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
         operation: (name: String, body: String)?
     ) {
         self.model = model
@@ -70,6 +72,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.onCloseInApp = onCloseInApp
         self.onError = onError
         self.onTapAction = onTapAction
+        self.windowProvider = windowProvider
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -191,9 +194,7 @@ extension WebViewController: WebViewAction {
     func onInit() {
         Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         DispatchQueue.main.async {
-            if let window = UIApplication.shared.windows.first(where: {
-                $0.rootViewController is WebViewController
-            }) {
+            if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
                 UIView.animate(withDuration: 0.3) {
                     window.alpha = 1.0
@@ -226,9 +227,7 @@ extension WebViewController: WebViewAction {
 
     func onHide() {
         DispatchQueue.main.async {
-            if let window = UIApplication.shared.windows.first(where: {
-                $0.rootViewController is WebViewController
-            }) {
+            if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = false
                 window.alpha = 0.00
                 Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
@@ -242,6 +241,10 @@ extension WebViewController: WebViewAction {
 }
 
 private extension WebViewController {
+    static func defaultWindowProvider() -> UIWindow? {
+        UIApplication.shared.windows.first(where: { $0.rootViewController is WebViewController })
+    }
+
     func notifyPresentedIfNeeded() {
         guard !hasOnPresentedBeenCalled else {
             return

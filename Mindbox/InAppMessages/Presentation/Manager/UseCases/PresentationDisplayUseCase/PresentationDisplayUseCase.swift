@@ -9,17 +9,38 @@
 import UIKit
 import MindboxLogger
 
-final class PresentationDisplayUseCase {
+protocol PresentationDisplayUseCaseProtocol: AnyObject {
+    func presentInAppUIModel(
+        model: InAppFormData,
+        onPresented: @escaping () -> Void,
+        onTapAction: @escaping InAppMessageTapAction,
+        onClose: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
+    )
+    func dismissInAppUIModel(onClose: @escaping () -> Void)
+    func onPresented(id: String, _ completion: @escaping () -> Void)
+}
+
+final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
+    typealias DependenciesResolver = (MindboxFormVariant) -> (
+        strategy: PresentationStrategyProtocol?,
+        factory: ViewFactoryProtocol?
+    )
 
     private var presentationStrategy: PresentationStrategyProtocol?
     private var presentedVC: UIViewController?
     private var model: InAppFormData?
     private var factory: ViewFactoryProtocol?
     private let tracker: InAppMessagesTrackerProtocol
+    private let dependenciesResolver: DependenciesResolver
     private lazy var clickTracker = PresentationClickTracker(tracker: tracker)
 
-    init(tracker: InAppMessagesTrackerProtocol) {
+    init(
+        tracker: InAppMessagesTrackerProtocol,
+        dependenciesResolver: @escaping DependenciesResolver = PresentationDisplayUseCase.defaultDependenciesResolver
+    ) {
         self.tracker = tracker
+        self.dependenciesResolver = dependenciesResolver
     }
 
     func presentInAppUIModel(
@@ -30,7 +51,9 @@ final class PresentationDisplayUseCase {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
 
-        changeType(model: model.content)
+        let dependencies = dependenciesResolver(model.content)
+        presentationStrategy = dependencies.strategy
+        factory = dependencies.factory
 
         guard let presentationStrategy = presentationStrategy else {
             onError(.failed("[PresentationDisplayUseCase] Presentation strategy is not configured."))
@@ -113,22 +136,23 @@ final class PresentationDisplayUseCase {
         }
         completion()
     }
+}
 
-    private func changeType(model: MindboxFormVariant) {
+private extension PresentationDisplayUseCase {
+    static func defaultDependenciesResolver(model: MindboxFormVariant) -> (
+        strategy: PresentationStrategyProtocol?,
+        factory: ViewFactoryProtocol?
+    ) {
         switch model {
-            case .modal(let modalVariant):
-                if modalVariant.content.background.layers.contains(where: { $0.layerType == .webview }) {
-                    self.presentationStrategy = WebviewPresentationStrategy()
-                    self.factory = WebViewFactory()
-                } else {
-                    self.presentationStrategy = ModalPresentationStrategy()
-                    self.factory = ModalViewFactory()
-                }
-            case .snackbar:
-                self.presentationStrategy = SnackbarPresentationStrategy()
-                self.factory = SnackbarViewFactory()
-            default:
-                break
+        case .modal(let modalVariant):
+            if modalVariant.content.background.layers.contains(where: { $0.layerType == .webview }) {
+                return (strategy: WebviewPresentationStrategy(), factory: WebViewFactory())
+            }
+            return (strategy: ModalPresentationStrategy(), factory: ModalViewFactory())
+        case .snackbar:
+            return (strategy: SnackbarPresentationStrategy(), factory: SnackbarViewFactory())
+        default:
+            return (strategy: nil, factory: nil)
         }
     }
 }
