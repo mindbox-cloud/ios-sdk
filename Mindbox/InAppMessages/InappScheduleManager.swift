@@ -96,6 +96,7 @@ internal extension InappScheduleManager {
                 scheduledInapp.timer.cancel()
             }
             
+            self.failureManager.clearFailures()
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
