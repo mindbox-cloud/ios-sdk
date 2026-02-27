@@ -26,6 +26,14 @@ final class FeatureToggleManager {
 
     func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?) {
         self.featureToggles = featureToggles
+        let flags: [String] = [
+            featureToggles?.shouldSendInAppShowError.map { "MobileSdkShouldSendInAppShowError=\($0)" }
+        ].compactMap { $0 }
+        Logger.common(
+            message: "[FeatureToggles] \(flags)",
+            level: .debug,
+            category: .inAppMessages
+        )
     }
     
     func isFeatureEnabled(_ feature: FeatureFlag) -> Bool {

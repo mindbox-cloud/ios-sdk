@@ -41,16 +41,23 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         queue.async { [self] in
             if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
                 guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
-                    print("🔥 [InappShowFailureManager] ignore failure for inappId=\(inappId). Existing reason=\(failures[existingIndex].failureReason.rawValue), new reason=\(reason.rawValue)")
+                    Logger.common(
+                        message: "[InappShowFailureManager] Ignore failure update: existing reason has higher priority. inappId=\(inappId), existing=\(failures[existingIndex].failureReason.rawValue), incoming=\(reason.rawValue)",
+                        level: .debug,
+                        category: .inAppMessages
+                    )
                     return
                 }
                 failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
-                print("🔥 [InappShowFailureManager] replace failure for inappId=\(inappId). New reason=\(reason.rawValue), details=\(details ?? "nil")")
+                Logger.common(
+                    message: "[InappShowFailureManager] Failure reason updated. inappId=\(inappId), reason=\(reason.rawValue)",
+                    level: .debug,
+                    category: .inAppMessages
+                )
                 return
             }
             
             failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
-            print("🔥 [InappShowFailureManager] add failure for inappId=\(inappId). Reason=\(reason.rawValue), details=\(details ?? "nil")")
         }
     }
     
