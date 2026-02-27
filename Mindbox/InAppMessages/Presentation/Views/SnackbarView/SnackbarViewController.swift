@@ -60,6 +60,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     private let onPresented: () -> Void
     private let onTapAction: InAppMessageTapAction
     private let onClose: () -> Void
+    private let onError: (InAppPresentationError) -> Void
 
     private var hasSetupLayers = false
     private var hasSetupElements = false
@@ -73,6 +74,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         firstImageValue: String,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
+        onError: @escaping (InAppPresentationError) -> Void,
         onClose: @escaping () -> Void
     ) {
         self.model = model
@@ -81,6 +83,7 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         self.firstImageValue = firstImageValue
         self.onPresented = onPresented
         self.onTapAction = onTapAction
+        self.onError = onError
         self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
     }
@@ -184,6 +187,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     private func setupConstraints() {
         guard let image = imagesDict[firstImageValue] else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
+            reportErrorAndClose(
+                .failedToLoadImages
+            )
             return
         }
 
@@ -207,6 +213,13 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
             snackbarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             snackbarView.heightAnchor.constraint(equalToConstant: height)
         ])
+    }
+}
+
+private extension SnackbarViewController {
+    func reportErrorAndClose(_ error: InAppPresentationError) {
+        onError(error)
+        onClose()
     }
 }
 

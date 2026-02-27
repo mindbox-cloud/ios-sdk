@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import UIKit
 @testable import Mindbox
 
 final class InappShowFailureManagerTests: XCTestCase {
@@ -341,5 +342,300 @@ private final class InappShowFailureDatabaseRepositoryMock: DatabaseRepositoryPr
 
     func countEvents() throws -> Int {
         createdEvents.count
+    }
+}
+
+final class InAppPresentationErrorMappingTests: XCTestCase {
+    func testFailureReasonMapping() {
+        XCTAssertEqual(InAppPresentationError.failedToLoadImages.failureReason, .presentationFailed)
+        XCTAssertEqual(InAppPresentationError.failedToLoadWindow.failureReason, .presentationFailed)
+        XCTAssertEqual(InAppPresentationError.failed("details").failureReason, .presentationFailed)
+        XCTAssertEqual(InAppPresentationError.webviewLoadFailed("details").failureReason, .webviewLoadFailed)
+        XCTAssertEqual(InAppPresentationError.webviewPresentationFailed("details").failureReason, .webviewPresentationFailed)
+    }
+
+    func testFailureDetailsMapping() {
+        XCTAssertEqual(
+            InAppPresentationError.failedToLoadImages.failureDetails,
+            "[InAppPresentationError] Failed to load images."
+        )
+        XCTAssertEqual(
+            InAppPresentationError.failedToLoadWindow.failureDetails,
+            "[InAppPresentationError] Failed to load window."
+        )
+        XCTAssertEqual(
+            InAppPresentationError.failed("presentation-failed").failureDetails,
+            "presentation-failed"
+        )
+        XCTAssertEqual(
+            InAppPresentationError.webviewLoadFailed("webview-load").failureDetails,
+            "webview-load"
+        )
+        XCTAssertEqual(
+            InAppPresentationError.webviewPresentationFailed("webview-presentation").failureDetails,
+            "webview-presentation"
+        )
+    }
+}
+
+final class PresentationDisplayUseCaseTests: XCTestCase {
+    private var tracker: InAppMessagesTrackerMock!
+
+    override func setUp() {
+        super.setUp()
+        tracker = InAppMessagesTrackerMock()
+    }
+
+    override func tearDown() {
+        tracker = nil
+        super.tearDown()
+    }
+
+    func testPresent_whenStrategyIsNotConfigured_callsOnError() {
+        let sut = PresentationDisplayUseCase(
+            tracker: tracker,
+            dependenciesResolver: { _ in (strategy: nil, factory: nil) }
+        )
+
+        var receivedError: InAppPresentationError?
+        sut.presentInAppUIModel(
+            model: makeModalInApp(),
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onClose: {},
+            onError: { receivedError = $0 }
+        )
+
+        assertFailedError(
+            receivedError,
+            details: "[PresentationDisplayUseCase] Presentation strategy is not configured."
+        )
+    }
+
+    func testPresent_whenWindowCreationFails_callsFailedToLoadWindow() {
+        let strategy = PresentationStrategyMock(windowToReturn: nil, presentResult: true)
+        let sut = PresentationDisplayUseCase(
+            tracker: tracker,
+            dependenciesResolver: { _ in (strategy: strategy, factory: ViewFactoryMock(viewControllerToReturn: UIViewController())) }
+        )
+
+        var receivedError: InAppPresentationError?
+        sut.presentInAppUIModel(
+            model: makeModalInApp(),
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onClose: {},
+            onError: { receivedError = $0 }
+        )
+
+        guard case .failedToLoadWindow = receivedError else {
+            return XCTFail("Expected .failedToLoadWindow, got \(String(describing: receivedError))")
+        }
+    }
+
+    func testPresent_whenFactoryIsMissing_callsOnError() {
+        let strategy = PresentationStrategyMock(windowToReturn: UIWindow(), presentResult: true)
+        let sut = PresentationDisplayUseCase(
+            tracker: tracker,
+            dependenciesResolver: { _ in (strategy: strategy, factory: nil) }
+        )
+
+        var receivedError: InAppPresentationError?
+        sut.presentInAppUIModel(
+            model: makeModalInApp(),
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onClose: {},
+            onError: { receivedError = $0 }
+        )
+
+        assertFailedError(
+            receivedError,
+            details: "[PresentationDisplayUseCase] Factory does not exist."
+        )
+    }
+
+    func testPresent_whenFactoryCannotCreateViewController_callsOnError() {
+        let strategy = PresentationStrategyMock(windowToReturn: UIWindow(), presentResult: true)
+        let factory = ViewFactoryMock(viewControllerToReturn: nil)
+        let sut = PresentationDisplayUseCase(
+            tracker: tracker,
+            dependenciesResolver: { _ in (strategy: strategy, factory: factory) }
+        )
+
+        var receivedError: InAppPresentationError?
+        sut.presentInAppUIModel(
+            model: makeModalInApp(),
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onClose: {},
+            onError: { receivedError = $0 }
+        )
+
+        assertFailedError(
+            receivedError,
+            details: "[PresentationDisplayUseCase] Failed to create in-app view controller."
+        )
+    }
+
+    func testPresent_whenStrategyPresentFails_callsOnError() {
+        let strategy = PresentationStrategyMock(windowToReturn: UIWindow(), presentResult: false)
+        let factory = ViewFactoryMock(viewControllerToReturn: UIViewController())
+        let sut = PresentationDisplayUseCase(
+            tracker: tracker,
+            dependenciesResolver: { _ in (strategy: strategy, factory: factory) }
+        )
+
+        var receivedError: InAppPresentationError?
+        sut.presentInAppUIModel(
+            model: makeModalInApp(),
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onClose: {},
+            onError: { receivedError = $0 }
+        )
+
+        assertFailedError(
+            receivedError,
+            details: "[PresentationDisplayUseCase] Failed to present in-app view controller."
+        )
+    }
+
+    private func makeModalInApp() -> InAppFormData {
+        let modal = ModalFormVariant(content: InappFormVariantContent(background: ContentBackground(layers: []), elements: nil))
+        return InAppFormData(
+            inAppId: "inapp-id",
+            isPriority: false,
+            delayTime: nil,
+            imagesDict: [:],
+            firstImageValue: "",
+            content: .modal(modal),
+            frequency: nil
+        )
+    }
+
+    private func assertFailedError(_ error: InAppPresentationError?, details: String, file: StaticString = #filePath, line: UInt = #line) {
+        guard case .failed(let message) = error else {
+            return XCTFail("Expected .failed(\(details)), got \(String(describing: error))", file: file, line: line)
+        }
+        XCTAssertEqual(message, details, file: file, line: line)
+    }
+}
+
+final class SnackbarViewControllerTests: XCTestCase {
+    func testLayout_whenImageIsMissing_reportsErrorAndCloses() {
+        let model = makeSnackbarModel()
+        let snackbarView = SnackbarView(onClose: {})
+
+        var receivedError: InAppPresentationError?
+        var closeCalls = 0
+        let sut = TopSnackbarViewController(
+            model: model,
+            imagesDict: [:],
+            snackbarView: snackbarView,
+            firstImageValue: "missing-image",
+            onPresented: {},
+            onTapAction: { _, _ in },
+            onError: { receivedError = $0 },
+            onClose: { closeCalls += 1 }
+        )
+
+        sut.loadViewIfNeeded()
+        sut.view.frame = CGRect(x: 0, y: 0, width: 320, height: 640)
+        sut.viewDidLayoutSubviews()
+
+        guard case .failedToLoadImages = receivedError else {
+            return XCTFail("Expected .failedToLoadImages, got \(String(describing: receivedError))")
+        }
+        XCTAssertEqual(closeCalls, 1)
+    }
+
+    private func makeSnackbarModel() -> SnackbarFormVariant {
+        let content = SnackbarFormVariantContent(
+            background: ContentBackground(layers: []),
+            position: ContentPosition(
+                gravity: ContentPositionGravity(vertical: .top, horizontal: .center),
+                margin: ContentPositionMargin(kind: .dp, top: 0, right: 0, left: 0, bottom: 0)
+            ),
+            elements: []
+        )
+        return SnackbarFormVariant(content: content)
+    }
+}
+
+final class WebViewControllerWindowProviderTests: XCTestCase {
+    func testOnInit_withInjectedWindowProvider_callsOnPresentedOnlyOnce() {
+        let expectation = expectation(description: "onPresented is called once")
+        expectation.expectedFulfillmentCount = 1
+
+        let window = UIWindow()
+        let model = makeModalVariant()
+        let sut = WebViewController(
+            model: model,
+            id: "webview-id",
+            imagesDict: [:],
+            onPresented: {
+                expectation.fulfill()
+            },
+            onTapAction: { _, _ in },
+            onCloseInApp: {},
+            onError: { _ in },
+            windowProvider: { window },
+            operation: nil
+        )
+
+        sut.onInit()
+        sut.onInit()
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    private func makeModalVariant() -> ModalFormVariant {
+        ModalFormVariant(
+            content: InappFormVariantContent(
+                background: ContentBackground(layers: []),
+                elements: nil
+            )
+        )
+    }
+}
+
+private final class InAppMessagesTrackerMock: InAppMessagesTrackerProtocol {
+    func trackView(id: String) throws {}
+    func trackClick(id: String) throws {}
+}
+
+private final class PresentationStrategyMock: PresentationStrategyProtocol {
+    var window: UIWindow?
+    private let windowToReturn: UIWindow?
+    private let presentResult: Bool
+
+    init(windowToReturn: UIWindow?, presentResult: Bool) {
+        self.windowToReturn = windowToReturn
+        self.presentResult = presentResult
+    }
+
+    func getWindow() -> UIWindow? {
+        windowToReturn
+    }
+
+    func present(id: String, in window: UIWindow, using viewController: UIViewController) -> Bool {
+        presentResult
+    }
+
+    func dismiss(viewController: UIViewController) {}
+
+    func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {}
+}
+
+private final class ViewFactoryMock: ViewFactoryProtocol {
+    private let viewControllerToReturn: UIViewController?
+
+    init(viewControllerToReturn: UIViewController?) {
+        self.viewControllerToReturn = viewControllerToReturn
+    }
+
+    func create(with params: ViewFactoryParameters) -> UIViewController? {
+        viewControllerToReturn
     }
 }

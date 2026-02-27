@@ -159,8 +159,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
         
         inappScheduler.scheduleInApp(inapp)
-        // TODO: - нам не нужен вызов тут, он будет дальше по логике
-        failureManager.sendFailures()
         completion()
     }
 

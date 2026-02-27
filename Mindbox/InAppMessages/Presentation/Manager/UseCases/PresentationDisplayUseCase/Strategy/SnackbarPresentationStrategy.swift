@@ -42,7 +42,7 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         return window
     }
 
-    func present(id: String, in window: UIWindow, using viewController: UIViewController) {
+    func present(id: String, in window: UIWindow, using viewController: UIViewController) -> Bool {
         if var topController = window.rootViewController {
             while let presentedViewController = topController.presentedViewController {
                 topController = presentedViewController
@@ -62,8 +62,10 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
 
             viewController.didMove(toParent: topController)
             Logger.common(message: "In-app snackbar with id \(id) presented", level: .info, category: .inAppMessages)
+            return true
         } else {
             Logger.common(message: "Unable to get top controller. Abort.", level: .error, category: .inAppMessages)
+            return false
         }
     }
 

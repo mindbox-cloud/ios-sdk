@@ -12,7 +12,7 @@ protocol PresentationStrategyProtocol {
     var window: UIWindow? { get set }
 
     func getWindow() -> UIWindow?
-    func present(id: String, in window: UIWindow, using viewController: UIViewController)
+    func present(id: String, in window: UIWindow, using viewController: UIViewController) -> Bool
     func dismiss(viewController: UIViewController)
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize)
 }
