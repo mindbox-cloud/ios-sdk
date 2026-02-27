@@ -32,28 +32,24 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            Logger.common(message: "[InappShowFailureManager] addFailure ignored, feature is disabled",
-                          level: .debug,
-                          category: .inAppMessages)
+            Logger.common(message: "[InappShowFailureManager] addFailure ignored, feature is disabled", category: .inAppMessages)
             return
         }
         
         queue.async { [self] in
             if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
                 guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
+                    let existingReason = failures[existingIndex].failureReason.rawValue
                     Logger.common(
-                        message: "[InappShowFailureManager] Ignore failure update: existing reason has higher priority. inappId=\(inappId), existing=\(failures[existingIndex].failureReason.rawValue), incoming=\(reason.rawValue)",
-                        level: .debug,
+                        message: "[InappShowFailureManager] Ignore failure update: existing reason has higher priority. " +
+                            "inappId=\(inappId), existing=\(existingReason), incoming=\(reason.rawValue)",
                         category: .inAppMessages
                     )
                     return
                 }
                 failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
-                Logger.common(
-                    message: "[InappShowFailureManager] Failure reason updated. inappId=\(inappId), reason=\(reason.rawValue)",
-                    level: .debug,
-                    category: .inAppMessages
-                )
+                Logger.common(message: "[InappShowFailureManager] Failure reason updated. inappId=\(inappId), reason=\(reason.rawValue)",
+                              category: .inAppMessages)
                 return
             }
             
