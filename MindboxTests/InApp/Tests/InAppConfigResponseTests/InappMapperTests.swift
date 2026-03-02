@@ -178,8 +178,8 @@ struct InappRemainingTargetingTests {
         #expect(mockDataFacade.imageDownloadFailures.first?.details == imageError.localizedDescription)
     }
     
-    @Test("Image download non-5xx error does not add in-app show failure", .tags(.remainingTargeting))
-    func imageDownloadNon5xxError_doesNotAddFailure() async throws {
+    @Test("Image download 4xx error adds in-app show failure", .tags(.remainingTargeting))
+    func imageDownload4xxError_addsFailure() async throws {
         let config = try InappTargetingConfig.oneTargeting.getConfig()
         let imageError = MindboxError.protocolError(
             .init(
@@ -188,6 +188,19 @@ struct InappRemainingTargetingTests {
                 httpStatusCode: 404
             )
         )
+        mockDataFacade.downloadImageError = imageError
+        mockDataFacade.cleanImageDownloadFailures()
+        
+        _ = await handleInapps(event: nil, config: config)
+        
+        #expect(mockDataFacade.imageDownloadFailures.count == 1)
+        #expect(mockDataFacade.imageDownloadFailures.first?.inappId == "1")
+    }
+
+    @Test("Image download connection error does not add in-app show failure", .tags(.remainingTargeting))
+    func imageDownloadConnectionError_doesNotAddFailure() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let imageError = MindboxError.connectionError
         mockDataFacade.downloadImageError = imageError
         mockDataFacade.cleanImageDownloadFailures()
         

@@ -44,7 +44,11 @@ private extension ImageDownloadService {
     ) {
         if let nsError = error as? NSError {
             Logger.common(message: "Failed to download image. [URL]: \(sourceUrl). \nError: \(nsError.localizedDescription)", level: .debug, category: .inAppMessages)
-            completion(.failure(.unknown(nsError)))
+            if nsError.isNetworkOrTimeoutError {
+                completion(.failure(.connectionError))
+            } else {
+                completion(.failure(.unknown(nsError)))
+            }
             return
         }
 
@@ -90,5 +94,18 @@ private extension ImageDownloadService {
             Logger.common(message: "Failed to read image data. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
             return .failure(.unknown(error))
         }
+    }
+}
+
+extension NSError {
+    var isNetworkOrTimeoutError: Bool {
+        domain == NSURLErrorDomain && [
+            NSURLErrorTimedOut,
+            NSURLErrorNotConnectedToInternet,
+            NSURLErrorNetworkConnectionLost,
+            NSURLErrorDataNotAllowed,
+            NSURLErrorCannotConnectToHost,
+            NSURLErrorDNSLookupFailed,
+        ].contains(code)
     }
 }

@@ -70,7 +70,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         imageService.downloadImage(withUrl: url) { result in
             if case .failure(let error) = result {
                 switch error {
-                case .serverError, .unknown:
+                case .serverError, .protocolError, .unknown:
                     self.failureManager.addFailure(
                         inappId: inappId,
                         reason: .imageDownloadFailed,
