@@ -68,8 +68,14 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
     }
 
     func dismiss(viewController: UIViewController) {
+        viewController.willMove(toParent: nil)
         viewController.view.removeFromSuperview()
         viewController.removeFromParent()
+        
+        window?.isHidden = true
+        window?.rootViewController = nil
+        window = nil
+        
         Logger.common(message: "In-app snackbar presentation dismissed", level: .debug, category: .inAppMessages)
     }
 
