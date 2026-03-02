@@ -84,6 +84,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         let config = WKWebViewConfiguration()
+        config.websiteDataStore = .nonPersistent()
         config.applicationNameForUserAgent = userAgent
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []

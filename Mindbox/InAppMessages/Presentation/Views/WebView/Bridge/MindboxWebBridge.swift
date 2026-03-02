@@ -21,7 +21,7 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?)
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?)
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
-    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
+    func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
 }
 
 protocol BridgePendingStore: AnyObject {
@@ -206,7 +206,7 @@ extension MindboxWebBridge: WKNavigationDelegate {
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let navigationDelegate = navigationDelegate {
-            navigationDelegate.webBridge(self, decidePolicyFor: navigationAction.request.url, decisionHandler: decisionHandler)
+            navigationDelegate.webBridge(self, decidePolicyFor: navigationAction.request.url, navigationType: navigationAction.navigationType, decisionHandler: decisionHandler)
         } else {
             decisionHandler(.allow)
         }
