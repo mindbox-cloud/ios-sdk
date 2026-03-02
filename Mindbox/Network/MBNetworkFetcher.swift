@@ -138,7 +138,7 @@ class MBNetworkFetcher: NetworkFetcher {
     ) {
         Logger.response(data: data, response: response, error: error)
 
-        guard let responseContext = makeResponseContext(response: response, error: error, completion: completion) else {
+        guard let responseContext = makeResponseContext(response: response, error: error, networkTimeMs: networkTimeMs, completion: completion) else {
             return
         }
 
@@ -148,7 +148,6 @@ class MBNetworkFetcher: NetworkFetcher {
                 context: responseContext,
                 emptyData: emptyData,
                 needBaseResponse: needBaseResponse,
-                networkTimeMs: networkTimeMs,
                 completion: completion
             )
             return
@@ -157,35 +156,33 @@ class MBNetworkFetcher: NetworkFetcher {
         handleMissingData(
             error: error,
             context: responseContext,
-            networkTimeMs: networkTimeMs,
             completion: completion
         )
     }
 
-    private typealias ResponseContext = (
-        response: URLResponse,
-        httpResponse: HTTPURLResponse,
-        statusCode: HTTPURLResponseStatusCodeValidator.StatusCodes
-    )
+    private struct ResponseContext {
+        let response: URLResponse
+        let httpResponse: HTTPURLResponse
+        let statusCode: HTTPURLResponseStatusCodeValidator.StatusCodes
+        let networkTimeMs: Int
+    }
 
     private func makeResponseContext(
         response: URLResponse?,
         error: Error?,
+        networkTimeMs: Int,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) -> ResponseContext? {
-        // Check if we have any response at all
         guard let response = response else {
             completion(.failure(.connectionError))
             return nil
         }
 
-        // Make sure we got the correct response type
         guard let httpResponse = response as? HTTPURLResponse else {
             completion(.failure(.invalidResponse(response)))
             return nil
         }
 
-        // Make sure response has status code
         guard let statusCode = HTTPURLResponseStatusCodeValidator.StatusCodes(statusCode: httpResponse.statusCode) else {
             if error != nil {
                 completion(.failure(.serverError(.init(
@@ -199,21 +196,24 @@ class MBNetworkFetcher: NetworkFetcher {
             return nil
         }
 
-        return (response: response, httpResponse: httpResponse, statusCode: statusCode)
+        return ResponseContext(
+            response: response,
+            httpResponse: httpResponse,
+            statusCode: statusCode,
+            networkTimeMs: networkTimeMs
+        )
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func handleResponseData(
         _ data: Data,
         context: ResponseContext,
         emptyData: Bool,
         needBaseResponse: Bool,
-        networkTimeMs: Int,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         if context.statusCode == .serverError {
             let body = String(data: data, encoding: .utf8)
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: networkTimeMs, responseBody: body)))
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
             return
         }
 
@@ -230,7 +230,6 @@ class MBNetworkFetcher: NetworkFetcher {
                 data: data,
                 context: context,
                 emptyData: emptyData,
-                networkTimeMs: networkTimeMs,
                 completion: completion
             )
         }
@@ -268,19 +267,17 @@ class MBNetworkFetcher: NetworkFetcher {
         }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func handleDecodingError(
         _ decodingError: Error,
         data: Data,
         context: ResponseContext,
         emptyData: Bool,
-        networkTimeMs: Int,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         switch context.statusCode {
         case .serverError:
             let body = String(data: data, encoding: .utf8)
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: networkTimeMs, responseBody: body)))
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
         default:
             if emptyData {
                 completion(.success(data))
@@ -299,14 +296,12 @@ class MBNetworkFetcher: NetworkFetcher {
     private func handleMissingData(
         error: Error?,
         context: ResponseContext,
-        networkTimeMs: Int,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         if let error = error {
-            // Handle server errors
             switch context.statusCode {
             case .serverError:
-                completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: networkTimeMs)))
+                completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs)))
             default:
                 completion(.failure(.unknown(error)))
             }
