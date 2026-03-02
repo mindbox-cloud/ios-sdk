@@ -202,7 +202,7 @@ class MBNetworkFetcher: NetworkFetcher {
         needBaseResponse: Bool,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
-        if !needBaseResponse, context.statusCode == .serverError {
+        if context.statusCode == .serverError {
             completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
             return
         }
