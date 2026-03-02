@@ -105,7 +105,7 @@ extension NSError {
             NSURLErrorNetworkConnectionLost,
             NSURLErrorDataNotAllowed,
             NSURLErrorCannotConnectToHost,
-            NSURLErrorDNSLookupFailed,
+            NSURLErrorDNSLookupFailed
         ].contains(code)
     }
 }

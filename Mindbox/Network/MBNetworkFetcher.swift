@@ -202,6 +202,7 @@ class MBNetworkFetcher: NetworkFetcher {
         return (response: response, httpResponse: httpResponse, statusCode: statusCode)
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func handleResponseData(
         _ data: Data,
         context: ResponseContext,
@@ -267,6 +268,7 @@ class MBNetworkFetcher: NetworkFetcher {
         }
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func handleDecodingError(
         _ decodingError: Error,
         data: Data,
