@@ -163,13 +163,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
         featureToggleManager.applyFeatureToggles(settings.featureToggles)
         
-        // TODO: - Remove this log after QA check build
-        Logger.common(
-            message: "[FeatureToggles] MobileSdkShouldSendInAppShowError: \(featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError))",
-            level: .info,
-            category: .general
-        )
-        
         saveConfigSessionToCache(settings.slidingExpiration?.config)
     }
 

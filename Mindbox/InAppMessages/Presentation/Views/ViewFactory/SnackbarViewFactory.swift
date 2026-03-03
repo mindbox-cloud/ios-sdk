@@ -27,6 +27,7 @@ class SnackbarViewFactory: ViewFactoryProtocol {
                                                                        firstImageValue: params.firstImageValue,
                                                                        onPresented: params.onPresented,
                                                                        onTapAction: params.onTapAction,
+                                                                       onError: params.onError,
                                                                        onClose: params.onClose)
                     case .bottom:
                     snackbarViewController = BottomSnackbarViewController(model: snackbarFormVariant,
@@ -35,6 +36,7 @@ class SnackbarViewFactory: ViewFactoryProtocol {
                                                                           firstImageValue: params.firstImageValue,
                                                                           onPresented: params.onPresented,
                                                                           onTapAction: params.onTapAction,
+                                                                          onError: params.onError,
                                                                           onClose: params.onClose)
                     default:
                         Logger.common(message: "SnackbarViewFactory controller is nil.")

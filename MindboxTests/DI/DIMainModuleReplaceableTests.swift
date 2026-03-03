@@ -78,4 +78,10 @@ class DIMainModuleReplaceableTests: XCTestCase {
         XCTAssertNotNil(manager)
         XCTAssert(manager is InAppCoreManager)
     }
+    
+    func testInappShowFailureManagerIsRegistered() {
+        let manager: InappShowFailureManagerProtocol? = DI.inject(InappShowFailureManagerProtocol.self)
+        XCTAssertNotNil(manager)
+        XCTAssert(manager is InappShowFailureManager)
+    }
 }

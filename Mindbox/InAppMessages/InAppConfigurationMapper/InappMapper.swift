@@ -49,6 +49,7 @@ class InappMapper: InappMapperProtocol {
             self.prepareTargetingChecker(for: filteredInapps)
             self.prepareForRemainingTargeting()
             self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
+                
                 self.sendRemainingInappsTargeting {
                     completion(formData)
                     group.leave()
@@ -147,7 +148,7 @@ class InappMapper: InappMapperProtocol {
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.dataFacade.downloadImage(withUrl: imageValue) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId) { result in
                         defer {
                             group.leave()
                         }
@@ -215,7 +216,7 @@ class InappMapper: InappMapperProtocol {
     }
 
     func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
-        self.dataFacade.fetchDependencies(model: applicationEvent?.model) {
+        self.dataFacade.fetchDependencies(model: applicationEvent?.model, shouldCollectFailures: false) {
             let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.inappFilterService.filterInappsByOperation(
                 event: self.applicationEvent,
                 operationInapps: self.targetingChecker.context.operationInapps

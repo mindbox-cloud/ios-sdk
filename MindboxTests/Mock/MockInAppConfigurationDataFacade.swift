@@ -20,6 +20,8 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     public var showArray: [String] = []
     public var targetingArray: [String] = []
+    public var downloadImageError: MindboxError?
+    public var imageDownloadFailures: [(inappId: String, details: String?)] = []
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -31,11 +33,25 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         self.tracker = tracker
     }
 
-    func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
+    func fetchDependencies(
+        model: InappOperationJSONModel?,
+        shouldCollectFailures: Bool,
+        _ completion: @escaping () -> Void
+    ) {
         completion()
     }
 
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+        if let downloadImageError {
+            switch downloadImageError {
+            case .serverError, .protocolError, .unknown:
+                imageDownloadFailures.append((inappId: inappId, details: downloadImageError.localizedDescription))
+            default:
+                break
+            }
+            completion(.failure(downloadImageError))
+            return
+        }
         if #available(iOS 13.0, *) {
             let image = UIImage(systemName: "star")
             completion(.success(image!))
@@ -43,7 +59,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
             completion(.success(UIImage()))
         }
     }
-
+    
     func trackTargeting(id: String?) {
         if let id = id {
             if showArray.isEmpty {
@@ -56,5 +72,9 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     func cleanTargetingArray() {
         targetingArray = []
+    }
+    
+    func cleanImageDownloadFailures() {
+        imageDownloadFailures = []
     }
 }

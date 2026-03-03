@@ -79,7 +79,9 @@ final class TransparentView: UIView {
 
         facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
             self?.quizInitTimeoutWorkItem?.cancel()
-            self?.delegate?.closeTimeoutWebViewVC()
+            self?.delegate?.closeLoadFailedWebViewVC(
+                reason: "[WebView] Failed to load HTML content from baseUrl=\(baseUrl), contentUrl=\(contentUrl)"
+            )
         }
     }
 
@@ -229,6 +231,9 @@ extension TransparentView: WebBridgeNavigationDelegate {
     
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
+        delegate?.closeLoadFailedWebViewVC(
+            reason: "[WebView] WKNavigation loading failed for URL \(url?.absoluteString ?? "unknown"): \(error.localizedDescription)"
+        )
     }
     
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

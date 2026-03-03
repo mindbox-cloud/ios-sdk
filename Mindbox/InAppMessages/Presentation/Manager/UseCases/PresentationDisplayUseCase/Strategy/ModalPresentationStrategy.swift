@@ -16,10 +16,11 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
         return makeInAppMessageWindow()
     }
 
-    func present(id: String, in window: UIWindow, using viewController: UIViewController) {
+    func present(id: String, in window: UIWindow, using viewController: UIViewController) -> Bool {
         window.rootViewController = viewController
         window.isHidden = false
         Logger.common(message: "In-app modal with id \(id) presented", level: .info, category: .inAppMessages)
+        return true
     }
 
     func dismiss(viewController: UIViewController) {

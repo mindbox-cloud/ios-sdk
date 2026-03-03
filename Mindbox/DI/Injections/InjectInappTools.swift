@@ -74,6 +74,15 @@ extension MBContainer {
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
             return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
         }
+        
+        register(InappShowFailureManagerProtocol.self) {
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+            let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+            return InappShowFailureManager(
+                databaseRepository: databaseRepository,
+                featureToggleManager: featureToggleManager
+            )
+        }
 
         return self
     }
@@ -108,8 +117,14 @@ extension MBContainer {
             let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
             let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
+            let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
             
-            return InappScheduleManager(presentationManager: presentationManager, presentationValidator: presentationValidator, trackingService: inappTrackingService)
+            return InappScheduleManager(
+                presentationManager: presentationManager,
+                presentationValidator: presentationValidator,
+                trackingService: inappTrackingService,
+                failureManager: failureManager
+            )
         }
 
         return self

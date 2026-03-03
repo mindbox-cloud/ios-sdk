@@ -11,9 +11,19 @@ import UIKit
 import MindboxLogger
 
 protocol InAppConfigurationDataFacadeProtocol {
-    func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void)
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void)
+    func fetchDependencies(
+        model: InappOperationJSONModel?,
+        shouldCollectFailures: Bool,
+        _ completion: @escaping () -> Void
+    )
+    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?)
+}
+
+extension InAppConfigurationDataFacadeProtocol {
+    func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
+        fetchDependencies(model: model, shouldCollectFailures: true, completion)
+    }
 }
 
 class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
@@ -23,31 +33,53 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     var targetingChecker: InAppTargetingCheckerProtocol
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
+    let failureManager: InappShowFailureManagerProtocol
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
          imageService: ImageDownloadServiceProtocol,
-         tracker: InappTargetingTrackProtocol) {
+         tracker: InappTargetingTrackProtocol,
+         failureManager: InappShowFailureManagerProtocol) {
         self.segmentationService = segmentationService
         self.targetingChecker = targetingChecker
         self.imageService = imageService
         self.tracker = tracker
+        self.failureManager = failureManager
     }
 
     private let dispatchGroup = DispatchGroup()
 
-    func fetchDependencies(model: InappOperationJSONModel?, _ completion: @escaping () -> Void) {
-        fetchSegmentationIfNeeded()
-        fetchGeoIfNeeded()
-        fetchProductSegmentationIfNeeded(products: model?.viewProduct?.product)
+    func fetchDependencies(
+        model: InappOperationJSONModel?,
+        shouldCollectFailures: Bool,
+        _ completion: @escaping () -> Void
+    ) {
+        fetchSegmentationIfNeeded(shouldCollectFailures: shouldCollectFailures)
+        fetchGeoIfNeeded(shouldCollectFailures: shouldCollectFailures)
+        fetchProductSegmentationIfNeeded(
+            products: model?.viewProduct?.product,
+            shouldCollectFailures: shouldCollectFailures
+        )
 
         dispatchGroup.notify(queue: .main) {
             completion()
         }
     }
 
-    func downloadImage(withUrl url: String, completion: @escaping (Result<UIImage, Error>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
+            if case .failure(let error) = result {
+                switch error {
+                case .serverError, .protocolError, .unknown:
+                    self.failureManager.addFailure(
+                        inappId: inappId,
+                        reason: .imageDownloadFailed,
+                        details: error.localizedDescription
+                    )
+                default:
+                    break
+                }
+            }
             completion(result)
         }
     }
@@ -65,30 +97,51 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 }
 
 extension InAppConfigurationDataFacade {
-    private func fetchSegmentationIfNeeded() {
-        if !SessionTemporaryStorage.shared.checkSegmentsRequestCompleted {
-            dispatchGroup.enter()
-            segmentationService.checkSegmentationRequest { response in
+    private func fetchSegmentationIfNeeded(shouldCollectFailures: Bool) {
+        dispatchGroup.enter()
+        segmentationService.checkSegmentationRequest { result in
+            switch result {
+            case .success(let response):
                 self.targetingChecker.checkedSegmentations = response
-                self.dispatchGroup.leave()
+            case .failure(let error):
+                self.targetingChecker.checkedSegmentations = nil
+                if shouldCollectFailures {
+                    self.addTargetingFailureIfNeeded(
+                        for: error,
+                        reason: .customerSegmentRequestFailed,
+                        inappIds: self.targetingChecker.context.segmentInapps
+                    )
+                }
             }
+            self.dispatchGroup.leave()
         }
     }
 
-    private func fetchGeoIfNeeded() {
-        if targetingChecker.context.isNeedGeoRequest
-            && !SessionTemporaryStorage.shared.geoRequestCompleted {
+    private func fetchGeoIfNeeded(shouldCollectFailures: Bool) {
+        if targetingChecker.context.isNeedGeoRequest {
             dispatchGroup.enter()
             geoService = DI.injectOrFail(GeoServiceProtocol.self)
-            geoService?.geoRequest { model in
-                self.targetingChecker.geoModels = model
+            geoService?.geoRequest { result in
+                switch result {
+                case .success(let model):
+                    self.targetingChecker.geoModels = model
+                case .failure(let error):
+                    self.targetingChecker.geoModels = nil
+                    if shouldCollectFailures {
+                        self.addTargetingFailureIfNeeded(
+                            for: error,
+                            reason: .geoRequestFailed,
+                            inappIds: self.targetingChecker.context.geoInapps
+                        )
+                    }
+                }
                 self.dispatchGroup.leave()
                 self.geoService = nil
             }
         }
     }
 
-    func fetchProductSegmentationIfNeeded(products: ProductCategory?) {
+    func fetchProductSegmentationIfNeeded(products: ProductCategory?, shouldCollectFailures: Bool = true) {
         guard targetingChecker.event?.name == SessionTemporaryStorage.shared.viewProductOperation else {
             Logger.common(message: "Skipping segmentation fetch: unexpected event '\(targetingChecker.event?.name ?? "nil")'")
             return
@@ -106,12 +159,38 @@ extension InAppConfigurationDataFacade {
         }
 
         dispatchGroup.enter()
-        segmentationService.checkProductSegmentationRequest(products: products) { response in
-            if let response = response {
-                self.targetingChecker.checkedProductSegmentations[firstProduct] = response
+        segmentationService.checkProductSegmentationRequest(products: products) { result in
+            switch result {
+            case .success(let response):
+                if let response = response {
+                    self.targetingChecker.checkedProductSegmentations[firstProduct] = response
+                }
+            case .failure(let error):
+                if shouldCollectFailures {
+                    self.addTargetingFailureIfNeeded(
+                        for: error,
+                        reason: .productSegmentRequestFailed,
+                        inappIds: self.targetingChecker.context.productSegmentInapps
+                    )
+                }
             }
-            
+
             self.dispatchGroup.leave()
+        }
+    }
+
+    private func addTargetingFailureIfNeeded(
+        for error: MindboxError,
+        reason: InAppShowFailureReason,
+        inappIds: Set<String>
+    ) {
+        guard case .serverError = error else {
+            return
+        }
+
+        let details = error.failureReason
+        inappIds.forEach {
+            failureManager.addFailure(inappId: $0, reason: reason, details: details)
         }
     }
 }

@@ -15,7 +15,7 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         makeInAppMessageWindow()
     }
 
-    func present(id: String, in window: UIWindow, using viewController: UIViewController) {
+    func present(id: String, in window: UIWindow, using viewController: UIViewController) -> Bool {
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Starting presentation", category: .webViewInAppMessages)
         window.rootViewController = viewController
         window.backgroundColor = .clear
@@ -33,6 +33,7 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         Logger.common(message: "[WebView] WebviewPresentationStrategy: View controller view loaded", category: .webViewInAppMessages)
         
         Logger.common(message: "[WebView] In-app WebView with id \(id) start presenting with hidden window", category: .webViewInAppMessages)
+        return true
     }
 
     func dismiss(viewController: UIViewController) {

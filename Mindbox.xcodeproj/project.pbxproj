@@ -451,6 +451,7 @@
 		F31A947C2BC69E3900E6C978 /* PeriodicFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */; };
 		F31A947E2BC6A00D00E6C978 /* OnceFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */; };
 		F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */; };
+		F31DB4082F56A50E00DCEB85 /* NSError+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31DB4072F56A50E00DCEB85 /* NSError+Extensions.swift */; };
 		F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */; };
 		F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
@@ -621,6 +622,9 @@
 		F3B2A3A22A4C79E200E2CA25 /* ProtocolError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */; };
 		F3BD9F822F273BCD00647BAF /* BridgeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */; };
 		F3BDA0382F27444500647BAF /* MindboxWebBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */; };
+		F3C1A0022F5B100100ABC001 /* InappShowFailureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C1A0012F5B100100ABC001 /* InappShowFailureManager.swift */; };
+		F3C1A0042F5B100100ABC001 /* InAppShowFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C1A0032F5B100100ABC001 /* InAppShowFailure.swift */; };
+		F3C1A0062F5B100100ABC001 /* InappShowFailureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */; };
 		F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */; };
 		F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */; };
 		F3D925AB2A120C0F00135C87 /* InAppImageDownloaderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */; };
@@ -1146,6 +1150,7 @@
 		F31A947B2BC69E3900E6C978 /* PeriodicFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodicFrequency.swift; sourceTree = "<group>"; };
 		F31A947D2BC6A00D00E6C978 /* OnceFrequency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFrequency.swift; sourceTree = "<group>"; };
 		F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyValidator.swift; sourceTree = "<group>"; };
+		F31DB4072F56A50E00DCEB85 /* NSError+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSError+Extensions.swift"; sourceTree = "<group>"; };
 		F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTests.swift; sourceTree = "<group>"; };
 		F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManagerTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
@@ -1309,6 +1314,9 @@
 		F3B2A39D2A4C79E200E2CA25 /* ProtocolError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProtocolError.swift; sourceTree = "<group>"; };
 		F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessage.swift; sourceTree = "<group>"; };
 		F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxWebBridge.swift; sourceTree = "<group>"; };
+		F3C1A0012F5B100100ABC001 /* InappShowFailureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappShowFailureManager.swift; sourceTree = "<group>"; };
+		F3C1A0032F5B100100ABC001 /* InAppShowFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppShowFailure.swift; sourceTree = "<group>"; };
+		F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappShowFailureManagerTests.swift; sourceTree = "<group>"; };
 		F3D818AF2A3885AD0002957C /* ABTestDeviceMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixer.swift; sourceTree = "<group>"; };
 		F3D818B22A3885F50002957C /* ABTestDeviceMixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestDeviceMixerTests.swift; sourceTree = "<group>"; };
 		F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppImageDownloaderMock.swift; sourceTree = "<group>"; };
@@ -2452,6 +2460,7 @@
 				9B24FAB328C751CB00F10B5D /* Images */,
 				F34975692DEF2C8400BEC667 /* InappTrackingService.swift */,
 				F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */,
+				F3C1A0012F5B100100ABC001 /* InappShowFailureManager.swift */,
 			);
 			path = InAppMessages;
 			sourceTree = "<group>";
@@ -2489,6 +2498,7 @@
 				9B24FABC28C757A700F10B5D /* InAppResponse.swift */,
 				A184654429C310F100E64780 /* InAppOperationJSONModel.swift */,
 				A1D23AEF29DE082E00A75179 /* InAppProductSegmentResponse.swift */,
+				F3C1A0032F5B100100ABC001 /* InAppShowFailure.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2532,6 +2542,7 @@
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
 				F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */,
 				F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */,
+				F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -3324,6 +3335,7 @@
 				F382F2102BAC6AD100BC97FF /* UNAuthorizationStatus+Extensions.swift */,
 				BB4D7CC62BDEC51D008E3AB8 /* Notification+Extensions.swift */,
 				BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */,
+				F31DB4072F56A50E00DCEB85 /* NSError+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -4070,6 +4082,7 @@
 				F3A8B9A52A3A6F2800E9C055 /* MonitoringModel.swift in Sources */,
 				4741425C2E8A681600839AD8 /* StubDatabaseLoader.swift in Sources */,
 				F33087662C37590600F8DF10 /* InjectInappTools.swift in Sources */,
+				F3C1A0022F5B100100ABC001 /* InappShowFailureManager.swift in Sources */,
 				334F3AE8264C199900A6AC00 /* ItemRequest.swift in Sources */,
 				84CC799325CACF0C00C062BD /* EventRepository.swift in Sources */,
 				6FDD145B266F7CC300A50C35 /* ContentTypeResponse.swift in Sources */,
@@ -4277,6 +4290,7 @@
 				F31A94802BC7E61800E6C978 /* InappFrequencyValidator.swift in Sources */,
 				33072F322664C357001F1AB2 /* ProductListResponse.swift in Sources */,
 				F31909992E979D9E00373E2F /* MindboxAppDelegateProxy.swift in Sources */,
+				F31DB4082F56A50E00DCEB85 /* NSError+Extensions.swift in Sources */,
 				47CFDAB92F3A05430034F310 /* SystemInfoProvider.swift in Sources */,
 				9B24FAB128C74BD200F10B5D /* InAppConfigurationManager.swift in Sources */,
 				F382F20D2BAC548900BC97FF /* VisitTargetingChecker.swift in Sources */,
@@ -4340,6 +4354,7 @@
 				6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */,
 				A1A916E129C9053200D59D9E /* CategoryIDInChecker.swift in Sources */,
 				9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */,
+				F3C1A0042F5B100100ABC001 /* InAppShowFailure.swift in Sources */,
 				6FDD1441266F7C0600A50C35 /* AppliedPromotionTypeResponse.swift in Sources */,
 				F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */,
 				F3482F1F2A65DC20002A41EC /* CopyInappMessageDelegate.swift in Sources */,
@@ -4425,6 +4440,7 @@
 				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */,
+				F3C1A0062F5B100100ABC001 /* InappShowFailureManagerTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
 				9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */,
