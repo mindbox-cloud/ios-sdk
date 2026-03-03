@@ -96,16 +96,3 @@ private extension ImageDownloadService {
         }
     }
 }
-
-extension NSError {
-    var isNetworkOrTimeoutError: Bool {
-        domain == NSURLErrorDomain && [
-            NSURLErrorTimedOut,
-            NSURLErrorNotConnectedToInternet,
-            NSURLErrorNetworkConnectionLost,
-            NSURLErrorDataNotAllowed,
-            NSURLErrorCannotConnectToHost,
-            NSURLErrorDNSLookupFailed
-        ].contains(code)
-    }
-}
