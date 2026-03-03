@@ -43,8 +43,11 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         if let downloadImageError {
-            if case .serverError = downloadImageError {
+            switch downloadImageError {
+            case .serverError, .protocolError, .unknown:
                 imageDownloadFailures.append((inappId: inappId, details: downloadImageError.localizedDescription))
+            default:
+                break
             }
             completion(.failure(downloadImageError))
             return

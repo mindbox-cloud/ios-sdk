@@ -44,7 +44,11 @@ private extension ImageDownloadService {
     ) {
         if let nsError = error as? NSError {
             Logger.common(message: "Failed to download image. [URL]: \(sourceUrl). \nError: \(nsError.localizedDescription)", level: .debug, category: .inAppMessages)
-            completion(.failure(.unknown(nsError)))
+            if nsError.isNetworkOrTimeoutError {
+                completion(.failure(.connectionError))
+            } else {
+                completion(.failure(.unknown(nsError)))
+            }
             return
         }
 

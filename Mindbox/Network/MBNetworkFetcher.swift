@@ -61,8 +61,10 @@ class MBNetworkFetcher: NetworkFetcher {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             // Starting data task
+            let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { data, response, error in
-                self.handleResponse(data, response, error, needBaseResponse: needBaseResponse) { result in
+                let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+                self.handleResponse(data, response, error, needBaseResponse: needBaseResponse, networkTimeMs: networkTimeMs) { result in
                     switch result {
                     case let .success(response):
                         do {
@@ -105,8 +107,10 @@ class MBNetworkFetcher: NetworkFetcher {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             // Starting data task
+            let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
-                self?.handleResponse(data, response, error, emptyData: true, needBaseResponse: true, completion: { result in
+                let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+                self?.handleResponse(data, response, error, emptyData: true, needBaseResponse: true, networkTimeMs: networkTimeMs, completion: { result in
                     switch result {
                     case .success:
                         completion(.success(()))
@@ -129,11 +133,12 @@ class MBNetworkFetcher: NetworkFetcher {
         _ error: Error?,
         emptyData: Bool = false,
         needBaseResponse: Bool = false,
+        networkTimeMs: Int = 0,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         Logger.response(data: data, response: response, error: error)
 
-        guard let responseContext = makeResponseContext(response: response, error: error, completion: completion) else {
+        guard let responseContext = makeResponseContext(response: response, error: error, networkTimeMs: networkTimeMs, completion: completion) else {
             return
         }
 
@@ -155,30 +160,29 @@ class MBNetworkFetcher: NetworkFetcher {
         )
     }
 
-    private typealias ResponseContext = (
-        response: URLResponse,
-        httpResponse: HTTPURLResponse,
-        statusCode: HTTPURLResponseStatusCodeValidator.StatusCodes
-    )
+    private struct ResponseContext {
+        let response: URLResponse
+        let httpResponse: HTTPURLResponse
+        let statusCode: HTTPURLResponseStatusCodeValidator.StatusCodes
+        let networkTimeMs: Int
+    }
 
     private func makeResponseContext(
         response: URLResponse?,
         error: Error?,
+        networkTimeMs: Int,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) -> ResponseContext? {
-        // Check if we have any response at all
         guard let response = response else {
             completion(.failure(.connectionError))
             return nil
         }
 
-        // Make sure we got the correct response type
         guard let httpResponse = response as? HTTPURLResponse else {
             completion(.failure(.invalidResponse(response)))
             return nil
         }
 
-        // Make sure response has status code
         guard let statusCode = HTTPURLResponseStatusCodeValidator.StatusCodes(statusCode: httpResponse.statusCode) else {
             if error != nil {
                 completion(.failure(.serverError(.init(
@@ -192,7 +196,12 @@ class MBNetworkFetcher: NetworkFetcher {
             return nil
         }
 
-        return (response: response, httpResponse: httpResponse, statusCode: statusCode)
+        return ResponseContext(
+            response: response,
+            httpResponse: httpResponse,
+            statusCode: statusCode,
+            networkTimeMs: networkTimeMs
+        )
     }
 
     private func handleResponseData(
@@ -202,8 +211,9 @@ class MBNetworkFetcher: NetworkFetcher {
         needBaseResponse: Bool,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
-        if !needBaseResponse, context.statusCode == .serverError {
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
+        if context.statusCode == .serverError {
+            let body = String(data: data, encoding: .utf8)
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
             return
         }
 
@@ -266,7 +276,8 @@ class MBNetworkFetcher: NetworkFetcher {
     ) {
         switch context.statusCode {
         case .serverError:
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
+            let body = String(data: data, encoding: .utf8)
+            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
         default:
             if emptyData {
                 completion(.success(data))
@@ -288,10 +299,9 @@ class MBNetworkFetcher: NetworkFetcher {
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
         if let error = error {
-            // Handle server errors
             switch context.statusCode {
             case .serverError:
-                completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode)))
+                completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs)))
             default:
                 completion(.failure(.unknown(error)))
             }
@@ -300,10 +310,11 @@ class MBNetworkFetcher: NetworkFetcher {
         }
     }
 
-    private func internalServerError(httpStatusCode: Int) -> MindboxError {
-        .serverError(.init(
+    private func internalServerError(httpStatusCode: Int, networkTimeMs: Int = 0, responseBody: String? = nil) -> MindboxError {
+        let body = responseBody ?? "{}"
+        return .serverError(.init(
             status: .internalServerError,
-            errorMessage: "Internal Server error",
+            errorMessage: "MindboxError.serverError. statusCode=\(httpStatusCode), networkTimeMs=\(networkTimeMs), body=\(body)",
             httpStatusCode: httpStatusCode
         ))
     }

@@ -68,12 +68,17 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
-            if case .failure(let error) = result, case .serverError = error {
-                self.failureManager.addFailure(
-                    inappId: inappId,
-                    reason: .imageDownloadFailed,
-                    details: error.localizedDescription
-                )
+            if case .failure(let error) = result {
+                switch error {
+                case .serverError, .protocolError, .unknown:
+                    self.failureManager.addFailure(
+                        inappId: inappId,
+                        reason: .imageDownloadFailed,
+                        details: error.localizedDescription
+                    )
+                default:
+                    break
+                }
             }
             completion(result)
         }

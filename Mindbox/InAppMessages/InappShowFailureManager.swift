@@ -82,6 +82,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
 
             do {
                 try databaseRepository.create(event: event)
+                Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with \(failures.count) failure(s)",
+                              category: .inAppMessages)
                 failures.removeAll()
             } catch {
                 Logger.common(
