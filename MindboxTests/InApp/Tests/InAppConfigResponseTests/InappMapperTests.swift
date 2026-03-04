@@ -175,7 +175,9 @@ struct InappRemainingTargetingTests {
         
         #expect(mockDataFacade.imageDownloadFailures.count == 1)
         #expect(mockDataFacade.imageDownloadFailures.first?.inappId == "1")
-        #expect(mockDataFacade.imageDownloadFailures.first?.details == imageError.localizedDescription)
+        let details = mockDataFacade.imageDownloadFailures.first?.details ?? ""
+        #expect(details.hasPrefix("Image URL:"))
+        #expect(details.contains(imageError.localizedDescription))
     }
     
     @Test("Image download 4xx error adds in-app show failure", .tags(.remainingTargeting))

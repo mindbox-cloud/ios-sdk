@@ -193,9 +193,10 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
 
         dataFacade.fetchProductSegmentationIfNeeded(products: products)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-2", "inapp-other"])
 
-        XCTAssertEqual(mockFailureManager.failures.count, 2)
-        XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-1", "inapp-2"]))
+        XCTAssertEqual(mockFailureManager.failures.count, 1)
+        XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-2"]))
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .productSegmentRequestFailed })
     }
 
@@ -211,6 +212,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         mockSegmentation.stubError = .protocolError(.init(status: .protocolError, errorMessage: "Bad request", httpStatusCode: 400))
 
         dataFacade.fetchProductSegmentationIfNeeded(products: products)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-1"])
 
         XCTAssertTrue(mockFailureManager.failures.isEmpty)
     }
@@ -226,9 +228,10 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         }
 
         waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment-2", "inapp-other"])
 
-        XCTAssertEqual(mockFailureManager.failures.count, 2)
-        XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-segment-1", "inapp-segment-2"]))
+        XCTAssertEqual(mockFailureManager.failures.count, 1)
+        XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-segment-2"]))
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
     }
 
@@ -279,6 +282,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
             firstExpectation.fulfill()
         }
         waitForExpectations(timeout: 1)
+        facade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"])
 
         shouldReturnFailure = false
         let secondExpectation = expectation(description: "second fetch dependencies")
@@ -286,11 +290,28 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
             secondExpectation.fulfill()
         }
         waitForExpectations(timeout: 1)
+        facade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"])
 
         XCTAssertEqual(requestCallCount, 1)
         XCTAssertEqual(localFailureManager.failures.count, 2)
         XCTAssertTrue(localFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
         XCTAssertEqual(localFailureManager.failures.map { $0.inappId }, ["inapp-segment", "inapp-segment"])
+    }
+
+    func test_doNotAddFailure_whenShouldCollectFailuresIsFalse() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        let expectation = expectation(description: "fetch dependencies")
+
+        dataFacade.fetchDependencies(model: nil, shouldCollectFailures: false) {
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"])
+
+        XCTAssertTrue(mockFailureManager.failures.isEmpty)
     }
 
     func test_addFailure_whenGeoReturnsServerError() {
@@ -305,6 +326,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         }
 
         waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-geo", "inapp-other"])
 
         XCTAssertEqual(mockFailureManager.failures.count, 1)
         XCTAssertEqual(mockFailureManager.failures.first?.inappId, "inapp-geo")
@@ -322,6 +344,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
             firstExpectation.fulfill()
         }
         waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-geo"])
 
         networkFetcher?.error = nil
         let secondExpectation = expectation(description: "second fetch dependencies")
@@ -329,6 +352,7 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
             secondExpectation.fulfill()
         }
         waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-geo"])
 
         XCTAssertEqual(mockFailureManager.failures.count, 2)
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .geoRequestFailed })

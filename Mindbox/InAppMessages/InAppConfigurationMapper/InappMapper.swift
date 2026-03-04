@@ -48,8 +48,8 @@ class InappMapper: InappMapperProtocol {
             let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
             self.prepareTargetingChecker(for: filteredInapps)
             self.prepareForRemainingTargeting()
+
             self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
-                
                 self.sendRemainingInappsTargeting {
                     completion(formData)
                     group.leave()
@@ -89,6 +89,9 @@ class InappMapper: InappMapperProtocol {
                 operationInapps: self.targetingChecker.context.operationInapps
             )
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
+            let suitableIds = Set(suitableInapps.map(\.inAppId))
+            let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
+            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds)
 
             if suitableInapps.isEmpty {
                 completion(nil)

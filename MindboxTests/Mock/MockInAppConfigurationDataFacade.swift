@@ -22,6 +22,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     public var targetingArray: [String] = []
     public var downloadImageError: MindboxError?
     public var imageDownloadFailures: [(inappId: String, details: String?)] = []
+    public var collectedTargetingFailureIds: [Set<String>] = []
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -45,7 +46,8 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
-                imageDownloadFailures.append((inappId: inappId, details: downloadImageError.localizedDescription))
+                let details = "Image URL: \(url). \(downloadImageError.localizedDescription)"
+                imageDownloadFailures.append((inappId: inappId, details: details))
             default:
                 break
             }
@@ -58,6 +60,10 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         } else {
             completion(.success(UIImage()))
         }
+    }
+
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>) {
+        collectedTargetingFailureIds.append(failedTargetingInappIds)
     }
     
     func trackTargeting(id: String?) {
@@ -76,5 +82,9 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     
     func cleanImageDownloadFailures() {
         imageDownloadFailures = []
+    }
+
+    func cleanCollectedTargetingFailureIds() {
+        collectedTargetingFailureIds = []
     }
 }

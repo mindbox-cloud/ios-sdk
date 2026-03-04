@@ -16,6 +16,7 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>)
     func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?)
 }
@@ -34,6 +35,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
     let failureManager: InappShowFailureManagerProtocol
+
+    private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -54,6 +57,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     ) {
+        pendingTargetingFailureDetails.removeAll()
         fetchSegmentationIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchGeoIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchProductSegmentationIfNeeded(
@@ -66,15 +70,33 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>) {
+        defer {
+            pendingTargetingFailureDetails.removeAll()
+        }
+
+        guard !failedTargetingInappIds.isEmpty else {
+            return
+        }
+
+        pendingTargetingFailureDetails.forEach { reason, details in
+            let inappIds = inappIds(for: reason)
+            failedTargetingInappIds.intersection(inappIds).forEach {
+                failureManager.addFailure(inappId: $0, reason: reason, details: details)
+            }
+        }
+    }
+
     func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             if case .failure(let error) = result {
                 switch error {
                 case .serverError, .protocolError, .unknown:
+                    let details = "Image URL: \(url) | \(error.localizedDescription)"
                     self.failureManager.addFailure(
                         inappId: inappId,
                         reason: .imageDownloadFailed,
-                        details: error.localizedDescription
+                        details: details
                     )
                 default:
                     break
@@ -105,13 +127,11 @@ extension InAppConfigurationDataFacade {
                 self.targetingChecker.checkedSegmentations = response
             case .failure(let error):
                 self.targetingChecker.checkedSegmentations = nil
-                if shouldCollectFailures {
-                    self.addTargetingFailureIfNeeded(
-                        for: error,
-                        reason: .customerSegmentRequestFailed,
-                        inappIds: self.targetingChecker.context.segmentInapps
-                    )
-                }
+                self.storeTargetingFailureIfNeeded(
+                    for: error,
+                    reason: .customerSegmentRequestFailed,
+                    shouldCollectFailures: shouldCollectFailures
+                )
             }
             self.dispatchGroup.leave()
         }
@@ -127,13 +147,11 @@ extension InAppConfigurationDataFacade {
                     self.targetingChecker.geoModels = model
                 case .failure(let error):
                     self.targetingChecker.geoModels = nil
-                    if shouldCollectFailures {
-                        self.addTargetingFailureIfNeeded(
-                            for: error,
-                            reason: .geoRequestFailed,
-                            inappIds: self.targetingChecker.context.geoInapps
-                        )
-                    }
+                    self.storeTargetingFailureIfNeeded(
+                        for: error,
+                        reason: .geoRequestFailed,
+                        shouldCollectFailures: shouldCollectFailures
+                    )
                 }
                 self.dispatchGroup.leave()
                 self.geoService = nil
@@ -166,31 +184,42 @@ extension InAppConfigurationDataFacade {
                     self.targetingChecker.checkedProductSegmentations[firstProduct] = response
                 }
             case .failure(let error):
-                if shouldCollectFailures {
-                    self.addTargetingFailureIfNeeded(
-                        for: error,
-                        reason: .productSegmentRequestFailed,
-                        inappIds: self.targetingChecker.context.productSegmentInapps
-                    )
-                }
+                self.storeTargetingFailureIfNeeded(
+                    for: error,
+                    reason: .productSegmentRequestFailed,
+                    shouldCollectFailures: shouldCollectFailures
+                )
             }
 
             self.dispatchGroup.leave()
         }
     }
 
-    private func addTargetingFailureIfNeeded(
+    private func storeTargetingFailureIfNeeded(
         for error: MindboxError,
         reason: InAppShowFailureReason,
-        inappIds: Set<String>
+        shouldCollectFailures: Bool
     ) {
+        guard shouldCollectFailures else {
+            return
+        }
         guard case .serverError = error else {
             return
         }
 
-        let details = error.failureReason
-        inappIds.forEach {
-            failureManager.addFailure(inappId: $0, reason: reason, details: details)
+        pendingTargetingFailureDetails[reason] = error.failureReason
+    }
+
+    private func inappIds(for reason: InAppShowFailureReason) -> Set<String> {
+        switch reason {
+        case .customerSegmentRequestFailed:
+            return targetingChecker.context.segmentInapps
+        case .geoRequestFailed:
+            return targetingChecker.context.geoInapps
+        case .productSegmentRequestFailed:
+            return targetingChecker.context.productSegmentInapps
+        default:
+            return []
         }
     }
 }
