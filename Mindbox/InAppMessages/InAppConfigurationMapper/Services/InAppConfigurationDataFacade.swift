@@ -92,10 +92,11 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
             if case .failure(let error) = result {
                 switch error {
                 case .serverError, .protocolError, .unknown:
+                    let details = "Image URL: \(url) | \(error.localizedDescription)"
                     self.failureManager.addFailure(
                         inappId: inappId,
                         reason: .imageDownloadFailed,
-                        details: error.localizedDescription
+                        details: details
                     )
                 default:
                     break

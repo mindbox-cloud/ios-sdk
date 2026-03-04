@@ -46,7 +46,8 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
-                imageDownloadFailures.append((inappId: inappId, details: downloadImageError.localizedDescription))
+                let details = "Image URL: \(url). \(downloadImageError.localizedDescription)"
+                imageDownloadFailures.append((inappId: inappId, details: details))
             default:
                 break
             }
