@@ -47,19 +47,7 @@ class InappMapper: InappMapperProtocol {
             self.abTests = response.abtests
             let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
             self.prepareTargetingChecker(for: filteredInapps)
-
-            // Save failure-eligible sets (only filtered inapps should get failures)
-            let failureSegmentInapps = self.targetingChecker.context.segmentInapps
-            let failureGeoInapps = self.targetingChecker.context.geoInapps
-            let failureProductSegmentInapps = self.targetingChecker.context.productSegmentInapps
-
-            // Expand context with ALL valid inapps (full segment IDs for API request + operationInapps)
             self.prepareForRemainingTargeting()
-
-            // Restore failure sets — API gets full data, failures only for filtered
-            self.targetingChecker.context.segmentInapps = failureSegmentInapps
-            self.targetingChecker.context.geoInapps = failureGeoInapps
-            self.targetingChecker.context.productSegmentInapps = failureProductSegmentInapps
 
             self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
                 self.sendRemainingInappsTargeting {
@@ -101,6 +89,9 @@ class InappMapper: InappMapperProtocol {
                 operationInapps: self.targetingChecker.context.operationInapps
             )
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
+            let suitableIds = Set(suitableInapps.map(\.inAppId))
+            let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
+            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds)
 
             if suitableInapps.isEmpty {
                 completion(nil)
