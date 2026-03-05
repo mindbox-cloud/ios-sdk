@@ -460,7 +460,8 @@ final class InappFilterServiceTests: XCTestCase {
             sdkVersion: sdkVersion,
             targeting: .true(targeting),
             frequency: frequency,
-            form: form
+            form: form,
+            tags: nil
         )
     }
 
