@@ -23,4 +23,5 @@ extension Tag {
     @Tag static var remainingTargeting: Self
     @Tag static var abTesting: Self
     @Tag static var geoTargeting: Self
+    @Tag static var webView: Self
 }

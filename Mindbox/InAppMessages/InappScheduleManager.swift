@@ -121,7 +121,11 @@ internal extension InappScheduleManager {
                 let timeToDisplay = processingDuration + presentationTime
                 let timeToDisplayString = timeToDisplay.toTimeSpan()
                 Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
-                try? self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
+                do {
+                    try self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
+                } catch {
+                    Logger.common(message: "[InappScheduleManager] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
+                }
                 self.trackingService.trackInAppShown(id: inapp.inAppId)
                 self.trackingService.saveInappStateChange()
                 self.failureManager.clearFailures()
