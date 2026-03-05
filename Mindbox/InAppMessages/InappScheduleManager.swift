@@ -14,6 +14,7 @@ import UIKit
 internal struct ScheduledInapp {
     let inapp: InAppFormData
     let timer: DispatchSourceTimer
+    let processingDuration: TimeInterval
 }
 
 protocol InappScheduleManagerProtocol {
@@ -26,19 +27,21 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
     let trackingService: InAppTrackingServiceProtocol
+    let tracker: InAppMessagesTrackerProtocol
     let failureManager: InappShowFailureManagerProtocol
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
-    private var processingDurations: [String: TimeInterval] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
          presentationValidator: InAppPresentationValidatorProtocol,
          trackingService: InAppTrackingServiceProtocol,
+         tracker: InAppMessagesTrackerProtocol,
          failureManager: InappShowFailureManagerProtocol) {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
         self.trackingService = trackingService
+        self.tracker = tracker
         self.failureManager = failureManager
         addObserver()
     }
@@ -66,13 +69,12 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             }
         }
         
-        let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer)
+        let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer, processingDuration: processingDuration)
         
         queue.async {
-            self.processingDurations[inapp.inAppId] = processingDuration
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
             timer.resume()
-            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
+            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority) processingDuration=\(processingDuration.toTimeSpan())")
         }
     }
 }
@@ -93,7 +95,7 @@ internal extension InappScheduleManager {
                                                            frequency: firstInapp.inapp.frequency,
                                                            id: firstInapp.inapp.inAppId) {
                 let readyTimestamp = CACurrentMediaTime()
-                self.presentInapp(firstInapp.inapp, readyTimestamp: readyTimestamp)
+                self.presentInapp(firstInapp.inapp, readyTimestamp: readyTimestamp, processingDuration: firstInapp.processingDuration)
             }
             
             for scheduledInapp in scheduledInapps {
@@ -105,8 +107,7 @@ internal extension InappScheduleManager {
         }
     }
     
-    func presentInapp(_ inapp: InAppFormData, readyTimestamp: TimeInterval) {
-        let processingDuration = processingDurations.removeValue(forKey: inapp.inAppId) ?? 0
+    func presentInapp(_ inapp: InAppFormData, readyTimestamp: TimeInterval, processingDuration: TimeInterval = 0) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
@@ -116,9 +117,11 @@ internal extension InappScheduleManager {
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
-                let presentationDuration = CACurrentMediaTime() - readyTimestamp
-                let totalDuration = processingDuration + presentationDuration
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processing=\(processingDuration.toTimeSpan()) presentation=\(presentationDuration.toTimeSpan()) total=\(totalDuration.toTimeSpan())")
+                let presentationTime = CACurrentMediaTime() - readyTimestamp
+                let timeToDisplay = processingDuration + presentationTime
+                let timeToDisplayString = timeToDisplay.toTimeSpan()
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
+                try? self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
                 self.trackingService.trackInAppShown(id: inapp.inAppId)
                 self.trackingService.saveInappStateChange()
                 self.failureManager.clearFailures()

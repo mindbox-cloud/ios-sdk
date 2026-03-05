@@ -18,7 +18,7 @@ protocol PresentationDisplayUseCaseProtocol: AnyObject {
         onError: @escaping (InAppPresentationError) -> Void
     )
     func dismissInAppUIModel(onClose: @escaping () -> Void)
-    func onPresented(id: String, tags: [String: String]?, _ completion: @escaping () -> Void)
+    func onPresented(id: String, _ completion: @escaping () -> Void)
 }
 
 final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
@@ -127,13 +127,8 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
         onClose()
     }
 
-    func onPresented(id: String, tags: [String: String]?, _ completion: @escaping () -> Void) {
-        do {
-            try tracker.trackView(id: id, tags: tags, timeToDisplay: nil)
-            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View. Id \(id)", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
-        }
+    func onPresented(id: String, _ completion: @escaping () -> Void) {
+        Logger.common(message: "[PresentationDisplayUseCase] InApp presented. Id \(id)", level: .info, category: .notification)
         completion()
     }
 }

@@ -90,7 +90,7 @@ final class TransparentView: UIView {
     }
 
     private func setupTimeoutTimer() {
-        let secondsTimeout = 7
+        let secondsTimeout = 20
 
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in

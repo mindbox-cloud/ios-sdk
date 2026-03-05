@@ -29,6 +29,7 @@ struct InappScheduleManagerTests {
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
             trackingService: trackingServiceMock,
+            tracker: DI.injectOrFail(InAppMessagesTracker.self),
             failureManager: failureManagerMock
         )
 
@@ -315,9 +316,9 @@ struct InappScheduleManagerTests {
 
             presentationTime = entry.key
 
-            let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: existingScheduled.timer)
-            let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: existingScheduled.timer)
-            let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: existingScheduled.timer)
+            let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: existingScheduled.timer, processingDuration: 0)
+            let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: existingScheduled.timer, processingDuration: 0)
+            let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: existingScheduled.timer, processingDuration: 0)
 
             self.scheduleManager.inappsByPresentationTime[entry.key] = [
                 scheduledInapp1,
