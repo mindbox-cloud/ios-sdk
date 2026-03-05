@@ -18,6 +18,7 @@ struct InAppFormData {
     let firstImageValue: String
     let content: MindboxFormVariant
     let frequency: InappFrequency?
+    let tags: [String: String]?
     var operation: (name: String, body: String)?
 
     init(
@@ -28,6 +29,7 @@ struct InAppFormData {
         firstImageValue: String,
         content: MindboxFormVariant,
         frequency: InappFrequency?,
+        tags: [String: String]? = nil,
         operation: (name: String, body: String)? = nil
     ) {
         self.inAppId = inAppId
@@ -37,6 +39,7 @@ struct InAppFormData {
         self.firstImageValue = firstImageValue
         self.content = content
         self.frequency = frequency
+        self.tags = tags
         self.operation = operation
     }
 }
@@ -48,4 +51,5 @@ struct InAppTransitionData: Equatable {
     let delayTime: String?
     let content: MindboxFormVariant
     let frequency: InappFrequency?
+    let tags: [String: String]?
 }

@@ -143,6 +143,7 @@ class InappMapper: InappMapperProtocol {
                         firstImageValue: "",
                         content: inapp.content,
                         frequency: inapp.frequency,
+                        tags: inapp.tags,
                         operation: self.getOperation()
                     )
                     continue
@@ -179,6 +180,7 @@ class InappMapper: InappMapperProtocol {
                                                  firstImageValue: firstImageValue,
                                                  content: inapp.content,
                                                  frequency: inapp.frequency,
+                                                 tags: inapp.tags,
                                                  operation: self.getOperation())
                     }
                 }

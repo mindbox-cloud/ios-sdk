@@ -107,7 +107,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
-                self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
+                self.displayUseCase.onPresented(id: inAppFormData.inAppId, tags: inAppFormData.tags, onPresented)
             }, onTapAction: onTapAction,
             onClose: {
                 self.displayUseCase.dismissInAppUIModel(onClose: safeOnPresentationCompleted)

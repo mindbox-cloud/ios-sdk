@@ -74,7 +74,8 @@ final class InappsFilterService: InappFilterProtocol {
                                                    isPriority: inapp.isPriority,
                                                    delayTime: inapp.delayTime,
                                                    content: inAppFormVariants,
-                                                   frequency: inapp.frequency)
+                                                   frequency: inapp.frequency,
+                                                   tags: inapp.tags)
                 filteredInAppsByEvent.append(formData)
             }
         }
