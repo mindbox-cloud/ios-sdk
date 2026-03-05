@@ -44,6 +44,7 @@
 		330D8CCB26579521005106D5 /* DiscountTypeRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330D8CCA26579521005106D5 /* DiscountTypeRequest.swift */; };
 		330D8CCD26579581005106D5 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330D8CCC26579581005106D5 /* Channel.swift */; };
 		3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4126303F2F000A30D0 /* String+Regex.swift */; };
+		3328FE4426303F30000A30D0 /* TimeInterval+TimeSpan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3328FE4326303F30000A30D0 /* TimeInterval+TimeSpan.swift */; };
 		3333C1A12681D3CF00B60D84 /* MindboxNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3333C1982681D3CF00B60D84 /* MindboxNotifications.framework */; };
 		3333C1A82681D3CF00B60D84 /* MindboxNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 3333C19A2681D3CF00B60D84 /* MindboxNotifications.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3333C1AF2681D3DB00B60D84 /* MindboxNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337EDF332636DA3F0089559F /* MindboxNotificationService.swift */; };
@@ -743,6 +744,7 @@
 		330D8CCA26579521005106D5 /* DiscountTypeRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscountTypeRequest.swift; sourceTree = "<group>"; };
 		330D8CCC26579581005106D5 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
 		3328FE4126303F2F000A30D0 /* String+Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Regex.swift"; sourceTree = "<group>"; };
+		3328FE4326303F30000A30D0 /* TimeInterval+TimeSpan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+TimeSpan.swift"; sourceTree = "<group>"; };
 		3333C1982681D3CF00B60D84 /* MindboxNotifications.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MindboxNotifications.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3333C19A2681D3CF00B60D84 /* MindboxNotifications.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MindboxNotifications.h; sourceTree = "<group>"; };
 		3333C19B2681D3CF00B60D84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1562,6 +1564,7 @@
 				84BAEF8525D5492B002E8A26 /* Body+ */,
 				84F7053A26120199009C7A07 /* Constants.swift */,
 				3328FE4126303F2F000A30D0 /* String+Regex.swift */,
+				3328FE4326303F30000A30D0 /* TimeInterval+TimeSpan.swift */,
 				F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */,
 				A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */,
 			);
@@ -4299,6 +4302,7 @@
 				F3D818B02A3885AD0002957C /* ABTestDeviceMixer.swift in Sources */,
 				F33608262A8CC94A00C7C9B7 /* SnackbarViewController.swift in Sources */,
 				3328FE4226303F2F000A30D0 /* String+Regex.swift in Sources */,
+				3328FE4426303F30000A30D0 /* TimeInterval+TimeSpan.swift in Sources */,
 				F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */,
 				DEC482157E5249DBBFAEFC9A /* FeatureTogglesModel.swift in Sources */,
 				3FB93AC126964AD3A061B4A7 /* FeatureToggleManager.swift in Sources */,

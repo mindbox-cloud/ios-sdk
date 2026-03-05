@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 import UIKit
 
@@ -17,7 +18,7 @@ internal struct ScheduledInapp {
 
 protocol InappScheduleManagerProtocol {
     var delegate: InAppMessagesDelegate? { get set }
-    func scheduleInApp(_ inAppFormData: InAppFormData)
+    func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -29,6 +30,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
+    private var processingDurations: [String: TimeInterval] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
          presentationValidator: InAppPresentationValidatorProtocol,
@@ -47,7 +49,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     
     weak var delegate: InAppMessagesDelegate?
     
-    func scheduleInApp(_ inapp: InAppFormData) {
+    func scheduleInApp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         let delay = getDelay(inapp.delayTime)
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
@@ -67,6 +69,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer)
         
         queue.async {
+            self.processingDurations[inapp.inAppId] = processingDuration
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
             timer.resume()
             Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
@@ -89,7 +92,8 @@ internal extension InappScheduleManager {
                 self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
                                                            frequency: firstInapp.inapp.frequency,
                                                            id: firstInapp.inapp.inAppId) {
-                self.presentInapp(firstInapp.inapp)
+                let readyTimestamp = CACurrentMediaTime()
+                self.presentInapp(firstInapp.inapp, readyTimestamp: readyTimestamp)
             }
             
             for scheduledInapp in scheduledInapps {
@@ -101,7 +105,8 @@ internal extension InappScheduleManager {
         }
     }
     
-    func presentInapp(_ inapp: InAppFormData) {
+    func presentInapp(_ inapp: InAppFormData, readyTimestamp: TimeInterval) {
+        let processingDuration = processingDurations.removeValue(forKey: inapp.inAppId) ?? 0
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
@@ -111,6 +116,9 @@ internal extension InappScheduleManager {
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
+                let presentationDuration = CACurrentMediaTime() - readyTimestamp
+                let totalDuration = processingDuration + presentationDuration
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processing=\(processingDuration.toTimeSpan()) presentation=\(presentationDuration.toTimeSpan()) total=\(totalDuration.toTimeSpan())")
                 self.trackingService.trackInAppShown(id: inapp.inAppId)
                 self.trackingService.saveInappStateChange()
                 self.failureManager.clearFailures()

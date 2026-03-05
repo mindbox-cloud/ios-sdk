@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 /// Event that may trigger showing in-app message
@@ -136,8 +137,11 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
+        let triggerTimestamp = CACurrentMediaTime()
+        
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
-            self.onReceivedInAppResponse(inapp: inapp) {
+            let processingDuration = CACurrentMediaTime() - triggerTimestamp
+            self.onReceivedInAppResponse(inapp: inapp, processingDuration: processingDuration) {
                 completion()
             }
         }
@@ -149,7 +153,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         || SessionTemporaryStorage.shared.viewCategoryOperation?.contains(operationName) ?? false
     }
 
-    private func onReceivedInAppResponse(inapp: InAppFormData?, completion: @escaping () -> Void) {
+    private func onReceivedInAppResponse(inapp: InAppFormData?, processingDuration: TimeInterval, completion: @escaping () -> Void) {
         let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
         guard let inapp = inapp else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
@@ -158,7 +162,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
         
-        inappScheduler.scheduleInApp(inapp)
+        inappScheduler.scheduleInApp(inapp, processingDuration: processingDuration)
         completion()
     }
 
