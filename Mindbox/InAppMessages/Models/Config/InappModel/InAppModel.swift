@@ -62,11 +62,7 @@ extension InAppDTO {
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
 
-        do {
-            self.tags = try container.decodeIfPresent([String: String].self, forKey: .tags)
-        } catch {
-            self.tags = nil
-        }
+        self.tags = try? container.decodeIfPresent([String: String].self, forKey: .tags)
     }
 }
 
