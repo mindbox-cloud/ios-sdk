@@ -117,12 +117,14 @@ extension MBContainer {
             let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
             let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
+            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
             let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
             
             return InappScheduleManager(
                 presentationManager: presentationManager,
                 presentationValidator: presentationValidator,
                 trackingService: inappTrackingService,
+                tracker: tracker,
                 failureManager: failureManager
             )
         }

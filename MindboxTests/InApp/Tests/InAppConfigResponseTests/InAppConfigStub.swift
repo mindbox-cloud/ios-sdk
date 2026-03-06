@@ -140,7 +140,8 @@ extension InAppConfigStub {
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
                          targeting: targeting,
-                         form: try getForm())]
+                         form: try getForm(),
+                         tags: nil)]
     }
 
     private func getForm() throws -> InAppFormDTO {

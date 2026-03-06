@@ -601,7 +601,7 @@ final class WebViewControllerWindowProviderTests: XCTestCase {
 }
 
 private final class InAppMessagesTrackerMock: InAppMessagesTrackerProtocol {
-    func trackView(id: String) throws {}
+    func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {}
     func trackClick(id: String) throws {}
 }
 

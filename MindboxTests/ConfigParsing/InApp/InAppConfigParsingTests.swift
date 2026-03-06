@@ -60,6 +60,13 @@ fileprivate enum InAppConfig: String, Configurable {
 
     case inAppWebviewValid = "InAppWebviewValid" // Valid webview InApp with params
     case inAppWebviewParamsTypeError = "InAppWebviewParamsTypeError" // webview params is Int instead of object
+
+    // MARK: - tags
+
+    case inAppTagsValid = "InAppTagsValid" // tags with only string values
+    case inAppTagsNil = "InAppTagsNil" // tags absent
+    case inAppTagsTypeError = "InAppTagsTypeError" // tags with one non-String value → tags == nil, inapp not skipped
+    case inAppTagsArbitraryKeys = "InAppTagsArbitraryKeys" // tags with arbitrary (non-standard) keys
 }
 
 final class InAppConfigParsingTests: XCTestCase {
@@ -304,5 +311,53 @@ final class InAppConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
                       "InApp must be skipped when webview params has wrong type")
+    }
+
+    // MARK: - tags
+
+    func test_InApp_withTagsValid_shouldDecodeTags() {
+        let config = try! InAppConfig.inAppTagsValid.getConfig()
+        XCTAssertNotNil(config.inapps)
+        guard let inapp = config.inapps?.elements.first else {
+            XCTFail("InApp should be present")
+            return
+        }
+        XCTAssertEqual(inapp.tags?["layer"], "webView")
+        XCTAssertEqual(inapp.tags?["type"], "modal")
+    }
+
+    func test_InApp_withTagsNil_shouldHaveNilTags() {
+        let config = try! InAppConfig.inAppTagsNil.getConfig()
+        XCTAssertNotNil(config.inapps)
+        guard let inapp = config.inapps?.elements.first else {
+            XCTFail("InApp should be present")
+            return
+        }
+        XCTAssertNil(inapp.tags, "tags must be nil when absent")
+    }
+
+    func test_InApp_withTagsTypeError_shouldHaveNilTagsAndNotSkipInApp() {
+        let config = try! InAppConfig.inAppTagsTypeError.getConfig()
+        XCTAssertNotNil(config.inapps)
+        guard let inapp = config.inapps?.elements.first else {
+            XCTFail("InApp must NOT be skipped when tags has non-String value")
+            return
+        }
+        XCTAssertNil(inapp.tags, "tags must be nil when any value is not String")
+    }
+
+    func test_InApp_withTagsArbitraryKeys_shouldDecodeAllKeys() {
+        let config = try! InAppConfig.inAppTagsArbitraryKeys.getConfig()
+        XCTAssertNotNil(config.inapps)
+        guard let inapp = config.inapps?.elements.first else {
+            XCTFail("InApp should be present")
+            return
+        }
+        XCTAssertNotNil(inapp.tags)
+        XCTAssertEqual(inapp.tags?.count, 4)
+        XCTAssertEqual(inapp.tags?["customKey1"], "value1")
+        XCTAssertEqual(inapp.tags?["another-key"], "value2")
+        XCTAssertEqual(inapp.tags?["key_with_underscore"], "value3")
+        XCTAssertEqual(inapp.tags?["CamelCaseKey"], "value4")
     }
 }

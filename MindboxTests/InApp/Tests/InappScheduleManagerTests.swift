@@ -7,6 +7,7 @@
 //
 
 import Testing
+import QuartzCore
 @testable import Mindbox
 
 @Suite("In-app schedule manager tests")
@@ -28,6 +29,7 @@ struct InappScheduleManagerTests {
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
             trackingService: trackingServiceMock,
+            tracker: DI.injectOrFail(InAppMessagesTracker.self),
             failureManager: failureManagerMock
         )
 
@@ -41,7 +43,7 @@ struct InappScheduleManagerTests {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -75,7 +77,7 @@ struct InappScheduleManagerTests {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -112,9 +114,9 @@ struct InappScheduleManagerTests {
         let inapp2 = createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03")
         let inapp3 = createInAppFormData(id: "3", isPriority: true, delayTime: "00:00:04")
 
-        scheduleManager.scheduleInApp(inapp1)
-        scheduleManager.scheduleInApp(inapp2)
-        scheduleManager.scheduleInApp(inapp3)
+        scheduleManager.scheduleInApp(inapp1, processingDuration: 0)
+        scheduleManager.scheduleInApp(inapp2, processingDuration: 0)
+        scheduleManager.scheduleInApp(inapp3, processingDuration: 0)
 
         var entries: [(time: TimeInterval, inappId: String)] = []
 
@@ -155,7 +157,7 @@ struct InappScheduleManagerTests {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -179,7 +181,7 @@ struct InappScheduleManagerTests {
     @Test("Eligible in-app cleanup clears buffered failures", .tags(.inAppSchedule))
     func showEligibleInapp_clearsFailuresAfterCleanup() {
         let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: nil)
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
         scheduleManager.queue.sync {
@@ -207,7 +209,7 @@ struct InappScheduleManagerTests {
         #expect(scheduleManager.getDelay("invalid_time") == 0)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -234,7 +236,7 @@ struct InappScheduleManagerTests {
         #expect(scheduleManager.getDelay("00:00:00") == 0)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -265,7 +267,7 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "01:00:00")
         let start = Date().timeIntervalSince1970
 
-        scheduleManager.scheduleInApp(inapp)
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var scheduledTime: TimeInterval?
 
@@ -299,7 +301,7 @@ struct InappScheduleManagerTests {
         let inapp2 = createInAppFormData(id: "2", isPriority: true, delayTime: "01:00:00")
         let inapp3 = createInAppFormData(id: "3", isPriority: false, delayTime: "01:00:00")
 
-        scheduleManager.scheduleInApp(inapp1)
+        scheduleManager.scheduleInApp(inapp1, processingDuration: 0)
 
         var presentationTime: TimeInterval?
 
@@ -314,9 +316,9 @@ struct InappScheduleManagerTests {
 
             presentationTime = entry.key
 
-            let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: existingScheduled.timer)
-            let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: existingScheduled.timer)
-            let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: existingScheduled.timer)
+            let scheduledInapp1 = ScheduledInapp(inapp: inapp1, timer: existingScheduled.timer, processingDuration: 0)
+            let scheduledInapp2 = ScheduledInapp(inapp: inapp2, timer: existingScheduled.timer, processingDuration: 0)
+            let scheduledInapp3 = ScheduledInapp(inapp: inapp3, timer: existingScheduled.timer, processingDuration: 0)
 
             self.scheduleManager.inappsByPresentationTime[entry.key] = [
                 scheduledInapp1,
@@ -343,7 +345,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onPresented_clearsFailures() {
         let inapp = createInAppFormData(id: "success-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp)
+        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
         #expect(presentationManagerMock.presentCallsCount == 1)
         #expect(failureManagerMock.clearFailuresCallCount == 0)
 
@@ -355,7 +357,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_sendsFailures() {
         let inapp = createInAppFormData(id: "error-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp)
+        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
         #expect(presentationManagerMock.presentCallsCount == 1)
         #expect(failureManagerMock.sendFailuresCallCount == 0)
 
@@ -377,7 +379,7 @@ struct InappScheduleManagerTests {
             let (error, expectedReason, expectedDetails) = testCase
             let inapp = createInAppFormData(id: "error-map-\(index)", isPriority: false, delayTime: nil)
 
-            scheduleManager.presentInapp(inapp)
+            scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
             presentationManagerMock.receivedOnError?(error)
 
             #expect(failureManagerMock.addFailureCallCount == index + 1)
@@ -394,7 +396,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_resetsPresentingFlag() {
         let inapp = createInAppFormData(id: "error-reset-flag", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp)
+        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
         #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
 
         presentationManagerMock.receivedOnError?(.failed("any-error"))
@@ -405,7 +407,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_isSingleShot() {
         let inapp = createInAppFormData(id: "single-shot-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp)
+        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
 
         presentationManagerMock.receivedOnError?(.failed("first-error"))
         presentationManagerMock.receivedOnError?(.failed("second-error"))

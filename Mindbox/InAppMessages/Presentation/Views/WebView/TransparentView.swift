@@ -90,14 +90,12 @@ final class TransparentView: UIView {
     }
 
     private func setupTimeoutTimer() {
-        let secondsTimeout = 7
-
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsTimeout), execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
     }
 }
 

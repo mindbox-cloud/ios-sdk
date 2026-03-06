@@ -80,6 +80,10 @@ enum Constants {
         }
     }
     
+    enum WebView {
+        static let timeoutSeconds = 7
+    }
+
     enum MagicNumbers {
         static let daysToKeepInappShowTimes = 2
     }

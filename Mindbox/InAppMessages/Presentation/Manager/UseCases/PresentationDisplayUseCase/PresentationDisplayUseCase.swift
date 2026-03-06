@@ -128,12 +128,7 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
     }
 
     func onPresented(id: String, _ completion: @escaping () -> Void) {
-        do {
-            try tracker.trackView(id: id)
-            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View. Id \(id)", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "[PresentationDisplayUseCase] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
-        }
+        Logger.common(message: "[PresentationDisplayUseCase] InApp presented. Id \(id)", level: .info, category: .notification)
         completion()
     }
 }
