@@ -36,6 +36,12 @@ enum Constants {
         static let sdkVersionNumeric = 12
     }
 
+    enum WebViewLocalState {
+        static let suiteName = "cloud.Mindbox.webview.localState"
+        static let defaultVersion = 1
+        static let keyPrefix = "mb_"
+    }
+
     enum WebViewBridgeJS {
         static let handlerName = "SdkBridge"
         static let bridgeFunction = "window.bridgeMessagesHandlers.emit"

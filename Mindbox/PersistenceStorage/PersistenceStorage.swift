@@ -58,7 +58,10 @@ protocol PersistenceStorage: AnyObject {
     var applicationInfoUpdateVersion: Int? { get set }
     
     var applicationInstanceId: String? { get set }
-    
+
+    /// Version of the WebView localState, managed by JS via localState.init
+    var webViewLocalStateVersion: Int? { get set }
+
     // Reset functions
 
     func softReset()

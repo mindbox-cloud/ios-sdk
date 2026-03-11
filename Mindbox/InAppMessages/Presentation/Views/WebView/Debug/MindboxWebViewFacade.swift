@@ -24,6 +24,7 @@ private enum PayloadKey {
     static let trackVisitRequestUrl = "trackVisitRequestUrl"
 
     static let permissions = "permissions"
+    static let localStateVersion = "localStateVersion"
 
     enum Insets {
         static let key = "insets"
@@ -258,6 +259,9 @@ extension MindboxWebViewFacade {
             mindboxParams[PayloadKey.operationName] = operation.name
             mindboxParams[PayloadKey.operationBody] = operation.body
         }
+
+        // Add localState version for WebView JS migration logic
+        mindboxParams[PayloadKey.localStateVersion] = persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
 
         // Add last track-visit data
         if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
