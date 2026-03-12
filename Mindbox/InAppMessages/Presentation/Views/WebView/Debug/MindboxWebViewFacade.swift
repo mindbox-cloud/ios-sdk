@@ -23,6 +23,8 @@ private enum PayloadKey {
     static let trackVisitSource = "trackVisitSource"
     static let trackVisitRequestUrl = "trackVisitRequestUrl"
 
+    static let firstInitializationDateTime = "firstInitializationDateTime"
+
     static let permissions = "permissions"
 
     enum Insets {
@@ -223,6 +225,10 @@ extension MindboxWebViewFacade {
             PayloadKey.inAppId: inAppId
         ]
 
+        if let firstInitDate = persistenceStorage.firstInitializationDateTime {
+            mindboxParams[PayloadKey.firstInitializationDateTime] = firstInitDate.iso8601
+        }
+
         // Add system info (theme, platform, locale, version)
         let systemInfo = systemInfoProvider.getBasicSystemInfo()
         mindboxParams.merge(systemInfo) { _, new in new }
@@ -259,15 +265,7 @@ extension MindboxWebViewFacade {
             mindboxParams[PayloadKey.operationBody] = operation.body
         }
 
-        // Add last track-visit data
-        if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
-            if let source = lastTrackVisit.source {
-                mindboxParams[PayloadKey.trackVisitSource] = source.rawValue
-            }
-            if let requestUrl = lastTrackVisit.requestUrl {
-                mindboxParams[PayloadKey.trackVisitRequestUrl] = requestUrl
-            }
-        }
+        appendTrackVisitData(to: &mindboxParams)
 
         // Serialize to JSON string
         do {
@@ -280,6 +278,16 @@ extension MindboxWebViewFacade {
         } catch {
             logError("[WebView] Failed to encode start payload to JSON string: \(error)")
             return .string("{}")
+        }
+    }
+
+    private func appendTrackVisitData(to params: inout [String: Any]) {
+        guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
+        if let source = lastTrackVisit.source {
+            params[PayloadKey.trackVisitSource] = source.rawValue
+        }
+        if let requestUrl = lastTrackVisit.requestUrl {
+            params[PayloadKey.trackVisitRequestUrl] = requestUrl
         }
     }
     
