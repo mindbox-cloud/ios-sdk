@@ -115,4 +115,6 @@ class MockPersistenceStorage: PersistenceStorage {
     var applicationInfoUpdateVersion: Int?
     
     var applicationInstanceId: String?
+
+    var webViewLocalStateVersion: Int?
 }
