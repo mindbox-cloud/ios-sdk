@@ -179,6 +179,9 @@ final class CoreController {
         do {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+            if persistenceStorage.firstInitializationDateTime == nil {
+                persistenceStorage.firstInitializationDateTime = persistenceStorage.installationDate ?? Date()
+            }
             persistenceStorage.installationDate = Date()
             Logger.common(message: "[Core] Mobile application has been installed", level: .default, category: .general)
             updateLastInfoUpdateDate()
