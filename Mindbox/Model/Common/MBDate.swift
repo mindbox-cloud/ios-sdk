@@ -28,7 +28,7 @@ public final class DateTime: MBDate {
     }
 
     override func decodeWithFormat(_ rawString: String) -> Date? {
-        return rawString.dateFromISO8601
+        return Date.fromISO8601(rawString)
     }
 }
 
@@ -82,34 +82,6 @@ extension Date {
 
     public var asDateTimeWithSeconds: String {
         return DateTimeWithSeconds(self).string
-    }
-}
-
-fileprivate extension Date {
-    struct Formatter {
-        static let iso8601: DateFormatter = {
-            let formatter = DateFormatter()
-            formatter.calendar = Calendar(identifier: .iso8601)
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.timeZone = TimeZone(secondsFromGMT: 0)
-            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
-            return formatter
-        }()
-    }
-
-    var iso8601: String {
-        return Formatter.iso8601.string(from: self)
-    }
-}
-
-fileprivate extension String {
-    var dateFromISO8601: Date? {
-        var data = self
-        if range(of: ".") == nil {
-            // Case where the string doesn't contain the optional milliseconds
-            data = data.replacingOccurrences(of: "Z", with: ".000000Z")
-        }
-        return Date.Formatter.iso8601.date(from: data)
     }
 }
 
