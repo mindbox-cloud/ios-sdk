@@ -21,6 +21,7 @@ final class MigrationManagerTests: XCTestCase {
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorageMock.deviceUUID = "00000000-0000-0000-0000-000000000000"
         persistenceStorageMock.installationDate = Date()
+        persistenceStorageMock.firstInitializationDateTime = nil
         persistenceStorageMock.configDownloadDate = Date()
         persistenceStorageMock.userVisitCount = 1
         persistenceStorageMock.handledlogRequestIds = ["37db8697-ace9-4d1f-99b6-7e303d6c874f"]
@@ -48,6 +49,7 @@ final class MigrationManagerTests: XCTestCase {
 
     @available(*, deprecated, message: "Suppress deprecated `shownInAppsIds` and `shownInappsDictionary` warning")
     func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
+        let initialInstallationDate = persistenceStorageMock.installationDate
         
         setUpForRemoveBackgroundTaskDataMigration()
         setUpForDatabaseMetadataMigration()
@@ -68,6 +70,17 @@ final class MigrationManagerTests: XCTestCase {
         
         XCTAssertForRemoveBackgroundTaskDataMigration()
         XCTAssertDatabaseMetadataMigration()
+        let firstInitializationDateTime = persistenceStorageMock.firstInitializationDateTime
+        XCTAssertNotNil(firstInitializationDateTime,
+                        "firstInitializationDateTime must be filled by migration for existing users")
+        XCTAssertNotNil(initialInstallationDate,
+                        "installationDate should be set in test setup")
+        XCTAssertEqual(
+            firstInitializationDateTime?.timeIntervalSince1970 ?? 0,
+            initialInstallationDate?.timeIntervalSince1970 ?? 0,
+            accuracy: 1.0,
+            "firstInitializationDateTime should be copied from installationDate during migration"
+        )
     }
 
     func testPerformTestMigrationsButFirstInstallationAndSkipMigrations() {

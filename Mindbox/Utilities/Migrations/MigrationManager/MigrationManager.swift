@@ -54,7 +54,8 @@ final class MigrationManager {
             ShownInAppsIDsMigration(),
             ShownInAppsDictionaryMigration(),
             RemoveBackgroundTaskDataMigration(),
-            DatabaseMetadataMigration()
+            DatabaseMetadataMigration(),
+            FirstInitializationDateTimeMigration()
         ]
     }
 }
@@ -125,5 +126,30 @@ extension MigrationManager {
         self.init(persistenceStorage: persistenceStorage)
         self.localSdkVersionCode = sdkVersionCode
         self.migrations = migrations
+    }
+}
+
+// MARK: - First initialization date migration
+
+final class FirstInitializationDateTimeMigration: MigrationProtocol {
+
+    private let persistenceStorage: PersistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+
+    var description: String {
+        "Migration fills firstInitializationDateTime from installationDate. Starting with SDK 2.15.0."
+    }
+
+    var isNeeded: Bool {
+        persistenceStorage.firstInitializationDateTime == nil
+            && persistenceStorage.installationDate != nil
+    }
+
+    var version: Int {
+        4
+    }
+
+    func run() throws {
+        guard persistenceStorage.firstInitializationDateTime == nil else { return }
+        persistenceStorage.firstInitializationDateTime = persistenceStorage.installationDate ?? Date()
     }
 }
