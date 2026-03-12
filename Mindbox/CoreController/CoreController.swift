@@ -180,7 +180,10 @@ final class CoreController {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
             if persistenceStorage.firstInitializationDateTime == nil {
-                persistenceStorage.firstInitializationDateTime = persistenceStorage.installationDate ?? Date()
+                let initialDateTime = persistenceStorage.installationDate ?? Date()
+                let source = persistenceStorage.installationDate != nil ? "installationDate" : "currentDate"
+                Logger.common(message: "[Core] Set firstInitializationDateTime from \(source): \(initialDateTime)")
+                persistenceStorage.firstInitializationDateTime = initialDateTime
             }
             persistenceStorage.installationDate = Date()
             Logger.common(message: "[Core] Mobile application has been installed", level: .default, category: .general)
