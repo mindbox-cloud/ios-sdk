@@ -26,6 +26,7 @@ private enum PayloadKey {
     static let firstInitializationDateTime = "firstInitializationDateTime"
 
     static let permissions = "permissions"
+    static let localStateVersion = "localStateVersion"
 
     enum Insets {
         static let key = "insets"
@@ -265,7 +266,18 @@ extension MindboxWebViewFacade {
             mindboxParams[PayloadKey.operationBody] = operation.body
         }
 
-        appendTrackVisitData(to: &mindboxParams)
+        // Add localState version for WebView JS migration logic
+        mindboxParams[PayloadKey.localStateVersion] = persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
+
+        // Add last track-visit data
+        if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
+            if let source = lastTrackVisit.source {
+                mindboxParams[PayloadKey.trackVisitSource] = source.rawValue
+            }
+            if let requestUrl = lastTrackVisit.requestUrl {
+                mindboxParams[PayloadKey.trackVisitRequestUrl] = requestUrl
+            }
+        }
 
         // Serialize to JSON string
         do {
@@ -281,16 +293,6 @@ extension MindboxWebViewFacade {
         }
     }
 
-    private func appendTrackVisitData(to params: inout [String: Any]) {
-        guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
-        if let source = lastTrackVisit.source {
-            params[PayloadKey.trackVisitSource] = source.rawValue
-        }
-        if let requestUrl = lastTrackVisit.requestUrl {
-            params[PayloadKey.trackVisitRequestUrl] = requestUrl
-        }
-    }
-    
     private func fetchHTML(from urlString: String,
                            completion: @escaping (String?) -> Void) {
         guard let url = URL(string: urlString) else {

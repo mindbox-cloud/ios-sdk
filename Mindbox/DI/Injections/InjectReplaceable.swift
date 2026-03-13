@@ -35,7 +35,12 @@ extension MBContainer {
             }
             return MBPersistenceStorage(defaults: defaults)
         }
-        
+
+        register(WebViewLocalStateStorageProtocol.self, scope: .transient) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return WebViewLocalStateStorage(persistenceStorage: persistenceStorage)
+        }
+
         register(DatabaseRepositoryProtocol.self) {
             let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
 
