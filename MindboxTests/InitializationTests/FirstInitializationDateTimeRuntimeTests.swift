@@ -7,7 +7,54 @@
 //
 
 import XCTest
+import Testing
 @testable import Mindbox
+
+// MARK: - Swift Testing (no host-app dependency)
+
+@Suite(.serialized)
+struct FirstInitializationDateTimeStorageTests {
+
+    private let storage: PersistenceStorage
+
+    init() {
+        storage = DI.injectOrFail(PersistenceStorage.self)
+        storage.reset()
+    }
+
+    @Test("reset() clears firstInitializationDateTime")
+    func resetClearsFirstInitializationDate() {
+        storage.firstInitializationDateTime = Date()
+        #expect(storage.firstInitializationDateTime != nil)
+
+        storage.reset()
+
+        #expect(
+            storage.firstInitializationDateTime == nil,
+            "reset() must clear firstInitializationDateTime."
+        )
+    }
+
+    @Test("softReset() does not clear firstInitializationDateTime")
+    func softResetDoesNotClearFirstInitializationDate() throws {
+        let date = Date()
+        storage.firstInitializationDateTime = date
+        #expect(storage.firstInitializationDateTime != nil)
+
+        storage.softReset()
+
+        let firstInitDate = try #require(
+            storage.firstInitializationDateTime,
+            "softReset() must NOT clear firstInitializationDateTime."
+        )
+        #expect(
+            abs(firstInitDate.timeIntervalSince1970 - date.timeIntervalSince1970) <= 1.0,
+            "firstInitializationDateTime should remain unchanged after softReset()."
+        )
+    }
+}
+
+// MARK: - XCTest (requires host-app context for CoreController → UIApplication.shared)
 
 final class FirstInitializationDateTimeRuntimeTests: XCTestCase {
 
@@ -35,22 +82,16 @@ final class FirstInitializationDateTimeRuntimeTests: XCTestCase {
         storage = nil
         super.tearDown()
     }
-}
-
-extension FirstInitializationDateTimeRuntimeTests {
 
     func test_newUser_firstInitializationDateTimeIsSetOnInitializationInstall() throws {
-        // given
         storage.reset()
         XCTAssertNil(storage.installationDate)
         XCTAssertNil(storage.firstInitializationDateTime)
 
-        // when
         let configuration = try MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration)
         waitForInitializationFinished()
 
-        // then
         let firstInitDate = try XCTUnwrap(storage.firstInitializationDateTime,
                                           "firstInitializationDateTime must be set for a new user after initialization.")
         let installationDate = try XCTUnwrap(storage.installationDate,
@@ -62,41 +103,7 @@ extension FirstInitializationDateTimeRuntimeTests {
         )
     }
 
-    func test_resetClearsFirstInitializationDate() {
-        // given
-        storage.firstInitializationDateTime = Date()
-        XCTAssertNotNil(storage.firstInitializationDateTime)
-
-        // when
-        storage.reset()
-
-        // then
-        XCTAssertNil(storage.firstInitializationDateTime,
-                     "reset() must clear firstInitializationDateTime.")
-    }
-
-    func test_softResetDoesNotClearFirstInitializationDate() throws {
-        // given
-        let date = Date()
-        storage.firstInitializationDateTime = date
-        XCTAssertNotNil(storage.firstInitializationDateTime)
-
-        // when
-        storage.softReset()
-
-        // then
-        let firstInitDate = try XCTUnwrap(storage.firstInitializationDateTime,
-                                          "softReset() must NOT clear firstInitializationDateTime.")
-        XCTAssertEqual(
-            firstInitDate.timeIntervalSince1970,
-            date.timeIntervalSince1970,
-            accuracy: 1.0,
-            "firstInitializationDateTime should remain unchanged after softReset()."
-        )
-    }
-    
     func test_reinitialization_doesNotOverwriteFirstInitializationDateTime() throws {
-        // given
         let configuration1 = try MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
         waitForInitializationFinished()
@@ -104,12 +111,10 @@ extension FirstInitializationDateTimeRuntimeTests {
         let originalDate = try XCTUnwrap(storage.firstInitializationDateTime,
                                         "firstInitializationDateTime must be set after first initialization.")
 
-        // when
         let configuration2 = try MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
         waitForInitializationFinished()
 
-        // then
         let dateAfterReinit = try XCTUnwrap(storage.firstInitializationDateTime,
                                             "firstInitializationDateTime must not be nil after reinitialization.")
         XCTAssertEqual(

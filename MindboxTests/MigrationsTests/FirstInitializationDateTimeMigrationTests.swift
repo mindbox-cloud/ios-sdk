@@ -6,65 +6,50 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import Mindbox
 
-final class FirstInitializationDateTimeMigrationTests: XCTestCase {
+@Suite(.serialized)
+struct FirstInitializationDateTimeMigrationTests {
 
-    private var storage: PersistenceStorage!
-    private var migrationManager: MigrationManagerProtocol!
+    private let storage: PersistenceStorage
+    private let migrationManager: MigrationManagerProtocol
 
-    override func setUp() {
-        super.setUp()
+    init() {
         storage = DI.injectOrFail(PersistenceStorage.self)
         storage.reset()
         migrationManager = MigrationManager(persistenceStorage: storage)
     }
 
-    override func tearDown() {
-        migrationManager = nil
-        storage = nil
-        super.tearDown()
-    }
-}
-
-extension FirstInitializationDateTimeMigrationTests {
-
-    func test_existingUser_migrationCopiesInstallationDate() throws {
-        // given: existing user with an old installationDate, no firstInitializationDateTime
+    @Test("Existing user: migration copies installationDate")
+    func existingUserMigrationCopiesInstallationDate() throws {
         let oldDate = Date(timeIntervalSince1970: 1_000_000)
         storage.installationDate = oldDate
         storage.firstInitializationDateTime = nil
 
-        // when
         migrationManager.migrate()
 
-        // then
-        let firstInitDate = try XCTUnwrap(storage.firstInitializationDateTime,
-                                          "firstInitializationDateTime must be set after migration.")
-        XCTAssertEqual(
-            firstInitDate.timeIntervalSince1970,
-            oldDate.timeIntervalSince1970,
-            accuracy: 1.0,
+        let firstInitDate = try #require(
+            storage.firstInitializationDateTime,
+            "firstInitializationDateTime must be set after migration."
+        )
+        #expect(
+            abs(firstInitDate.timeIntervalSince1970 - oldDate.timeIntervalSince1970) <= 1.0,
             "firstInitializationDateTime should match the old installationDate."
         )
     }
 
-    func test_existingUser_migrationDoesNotOverwriteExistingFirstInitializationDate() throws {
-        // given: firstInitializationDateTime is already set
+    @Test("Existing user: migration does not overwrite existing firstInitializationDateTime")
+    func existingUserMigrationDoesNotOverwriteExisting() throws {
         let originalDate = Date(timeIntervalSince1970: 1_000_000)
         storage.firstInitializationDateTime = originalDate
         storage.installationDate = Date(timeIntervalSince1970: 2_000_000)
 
-        // when
         migrationManager.migrate()
 
-        // then
-        let firstInitDate = try XCTUnwrap(storage.firstInitializationDateTime)
-        XCTAssertEqual(
-            firstInitDate.timeIntervalSince1970,
-            originalDate.timeIntervalSince1970,
-            accuracy: 1.0,
+        let firstInitDate = try #require(storage.firstInitializationDateTime)
+        #expect(
+            abs(firstInitDate.timeIntervalSince1970 - originalDate.timeIntervalSince1970) <= 1.0,
             "firstInitializationDateTime must not be overwritten once set."
         )
     }
