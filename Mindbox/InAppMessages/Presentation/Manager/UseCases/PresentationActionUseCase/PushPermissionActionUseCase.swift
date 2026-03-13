@@ -35,9 +35,7 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
 
 enum PushPermissionHelper {
 
-    private static let handler = PushNotificationsPermissionHandler()
-
     static func requestOrOpenSettings() {
-        handler.request { _ in }
+        PushNotificationsPermissionHandler().request { _ in }
     }
 }

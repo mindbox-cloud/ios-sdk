@@ -25,6 +25,7 @@ final class TransparentView: UIView {
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
+    private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistry.self)
 
     init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
         self.params = params
@@ -181,6 +182,9 @@ extension TransparentView: WebBridgeMessageDelegate {
 
         case Action.localStateInit:
             handleLocalStateInit(message: message)
+
+        case Action.permissionRequest:
+            handlePermissionRequest(message: message)
 
         default:
             Logger.common(
@@ -679,6 +683,75 @@ extension TransparentView {
             return nil
         }
         return urlString
+    }
+}
+
+// MARK: - Permission Request Handler
+
+extension TransparentView {
+
+    private func handlePermissionRequest(message: BridgeMessage) {
+        guard let typeString = extractPermissionType(from: message) else {
+            sendBridgeError("Invalid payload: missing or empty 'type' field", action: message.action, id: message.id)
+            return
+        }
+
+        guard let permissionType = PermissionType(rawValue: typeString) else {
+            sendBridgeError("Unknown permission type: '\(typeString)'", action: message.action, id: message.id)
+            return
+        }
+
+        guard let handler = permissionHandlerRegistry.handler(for: permissionType) else {
+            sendBridgeError("No handler registered for permission type: '\(typeString)'", action: message.action, id: message.id)
+            return
+        }
+
+        for key in handler.requiredInfoPlistKeys {
+            guard Bundle.main.object(forInfoDictionaryKey: key) != nil else {
+                sendBridgeError("Missing Info.plist key: \(key)", action: message.action, id: message.id)
+                return
+            }
+        }
+
+        handler.request { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                switch result {
+                case .granted:
+                    let response = BridgeMessage(
+                        type: .response,
+                        action: message.action,
+                        payload: .object(["status": .string("granted")]),
+                        id: message.id
+                    )
+                    self.facade?.sendToJS(response)
+
+                case .denied:
+                    let response = BridgeMessage(
+                        type: .response,
+                        action: message.action,
+                        payload: .object(["status": .string("denied")]),
+                        id: message.id
+                    )
+                    self.facade?.sendToJS(response)
+
+                case .error(let errorMessage):
+                    self.sendBridgeError(errorMessage, action: message.action, id: message.id)
+                }
+            }
+        }
+    }
+
+    private func extractPermissionType(from message: BridgeMessage) -> String? {
+        guard case .string(let str) = message.payload,
+              let data = str.data(using: .utf8),
+              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
+              case .string(let typeString) = dict["type"],
+              !typeString.isEmpty else {
+            return nil
+        }
+        return typeString
     }
 }
 
