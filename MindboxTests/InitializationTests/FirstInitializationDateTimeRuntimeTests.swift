@@ -26,6 +26,10 @@ final class FirstInitializationDateTimeRuntimeTests: XCTestCase {
     }
 
     override func tearDown() {
+        storage.reset()
+        storage.userVisitCount = 0
+        SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = false
         controllerQueue = nil
         coreController = nil
         storage = nil
@@ -88,6 +92,31 @@ extension FirstInitializationDateTimeRuntimeTests {
             date.timeIntervalSince1970,
             accuracy: 1.0,
             "firstInitializationDateTime should remain unchanged after softReset()."
+        )
+    }
+    
+    func test_reinitialization_doesNotOverwriteFirstInitializationDateTime() throws {
+        // given
+        let configuration1 = try MBConfiguration(plistName: "TestConfig1")
+        coreController.initialization(configuration: configuration1)
+        waitForInitializationFinished()
+
+        let originalDate = try XCTUnwrap(storage.firstInitializationDateTime,
+                                        "firstInitializationDateTime must be set after first initialization.")
+
+        // when
+        let configuration2 = try MBConfiguration(plistName: "TestConfig2")
+        coreController.initialization(configuration: configuration2)
+        waitForInitializationFinished()
+
+        // then
+        let dateAfterReinit = try XCTUnwrap(storage.firstInitializationDateTime,
+                                            "firstInitializationDateTime must not be nil after reinitialization.")
+        XCTAssertEqual(
+            dateAfterReinit.timeIntervalSince1970,
+            originalDate.timeIntervalSince1970,
+            accuracy: 1.0,
+            "firstInitializationDateTime must not change on reinitialization."
         )
     }
 }

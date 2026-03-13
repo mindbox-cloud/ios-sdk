@@ -15,6 +15,15 @@ extension Date {
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        return formatter
+    }()
+
+    private static let iso8601WithMillisecondsFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
         return formatter
     }()
@@ -24,10 +33,7 @@ extension Date {
     }
 
     static func fromISO8601(_ string: String) -> Date? {
-        var data = string
-        if string.range(of: ".") == nil {
-            data = data.replacingOccurrences(of: "Z", with: ".000000Z")
-        }
-        return iso8601Formatter.date(from: data)
+        iso8601Formatter.date(from: string)
+            ?? iso8601WithMillisecondsFormatter.date(from: string)
     }
 }

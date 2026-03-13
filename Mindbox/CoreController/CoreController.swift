@@ -119,6 +119,12 @@ final class CoreController {
     }
 
     private func primaryInitialization(with configutaion: MBConfiguration) {
+        if persistenceStorage.firstInitializationDateTime == nil {
+            let now = Date()
+            persistenceStorage.firstInitializationDateTime = now
+            Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
+        }
+
         // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
         let deviceUUID = generateDeviceUUID()
         startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
@@ -179,12 +185,6 @@ final class CoreController {
         do {
             try installEvent(encodable, config: configuration)
             persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
-            if persistenceStorage.firstInitializationDateTime == nil {
-                let initialDateTime = persistenceStorage.installationDate ?? Date()
-                let source = persistenceStorage.installationDate != nil ? "installationDate" : "currentDate"
-                Logger.common(message: "[Core] Set firstInitializationDateTime from \(source): \(initialDateTime)")
-                persistenceStorage.firstInitializationDateTime = initialDateTime
-            }
             persistenceStorage.installationDate = Date()
             Logger.common(message: "[Core] Mobile application has been installed", level: .default, category: .general)
             updateLastInfoUpdateDate()

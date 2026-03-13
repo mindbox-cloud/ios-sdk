@@ -217,26 +217,48 @@ extension MindboxWebViewFacade {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)
 
-        var mindboxParams: [String: Any] = [
+        var params = buildBaseParams(persistenceStorage: persistenceStorage)
+        addSystemInfo(to: &params, systemInfoProvider: systemInfoProvider)
+        mergeCustomParams(into: &params)
+        addOperationParams(to: &params)
+        addTrackVisitParams(to: &params)
+
+        return serializeToJSONString(params)
+    }
+
+    private func buildBaseParams(persistenceStorage: PersistenceStorage) -> [String: Any] {
+        var params: [String: Any] = [
             PayloadKey.sdkVersion: Mindbox.shared.sdkVersion,
             PayloadKey.endpointId: persistenceStorage.configuration?.endpoint ?? "",
             PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
             PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
             PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)",
-            PayloadKey.inAppId: inAppId
+            PayloadKey.inAppId: inAppId,
+            // Add localState version for WebView JS migration logic
+            PayloadKey.localStateVersion: persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
         ]
 
         if let firstInitDate = persistenceStorage.firstInitializationDateTime {
-            mindboxParams[PayloadKey.firstInitializationDateTime] = firstInitDate.iso8601
+            params[PayloadKey.firstInitializationDateTime] = firstInitDate.iso8601
         }
 
-        // Add system info (theme, platform, locale, version)
-        let systemInfo = systemInfoProvider.getBasicSystemInfo()
-        mindboxParams.merge(systemInfo) { _, new in new }
+        return params
+    }
+
+    // Add operation data
+    private func addOperationParams(to params: inout [String: Any]) {
+        guard let operation else { return }
+        params[PayloadKey.operationName] = operation.name
+        params[PayloadKey.operationBody] = operation.body
+    }
+
+    // Add system info (theme, platform, locale, version)
+    private func addSystemInfo(to params: inout [String: Any], systemInfoProvider: SystemInfoProvider) {
+        params.merge(systemInfoProvider.getBasicSystemInfo()) { _, new in new }
 
         // Add safe area insets
         let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
-        mindboxParams[PayloadKey.Insets.key] = [
+        params[PayloadKey.Insets.key] = [
             PayloadKey.Insets.top: insets.top,
             PayloadKey.Insets.left: insets.left,
             PayloadKey.Insets.bottom: insets.bottom,
@@ -246,42 +268,33 @@ extension MindboxWebViewFacade {
         // Add granted permissions
         let permissions = systemInfoProvider.getGrantedPermissions()
         if !permissions.isEmpty {
-            var permissionsDict: [String: Any] = [:]
-            for (key, status) in permissions {
-                permissionsDict[key] = status.toDictionary()
-            }
-            mindboxParams[PayloadKey.permissions] = permissionsDict
+            params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
         }
+    }
 
-        // Merge params from configuration
-        if let params, !params.isEmpty {
-            for (key, value) in params {
-                mindboxParams[key] = value.anyValue ?? NSNull()
-            }
+    // Merge params from configuration
+    private func mergeCustomParams(into params: inout [String: Any]) {
+        guard let customParams = self.params, !customParams.isEmpty else { return }
+        for (key, value) in customParams {
+            params[key] = value.anyValue ?? NSNull()
         }
+    }
 
-        // Add operation data
-        if let operation {
-            mindboxParams[PayloadKey.operationName] = operation.name
-            mindboxParams[PayloadKey.operationBody] = operation.body
+    // Add last track-visit data
+    private func addTrackVisitParams(to params: inout [String: Any]) {
+        guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
+        if let source = lastTrackVisit.source {
+            params[PayloadKey.trackVisitSource] = source.rawValue
         }
-
-        // Add localState version for WebView JS migration logic
-        mindboxParams[PayloadKey.localStateVersion] = persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
-
-        // Add last track-visit data
-        if let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit {
-            if let source = lastTrackVisit.source {
-                mindboxParams[PayloadKey.trackVisitSource] = source.rawValue
-            }
-            if let requestUrl = lastTrackVisit.requestUrl {
-                mindboxParams[PayloadKey.trackVisitRequestUrl] = requestUrl
-            }
+        if let requestUrl = lastTrackVisit.requestUrl {
+            params[PayloadKey.trackVisitRequestUrl] = requestUrl
         }
+    }
 
-        // Serialize to JSON string
+    // Serialize to JSON string
+    private func serializeToJSONString(_ params: [String: Any]) -> JSONValue {
         do {
-            let data = try JSONSerialization.data(withJSONObject: mindboxParams, options: [])
+            let data = try JSONSerialization.data(withJSONObject: params, options: [])
             guard let jsonString = String(bytes: data, encoding: .utf8) else {
                 logError("[WebView] Failed to convert JSON data to UTF-8 string")
                 return .string("{}")
