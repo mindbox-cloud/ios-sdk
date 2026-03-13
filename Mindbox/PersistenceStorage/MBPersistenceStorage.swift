@@ -45,6 +45,23 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
+    var firstInitializationDateTime: Date? {
+        get {
+            if let dateString = firstInitializationDateTimeString {
+                return dateFormatter.date(from: dateString)
+            } else {
+                return nil
+            }
+        }
+        set {
+            if let date = newValue {
+                firstInitializationDateTimeString = dateFormatter.string(from: date)
+            } else {
+                firstInitializationDateTimeString = nil
+            }
+        }
+    }
+
     var apnsTokenSaveDate: Date? {
         get {
             if let dateString = apnsTokenSaveDateString {
@@ -204,6 +221,13 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
+    @UserDefaultsWrapper(key: .firstInitializationDateTime, defaultValue: nil)
+    private var firstInitializationDateTimeString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
+
     @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
     var needUpdateInfoOnce: Bool? {
         didSet {
@@ -270,6 +294,7 @@ extension MBPersistenceStorage {
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
+            case firstInitializationDateTime = "MBPersistenceStorage-firstInitializationDateTime"
             case shownDatesByInApp = "MBPersistenceStorage-shownDatesByInApp"
             case lastInappStateChangeDate = "MBPersistenceStorage-lastInappStateChangeDate"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"

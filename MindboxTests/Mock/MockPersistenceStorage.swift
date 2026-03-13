@@ -67,6 +67,12 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+
+    var firstInitializationDateTime: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     var lastInfoUpdateDate: Date? {
         didSet {

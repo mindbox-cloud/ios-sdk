@@ -11,6 +11,11 @@ import Foundation
 protocol PersistenceStorage: AnyObject {
     var installationDate: Date? { get set }
 
+    /// The date when the SDK was first initialized. Write-once, set during the first `install()` call
+    /// and never overwritten. For existing users upgrading to this SDK version, the value is
+    /// populated from `installationDate` by migration on app startup.
+    var firstInitializationDateTime: Date? { get set }
+
     var deviceUUID: String? { get set }
 
     var installationId: String? { get set }
@@ -104,6 +109,7 @@ extension PersistenceStorage {
 extension PersistenceStorage {
     func reset() {
         installationDate = nil
+        firstInitializationDateTime = nil
         deviceUUID = nil
         installationId = nil
         apnsToken = nil
