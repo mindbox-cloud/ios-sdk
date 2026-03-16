@@ -246,6 +246,9 @@
 		47FDF0BA2C5BDAB80051F08C /* MigrationManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */; };
 		47FDF0BC2C5BE8BB0051F08C /* MigrationProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */; };
 		5D3FCB95C2AF59DF36A61254 /* WebViewLocalStateStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */; };
+		A1B2C3D400000001E1010101 /* MockPermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002E1010101 /* MockPermissionHandler.swift */; };
+		A1B2C3D400000003E1010101 /* PermissionHandlerRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */; };
+		A1B2C3D400000005E1010101 /* BridgeMessagePermissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
 		6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */; };
 		6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */; };
@@ -447,6 +450,9 @@
 		F306291A2BD27D7500EF6609 /* InappFrequencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */; };
 		F30654BB2F1A83520058808C /* MindboxWebViewFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30654BA2F1A83520058808C /* MindboxWebViewFacade.swift */; };
 		F30F1A282B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */; };
+		A1B2C3D400000010E1010101 /* PermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000011E1010101 /* PermissionHandler.swift */; };
+		A1B2C3D400000012E1010101 /* LocationPermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000013E1010101 /* LocationPermissionHandler.swift */; };
+		A1B2C3D400000014E1010101 /* PushNotificationsPermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */; };
 		F31470842B96355600E01E5C /* MockInAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */; };
 		F31470892B96387C00E01E5C /* 3-4-5-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */; };
 		F314708C2B96464900E01E5C /* 7-TargetingRequests.json in Resources */ = {isa = PBXBuildFile; fileRef = F314708B2B96464900E01E5C /* 7-TargetingRequests.json */; };
@@ -714,6 +720,9 @@
 /* Begin PBXFileReference section */
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewLocalStateStorageTests.swift; sourceTree = "<group>"; };
+		A1B2C3D400000002E1010101 /* MockPermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPermissionHandler.swift; sourceTree = "<group>"; };
+		A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandlerRegistryTests.swift; sourceTree = "<group>"; };
+		A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessagePermissionTests.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		313B233325ADEA0F00A1CB72 /* Mindbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mindbox.h; sourceTree = "<group>"; };
 		313B233425ADEA0F00A1CB72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -1157,6 +1166,9 @@
 		F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyTests.swift; sourceTree = "<group>"; };
 		F30654BA2F1A83520058808C /* MindboxWebViewFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxWebViewFacade.swift; sourceTree = "<group>"; };
 		F30F1A272B9F0C8A0099DFD9 /* PushPermissionLayerAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionLayerAction.swift; sourceTree = "<group>"; };
+		A1B2C3D400000011E1010101 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
+		A1B2C3D400000013E1010101 /* LocationPermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionHandler.swift; sourceTree = "<group>"; };
+		A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationsPermissionHandler.swift; sourceTree = "<group>"; };
 		F31470832B96355600E01E5C /* MockInAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "3-4-5-TargetingRequests.json"; sourceTree = "<group>"; };
 		F314708B2B96464900E01E5C /* 7-TargetingRequests.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "7-TargetingRequests.json"; sourceTree = "<group>"; };
@@ -1442,10 +1454,29 @@
 			path = FeatureToggleManager;
 			sourceTree = "<group>";
 		};
+		A1B2C3D400000016E1010101 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000011E1010101 /* PermissionHandler.swift */,
+				A1B2C3D400000013E1010101 /* LocationPermissionHandler.swift */,
+				A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
+		A1B2C3D400000007E1010101 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
 		2B4C84F6EDD4B7D977F67A95 /* WebView */ = {
 			isa = PBXGroup;
 			children = (
 				0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */,
+				A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -2509,6 +2540,7 @@
 				F34975692DEF2C8400BEC667 /* InappTrackingService.swift */,
 				F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */,
 				F3C1A0012F5B100100ABC001 /* InappShowFailureManager.swift */,
+				A1B2C3D400000016E1010101 /* Permissions */,
 			);
 			path = InAppMessages;
 			sourceTree = "<group>";
@@ -2574,6 +2606,7 @@
 				9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */,
 				9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */,
 				F3D925AA2A120C0F00135C87 /* InAppImageDownloaderMock.swift */,
+				A1B2C3D400000002E1010101 /* MockPermissionHandler.swift */,
 			);
 			path = Mock;
 			sourceTree = "<group>";
@@ -2593,6 +2626,7 @@
 				F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */,
 				F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */,
 				2B4C84F6EDD4B7D977F67A95 /* WebView */,
+				A1B2C3D400000007E1010101 /* Permissions */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -4249,6 +4283,9 @@
 				84A312B025DA5CF30096A017 /* BackgroundTaskManagerProxy.swift in Sources */,
 				F331DD042A83A56500222120 /* PresentationStrategyProtocol.swift in Sources */,
 				F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */,
+				A1B2C3D400000010E1010101 /* PermissionHandler.swift in Sources */,
+				A1B2C3D400000012E1010101 /* LocationPermissionHandler.swift in Sources */,
+				A1B2C3D400000014E1010101 /* PushNotificationsPermissionHandler.swift in Sources */,
 				F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */,
 				A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */,
 				9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */,
@@ -4555,6 +4592,9 @@
 				A11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift in Sources */,
 				A11C2D3E4F5566778899AA02 /* FirstInitializationDateTimeMigrationTests.swift in Sources */,
 				5D3FCB95C2AF59DF36A61254 /* WebViewLocalStateStorageTests.swift in Sources */,
+				A1B2C3D400000001E1010101 /* MockPermissionHandler.swift in Sources */,
+				A1B2C3D400000003E1010101 /* PermissionHandlerRegistryTests.swift in Sources */,
+				A1B2C3D400000005E1010101 /* BridgeMessagePermissionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

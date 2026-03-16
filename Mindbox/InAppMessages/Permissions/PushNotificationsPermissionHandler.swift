@@ -28,10 +28,9 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
             case .notDetermined:
                 self.requestAuthorization(completion: completion)
             case .denied:
-                self.openSettings()
-                completion(.denied)
+                completion(.denied(dialogShown: false))
             case .authorized, .provisional, .ephemeral:
-                completion(.granted)
+                completion(.granted(dialogShown: false))
             @unknown default:
                 completion(.error("Unknown authorization status"))
             }
@@ -59,42 +58,16 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
                     level: .debug,
                     category: .inAppMessages
                 )
-                completion(.granted)
+                completion(.granted(dialogShown: true))
             } else {
                 Logger.common(
                     message: "User did not grant notification permissions.",
                     level: .debug,
                     category: .inAppMessages
                 )
-                completion(.denied)
+                completion(.denied(dialogShown: true))
             }
         }
     }
 
-    private func openSettings() {
-        DispatchQueue.main.async {
-            let settingsUrl: URL?
-            if #available(iOS 16.0, *) {
-                settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
-            } else {
-                settingsUrl = URL(string: UIApplication.openSettingsURLString)
-            }
-
-            guard let settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
-                Logger.common(
-                    message: "Failed to parse the settings URL or encountered an issue opening it.",
-                    level: .debug,
-                    category: .inAppMessages
-                )
-                return
-            }
-
-            UIApplication.shared.open(settingsUrl)
-            Logger.common(
-                message: "Navigated to app settings for notification permission.",
-                level: .debug,
-                category: .inAppMessages
-            )
-        }
-    }
 }

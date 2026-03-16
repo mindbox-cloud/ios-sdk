@@ -718,20 +718,26 @@ extension TransparentView {
                 guard let self else { return }
 
                 switch result {
-                case .granted:
+                case .granted(let dialogShown):
                     let response = BridgeMessage(
                         type: .response,
                         action: message.action,
-                        payload: .object(["status": .string("granted")]),
+                        payload: .object([
+                            "status": .string("granted"),
+                            "dialogShown": .bool(dialogShown)
+                        ]),
                         id: message.id
                     )
                     self.facade?.sendToJS(response)
 
-                case .denied:
+                case .denied(let dialogShown):
                     let response = BridgeMessage(
                         type: .response,
                         action: message.action,
-                        payload: .object(["status": .string("denied")]),
+                        payload: .object([
+                            "status": .string("denied"),
+                            "dialogShown": .bool(dialogShown)
+                        ]),
                         id: message.id
                     )
                     self.facade?.sendToJS(response)

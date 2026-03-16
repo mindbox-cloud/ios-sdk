@@ -14,8 +14,8 @@ enum PermissionType: String {
 }
 
 enum PermissionRequestResult {
-    case granted
-    case denied
+    case granted(dialogShown: Bool)
+    case denied(dialogShown: Bool)
     case error(String)
 }
 
