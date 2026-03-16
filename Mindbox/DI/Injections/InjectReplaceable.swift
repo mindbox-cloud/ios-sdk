@@ -45,6 +45,9 @@ extension MBContainer {
             let registry = PermissionHandlerRegistry()
             registry.register(PushNotificationsPermissionHandler())
             registry.register(LocationPermissionHandler())
+            registry.register(CameraPermissionHandler())
+            registry.register(MicrophonePermissionHandler())
+            registry.register(PhotoLibraryPermissionHandler())
             return registry
         }
 
