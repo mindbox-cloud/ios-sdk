@@ -25,7 +25,7 @@ final class TransparentView: UIView {
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
-    private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistry.self)
+    private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
 
     init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
         self.params = params
@@ -719,28 +719,24 @@ extension TransparentView {
 
                 switch result {
                 case .granted:
-                    let response = BridgeMessage(
-                        type: .response,
-                        action: message.action,
-                        payload: .object(["result": .string("granted")]),
-                        id: message.id
-                    )
-                    self.facade?.sendToJS(response)
-
+                    self.sendPermissionResponse("granted", action: message.action, id: message.id)
                 case .denied:
-                    let response = BridgeMessage(
-                        type: .response,
-                        action: message.action,
-                        payload: .object(["result": .string("denied")]),
-                        id: message.id
-                    )
-                    self.facade?.sendToJS(response)
-
+                    self.sendPermissionResponse("denied", action: message.action, id: message.id)
                 case .error(let errorMessage):
                     self.sendBridgeError(errorMessage, action: message.action, id: message.id)
                 }
             }
         }
+    }
+
+    private func sendPermissionResponse(_ resultValue: String, action: String, id: UUID) {
+        let response = BridgeMessage(
+            type: .response,
+            action: action,
+            payload: .object(["result": .string(resultValue)]),
+            id: id
+        )
+        facade?.sendToJS(response)
     }
 
     private func extractPermissionType(from message: BridgeMessage) -> String? {

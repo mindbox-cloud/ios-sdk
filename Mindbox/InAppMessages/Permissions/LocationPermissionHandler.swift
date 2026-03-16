@@ -17,35 +17,44 @@ final class LocationPermissionHandler: NSObject, PermissionHandler {
 
     private var completion: ((PermissionRequestResult) -> Void)?
     private var locationManager: CLLocationManager?
+    private var isRequestInProgress = false
 
     func request(completion: @escaping (PermissionRequestResult) -> Void) {
-        let status: CLAuthorizationStatus
-        let manager = CLLocationManager()
+        DispatchQueue.main.async { [self] in
+            guard !isRequestInProgress else {
+                completion(.error("Location permission request already in progress"))
+                return
+            }
 
-        if #available(iOS 14.0, *) {
-            status = manager.authorizationStatus
-        } else {
-            status = CLLocationManager.authorizationStatus()
-        }
+            let manager = CLLocationManager()
+            let status: CLAuthorizationStatus
 
-        Logger.common(
-            message: "[WebView] Location permission status: \(status.rawValue)",
-            level: .debug,
-            category: .webViewInAppMessages
-        )
+            if #available(iOS 14.0, *) {
+                status = manager.authorizationStatus
+            } else {
+                status = CLLocationManager.authorizationStatus()
+            }
 
-        switch status {
-        case .notDetermined:
-            self.completion = completion
-            self.locationManager = manager
-            manager.delegate = self
-            manager.requestWhenInUseAuthorization()
-        case .denied, .restricted:
-            completion(.denied)
-        case .authorizedWhenInUse, .authorizedAlways:
-            completion(.granted)
-        @unknown default:
-            completion(.error("Unknown location authorization status"))
+            Logger.common(
+                message: "[WebView] Location permission status: \(status.rawValue)",
+                level: .debug,
+                category: .webViewInAppMessages
+            )
+
+            switch status {
+            case .notDetermined:
+                isRequestInProgress = true
+                self.completion = completion
+                self.locationManager = manager
+                manager.delegate = self
+                manager.requestWhenInUseAuthorization()
+            case .denied, .restricted:
+                completion(.denied)
+            case .authorizedWhenInUse, .authorizedAlways:
+                completion(.granted)
+            @unknown default:
+                completion(.error("Unknown location authorization status"))
+            }
         }
     }
 }
@@ -75,5 +84,6 @@ extension LocationPermissionHandler: CLLocationManagerDelegate {
 
         self.completion = nil
         self.locationManager = nil
+        self.isRequestInProgress = false
     }
 }

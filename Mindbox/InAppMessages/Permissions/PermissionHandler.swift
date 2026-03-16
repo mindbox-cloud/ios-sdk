@@ -16,7 +16,7 @@ enum PermissionType: String {
     case photoLibrary
 }
 
-enum PermissionRequestResult {
+enum PermissionRequestResult: Equatable {
     case granted
     case denied
     case error(String)
@@ -28,7 +28,11 @@ protocol PermissionHandler {
     func request(completion: @escaping (PermissionRequestResult) -> Void)
 }
 
-final class PermissionHandlerRegistry {
+protocol PermissionHandlerRegistryProtocol {
+    func handler(for type: PermissionType) -> PermissionHandler?
+}
+
+final class PermissionHandlerRegistry: PermissionHandlerRegistryProtocol {
 
     private var handlers: [PermissionType: PermissionHandler] = [:]
 

@@ -33,9 +33,7 @@ final class PhotoLibraryPermissionHandler: PermissionHandler {
             requestAccess(completion: completion)
         case .denied, .restricted:
             completion(.denied)
-        case .authorized:
-            completion(.granted)
-        case .limited:
+        case .authorized, .limited:
             completion(.granted)
         @unknown default:
             completion(.error("Unknown photo library authorization status"))

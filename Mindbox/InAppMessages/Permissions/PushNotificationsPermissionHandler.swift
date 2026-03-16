@@ -19,9 +19,9 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
     func request(completion: @escaping (PermissionRequestResult) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             Logger.common(
-                message: "Push permission status: \(settings.authorizationStatus.description)",
+                message: "[WebView] Push notification permission status: \(settings.authorizationStatus.description)",
                 level: .debug,
-                category: .inAppMessages
+                category: .webViewInAppMessages
             )
 
             switch settings.authorizationStatus {
@@ -41,9 +41,9 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
                 Logger.common(
-                    message: "Error requesting notification permissions: \(error)",
+                    message: "[WebView] Error requesting notification permissions: \(error)",
                     level: .error,
-                    category: .inAppMessages
+                    category: .webViewInAppMessages
                 )
                 completion(.error(error.localizedDescription))
                 return
@@ -54,20 +54,19 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
                 Logger.common(
-                    message: "Notification permission was granted by the user.",
+                    message: "[WebView] Notification permission was granted by the user.",
                     level: .debug,
-                    category: .inAppMessages
+                    category: .webViewInAppMessages
                 )
                 completion(.granted)
             } else {
                 Logger.common(
-                    message: "User did not grant notification permissions.",
+                    message: "[WebView] User did not grant notification permissions.",
                     level: .debug,
-                    category: .inAppMessages
+                    category: .webViewInAppMessages
                 )
                 completion(.denied)
             }
         }
     }
-
 }

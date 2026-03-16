@@ -41,7 +41,7 @@ extension MBContainer {
             return WebViewLocalStateStorage(persistenceStorage: persistenceStorage)
         }
 
-        register(PermissionHandlerRegistry.self, scope: .transient) {
+        register(PermissionHandlerRegistryProtocol.self, scope: .transient) {
             let registry = PermissionHandlerRegistry()
             registry.register(PushNotificationsPermissionHandler())
             registry.register(LocationPermissionHandler())
