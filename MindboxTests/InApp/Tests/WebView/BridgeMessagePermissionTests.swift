@@ -21,16 +21,13 @@ struct BridgeMessagePermissionTests {
 
     // MARK: - Serialization: Native → JS response
 
-    @Test("Response with granted status and dialogShown encodes payload as JSON string")
+    @Test("Response with granted result encodes payload as JSON string")
     func grantedResponseEncodesCorrectly() throws {
         let id = UUID()
         let message = BridgeMessage(
             type: .response,
             action: BridgeMessage.Action.permissionRequest,
-            payload: .object([
-                "status": .string("granted"),
-                "dialogShown": .bool(true)
-            ]),
+            payload: .object(["result": .string("granted")]),
             id: id,
             timestamp: 1_710_340_800_000
         )
@@ -49,20 +46,16 @@ struct BridgeMessagePermissionTests {
         let payloadDict = try #require(
             try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
         )
-        #expect(payloadDict["status"] as? String == "granted")
-        #expect(payloadDict["dialogShown"] as? Bool == true)
+        #expect(payloadDict["result"] as? String == "granted")
     }
 
-    @Test("Response with denied status and dialogShown=false encodes correctly")
-    func deniedWithoutDialogEncodesCorrectly() throws {
+    @Test("Response with denied result encodes correctly")
+    func deniedResponseEncodesCorrectly() throws {
         let id = UUID()
         let message = BridgeMessage(
             type: .response,
             action: BridgeMessage.Action.permissionRequest,
-            payload: .object([
-                "status": .string("denied"),
-                "dialogShown": .bool(false)
-            ]),
+            payload: .object(["result": .string("denied")]),
             id: id,
             timestamp: 1_710_340_800_000
         )
@@ -78,8 +71,7 @@ struct BridgeMessagePermissionTests {
         let payloadDict = try #require(
             try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
         )
-        #expect(payloadDict["status"] as? String == "denied")
-        #expect(payloadDict["dialogShown"] as? Bool == false)
+        #expect(payloadDict["result"] as? String == "denied")
     }
 
     @Test("Error response encodes error message in payload")

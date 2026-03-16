@@ -28,9 +28,9 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
             case .notDetermined:
                 self.requestAuthorization(completion: completion)
             case .denied:
-                completion(.denied(dialogShown: false))
+                completion(.denied)
             case .authorized, .provisional, .ephemeral:
-                completion(.granted(dialogShown: false))
+                completion(.granted)
             @unknown default:
                 completion(.error("Unknown authorization status"))
             }
@@ -58,14 +58,14 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
                     level: .debug,
                     category: .inAppMessages
                 )
-                completion(.granted(dialogShown: true))
+                completion(.granted)
             } else {
                 Logger.common(
                     message: "User did not grant notification permissions.",
                     level: .debug,
                     category: .inAppMessages
                 )
-                completion(.denied(dialogShown: true))
+                completion(.denied)
             }
         }
     }

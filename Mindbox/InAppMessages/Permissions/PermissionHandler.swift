@@ -11,11 +11,14 @@ import Foundation
 enum PermissionType: String {
     case pushNotifications
     case location
+    case camera
+    case microphone
+    case photoLibrary
 }
 
 enum PermissionRequestResult {
-    case granted(dialogShown: Bool)
-    case denied(dialogShown: Bool)
+    case granted
+    case denied
     case error(String)
 }
 

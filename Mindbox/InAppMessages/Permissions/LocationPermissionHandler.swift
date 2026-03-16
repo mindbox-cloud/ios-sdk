@@ -41,9 +41,9 @@ final class LocationPermissionHandler: NSObject, PermissionHandler {
             manager.delegate = self
             manager.requestWhenInUseAuthorization()
         case .denied, .restricted:
-            completion(.denied(dialogShown: false))
+            completion(.denied)
         case .authorizedWhenInUse, .authorizedAlways:
-            completion(.granted(dialogShown: false))
+            completion(.granted)
         @unknown default:
             completion(.error("Unknown location authorization status"))
         }
@@ -66,9 +66,9 @@ extension LocationPermissionHandler: CLLocationManagerDelegate {
 
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            completion(.granted(dialogShown: true))
+            completion(.granted)
         case .denied, .restricted:
-            completion(.denied(dialogShown: true))
+            completion(.denied)
         default:
             completion(.error("Unknown location authorization status"))
         }
