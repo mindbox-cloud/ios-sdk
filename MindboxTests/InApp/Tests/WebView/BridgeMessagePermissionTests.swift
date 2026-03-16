@@ -134,4 +134,35 @@ struct BridgeMessagePermissionTests {
             Issue.record("Expected .string payload, got \(String(describing: message.payload))")
         }
     }
+
+    @Test(
+        "All permission types parse from JS payload",
+        arguments: ["pushNotifications", "location", "camera", "microphone", "photoLibrary"]
+    )
+    func parseAllPermissionTypes(typeString: String) throws {
+        let id = UUID()
+        let rawJSON = """
+        {
+            "version": 1,
+            "type": "request",
+            "action": "permission.request",
+            "payload": "{\\"type\\":\\"\(typeString)\\"}",
+            "id": "\(id.uuidString.lowercased())",
+            "timestamp": 1710340800000
+        }
+        """
+
+        let message = try #require(BridgeMessage.from(body: rawJSON))
+
+        if case .string(let payloadStr) = message.payload {
+            let payloadData = try #require(payloadStr.data(using: .utf8))
+            let payloadDict = try #require(
+                try JSONSerialization.jsonObject(with: payloadData) as? [String: String]
+            )
+            #expect(payloadDict["type"] == typeString)
+            #expect(PermissionType(rawValue: typeString) != nil)
+        } else {
+            Issue.record("Expected .string payload, got \(String(describing: message.payload))")
+        }
+    }
 }
