@@ -41,6 +41,16 @@ extension MBContainer {
             return WebViewLocalStateStorage(persistenceStorage: persistenceStorage)
         }
 
+        register(PermissionHandlerRegistryProtocol.self, scope: .transient) {
+            let registry = PermissionHandlerRegistry()
+            registry.register(PushNotificationsPermissionHandler())
+            registry.register(LocationPermissionHandler())
+            registry.register(CameraPermissionHandler())
+            registry.register(MicrophonePermissionHandler())
+            registry.register(PhotoLibraryPermissionHandler())
+            return registry
+        }
+
         register(DatabaseRepositoryProtocol.self) {
             let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
 

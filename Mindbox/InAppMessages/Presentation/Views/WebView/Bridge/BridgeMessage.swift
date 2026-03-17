@@ -150,9 +150,10 @@ public struct BridgeMessage: Codable {
         static let localStateGet = "localState.get"
         static let localStateSet = "localState.set"
         static let localStateInit = "localState.init"
+        static let permissionRequest = "permission.request"
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher)
-        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, openLink, localStateGet, localStateSet, localStateInit]
+        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, openLink, localStateGet, localStateSet, localStateInit, permissionRequest]
     }
 
     enum CodingKeys: String, CodingKey {
