@@ -103,6 +103,15 @@ public enum JSONValue: Codable, Equatable {
         }
     }
 
+    var doubleValue: Double? {
+        switch self {
+        case .double(let v): return v
+        case .int(let v): return Double(v)
+        case .string(let v): return Double(v)
+        default: return nil
+        }
+    }
+
     var anyValue: Any? {
         switch self {
         case .string(let value):
@@ -151,9 +160,10 @@ public struct BridgeMessage: Codable {
         static let localStateSet = "localState.set"
         static let localStateInit = "localState.init"
         static let permissionRequest = "permission.request"
+        static let haptic = "haptic"
 
-        /// Actions that send their own bridge responses (no auto-response from dispatcher)
-        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, openLink, localStateGet, localStateSet, localStateInit, permissionRequest]
+        /// Actions that send their own bridge responses (no auto-response from dispatcher).
+        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, openLink, localStateGet, localStateSet, localStateInit, permissionRequest, haptic]
     }
 
     enum CodingKeys: String, CodingKey {

@@ -41,6 +41,10 @@ extension MBContainer {
             return WebViewLocalStateStorage(persistenceStorage: persistenceStorage)
         }
 
+        register(HapticServiceProtocol.self, scope: .transient) {
+            HapticService()
+        }
+
         register(PermissionHandlerRegistryProtocol.self, scope: .transient) {
             let registry = PermissionHandlerRegistry()
             registry.register(PushNotificationsPermissionHandler())
