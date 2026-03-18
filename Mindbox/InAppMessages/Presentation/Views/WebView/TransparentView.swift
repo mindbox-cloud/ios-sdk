@@ -26,6 +26,7 @@ final class TransparentView: UIView {
     private var isReadyCheckInFlight = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
+    private lazy var hapticService = HapticService()
 
     init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
         self.params = params
@@ -142,9 +143,11 @@ extension TransparentView: WebBridgeMessageDelegate {
         switch action {
         case Action.close:
             quizInitTimeoutWorkItem?.cancel()
+            hapticService.stopPattern()
             webViewAction?.onClose()
         case Action.`init`:
             quizInitTimeoutWorkItem?.cancel()
+            hapticService.prepare()
             webViewAction?.onInit()
 
         case Action.click:
@@ -185,6 +188,9 @@ extension TransparentView: WebBridgeMessageDelegate {
 
         case Action.permissionRequest:
             handlePermissionRequest(message: message)
+
+        case Action.haptic:
+            handleHaptic(message: message)
 
         default:
             Logger.common(
@@ -304,6 +310,16 @@ extension TransparentView {
         return (operation, bodyString)
     }
 
+    private func sendBridgeSuccess(action: String, id: UUID) {
+        let response = BridgeMessage(
+            type: .response,
+            action: action,
+            payload: .object(["success": .bool(true)]),
+            id: id
+        )
+        facade?.sendToJS(response)
+    }
+
     private func sendBridgeError(_ errorMessage: String, action: String, id: UUID) {
         let errorPayload: JSONValue = .object(["error": .string(errorMessage)])
         let response = BridgeMessage(type: .error, action: action, payload: errorPayload, id: id)
@@ -329,13 +345,7 @@ extension TransparentView {
             return
         }
 
-        let successResponse = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: .object(["success": .bool(true)]),
-            id: message.id
-        )
-        facade?.sendToJS(successResponse)
+        sendBridgeSuccess(action: message.action, id: message.id)
     }
 
     private func handleSyncOperation(message: BridgeMessage) {
@@ -596,13 +606,7 @@ extension TransparentView {
                             level: .info,
                             category: .webViewInAppMessages
                         )
-                        let response = BridgeMessage(
-                            type: .response,
-                            action: message.action,
-                            payload: .object(["success": .bool(true)]),
-                            id: message.id
-                        )
-                        self?.facade?.sendToJS(response)
+                        self?.sendBridgeSuccess(action: message.action, id: message.id)
                     } else {
                         Logger.common(
                             message: "[WebView] navigate: not a universal link, falling back to SFSafariViewController for \(url.absoluteString)",
@@ -634,13 +638,7 @@ extension TransparentView {
                 level: .info,
                 category: .webViewInAppMessages
             )
-            let response = BridgeMessage(
-                type: .response,
-                action: message.action,
-                payload: .object(["success": .bool(true)]),
-                id: message.id
-            )
-            self?.facade?.sendToJS(response)
+            self?.sendBridgeSuccess(action: message.action, id: message.id)
         }
     }
 
@@ -654,13 +652,7 @@ extension TransparentView {
                             level: .info,
                             category: .webViewInAppMessages
                         )
-                        let response = BridgeMessage(
-                            type: .response,
-                            action: message.action,
-                            payload: .object(["success": .bool(true)]),
-                            id: message.id
-                        )
-                        self?.facade?.sendToJS(response)
+                        self?.sendBridgeSuccess(action: message.action, id: message.id)
                     } else {
                         Logger.common(
                             message: "[WebView] navigate: failed to open \(url.absoluteString)",
@@ -764,6 +756,16 @@ private extension WKNavigationType {
         case .other:            return "other"
         @unknown default:       return "unknown(\(rawValue))"
         }
+    }
+}
+
+// MARK: - Haptic Handler
+
+extension TransparentView {
+
+    private func handleHaptic(message: BridgeMessage) {
+        hapticService.handle(message: message)
+        sendBridgeSuccess(action: message.action, id: message.id)
     }
 }
 
