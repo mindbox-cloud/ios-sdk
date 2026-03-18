@@ -10,7 +10,13 @@ import UIKit
 import CoreHaptics
 import MindboxLogger
 
-final class HapticService {
+protocol HapticServiceProtocol {
+    func prepare()
+    func stopPattern()
+    func handle(message: BridgeMessage)
+}
+
+final class HapticService: HapticServiceProtocol {
 
     // MARK: - Generators
 
