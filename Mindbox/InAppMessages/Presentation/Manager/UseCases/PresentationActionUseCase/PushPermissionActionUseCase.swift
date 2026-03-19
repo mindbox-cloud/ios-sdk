@@ -7,8 +7,6 @@
 //
 
 import Foundation
-import UIKit
-import MindboxLogger
 
 extension ContentBackgroundLayerAction {
     /// Delegates to `ActionUseCaseFactory` to extract URL/payload and handle side effects.
@@ -36,32 +34,5 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
             }
         }
         return (nil, model.intentPayload)
-    }
-}
-
-enum PushPermissionHelper {
-
-    static func requestPermission(completion: ((PermissionRequestResult) -> Void)? = nil) {
-        let registry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
-        registry.handler(for: .pushNotifications)?.request { result in
-            completion?(result)
-        }
-    }
-
-    static func openPushNotificationSettings() {
-        DispatchQueue.main.async {
-            let settingsUrl: URL?
-            if #available(iOS 16.0, *) {
-                settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
-            } else {
-                settingsUrl = URL(string: UIApplication.openSettingsURLString)
-            }
-            guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
-                Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
-                return
-            }
-            UIApplication.shared.open(settingsUrl)
-            Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
-        }
     }
 }

@@ -419,6 +419,7 @@
 		A1B2C3D400000003E1010101 /* PermissionHandlerRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */; };
 		A1B2C3D400000005E1010101 /* BridgeMessagePermissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */; };
 		A1B2C3D400000010E1010101 /* PermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000011E1010101 /* PermissionHandler.swift */; };
+		A1B2C3D400000020E1010101 /* PushPermissionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000021E1010101 /* PushPermissionHelper.swift */; };
 
 		A1B2C3D400000014E1010101 /* PushNotificationsPermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */; };
 		A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */; };
@@ -1137,6 +1138,7 @@
 		A1B2C3D400000011E1010101 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 
 		A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationsPermissionHandler.swift; sourceTree = "<group>"; };
+		A1B2C3D400000021E1010101 /* PushPermissionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionHelper.swift; sourceTree = "<group>"; };
 		A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = UnknownTargetingsModel.json; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
 		A1D017E82976CC1C00CD9F99 /* TargetingChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingChecker.swift; sourceTree = "<group>"; };
@@ -2936,6 +2938,7 @@
 			children = (
 				A1B2C3D400000011E1010101 /* PermissionHandler.swift */,
 				A1B2C3D400000015E1010101 /* PushNotificationsPermissionHandler.swift */,
+				A1B2C3D400000021E1010101 /* PushPermissionHelper.swift */,
 			);
 			path = Permissions;
 			sourceTree = "<group>";
@@ -4346,6 +4349,7 @@
 				F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */,
 				A1B2C3D400000010E1010101 /* PermissionHandler.swift in Sources */,
 				A1B2C3D400000014E1010101 /* PushNotificationsPermissionHandler.swift in Sources */,
+				A1B2C3D400000020E1010101 /* PushPermissionHelper.swift in Sources */,
 				F3482F192A65DBBD002A41EC /* MindboxPayloadCopierDelegate.swift in Sources */,
 				A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */,
 				9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */,
