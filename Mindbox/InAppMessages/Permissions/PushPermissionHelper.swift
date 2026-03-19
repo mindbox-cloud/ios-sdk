@@ -12,8 +12,10 @@ import MindboxLogger
 
 enum PushPermissionHelper {
 
-    static func requestPermission(completion: ((PermissionRequestResult) -> Void)? = nil) {
-        let registry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
+    static func requestPermission(
+        registry: PermissionHandlerRegistryProtocol = DI.injectOrFail(PermissionHandlerRegistryProtocol.self),
+        completion: ((PermissionRequestResult) -> Void)? = nil
+    ) {
         registry.handler(for: .pushNotifications)?.request { result in
             completion?(result)
         }

@@ -417,6 +417,7 @@
 		A1A916E529C9191900D59D9E /* InAppConfigStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A916E429C9191900D59D9E /* InAppConfigStub.swift */; };
 		A1B2C3D400000001E1010101 /* MockPermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002E1010101 /* MockPermissionHandler.swift */; };
 		A1B2C3D400000003E1010101 /* PermissionHandlerRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */; };
+		A1B2C3D400000030E1010101 /* PushPermissionHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000031E1010101 /* PushPermissionHelperTests.swift */; };
 		A1B2C3D400000005E1010101 /* BridgeMessagePermissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */; };
 		A1B2C3D400000010E1010101 /* PermissionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000011E1010101 /* PermissionHandler.swift */; };
 		A1B2C3D400000020E1010101 /* PushPermissionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000021E1010101 /* PushPermissionHelper.swift */; };
@@ -1134,6 +1135,7 @@
 		A1A916E429C9191900D59D9E /* InAppConfigStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigStub.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002E1010101 /* MockPermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPermissionHandler.swift; sourceTree = "<group>"; };
 		A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandlerRegistryTests.swift; sourceTree = "<group>"; };
+		A1B2C3D400000031E1010101 /* PushPermissionHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionHelperTests.swift; sourceTree = "<group>"; };
 		A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessagePermissionTests.swift; sourceTree = "<group>"; };
 		A1B2C3D400000011E1010101 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 
@@ -2929,6 +2931,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000004E1010101 /* PermissionHandlerRegistryTests.swift */,
+				A1B2C3D400000031E1010101 /* PushPermissionHelperTests.swift */,
 			);
 			path = Permissions;
 			sourceTree = "<group>";
@@ -4662,6 +4665,7 @@
 				5D3FCB95C2AF59DF36A61254 /* WebViewLocalStateStorageTests.swift in Sources */,
 				A1B2C3D400000001E1010101 /* MockPermissionHandler.swift in Sources */,
 				A1B2C3D400000003E1010101 /* PermissionHandlerRegistryTests.swift in Sources */,
+				A1B2C3D400000030E1010101 /* PushPermissionHelperTests.swift in Sources */,
 				A1B2C3D400000005E1010101 /* BridgeMessagePermissionTests.swift in Sources */,
 				6182078DDFC681D168546DB1 /* HapticRequestParserTests.swift in Sources */,
 				6182078DDFC681D168546DB2 /* HapticRequestValidatorTests.swift in Sources */,
