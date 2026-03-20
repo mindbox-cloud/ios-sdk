@@ -710,10 +710,10 @@ extension TransparentView {
                 guard let self else { return }
 
                 switch result {
-                case .granted:
-                    self.sendPermissionResponse("granted", action: message.action, id: message.id)
-                case .denied:
-                    self.sendPermissionResponse("denied", action: message.action, id: message.id)
+                case .granted(let dialogShown):
+                    self.sendPermissionResponse("granted", dialogShown: dialogShown, action: message.action, id: message.id)
+                case .denied(let dialogShown):
+                    self.sendPermissionResponse("denied", dialogShown: dialogShown, action: message.action, id: message.id)
                 case .error(let errorMessage):
                     self.sendBridgeError(errorMessage, action: message.action, id: message.id)
                 }
@@ -721,11 +721,11 @@ extension TransparentView {
         }
     }
 
-    private func sendPermissionResponse(_ resultValue: String, action: String, id: UUID) {
+    private func sendPermissionResponse(_ resultValue: String, dialogShown: Bool, action: String, id: UUID) {
         let response = BridgeMessage(
             type: .response,
             action: action,
-            payload: .object(["result": .string(resultValue)]),
+            payload: .object(["result": .string(resultValue), "dialogShown": .bool(dialogShown)]),
             id: id
         )
         facade?.sendToJS(response)

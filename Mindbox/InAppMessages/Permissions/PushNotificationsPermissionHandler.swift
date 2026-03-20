@@ -28,9 +28,9 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
             case .notDetermined:
                 self.requestAuthorization(completion: completion)
             case .denied:
-                completion(.denied)
+                completion(.denied(dialogShown: false))
             case .authorized, .provisional, .ephemeral:
-                completion(.granted)
+                completion(.granted(dialogShown: false))
             @unknown default:
                 completion(.error("Unknown authorization status"))
             }
@@ -58,14 +58,14 @@ final class PushNotificationsPermissionHandler: PermissionHandler {
                     level: .debug,
                     category: .webViewInAppMessages
                 )
-                completion(.granted)
+                completion(.granted(dialogShown: true))
             } else {
                 Logger.common(
                     message: "[WebView] User did not grant notification permissions.",
                     level: .debug,
                     category: .webViewInAppMessages
                 )
-                completion(.denied)
+                completion(.denied(dialogShown: true))
             }
         }
     }

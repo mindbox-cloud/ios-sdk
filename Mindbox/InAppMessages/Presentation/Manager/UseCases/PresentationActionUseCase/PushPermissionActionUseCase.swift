@@ -28,15 +28,11 @@ final class PushPermissionActionUseCase: PresentationActionUseCaseProtocol {
     }
 
     func execute() -> (url: URL?, payload: String)? {
-        PushPermissionHelper.requestPermission()
+        PushPermissionHelper.requestPermission { result in
+            if case .denied(dialogShown: false) = result {
+                PushPermissionHelper.openPushNotificationSettings()
+            }
+        }
         return (nil, model.intentPayload)
-    }
-}
-
-enum PushPermissionHelper {
-
-    static func requestPermission() {
-        let registry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
-        registry.handler(for: .pushNotifications)?.request { _ in }
     }
 }

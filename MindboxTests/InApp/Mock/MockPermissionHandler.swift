@@ -14,7 +14,7 @@ final class MockPermissionHandler: PermissionHandler {
     let permissionType: PermissionType
     let requiredInfoPlistKeys: [String]
 
-    var stubbedResult: PermissionRequestResult = .granted
+    var stubbedResult: PermissionRequestResult = .granted(dialogShown: false)
     private(set) var requestCallCount = 0
 
     init(permissionType: PermissionType, requiredInfoPlistKeys: [String] = []) {

@@ -27,7 +27,7 @@ struct BridgeMessagePermissionTests {
         let message = BridgeMessage(
             type: .response,
             action: BridgeMessage.Action.permissionRequest,
-            payload: .object(["result": .string("granted")]),
+            payload: .object(["result": .string("granted"), "dialogShown": .bool(true)]),
             id: id,
             timestamp: 1_710_340_800_000
         )
@@ -47,6 +47,7 @@ struct BridgeMessagePermissionTests {
             try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
         )
         #expect(payloadDict["result"] as? String == "granted")
+        #expect(payloadDict["dialogShown"] as? Bool == true)
     }
 
     @Test("Response with denied result encodes correctly")
@@ -55,7 +56,7 @@ struct BridgeMessagePermissionTests {
         let message = BridgeMessage(
             type: .response,
             action: BridgeMessage.Action.permissionRequest,
-            payload: .object(["result": .string("denied")]),
+            payload: .object(["result": .string("denied"), "dialogShown": .bool(false)]),
             id: id,
             timestamp: 1_710_340_800_000
         )
@@ -72,6 +73,7 @@ struct BridgeMessagePermissionTests {
             try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
         )
         #expect(payloadDict["result"] as? String == "denied")
+        #expect(payloadDict["dialogShown"] as? Bool == false)
     }
 
     @Test("Error response encodes error message in payload")
@@ -137,7 +139,7 @@ struct BridgeMessagePermissionTests {
 
     @Test(
         "All permission types parse from JS payload",
-        arguments: ["pushNotifications", "location", "camera", "microphone", "photoLibrary"]
+        arguments: ["pushNotifications"]
     )
     func parseAllPermissionTypes(typeString: String) throws {
         let id = UUID()
