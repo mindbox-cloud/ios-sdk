@@ -192,6 +192,9 @@ extension TransparentView: WebBridgeMessageDelegate {
         case Action.haptic:
             handleHaptic(message: message)
 
+        case Action.openSettings:
+            handleOpenSettings(message: message)
+
         default:
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
@@ -766,6 +769,73 @@ extension TransparentView {
     private func handleHaptic(message: BridgeMessage) {
         hapticService.handle(message: message)
         sendBridgeSuccess(action: message.action, id: message.id)
+    }
+}
+
+// MARK: - Open Settings Handler
+
+extension TransparentView {
+
+    private enum SettingsType: String {
+        case notifications
+        case application
+    }
+
+    private func handleOpenSettings(message: BridgeMessage) {
+        guard let typeString = extractSettingsType(from: message) else {
+            sendBridgeError("Invalid payload: missing or empty 'type' field", action: message.action, id: message.id)
+            return
+        }
+        guard let settingsType = SettingsType(rawValue: typeString) else {
+            sendBridgeError("Unknown settings type: '\(typeString)'", action: message.action, id: message.id)
+            return
+        }
+        Logger.common(message: "[WebView] openSettings: type='\(typeString)'", level: .info, category: .webViewInAppMessages)
+
+        switch settingsType {
+        case .notifications:
+            handleOpenNotificationSettings(message: message)
+        case .application:
+            handleOpenApplicationSettings(message: message)
+        }
+    }
+
+    private func handleOpenNotificationSettings(message: BridgeMessage) {
+        PushPermissionHelper.openPushNotificationSettings()
+        Logger.common(message: "[WebView] openSettings: opened notification settings", level: .info, category: .webViewInAppMessages)
+        sendBridgeSuccess(action: message.action, id: message.id)
+    }
+
+    private func handleOpenApplicationSettings(message: BridgeMessage) {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
+            return
+        }
+        DispatchQueue.main.async { [weak self] in
+            UIApplication.shared.open(url, options: [:]) { success in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if success {
+                        Logger.common(message: "[WebView] openSettings: opened application settings", level: .info, category: .webViewInAppMessages)
+                        self.sendBridgeSuccess(action: message.action, id: message.id)
+                    } else {
+                        Logger.common(message: "[WebView] openSettings: failed to open application settings", level: .default, category: .webViewInAppMessages)
+                        self.sendBridgeError("Failed to open application settings", action: message.action, id: message.id)
+                    }
+                }
+            }
+        }
+    }
+
+    private func extractSettingsType(from message: BridgeMessage) -> String? {
+        guard case .string(let str) = message.payload,
+              let data = str.data(using: .utf8),
+              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
+              case .string(let typeString) = dict["type"],
+              !typeString.isEmpty else {
+            return nil
+        }
+        return typeString
     }
 }
 
