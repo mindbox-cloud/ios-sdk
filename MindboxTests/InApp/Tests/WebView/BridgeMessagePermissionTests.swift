@@ -123,7 +123,7 @@ struct BridgeMessagePermissionTests {
         let message = try #require(BridgeMessage.from(body: rawJSON))
 
         #expect(message.type == .request)
-        #expect(message.action == BridgeMessage.Action.permissionRequest)
+        #expect(message.parsedAction == .permissionRequest)
         #expect(message.id == id)
 
         if case .string(let payloadStr) = message.payload {

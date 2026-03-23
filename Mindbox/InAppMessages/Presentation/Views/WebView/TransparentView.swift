@@ -138,68 +138,56 @@ extension TransparentView: WebBridgeMessageDelegate {
         
         // TODO: - Create plugin-based handlers
 
-        typealias Action = BridgeMessage.Action
-
-        switch action {
-        case Action.close:
-            quizInitTimeoutWorkItem?.cancel()
-            hapticService.stopPattern()
-            webViewAction?.onClose()
-        case Action.`init`:
-            quizInitTimeoutWorkItem?.cancel()
-            hapticService.prepare()
-            webViewAction?.onInit()
-
-        case Action.click:
-            webViewAction?.onCompleted(data: data)
-
-        case Action.hide:
-            webViewAction?.onHide()
-
-        case Action.log:
-            webViewAction?.onLog(message: data)
-
-        case Action.userAgent:
-            Logger.common(
-                message: "[WebView] UserAgent: \(data)",
-                category: .webViewInAppMessages
-            )
-
-        case Action.ready:
-            facade?.sendReadyEvent(id: message.id)
-
-        case Action.asyncOperation:
-            handleAsyncOperation(message: message)
-
-        case Action.syncOperation:
-            handleSyncOperation(message: message)
-
-        case Action.openLink:
-            handleNavigate(message: message)
-
-        case Action.localStateGet:
-            handleLocalStateGet(message: message)
-
-        case Action.localStateSet:
-            handleLocalStateSet(message: message)
-
-        case Action.localStateInit:
-            handleLocalStateInit(message: message)
-
-        case Action.permissionRequest:
-            handlePermissionRequest(message: message)
-
-        case Action.haptic:
-            handleHaptic(message: message)
-
-        case Action.openSettings:
-            handleOpenSettings(message: message)
-
-        default:
+        guard let parsedAction = BridgeMessage.Action(rawValue: action) else {
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
                 category: .webViewInAppMessages
             )
+            return
+        }
+
+        switch parsedAction {
+        case .close:
+            quizInitTimeoutWorkItem?.cancel()
+            hapticService.stopPattern()
+            webViewAction?.onClose()
+        case .`init`:
+            quizInitTimeoutWorkItem?.cancel()
+            hapticService.prepare()
+            webViewAction?.onInit()
+        case .click:
+            webViewAction?.onCompleted(data: data)
+        case .hide:
+            webViewAction?.onHide()
+        case .log:
+            webViewAction?.onLog(message: data)
+        case .userAgent:
+            Logger.common(
+                message: "[WebView] UserAgent: \(data)",
+                category: .webViewInAppMessages
+            )
+        case .ready:
+            facade?.sendReadyEvent(id: message.id)
+        case .asyncOperation:
+            handleAsyncOperation(message: message)
+        case .syncOperation:
+            handleSyncOperation(message: message)
+        case .openLink:
+            handleNavigate(message: message)
+        case .localStateGet:
+            handleLocalStateGet(message: message)
+        case .localStateSet:
+            handleLocalStateSet(message: message)
+        case .localStateInit:
+            handleLocalStateInit(message: message)
+        case .permissionRequest:
+            handlePermissionRequest(message: message)
+        case .haptic:
+            handleHaptic(message: message)
+        case .settingsOpen:
+            handleOpenSettings(message: message)
+        case .navigationIntercepted:
+            break
         }
     }
 }

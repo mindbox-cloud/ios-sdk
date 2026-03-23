@@ -11,12 +11,12 @@ import Foundation
 enum SettingsRequestParser {
 
     private enum PayloadKey {
-        static let type = "type"
+        static let target = "target"
     }
 
     static func parse(from message: BridgeMessage) -> SettingsType? {
         let dict = extractPayloadDict(from: message)
-        guard case .string(let typeString) = dict[PayloadKey.type], !typeString.isEmpty else {
+        guard case .string(let typeString) = dict[PayloadKey.target], !typeString.isEmpty else {
             return nil
         }
         return SettingsType(rawValue: typeString)
