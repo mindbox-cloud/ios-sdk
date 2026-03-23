@@ -252,6 +252,8 @@
 		6182078DDFC681D168546DAF /* HapticRequestParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400A /* HapticRequestParser.swift */; };
 		6182078DDFC681D168546DB0 /* HapticRequestValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400B /* HapticRequestValidator.swift */; };
 		6182078DDFC681D168546DB1 /* HapticRequestParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */; };
+		6E2AC9F542574B17AB3DD4B6 /* SettingsType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4275DCA97D4445CD80B0DFC0 /* SettingsType.swift */; };
+		813FE960DC0543F681C94275 /* SettingsRequestParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FC619AC23245CC8CD45E63 /* SettingsRequestParser.swift */; };
 		6182078DDFC681D168546DB2 /* HapticRequestValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400D /* HapticRequestValidatorTests.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
 		6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */; };
@@ -1179,6 +1181,8 @@
 		BD1BE43AA9EAEA03F8ED400B /* HapticRequestValidator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticRequestValidator.swift; sourceTree = "<group>"; };
 		BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticRequestParserTests.swift; sourceTree = "<group>"; };
 		BD1BE43AA9EAEA03F8ED400D /* HapticRequestValidatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticRequestValidatorTests.swift; sourceTree = "<group>"; };
+		4275DCA97D4445CD80B0DFC0 /* SettingsType.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsType.swift; sourceTree = "<group>"; };
+		30FC619AC23245CC8CD45E63 /* SettingsRequestParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsRequestParser.swift; sourceTree = "<group>"; };
 		D216DE502C0716B70020F58A /* StringExtensionsTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringExtensionsTests.swift; sourceTree = "<group>"; };
 		D216DE522C0716B80020F58A /* TimeIntervalTimeSpanTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeIntervalTimeSpanTests.swift; sourceTree = "<group>"; };
 		D2F7E2412BADB89900B24BB8 /* UserVisitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManager.swift; sourceTree = "<group>"; };
@@ -2985,8 +2989,19 @@
 				B4E4386E2D8AFA5700603F3A /* WebViewController.swift */,
 				F332D2622CC27AC700A65F39 /* TransparentView.swift */,
 				CB3F1C529E728059367459B7 /* Haptic */,
+				8BBC34EAB0824F46BF68D563 /* Settings */,
 			);
 			path = WebView;
+			sourceTree = "<group>";
+		};
+		8BBC34EAB0824F46BF68D563 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				4275DCA97D4445CD80B0DFC0 /* SettingsType.swift */,
+				30FC619AC23245CC8CD45E63 /* SettingsRequestParser.swift */,
+			);
+			name = Settings;
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		CB3F1C529E728059367459B7 /* Haptic */ = {
@@ -4562,6 +4577,8 @@
 				6182078DDFC681D168546DAE /* HapticRequest.swift in Sources */,
 				6182078DDFC681D168546DAF /* HapticRequestParser.swift in Sources */,
 				6182078DDFC681D168546DB0 /* HapticRequestValidator.swift in Sources */,
+				6E2AC9F542574B17AB3DD4B6 /* SettingsType.swift in Sources */,
+				813FE960DC0543F681C94275 /* SettingsRequestParser.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

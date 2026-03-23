@@ -776,21 +776,12 @@ extension TransparentView {
 
 extension TransparentView {
 
-    private enum SettingsType: String {
-        case notifications
-        case application
-    }
-
     private func handleOpenSettings(message: BridgeMessage) {
-        guard let typeString = extractSettingsType(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty 'type' field", action: message.action, id: message.id)
+        guard let settingsType = SettingsRequestParser.parse(from: message) else {
+            sendBridgeError("Invalid or unknown settings type", action: message.action, id: message.id)
             return
         }
-        guard let settingsType = SettingsType(rawValue: typeString) else {
-            sendBridgeError("Unknown settings type: '\(typeString)'", action: message.action, id: message.id)
-            return
-        }
-        Logger.common(message: "[WebView] openSettings: type='\(typeString)'", level: .info, category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] openSettings: type='\(settingsType.rawValue)'", level: .info, category: .webViewInAppMessages)
 
         switch settingsType {
         case .notifications:
@@ -827,16 +818,6 @@ extension TransparentView {
         }
     }
 
-    private func extractSettingsType(from message: BridgeMessage) -> String? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let typeString) = dict["type"],
-              !typeString.isEmpty else {
-            return nil
-        }
-        return typeString
-    }
 }
 
 extension TransparentView: UIScrollViewDelegate {
