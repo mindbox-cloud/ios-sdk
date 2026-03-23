@@ -787,7 +787,11 @@ extension TransparentView {
         case .notifications:
             handleOpenNotificationSettings(message: message)
         case .application:
-            handleOpenApplicationSettings(message: message)
+            guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
+                return
+            }
+            openViaUIApplication(url: url, message: message)
         }
     }
 
@@ -796,28 +800,6 @@ extension TransparentView {
         Logger.common(message: "[WebView] openSettings: opened notification settings", level: .info, category: .webViewInAppMessages)
         sendBridgeSuccess(action: message.action, id: message.id)
     }
-
-    private func handleOpenApplicationSettings(message: BridgeMessage) {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else {
-            sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
-            return
-        }
-        DispatchQueue.main.async { [weak self] in
-            UIApplication.shared.open(url, options: [:]) { success in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    if success {
-                        Logger.common(message: "[WebView] openSettings: opened application settings", level: .info, category: .webViewInAppMessages)
-                        self.sendBridgeSuccess(action: message.action, id: message.id)
-                    } else {
-                        Logger.common(message: "[WebView] openSettings: failed to open application settings", level: .default, category: .webViewInAppMessages)
-                        self.sendBridgeError("Failed to open application settings", action: message.action, id: message.id)
-                    }
-                }
-            }
-        }
-    }
-
 }
 
 extension TransparentView: UIScrollViewDelegate {
