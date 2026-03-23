@@ -72,6 +72,7 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
         if skipNextDirectTrackVisit {
             skipNextDirectTrackVisit = false
             Logger.common(message: "Skipping trackDirect because push or universal link track visit already sent", level: .info, category: .visit)
+            inappSessionManager.checkInappSession()
             return
         }
         let encodable = TrackVisit(source: .direct)
