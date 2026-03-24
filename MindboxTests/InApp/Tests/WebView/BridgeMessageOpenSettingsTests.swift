@@ -1,33 +1,33 @@
 //
-//  BridgeMessagePermissionTests.swift
+//  BridgeMessageOpenSettingsTests.swift
 //  MindboxTests
 //
-//  Created by Akylbek Utekeshev on 16.03.2026.
+//  Created by Akylbek Utekeshev on 23.03.2026.
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-@Suite("BridgeMessage permission.request", .tags(.webView))
-struct BridgeMessagePermissionTests {
+@Suite("BridgeMessage settings.open", .tags(.webView))
+struct BridgeMessageOpenSettingsTests {
 
     // MARK: - deferredActions contract
 
-    @Test("deferredActions contains permissionRequest")
-    func deferredActionsContainsPermissionRequest() {
-        #expect(BridgeMessage.Action.deferredActions.contains(BridgeMessage.Action.permissionRequest))
+    @Test("deferredActions contains settingsOpen")
+    func deferredActionsContainsSettingsOpen() {
+        #expect(BridgeMessage.Action.deferredActions.contains(BridgeMessage.Action.settingsOpen))
     }
 
     // MARK: - Serialization: Native → JS response
 
-    @Test("Response with granted result encodes payload as JSON string")
-    func grantedResponseEncodesCorrectly() throws {
+    @Test("Success response for notifications target encodes payload as JSON string")
+    func notificationsSuccessResponseEncodesCorrectly() throws {
         let id = UUID()
         let message = BridgeMessage(
             type: .response,
-            action: BridgeMessage.Action.permissionRequest,
-            payload: .object(["result": .string("granted"), "dialogShown": .bool(true)]),
+            action: BridgeMessage.Action.settingsOpen,
+            payload: .object(["success": .bool(true)]),
             id: id,
             timestamp: 1_710_340_800_000
         )
@@ -39,50 +39,23 @@ struct BridgeMessagePermissionTests {
         )
 
         #expect(dict["type"] as? String == "response")
-        #expect(dict["action"] as? String == "permission.request")
+        #expect(dict["action"] as? String == "settings.open")
 
         let payloadString = try #require(dict["payload"] as? String)
         let payloadData = try #require(payloadString.data(using: .utf8))
         let payloadDict = try #require(
             try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
         )
-        #expect(payloadDict["result"] as? String == "granted")
-        #expect(payloadDict["dialogShown"] as? Bool == true)
-    }
-
-    @Test("Response with denied result encodes correctly")
-    func deniedResponseEncodesCorrectly() throws {
-        let id = UUID()
-        let message = BridgeMessage(
-            type: .response,
-            action: BridgeMessage.Action.permissionRequest,
-            payload: .object(["result": .string("denied"), "dialogShown": .bool(false)]),
-            id: id,
-            timestamp: 1_710_340_800_000
-        )
-
-        let json = try #require(message.jsonString())
-        let data = try #require(json.data(using: .utf8))
-        let dict = try #require(
-            try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        )
-
-        let payloadString = try #require(dict["payload"] as? String)
-        let payloadData = try #require(payloadString.data(using: .utf8))
-        let payloadDict = try #require(
-            try JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
-        )
-        #expect(payloadDict["result"] as? String == "denied")
-        #expect(payloadDict["dialogShown"] as? Bool == false)
+        #expect(payloadDict["success"] as? Bool == true)
     }
 
     @Test("Error response encodes error message in payload")
     func errorResponseEncodesCorrectly() throws {
         let id = UUID()
-        let errorText = "Missing Info.plist key: NSLocationWhenInUseUsageDescription"
+        let errorText = "Unknown settings target: 'invalid'"
         let message = BridgeMessage(
             type: .error,
-            action: BridgeMessage.Action.permissionRequest,
+            action: BridgeMessage.Action.settingsOpen,
             payload: .object(["error": .string(errorText)]),
             id: id,
             timestamp: 1_710_340_800_000
@@ -106,15 +79,15 @@ struct BridgeMessagePermissionTests {
 
     // MARK: - Deserialization: JS → Native request
 
-    @Test("BridgeMessage.from parses permission.request from JS")
-    func parsePermissionRequestFromJS() throws {
+    @Test("BridgeMessage.from parses settings.open with notifications target from JS")
+    func parseSettingsOpenNotificationsFromJS() throws {
         let id = UUID()
         let rawJSON = """
         {
             "version": 1,
             "type": "request",
-            "action": "permission.request",
-            "payload": "{\\"type\\":\\"pushNotifications\\"}",
+            "action": "settings.open",
+            "payload": "{\\"target\\":\\"notifications\\"}",
             "id": "\(id.uuidString.lowercased())",
             "timestamp": 1710340800000
         }
@@ -123,7 +96,7 @@ struct BridgeMessagePermissionTests {
         let message = try #require(BridgeMessage.from(body: rawJSON))
 
         #expect(message.type == .request)
-        #expect(message.parsedAction == .permissionRequest)
+        #expect(message.parsedAction == .settingsOpen)
         #expect(message.id == id)
 
         if case .string(let payloadStr) = message.payload {
@@ -131,24 +104,54 @@ struct BridgeMessagePermissionTests {
             let payloadDict = try #require(
                 try JSONSerialization.jsonObject(with: payloadData) as? [String: String]
             )
-            #expect(payloadDict["type"] == "pushNotifications")
+            #expect(payloadDict["target"] == "notifications")
+        } else {
+            Issue.record("Expected .string payload, got \(String(describing: message.payload))")
+        }
+    }
+
+    @Test("BridgeMessage.from parses settings.open with application target from JS")
+    func parseSettingsOpenApplicationFromJS() throws {
+        let id = UUID()
+        let rawJSON = """
+        {
+            "version": 1,
+            "type": "request",
+            "action": "settings.open",
+            "payload": "{\\"target\\":\\"application\\"}",
+            "id": "\(id.uuidString.lowercased())",
+            "timestamp": 1710340800000
+        }
+        """
+
+        let message = try #require(BridgeMessage.from(body: rawJSON))
+
+        #expect(message.type == .request)
+        #expect(message.parsedAction == .settingsOpen)
+
+        if case .string(let payloadStr) = message.payload {
+            let payloadData = try #require(payloadStr.data(using: .utf8))
+            let payloadDict = try #require(
+                try JSONSerialization.jsonObject(with: payloadData) as? [String: String]
+            )
+            #expect(payloadDict["target"] == "application")
         } else {
             Issue.record("Expected .string payload, got \(String(describing: message.payload))")
         }
     }
 
     @Test(
-        "All permission types parse from JS payload",
-        arguments: ["pushNotifications"]
+        "All valid settings targets parse from JS payload",
+        arguments: ["notifications", "application"]
     )
-    func parseAllPermissionTypes(typeString: String) throws {
+    func parseAllValidSettingsTargets(targetString: String) throws {
         let id = UUID()
         let rawJSON = """
         {
             "version": 1,
             "type": "request",
-            "action": "permission.request",
-            "payload": "{\\"type\\":\\"\(typeString)\\"}",
+            "action": "settings.open",
+            "payload": "{\\"target\\":\\"\(targetString)\\"}",
             "id": "\(id.uuidString.lowercased())",
             "timestamp": 1710340800000
         }
@@ -161,8 +164,7 @@ struct BridgeMessagePermissionTests {
             let payloadDict = try #require(
                 try JSONSerialization.jsonObject(with: payloadData) as? [String: String]
             )
-            #expect(payloadDict["type"] == typeString)
-            #expect(PermissionType(rawValue: typeString) != nil)
+            #expect(payloadDict["target"] == targetString)
         } else {
             Issue.record("Expected .string payload, got \(String(describing: message.payload))")
         }

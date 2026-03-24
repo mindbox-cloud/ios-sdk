@@ -56,7 +56,7 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        if !BridgeMessage.Action.deferredActions.contains(message.action) {
+        if !(message.parsedAction?.isDeferred ?? false) {
             let response = BridgeMessage(
                 type: .response,
                 action: message.action,

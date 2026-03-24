@@ -144,26 +144,38 @@ public struct BridgeMessage: Codable {
         case error
     }
 
-    enum Action {
-        static let close = "close"
-        static let `init` = "init"
-        static let click = "click"
-        static let hide = "hide"
-        static let log = "log"
-        static let userAgent = "userAgent"
-        static let ready = "ready"
-        static let asyncOperation = "asyncOperation"
-        static let syncOperation = "syncOperation"
-        static let openLink = "openLink"
-        static let navigationIntercepted = "navigationIntercepted"
-        static let localStateGet = "localState.get"
-        static let localStateSet = "localState.set"
-        static let localStateInit = "localState.init"
-        static let permissionRequest = "permission.request"
-        static let haptic = "haptic"
+    enum Action: String, CaseIterable {
+        case close
+        case `init`
+        case click
+        case hide
+        case log
+        case userAgent
+        case ready
+        case asyncOperation
+        case syncOperation
+        case openLink
+        case navigationIntercepted
+        case localStateGet = "localState.get"
+        case localStateSet = "localState.set"
+        case localStateInit = "localState.init"
+        case permissionRequest = "permission.request"
+        case haptic
+        case settingsOpen = "settings.open"
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher).
-        static let deferredActions: Set<String> = [ready, asyncOperation, syncOperation, openLink, localStateGet, localStateSet, localStateInit, permissionRequest, haptic]
+        var isDeferred: Bool {
+            switch self {
+            case .ready, .asyncOperation, .syncOperation, .openLink,
+                 .localStateGet, .localStateSet, .localStateInit,
+                 .permissionRequest, .haptic, .settingsOpen:
+                return true
+            case .close, .`init`, .click, .hide, .log, .userAgent, .navigationIntercepted:
+                return false
+            }
+        }
+
+        static let deferredActions: Set<Action> = Set(allCases.filter(\.isDeferred))
     }
 
     enum CodingKeys: String, CodingKey {
@@ -176,6 +188,8 @@ public struct BridgeMessage: Codable {
     public let payload: JSONValue?
     public let id: UUID
     public let timestamp: Int64
+
+    var parsedAction: Action? { Action(rawValue: action) }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
@@ -220,6 +234,16 @@ public struct BridgeMessage: Codable {
         self.payload = payload
         self.id = id
         self.timestamp = timestamp
+    }
+
+    init(
+        type: MessageType,
+        action: Action,
+        payload: JSONValue?,
+        id: UUID = UUID(),
+        timestamp: Int64 = BridgeMessage.currentTimestampMs()
+    ) {
+        self.init(type: type, action: action.rawValue, payload: payload, id: id, timestamp: timestamp)
     }
 
     init?(

@@ -138,65 +138,56 @@ extension TransparentView: WebBridgeMessageDelegate {
         
         // TODO: - Create plugin-based handlers
 
-        typealias Action = BridgeMessage.Action
-
-        switch action {
-        case Action.close:
-            quizInitTimeoutWorkItem?.cancel()
-            hapticService.stopPattern()
-            webViewAction?.onClose()
-        case Action.`init`:
-            quizInitTimeoutWorkItem?.cancel()
-            hapticService.prepare()
-            webViewAction?.onInit()
-
-        case Action.click:
-            webViewAction?.onCompleted(data: data)
-
-        case Action.hide:
-            webViewAction?.onHide()
-
-        case Action.log:
-            webViewAction?.onLog(message: data)
-
-        case Action.userAgent:
-            Logger.common(
-                message: "[WebView] UserAgent: \(data)",
-                category: .webViewInAppMessages
-            )
-
-        case Action.ready:
-            facade?.sendReadyEvent(id: message.id)
-
-        case Action.asyncOperation:
-            handleAsyncOperation(message: message)
-
-        case Action.syncOperation:
-            handleSyncOperation(message: message)
-
-        case Action.openLink:
-            handleNavigate(message: message)
-
-        case Action.localStateGet:
-            handleLocalStateGet(message: message)
-
-        case Action.localStateSet:
-            handleLocalStateSet(message: message)
-
-        case Action.localStateInit:
-            handleLocalStateInit(message: message)
-
-        case Action.permissionRequest:
-            handlePermissionRequest(message: message)
-
-        case Action.haptic:
-            handleHaptic(message: message)
-
-        default:
+        guard let parsedAction = BridgeMessage.Action(rawValue: action) else {
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
                 category: .webViewInAppMessages
             )
+            return
+        }
+
+        switch parsedAction {
+        case .close:
+            quizInitTimeoutWorkItem?.cancel()
+            hapticService.stopPattern()
+            webViewAction?.onClose()
+        case .`init`:
+            quizInitTimeoutWorkItem?.cancel()
+            hapticService.prepare()
+            webViewAction?.onInit()
+        case .click:
+            webViewAction?.onCompleted(data: data)
+        case .hide:
+            webViewAction?.onHide()
+        case .log:
+            webViewAction?.onLog(message: data)
+        case .userAgent:
+            Logger.common(
+                message: "[WebView] UserAgent: \(data)",
+                category: .webViewInAppMessages
+            )
+        case .ready:
+            facade?.sendReadyEvent(id: message.id)
+        case .asyncOperation:
+            handleAsyncOperation(message: message)
+        case .syncOperation:
+            handleSyncOperation(message: message)
+        case .openLink:
+            handleNavigate(message: message)
+        case .localStateGet:
+            handleLocalStateGet(message: message)
+        case .localStateSet:
+            handleLocalStateSet(message: message)
+        case .localStateInit:
+            handleLocalStateInit(message: message)
+        case .permissionRequest:
+            handlePermissionRequest(message: message)
+        case .haptic:
+            handleHaptic(message: message)
+        case .settingsOpen:
+            handleOpenSettings(message: message)
+        case .navigationIntercepted:
+            break
         }
     }
 }
@@ -765,6 +756,36 @@ extension TransparentView {
 
     private func handleHaptic(message: BridgeMessage) {
         hapticService.handle(message: message)
+        sendBridgeSuccess(action: message.action, id: message.id)
+    }
+}
+
+// MARK: - Open Settings Handler
+
+extension TransparentView {
+
+    private func handleOpenSettings(message: BridgeMessage) {
+        guard let settingsType = SettingsRequestParser.parse(from: message) else {
+            sendBridgeError("Invalid or unknown settings type", action: message.action, id: message.id)
+            return
+        }
+        Logger.common(message: "[WebView] openSettings: type='\(settingsType.rawValue)'", level: .info, category: .webViewInAppMessages)
+
+        switch settingsType {
+        case .notifications:
+            handleOpenNotificationSettings(message: message)
+        case .application:
+            guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
+                return
+            }
+            openViaUIApplication(url: url, message: message)
+        }
+    }
+
+    private func handleOpenNotificationSettings(message: BridgeMessage) {
+        PushPermissionHelper.openPushNotificationSettings()
+        Logger.common(message: "[WebView] openSettings: opened notification settings", level: .info, category: .webViewInAppMessages)
         sendBridgeSuccess(action: message.action, id: message.id)
     }
 }
