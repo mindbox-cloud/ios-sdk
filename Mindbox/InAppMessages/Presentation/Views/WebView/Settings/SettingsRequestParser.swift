@@ -8,6 +8,11 @@
 
 import Foundation
 
+enum SettingsType: String {
+    case notifications
+    case application
+}
+
 enum SettingsRequestParser {
 
     private enum PayloadKey {
