@@ -166,6 +166,8 @@ extension TransparentView: WebBridgeMessageDelegate {
         }
 
         switch parsedAction {
+
+        // Lifecycle
         case .close:
             quizInitTimeoutWorkItem?.cancel()
             hapticService.stopPattern()
@@ -179,37 +181,46 @@ extension TransparentView: WebBridgeMessageDelegate {
             webViewAction?.onCompleted(data: data)
         case .hide:
             webViewAction?.onHide()
-        case .log:
-            webViewAction?.onLog(message: data)
-        case .userAgent:
-            Logger.common(
-                message: "[WebView] UserAgent: \(data)",
-                category: .webViewInAppMessages
-            )
         case .ready:
             facade?.sendReadyEvent(id: message.id)
+
+        // Info
+        case .log:
+            webViewAction?.onLog(message: data)
+
+        // Operations
         case .asyncOperation:
             handleAsyncOperation(message: message)
         case .syncOperation:
             handleSyncOperation(message: message)
+
+        // Navigation, Settings & Permissions
         case .openLink:
             handleNavigate(message: message)
+        case .settingsOpen:
+            handleOpenSettings(message: message)
+        case .permissionRequest:
+            handlePermissionRequest(message: message)
+
+        // Local State
         case .localStateGet:
             handleLocalStateGet(message: message)
         case .localStateSet:
             handleLocalStateSet(message: message)
         case .localStateInit:
             handleLocalStateInit(message: message)
-        case .permissionRequest:
-            handlePermissionRequest(message: message)
+
+        // Haptic
         case .haptic:
             handleHaptic(message: message)
-        case .settingsOpen:
-            handleOpenSettings(message: message)
+
+        // Motion
         case .motionStart:
             handleMotionStart(message: message)
         case .motionStop:
             handleMotionStop(message: message)
+
+        // Native → JS (not handled here)
         case .navigationIntercepted, .motionEvent:
             break
         }
@@ -758,7 +769,7 @@ extension TransparentView {
     }
 }
 
-// MARK: - WKNavigationType Debug Label
+// MARK: - WKNavigationType String Representation
 
 private extension WKNavigationType {
     var debugLabel: String {
