@@ -145,6 +145,7 @@ public struct BridgeMessage: Codable {
     }
 
     enum Action: String, CaseIterable {
+        // JS → Native
         case close
         case `init`
         case click
@@ -155,22 +156,29 @@ public struct BridgeMessage: Codable {
         case asyncOperation
         case syncOperation
         case openLink
-        case navigationIntercepted
         case localStateGet = "localState.get"
         case localStateSet = "localState.set"
         case localStateInit = "localState.init"
         case permissionRequest = "permission.request"
         case haptic
         case settingsOpen = "settings.open"
+        case motionStart = "motion.start"
+        case motionStop = "motion.stop"
+
+        // Native → JS
+        case navigationIntercepted
+        case motionEvent = "motion.event"
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher).
         var isDeferred: Bool {
             switch self {
             case .ready, .asyncOperation, .syncOperation, .openLink,
                  .localStateGet, .localStateSet, .localStateInit,
-                 .permissionRequest, .haptic, .settingsOpen:
+                 .permissionRequest, .haptic, .settingsOpen,
+                 .motionStart, .motionStop:
                 return true
-            case .close, .`init`, .click, .hide, .log, .userAgent, .navigationIntercepted:
+            case .close, .`init`, .click, .hide, .log, .userAgent,
+                 .navigationIntercepted, .motionEvent:
                 return false
             }
         }

@@ -45,6 +45,10 @@ extension MBContainer {
             HapticService()
         }
 
+        register(MotionServiceProtocol.self, scope: .transient) {
+            MotionService()
+        }
+
         register(PermissionHandlerRegistryProtocol.self, scope: .transient) {
             let registry = PermissionHandlerRegistry()
             registry.register(PushNotificationsPermissionHandler())
