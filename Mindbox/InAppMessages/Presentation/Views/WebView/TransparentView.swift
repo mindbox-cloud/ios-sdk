@@ -65,6 +65,7 @@ final class TransparentView: UIView {
     }
 
     deinit {
+        if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
@@ -818,6 +819,7 @@ extension TransparentView {
 extension TransparentView {
 
     func handleSystemShake() {
+        guard isMotionServiceInitialized else { return }
         motionService.handleSystemShake()
     }
 

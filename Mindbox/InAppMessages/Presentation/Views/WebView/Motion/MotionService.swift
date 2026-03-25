@@ -85,6 +85,14 @@ final class MotionService: MotionServiceProtocol {
 
     deinit {
         removeLifecycleObservers()
+        if motionManager.isDeviceMotionActive {
+            motionManager.stopDeviceMotionUpdates()
+        }
+        if let saved = savedShakeToEditSetting {
+            DispatchQueue.main.async {
+                UIApplication.shared.applicationSupportsShakeToEdit = saved
+            }
+        }
     }
 
     // MARK: - Public
