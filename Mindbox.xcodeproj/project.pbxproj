@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
+		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
 		313B233A25ADEA0F00A1CB72 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* Mindbox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */; };
 		313B234125ADEA0F00A1CB72 /* Mindbox.h in Headers */ = {isa = PBXBuildFile; fileRef = 313B233325ADEA0F00A1CB72 /* Mindbox.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -999,6 +1000,7 @@
 		6FDD1462266F7CED00A50C35 /* ProductElementReponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductElementReponse.swift; sourceTree = "<group>"; };
 		6FDD1464266F7CFE00A50C35 /* ItemProductResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemProductResponse.swift; sourceTree = "<group>"; };
 		7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MotionServiceResolvePositionTests.swift; sourceTree = "<group>"; };
+		7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MotionServiceShakeToEditTests.swift; sourceTree = "<group>"; };
 		840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickNotificationManager.swift; sourceTree = "<group>"; };
 		840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataClass.swift"; sourceTree = "<group>"; };
 		840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDEvent+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -1484,6 +1486,7 @@
 				BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */,
 				BD1BE43AA9EAEA03F8ED400D /* HapticRequestValidatorTests.swift */,
 				7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */,
+				7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -4673,6 +4676,7 @@
 				6182078DDFC681D168546DB2 /* HapticRequestValidatorTests.swift in Sources */,
 				C0360B4CF720E2CBDC488E82 /* TrackVisitManagerTests.swift in Sources */,
 				0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */,
+				0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
