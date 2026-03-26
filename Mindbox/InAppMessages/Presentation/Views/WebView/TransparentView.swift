@@ -92,6 +92,15 @@ final class TransparentView: UIView {
         facade?.cleanWebView()
     }
 
+    func cancelTimeoutTimer() {
+        quizInitTimeoutWorkItem?.cancel()
+        quizInitTimeoutWorkItem = nil
+    }
+
+    func restartTimeoutTimer() {
+        setupTimeoutTimer()
+    }
+
     private func setupTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
