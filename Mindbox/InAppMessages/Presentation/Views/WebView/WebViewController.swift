@@ -81,6 +81,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     deinit {
+        NotificationCenter.default.removeObserver(self)
         Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
     }
@@ -138,6 +139,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
         setupWebView()
+        addLifecycleObservers()
     }
 
     // MARK: Private methods
@@ -147,6 +149,40 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onClose()
     }
     
+    private func addLifecycleObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+    }
+
+    private func removeLifecycleObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @objc
+    private func appDidEnterBackground() {
+        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        transparentWebView?.cancelTimeoutTimer()
+        Logger.common(message: "[WebView] App entered background, timeout timer cancelled for in-app id \(id)", category: .webViewInAppMessages)
+    }
+
+    @objc
+    private func appWillEnterForeground() {
+        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        transparentWebView?.restartTimeoutTimer()
+        Logger.common(message: "[WebView] App entering foreground, timeout timer restarted for in-app id \(id)", category: .webViewInAppMessages)
+    }
+
     private func createUserAgent() -> String {
         let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
 
@@ -193,6 +229,7 @@ extension WebViewController: WebViewAction {
 
     func onInit() {
         Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
+        removeLifecycleObservers()
         DispatchQueue.main.async {
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
