@@ -94,8 +94,8 @@ internal extension InappScheduleManager {
                 self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
                                                            frequency: firstInapp.inapp.frequency,
                                                            id: firstInapp.inapp.inAppId) {
-                let readyTimestamp = CACurrentMediaTime()
-                self.presentInapp(firstInapp.inapp, readyTimestamp: readyTimestamp, processingDuration: firstInapp.processingDuration)
+                let stopwatch = ForegroundStopwatch()
+                self.presentInapp(firstInapp.inapp, stopwatch: stopwatch, processingDuration: firstInapp.processingDuration)
             }
             
             for scheduledInapp in scheduledInapps {
@@ -107,7 +107,7 @@ internal extension InappScheduleManager {
         }
     }
     
-    func presentInapp(_ inapp: InAppFormData, readyTimestamp: TimeInterval, processingDuration: TimeInterval = 0) {
+    func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
@@ -117,7 +117,8 @@ internal extension InappScheduleManager {
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
-                let presentationTime = CACurrentMediaTime() - readyTimestamp
+                let presentationTime = stopwatch.elapsed
+                stopwatch.stop()
                 let timeToDisplay = processingDuration + presentationTime
                 let timeToDisplayString = timeToDisplay.toTimeSpan()
                 Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")

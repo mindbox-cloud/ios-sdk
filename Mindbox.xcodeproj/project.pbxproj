@@ -481,6 +481,8 @@
 		F3266A392F6295A600CE6137 /* FirstInitializationDateTimeMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3266A382F6295A600CE6137 /* FirstInitializationDateTimeMigration.swift */; };
 		F32B68882CF83B030088BCDD /* InappConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */; };
 		F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */; };
+		F3B70A032F250A0100AABB02 /* ForegroundStopwatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B70A022F250A0100AABB02 /* ForegroundStopwatchTests.swift */; };
+		F3B70A052F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B70A042F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
 		F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32E536E2C3F2B05002C7CA0 /* DITests.swift */; };
@@ -617,6 +619,7 @@
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
 		F3A0B0022F28A00100CE7E63 /* TransparentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */; };
 		F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */; };
+		F3B70A012F250A0100AABB01 /* ForegroundStopwatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B70A002F250A0100AABB01 /* ForegroundStopwatch.swift */; };
 		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
 		F3A49BF52DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		F3A49BF62DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
@@ -1206,6 +1209,8 @@
 		F3266A382F6295A600CE6137 /* FirstInitializationDateTimeMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstInitializationDateTimeMigration.swift; sourceTree = "<group>"; };
 		F32B68872CF83B030088BCDD /* InappConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappConfigurationTests.swift; sourceTree = "<group>"; };
 		F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManagerTests.swift; sourceTree = "<group>"; };
+		F3B70A022F250A0100AABB02 /* ForegroundStopwatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForegroundStopwatchTests.swift; sourceTree = "<group>"; };
+		F3B70A042F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeToDisplayBackgroundTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
 		F32E536E2C3F2B05002C7CA0 /* DITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DITests.swift; sourceTree = "<group>"; };
@@ -1342,6 +1347,7 @@
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
 		F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransparentViewTests.swift; sourceTree = "<group>"; };
 		F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManager.swift; sourceTree = "<group>"; };
+		F3B70A002F250A0100AABB01 /* ForegroundStopwatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForegroundStopwatch.swift; sourceTree = "<group>"; };
 		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
 		F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingExpirationModel.swift; sourceTree = "<group>"; };
 		F3A8B9442A38870100E9C055 /* MixerUUIDS.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = MixerUUIDS.json; sourceTree = "<group>"; };
@@ -2559,6 +2565,7 @@
 				9B24FAB328C751CB00F10B5D /* Images */,
 				F34975692DEF2C8400BEC667 /* InappTrackingService.swift */,
 				F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */,
+				F3B70A002F250A0100AABB01 /* ForegroundStopwatch.swift */,
 				F3C1A0012F5B100100ABC001 /* InappShowFailureManager.swift */,
 				A1B2C3D400000016E1010101 /* Permissions */,
 			);
@@ -2643,6 +2650,8 @@
 				9BC24E7828F6BFEC00C2619C /* InAppConfigResponseTests */,
 				F3D925AC2A1236F400135C87 /* URLSessionImageDownloaderTests.swift */,
 				F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */,
+				F3B70A022F250A0100AABB02 /* ForegroundStopwatchTests.swift */,
+				F3B70A042F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift */,
 				F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */,
 				F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */,
 				2B4C84F6EDD4B7D977F67A95 /* WebView */,
@@ -4236,6 +4245,7 @@
 				334F3A67264AA18500A6AC00 /* MindboxAppDelegate.swift in Sources */,
 				B3A6254C2689F83100B6A3B7 /* PersonalOffersResponse.swift in Sources */,
 				F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */,
+				F3B70A012F250A0100AABB01 /* ForegroundStopwatch.swift in Sources */,
 				84F565212628304A00269FD6 /* TrackVisit.swift in Sources */,
 				F34975382DEE2C6A00BEC667 /* ShownInAppsDictionaryMigration.swift in Sources */,
 				4766A8942C92FEF6002D15A4 /* SettingsOperationsModel.swift in Sources */,
@@ -4599,6 +4609,8 @@
 				47B90E312C626B9300BD93E7 /* TestProtocolMigrations.swift in Sources */,
 				F3A8B9982A3A421C00E9C055 /* SDKVersionValidatorTests.swift in Sources */,
 				F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */,
+				F3B70A032F250A0100AABB02 /* ForegroundStopwatchTests.swift in Sources */,
+				F3B70A052F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift in Sources */,
 				F3A0B0022F28A00100CE7E63 /* TransparentViewTests.swift in Sources */,
 				F3C1A0062F5B100100ABC001 /* InappShowFailureManagerTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
