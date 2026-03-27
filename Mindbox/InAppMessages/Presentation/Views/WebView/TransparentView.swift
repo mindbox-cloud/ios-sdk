@@ -27,6 +27,15 @@ final class TransparentView: UIView {
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
+    private var isMotionServiceInitialized = false
+    private lazy var motionService: MotionServiceProtocol = {
+        isMotionServiceInitialized = true
+        let service = DI.injectOrFail(MotionServiceProtocol.self)
+        service.onGestureDetected = { [weak self] gesture, data in
+            self?.sendMotionEvent(gesture: gesture, data: data)
+        }
+        return service
+    }()
 
     init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
         self.params = params
@@ -56,6 +65,7 @@ final class TransparentView: UIView {
     }
 
     deinit {
+        if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
@@ -156,9 +166,12 @@ extension TransparentView: WebBridgeMessageDelegate {
         }
 
         switch parsedAction {
+
+        // Lifecycle
         case .close:
             quizInitTimeoutWorkItem?.cancel()
             hapticService.stopPattern()
+            if isMotionServiceInitialized { motionService.stopMonitoring() }
             webViewAction?.onClose()
         case .`init`:
             quizInitTimeoutWorkItem?.cancel()
@@ -168,34 +181,47 @@ extension TransparentView: WebBridgeMessageDelegate {
             webViewAction?.onCompleted(data: data)
         case .hide:
             webViewAction?.onHide()
-        case .log:
-            webViewAction?.onLog(message: data)
-        case .userAgent:
-            Logger.common(
-                message: "[WebView] UserAgent: \(data)",
-                category: .webViewInAppMessages
-            )
         case .ready:
             facade?.sendReadyEvent(id: message.id)
+
+        // Info
+        case .log:
+            webViewAction?.onLog(message: data)
+
+        // Operations
         case .asyncOperation:
             handleAsyncOperation(message: message)
         case .syncOperation:
             handleSyncOperation(message: message)
+
+        // Navigation, Settings & Permissions
         case .openLink:
             handleNavigate(message: message)
+        case .settingsOpen:
+            handleOpenSettings(message: message)
+        case .permissionRequest:
+            handlePermissionRequest(message: message)
+
+        // Local State
         case .localStateGet:
             handleLocalStateGet(message: message)
         case .localStateSet:
             handleLocalStateSet(message: message)
         case .localStateInit:
             handleLocalStateInit(message: message)
-        case .permissionRequest:
-            handlePermissionRequest(message: message)
+
+        // Haptic
         case .haptic:
             handleHaptic(message: message)
-        case .settingsOpen:
-            handleOpenSettings(message: message)
-        case .navigationIntercepted:
+
+        // Motion
+        case .motionStart:
+            handleMotionStart(message: message)
+        case .motionStop:
+            handleMotionStop(message: message)
+
+        // Native → JS (not handled here)
+        case .navigationIntercepted, .motionEvent:
             break
         }
     }
@@ -743,7 +769,7 @@ extension TransparentView {
     }
 }
 
-// MARK: - WKNavigationType Debug Label
+// MARK: - WKNavigationType String Representation
 
 private extension WKNavigationType {
     var debugLabel: String {
@@ -798,6 +824,95 @@ extension TransparentView {
                 self?.sendBridgeSuccess(action: message.action, id: message.id)
             }
         }
+    }
+}
+
+// MARK: - Motion Handlers
+
+extension TransparentView {
+
+    func handleSystemShake() {
+        guard isMotionServiceInitialized else { return }
+        motionService.handleSystemShake()
+    }
+
+    private func handleMotionStart(message: BridgeMessage) {
+        guard let payload = extractMotionPayload(from: message) else {
+            sendBridgeError("Invalid payload: missing 'gestures' array", action: message.action, id: message.id)
+            return
+        }
+
+        guard case .array(let gestureArray) = payload["gestures"] else {
+            sendBridgeError("Invalid payload: 'gestures' must be an array", action: message.action, id: message.id)
+            return
+        }
+
+        var gestures = Set<MotionGesture>()
+        for item in gestureArray {
+            if case .string(let name) = item, let gesture = MotionGesture(rawValue: name) {
+                gestures.insert(gesture)
+            }
+        }
+
+        guard !gestures.isEmpty else {
+            sendBridgeError("No valid gestures provided. Available: shake, flip", action: message.action, id: message.id)
+            return
+        }
+
+        let result = motionService.startMonitoring(gestures: gestures)
+
+        if result.allUnavailable {
+            sendBridgeError(
+                "No sensors available for requested gestures: \(result.unavailable.map(\.rawValue).joined(separator: ", "))",
+                action: message.action,
+                id: message.id
+            )
+        } else {
+            var payload: [String: JSONValue] = ["success": .bool(true)]
+            if !result.unavailable.isEmpty {
+                payload["unavailable"] = .array(result.unavailable.map { .string($0.rawValue) })
+            }
+            let response = BridgeMessage(
+                type: .response,
+                action: message.action,
+                payload: .object(payload),
+                id: message.id
+            )
+            facade?.sendToJS(response)
+        }
+    }
+
+    private func handleMotionStop(message: BridgeMessage) {
+        motionService.stopMonitoring()
+        sendBridgeSuccess(action: message.action, id: message.id)
+    }
+
+    private func sendMotionEvent(gesture: MotionGesture, data: [String: Any]) {
+        var payload: [String: JSONValue] = ["gesture": .string(gesture.rawValue)]
+        for (key, value) in data {
+            if let jsonValue = JSONValue(any: value) {
+                payload[key] = jsonValue
+            }
+        }
+
+        let event = BridgeMessage(
+            type: .request,
+            action: BridgeMessage.Action.motionEvent.rawValue,
+            payload: .object(payload)
+        )
+        facade?.sendToJS(event)
+    }
+
+    private func extractMotionPayload(from message: BridgeMessage) -> [String: JSONValue]? {
+        if case .string(let str) = message.payload,
+           let data = str.data(using: .utf8),
+           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
+            return dict
+        }
+        if case .object(let dict) = message.payload {
+            return dict
+        }
+        return nil
     }
 }
 

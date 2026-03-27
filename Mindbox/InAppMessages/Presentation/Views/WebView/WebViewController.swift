@@ -129,6 +129,8 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: Life cycle
 
+    override var canBecomeFirstResponder: Bool { true }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black.withAlphaComponent(Constants.defaultAlphaBackgroundColor)
@@ -140,6 +142,18 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         view.isUserInteractionEnabled = true
         setupWebView()
         addLifecycleObservers()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        becomeFirstResponder()
+    }
+
+    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        if motion == .motionShake {
+            transparentWebView?.handleSystemShake()
+        }
+        super.motionEnded(motion, with: event)
     }
 
     // MARK: Private methods

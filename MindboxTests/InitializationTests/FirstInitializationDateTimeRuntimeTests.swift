@@ -6,11 +6,10 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import XCTest
 import Testing
 @testable import Mindbox
 
-// MARK: - Swift Testing (no host-app dependency)
+// MARK: - Storage tests (no host-app dependency)
 
 @Suite(.serialized)
 struct FirstInitializationDateTimeStorageTests {
@@ -54,16 +53,18 @@ struct FirstInitializationDateTimeStorageTests {
     }
 }
 
-// MARK: - XCTest (requires host-app context for CoreController → UIApplication.shared)
+// MARK: - Runtime tests (CoreController → UIApplication.shared)
 
-final class FirstInitializationDateTimeRuntimeTests: XCTestCase {
+@Suite(.serialized)
+@MainActor
+struct FirstInitializationDateTimeRuntimeTests {
 
-    private var storage: PersistenceStorage!
-    private var coreController: CoreController!
-    private var controllerQueue: DispatchQueue!
+    private let storage: PersistenceStorage
+    private let coreController: CoreController
+    private let controllerQueue: DispatchQueue
 
-    override func setUp() {
-        super.setUp()
+    init() {
+        TestConfiguration.configure()
         storage = DI.injectOrFail(PersistenceStorage.self)
         storage.reset()
         coreController = DI.injectOrFail(CoreController.self)
@@ -72,64 +73,73 @@ final class FirstInitializationDateTimeRuntimeTests: XCTestCase {
         try? databaseRepository.erase()
     }
 
-    override func tearDown() {
+    @Test("New user: firstInitializationDateTime is set on initialization (install)")
+    func newUserFirstInitializationDateTimeIsSet() async throws {
+        storage.reset()
+        #expect(storage.installationDate == nil)
+        #expect(storage.firstInitializationDateTime == nil)
+
+        let configuration = try MBConfiguration(plistName: "TestConfig1")
+        coreController.initialization(configuration: configuration)
+        await waitForInitializationFinished()
+
+        let firstInitDate = try #require(
+            storage.firstInitializationDateTime,
+            "firstInitializationDateTime must be set for a new user after initialization."
+        )
+        let installationDate = try #require(
+            storage.installationDate,
+            "installationDate must be set for a new user after initialization."
+        )
+        #expect(
+            firstInitDate.timeIntervalSince1970 <= installationDate.timeIntervalSince1970,
+            "firstInitializationDateTime should not be later than installationDate."
+        )
+
+        cleanup()
+    }
+
+    @Test("Reinitialization does not overwrite firstInitializationDateTime")
+    func reinitializationDoesNotOverwrite() async throws {
+        let configuration1 = try MBConfiguration(plistName: "TestConfig1")
+        coreController.initialization(configuration: configuration1)
+        await waitForInitializationFinished()
+
+        let originalDate = try #require(
+            storage.firstInitializationDateTime,
+            "firstInitializationDateTime must be set after first initialization."
+        )
+
+        let configuration2 = try MBConfiguration(plistName: "TestConfig2")
+        coreController.initialization(configuration: configuration2)
+        await waitForInitializationFinished()
+
+        let dateAfterReinit = try #require(
+            storage.firstInitializationDateTime,
+            "firstInitializationDateTime must not be nil after reinitialization."
+        )
+        #expect(
+            abs(dateAfterReinit.timeIntervalSince1970 - originalDate.timeIntervalSince1970) <= 1.0,
+            "firstInitializationDateTime must not change on reinitialization."
+        )
+
+        cleanup()
+    }
+
+    // MARK: - Helpers
+
+    private func waitForInitializationFinished() async {
+        await withCheckedContinuation { continuation in
+            controllerQueue.async {
+                continuation.resume()
+            }
+        }
+    }
+
+    private func cleanup() {
         storage.reset()
         storage.userVisitCount = 0
         SessionTemporaryStorage.shared.erase()
         SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = false
-        controllerQueue = nil
-        coreController = nil
-        storage = nil
-        super.tearDown()
-    }
-
-    func test_newUser_firstInitializationDateTimeIsSetOnInitializationInstall() throws {
-        storage.reset()
-        XCTAssertNil(storage.installationDate)
-        XCTAssertNil(storage.firstInitializationDateTime)
-
-        let configuration = try MBConfiguration(plistName: "TestConfig1")
-        coreController.initialization(configuration: configuration)
-        waitForInitializationFinished()
-
-        let firstInitDate = try XCTUnwrap(storage.firstInitializationDateTime,
-                                          "firstInitializationDateTime must be set for a new user after initialization.")
-        let installationDate = try XCTUnwrap(storage.installationDate,
-                                             "installationDate must be set for a new user after initialization.")
-        XCTAssertLessThanOrEqual(
-            firstInitDate.timeIntervalSince1970,
-            installationDate.timeIntervalSince1970,
-            "firstInitializationDateTime should not be later than installationDate."
-        )
-    }
-
-    func test_reinitialization_doesNotOverwriteFirstInitializationDateTime() throws {
-        let configuration1 = try MBConfiguration(plistName: "TestConfig1")
-        coreController.initialization(configuration: configuration1)
-        waitForInitializationFinished()
-
-        let originalDate = try XCTUnwrap(storage.firstInitializationDateTime,
-                                        "firstInitializationDateTime must be set after first initialization.")
-
-        let configuration2 = try MBConfiguration(plistName: "TestConfig2")
-        coreController.initialization(configuration: configuration2)
-        waitForInitializationFinished()
-
-        let dateAfterReinit = try XCTUnwrap(storage.firstInitializationDateTime,
-                                            "firstInitializationDateTime must not be nil after reinitialization.")
-        XCTAssertEqual(
-            dateAfterReinit.timeIntervalSince1970,
-            originalDate.timeIntervalSince1970,
-            accuracy: 1.0,
-            "firstInitializationDateTime must not change on reinitialization."
-        )
-    }
-}
-
-private extension FirstInitializationDateTimeRuntimeTests {
-    func waitForInitializationFinished() {
-        let expectation = self.expectation(description: "controller initialization")
-        controllerQueue.async { expectation.fulfill() }
-        wait(for: [expectation], timeout: 10)
     }
 }
