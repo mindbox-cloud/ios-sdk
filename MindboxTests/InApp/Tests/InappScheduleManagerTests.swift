@@ -8,6 +8,7 @@
 
 import Testing
 import QuartzCore
+import UIKit
 @testable import Mindbox
 
 @Suite("In-app schedule manager tests")
@@ -345,7 +346,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onPresented_clearsFailures() {
         let inapp = createInAppFormData(id: "success-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
+        scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(presentationManagerMock.presentCallsCount == 1)
         #expect(failureManagerMock.clearFailuresCallCount == 0)
 
@@ -357,7 +358,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_sendsFailures() {
         let inapp = createInAppFormData(id: "error-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
+        scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(presentationManagerMock.presentCallsCount == 1)
         #expect(failureManagerMock.sendFailuresCallCount == 0)
 
@@ -379,7 +380,7 @@ struct InappScheduleManagerTests {
             let (error, expectedReason, expectedDetails) = testCase
             let inapp = createInAppFormData(id: "error-map-\(index)", isPriority: false, delayTime: nil)
 
-            scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
+            scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
             presentationManagerMock.receivedOnError?(error)
 
             #expect(failureManagerMock.addFailureCallCount == index + 1)
@@ -396,7 +397,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_resetsPresentingFlag() {
         let inapp = createInAppFormData(id: "error-reset-flag", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
+        scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
 
         presentationManagerMock.receivedOnError?(.failed("any-error"))
@@ -407,7 +408,7 @@ struct InappScheduleManagerTests {
     func presentInapp_onError_isSingleShot() {
         let inapp = createInAppFormData(id: "single-shot-id", isPriority: false, delayTime: nil)
 
-        scheduleManager.presentInapp(inapp, readyTimestamp: CACurrentMediaTime())
+        scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
 
         presentationManagerMock.receivedOnError?(.failed("first-error"))
         presentationManagerMock.receivedOnError?(.failed("second-error"))
