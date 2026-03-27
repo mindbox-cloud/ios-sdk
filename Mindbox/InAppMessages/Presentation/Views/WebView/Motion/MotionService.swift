@@ -134,6 +134,7 @@ final class MotionService: MotionServiceProtocol {
     }
 
     func stopMonitoring() {
+        guard !activeGestures.isEmpty else { return }
         removeLifecycleObservers()
         stopSensors()
         restoreShakeToEdit()
