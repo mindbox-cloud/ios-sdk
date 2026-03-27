@@ -21,7 +21,7 @@ enum PushPermissionHelper {
         }
     }
 
-    static func openPushNotificationSettings() {
+    static func openPushNotificationSettings(completion: ((Bool) -> Void)? = nil) {
         DispatchQueue.main.async {
             let settingsUrl: URL?
             if #available(iOS 16.0, *) {
@@ -31,10 +31,13 @@ enum PushPermissionHelper {
             }
             guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
                 Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
+                completion?(false)
                 return
             }
-            UIApplication.shared.open(settingsUrl)
-            Logger.common(message: "Navigated to app settings for notification permission.", level: .debug, category: .inAppMessages)
+            UIApplication.shared.open(settingsUrl) { success in
+                Logger.common(message: "Navigated to app settings for notification permission. Success: \(success)", level: .debug, category: .inAppMessages)
+                completion?(success)
+            }
         }
     }
 }

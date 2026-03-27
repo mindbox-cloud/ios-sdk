@@ -793,9 +793,11 @@ extension TransparentView {
     }
 
     private func handleOpenNotificationSettings(message: BridgeMessage) {
-        PushPermissionHelper.openPushNotificationSettings()
-        Logger.common(message: "[WebView] openSettings: opened notification settings", level: .info, category: .webViewInAppMessages)
-        sendBridgeSuccess(action: message.action, id: message.id)
+        PushPermissionHelper.openPushNotificationSettings { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.sendBridgeSuccess(action: message.action, id: message.id)
+            }
+        }
     }
 }
 
