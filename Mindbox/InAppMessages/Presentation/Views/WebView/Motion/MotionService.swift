@@ -11,33 +11,81 @@ import UIKit
 import CoreMotion
 import MindboxLogger
 
+/// Motion gestures that can be monitored via the bridge `motion.start` action.
+///
+/// - `shake`: Device was shaken. Detected via system `UIResponder.motionEnded`.
+/// - `flip`: Device changed orientation (one of 6 faces). Detected via `CMMotionManager` gravity.
 enum MotionGesture: String, CaseIterable {
     case shake
     case flip
 }
 
-/// Device orientation based on dominant gravity axis.
+/// Device orientation based on dominant gravity axis (6 faces of a cube).
+///
+/// Each face corresponds to one axis exceeding the gravity threshold:
+///
+/// | Position | Axis | Condition |
+/// |---|---|---|
+/// | `faceUp` | Z | `gravity.z < -0.8` |
+/// | `faceDown` | Z | `gravity.z > +0.8` |
+/// | `portrait` | Y | `gravity.y < -0.8` |
+/// | `portraitUpsideDown` | Y | `gravity.y > +0.8` |
+/// | `landscapeLeft` | X | `gravity.x < -0.8` |
+/// | `landscapeRight` | X | `gravity.x > +0.8` |
 enum DevicePosition: String, CaseIterable {
-    case faceUp             // lying screen up       (gravity.z < -threshold)
-    case faceDown           // lying screen down     (gravity.z >  threshold)
-    case portrait           // upright normal        (gravity.y < -threshold)
-    case portraitUpsideDown // upright flipped       (gravity.y >  threshold)
-    case landscapeLeft      // rotated left          (gravity.x < -threshold)
-    case landscapeRight     // rotated right         (gravity.x >  threshold)
+    /// Lying screen up (e.g. on a table). `gravity.z < -threshold`.
+    case faceUp
+    /// Lying screen down (flipped on a table). `gravity.z > +threshold`.
+    case faceDown
+    /// Upright, normal orientation (held in hand). `gravity.y < -threshold`.
+    case portrait
+    /// Upright, flipped upside down. `gravity.y > +threshold`.
+    case portraitUpsideDown
+    /// Rotated left (landscape, volume buttons on top). `gravity.x < -threshold`.
+    case landscapeLeft
+    /// Rotated right (landscape, volume buttons on bottom). `gravity.x > +threshold`.
+    case landscapeRight
 }
 
+/// Result of ``MotionServiceProtocol/startMonitoring(gestures:)``.
+///
+/// Reports which gestures were successfully started and which were unavailable
+/// (e.g. flip on a device without gyroscope).
 struct MotionStartResult {
+    /// Gestures that were successfully started.
     let started: Set<MotionGesture>
+    /// Gestures that could not be started (sensor unavailable).
     let unavailable: Set<MotionGesture>
 
+    /// `true` if no gestures could be started at all.
     var allUnavailable: Bool { started.isEmpty && !unavailable.isEmpty }
 }
 
+/// Monitors device motion gestures (shake, flip) and reports events via callback.
+///
+/// - Shake is detected via system `UIResponder.motionEnded(.motionShake)`.
+///   The host app's `applicationSupportsShakeToEdit` is temporarily disabled while shake is active.
+/// - Flip is detected via `CMMotionManager.deviceMotion` gravity vector across 3 axes,
+///   using hysteresis (enter 0.8g / exit 0.6g) to prevent flickering at axis boundaries.
+/// - Sensors auto-suspend on app background and resume on foreground.
 protocol MotionServiceProtocol: AnyObject {
+    /// Called on main thread when a gesture is detected.
+    /// - Parameters:
+    ///   - gesture: The detected gesture type.
+    ///   - data: Gesture-specific payload (e.g. `["from": "portrait", "to": "faceDown"]` for flip).
     var onGestureDetected: ((MotionGesture, [String: Any]) -> Void)? { get set }
+
+    /// Starts monitoring the specified gestures. Replaces any previous subscription.
+    ///
+    /// - Parameter gestures: Set of gestures to monitor.
+    /// - Returns: Result indicating which gestures started and which were unavailable.
     @discardableResult
     func startMonitoring(gestures: Set<MotionGesture>) -> MotionStartResult
+
+    /// Stops all gesture monitoring, restores system settings, and releases sensors.
     func stopMonitoring()
+
+    /// Called by `WebViewController.motionEnded` when system detects a shake.
     func handleSystemShake()
 }
 

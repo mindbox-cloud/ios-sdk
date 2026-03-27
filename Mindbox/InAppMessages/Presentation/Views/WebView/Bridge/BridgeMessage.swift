@@ -145,40 +145,409 @@ public struct BridgeMessage: Codable {
     }
 
     enum Action: String, CaseIterable {
-        // JS → Native
+
+        // MARK: JS → Native: Lifecycle
+
+        /// JS requests to close the in-app and trigger dismiss callback.
+        ///
+        /// Stops haptic patterns and motion monitoring. Triggers ``WebViewAction/onClose()``.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   {}
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case close
+
+        /// JS signals that the in-app content is initialized.
+        ///
+        /// Prepares the haptic engine for upcoming feedback. Triggers ``WebViewAction/onInit()``.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   {}
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case `init`
+
+        /// JS reports a user click with navigation intent.
+        ///
+        /// The raw payload string is forwarded as-is to ``WebViewAction/onCompleted(data:)``
+        /// without parsing or validation on the native side.
+        ///
+        /// - Payload (typical):
+        ///   ```json
+        ///   { "$type": "redirectUrl", "value": "https://example.com", "intentPayload": "promo123" }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case click
+
+        /// JS requests to hide the WebView without fully closing it.
+        ///
+        /// Triggers ``WebViewAction/onHide()``.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   {}
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case hide
-        case log
-        case userAgent
+
+        /// JS confirms the bridge is ready to receive messages.
+        ///
+        /// Native responds with a JSON string containing all init parameters
+        /// needed by the web content to configure itself.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   {}
+        ///   ```
+        /// - Response: JSON string with the following fields:
+        ///   ```json
+        ///   {
+        ///     "sdkVersion": "2.15.0",
+        ///     "sdkVersionNumeric": "11",
+        ///     "endpointId": "my-app-endpoint",
+        ///     "deviceUUID": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+        ///     "userVisitCount": "41",
+        ///     "inAppId": "65f3a8b9-2c4d-4e5f-a6b7-c8d9e0f12345",
+        ///     "firstInitializationDateTime": "2025-01-15T10:30:00Z",
+        ///     "localStateVersion": 1,
+        ///     "operationName": "Inapp.Click",
+        ///     "operationBody": "{\"inappId\":\"...\"}",
+        ///     "trackVisitSource": "link",
+        ///     "trackVisitRequestUrl": "https://example.com/page",
+        ///     "permissions": {
+        ///       "pushNotifications": { "granted": true }
+        ///     },
+        ///     "insets": { "top": 47, "left": 0, "bottom": 34, "right": 0 },
+        ///     "theme": "light",
+        ///     "platform": "ios",
+        ///     "locale": "en_US",
+        ///     "version": "1.2.3"
+        ///   }
+        ///   ```
+        ///
+        /// > Note: The response payload is a **JSON-encoded string**, not a raw object.
+        /// > JS must parse it with `JSON.parse()` to access the fields.
+        /// >
+        /// > Fields `operationName`, `operationBody`, `trackVisitSource`,
+        /// > `trackVisitRequestUrl`, `permissions`, `firstInitializationDateTime`,
+        /// > `version` (app version) are optional and included only when available.
+        /// > Custom params from in-app configuration are merged at root level.
         case ready
+
+        // MARK: JS → Native: Info
+
+        /// JS sends a message to native SDK logger.
+        ///
+        /// Triggers ``WebViewAction/onLog(message:)``.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "message": "<string>" }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case log
+
+        // MARK: JS → Native: Operations
+
+        /// JS triggers an asynchronous Mindbox operation (fire-and-forget).
+        ///
+        /// The operation is sent to the Mindbox backend.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "operation": "<string>", "body": { ... } }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case asyncOperation
+
+        /// JS triggers a synchronous Mindbox operation and expects a response body.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "operation": "<string>", "body": { ... } }
+        ///   ```
+        /// - Response: operation response JSON from Mindbox backend
         case syncOperation
+
+        // MARK: JS → Native: Navigation, Settings & Permissions
+
+        /// JS requests to open a URL in an external handler.
+        ///
+        /// For `http`/`https` URLs: first tries to open as a universal link
+        /// (another app that handles this domain). If no app claims it,
+        /// falls back to in-app `SFSafariViewController`.
+        ///
+        /// For custom schemes (e.g. `tel:`, `mailto:`, deep links):
+        /// opens via `UIApplication.open`.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "url": "https://example.com/product/123" }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case openLink
-        case localStateGet = "localState.get"
-        case localStateSet = "localState.set"
-        case localStateInit = "localState.init"
-        case permissionRequest = "permission.request"
-        case haptic
+
+        /// JS requests to open device or app settings.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "target": "notifications" | "application" }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        ///
+        /// > Note: `"notifications"` opens system notification settings for the app.
+        /// > `"application"` opens the app's page in Settings.
         case settingsOpen = "settings.open"
+
+        /// JS requests a device permission.
+        ///
+        /// Currently only push notifications are supported.
+        /// Shows the system permission dialog if status is `.notDetermined`,
+        /// otherwise returns current authorization status without a dialog.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "type": "pushNotifications" }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "result": "granted" | "denied", "dialogShown": true | false }
+        ///   ```
+        ///
+        /// > Note: If the user previously denied notifications, `"denied"` is returned
+        /// > with `"dialogShown": false`. Use `settingsOpen` to redirect the user to Settings.
+        case permissionRequest = "permission.request"
+
+        // MARK: JS → Native: Local State
+
+        /// JS retrieves saved values from on-device key-value storage.
+        ///
+        /// If `data` array is empty or omitted, **all** stored values are returned.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "data": ["key1", "key2"] }
+        ///   ```
+        /// - Payload (get all):
+        ///   ```json
+        ///   { "data": [] }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "data": { "key1": "value1", "key2": "value2" }, "version": 1 }
+        ///   ```
+        case localStateGet = "localState.get"
+
+        /// JS saves values to on-device key-value storage by key.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "data": { "key1": "value1", "key2": "value2" } }
+        ///   ```
+        /// - Response: echoes the saved keys with current version:
+        ///   ```json
+        ///   { "data": { "key1": "value1", "key2": "value2" }, "version": 1 }
+        ///   ```
+        ///
+        /// > Note: Only the keys from the request are returned, not the full stored state.
+        case localStateSet = "localState.set"
+
+        /// JS initializes local state and updates schema version.
+        ///
+        /// Merges provided data into storage and sets the version number.
+        /// Always applies data regardless of current version — version is overwritten, not compared.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "data": { "key1": "defaultValue1" }, "version": 1 }
+        ///   ```
+        /// - Response: echoes the initialized keys with the set version:
+        ///   ```json
+        ///   { "data": { "key1": "defaultValue1" }, "version": 1 }
+        ///   ```
+        ///
+        /// > Note: Only the keys from the request are returned, not the full stored state.
+        case localStateInit = "localState.init"
+
+        // MARK: JS → Native: Haptic
+
+        /// JS triggers haptic feedback.
+        ///
+        /// Four feedback types are supported:
+        ///
+        /// **Selection** — light tick (e.g. scrolling a picker):
+        /// ```json
+        /// { "type": "selection" }
+        /// ```
+        ///
+        /// **Impact** — single tap with configurable intensity:
+        /// ```json
+        /// { "type": "impact", "style": "light" | "medium" | "heavy" | "soft" | "rigid" }
+        /// ```
+        ///
+        /// **Notification** — system notification feedback:
+        /// ```json
+        /// { "type": "notification", "style": "success" | "warning" | "error" }
+        /// ```
+        ///
+        /// **Custom pattern** — sequence of haptic events:
+        /// ```json
+        /// {
+        ///   "type": "pattern",
+        ///   "pattern": [
+        ///     { "time": 0, "duration": 50, "intensity": 0.8, "sharpness": 1.0 },
+        ///     { "time": 150, "duration": 50, "intensity": 0.6, "sharpness": 0.5 }
+        ///   ]
+        /// }
+        /// ```
+        ///
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        ///
+        /// > Note: `"soft"` and `"rigid"` impact styles require iOS 13+.
+        /// > On older versions they fall back to `"light"` and `"heavy"` respectively.
+        case haptic
+
+        // MARK: JS → Native: Motion
+
+        /// JS subscribes to motion gestures (shake, flip).
+        ///
+        /// Replaces any previous subscription. Starts device sensors as needed.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "gestures": ["shake", "flip"] }
+        ///   ```
+        /// - Response (all gestures available):
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        /// - Response (some gestures unavailable, rest started):
+        ///   ```json
+        ///   { "success": true, "unavailable": ["flip"] }
+        ///   ```
+        /// - Error (all requested gestures unavailable):
+        ///   ```json
+        ///   { "error": "No sensors available for requested gestures: flip" }
+        ///   ```
+        ///
+        /// > Note: When shake is active, the system "Undo Typing" alert is suppressed
+        /// > via `applicationSupportsShakeToEdit`. The original setting is restored on stop.
         case motionStart = "motion.start"
+
+        /// JS stops all motion gesture monitoring.
+        ///
+        /// Stops device sensors and restores `applicationSupportsShakeToEdit`.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   {}
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
         case motionStop = "motion.stop"
 
-        // Native → JS
-        case navigationIntercepted
+        // MARK: Native → JS: Motion
+
+        /// SDK notifies JS about a detected motion gesture.
+        ///
+        /// Fired for each gesture event while monitoring is active.
+        ///
+        /// **Shake** — device was shaken (system detection via `UIResponder.motionEnded`):
+        /// ```json
+        /// { "gesture": "shake" }
+        /// ```
+        ///
+        /// **Flip** — device changed orientation (gravity-based, 6 positions):
+        /// ```json
+        /// { "gesture": "flip", "from": "portrait", "to": "faceDown" }
+        /// ```
+        ///
+        /// Positions: `faceUp`, `faceDown`, `portrait`, `portraitUpsideDown`,
+        /// `landscapeLeft`, `landscapeRight`.
+        ///
+        /// > Note: Flip fires on every position change. JS should filter
+        /// > by `to` field to match the desired target (e.g. `to == "faceDown"`).
         case motionEvent = "motion.event"
+        
+        // MARK: Native → JS: Navigation
+
+        /// SDK notifies JS about an intercepted main frame navigation.
+        ///
+        /// Fired when WKWebView attempts to navigate away from the in-app content.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "url": "<string>" }
+        ///   ```
+        case navigationIntercepted
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher).
         var isDeferred: Bool {
             switch self {
-            case .ready, .asyncOperation, .syncOperation, .openLink,
-                 .localStateGet, .localStateSet, .localStateInit,
-                 .permissionRequest, .haptic, .settingsOpen,
-                 .motionStart, .motionStop:
+            // Lifecycle
+            case .ready:
                 return true
-            case .close, .`init`, .click, .hide, .log, .userAgent,
-                 .navigationIntercepted, .motionEvent:
+            case .close, .`init`, .click, .hide, .log:
+                return false
+
+            // Operations
+            case .asyncOperation, .syncOperation:
+                return true
+
+            // Navigation, Settings & Permissions
+            case .openLink, .settingsOpen, .permissionRequest:
+                return true
+
+            // Local State
+            case .localStateGet, .localStateSet, .localStateInit:
+                return true
+
+            // Haptic
+            case .haptic:
+                return true
+
+            // Motion
+            case .motionStart, .motionStop:
+                return true
+
+            // Native → JS: Motion
+            case .motionEvent:
+                return false
+                
+            // Native → JS: Navigation
+            case .navigationIntercepted:
                 return false
             }
         }
