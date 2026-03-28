@@ -622,13 +622,6 @@
 		F3A0B0022F28A00100CE7E63 /* TransparentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */; };
 		F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */; };
 		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
-		F3A49BF52DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BF62DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BF72DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BF82DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BF92DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BFA2DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
-		F3A49BFB2DDF0BD400C52AB6 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
 		F3A8B9452A38870100E9C055 /* MixerUUIDS.json in Resources */ = {isa = PBXBuildFile; fileRef = F3A8B9442A38870100E9C055 /* MixerUUIDS.json */; };
 		F3A8B9582A389D9D00E9C055 /* GeoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9572A389D9D00E9C055 /* GeoService.swift */; };
@@ -4037,13 +4030,6 @@
 				F3FAD86E2AB8656700D98C03 /* closeButtonWithOpenButton.json in Resources */,
 				F39117292AB4C2EF00852298 /* missingElementsSection.json in Resources */,
 				F3FAD8762AB867E700D98C03 /* closeButtonMarginAboveOne.json in Resources */,
-				F3A49BF52DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BF62DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BF72DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BF82DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BF92DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BFA2DDF0BD400C52AB6 /* (null) in Resources */,
-				F3A49BFB2DDF0BD400C52AB6 /* (null) in Resources */,
 				A17958922978C88B00609E91 /* AllTargetingsModelValid.json in Resources */,
 				A179588E2978BE7000609E91 /* AndTargetingModelValid.json in Resources */,
 				A179588C2978BE7000609E91 /* OrTargetingModelValid.json in Resources */,
