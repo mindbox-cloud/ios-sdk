@@ -17,6 +17,7 @@ final class ProductSegmentChecker: InternalTargetingChecker<ProductSegmentTarget
             context.operationInapps[key.lowercased(), default: []].insert(id)
         }
         context.productSegments.append(targeting.segmentationExternalId)
+        context.productSegmentInapps.insert(id)
     }
 
     override func checkInternal(targeting: ProductSegmentTargeting) -> Bool {

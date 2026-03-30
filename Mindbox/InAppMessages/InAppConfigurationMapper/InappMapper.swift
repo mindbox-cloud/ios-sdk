@@ -48,6 +48,7 @@ class InappMapper: InappMapperProtocol {
             let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
             self.prepareTargetingChecker(for: filteredInapps)
             self.prepareForRemainingTargeting()
+
             self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
                 self.sendRemainingInappsTargeting {
                     completion(formData)
@@ -88,6 +89,9 @@ class InappMapper: InappMapperProtocol {
                 operationInapps: self.targetingChecker.context.operationInapps
             )
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
+            let suitableIds = Set(suitableInapps.map(\.inAppId))
+            let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
+            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds)
 
             if suitableInapps.isEmpty {
                 completion(nil)
@@ -129,16 +133,26 @@ class InappMapper: InappMapperProtocol {
 
                 Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
                 
-                // For the webview case, we skip downloading images
-                if case .webview = inapp.content {
-                    formData = InAppFormData(inAppId: inapp.inAppId, isPriority: inapp.isPriority, delayTime: inapp.delayTime, imagesDict: [:], firstImageValue: "", content: inapp.content, frequency: inapp.frequency)
+                if case .modal(let modal) = inapp.content,
+                   modal.content.background.layers.contains(where: { $0.layerType == .webview }) {
+                    formData = InAppFormData(
+                        inAppId: inapp.inAppId,
+                        isPriority: inapp.isPriority,
+                        delayTime: inapp.delayTime,
+                        imagesDict: [:],
+                        firstImageValue: "",
+                        content: inapp.content,
+                        frequency: inapp.frequency,
+                        tags: inapp.tags,
+                        operation: self.getOperation()
+                    )
                     continue
                 }
-                
+
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.dataFacade.downloadImage(withUrl: imageValue) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId) { result in
                         defer {
                             group.leave()
                         }
@@ -165,7 +179,9 @@ class InappMapper: InappMapperProtocol {
                                                  imagesDict: imageDict,
                                                  firstImageValue: firstImageValue,
                                                  content: inapp.content,
-                                                 frequency: inapp.frequency)
+                                                 frequency: inapp.frequency,
+                                                 tags: inapp.tags,
+                                                 operation: self.getOperation())
                     }
                 }
             }
@@ -187,8 +203,25 @@ class InappMapper: InappMapperProtocol {
         return applicationEvent?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
     }
 
+    private func getOperation() -> (name: String, body: String)? {
+        guard let event = applicationEvent else { return nil }
+
+        let name = event.name
+        let body: String
+
+        if let model = event.model,
+           let data = try? JSONEncoder().encode(model),
+           let jsonString = String(data: data, encoding: .utf8) {
+            body = jsonString
+        } else {
+            body = "{}"
+        }
+
+        return (name: name, body: body)
+    }
+
     func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
-        self.dataFacade.fetchDependencies(model: applicationEvent?.model) {
+        self.dataFacade.fetchDependencies(model: applicationEvent?.model, shouldCollectFailures: false) {
             let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.inappFilterService.filterInappsByOperation(
                 event: self.applicationEvent,
                 operationInapps: self.targetingChecker.context.operationInapps

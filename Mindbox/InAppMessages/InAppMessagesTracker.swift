@@ -13,11 +13,30 @@ protocol InappTargetingTrackProtocol: AnyObject {
 }
 
 protocol InAppMessagesTrackerProtocol: AnyObject {
-    func trackView(id: String) throws
+    func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws
     func trackClick(id: String) throws
 }
 
 class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackProtocol {
+    
+    struct InAppShowBody: Encodable {
+        let inappId: String
+        let timeToDisplay: String?
+        let tags: [String: String]?
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(inappId, forKey: .inappId)
+            try container.encodeIfPresent(timeToDisplay, forKey: .timeToDisplay)
+            if let tags = tags, !tags.isEmpty {
+                try container.encode(tags, forKey: .tags)
+            }
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case inappId, timeToDisplay, tags
+        }
+    }
 
     struct InAppBody: Codable {
         let inappId: String
@@ -29,8 +48,8 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackPro
         self.databaseRepository = databaseRepository
     }
 
-    func trackView(id: String) throws {
-        let encodable = InAppBody(inappId: id)
+    func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {
+        let encodable = InAppShowBody(inappId: id, timeToDisplay: timeToDisplay, tags: tags)
         let event = Event(type: .inAppViewEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }

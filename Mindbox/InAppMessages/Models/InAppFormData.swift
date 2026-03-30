@@ -18,6 +18,30 @@ struct InAppFormData {
     let firstImageValue: String
     let content: MindboxFormVariant
     let frequency: InappFrequency?
+    let tags: [String: String]?
+    var operation: (name: String, body: String)?
+
+    init(
+        inAppId: String,
+        isPriority: Bool,
+        delayTime: String?,
+        imagesDict: [String: UIImage],
+        firstImageValue: String,
+        content: MindboxFormVariant,
+        frequency: InappFrequency?,
+        tags: [String: String]? = nil,
+        operation: (name: String, body: String)? = nil
+    ) {
+        self.inAppId = inAppId
+        self.isPriority = isPriority
+        self.delayTime = delayTime
+        self.imagesDict = imagesDict
+        self.firstImageValue = firstImageValue
+        self.content = content
+        self.frequency = frequency
+        self.tags = tags
+        self.operation = operation
+    }
 }
 
 // TODO: - Need to remove this struct and use only InappFormData.
@@ -27,4 +51,5 @@ struct InAppTransitionData: Equatable {
     let delayTime: String?
     let content: MindboxFormVariant
     let frequency: InappFrequency?
+    let tags: [String: String]?
 }

@@ -24,6 +24,7 @@ struct Event: EventProtocol {
         case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
         case inAppTargetingEvent = "Inapp.Targeting"
+        case inAppShowFailureEvent = "Inapp.ShowFailure"
 
         case sdkLogs = "MobileSdk.Logs"
     }

@@ -591,6 +591,8 @@ class ABTests: XCTestCase {
         XCTAssertNil(response.abtests, "AB-тесты, где lower больше upper, должны возвращать nil")
     }
 
+    /// ABTest sdkVersion.min is set to 999 in ConfigWithABNormal.json — intentionally unreachable,
+    /// so this test stays valid regardless of future sdkVersionNumeric bumps.
     func test_abtests_sdk_version_lower_than_required_should_return_nil() throws {
         let response = try InappConfig.configWithABNormal.getConfig()
         XCTAssertNil(response.abtests, "AB-тесты с минимальной SDK-версией, превышающей текущую, должны возвращать nil")
@@ -616,7 +618,8 @@ private extension ABTests {
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
-                                           form: formModel)
+                                           form: formModel,
+                                           tags: inapp.tags)
                     filteredInapps.append(inappModel)
                 }
             } catch {

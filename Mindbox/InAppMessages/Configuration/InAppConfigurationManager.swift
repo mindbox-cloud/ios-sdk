@@ -32,17 +32,20 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
+    private let featureToggleManager: FeatureToggleManager
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inappMapper: InappMapperProtocol?,
-        persistenceStorage: PersistenceStorage
+        persistenceStorage: PersistenceStorage,
+        featureToggleManager: FeatureToggleManager
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.persistenceStorage = persistenceStorage
+        self.featureToggleManager = featureToggleManager
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -157,6 +160,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let inappSettings = settings.inapp {
             SessionTemporaryStorage.shared.inAppSettings = inappSettings
         }
+
+        featureToggleManager.applyFeatureToggles(settings.featureToggles)
         
         saveConfigSessionToCache(settings.slidingExpiration?.config)
     }

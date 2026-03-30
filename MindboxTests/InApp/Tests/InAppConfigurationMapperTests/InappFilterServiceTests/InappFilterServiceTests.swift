@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 // swiftlint:disable force_unwrapping
 
@@ -384,6 +384,67 @@ final class InappFilterServiceTests: XCTestCase {
         XCTAssertEqual(actualOrder, expectedOrder, "Order should remain unchanged when all in-apps have same priority")
     }
 
+    // MARK: - Webview Layer
+
+    func test_webviewLayerValid() throws {
+        let config = try getConfig(name: "webviewLayerValid")
+        let inapps = sut.filter(inapps: config.inapps?.elements, abTests: config.abtests)
+        XCTAssertEqual(inapps.count, 2)
+
+        if let variant = inapps.first?.form.variants.first {
+            switch variant {
+                case .modal(let model):
+                    XCTAssertEqual(model.content.background.layers.count, 1)
+                    guard case .webview(let webviewLayer) = model.content.background.layers.first else {
+                        XCTFail("Layer should be webview type")
+                        return
+                    }
+                    XCTAssertEqual(webviewLayer.baseUrl, "https://inapp.local/popup")
+                    XCTAssertEqual(webviewLayer.contentUrl, "https://api.example.com/webview/inapp.html")
+                    XCTAssertEqual(webviewLayer.params["formId"], .string("12345"))
+                default:
+                    XCTFail("Variant should be modal")
+            }
+        }
+    }
+
+    func test_webviewLayerMissingBaseUrl() throws {
+        let config = try getConfig(name: "webviewLayerMissingBaseUrl")
+        let inapps = sut.filter(inapps: config.inapps?.elements, abTests: config.abtests)
+        XCTAssertEqual(inapps.count, 1)
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
+    }
+
+    func test_webviewLayerMissingContentUrl() throws {
+        let config = try getConfig(name: "webviewLayerMissingContentUrl")
+        let inapps = sut.filter(inapps: config.inapps?.elements, abTests: config.abtests)
+        XCTAssertEqual(inapps.count, 1)
+        XCTAssertEqual(inapps.first?.id, Constants.defaultID)
+    }
+
+    func test_webviewAndImageLayers() throws {
+        let config = try getConfig(name: "webviewAndImageLayers")
+        let inapps = sut.filter(inapps: config.inapps?.elements, abTests: config.abtests)
+        XCTAssertEqual(inapps.count, 2)
+
+        if let variant = inapps.first?.form.variants.first {
+            switch variant {
+                case .modal(let model):
+                    XCTAssertEqual(model.content.background.layers.count, 2)
+                    guard case .image = model.content.background.layers[0] else {
+                        XCTFail("First layer should be image type")
+                        return
+                    }
+                    guard case .webview = model.content.background.layers[1] else {
+                        XCTFail("Second layer should be webview type")
+                        return
+                    }
+                default:
+                    XCTFail("Variant should be modal")
+            }
+        }
+    }
+
     // MARK: - Helper Methods
     
     private func createTestInApp(id: String, isPriority: Bool) -> InApp {
@@ -399,7 +460,8 @@ final class InappFilterServiceTests: XCTestCase {
             sdkVersion: sdkVersion,
             targeting: .true(targeting),
             frequency: frequency,
-            form: form
+            form: form,
+            tags: nil
         )
     }
 

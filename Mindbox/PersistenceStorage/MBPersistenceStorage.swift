@@ -45,6 +45,23 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
+    var firstInitializationDateTime: Date? {
+        get {
+            if let dateString = firstInitializationDateTimeString {
+                return dateFormatter.date(from: dateString)
+            } else {
+                return nil
+            }
+        }
+        set {
+            if let date = newValue {
+                firstInitializationDateTimeString = dateFormatter.string(from: date)
+            } else {
+                firstInitializationDateTimeString = nil
+            }
+        }
+    }
+
     var apnsTokenSaveDate: Date? {
         get {
             if let dateString = apnsTokenSaveDateString {
@@ -204,6 +221,13 @@ class MBPersistenceStorage: PersistenceStorage {
         }
     }
 
+    @UserDefaultsWrapper(key: .firstInitializationDateTime, defaultValue: nil)
+    private var firstInitializationDateTimeString: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
+
     @UserDefaultsWrapper(key: .needUpdateInfoOnce, defaultValue: nil)
     var needUpdateInfoOnce: Bool? {
         didSet {
@@ -240,7 +264,10 @@ class MBPersistenceStorage: PersistenceStorage {
     
     @UserDefaultsWrapper(key: .applicationInstanceId, defaultValue: nil)
     var applicationInstanceId: String?
-    
+
+    @UserDefaultsWrapper(key: .webViewLocalStateVersion, defaultValue: nil)
+    var webViewLocalStateVersion: Int?
+
     // MARK: - Deprecated Properties
     // These properties are deprecated and will be removed in future versions.
     // Please use the recommended alternatives instead.
@@ -267,6 +294,7 @@ extension MBPersistenceStorage {
             case configurationData = "MBPersistenceStorage-configurationData"
             case isNotificationsEnabled = "MBPersistenceStorage-isNotificationsEnabled"
             case installationData = "MBPersistenceStorage-installationData"
+            case firstInitializationDateTime = "MBPersistenceStorage-firstInitializationDateTime"
             case shownDatesByInApp = "MBPersistenceStorage-shownDatesByInApp"
             case lastInappStateChangeDate = "MBPersistenceStorage-lastInappStateChangeDate"
             case handledlogRequestIds = "MBPersistenceStorage-handledlogRequestIds"
@@ -277,6 +305,7 @@ extension MBPersistenceStorage {
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
             case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
+            case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
 
             // MARK: - Deprecated Keys
             // These keys are deprecated and will be removed in future versions.

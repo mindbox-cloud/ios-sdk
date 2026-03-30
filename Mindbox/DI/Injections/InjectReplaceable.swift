@@ -35,7 +35,26 @@ extension MBContainer {
             }
             return MBPersistenceStorage(defaults: defaults)
         }
-        
+
+        register(WebViewLocalStateStorageProtocol.self, scope: .transient) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return WebViewLocalStateStorage(persistenceStorage: persistenceStorage)
+        }
+
+        register(HapticServiceProtocol.self, scope: .transient) {
+            HapticService()
+        }
+
+        register(MotionServiceProtocol.self, scope: .transient) {
+            MotionService()
+        }
+
+        register(PermissionHandlerRegistryProtocol.self, scope: .transient) {
+            let registry = PermissionHandlerRegistry()
+            registry.register(PushNotificationsPermissionHandler())
+            return registry
+        }
+
         register(DatabaseRepositoryProtocol.self) {
             let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
 
@@ -65,11 +84,13 @@ extension MBContainer {
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let imageService = DI.injectOrFail(ImageDownloadServiceProtocol.self)
             let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+            let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
 
             return InAppConfigurationDataFacade(segmentationService: segmentationSevice,
                                                 targetingChecker: targetingChecker,
                                                 imageService: imageService,
-                                                tracker: tracker)
+                                                tracker: tracker,
+                                                failureManager: failureManager)
         }
 
         register(SessionManager.self) {

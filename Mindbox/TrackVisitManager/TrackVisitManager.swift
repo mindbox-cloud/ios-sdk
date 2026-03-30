@@ -25,6 +25,11 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     private let databaseRepository: DatabaseRepositoryProtocol
     private let inappSessionManager: InappSessionManagerProtocol
 
+    /// When `true`, the next `trackDirect()` call will be skipped.
+    /// Set by `handlePush` / `handleUniversalLink` to prevent a duplicate
+    /// track-visit that would otherwise fire from the session handler.
+    private var skipNextDirectTrackVisit = false
+
     init(
         databaseRepository: DatabaseRepositoryProtocol,
         inappSessionManager: InappSessionManagerProtocol
@@ -64,7 +69,14 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     }
 
     func trackDirect() throws {
+        if skipNextDirectTrackVisit {
+            skipNextDirectTrackVisit = false
+            Logger.common(message: "Skipping trackDirect because push or universal link track visit already sent", level: .info, category: .visit)
+            inappSessionManager.checkInappSession()
+            return
+        }
         let encodable = TrackVisit(source: .direct)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .direct, requestUrl: nil)
         Logger.common(message: "Tracked Visit event type direct", level: .info, category: .visit)
         try sendTrackVisit(encodable)
     }
@@ -81,13 +93,17 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     }
 
     private func handleUniversalLink(_ userActivity: NSUserActivity) throws {
+        skipNextDirectTrackVisit = true
         let encodable = TrackVisit(url: userActivity.webpageURL, source: .link)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .link, requestUrl: userActivity.webpageURL?.absoluteString)
         try sendTrackVisit(encodable)
         Logger.common(message: "Tracked Visit event type: universal link", level: .info, category: .visit)
     }
 
     private func handlePush(_ response: UNNotificationResponse) throws {
+        skipNextDirectTrackVisit = true
         let encodable = TrackVisit(source: .push)
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .push, requestUrl: nil)
         try sendTrackVisit(encodable)
         Logger.common(message: "Tracked Visit event type: push", level: .info, category: .visit)
     }

@@ -1,0 +1,26 @@
+{
+  "inapps": [
+    {
+      "id": "test-valid-inapp-id",
+      "sdkVersion": {
+        "min": 8,
+        "max": null
+      },
+      "frequency": {
+        "kind": "lifetime",
+        "$type": "once"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": 1
+      }
+    }
+  ]
+}

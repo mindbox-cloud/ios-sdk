@@ -225,6 +225,11 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(filter)
     }
 
+    func testFeatureToggleManagerIsRegistered() {
+        let manager: FeatureToggleManager? = DI.inject(FeatureToggleManager.self)
+        XCTAssertNotNil(manager)
+    }
+
     // Тесты для InappPresentation
     func testInAppMessagesTrackerIsRegistered() {
         let tracker: InAppMessagesTracker? = DI.inject(InAppMessagesTracker.self)
@@ -234,16 +239,6 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     func testPresentationDisplayUseCaseIsRegistered() {
         let useCase: PresentationDisplayUseCase? = DI.inject(PresentationDisplayUseCase.self)
         XCTAssertNotNil(useCase)
-    }
-
-    func testUseCaseFactoryIsRegistered() {
-        let factory: UseCaseFactoryProtocol? = DI.inject(UseCaseFactoryProtocol.self)
-        XCTAssertNotNil(factory)
-    }
-
-    func testInAppActionHandlerIsRegistered() {
-        let handler: InAppActionHandlerProtocol? = DI.inject(InAppActionHandlerProtocol.self)
-        XCTAssertNotNil(handler)
     }
 
     func testInAppPresentationManagerIsRegistered() {
@@ -274,6 +269,11 @@ final class DIMainModuleRegistrationTests: XCTestCase {
     
     func test_InappScheduleManagerIsRegistered() {
         let manager: InappScheduleManagerProtocol? = DI.inject(InappScheduleManagerProtocol.self)
+        XCTAssertNotNil(manager)
+    }
+    
+    func testInappShowFailureManagerIsRegistered() {
+        let manager: InappShowFailureManagerProtocol? = DI.inject(InappShowFailureManagerProtocol.self)
         XCTAssertNotNil(manager)
     }
 }

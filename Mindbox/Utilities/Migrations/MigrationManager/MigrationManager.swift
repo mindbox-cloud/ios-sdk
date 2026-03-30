@@ -54,7 +54,8 @@ final class MigrationManager {
             ShownInAppsIDsMigration(),
             ShownInAppsDictionaryMigration(),
             RemoveBackgroundTaskDataMigration(),
-            DatabaseMetadataMigration()
+            DatabaseMetadataMigration(),
+            FirstInitializationDateTimeMigration()
         ]
     }
 }
