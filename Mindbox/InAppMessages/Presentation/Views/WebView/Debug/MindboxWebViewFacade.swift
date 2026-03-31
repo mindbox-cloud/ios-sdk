@@ -93,12 +93,11 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         config.mediaTypesRequiringUserActionForPlayback = []
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        // TODO: Turn on DEBUG IF after 2.15.0-RC
-//        #if DEBUG
+        #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
-//        #endif
+        #endif
         let bridge = MindboxWebBridge(webView: webView)
 
         self.webView = webView
