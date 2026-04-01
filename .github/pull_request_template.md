@@ -1,52 +1,29 @@
-<!-- Обязательно укажите ID тикета (например: MOBILEWEBVIEW-22, WMSDK-608) -->
-Ссылка: https://tracker.yandex.ru/[JIRA-ID]
-
----
+Ticket: https://tracker.yandex.ru/MOBILE-
 
 ## Summary
 
-<!-- Краткое описание изменений (1-3 предложения) -->
-
-
----
+<!-- Brief description of changes (1-3 sentences) -->
 
 ## Type of Change
 
-<!-- Отметьте тип изменений, остальное удалить -->
-- [ ] Feature (новая функциональность)
-- [ ] Fix (исправление бага)
-- [ ] Refactor (рефакторинг кода)
-- [ ] Docs (документация)
-- [ ] Tests (тесты)
-- [ ] CI/CD (изменения в CI/CD)
-- [ ] Dependencies (обновление зависимостей)
-- [ ] Other: ___________
-
----
+- [ ] Feature
+- [ ] Bug fix
+- [ ] Refactor
+- [ ] Tests
+- [ ] CI/CD
+- [ ] Dependencies
+- [ ] Other: ___
 
 ## Changes
 
-<!-- Детальное описание того, что изменено -->
+<!-- What was changed and why -->
 
-### Основные изменения:
 -
 -
--
-
-### Затронутые компоненты:
-<!-- Например: InAppMessages, CoreController, Database, MindboxNotifications -->
--
-
-### Ключевые файлы:
-<!-- Например: Mindbox/InAppMessages/InAppMessageManager.swift -->
--
-
----
 
 ## Testing
 
-### Unit Tests
-<!-- Описание добавленных/измененных тестов -->
--
+<!-- Describe how the changes were tested -->
 
---- 
+- [ ] Unit tests added/updated
+- [ ] Manual testing performed

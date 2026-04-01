@@ -2,7 +2,8 @@
 //  InappShowFailureManagerTests.swift
 //  MindboxTests
 //
-//  Created by Cursor on 19.02.2026.
+//  Created by Akylbek Utekeshev on 19.02.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import XCTest
