@@ -368,6 +368,302 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         }
         waitForExpectations(timeout: 1)
     }
+
+    // MARK: - 2xx + ProtocolError status in body → invalidResponse
+
+    func test_http200_statusProtocolError_returnsInvalidResponse() throws {
+        let fetcher = try makeFetcher()
+        let body = baseResponseData(status: "ProtocolError")
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected invalidResponse for 2xx + ProtocolError status")
+            case .failure(let error):
+                guard case .invalidResponse = error else {
+                    XCTFail("Expected invalidResponse, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 2xx + InternalServerError status in body → invalidResponse
+
+    func test_http200_statusInternalServerError_returnsInvalidResponse() throws {
+        let fetcher = try makeFetcher()
+        let body = baseResponseData(status: "InternalServerError")
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected invalidResponse for 2xx + InternalServerError status")
+            case .failure(let error):
+                guard case .invalidResponse = error else {
+                    XCTFail("Expected invalidResponse, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 2xx + unknown status in body → invalidResponse
+
+    func test_http200_statusUnknown_returnsInvalidResponse() throws {
+        let fetcher = try makeFetcher()
+        let body = baseResponseData(status: "SomethingUnexpected")
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected invalidResponse for 2xx + unknown status")
+            case .failure(let error):
+                guard case .invalidResponse = error else {
+                    XCTFail("Expected invalidResponse, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 4xx + ValidationError status → .validationError
+
+    func test_http400_statusValidationError_returnsValidationError() throws {
+        let fetcher = try makeFetcher()
+        let body = validationErrorData()
+        stubResponse(statusCode: 400, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected validationError")
+            case .failure(let error):
+                guard case .validationError = error else {
+                    XCTFail("Expected validationError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 4xx (non-404) + unparseable body → protocolError "Client error"
+
+    func test_http400_unparseableBody_returnsProtocolErrorClientError() throws {
+        let fetcher = try makeFetcher()
+        let body = "not json".data(using: .utf8)
+        stubResponse(statusCode: 400, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected protocolError for 400 + unparseable body")
+            case .failure(let error):
+                guard case .protocolError(let pe) = error else {
+                    XCTFail("Expected protocolError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 400)
+                XCTAssertEqual(pe.errorMessage, "Client error")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 403 + unparseable body → protocolError "Client error"
+
+    func test_http403_unparseableBody_returnsProtocolErrorClientError() throws {
+        let fetcher = try makeFetcher()
+        let body = "Forbidden".data(using: .utf8)
+        stubResponse(statusCode: 403, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected protocolError for 403 + unparseable body")
+            case .failure(let error):
+                guard case .protocolError(let pe) = error else {
+                    XCTFail("Expected protocolError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 403)
+                XCTAssertEqual(pe.errorMessage, "Client error")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 5xx + empty body → .serverError
+
+    func test_http500_emptyBody_returnsServerError() throws {
+        let fetcher = try makeFetcher()
+        stubResponse(statusCode: 500, body: nil)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected serverError for 500 + nil data")
+            case .failure(let error):
+                guard case .serverError(let pe) = error else {
+                    XCTFail("Expected serverError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 500)
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 2xx + empty body + Void request (emptyData=true) → success
+
+    func test_http200_emptyBody_voidRequest_returnsSuccess() throws {
+        let fetcher = try makeFetcher()
+        stubResponse(statusCode: 200, body: nil)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                break // expected — emptyData=true at 2xx tolerates unparseable body
+            case .failure(let error):
+                XCTFail("Expected success for 200 + empty body + Void request, got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 2xx + empty body + typed request (emptyData=false) → parsing error
+
+    func test_http200_emptyBody_typedRequest_returnsParsingError() throws {
+        let fetcher = try makeFetcher()
+        stubResponse(statusCode: 200, body: nil)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(type: InAppGeoResponse.self, route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected parsing error for 200 + empty body + typed request")
+            case .failure(let error):
+                guard case .internalError(let ie) = error else {
+                    XCTFail("Expected internalError(.parsing), got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(ie.errorKey, ErrorKey.parsing.rawValue)
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - 503 + parseable body → .serverError with decoded message
+
+    func test_http503_parseableBody_returnsServerErrorWithMessage() throws {
+        let fetcher = try makeFetcher()
+        let body = protocolErrorData(status: "InternalServerError", message: "Service Unavailable", httpCode: 503)
+        stubResponse(statusCode: 503, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected serverError")
+            case .failure(let error):
+                guard case .serverError(let pe) = error else {
+                    XCTFail("Expected serverError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 503)
+                XCTAssertEqual(pe.errorMessage, "Service Unavailable")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - Typed request + 200 + needBaseResponse=true + success body → decoded object
+
+    func test_typedRequest_http200_statusSuccess_returnsDecodedObject() throws {
+        let fetcher = try makeFetcher()
+        let responseBody: [String: Any] = [
+            "status": "Success",
+            "city_id": 10,
+            "region_id": 20,
+            "country_id": 30
+        ]
+        // swiftlint:disable:next force_try
+        let body = try! JSONSerialization.data(withJSONObject: responseBody)
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(type: InAppGeoResponse.self, route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success(let response):
+                XCTAssertEqual(response.city, 10)
+                XCTAssertEqual(response.region, 20)
+                XCTAssertEqual(response.country, 30)
+            case .failure(let error):
+                XCTFail("Expected success, got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - Typed request + 200 + valid base response but invalid target type → parsing error
+
+    func test_typedRequest_http200_invalidTargetType_returnsParsingError() throws {
+        let fetcher = try makeFetcher()
+        // Valid base response but missing fields for InAppGeoResponse
+        let body = baseResponseData(status: "Success")
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.request(type: InAppGeoResponse.self, route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected parsing error for invalid target type")
+            case .failure(let error):
+                guard case .internalError(let ie) = error else {
+                    XCTFail("Expected internalError(.parsing), got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(ie.errorKey, ErrorKey.parsing.rawValue)
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
 }
 
 // MARK: - Stub URL Protocol
