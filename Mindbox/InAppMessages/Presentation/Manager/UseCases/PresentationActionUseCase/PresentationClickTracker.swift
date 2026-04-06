@@ -10,11 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol PresentationActionUseCaseProtocol {
-    func onTapAction(
-        id: String,
-        onTap: @escaping InAppMessageTapAction,
-        close: @escaping () -> Void
-    )
+    func execute() -> (url: URL?, payload: String)?
 }
 
 class PresentationClickTracker {

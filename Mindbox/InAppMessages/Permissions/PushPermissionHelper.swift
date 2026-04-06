@@ -1,0 +1,43 @@
+//
+//  PushPermissionHelper.swift
+//  Mindbox
+//
+//  Created by Akylbek Utekeshev on 19.03.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import UIKit
+import MindboxLogger
+
+enum PushPermissionHelper {
+
+    static func requestPermission(
+        registry: PermissionHandlerRegistryProtocol = DI.injectOrFail(PermissionHandlerRegistryProtocol.self),
+        completion: ((PermissionRequestResult) -> Void)? = nil
+    ) {
+        registry.handler(for: .pushNotifications)?.request { result in
+            completion?(result)
+        }
+    }
+
+    static func openPushNotificationSettings(completion: ((Bool) -> Void)? = nil) {
+        DispatchQueue.main.async {
+            let settingsUrl: URL?
+            if #available(iOS 16.0, *) {
+                settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
+            } else {
+                settingsUrl = URL(string: UIApplication.openSettingsURLString)
+            }
+            guard let settingsUrl = settingsUrl, UIApplication.shared.canOpenURL(settingsUrl) else {
+                Logger.common(message: "Failed to parse the settings URL or encountered an issue opening it.", level: .debug, category: .inAppMessages)
+                completion?(false)
+                return
+            }
+            UIApplication.shared.open(settingsUrl) { success in
+                Logger.common(message: "Navigated to app settings for notification permission. Success: \(success)", level: .debug, category: .inAppMessages)
+                completion?(success)
+            }
+        }
+    }
+}

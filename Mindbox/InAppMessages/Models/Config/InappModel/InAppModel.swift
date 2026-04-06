@@ -17,6 +17,7 @@ struct InAppDTO: Decodable, Equatable {
     var frequency: InappFrequency?
     let targeting: Targeting
     let form: InAppFormDTO
+    let tags: [String: String]?
 
     enum CodingKeys: CodingKey {
         case id
@@ -26,6 +27,7 @@ struct InAppDTO: Decodable, Equatable {
         case frequency
         case targeting
         case form
+        case tags
     }
 }
 
@@ -59,6 +61,8 @@ extension InAppDTO {
 
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
+
+        self.tags = try? container.decodeIfPresent([String: String].self, forKey: .tags)
     }
 }
 
@@ -70,4 +74,5 @@ struct InApp: Decodable, Equatable {
     let targeting: Targeting
     var frequency: InappFrequency?
     let form: InAppForm
+    let tags: [String: String]?
 }

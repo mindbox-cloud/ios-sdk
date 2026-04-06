@@ -58,7 +58,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     private let firstImageValue: String
 
     private let onPresented: () -> Void
-    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    private let onTapAction: InAppMessageTapAction
+    private let onClose: () -> Void
+    private let onError: (InAppPresentationError) -> Void
 
     private var hasSetupLayers = false
     private var hasSetupElements = false
@@ -71,7 +73,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         snackbarView: SnackbarView,
         firstImageValue: String,
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void
+        onTapAction: @escaping InAppMessageTapAction,
+        onError: @escaping (InAppPresentationError) -> Void,
+        onClose: @escaping () -> Void
     ) {
         self.model = model
         self.imagesDict = imagesDict
@@ -79,6 +83,8 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
         self.firstImageValue = firstImageValue
         self.onPresented = onPresented
         self.onTapAction = onTapAction
+        self.onError = onError
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -181,6 +187,9 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     private func setupConstraints() {
         guard let image = imagesDict[firstImageValue] else {
             Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
+            reportErrorAndClose(
+                .failedToLoadImages
+            )
             return
         }
 
@@ -207,18 +216,30 @@ class SnackbarViewController: UIViewController, InappViewControllerProtocol {
     }
 }
 
+private extension SnackbarViewController {
+    func reportErrorAndClose(_ error: InAppPresentationError) {
+        onError(error)
+        onClose()
+    }
+}
+
 // MARK: - GestureHandler
 
 extension SnackbarViewController: GestureHandler {
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? InAppImageOnlyView else {
-            Logger.common(message: "[Error]: \(#function) at line \(#line) of \(#file)", level: .error)
+        guard let imageView = sender.view as? InAppImageOnlyView,
+              let action = imageView.action else {
             return
         }
 
-        let action = imageView.action
-        onTapAction(action)
+        guard let tapData = action.handleTap() else {
+            onTapAction(nil, "")
+            return
+        }
+
+        onTapAction(tapData.url, tapData.payload)
+        onClose()
     }
 
     @objc

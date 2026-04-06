@@ -10,16 +10,6 @@ import Foundation
 import UIKit
 import MindboxLogger
 
-struct InAppMessageUIModel {
-    struct InAppRedirect {
-        let redirectUrl: String
-        let payload: String
-    }
-    let inAppId: String
-    let image: UIImage
-    let redirect: InAppRedirect
-}
-
 protocol InAppPresentationManagerProtocol: AnyObject {
     func present(
         inAppFormData: InAppFormData,
@@ -33,19 +23,42 @@ protocol InAppPresentationManagerProtocol: AnyObject {
 enum InAppPresentationError {
     case failedToLoadImages
     case failedToLoadWindow
+    case webviewLoadFailed(String)
+    case webviewPresentationFailed(String)
     case failed(String)
+}
+
+extension InAppPresentationError {
+    var failureReason: InAppShowFailureReason {
+        switch self {
+        case .webviewLoadFailed:
+            return .webviewLoadFailed
+        case .webviewPresentationFailed:
+            return .webviewPresentationFailed
+        default:
+            return .presentationFailed
+        }
+    }
+
+    var failureDetails: String? {
+        switch self {
+        case .failedToLoadImages:
+            return "[InAppPresentationError] Failed to load images."
+        case .failedToLoadWindow:
+            return "[InAppPresentationError] Failed to load window."
+        case .webviewLoadFailed(let details), .webviewPresentationFailed(let details), .failed(let details):
+            return details
+        }
+    }
 }
 
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
-    private let actionHandler: InAppActionHandlerProtocol
-    private let displayUseCase: PresentationDisplayUseCase
+    private let displayUseCase: PresentationDisplayUseCaseProtocol
 
-    init(actionHandler: InAppActionHandlerProtocol,
-         displayUseCase: PresentationDisplayUseCase) {
-        self.actionHandler = actionHandler
+    init(displayUseCase: PresentationDisplayUseCaseProtocol) {
         self.displayUseCase = displayUseCase
 
         addObserverToDismissInApp()
@@ -70,27 +83,62 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onPresentationCompleted: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     ) {
+        let callbackGuard = PresentationCallbackGuard()
+        let safeOnError: (InAppPresentationError) -> Void = { error in
+            DispatchQueue.main.async {
+                callbackGuard.finishWithError {
+                    onError(error)
+                }
+            }
+        }
+        let safeOnPresentationCompleted: () -> Void = {
+            DispatchQueue.main.async {
+                callbackGuard.finishSuccessfully {
+                    onPresentationCompleted()
+                }
+            }
+        }
+
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
-                onError(.failed("[InAppPresentationManager] Self guard not passed."))
+                safeOnError(.failed("[InAppPresentationManager] Self guard not passed."))
                 return
             }
 
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
-            }, onTapAction: { [weak self] action in
-                guard let self = self,
-                      let action = action else {
-                    return
-                }
-
-                self.actionHandler.handleAction(action, for: inAppFormData.inAppId, onTap: onTapAction, close: {
-                    self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
-                })
-            }, onClose: {
-                self.displayUseCase.dismissInAppUIModel(onClose: onPresentationCompleted)
-            })
+            }, onTapAction: onTapAction,
+            onClose: {
+                self.displayUseCase.dismissInAppUIModel(onClose: safeOnPresentationCompleted)
+            },
+            onError: safeOnError)
         }
+    }
+}
+
+private final class PresentationCallbackGuard {
+    private var isTerminalEventHandled = false
+
+    func finishWithError(_ action: () -> Void) {
+        guard beginTerminalEventIfNeeded() else {
+            return
+        }
+        action()
+    }
+
+    func finishSuccessfully(_ action: () -> Void) {
+        guard beginTerminalEventIfNeeded() else {
+            return
+        }
+        action()
+    }
+
+    private func beginTerminalEventIfNeeded() -> Bool {
+        guard !isTerminalEventHandled else {
+            return false
+        }
+        isTerminalEventHandled = true
+        return true
     }
 }

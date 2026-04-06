@@ -17,8 +17,8 @@ final class SessionTemporaryStorage {
     var observedCustomOperations: Set<String> = []
     var viewProductOperation: String?
     var viewCategoryOperation: String?
-    var geoRequestCompleted = false
-    var checkSegmentsRequestCompleted = false
+    var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
+    var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
     var isPresentingInAppMessage = false
     var pushPermissionStatus: UNAuthorizationStatus = .denied
     var sessionShownInApps: [String] = []
@@ -32,6 +32,9 @@ final class SessionTemporaryStorage {
     }
     
     var lastInappClickedID: String?
+
+    /// Last track-visit data (source and requestUrl only)
+    var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
 
     var expiredConfigSession: String?
     var isUserVisitSaved = false
@@ -48,12 +51,13 @@ final class SessionTemporaryStorage {
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil
-        geoRequestCompleted = false
-        checkSegmentsRequestCompleted = false
+        geoRequestResult = nil
+        segmentationRequestResult = nil
         isPresentingInAppMessage = false
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
+        lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")

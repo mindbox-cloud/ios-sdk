@@ -36,8 +36,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     ]
 
     let layersFactories: [ContentBackgroundLayerType: LayerFactory] = [
-        .image: ImageLayerFactory(),
-        .webview: ImageLayerFactory()
+        .image: ImageLayerFactory()
     ]
 
     // MARK: Private properties
@@ -48,7 +47,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
 
     private let onPresented: () -> Void
     private let onClose: () -> Void
-    private let onTapAction: (ContentBackgroundLayerAction?) -> Void
+    private let onTapAction: InAppMessageTapAction
 
     private var viewWillAppearWasCalled = false
 
@@ -63,7 +62,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
         id: String,
         imagesDict: [String: UIImage],
         onPresented: @escaping () -> Void,
-        onTapAction: @escaping (ContentBackgroundLayerAction?) -> Void,
+        onTapAction: @escaping InAppMessageTapAction,
         onClose: @escaping () -> Void
     ) {
         self.model = model
@@ -165,12 +164,18 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
 extension ModalViewController: GestureHandler {
     @objc
     func imageTapped(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? InAppImageOnlyView else {
+        guard let imageView = sender.view as? InAppImageOnlyView,
+              let action = imageView.action else {
             return
         }
 
-        let action = imageView.action
-        onTapAction(action)
+        guard let tapData = action.handleTap() else {
+            onTapAction(nil, "")
+            return
+        }
+
+        onTapAction(tapData.url, tapData.payload)
+        onClose()
     }
 
     @objc

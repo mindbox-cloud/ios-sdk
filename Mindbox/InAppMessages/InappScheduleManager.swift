@@ -7,17 +7,19 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 import UIKit
 
 internal struct ScheduledInapp {
     let inapp: InAppFormData
     let timer: DispatchSourceTimer
+    let processingDuration: TimeInterval
 }
 
 protocol InappScheduleManagerProtocol {
     var delegate: InAppMessagesDelegate? { get set }
-    func scheduleInApp(_ inAppFormData: InAppFormData)
+    func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -25,16 +27,22 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
     let trackingService: InAppTrackingServiceProtocol
+    let tracker: InAppMessagesTrackerProtocol
+    let failureManager: InappShowFailureManagerProtocol
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
          presentationValidator: InAppPresentationValidatorProtocol,
-         trackingService: InAppTrackingServiceProtocol) {
+         trackingService: InAppTrackingServiceProtocol,
+         tracker: InAppMessagesTrackerProtocol,
+         failureManager: InappShowFailureManagerProtocol) {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
         self.trackingService = trackingService
+        self.tracker = tracker
+        self.failureManager = failureManager
         addObserver()
     }
     
@@ -44,7 +52,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     
     weak var delegate: InAppMessagesDelegate?
     
-    func scheduleInApp(_ inapp: InAppFormData) {
+    func scheduleInApp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         let delay = getDelay(inapp.delayTime)
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
@@ -61,12 +69,12 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             }
         }
         
-        let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer)
+        let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer, processingDuration: processingDuration)
         
         queue.async {
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
             timer.resume()
-            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority)")
+            Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority) processingDuration=\(processingDuration.toTimeSpan())")
         }
     }
 }
@@ -86,28 +94,42 @@ internal extension InappScheduleManager {
                 self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
                                                            frequency: firstInapp.inapp.frequency,
                                                            id: firstInapp.inapp.inAppId) {
-                self.presentInapp(firstInapp.inapp)
+                let stopwatch = ForegroundStopwatch()
+                self.presentInapp(firstInapp.inapp, stopwatch: stopwatch, processingDuration: firstInapp.processingDuration)
             }
             
             for scheduledInapp in scheduledInapps {
                 scheduledInapp.timer.cancel()
             }
             
+            self.failureManager.clearFailures()
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
     
-    func presentInapp(_ inapp: InAppFormData) {
+    func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
-        
+        var didHandleOnError = false
+
         Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
-        
+
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
+                let presentationTime = stopwatch.elapsed
+                stopwatch.stop()
+                let timeToDisplay = processingDuration + presentationTime
+                let timeToDisplayString = timeToDisplay.toTimeSpan()
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
+                do {
+                    try self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
+                } catch {
+                    Logger.common(message: "[InappScheduleManager] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
+                }
                 self.trackingService.trackInAppShown(id: inapp.inAppId)
                 self.trackingService.saveInappStateChange()
+                self.failureManager.clearFailures()
             },
             onTapAction: { [delegate] url, payload in
                 delegate?.inAppMessageTapAction(
@@ -122,13 +144,18 @@ internal extension InappScheduleManager {
                 self.trackingService.saveInappStateChange()
             },
             onError: { error in
-                if case .failedToLoadWindow = error {
-                    SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                    Logger.common(
-                        message: "[InappScheduleManager] Failed to show window",
-                        level: .debug, category: .inAppMessages
-                    )
+                guard !didHandleOnError else {
+                    return
                 }
+                didHandleOnError = true
+
+                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                self.failureManager.addFailure(
+                    inappId: inapp.inAppId,
+                    reason: error.failureReason,
+                    details: error.failureDetails
+                )
+                self.failureManager.sendFailures()
             }
         )
     }

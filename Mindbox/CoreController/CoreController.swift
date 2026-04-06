@@ -119,6 +119,12 @@ final class CoreController {
     }
 
     private func primaryInitialization(with configutaion: MBConfiguration) {
+        if persistenceStorage.firstInitializationDateTime == nil {
+            let now = Date()
+            persistenceStorage.firstInitializationDateTime = now
+            Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
+        }
+
         // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
         let deviceUUID = generateDeviceUUID()
         startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)

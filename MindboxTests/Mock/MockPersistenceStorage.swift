@@ -67,6 +67,12 @@ class MockPersistenceStorage: PersistenceStorage {
             onDidChange?()
         }
     }
+
+    var firstInitializationDateTime: Date? {
+        didSet {
+            onDidChange?()
+        }
+    }
     
     var lastInfoUpdateDate: Date? {
         didSet {
@@ -115,4 +121,6 @@ class MockPersistenceStorage: PersistenceStorage {
     var applicationInfoUpdateVersion: Int?
     
     var applicationInstanceId: String?
+
+    var webViewLocalStateVersion: Int?
 }

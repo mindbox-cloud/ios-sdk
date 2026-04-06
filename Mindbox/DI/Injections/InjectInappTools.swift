@@ -74,6 +74,15 @@ extension MBContainer {
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
             return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
         }
+        
+        register(InappShowFailureManagerProtocol.self) {
+            let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+            let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+            return InappShowFailureManager(
+                databaseRepository: databaseRepository,
+                featureToggleManager: featureToggleManager
+            )
+        }
 
         return self
     }
@@ -89,20 +98,9 @@ extension MBContainer {
             return PresentationDisplayUseCase(tracker: tracker)
         }
 
-        register(UseCaseFactoryProtocol.self) {
-            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
-            return ActionUseCaseFactory(tracker: tracker)
-        }
-
-        register(InAppActionHandlerProtocol.self) {
-            let actionUseCaseFactory = DI.injectOrFail(UseCaseFactoryProtocol.self)
-            return InAppActionHandler(actionUseCaseFactory: actionUseCaseFactory)
-        }
-
         register(InAppPresentationManagerProtocol.self) {
-            let actionHandler = DI.injectOrFail(InAppActionHandlerProtocol.self)
             let displayUseCase = DI.injectOrFail(PresentationDisplayUseCase.self)
-            return InAppPresentationManager(actionHandler: actionHandler, displayUseCase: displayUseCase)
+            return InAppPresentationManager(displayUseCase: displayUseCase)
         }
         
         register(InAppPresentationValidatorProtocol.self) {
@@ -119,8 +117,16 @@ extension MBContainer {
             let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
             let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
             let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
+            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
+            let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
             
-            return InappScheduleManager(presentationManager: presentationManager, presentationValidator: presentationValidator, trackingService: inappTrackingService)
+            return InappScheduleManager(
+                presentationManager: presentationManager,
+                presentationValidator: presentationValidator,
+                trackingService: inappTrackingService,
+                tracker: tracker,
+                failureManager: failureManager
+            )
         }
 
         return self

@@ -46,7 +46,10 @@ class ImageDownloadServiceTests: XCTestCase {
             case .success(let image):
                 XCTFail("Expected failure, but got \(image) instead")
             case .failure(let error):
-                XCTAssertNotNil(error)
+                guard case .protocolError(let protocolError) = error else {
+                    return XCTFail("Expected protocolError, got \(error)")
+                }
+                XCTAssertEqual(protocolError.httpStatusCode, 404)
             }
             expectation.fulfill()
         }
