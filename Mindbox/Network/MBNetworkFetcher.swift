@@ -211,85 +211,128 @@ class MBNetworkFetcher: NetworkFetcher {
         needBaseResponse: Bool,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
-        if context.statusCode == .serverError {
-            let body = String(data: data, encoding: .utf8)
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
-            return
-        }
-
-        do {
-            try decodeResponseData(
+        switch context.statusCode {
+        case .success:
+            handleSuccessResponseData(
                 data,
                 context: context,
+                emptyData: emptyData,
                 needBaseResponse: needBaseResponse,
                 completion: completion
             )
-        } catch let decodingError {
-            handleDecodingError(
-                decodingError,
-                data: data,
+        case .clientError:
+            handleClientErrorResponseData(
+                data,
                 context: context,
-                emptyData: emptyData,
                 completion: completion
             )
+        case .serverError:
+            handleServerErrorResponseData(
+                data,
+                context: context,
+                completion: completion
+            )
+        case .redirection:
+            completion(.failure(.invalidResponse(context.response)))
         }
     }
 
-    private func decodeResponseData(
+    // MARK: - 2xx Success
+
+    private func handleSuccessResponseData(
         _ data: Data,
         context: ResponseContext,
+        emptyData: Bool,
         needBaseResponse: Bool,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
-    ) throws {
+    ) {
         if !needBaseResponse {
             completion(.success(data))
             return
         }
 
         let decoder = JSONDecoder()
-        // Decoding to structure with `status` field
-        let base = try decoder.decode(BaseResponse.self, from: data)
-        // Figure out what server returned
-        switch base.status {
-        case .success, .transactionAlreadyProcessed:
-            completion(.success(data))
-        case .validationError:
-            let error = try decoder.decode(ValidationError.self, from: data)
-            completion(.failure(.validationError(error)))
-        case .protocolError:
-            let error = try decoder.decode(ProtocolError.self, from: data)
-            completion(.failure(.protocolError(error)))
-        case .internalServerError:
-            let error = try decoder.decode(ProtocolError.self, from: data)
-            completion(.failure(.serverError(error)))
-        case .unknown:
-            completion(.failure(.invalidResponse(context.response)))
+        do {
+            let base = try decoder.decode(BaseResponse.self, from: data)
+            switch base.status {
+            case .success, .transactionAlreadyProcessed:
+                completion(.success(data))
+            case .validationError:
+                let error = try decoder.decode(ValidationError.self, from: data)
+                completion(.failure(.validationError(error)))
+            case .protocolError, .internalServerError, .unknown:
+                completion(.failure(.invalidResponse(context.response)))
+            }
+        } catch {
+            if emptyData {
+                completion(.success(data))
+            } else {
+                completion(.failure(.internalError(.init(errorKey: .parsing, rawError: error))))
+            }
         }
     }
 
-    private func handleDecodingError(
-        _ decodingError: Error,
-        data: Data,
+    // MARK: - 4xx Client Error
+
+    private func handleClientErrorResponseData(
+        _ data: Data,
         context: ResponseContext,
-        emptyData: Bool,
         completion: @escaping ((Result<Data, MindboxError>) -> Void)
     ) {
-        switch context.statusCode {
-        case .serverError:
-            let body = String(data: data, encoding: .utf8)
-            completion(.failure(internalServerError(httpStatusCode: context.httpResponse.statusCode, networkTimeMs: context.networkTimeMs, responseBody: body)))
-        default:
-            if emptyData {
-                completion(.success(data))
-            } else if context.httpResponse.statusCode == 404 {
+        let httpCode = context.httpResponse.statusCode
+        let decoder = JSONDecoder()
+
+        do {
+            let base = try decoder.decode(BaseResponse.self, from: data)
+            switch base.status {
+            case .protocolError:
+                let error = try decoder.decode(ProtocolError.self, from: data)
+                completion(.failure(.protocolError(error)))
+            case .validationError:
+                let error = try decoder.decode(ValidationError.self, from: data)
+                completion(.failure(.validationError(error)))
+            default:
+                completion(.failure(.protocolError(.init(
+                    status: .protocolError,
+                    errorMessage: "Client error",
+                    httpStatusCode: httpCode
+                ))))
+            }
+        } catch {
+            if httpCode == 404 {
                 completion(.failure(.protocolError(.init(
                     status: .protocolError,
                     errorMessage: "Invalid request url",
-                    httpStatusCode: context.httpResponse.statusCode
+                    httpStatusCode: httpCode
                 ))))
             } else {
-                completion(.failure(.internalError(.init(errorKey: .parsing, rawError: decodingError))))
+                completion(.failure(.protocolError(.init(
+                    status: .protocolError,
+                    errorMessage: "Client error",
+                    httpStatusCode: httpCode
+                ))))
             }
+        }
+    }
+
+    // MARK: - 5xx Server Error
+
+    private func handleServerErrorResponseData(
+        _ data: Data,
+        context: ResponseContext,
+        completion: @escaping ((Result<Data, MindboxError>) -> Void)
+    ) {
+        let decoder = JSONDecoder()
+        do {
+            let error = try decoder.decode(ProtocolError.self, from: data)
+            completion(.failure(.serverError(error)))
+        } catch {
+            let body = String(data: data, encoding: .utf8)
+            completion(.failure(internalServerError(
+                httpStatusCode: context.httpResponse.statusCode,
+                networkTimeMs: context.networkTimeMs,
+                responseBody: body
+            )))
         }
     }
 

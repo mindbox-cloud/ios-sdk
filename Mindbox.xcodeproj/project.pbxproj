@@ -10,6 +10,7 @@
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
 		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
+		1E3BD63AB3F1521C253CB818 /* MBNetworkFetcherResponseHandlingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */; };
 		302E35788CBDA959283569F4 /* MotionServiceBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DB93A7997961CA7C2BE917 /* MotionServiceBehaviorTests.swift */; };
 		313B233A25ADEA0F00A1CB72 /* Mindbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313B233025ADEA0F00A1CB72 /* Mindbox.framework */; };
 		313B233F25ADEA0F00A1CB72 /* MindboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */; };
@@ -1054,6 +1055,7 @@
 		84FCD3B825CA109E00D1E574 /* MockNetworkFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkFetcher.swift; sourceTree = "<group>"; };
 		84FCD3BC25CA10F600D1E574 /* SuccessResponse.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SuccessResponse.json; sourceTree = "<group>"; };
 		9778038796A8426ABDED1E97 /* FeatureTogglesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTogglesModel.swift; sourceTree = "<group>"; };
+		97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBNetworkFetcherResponseHandlingTests.swift; sourceTree = "<group>"; };
 		9B24FAAB28C74B8300F10B5D /* InAppConfigurationRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationRepository.swift; sourceTree = "<group>"; };
 		9B24FAAD28C74BA500F10B5D /* InAppCoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppCoreManager.swift; sourceTree = "<group>"; };
 		9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationManager.swift; sourceTree = "<group>"; };
@@ -1613,6 +1615,7 @@
 				84DC49D525D185A600D5D758 /* Supporting Files */,
 				313B234025ADEA0F00A1CB72 /* Info.plist */,
 				73662EFB100A1A3520058D4E /* TrackVisitManager */,
+				64FD3F7576619DCF106D10B6 /* Network */,
 			);
 			path = MindboxTests;
 			sourceTree = "<group>";
@@ -2247,6 +2250,15 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		64FD3F7576619DCF106D10B6 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */,
+			);
+			name = Network;
+			path = Network;
 			sourceTree = "<group>";
 		};
 		73662EFB100A1A3520058D4E /* TrackVisitManager */ = {
@@ -4709,6 +4721,7 @@
 				0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */,
 				0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */,
 				302E35788CBDA959283569F4 /* MotionServiceBehaviorTests.swift in Sources */,
+				1E3BD63AB3F1521C253CB818 /* MBNetworkFetcherResponseHandlingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
