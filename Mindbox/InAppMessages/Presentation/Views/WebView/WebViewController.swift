@@ -87,6 +87,26 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupWebView() {
+        // Try to claim a pre-rendered WebView first
+        if let holder = DI.inject(PrerenderedWebViewHolderProtocol.self),
+           let prerendered = holder.claim(inAppId: id) {
+            let webView = prerendered.transparentView
+            view.addSubview(webView)
+            setupConstraints(for: webView, in: view)
+
+            webView.delegate = self
+            webView.webViewAction = self
+            webView.updateOperation(operation)
+            webView.completeReadyHandshake()
+
+            self.transparentWebView = webView
+            Logger.common(
+                message: "[WebView Prerender] Claimed pre-rendered view for inAppId=\(id)",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
         guard let layer = model.content.background.layers.first else {
             reportErrorAndClose(
                 .webviewPresentationFailed("[WebView] Missing background layer for in-app id \(id).")

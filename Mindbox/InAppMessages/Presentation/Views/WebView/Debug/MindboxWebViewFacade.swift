@@ -49,6 +49,8 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
+    func loadHTMLFromCache(html: String, baseUrl: String, onFailure: @escaping () -> Void)
+    func updateOperation(_ operation: (name: String, body: String)?)
 }
 
 @_spi(Internal)
@@ -74,7 +76,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let params: [String: JSONValue]?
-    private let operation: (name: String, body: String)?
+    private var operation: (name: String, body: String)?
     private let inAppId: String
 
     private let log: WebViewLog
@@ -153,6 +155,21 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         }
     }
     
+    public func loadHTMLFromCache(html: String, baseUrl: String, onFailure: @escaping () -> Void) {
+        let url = URL(string: baseUrl)
+        DispatchQueue.main.async { [weak webView] in
+            guard let webView else {
+                onFailure()
+                return
+            }
+            webView.loadHTMLString(html, baseURL: url)
+        }
+    }
+
+    public func updateOperation(_ operation: (name: String, body: String)?) {
+        self.operation = operation
+    }
+
     public func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {
         webView.isOpaque = false
         webView.backgroundColor = .clear
@@ -307,11 +324,17 @@ extension MindboxWebViewFacade {
 
     private func fetchHTML(from urlString: String,
                            completion: @escaping (String?) -> Void) {
+        if let cached = DI.inject(WebViewContentPreloaderProtocol.self)?.cachedHTML(for: urlString) {
+            log("[WebView Preload] Using cached HTML for \(urlString)")
+            completion(cached)
+            return
+        }
+
         guard let url = URL(string: urlString) else {
             completion(nil)
             return
         }
-        
+
         let config = URLSessionConfiguration.ephemeral
         config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         config.urlCache = nil

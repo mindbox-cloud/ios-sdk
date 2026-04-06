@@ -33,19 +33,25 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
     private let featureToggleManager: FeatureToggleManager
+    private let contentPreloader: WebViewContentPreloaderProtocol?
+    private let prerenderedHolder: PrerenderedWebViewHolderProtocol?
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inappMapper: InappMapperProtocol?,
         persistenceStorage: PersistenceStorage,
-        featureToggleManager: FeatureToggleManager
+        featureToggleManager: FeatureToggleManager,
+        contentPreloader: WebViewContentPreloaderProtocol? = nil,
+        prerenderedHolder: PrerenderedWebViewHolderProtocol? = nil
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.persistenceStorage = persistenceStorage
         self.featureToggleManager = featureToggleManager
+        self.contentPreloader = contentPreloader
+        self.prerenderedHolder = prerenderedHolder
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -88,6 +94,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 configResponse = config
                 saveConfigToCache(data)
                 setupSettingsFromConfig(config.settings)
+                preloadWebViewContent(from: config)
                 if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
                     logsManager.sendLogs(logs: monitoring.logs.elements)
                 }
@@ -122,6 +129,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
         
         configResponse = cachedConfig
+        preloadWebViewContent(from: cachedConfig)
     }
 
     private func fetchConfigFromCache() -> ConfigResponse? {
@@ -164,6 +172,19 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         featureToggleManager.applyFeatureToggles(settings.featureToggles)
         
         saveConfigSessionToCache(settings.slidingExpiration?.config)
+    }
+
+    private func preloadWebViewContent(from config: ConfigResponse) {
+        contentPreloader?.invalidateCache()
+        contentPreloader?.preloadContent(from: config)
+
+        // Pre-render after a short delay to allow HTML downloads to complete
+        let holder = prerenderedHolder
+        let configCopy = config
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            holder?.invalidate()
+            holder?.prerender(from: configCopy)
+        }
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03FD8DEDA3F76976EA196D0A /* PrerenderedWebViewHolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */; };
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
 		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
@@ -255,6 +256,7 @@
 		6182078DDFC681D168546DB0 /* HapticRequestValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400B /* HapticRequestValidator.swift */; };
 		6182078DDFC681D168546DB1 /* HapticRequestParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */; };
 		6182078DDFC681D168546DB2 /* HapticRequestValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED400D /* HapticRequestValidatorTests.swift */; };
+		69A184BC09A1B2247A9C50C5 /* WebViewContentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003228420021A3AADAEA07EB /* WebViewContentCache.swift */; };
 		6F1EAA16266A670E007A335B /* ProductListItemsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */; };
 		6FDD143B266F7BD900A50C35 /* ProcessingStatusResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */; };
 		6FDD143D266F7BEB00A50C35 /* ItemResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */; };
@@ -279,6 +281,7 @@
 		6FDD1463266F7CED00A50C35 /* ProductElementReponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD1462266F7CED00A50C35 /* ProductElementReponse.swift */; };
 		6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD1464266F7CFE00A50C35 /* ItemProductResponse.swift */; };
 		813FE960DC0543F681C94275 /* SettingsRequestParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FC619AC23245CC8CD45E63 /* SettingsRequestParser.swift */; };
+		81D99E3E4297AD4ED77434B6 /* WebViewContentPreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E010A23B3C5142D2EEB5F4CA /* WebViewContentPreloader.swift */; };
 		840042A12614CE0000CA17C5 /* ClickNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840042A02614CE0000CA17C5 /* ClickNotificationManager.swift */; };
 		840C387225CC1AF200D50183 /* CDEvent+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387025CC1AF200D50183 /* CDEvent+CoreDataClass.swift */; };
 		840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C387125CC1AF200D50183 /* CDEvent+CoreDataProperties.swift */; };
@@ -727,6 +730,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		003228420021A3AADAEA07EB /* WebViewContentCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewContentCache.swift; sourceTree = "<group>"; };
 		0475E8755F63483597539A50 /* TrackVisitManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackVisitManagerTests.swift; sourceTree = "<group>"; };
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewLocalStateStorageTests.swift; sourceTree = "<group>"; };
@@ -826,6 +830,7 @@
 		33E42E5B268323E60046CBCB /* CashdeskRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashdeskRequest.swift; sourceTree = "<group>"; };
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
 		3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureToggleManager.swift; sourceTree = "<group>"; };
+		3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrerenderedWebViewHolder.swift; sourceTree = "<group>"; };
 		472179A62C80755A00C15E7F /* ShownInAppsIDsMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIDsMigration.swift; sourceTree = "<group>"; };
 		472765512E0D52A500A5A060 /* RemoveBackgroundTaskDataMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveBackgroundTaskDataMigration.swift; sourceTree = "<group>"; };
 		472F549D2C6E272A0008C465 /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
@@ -1186,6 +1191,7 @@
 		D2F7E2462BADB9EF00B24BB8 /* UserVisitManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserVisitManagerTests.swift; sourceTree = "<group>"; };
 		D2F7E2492BADC2AB00B24BB8 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		D2F7E24B2BADC4CA00B24BB8 /* MockSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSessionManager.swift; sourceTree = "<group>"; };
+		E010A23B3C5142D2EEB5F4CA /* WebViewContentPreloader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewContentPreloader.swift; sourceTree = "<group>"; };
 		F0DB93A7997961CA7C2BE917 /* MotionServiceBehaviorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MotionServiceBehaviorTests.swift; sourceTree = "<group>"; };
 		F30005432CFF3F7D004BE915 /* ABTestStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestStubs.swift; sourceTree = "<group>"; };
 		F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFrequencyTests.swift; sourceTree = "<group>"; };
@@ -1509,6 +1515,15 @@
 			path = FeatureToggleManager;
 			sourceTree = "<group>";
 		};
+		0A27450496A16B26F87C3D93 /* Prerender */ = {
+			isa = PBXGroup;
+			children = (
+				3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */,
+			);
+			name = Prerender;
+			path = Prerender;
+			sourceTree = "<group>";
+		};
 		2B4C84F6EDD4B7D977F67A95 /* WebView */ = {
 			isa = PBXGroup;
 			children = (
@@ -1521,6 +1536,16 @@
 				F0DB93A7997961CA7C2BE917 /* MotionServiceBehaviorTests.swift */,
 			);
 			path = WebView;
+			sourceTree = "<group>";
+		};
+		302A3F06CC6A65789BB57E45 /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				003228420021A3AADAEA07EB /* WebViewContentCache.swift */,
+				E010A23B3C5142D2EEB5F4CA /* WebViewContentPreloader.swift */,
+			);
+			name = Cache;
+			path = Cache;
 			sourceTree = "<group>";
 		};
 		313B232625ADEA0F00A1CB72 = {
@@ -3024,6 +3049,8 @@
 				CB3F1C529E728059367459B7 /* Haptic */,
 				8BBC34EAB0824F46BF68D563 /* Settings */,
 				A1B2C3D4E5F6A7B8C9D0E1F4 /* Motion */,
+				302A3F06CC6A65789BB57E45 /* Cache */,
+				0A27450496A16B26F87C3D93 /* Prerender */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -4596,6 +4623,9 @@
 				6182078DDFC681D168546DAF /* HapticRequestParser.swift in Sources */,
 				6182078DDFC681D168546DB0 /* HapticRequestValidator.swift in Sources */,
 				813FE960DC0543F681C94275 /* SettingsRequestParser.swift in Sources */,
+				69A184BC09A1B2247A9C50C5 /* WebViewContentCache.swift in Sources */,
+				81D99E3E4297AD4ED77434B6 /* WebViewContentPreloader.swift in Sources */,
+				03FD8DEDA3F76976EA196D0A /* PrerenderedWebViewHolder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

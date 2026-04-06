@@ -24,6 +24,8 @@ final class TransparentView: UIView {
     private let inAppId: String
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
+    private(set) var isPreloadMode: Bool
+    private(set) var pendingReadyId: UUID?
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -37,11 +39,12 @@ final class TransparentView: UIView {
         return service
     }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, isPreloadMode: Bool = false) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
         self.inAppId = inAppId
+        self.isPreloadMode = isPreloadMode
         super.init(frame: frame)
         commonInit()
     }
@@ -51,6 +54,7 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.isPreloadMode = false
         super.init(frame: frame)
         commonInit()
     }
@@ -60,6 +64,7 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.isPreloadMode = false
         super.init(coder: coder)
         commonInit()
     }
@@ -96,6 +101,39 @@ final class TransparentView: UIView {
                 reason: "[WebView] Failed to load HTML content from baseUrl=\(baseUrl), contentUrl=\(contentUrl)"
             )
         }
+    }
+
+    func loadHTMLFromCache(html: String, baseUrl: String) {
+        facade?.loadHTMLFromCache(html: html, baseUrl: baseUrl) { [weak self] in
+            self?.quizInitTimeoutWorkItem?.cancel()
+            self?.delegate?.closeLoadFailedWebViewVC(
+                reason: "[WebView] Failed to load cached HTML for baseUrl=\(baseUrl)"
+            )
+        }
+    }
+
+    func completeReadyHandshake() {
+        guard let readyId = pendingReadyId else {
+            Logger.common(
+                message: "[WebView Prerender] completeReadyHandshake called but no pending ready ID",
+                level: .default,
+                category: .webViewInAppMessages
+            )
+            return
+        }
+        isPreloadMode = false
+        pendingReadyId = nil
+        setupTimeoutTimer()
+        facade?.sendReadyEvent(id: readyId)
+        Logger.common(
+            message: "[WebView Prerender] Handshake completed for inAppId=\(inAppId)",
+            category: .webViewInAppMessages
+        )
+    }
+
+    func updateOperation(_ operation: (name: String, body: String)?) {
+        self.operation = operation
+        facade?.updateOperation(operation)
     }
 
     func cleanUp() {
@@ -182,7 +220,16 @@ extension TransparentView: WebBridgeMessageDelegate {
         case .hide:
             webViewAction?.onHide()
         case .ready:
-            facade?.sendReadyEvent(id: message.id)
+            if isPreloadMode {
+                pendingReadyId = message.id
+                quizInitTimeoutWorkItem?.cancel()
+                Logger.common(
+                    message: "[WebView Prerender] Ready received, holding handshake for inAppId=\(inAppId)",
+                    category: .webViewInAppMessages
+                )
+            } else {
+                facade?.sendReadyEvent(id: message.id)
+            }
 
         // Info
         case .log:
