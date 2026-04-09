@@ -45,16 +45,45 @@
 | Показ | JS рендерит контент → `init` → окно видимо | ~0.3s после триггера |
 | Re-warm | После закрытия — подготовить новый warm WebView | Фон, ~0.5-0.7s (bytecode cache) |
 
-### Замеры (реальное устройство)
+### Замеры (реальное устройство, симулятор iPhone 16)
 
-| Метрика | Без оптимизации | С Warm WebView | Разница |
-|---------|----------------|----------------|---------|
-| **Время показа** | **~2.2s** | **~0.3s** | **-86%** |
-| JS рендер (ready→init) | ~970ms | ~300ms* | — |
-| Hit rate | 33% (1 pre-rendered) | 100% | — |
-| Память | 30-50MB | 30-50MB (та же) | 0 |
+Замеры `timeToDisplay` (= processingTime + presentationTime), 4 прогона на один inapp:
 
-*0.3s — при warm hit. ~1.0s — с учетом JS рендера на текущей версии JS.
+#### develop (cold start, без оптимизации)
+
+| # | processingTime | presentationTime | timeToDisplay |
+|---|---------------|-----------------|---------------|
+| 1 | 16.5ms | 2336ms | 2353ms |
+| 2 | 10.4ms | 2333ms | 2343ms |
+| 3 | 15.9ms | 2178ms | 2194ms |
+| 4 | 13.2ms | 2379ms | 2392ms |
+| **avg** | **14ms** | **2307ms** | **2321ms** |
+
+#### feature/MOBILE-0000-MVP-CachedWebView (warm hit — тот же inapp)
+
+| # | processingTime | presentationTime | timeToDisplay |
+|---|---------------|-----------------|---------------|
+| 1 | 16.2ms | 1105ms | 1121ms |
+| 2 | 15.8ms | 1252ms | 1267ms |
+| 3 | 15.0ms | 1293ms | 1308ms |
+| 4 | 14.2ms | 1084ms | 1098ms |
+| **avg** | **15ms** | **1184ms** | **1199ms** |
+
+#### feature — cache miss (другой inapp, warm WebView занят)
+
+| # | processingTime | presentationTime | timeToDisplay |
+|---|---------------|-----------------|---------------|
+| 1 | 15.4ms | 1763ms | 1778ms |
+
+#### Итоговое сравнение
+
+| Сценарий | timeToDisplay | vs develop | Источник выигрыша |
+|----------|--------------|------------|-------------------|
+| develop (cold) | **2321ms** | baseline | — |
+| feature, warm hit | **1199ms** | **−48% / −1.12s** | HTML cache + pre-warmed WebView |
+| feature, cache miss | **1778ms** | **−24% / −0.54s** | HTML cache (без fetch по сети) |
+
+`processingTime` (~14-16ms) не изменился — вся оптимизация в `presentationTime`.
 
 ### Что SDK уже не может оптимизировать
 
@@ -166,6 +195,20 @@ SchemeHandler отдает файлы из disk cache
 
 ---
 
+## Стратегии при разных HTML+JS шаблонах
+
+Текущая архитектура держится на допущении: **все webview in-app'ы шарят один HTML+JS**. Если это не так:
+
+| Стратегия | Суть | Hit rate | Память | Когда применять |
+|-----------|------|----------|--------|-----------------|
+| **Pool warm WebViews** | Один warm WebView на каждый уникальный contentUrl | 100% | N × 50MB | N ≤ 3 шаблонов |
+| **Claim + URL check** | claim() проверяет совпадение URL; промах → cold start + async rewarm нужного URL | ~50-80% | 50MB | Универсально, низкая сложность |
+| **HTML cache only** | Отказаться от pre-warming, оставить только WebViewContentCache | 0% (WV) | ~0 | Универсально, уже работает как fallback |
+
+HTML cache (−24% от baseline) работает всегда как страховка независимо от стратегии.
+
+---
+
 ## Открытые вопросы
 
 | # | Вопрос | Кому | Влияние |
@@ -200,10 +243,11 @@ SchemeHandler отдает файлы из disk cache
 
 ## Метрики для отслеживания
 
-| Метрика | Текущее значение | Целевое значение |
-|---------|-----------------|-----------------|
-| `timeToDisplay` (warm hit) | 2.0-2.5s | <0.5s |
-| `timeToDisplay` (cold) | 2.0-2.5s | <1.5s |
-| Hit rate | ~33% | 100% |
-| Offline-показ | Невозможен | Работает |
-| Доп. память | 0 | ~30-50MB (1 warm WebView) |
+| Метрика | develop (baseline) | feature (warm hit) | feature (cache miss) | Целевое |
+|---------|-------------------|-------------------|---------------------|---------|
+| `timeToDisplay` | 2321ms | **1199ms (−48%)** | 1778ms (−24%) | <500ms |
+| `presentationTime` | 2307ms | 1184ms | 1763ms | — |
+| `processingTime` | 14ms | 15ms | 15ms | — |
+| Hit rate | ~33% | 100% | — | 100% |
+| Offline-показ | Невозможен | Невозможен | Невозможен | Работает |
+| Доп. память | 0 | ~30-50MB | ~30-50MB | ~30-50MB |
