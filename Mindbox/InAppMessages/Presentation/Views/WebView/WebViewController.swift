@@ -87,26 +87,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupWebView() {
-        // Try to claim a pre-rendered WebView first
-        if let holder = DI.inject(PrerenderedWebViewHolderProtocol.self),
-           let prerendered = holder.claim(inAppId: id) {
-            let webView = prerendered.transparentView
-            view.addSubview(webView)
-            setupConstraints(for: webView, in: view)
-
-            webView.delegate = self
-            webView.webViewAction = self
-            webView.updateOperation(operation)
-            webView.completeReadyHandshake()
-
-            self.transparentWebView = webView
-            Logger.common(
-                message: "[WebView Prerender] Claimed pre-rendered view for inAppId=\(id)",
-                category: .webViewInAppMessages
-            )
-            return
-        }
-
         guard let layer = model.content.background.layers.first else {
             reportErrorAndClose(
                 .webviewPresentationFailed("[WebView] Missing background layer for in-app id \(id).")
@@ -114,27 +94,45 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
             return
         }
 
-        switch layer {
-        case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
-            view.addSubview(webView)
-
-            setupConstraints(for: webView, in: view)
-
-            webView.delegate = self
-            webView.webViewAction = self
-            webView.loadHTMLPage(
-                baseUrl: webviewLayer.baseUrl,
-                contentUrl: webviewLayer.contentUrl
-            )
-
-            self.transparentWebView = webView
-        default:
+        guard case .webview(let webviewLayer) = layer else {
             reportErrorAndClose(
                 .webviewPresentationFailed("[WebView] Invalid background layer type for in-app id \(id).")
             )
             return
         }
+
+        // Try to claim a warm WebView — one pre-loaded view serves any in-app
+        if let holder = DI.inject(WarmWebViewHolderProtocol.self),
+           let warmView = holder.claim(inAppId: id, params: webviewLayer.params, operation: operation) {
+            view.addSubview(warmView)
+            setupConstraints(for: warmView, in: view)
+
+            warmView.delegate = self
+            warmView.webViewAction = self
+            warmView.completeReadyHandshake()
+
+            self.transparentWebView = warmView
+            Logger.common(
+                message: "[Warm WebView] Using warm view for inAppId=\(id)",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
+        // Fallback: standard cold flow
+        let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
+        view.addSubview(webView)
+
+        setupConstraints(for: webView, in: view)
+
+        webView.delegate = self
+        webView.webViewAction = self
+        webView.loadHTMLPage(
+            baseUrl: webviewLayer.baseUrl,
+            contentUrl: webviewLayer.contentUrl
+        )
+
+        self.transparentWebView = webView
     }
 
     private func setupConstraints(for view: UIView, in parentView: UIView) {

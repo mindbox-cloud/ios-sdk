@@ -9,6 +9,13 @@
 import UIKit
 import WebKit
 
+/// Shared process pool for all SDK WebViews.
+/// Enables JSC bytecode cache and HTTP cache sharing between WKWebView instances,
+/// which significantly reduces JS parse/compile time for pages loading the same scripts.
+enum SharedWebViewProcessPool {
+    static let pool = WKProcessPool()
+}
+
 private enum PayloadKey {
     static let sdkVersion = "sdkVersion"
     static let sdkVersionNumeric = "sdkVersionNumeric"
@@ -50,6 +57,8 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
     func loadHTMLFromCache(html: String, baseUrl: String, onFailure: @escaping () -> Void)
+    func updateInAppId(_ inAppId: String)
+    func updateParams(_ params: [String: JSONValue]?)
     func updateOperation(_ operation: (name: String, body: String)?)
 }
 
@@ -75,9 +84,9 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
-    private let params: [String: JSONValue]?
+    private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
-    private let inAppId: String
+    private var inAppId: String
 
     private let log: WebViewLog
     private let logError: WebViewLogError
@@ -89,6 +98,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         let config = WKWebViewConfiguration()
+        config.processPool = SharedWebViewProcessPool.pool
         config.websiteDataStore = .nonPersistent()
         config.applicationNameForUserAgent = userAgent
         config.allowsInlineMediaPlayback = true
@@ -164,6 +174,14 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
             }
             webView.loadHTMLString(html, baseURL: url)
         }
+    }
+
+    public func updateInAppId(_ inAppId: String) {
+        self.inAppId = inAppId
+    }
+
+    public func updateParams(_ params: [String: JSONValue]?) {
+        self.params = params
     }
 
     public func updateOperation(_ operation: (name: String, body: String)?) {

@@ -23,11 +23,18 @@ protocol PrerenderedWebViewHolderProtocol: AnyObject {
 
 final class PrerenderedWebViewHolder: PrerenderedWebViewHolderProtocol {
 
-    private var prerenderedView: PrerenderedWebView?
+    /// Maximum number of pre-rendered WebViews to keep in the pool.
+    /// Each additional WKWebView in a shared process pool costs ~10-15MB.
+    /// Default 3 = ~30-45MB overhead.
+    static let defaultMaxPoolSize = 3
+
+    private var pool: [String: PrerenderedWebView] = [:]  // inAppId → PrerenderedWebView
+    private let maxPoolSize: Int
     private let preloader: WebViewContentPreloaderProtocol
 
-    init(preloader: WebViewContentPreloaderProtocol) {
+    init(preloader: WebViewContentPreloaderProtocol, maxPoolSize: Int = PrerenderedWebViewHolder.defaultMaxPoolSize) {
         self.preloader = preloader
+        self.maxPoolSize = maxPoolSize
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveMemoryWarning),
@@ -41,100 +48,120 @@ final class PrerenderedWebViewHolder: PrerenderedWebViewHolderProtocol {
     }
 
     func prerender(from config: ConfigResponse) {
-        guard let candidate = selectCandidate(from: config) else {
+        let candidates = selectCandidates(from: config, limit: maxPoolSize)
+
+        if candidates.isEmpty {
             Logger.common(
-                message: "[WebView Prerender] No webview in-app candidate found for pre-rendering",
+                message: "[WebView Prerender] No webview in-app candidates found for pre-rendering",
                 level: .debug,
                 category: .webViewInAppMessages
             )
             return
         }
-
-        guard let cachedHTML = preloader.cachedHTML(for: candidate.webviewLayer.contentUrl) else {
-            Logger.common(
-                message: "[WebView Prerender] HTML not yet cached for \(candidate.webviewLayer.contentUrl), skipping pre-render",
-                level: .debug,
-                category: .webViewInAppMessages
-            )
-            return
-        }
-
-        let userAgent = createUserAgent()
-        let transparentView = TransparentView(
-            frame: .zero,
-            params: candidate.webviewLayer.params,
-            userAgent: userAgent,
-            operation: nil,
-            inAppId: candidate.inAppId,
-            isPreloadMode: true
-        )
-
-        transparentView.loadHTMLFromCache(
-            html: cachedHTML,
-            baseUrl: candidate.webviewLayer.baseUrl
-        )
-
-        self.prerenderedView = PrerenderedWebView(
-            transparentView: transparentView,
-            webviewLayer: candidate.webviewLayer,
-            inAppId: candidate.inAppId
-        )
 
         Logger.common(
-            message: "[WebView Prerender] Pre-rendering started for inAppId=\(candidate.inAppId)",
+            message: "[WebView Prerender] Starting pre-render for \(candidates.count) candidate(s) (pool max=\(maxPoolSize))",
             category: .webViewInAppMessages
         )
+
+        let userAgent = createUserAgent()
+
+        for candidate in candidates {
+            // Skip if already prerendered
+            if pool[candidate.inAppId] != nil {
+                continue
+            }
+
+            guard let cachedHTML = preloader.cachedHTML(for: candidate.webviewLayer.contentUrl) else {
+                Logger.common(
+                    message: "[WebView Prerender] HTML not yet cached for \(candidate.webviewLayer.contentUrl), skipping pre-render",
+                    level: .debug,
+                    category: .webViewInAppMessages
+                )
+                continue
+            }
+
+            let transparentView = TransparentView(
+                frame: .zero,
+                params: candidate.webviewLayer.params,
+                userAgent: userAgent,
+                operation: nil,
+                inAppId: candidate.inAppId,
+                isPreloadMode: true
+            )
+
+            transparentView.loadHTMLFromCache(
+                html: cachedHTML,
+                baseUrl: candidate.webviewLayer.baseUrl
+            )
+
+            pool[candidate.inAppId] = PrerenderedWebView(
+                transparentView: transparentView,
+                webviewLayer: candidate.webviewLayer,
+                inAppId: candidate.inAppId
+            )
+
+            Logger.common(
+                message: "[WebView Prerender] Pre-rendering started for inAppId=\(candidate.inAppId) (pool size: \(pool.count)/\(maxPoolSize))",
+                category: .webViewInAppMessages
+            )
+        }
     }
 
     func hasPrerendered(inAppId: String) -> Bool {
-        prerenderedView?.inAppId == inAppId
+        pool[inAppId] != nil
     }
 
     func claim(inAppId: String) -> PrerenderedWebView? {
-        guard let view = prerenderedView, view.inAppId == inAppId else {
+        guard let view = pool.removeValue(forKey: inAppId) else {
             Logger.common(
-                message: "[WebView Prerender] Claim miss for inAppId=\(inAppId), using standard flow",
+                message: "[WebView Prerender] Claim miss for inAppId=\(inAppId) (pool has: \(Array(pool.keys))), using standard flow",
                 category: .webViewInAppMessages
             )
             return nil
         }
 
-        let claimed = prerenderedView
-        prerenderedView = nil
-
         Logger.common(
-            message: "[WebView Prerender] Claimed pre-rendered view for inAppId=\(inAppId)",
+            message: "[WebView Prerender] Claimed pre-rendered view for inAppId=\(inAppId) (pool size: \(pool.count)/\(maxPoolSize))",
             category: .webViewInAppMessages
         )
 
-        return claimed
+        return view
     }
 
     func invalidate() {
-        if let view = prerenderedView {
+        for (inAppId, view) in pool {
             view.transparentView.cleanUp()
             Logger.common(
-                message: "[WebView Prerender] Invalidated pre-rendered view for inAppId=\(view.inAppId)",
+                message: "[WebView Prerender] Invalidated pre-rendered view for inAppId=\(inAppId)",
                 category: .webViewInAppMessages
             )
         }
-        prerenderedView = nil
+        pool.removeAll()
     }
 
     // MARK: - Private
 
     @objc
     private func didReceiveMemoryWarning() {
+        Logger.common(
+            message: "[WebView Prerender] Memory warning received, evicting \(pool.count) pre-rendered view(s)",
+            level: .default,
+            category: .webViewInAppMessages
+        )
         invalidate()
     }
 
-    /// Selects the best candidate for pre-rendering.
-    /// Priority: first in-app with `isPriority == true` that has a webview layer;
-    /// fallback: first in-app with a webview layer.
-    private func selectCandidate(from config: ConfigResponse) -> (inAppId: String, webviewLayer: WebviewContentBackgroundLayer)? {
-        guard let inapps = config.inapps?.elements else { return nil }
+    /// Selects up to `limit` candidates for pre-rendering.
+    /// Priority in-apps come first, then the rest in config order.
+    private func selectCandidates(
+        from config: ConfigResponse,
+        limit: Int
+    ) -> [(inAppId: String, webviewLayer: WebviewContentBackgroundLayer)] {
+        guard let inapps = config.inapps?.elements else { return [] }
 
-        var firstWebviewCandidate: (inAppId: String, webviewLayer: WebviewContentBackgroundLayer)?
+        var priorityCandidates: [(inAppId: String, webviewLayer: WebviewContentBackgroundLayer)] = []
+        var regularCandidates: [(inAppId: String, webviewLayer: WebviewContentBackgroundLayer)] = []
 
         for inapp in inapps {
             guard let variants = inapp.form.variants else { continue }
@@ -161,19 +188,20 @@ final class PrerenderedWebViewHolder: PrerenderedWebViewHolderProtocol {
                             params: webviewDTO.params ?? [:]
                         )
 
-                        if inapp.isPriority {
-                            return (inapp.id, domainLayer)
-                        }
+                        let candidate = (inapp.id, domainLayer)
 
-                        if firstWebviewCandidate == nil {
-                            firstWebviewCandidate = (inapp.id, domainLayer)
+                        if inapp.isPriority {
+                            priorityCandidates.append(candidate)
+                        } else {
+                            regularCandidates.append(candidate)
                         }
                     }
                 }
             }
         }
 
-        return firstWebviewCandidate
+        let allCandidates = priorityCandidates + regularCandidates
+        return Array(allCandidates.prefix(limit))
     }
 
     private func createUserAgent() -> String {

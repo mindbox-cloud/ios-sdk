@@ -21,11 +21,12 @@ final class TransparentView: UIView {
     private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
     private let userAgent: String
-    private let inAppId: String
+    private var inAppId: String
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
     private(set) var isPreloadMode: Bool
     private(set) var pendingReadyId: UUID?
+    var onReadyInPreloadMode: (() -> Void)?
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -131,6 +132,16 @@ final class TransparentView: UIView {
         )
     }
 
+    func updateInAppId(_ inAppId: String) {
+        self.inAppId = inAppId
+        facade?.updateInAppId(inAppId)
+    }
+
+    func updateParams(_ params: [String: JSONValue]) {
+        self.params = params
+        facade?.updateParams(params)
+    }
+
     func updateOperation(_ operation: (name: String, body: String)?) {
         self.operation = operation
         facade?.updateOperation(operation)
@@ -223,6 +234,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             if isPreloadMode {
                 pendingReadyId = message.id
                 quizInitTimeoutWorkItem?.cancel()
+                onReadyInPreloadMode?()
                 Logger.common(
                     message: "[WebView Prerender] Ready received, holding handshake for inAppId=\(inAppId)",
                     category: .webViewInAppMessages

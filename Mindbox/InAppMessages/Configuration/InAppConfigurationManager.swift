@@ -34,7 +34,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let persistenceStorage: PersistenceStorage
     private let featureToggleManager: FeatureToggleManager
     private let contentPreloader: WebViewContentPreloaderProtocol?
-    private let prerenderedHolder: PrerenderedWebViewHolderProtocol?
+    private let warmHolder: WarmWebViewHolderProtocol?
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
@@ -43,7 +43,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         persistenceStorage: PersistenceStorage,
         featureToggleManager: FeatureToggleManager,
         contentPreloader: WebViewContentPreloaderProtocol? = nil,
-        prerenderedHolder: PrerenderedWebViewHolderProtocol? = nil
+        warmHolder: WarmWebViewHolderProtocol? = nil
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
@@ -51,7 +51,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.persistenceStorage = persistenceStorage
         self.featureToggleManager = featureToggleManager
         self.contentPreloader = contentPreloader
-        self.prerenderedHolder = prerenderedHolder
+        self.warmHolder = warmHolder
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -178,12 +178,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         contentPreloader?.invalidateCache()
         contentPreloader?.preloadContent(from: config)
 
-        // Pre-render after a short delay to allow HTML downloads to complete
-        let holder = prerenderedHolder
+        // Warm up a single WebView after a short delay to allow HTML downloads to complete
+        let holder = warmHolder
         let configCopy = config
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             holder?.invalidate()
-            holder?.prerender(from: configCopy)
+            holder?.warmUp(from: configCopy)
         }
     }
 

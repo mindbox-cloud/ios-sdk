@@ -50,7 +50,7 @@ extension MBContainer {
                 persistenceStorage: persistenceStorage,
                 featureToggleManager: featureToggleManager,
                 contentPreloader: DI.inject(WebViewContentPreloaderProtocol.self),
-                prerenderedHolder: DI.inject(PrerenderedWebViewHolderProtocol.self))
+                warmHolder: DI.inject(WarmWebViewHolderProtocol.self))
         }
         
         register(CheckNotifWork.self) {

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warm WebView Strategy</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #0a0a0f; color: #e0e0e0; padding: 40px; }
+  h1 { font-size: 28px; color: #fff; margin-bottom: 8px; }
+  .subtitle { color: #888; font-size: 14px; margin-bottom: 40px; }
+  .section { margin-bottom: 48px; }
+  .section-title { font-size: 18px; color: #fff; margin-bottom: 20px; font-weight: 600; }
+
+  .flow { display: flex; flex-direction: column; gap: 0; position: relative; margin-left: 20px; }
+  .step { display: flex; align-items: stretch; gap: 16px; position: relative; }
+  .step-line { width: 3px; background: #333; position: relative; flex-shrink: 0; }
+  .step-line::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 13px; height: 13px; border-radius: 50%; border: 3px solid #333; background: #0a0a0f; }
+  .step.active .step-line { background: linear-gradient(to bottom, #6366f1, #6366f1); }
+  .step.active .step-line::before { border-color: #6366f1; background: #6366f1; }
+  .step.sdk .step-line { background: linear-gradient(to bottom, #22c55e, #22c55e); }
+  .step.sdk .step-line::before { border-color: #22c55e; background: #22c55e; }
+  .step.js .step-line { background: linear-gradient(to bottom, #f59e0b, #f59e0b); }
+  .step.js .step-line::before { border-color: #f59e0b; background: #f59e0b; }
+  .step.user .step-line { background: linear-gradient(to bottom, #ec4899, #ec4899); }
+  .step.user .step-line::before { border-color: #ec4899; background: #ec4899; }
+  .step.wait .step-line { background: repeating-linear-gradient(to bottom, #6366f1 0px, #6366f1 4px, transparent 4px, transparent 8px); }
+  .step.wait .step-line::before { border-color: #6366f1; background: #0a0a0f; }
+
+  .step-content { padding: 8px 0 24px 0; flex: 1; }
+  .step-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .step.active .step-label { color: #6366f1; }
+  .step.sdk .step-label { color: #22c55e; }
+  .step.js .step-label { color: #f59e0b; }
+  .step.user .step-label { color: #ec4899; }
+  .step.wait .step-label { color: #6366f1; }
+  .step-desc { font-size: 14px; color: #aaa; line-height: 1.5; }
+  .step-time { display: inline-block; background: #1a1a2e; border-radius: 4px; padding: 2px 8px; font-size: 12px; color: #888; margin-top: 4px; font-family: monospace; }
+
+  .phase-divider { display: flex; align-items: center; gap: 12px; margin: 32px 0; }
+  .phase-divider span { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+  .phase-divider::after { content: ''; flex: 1; height: 1px; background: #222; }
+  .phase1 span { color: #6366f1; }
+  .phase2 span { color: #ec4899; }
+  .phase3a span { color: #22c55e; }
+  .phase3b span { color: #f59e0b; }
+
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+  .card { background: #111118; border: 1px solid #222; border-radius: 12px; padding: 24px; }
+  .card h3 { font-size: 15px; margin-bottom: 16px; }
+  .card.old h3 { color: #f87171; }
+  .card.new h3 { color: #34d399; }
+  .card-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+  .card-row:last-child { border-bottom: none; }
+  .card-row .label { color: #888; }
+  .card-row .value { font-weight: 600; font-family: monospace; }
+  .card.old .value { color: #f87171; }
+  .card.new .value { color: #34d399; }
+  .hit { color: #34d399 !important; }
+  .miss { color: #f87171 !important; }
+
+  .arrow-block { display: flex; align-items: center; gap: 12px; margin: 12px 0 12px 20px; }
+  .arrow-block .arrow { font-size: 20px; color: #444; }
+  .arrow-block .text { font-size: 13px; color: #666; font-style: italic; }
+
+  .legend { display: flex; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot.sdk { background: #22c55e; }
+  .legend-dot.js { background: #f59e0b; }
+  .legend-dot.user { background: #ec4899; }
+  .legend-dot.system { background: #6366f1; }
+  .legend-dot.wait { background: #0a0a0f; border: 2px solid #6366f1; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-warm { background: #1a1a2e; color: #6366f1; border: 1px solid #6366f133; }
+  .badge-fast { background: #0a1a0f; color: #34d399; border: 1px solid #34d39933; }
+  .badge-user { background: #1a0a15; color: #ec4899; border: 1px solid #ec489933; }
+
+  .tabs { display: flex; gap: 0; margin-bottom: 0; }
+  .tab { padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #222; border-bottom: none; border-radius: 8px 8px 0 0; background: #0a0a0f; color: #666; }
+  .tab.active { background: #111118; color: #fff; border-color: #333; }
+  .tab-content { background: #111118; border: 1px solid #333; border-radius: 0 8px 8px 8px; padding: 24px; display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Warm WebView Strategy</h1>
+<p class="subtitle">1 WebView, загруженный заранее, обслуживает все in-apps. Контент приходит через payload.</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot system"></div> System / WebView</div>
+  <div class="legend-item"><div class="legend-dot sdk"></div> SDK (native)</div>
+  <div class="legend-item"><div class="legend-dot js"></div> JavaScript</div>
+  <div class="legend-item"><div class="legend-dot user"></div> User action</div>
+  <div class="legend-item"><div class="legend-dot wait"></div> Waiting (warm)</div>
+</div>
+
+<!-- PHASE 1 -->
+<div class="section">
+  <div class="phase-divider phase1"><span>Phase 1 &mdash; Warm-up (фон, пользователь не видит)</span></div>
+
+  <div class="flow">
+    <div class="step sdk">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">SDK</div>
+        <div class="step-desc">Получает конфиг с 3 in-apps (A, B, C)</div>
+      </div>
+    </div>
+    <div class="step active">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">WebView</div>
+        <div class="step-desc">Создаём 1 WKWebView (offscreen, невидимый)</div>
+        <div class="step-time">~50ms</div>
+      </div>
+    </div>
+    <div class="step active">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">WebView</div>
+        <div class="step-desc">loadHTMLString &mdash; одинаковый HTML для всех in-apps</div>
+        <div class="step-time">~0ms (из кэша)</div>
+      </div>
+    </div>
+    <div class="step js">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">JavaScript</div>
+        <div class="step-desc">Загружает tracker.js + main.js по &lt;script src&gt;</div>
+        <div class="step-time">~200-600ms</div>
+      </div>
+    </div>
+    <div class="step js">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">JavaScript</div>
+        <div class="step-desc">Parse + compile + bootstrap (bridge, listeners)</div>
+        <div class="step-time">~500ms</div>
+      </div>
+    </div>
+    <div class="step js">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">JS &rarr; SDK</div>
+        <div class="step-desc">postMessage({ action: "ready", id: "xxx" })</div>
+      </div>
+    </div>
+    <div class="step wait">
+      <div class="step-line" style="min-height: 60px;"></div>
+      <div class="step-content">
+        <div class="step-label">Waiting &nbsp; <span class="badge badge-warm">WARM</span></div>
+        <div class="step-desc">SDK <strong>не отвечает</strong>. Держит ready ID. WebView прогрет, JS живой, ждёт payload. Один WebView на все 3 in-apps.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="section">
+  <div class="phase-divider phase2"><span>Phase 2 &mdash; Триггер InApp A (пользователь открыл "Каталог")</span></div>
+
+  <div class="flow">
+    <div class="step user">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">User</div>
+        <div class="step-desc">Открывает экран "Каталог" &rarr; триггер InApp A</div>
+      </div>
+    </div>
+    <div class="step sdk">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">SDK &rarr; JS</div>
+        <div class="step-desc">evaluateJavaScript("emit({ inAppId: 'A', theme: 'light', customParams: {...} })")</div>
+        <div class="step-time">~0ms</div>
+      </div>
+    </div>
+    <div class="step js">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">JavaScript</div>
+        <div class="step-desc">JSON.parse(payload) &rarr; рендерит контент InApp A</div>
+        <div class="step-time">~300ms</div>
+      </div>
+    </div>
+    <div class="step active">
+      <div class="step-line"></div>
+      <div class="step-content">
+        <div class="step-label">Show &nbsp; <span class="badge badge-fast">~0.3s</span></div>
+        <div class="step-desc">WebView показывается пользователю с контентом InApp A</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 3 -->
+<div class="section">
+  <div class="phase-divider phase3a"><span>Phase 3 &mdash; После закрытия InApp A</span></div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">Вариант A: JS reusable</div>
+    <div class="tab" onclick="switchTab(1)">Вариант B: JS не reusable</div>
+  </div>
+
+  <div class="tab-content active" id="tab0">
+    <div class="flow">
+      <div class="step user">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">User</div>
+          <div class="step-desc">Закрывает InApp A</div>
+        </div>
+      </div>
+      <div class="step sdk">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">SDK</div>
+          <div class="step-desc">Скрывает WebView. <strong>Не уничтожает.</strong> JS жив, bridge жив.</div>
+        </div>
+      </div>
+      <div class="step js">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">JS reset</div>
+          <div class="step-desc">SDK вызывает JS reset-метод &mdash; очищает предыдущий контент</div>
+          <div class="step-time">~10ms</div>
+        </div>
+      </div>
+      <div class="step wait">
+        <div class="step-line" style="min-height: 40px;"></div>
+        <div class="step-content">
+          <div class="step-label">Waiting &nbsp; <span class="badge badge-warm">WARM</span></div>
+          <div class="step-desc">Снова готов принять payload любого in-app</div>
+        </div>
+      </div>
+      <div class="step user">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">User</div>
+          <div class="step-desc">Добавляет товар в корзину &rarr; триггер InApp B</div>
+        </div>
+      </div>
+      <div class="step sdk">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">SDK &rarr; JS &nbsp; <span class="badge badge-fast">~0.3s</span></div>
+          <div class="step-desc">emit(payload B) &rarr; JS рендерит InApp B &rarr; показ</div>
+        </div>
+      </div>
+    </div>
+    <p style="color: #34d399; font-size: 13px; margin-top: 16px;">Один WebView на всю сессию. 0ms прогрев между показами.</p>
+  </div>
+
+  <div class="tab-content" id="tab1">
+    <div class="flow">
+      <div class="step user">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">User</div>
+          <div class="step-desc">Закрывает InApp A</div>
+        </div>
+      </div>
+      <div class="step sdk">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">SDK</div>
+          <div class="step-desc">Уничтожает WebView. Создаёт новый.</div>
+        </div>
+      </div>
+      <div class="step active">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">Re-warm</div>
+          <div class="step-desc">loadHTMLString &rarr; JS загрузка (из bytecode cache!) &rarr; ready</div>
+          <div class="step-time">~0.5-0.7s (вместо 1.5s &mdash; Shared ProcessPool)</div>
+        </div>
+      </div>
+      <div class="step wait">
+        <div class="step-line" style="min-height: 40px;"></div>
+        <div class="step-content">
+          <div class="step-label">Waiting &nbsp; <span class="badge badge-warm">WARM</span></div>
+          <div class="step-desc">Готов к следующему триггеру</div>
+        </div>
+      </div>
+      <div class="step user">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">User</div>
+          <div class="step-desc">Добавляет товар в корзину &rarr; триггер InApp B</div>
+        </div>
+      </div>
+      <div class="step sdk">
+        <div class="step-line"></div>
+        <div class="step-content">
+          <div class="step-label">SDK &rarr; JS &nbsp; <span class="badge badge-fast">~0.3s</span></div>
+          <div class="step-desc">emit(payload B) &rarr; JS рендерит InApp B &rarr; показ</div>
+        </div>
+      </div>
+    </div>
+    <p style="color: #f59e0b; font-size: 13px; margin-top: 16px;">Re-warm ~0.5s в фоне после каждого закрытия. Всё равно быстрее текущего подхода.</p>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="section">
+  <div class="phase-divider" style="margin-top: 48px;"><span style="color: #fff;">Сравнение: 3 in-apps за сессию</span></div>
+
+  <div class="comparison">
+    <div class="card old">
+      <h3>Текущий подход (Pre-render InApp A)</h3>
+      <div class="card-row"><span class="label">InApp A (hit)</span><span class="value">~1.0s</span></div>
+      <div class="card-row"><span class="label">InApp B (miss)</span><span class="value miss">~2.2s</span></div>
+      <div class="card-row"><span class="label">InApp C (miss)</span><span class="value miss">~2.2s</span></div>
+      <div class="card-row"><span class="label">Память</span><span class="value">30-50MB</span></div>
+      <div class="card-row"><span class="label">Hit rate</span><span class="value miss">33%</span></div>
+    </div>
+    <div class="card new">
+      <h3>Warm WebView</h3>
+      <div class="card-row"><span class="label">InApp A</span><span class="value hit">~0.3s</span></div>
+      <div class="card-row"><span class="label">InApp B</span><span class="value hit">~0.3s</span></div>
+      <div class="card-row"><span class="label">InApp C</span><span class="value hit">~0.3s</span></div>
+      <div class="card-row"><span class="label">Память</span><span class="value">30-50MB</span></div>
+      <div class="card-row"><span class="label">Hit rate</span><span class="value hit">100%</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(index) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
+  document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
+}
+</script>
+
+</body>
+</html>

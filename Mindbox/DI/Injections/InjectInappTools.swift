@@ -93,9 +93,9 @@ extension MBContainer {
             return WebViewContentPreloader(cache: cache)
         }
 
-        register(PrerenderedWebViewHolderProtocol.self) {
+        register(WarmWebViewHolderProtocol.self) {
             let preloader = DI.injectOrFail(WebViewContentPreloaderProtocol.self)
-            return PrerenderedWebViewHolder(preloader: preloader)
+            return WarmWebViewHolder(preloader: preloader)
         }
 
         return self

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		03FD8DEDA3F76976EA196D0A /* PrerenderedWebViewHolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */; };
+		A1B2C3D4E5F60718A1B2C3D4 /* WarmWebViewHolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3D5 /* WarmWebViewHolder.swift */; };
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
 		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
@@ -831,6 +832,7 @@
 		33EBF0AF264E6283002A35D5 /* MBSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBSessionManager.swift; sourceTree = "<group>"; };
 		3456BAC56F984378B6CED7CB /* FeatureToggleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureToggleManager.swift; sourceTree = "<group>"; };
 		3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrerenderedWebViewHolder.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718A1B2C3D5 /* WarmWebViewHolder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WarmWebViewHolder.swift; sourceTree = "<group>"; };
 		472179A62C80755A00C15E7F /* ShownInAppsIDsMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShownInAppsIDsMigration.swift; sourceTree = "<group>"; };
 		472765512E0D52A500A5A060 /* RemoveBackgroundTaskDataMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoveBackgroundTaskDataMigration.swift; sourceTree = "<group>"; };
 		472F549D2C6E272A0008C465 /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
@@ -1519,6 +1521,7 @@
 			isa = PBXGroup;
 			children = (
 				3CE6FEF61EA7CED706BD926C /* PrerenderedWebViewHolder.swift */,
+				A1B2C3D4E5F60718A1B2C3D5 /* WarmWebViewHolder.swift */,
 			);
 			name = Prerender;
 			path = Prerender;
@@ -4626,6 +4629,7 @@
 				69A184BC09A1B2247A9C50C5 /* WebViewContentCache.swift in Sources */,
 				81D99E3E4297AD4ED77434B6 /* WebViewContentPreloader.swift in Sources */,
 				03FD8DEDA3F76976EA196D0A /* PrerenderedWebViewHolder.swift in Sources */,
+				A1B2C3D4E5F60718A1B2C3D4 /* WarmWebViewHolder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
