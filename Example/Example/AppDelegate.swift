@@ -40,7 +40,7 @@ final class AppDelegate: MindboxAppDelegate {
         return true
     }
     
-    // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+    // https://developers.mindbox.ru/docs/ios-quick-setup-push-notifications
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -49,7 +49,7 @@ final class AppDelegate: MindboxAppDelegate {
         completionHandler([.list, .badge, .sound, .banner])
     }
     
-    // https://developers.mindbox.ru/docs/ios-sdk-handle-tap
+    // https://developers.mindbox.ru/docs/ios-push-notification-deep-linking
     override func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -66,7 +66,7 @@ final class AppDelegate: MindboxAppDelegate {
         super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
     
-    // https://developers.mindbox.ru/docs/ios-send-push-notifications-appdelegate
+    // https://developers.mindbox.ru/docs/ios-quick-setup-push-notifications
     func registerForRemoteNotifications() {
         UNUserNotificationCenter.current().delegate = self
         DispatchQueue.main.async {
