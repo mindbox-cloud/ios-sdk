@@ -1,5 +1,5 @@
 //
-//  Item+SwiftData.swift
+//  NotificationModels.swift
 //  Example
 //
 //  Created by Sergei Semko on 6/11/24.
@@ -13,7 +13,7 @@ import SwiftData
 public final class Item {
     public var timestamp: Date
     public var mbPushNotification: PushNotification
-    
+
     public init(timestamp: Date, pushNotification: PushNotification) {
         self.timestamp = timestamp
         self.mbPushNotification = pushNotification
@@ -27,9 +27,14 @@ public struct PushNotification: Codable {
     public let imageUrl: String?
     public let payload: String?
     public let uniqueKey: String?
-    
+
     var decodedPayload: Payload? {
         guard let payloadData = payload?.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(Payload.self, from: payloadData)
     }
+}
+
+public struct Payload: Codable {
+    var pushName: String
+    var pushDate: String
 }
