@@ -176,15 +176,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private func preloadWebViewContent(from config: ConfigResponse) {
         contentPreloader?.invalidateCache()
-        contentPreloader?.preloadContent(from: config)
 
-        // Warm up a single WebView after a short delay to allow HTML downloads to complete
+        // Warm up as soon as HTML is cached (from disk or network) — no arbitrary delay
         let holder = warmHolder
         let configCopy = config
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        contentPreloader?.onHTMLCached = {
             holder?.invalidate()
             holder?.warmUp(from: configCopy)
         }
+
+        contentPreloader?.preloadContent(from: config)
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {

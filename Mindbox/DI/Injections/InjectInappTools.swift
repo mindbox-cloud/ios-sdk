@@ -88,14 +88,20 @@ extension MBContainer {
             WebViewContentCache()
         }
 
+        register(WebViewJSCacheProtocol.self) {
+            WebViewJSCache()
+        }
+
         register(WebViewContentPreloaderProtocol.self) {
             let cache = DI.injectOrFail(WebViewContentCacheProtocol.self)
-            return WebViewContentPreloader(cache: cache)
+            let jsCache = DI.injectOrFail(WebViewJSCacheProtocol.self)
+            return WebViewContentPreloader(cache: cache, jsCache: jsCache)
         }
 
         register(WarmWebViewHolderProtocol.self) {
             let preloader = DI.injectOrFail(WebViewContentPreloaderProtocol.self)
-            return WarmWebViewHolder(preloader: preloader)
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return WarmWebViewHolder(preloader: preloader, persistenceStorage: persistenceStorage)
         }
 
         return self

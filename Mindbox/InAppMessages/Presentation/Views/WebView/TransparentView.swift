@@ -25,8 +25,12 @@ final class TransparentView: UIView {
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
     private(set) var isPreloadMode: Bool
+    private(set) var isPreRenderMode: Bool
+    private(set) var isFullyRendered = false
     private(set) var pendingReadyId: UUID?
     var onReadyInPreloadMode: (() -> Void)?
+    var onPreRenderComplete: (() -> Void)?
+    var performanceTrackerId: String?
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -40,12 +44,13 @@ final class TransparentView: UIView {
         return service
     }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, isPreloadMode: Bool = false) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, isPreloadMode: Bool = false, isPreRenderMode: Bool = false) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
         self.inAppId = inAppId
         self.isPreloadMode = isPreloadMode
+        self.isPreRenderMode = isPreRenderMode
         super.init(frame: frame)
         commonInit()
     }
@@ -56,6 +61,7 @@ final class TransparentView: UIView {
         self.userAgent = ""
         self.inAppId = ""
         self.isPreloadMode = false
+        self.isPreRenderMode = false
         super.init(frame: frame)
         commonInit()
     }
@@ -66,6 +72,7 @@ final class TransparentView: UIView {
         self.userAgent = ""
         self.inAppId = ""
         self.isPreloadMode = false
+        self.isPreRenderMode = false
         super.init(coder: coder)
         commonInit()
     }
@@ -94,6 +101,7 @@ final class TransparentView: UIView {
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
+        facade?.performanceTrackerId = performanceTrackerId
         setupTimeoutTimer()
 
         facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
@@ -105,6 +113,7 @@ final class TransparentView: UIView {
     }
 
     func loadHTMLFromCache(html: String, baseUrl: String) {
+        facade?.performanceTrackerId = performanceTrackerId
         facade?.loadHTMLFromCache(html: html, baseUrl: baseUrl) { [weak self] in
             self?.quizInitTimeoutWorkItem?.cancel()
             self?.delegate?.closeLoadFailedWebViewVC(
@@ -126,6 +135,7 @@ final class TransparentView: UIView {
         pendingReadyId = nil
         setupTimeoutTimer()
         facade?.sendReadyEvent(id: readyId)
+        WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "ready_handshake_sent")
         Logger.common(
             message: "[WebView Prerender] Handshake completed for inAppId=\(inAppId)",
             category: .webViewInAppMessages
@@ -224,13 +234,26 @@ extension TransparentView: WebBridgeMessageDelegate {
             webViewAction?.onClose()
         case .`init`:
             quizInitTimeoutWorkItem?.cancel()
-            hapticService.prepare()
-            webViewAction?.onInit()
+            WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "js_init")
+            if isPreRenderMode {
+                isFullyRendered = true
+                Logger.common(
+                    message: "[WebView PreRender] Fully rendered for inAppId=\(inAppId)",
+                    category: .webViewInAppMessages
+                )
+                onPreRenderComplete?()
+            } else {
+                hapticService.prepare()
+                webViewAction?.onInit()
+            }
         case .click:
+            if isPreRenderMode { return }
             webViewAction?.onCompleted(data: data)
         case .hide:
+            if isPreRenderMode { return }
             webViewAction?.onHide()
         case .ready:
+            WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "js_ready")
             if isPreloadMode {
                 pendingReadyId = message.id
                 quizInitTimeoutWorkItem?.cancel()
@@ -241,6 +264,7 @@ extension TransparentView: WebBridgeMessageDelegate {
                 )
             } else {
                 facade?.sendReadyEvent(id: message.id)
+                WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "ready_event_sent")
             }
 
         // Info
@@ -290,6 +314,7 @@ extension TransparentView: WebBridgeMessageDelegate {
 
 extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
+        WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "navigation_started")
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
         // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
@@ -298,6 +323,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
     
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
+        WebViewLoadingTracker.checkpoint(id: performanceTrackerId, stage: "navigation_finished")
         Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.

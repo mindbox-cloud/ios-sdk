@@ -268,6 +268,9 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .webViewLocalStateVersion, defaultValue: nil)
     var webViewLocalStateVersion: Int?
 
+    @UserDefaultsWrapper(key: .isStoriesPrepared, defaultValue: false)
+    var isStoriesPrepared: Bool?
+
     // MARK: - Deprecated Properties
     // These properties are deprecated and will be removed in future versions.
     // Please use the recommended alternatives instead.
@@ -306,6 +309,7 @@ extension MBPersistenceStorage {
             case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
             case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
+            case isStoriesPrepared = "MBPersistenceStorage-isStoriesPrepared"
 
             // MARK: - Deprecated Keys
             // These keys are deprecated and will be removed in future versions.

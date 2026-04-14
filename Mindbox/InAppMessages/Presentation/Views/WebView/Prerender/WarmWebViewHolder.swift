@@ -14,25 +14,34 @@ protocol WarmWebViewHolderProtocol: AnyObject {
     func invalidate()
 }
 
-/// Maintains a single "warm" WKWebView with shared HTML+JS pre-loaded and ready.
+/// Pre-renders up to `maxPreRenderedCount` webview in-apps simultaneously by completing the JS
+/// handshake immediately with real data.
 ///
-/// Instead of pre-rendering a separate WKWebView per in-app (like `PrerenderedWebViewHolder`),
-/// this holder creates ONE WebView, loads the shared HTML+JS template, and waits for the JS "ready" signal.
-/// When any webview in-app triggers, the warm view is claimed — its inAppId, params, and operation
-/// are updated to match the target in-app, and the held handshake is completed.
+/// Instead of holding the `ready` handshake until trigger (warm approach), this holder sends
+/// the payload right away — JS renders the full in-app content including images/fonts.
+/// When the in-app triggers, the fully rendered WebView is returned and shown instantly.
 ///
-/// **Result**: 100% hit rate for webview in-apps, ~0.3s presentation time vs ~2.2s cold start.
-/// After claim, the holder re-warms a new WebView in the background for the next trigger.
+/// **Result**: True offline support — all resources are loaded during pre-render while online.
+/// After a view is claimed, the holder immediately starts pre-rendering a replacement.
 final class WarmWebViewHolder: WarmWebViewHolderProtocol {
 
-    private var warmView: TransparentView?
-    private var warmUpHTML: String?
-    private var warmUpBaseUrl: String?
-    private var warmUpStartTime: CFAbsoluteTime?
-    private let preloader: WebViewContentPreloaderProtocol
+    private static let maxPreRenderedCount = 2
 
-    init(preloader: WebViewContentPreloaderProtocol) {
+    /// Pre-rendered views keyed by inAppId.
+    private var preRenderedViews: [String: TransparentView] = [:]
+
+    /// Off-screen windows keyed by inAppId — keeps each WKWebView in the hierarchy so
+    /// the WebContent process completes layout, image decode, and JS execution.
+    private var offscreenWindows: [String: UIWindow] = [:]
+
+    private var lastConfig: ConfigResponse?
+    private let preloader: WebViewContentPreloaderProtocol
+    private let persistenceStorage: PersistenceStorage
+
+    init(preloader: WebViewContentPreloaderProtocol, persistenceStorage: PersistenceStorage) {
         self.preloader = preloader
+        self.persistenceStorage = persistenceStorage
+        persistenceStorage.isStoriesPrepared = false
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveMemoryWarning),
@@ -48,78 +57,97 @@ final class WarmWebViewHolder: WarmWebViewHolderProtocol {
     // MARK: - WarmWebViewHolderProtocol
 
     func warmUp(from config: ConfigResponse) {
-        guard warmView == nil else {
+        lastConfig = config
+
+        let candidates = findWebViewCandidates(from: config, limit: Self.maxPreRenderedCount)
+        guard !candidates.isEmpty else {
             Logger.common(
-                message: "[Warm WebView] Already warmed up, skipping",
+                message: "[PreRender] No webview in-app candidates found in config",
                 level: .debug,
                 category: .webViewInAppMessages
             )
             return
         }
 
-        guard let candidate = findFirstWebViewCandidate(from: config) else {
-            Logger.common(
-                message: "[Warm WebView] No webview in-app candidates found in config",
-                level: .debug,
-                category: .webViewInAppMessages
+        for candidate in candidates {
+            guard preRenderedViews.count < Self.maxPreRenderedCount else { break }
+            guard preRenderedViews[candidate.inAppId] == nil else {
+                Logger.common(
+                    message: "[PreRender] Already pre-rendering inAppId=\(candidate.inAppId), skipping",
+                    level: .debug,
+                    category: .webViewInAppMessages
+                )
+                continue
+            }
+            guard let html = preloader.cachedHTML(for: candidate.contentUrl) else {
+                Logger.common(
+                    message: "[PreRender] HTML not yet cached for \(candidate.contentUrl), skipping",
+                    level: .debug,
+                    category: .webViewInAppMessages
+                )
+                continue
+            }
+
+            let trackerId = WebViewLoadingTracker.makeId(inAppId: candidate.inAppId, flow: "prerender")
+            WebViewLoadingTracker.begin(id: trackerId, stage: "prerender_start")
+
+            createPreRenderedView(
+                html: html,
+                baseUrl: candidate.baseUrl,
+                inAppId: candidate.inAppId,
+                params: candidate.params,
+                trackerId: trackerId
             )
-            return
         }
-
-        guard let html = preloader.cachedHTML(for: candidate.contentUrl) else {
-            Logger.common(
-                message: "[Warm WebView] HTML not yet cached for \(candidate.contentUrl), skipping warm-up",
-                level: .debug,
-                category: .webViewInAppMessages
-            )
-            return
-        }
-
-        warmUpHTML = html
-        warmUpBaseUrl = candidate.baseUrl
-
-        createWarmView(html: html, baseUrl: candidate.baseUrl)
     }
 
     func claim(inAppId: String, params: [String: JSONValue], operation: (name: String, body: String)?) -> TransparentView? {
-        guard let view = warmView else {
+        guard let view = preRenderedViews[inAppId] else {
             Logger.common(
-                message: "[Warm WebView] Claim miss — no warm view available for inAppId=\(inAppId)",
+                message: "[PreRender] Claim miss — no pre-rendered view for inAppId=\(inAppId)",
                 category: .webViewInAppMessages
             )
             return nil
         }
 
-        guard view.pendingReadyId != nil else {
+        guard view.isFullyRendered else {
             Logger.common(
-                message: "[Warm WebView] Claim miss — warm view not yet ready (JS has not sent 'ready' event)",
+                message: "[PreRender] Claim miss — view not yet fully rendered for inAppId=\(inAppId)",
                 category: .webViewInAppMessages
             )
             return nil
         }
 
-        warmView = nil
+        // Detach from off-screen window before transferring to the real view hierarchy
+        view.removeFromSuperview()
+        offscreenWindows.removeValue(forKey: inAppId)
+        preRenderedViews.removeValue(forKey: inAppId)
 
-        view.updateInAppId(inAppId)
-        view.updateParams(params)
-        view.updateOperation(operation)
+        let anyFullyRendered = preRenderedViews.values.contains { $0.isFullyRendered }
+        persistenceStorage.isStoriesPrepared = anyFullyRendered
 
+        WebViewLoadingTracker.checkpoint(id: view.performanceTrackerId, stage: "view_claimed")
         Logger.common(
-            message: "[Warm WebView] Claimed warm view for inAppId=\(inAppId)",
+            message: "[PreRender] Claimed fully rendered view for inAppId=\(inAppId). Remaining: \(preRenderedViews.count)",
             category: .webViewInAppMessages
         )
 
-        scheduleRewarm()
+        scheduleNextPreRender()
 
         return view
     }
 
     func invalidate() {
-        guard warmView != nil else { return }
-        warmView?.cleanUp()
-        warmView = nil
+        guard !preRenderedViews.isEmpty else { return }
+        for (_, view) in preRenderedViews {
+            view.removeFromSuperview()
+            view.cleanUp()
+        }
+        preRenderedViews.removeAll()
+        offscreenWindows.removeAll()
+        persistenceStorage.isStoriesPrepared = false
         Logger.common(
-            message: "[Warm WebView] Invalidated",
+            message: "[PreRender] Invalidated all pre-rendered views",
             category: .webViewInAppMessages
         )
     }
@@ -129,65 +157,85 @@ final class WarmWebViewHolder: WarmWebViewHolderProtocol {
     @objc
     private func didReceiveMemoryWarning() {
         Logger.common(
-            message: "[Warm WebView] Memory warning received, evicting warm view",
+            message: "[PreRender] Memory warning received, evicting all pre-rendered views",
             level: .default,
             category: .webViewInAppMessages
         )
         invalidate()
     }
 
-    private func createWarmView(html: String, baseUrl: String) {
+    private func createPreRenderedView(html: String, baseUrl: String, inAppId: String, params: [String: JSONValue], trackerId: String) {
         let userAgent = createUserAgent()
         let startTime = CFAbsoluteTimeGetCurrent()
-        warmUpStartTime = startTime
 
+        let screenBounds = UIScreen.main.bounds
         let view = TransparentView(
-            frame: .zero,
-            params: [:],
+            frame: screenBounds,
+            params: params,
             userAgent: userAgent,
             operation: nil,
-            inAppId: "",
-            isPreloadMode: true
+            inAppId: inAppId,
+            isPreRenderMode: true
         )
+        view.performanceTrackerId = trackerId
 
-        view.onReadyInPreloadMode = { [weak self] in
+        // Attach to an off-screen window so WKWebView completes rendering
+        let window = UIWindow(frame: screenBounds)
+        window.windowLevel = .init(rawValue: -1)
+        window.alpha = 0.0
+        window.isUserInteractionEnabled = false
+        window.isHidden = false
+        window.addSubview(view)
+        view.frame = window.bounds
+        offscreenWindows[inAppId] = window
+
+        view.onPreRenderComplete = { [weak self] in
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime
             let ms = Int(elapsed * 1000)
             Logger.common(
-                message: "[Warm WebView] JS ready in \(ms)ms (warm-up complete)",
+                message: "[PreRender] Fully rendered in \(ms)ms for inAppId=\(inAppId)",
                 category: .webViewInAppMessages
             )
-            self?.warmUpStartTime = nil
+            self?.persistenceStorage.isStoriesPrepared = true
         }
 
         view.loadHTMLFromCache(html: html, baseUrl: baseUrl)
-        warmView = view
+        WebViewLoadingTracker.checkpoint(id: trackerId, stage: "html_sent_to_webview")
+        preRenderedViews[inAppId] = view
 
         Logger.common(
-            message: "[Warm WebView] Warm-up started (HTML loaded, waiting for JS ready)",
+            message: "[PreRender] Started pre-render for inAppId=\(inAppId). Total: \(preRenderedViews.count)/\(Self.maxPreRenderedCount)",
             category: .webViewInAppMessages
         )
     }
 
-    private func scheduleRewarm() {
-        guard let html = warmUpHTML, let baseUrl = warmUpBaseUrl else { return }
+    private func scheduleNextPreRender() {
+        guard let config = lastConfig else { return }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self, self.warmView == nil else { return }
-            self.createWarmView(html: html, baseUrl: baseUrl)
+            guard let self else { return }
+            guard self.preRenderedViews.count < Self.maxPreRenderedCount else { return }
+            self.warmUp(from: config)
             Logger.common(
-                message: "[Warm WebView] Re-warm triggered after claim",
+                message: "[PreRender] Re-render triggered after claim",
                 category: .webViewInAppMessages
             )
         }
     }
 
-    private func findFirstWebViewCandidate(
-        from config: ConfigResponse
-    ) -> (baseUrl: String, contentUrl: String)? {
-        guard let inapps = config.inapps?.elements else { return nil }
+    private struct WebViewCandidate {
+        let baseUrl: String
+        let contentUrl: String
+        let inAppId: String
+        let params: [String: JSONValue]
+    }
+
+    private func findWebViewCandidates(from config: ConfigResponse, limit: Int) -> [WebViewCandidate] {
+        var result: [WebViewCandidate] = []
+        guard let inapps = config.inapps?.elements else { return result }
 
         for inapp in inapps {
+            guard result.count < limit else { break }
             guard let variants = inapp.form.variants else { continue }
             for variant in variants {
                 let layers: [ContentBackgroundLayerDTO]?
@@ -205,13 +253,18 @@ final class WarmWebViewHolder: WarmWebViewHolderProtocol {
                     if case .webview(let webviewDTO) = layer,
                        let contentUrl = webviewDTO.contentUrl, !contentUrl.isEmpty,
                        let baseUrl = webviewDTO.baseUrl, !baseUrl.isEmpty {
-                        return (baseUrl, contentUrl)
+                        result.append(WebViewCandidate(
+                            baseUrl: baseUrl,
+                            contentUrl: contentUrl,
+                            inAppId: inapp.id,
+                            params: webviewDTO.params ?? [:]
+                        ))
                     }
                 }
             }
         }
 
-        return nil
+        return result
     }
 
     private func createUserAgent() -> String {

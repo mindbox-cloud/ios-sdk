@@ -101,26 +101,40 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
             return
         }
 
-        // Try to claim a warm WebView — one pre-loaded view serves any in-app
+        // Try to claim a pre-rendered WebView — fully rendered, show instantly
         if let holder = DI.inject(WarmWebViewHolderProtocol.self),
-           let warmView = holder.claim(inAppId: id, params: webviewLayer.params, operation: operation) {
-            view.addSubview(warmView)
-            setupConstraints(for: warmView, in: view)
+           let preRenderedView = holder.claim(inAppId: id, params: webviewLayer.params, operation: operation) {
+            view.addSubview(preRenderedView)
+            setupConstraints(for: preRenderedView, in: view)
 
-            warmView.delegate = self
-            warmView.webViewAction = self
-            warmView.completeReadyHandshake()
+            preRenderedView.delegate = self
+            preRenderedView.webViewAction = self
 
-            self.transparentWebView = warmView
-            Logger.common(
-                message: "[Warm WebView] Using warm view for inAppId=\(id)",
-                category: .webViewInAppMessages
-            )
+            self.transparentWebView = preRenderedView
+
+            if preRenderedView.isFullyRendered {
+                // Pre-rendered: init already fired, show window directly
+                Logger.common(
+                    message: "[PreRender] Using fully rendered view for inAppId=\(id)",
+                    category: .webViewInAppMessages
+                )
+                onInit()
+            } else if preRenderedView.pendingReadyId != nil {
+                // Fallback: warm but not fully rendered — complete handshake
+                preRenderedView.completeReadyHandshake()
+                Logger.common(
+                    message: "[Warm WebView] Using warm view for inAppId=\(id)",
+                    category: .webViewInAppMessages
+                )
+            }
             return
         }
 
         // Fallback: standard cold flow
+        let coldTrackerId = WebViewLoadingTracker.makeId(inAppId: id, flow: "cold")
+        WebViewLoadingTracker.begin(id: coldTrackerId, stage: "cold_start")
         let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
+        webView.performanceTrackerId = coldTrackerId
         view.addSubview(webView)
 
         setupConstraints(for: webView, in: view)
@@ -270,6 +284,7 @@ extension WebViewController: WebViewAction {
                 }
                 window.makeKeyAndVisible()
                 self.notifyPresentedIfNeeded()
+                WebViewLoadingTracker.complete(id: self.transparentWebView?.performanceTrackerId, stage: "window_shown")
                 Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
             }
         }

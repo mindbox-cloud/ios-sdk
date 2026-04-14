@@ -67,6 +67,10 @@ protocol PersistenceStorage: AnyObject {
     /// Version of the WebView localState, managed by JS via localState.init
     var webViewLocalStateVersion: Int? { get set }
 
+    /// `true` when a webview in-app has finished pre-rendering and is ready to be shown instantly.
+    /// Set to `false` while pre-rendering is in progress and reset after the view is claimed or invalidated.
+    var isStoriesPrepared: Bool? { get set }
+
     // Reset functions
 
     func softReset()

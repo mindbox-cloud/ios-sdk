@@ -60,6 +60,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func updateInAppId(_ inAppId: String)
     func updateParams(_ params: [String: JSONValue]?)
     func updateOperation(_ operation: (name: String, body: String)?)
+    var performanceTrackerId: String? { get set }
 }
 
 @_spi(Internal)
@@ -88,6 +89,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     private var operation: (name: String, body: String)?
     private var inAppId: String
 
+    public var performanceTrackerId: String?
     private let log: WebViewLog
     private let logError: WebViewLogError
 
@@ -103,6 +105,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         config.applicationNameForUserAgent = userAgent
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+
+        // Register mindbox-cache:// scheme handler for offline JS serving
+        if let jsCache = DI.inject(WebViewJSCacheProtocol.self) {
+            let schemeHandler = MindboxCacheSchemeHandler(jsCache: jsCache)
+            config.setURLSchemeHandler(schemeHandler, forURLScheme: MindboxCacheSchemeHandler.scheme)
+        }
 
         let webView = WKWebView(frame: .zero, configuration: config)
         #if DEBUG
@@ -128,10 +136,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     public func loadHTML(baseUrl: String,
                          contentUrl: String,
                          onFailure: @escaping () -> Void) {
+        let tid = performanceTrackerId
         let url = URL(string: baseUrl)
         let contentURL = URL(string: contentUrl)
         bridge.updateContentURL(contentURL)
-        
+
+        WebViewLoadingTracker.checkpoint(id: tid, stage: "fetch_html_start")
         fetchHTML(from: contentUrl) { [weak webView] html in
             guard let webView else {
                 DispatchQueue.main.async {
@@ -141,8 +151,15 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
             }
 
             if let html {
+                WebViewLoadingTracker.checkpoint(id: tid, stage: "fetch_html_complete")
+                let rewritten = HTMLScriptURLRewriter.rewrite(html).html
+                guard let data = rewritten.data(using: .utf8) else {
+                    DispatchQueue.main.async { onFailure() }
+                    return
+                }
                 DispatchQueue.main.async {
-                    webView.loadHTMLString(html, baseURL: url)
+                    WebViewLoadingTracker.checkpoint(id: tid, stage: "html_sent_to_webview")
+                    webView.load(data, mimeType: "text/html", characterEncodingName: "utf-8", baseURL: url ?? URL(string: "about:blank")!)
                 }
             } else {
                 DispatchQueue.main.async {
@@ -167,12 +184,17 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     public func loadHTMLFromCache(html: String, baseUrl: String, onFailure: @escaping () -> Void) {
         let url = URL(string: baseUrl)
+        let rewritten = HTMLScriptURLRewriter.rewrite(html).html
+        guard let data = rewritten.data(using: .utf8) else {
+            DispatchQueue.main.async { onFailure() }
+            return
+        }
         DispatchQueue.main.async { [weak webView] in
             guard let webView else {
                 onFailure()
                 return
             }
-            webView.loadHTMLString(html, baseURL: url)
+            webView.load(data, mimeType: "text/html", characterEncodingName: "utf-8", baseURL: url ?? URL(string: "about:blank")!)
         }
     }
 
