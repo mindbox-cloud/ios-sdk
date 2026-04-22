@@ -104,9 +104,39 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             applyConfigFromCache()
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
-        
+
+        prefetchWebViewAssets()
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
+    }
+
+    private func prefetchWebViewAssets() {
+        let urls = InAppWebViewAssetCache.extractWebViewContentUrls(from: configResponse?.inapps?.elements)
+        guard !urls.isEmpty else { return }
+
+        // Pre-download runtime dependencies so the cache-hit path can inline them:
+        //  - personalization/quizzes JSONs → `window.__POPMECHANIC_INIT` / `__PRELOADED_QUIZZES_CONFIG`
+        //    byendpoint checks these before its `pt()` / `ft()` runtime fetches.
+        //  - byendpoint.js itself → installs `window.PopMechanic`.
+        var extras: [URL] = []
+        if let endpointId = persistenceStorage.configuration?.endpoint {
+            [
+                InAppWebViewAssetCache.popMechanicInitURL(for: endpointId),
+                InAppWebViewAssetCache.quizzesConfigURL(for: endpointId),
+                InAppWebViewAssetCache.byendpointScriptURL(for: endpointId)
+            ].compactMap { $0 }.forEach { extras.append($0) }
+        }
+        if let url = InAppWebViewAssetCache.quizzesStableScriptURL {
+            extras.append(url)
+        }
+
+        Logger.common(message: "[WebViewCache] Prefetching assets for \(urls.count) webview in-app(s)", level: .debug, category: .inAppMessages)
+        InAppWebViewAssetCache.shared.prefetch(
+            contentUrls: urls,
+            extraScripts: extras,
+            log: { Logger.common(message: $0, level: .debug, category: .inAppMessages) },
+            logError: { Logger.common(message: $0, level: .error, category: .inAppMessages) }
+        )
     }
 
     private func applyConfigFromCache() {

@@ -182,6 +182,7 @@ extension TransparentView: WebBridgeMessageDelegate {
         case .hide:
             webViewAction?.onHide()
         case .ready:
+            quizInitTimeoutWorkItem?.cancel()
             facade?.sendReadyEvent(id: message.id)
 
         // Info
