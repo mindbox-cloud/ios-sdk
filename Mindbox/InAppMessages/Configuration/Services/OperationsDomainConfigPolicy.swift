@@ -26,7 +26,7 @@ enum OperationsDomainConfigPolicy {
             return currentlyStored == nil ? .keep : .clear
         }
 
-        guard HostNormalizer.isValidHost(value) else {
+        guard URLValidator.isValidHost(HostNormalizer.extractHost(value)) else {
             return .keep
         }
 

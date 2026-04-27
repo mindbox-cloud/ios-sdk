@@ -51,7 +51,7 @@ public struct MBConfiguration: Codable {
         self.endpoint = endpoint
         self.domain = domain
 
-        guard HostNormalizer.isValidHost(domain) else {
+        guard URLValidator.isValidHost(HostNormalizer.extractHost(domain)) else {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid domain. Domain is unreachable. [Domain]: \(domain)"))
             Logger.error(error.asLoggerError())
             throw error
@@ -64,7 +64,7 @@ public struct MBConfiguration: Codable {
         }
 
         if let operationsDomain = operationsDomain, !operationsDomain.isEmpty {
-            guard HostNormalizer.isValidHost(operationsDomain) else {
+            guard URLValidator.isValidHost(HostNormalizer.extractHost(operationsDomain)) else {
                 let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid operationsDomain. Host is unreachable. [OperationsDomain]: \(operationsDomain)"))
                 Logger.error(error.asLoggerError())
                 throw error

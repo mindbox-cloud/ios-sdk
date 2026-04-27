@@ -313,6 +313,7 @@
 		84B625E425C988FA00AB6228 /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E325C988FA00AB6228 /* URLValidator.swift */; };
 		84B625E925C989C100AB6228 /* UDIDValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625E825C989C100AB6228 /* UDIDValidator.swift */; };
 		84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */; };
+		F3CD202D2F600A800065392A /* URLValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD202E2F600A800065392A /* URLValidatorTests.swift */; };
 		84BAEF8225D54919002E8A26 /* BodyDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BAEF8125D54919002E8A26 /* BodyDecoder.swift */; };
 		84C65E5E25D4FBA3008996FA /* MobileApplicationInstalled.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */; };
 		84C65E6425D4FBBB008996FA /* MobileApplicationInfoUpdated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */; };
@@ -1039,6 +1040,7 @@
 		84B625E325C988FA00AB6228 /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
 		84B625E825C989C100AB6228 /* UDIDValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDIDValidator.swift; sourceTree = "<group>"; };
 		84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidatorsTestCase.swift; sourceTree = "<group>"; };
+		F3CD202E2F600A800065392A /* URLValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidatorTests.swift; sourceTree = "<group>"; };
 		84BAEF8125D54919002E8A26 /* BodyDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyDecoder.swift; sourceTree = "<group>"; };
 		84C65E5D25D4FBA3008996FA /* MobileApplicationInstalled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInstalled.swift; sourceTree = "<group>"; };
 		84C65E6325D4FBBB008996FA /* MobileApplicationInfoUpdated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileApplicationInfoUpdated.swift; sourceTree = "<group>"; };
@@ -2451,6 +2453,7 @@
 				F35E0C4D2DF0535E00E8A768 /* InAppTrackingServiceTests.swift */,
 				F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */,
 				84B625EF25C98B1200AB6228 /* ValidatorsTestCase.swift */,
+				F3CD202E2F600A800065392A /* URLValidatorTests.swift */,
 				F3A8B9972A3A421C00E9C055 /* SDKVersionValidatorTests.swift */,
 				F30629192BD27D7500EF6609 /* InappFrequencyTests.swift */,
 			);
@@ -4676,6 +4679,7 @@
 				9B9C9538292111A700BB29DA /* MockUUIDDebugService.swift in Sources */,
 				47A4FA782E73741700569870 /* LoggerDatabaseLoaderTests.swift in Sources */,
 				84B625F025C98B1200AB6228 /* ValidatorsTestCase.swift in Sources */,
+				F3CD202D2F600A800065392A /* URLValidatorTests.swift in Sources */,
 				4741425E2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift in Sources */,
 				847F580325C88BBF00147A9A /* HTTPMethod.swift in Sources */,
 				F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */,
