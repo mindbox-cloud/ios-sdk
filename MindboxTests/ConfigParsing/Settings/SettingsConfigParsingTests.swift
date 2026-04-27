@@ -65,6 +65,13 @@ fileprivate enum SettingsConfig: String, Configurable {
     case settingsInAppSettingsMissingMinIntervalBetweenShows = "SettingsInAppSettingsMissingMinIntervalBetweenShows" // Missing minIntervalBetweenShows
     case settingsInAppSettingsTypeErrors = "SettingsInAppSettingsTypeErrors" // All parameters have incorrect types
 
+    // BaseAddresses file names
+
+    case settingsBaseAddressesError = "SettingsBaseAddressesError" // Key is `baseAddressesTest` instead of `baseAddresses`
+    case settingsBaseAddressesTypeError = "SettingsBaseAddressesTypeError" // Type of `baseAddresses` is Int instead of BaseAddresses
+    case settingsBaseAddressesOperationsError = "SettingsBaseAddressesOperationsError" // Key is `operationsTest` instead of `operations`
+    case settingsBaseAddressesOperationsTypeError = "SettingsBaseAddressesOperationsTypeError" // Type of `operations` is Int instead of String
+
 }
 
 final class SettingsConfigParsingTests: XCTestCase {
@@ -93,6 +100,9 @@ final class SettingsConfigParsingTests: XCTestCase {
 
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
         XCTAssertEqual(config.featureToggles?.shouldSendInAppShowError, true, "shouldSendInAppShowError must be parsed correctly")
+
+        XCTAssertNotNil(config.baseAddresses, "BaseAddresses must be successfully parsed")
+        XCTAssertEqual(config.baseAddresses?.operations, "anonymizer-demo-api-regular.mindbox.ru", "operations must be parsed correctly")
     }
 
     // MARK: - Operations
@@ -519,15 +529,63 @@ final class SettingsConfigParsingTests: XCTestCase {
     func test_SettingsConfig_withInAppSettingsTypeErrors_shouldSetAllValuesToNil() {
         // All parameters have incorrect types
         let config = try! SettingsConfig.settingsInAppSettingsTypeErrors.getConfig()
-        
+
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
         XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
-        
+
         XCTAssertNil(config.inapp, "InAppSettings must be nil")
         XCTAssertNil(config.inapp?.maxInappsPerSession, "maxInappsPerSession must be nil due to type error")
         XCTAssertNil(config.inapp?.maxInappsPerDay, "maxInappsPerDay must be nil due to type error")
         XCTAssertNil(config.inapp?.minIntervalBetweenShows, "minIntervalBetweenShows must be nil due to type error")
+    }
+
+    // MARK: - BaseAddresses
+
+    func test_SettingsConfig_withBaseAddressesError_shouldSetBaseAddressesToNil() {
+        // Key is `baseAddressesTest` instead of `baseAddresses`
+        let config = try! SettingsConfig.settingsBaseAddressesError.getConfig()
+        XCTAssertNil(config.baseAddresses, "BaseAddresses must be `nil` if the key `baseAddresses` is not found")
+
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+    }
+
+    func test_SettingsConfig_withBaseAddressesTypeError_shouldSetBaseAddressesToNil() {
+        // Type of `baseAddresses` is Int instead of BaseAddresses
+        let config = try! SettingsConfig.settingsBaseAddressesTypeError.getConfig()
+        XCTAssertNil(config.baseAddresses, "BaseAddresses must be `nil` if the type of `baseAddresses` is not a `BaseAddresses`")
+
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+        XCTAssertNotNil(config.inapp, "InAppSettings must be successfully parsed")
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+    }
+
+    func test_SettingsConfig_withBaseAddressesOperationsError_shouldSetOperationsToNil() {
+        // Key is `operationsTest` instead of `operations`
+        let config = try! SettingsConfig.settingsBaseAddressesOperationsError.getConfig()
+        XCTAssertNotNil(config.baseAddresses, "BaseAddresses must be successfully parsed")
+        XCTAssertNil(config.baseAddresses?.operations, "operations must be `nil` if the key `operations` is not found")
+
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
+    }
+
+    func test_SettingsConfig_withBaseAddressesOperationsTypeError_shouldSetOperationsToNil() {
+        // Type of `operations` is Int instead of String
+        let config = try! SettingsConfig.settingsBaseAddressesOperationsTypeError.getConfig()
+        XCTAssertNotNil(config.baseAddresses, "BaseAddresses must be successfully parsed")
+        XCTAssertNil(config.baseAddresses?.operations, "operations must be `nil` if the type of `operations` is not a `String`")
+
+        XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
+        XCTAssertNotNil(config.ttl, "TTL must be successfully parsed")
+        XCTAssertNotNil(config.slidingExpiration, "SlidingExpiration must be successfully parsed")
     }
 
 }

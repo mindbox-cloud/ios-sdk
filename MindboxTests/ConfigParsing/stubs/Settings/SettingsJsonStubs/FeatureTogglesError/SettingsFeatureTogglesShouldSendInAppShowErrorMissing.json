@@ -1,27 +1,26 @@
 {
-    "operations": {
-        "viewProduct": {
-            "systemName": "ProductView"
-        },
-        "viewCategory": {
-            "systemName": "CategoryView"
-        },
-        "setCart": {
-            "systemName": "SetCart"
-        }
+  "operations": {
+    "viewProduct": {
+      "systemName": "ProductView"
     },
-    "ttl": {
-        "inapps": "0.00:00:10"
+    "viewCategory": {
+      "systemName": "CategoryView"
     },
-    "slidingExpiration": {
-        "config": "0.00:00:10",
-        "pushTokenKeepalive": "0.00:00:10"
-    },
-    "inapp": {
-        "maxInappsPerSession": 1,
-        "maxInappsPerDay": 1,
-        "minIntervalBetweenShows": "0.00:00:10"
-    },
-    "featureToggles": {
+    "setCart": {
+      "systemName": "SetCart"
     }
+  },
+  "ttl": {
+    "inapps": "0.00:00:10"
+  },
+  "slidingExpiration": {
+    "config": "0.00:00:10",
+    "pushTokenKeepalive": "0.00:00:10"
+  },
+  "inapp": {
+    "maxInappsPerSession": 1,
+    "maxInappsPerDay": 1,
+    "minIntervalBetweenShows": "0.00:00:10"
+  },
+  "featureToggles": {}
 }

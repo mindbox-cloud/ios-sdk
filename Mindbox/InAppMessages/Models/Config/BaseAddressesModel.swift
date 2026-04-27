@@ -13,5 +13,16 @@ extension Settings {
     /// (`/mobile/byendpoint/{endpointId}.json`).
     struct BaseAddresses: Decodable, Equatable {
         let operations: String?
+
+        enum CodingKeys: CodingKey {
+            case operations
+        }
+    }
+}
+
+extension Settings.BaseAddresses {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.operations = try? container.decodeIfPresent(String.self, forKey: .operations)
     }
 }
