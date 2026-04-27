@@ -25,4 +25,5 @@ extension Tag {
     @Tag static var geoTargeting: Self
     @Tag static var webView: Self
     @Tag static var trackVisit: Self
+    @Tag static var operationsRouting: Self
 }

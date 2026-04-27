@@ -15,6 +15,7 @@ import MindboxLogger
 public struct MBConfiguration: Codable {
     public let endpoint: String
     public let domain: String
+    public var operationsDomain: String?
     public var previousInstallationId: String?
     public var previousDeviceUUID: String?
     public var subscribeCustomerIfCreated: Bool
@@ -31,6 +32,9 @@ public struct MBConfiguration: Codable {
     /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
     /// - Parameter shouldCreateCustomer: Flag which determines create or not anonymous users. Usable only during first initialisation. Default value is `true`.
     /// - Parameter uuidDebugEnabled: Flag which determines if uuid debugging functionality is enabled. Default value is `true`.
+    /// - Parameter operationsDomain: Optional anonymizer host for `/v3/operations/*` and
+    ///     `/v1.1/customer/mobile-track-visit`. Bare host without scheme. Overridden by the
+    ///     value from the mobile JSON config when present. Default `nil` (use `domain`).
     ///
     /// - Throws:`MindboxError.internalError` for invalid initialization parameters
     public init(
@@ -41,7 +45,8 @@ public struct MBConfiguration: Codable {
         subscribeCustomerIfCreated: Bool = false,
         shouldCreateCustomer: Bool = true,
         imageLoadingMaxTimeInSeconds: Double? = nil,
-        uuidDebugEnabled: Bool = true
+        uuidDebugEnabled: Bool = true,
+        operationsDomain: String? = nil
     ) throws {
         self.endpoint = endpoint
         self.domain = domain
@@ -56,6 +61,17 @@ public struct MBConfiguration: Codable {
             let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Value endpoint can not be empty"))
             Logger.error(error.asLoggerError())
             throw error
+        }
+
+        if let operationsDomain = operationsDomain, !operationsDomain.isEmpty {
+            guard let url = URL(string: "https://" + operationsDomain), URLValidator(url: url).evaluate() else {
+                let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid operationsDomain. Host is unreachable. [OperationsDomain]: \(operationsDomain)"))
+                Logger.error(error.asLoggerError())
+                throw error
+            }
+            self.operationsDomain = operationsDomain
+        } else {
+            self.operationsDomain = nil
         }
 
         if let previousInstallationId = previousInstallationId, !previousInstallationId.isEmpty {
@@ -137,6 +153,7 @@ public struct MBConfiguration: Codable {
     enum CodingKeys: String, CodingKey {
         case endpoint
         case domain
+        case operationsDomain
         case previousInstallationId
         case previousDeviceUUID
         case subscribeCustomerIfCreated
@@ -148,6 +165,7 @@ public struct MBConfiguration: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
+        let operationsDomain = try? values.decodeIfPresent(String.self, forKey: .operationsDomain)
         var previousInstallationId: String?
         if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {
@@ -170,7 +188,8 @@ public struct MBConfiguration: Codable {
             previousDeviceUUID: previousDeviceUUID,
             subscribeCustomerIfCreated: subscribeCustomerIfCreated,
             shouldCreateCustomer: shouldCreateCustomer,
-            uuidDebugEnabled: uuidDebugEnabled
+            uuidDebugEnabled: uuidDebugEnabled,
+            operationsDomain: operationsDomain
         )
     }
 }
@@ -191,6 +210,8 @@ struct ConfigValidation {
 
     var changedState: ChangedState = .none
 
+    // `operationsDomain` is intentionally not diffed: changing it must not re-fire
+    // `installed`. The new value is picked up at request time via MBNetworkFetcher.
     mutating func compare(_ lhs: MBConfiguration?, _ rhs: MBConfiguration?) {
         if !(lhs?.domain == rhs?.domain && lhs?.endpoint == rhs?.endpoint) {
             changedState = .rest

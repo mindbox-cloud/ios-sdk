@@ -14,9 +14,10 @@ struct Settings: Decodable, Equatable {
     let slidingExpiration: SlidingExpiration?
     let inapp: InAppSettings?
     let featureToggles: FeatureToggles?
+    let baseAddresses: BaseAddresses?
 
     enum CodingKeys: CodingKey {
-        case operations, ttl, slidingExpiration, inapp, featureToggles
+        case operations, ttl, slidingExpiration, inapp, featureToggles, baseAddresses
     }
 }
 
@@ -28,5 +29,6 @@ extension Settings {
         self.slidingExpiration = try? container.decodeIfPresent(SlidingExpiration.self, forKey: .slidingExpiration)
         self.inapp = try? container.decodeIfPresent(InAppSettings.self, forKey: .inapp)
         self.featureToggles = try? container.decodeIfPresent(FeatureToggles.self, forKey: .featureToggles)
+        self.baseAddresses = try? container.decodeIfPresent(BaseAddresses.self, forKey: .baseAddresses)
     }
 }

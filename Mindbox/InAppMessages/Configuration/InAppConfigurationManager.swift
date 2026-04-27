@@ -156,14 +156,35 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         if let viewProduct = settings.operations?.viewProduct {
             SessionTemporaryStorage.shared.viewProductOperation = viewProduct.systemName.lowercased()
         }
-        
+
         if let inappSettings = settings.inapp {
             SessionTemporaryStorage.shared.inAppSettings = inappSettings
         }
 
         featureToggleManager.applyFeatureToggles(settings.featureToggles)
-        
+
+        persistOperationsDomain(from: settings.baseAddresses)
+
         saveConfigSessionToCache(settings.slidingExpiration?.config)
+    }
+
+    private func persistOperationsDomain(from baseAddresses: Settings.BaseAddresses?) {
+        let current = persistenceStorage.operationsDomainFromConfig
+        let raw = baseAddresses?.operations
+
+        switch OperationsDomainConfigPolicy.action(for: raw, currentlyStored: current) {
+        case .keep:
+            if let raw = raw, !raw.isEmpty, current != raw {
+                // `.keep` on a non-empty value means it was rejected by URLValidator.
+                Logger.common(message: "[OperationsDomain] Invalid domain from config — ignored, previous value kept. [Value]: \(raw)", level: .error, category: .inAppMessages)
+            }
+        case .clear:
+            persistenceStorage.operationsDomainFromConfig = nil
+            Logger.common(message: "[OperationsDomain] Cleared — config has no value.", level: .info, category: .inAppMessages)
+        case .save(let value):
+            persistenceStorage.operationsDomainFromConfig = value
+            Logger.common(message: "[OperationsDomain] Updated from config. [Value]: \(value)", level: .info, category: .inAppMessages)
+        }
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {

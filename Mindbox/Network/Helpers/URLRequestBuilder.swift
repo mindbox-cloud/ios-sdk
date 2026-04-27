@@ -12,6 +12,12 @@ import MindboxLogger
 struct URLRequestBuilder {
 
     let domain: String
+    let operationsDomain: String?
+
+    init(domain: String, operationsDomain: String? = nil) {
+        self.domain = domain
+        self.operationsDomain = operationsDomain
+    }
 
     func asURLRequest(route: Route) throws -> URLRequest {
         let components = makeURLComponents(for: route)
@@ -34,11 +40,20 @@ struct URLRequestBuilder {
     private func makeURLComponents(for route: Route) -> URLComponents {
         var components = URLComponents()
         components.scheme = "https"
-        components.host = domain
+        components.host = resolvedHost(for: route)
         components.path = route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
 
         return components
+    }
+
+    private func resolvedHost(for route: Route) -> String {
+        switch route.baseURLKind {
+        case .domain:
+            return domain
+        case .operations:
+            return operationsDomain ?? domain
+        }
     }
 
     private func makeQueryItems(for parameters: QueryParameters?) -> [URLQueryItem]? {
