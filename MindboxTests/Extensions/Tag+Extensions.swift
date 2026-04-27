@@ -26,4 +26,5 @@ extension Tag {
     @Tag static var webView: Self
     @Tag static var trackVisit: Self
     @Tag static var operationsRouting: Self
+    @Tag static var mbConfiguration: Self
 }
