@@ -36,13 +36,4 @@ enum HostNormalizer {
         }
         return "https://" + value
     }
-
-    /// Validates the extracted host. The `https://` prefix is required by
-    /// `URLValidator`'s full-URL regex — to be folded into URLValidator on rewrite.
-    static func isValidHost(_ raw: String) -> Bool {
-        let host = extractHost(raw)
-        guard !host.isEmpty,
-              let url = URL(string: "https://" + host) else { return false }
-        return URLValidator(url: url).evaluate()
-    }
 }

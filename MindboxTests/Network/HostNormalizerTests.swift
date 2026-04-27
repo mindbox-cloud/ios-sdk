@@ -74,29 +74,4 @@ struct HostNormalizerTests {
         #expect(HostNormalizer.toBaseURLString("https://api.mindbox.ru/") == "https://api.mindbox.ru")
         #expect(HostNormalizer.toBaseURLString("api.mindbox.ru/") == "https://api.mindbox.ru")
     }
-
-    // MARK: - isValidHost
-
-    @Test("Valid bare host passes")
-    func validBareHostPasses() {
-        #expect(HostNormalizer.isValidHost("api.mindbox.ru"))
-    }
-
-    @Test("Valid host with https:// prefix passes")
-    func validHostWithSchemePasses() {
-        #expect(HostNormalizer.isValidHost("https://api.mindbox.ru"))
-        #expect(HostNormalizer.isValidHost("http://proxy.example.com"))
-    }
-
-    @Test("Empty input fails")
-    func emptyHostFails() {
-        #expect(!HostNormalizer.isValidHost(""))
-        #expect(!HostNormalizer.isValidHost("   "))
-        #expect(!HostNormalizer.isValidHost("https://"))
-    }
-
-    @Test("Whitespace inside host fails")
-    func whitespaceInsideHostFails() {
-        #expect(!HostNormalizer.isValidHost("api mindbox ru"))
-    }
 }
