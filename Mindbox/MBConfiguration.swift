@@ -27,25 +27,25 @@ public struct MBConfiguration: Codable {
     ///
     /// - Parameter endpoint: Used for app identification
     /// - Parameter domain: Used for generating baseurl for REST
+    /// - Parameter operationsDomain: Optional host for sending operations. Overridden by
+    ///     the value from the mobile JSON config when present. Default `nil` (use `domain`).
     /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter previousDeviceUUID: Used instead of the generated value
     /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
     /// - Parameter shouldCreateCustomer: Flag which determines create or not anonymous users. Usable only during first initialisation. Default value is `true`.
     /// - Parameter uuidDebugEnabled: Flag which determines if uuid debugging functionality is enabled. Default value is `true`.
-    /// - Parameter operationsDomain: Optional host for sending operations. Overridden by
-    ///     the value from the mobile JSON config when present. Default `nil` (use `domain`).
     ///
     /// - Throws:`MindboxError.internalError` for invalid initialization parameters
     public init(
         endpoint: String,
         domain: String,
+        operationsDomain: String? = nil,
         previousInstallationId: String? = nil,
         previousDeviceUUID: String? = nil,
         subscribeCustomerIfCreated: Bool = false,
         shouldCreateCustomer: Bool = true,
         imageLoadingMaxTimeInSeconds: Double? = nil,
-        uuidDebugEnabled: Bool = true,
-        operationsDomain: String? = nil
+        uuidDebugEnabled: Bool = true
     ) throws {
         self.endpoint = endpoint
         self.domain = domain
@@ -183,12 +183,12 @@ public struct MBConfiguration: Codable {
         try self.init(
             endpoint: endpoint,
             domain: domain,
+            operationsDomain: operationsDomain,
             previousInstallationId: previousInstallationId,
             previousDeviceUUID: previousDeviceUUID,
             subscribeCustomerIfCreated: subscribeCustomerIfCreated,
             shouldCreateCustomer: shouldCreateCustomer,
-            uuidDebugEnabled: uuidDebugEnabled,
-            operationsDomain: operationsDomain
+            uuidDebugEnabled: uuidDebugEnabled
         )
     }
 }
