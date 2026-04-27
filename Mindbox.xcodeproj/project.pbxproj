@@ -29,6 +29,7 @@
 		31EB907325C402F900368FFB /* TestConfig3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31EB907125C402F900368FFB /* TestConfig3.plist */; };
 		31EB907425C402F900368FFB /* TestConfig2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31EB907225C402F900368FFB /* TestConfig2.plist */; };
 		F3CD20262F600A800065392A /* MBConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD20272F600A800065392A /* MBConfigurationTests.swift */; };
+		F3CD202B2F600A800065392A /* HostNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD202C2F600A800065392A /* HostNormalizerTests.swift */; };
 		31ED2DF225C4456600301FAD /* TestConfig_Invalid_2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */; };
 		31ED2DF325C4456600301FAD /* TestConfig_Invalid_1.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */; };
 		31ED2DF425C4456600301FAD /* TestConfig_Invalid_3.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */; };
@@ -57,6 +58,7 @@
 		3333C1B22681D42000B60D84 /* Payload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1B12681D42000B60D84 /* Payload.swift */; };
 		3333C1B42681D43C00B60D84 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1B32681D43C00B60D84 /* ImageFormat.swift */; };
 		3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1DD2681E9F300B60D84 /* URLRequestBuilder.swift */; };
+		F3CD20292F600A800065392A /* HostNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD202A2F600A800065392A /* HostNormalizer.swift */; };
 		3333C1E12681EA4D00B60D84 /* NotificationsPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333C1E02681EA4C00B60D84 /* NotificationsPayloads.swift */; };
 		3333D7BE265E56F2004279B0 /* OperationResponseType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3333D7BD265E56F2004279B0 /* OperationResponseType.swift */; };
 		3337E6A3265FAB39006949EB /* BaseResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3337E6A2265FAB39006949EB /* BaseResponse.swift */; };
@@ -758,6 +760,7 @@
 		31EB907125C402F900368FFB /* TestConfig3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig3.plist; sourceTree = "<group>"; };
 		31EB907225C402F900368FFB /* TestConfig2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig2.plist; sourceTree = "<group>"; };
 		F3CD20272F600A800065392A /* MBConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationTests.swift; sourceTree = "<group>"; };
+		F3CD202C2F600A800065392A /* HostNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostNormalizerTests.swift; sourceTree = "<group>"; };
 		31ED2DEF25C4456600301FAD /* TestConfig_Invalid_2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_2.plist; sourceTree = "<group>"; };
 		31ED2DF025C4456600301FAD /* TestConfig_Invalid_1.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_1.plist; sourceTree = "<group>"; };
 		31ED2DF125C4456600301FAD /* TestConfig_Invalid_3.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = TestConfig_Invalid_3.plist; sourceTree = "<group>"; };
@@ -789,6 +792,7 @@
 		3333C1B12681D42000B60D84 /* Payload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payload.swift; sourceTree = "<group>"; };
 		3333C1B32681D43C00B60D84 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		3333C1DD2681E9F300B60D84 /* URLRequestBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = URLRequestBuilder.swift; sourceTree = "<group>"; };
+		F3CD202A2F600A800065392A /* HostNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostNormalizer.swift; sourceTree = "<group>"; };
 		3333C1E02681EA4C00B60D84 /* NotificationsPayloads.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationsPayloads.swift; sourceTree = "<group>"; };
 		3333D7BD265E56F2004279B0 /* OperationResponseType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationResponseType.swift; sourceTree = "<group>"; };
 		3337E6A2265FAB39006949EB /* BaseResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseResponse.swift; sourceTree = "<group>"; };
@@ -2272,6 +2276,7 @@
 			children = (
 				97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */,
 				F3BA5E000130A000C0000006 /* OperationsURLRoutingTests.swift */,
+				F3CD202C2F600A800065392A /* HostNormalizerTests.swift */,
 			);
 			name = Network;
 			path = Network;
@@ -2390,6 +2395,7 @@
 			isa = PBXGroup;
 			children = (
 				3333C1DD2681E9F300B60D84 /* URLRequestBuilder.swift */,
+				F3CD202A2F600A800065392A /* HostNormalizer.swift */,
 				84EAEDFB25C8B18B00726063 /* DeviceModelHelper.swift */,
 			);
 			path = Helpers;
@@ -4425,6 +4431,7 @@
 				9B24FAB528C751E400F10B5D /* InAppImagesStorage.swift in Sources */,
 				F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */,
 				3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */,
+				F3CD20292F600A800065392A /* HostNormalizer.swift in Sources */,
 				F315503F2BBB24E20072A071 /* TTLValidationService.swift in Sources */,
 				F3BA5E000130A000C0000007 /* OperationsDomainConfigPolicy.swift in Sources */,
 				334F3AF5264C199900A6AC00 /* CodableDictionary.swift in Sources */,
@@ -4766,6 +4773,7 @@
 				302E35788CBDA959283569F4 /* MotionServiceBehaviorTests.swift in Sources */,
 				1E3BD63AB3F1521C253CB818 /* MBNetworkFetcherResponseHandlingTests.swift in Sources */,
 				F3BA5E000130A000C0000005 /* OperationsURLRoutingTests.swift in Sources */,
+				F3CD202B2F600A800065392A /* HostNormalizerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

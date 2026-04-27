@@ -67,6 +67,58 @@ struct OperationsURLRoutingTests {
         #expect(url?.query?.contains("endpointId=test-endpoint") == true)
     }
 
+    // MARK: - Scheme handling (host-with-scheme passthrough)
+
+    @Test("Bare host gets default https:// scheme")
+    func bareHostUsesHttps() throws {
+        let builder = URLRequestBuilder(domain: "api.mindbox.ru")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "api.mindbox.ru")
+    }
+
+    @Test("Explicit https:// in domain is preserved")
+    func explicitHttpsPreserved() throws {
+        let builder = URLRequestBuilder(domain: "https://api.mindbox.ru")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "api.mindbox.ru")
+    }
+
+    @Test("Explicit http:// in domain is preserved (proxy/staging case)")
+    func explicitHttpPreserved() throws {
+        let builder = URLRequestBuilder(domain: "http://proxy.example.com")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "http")
+        #expect(url?.host == "proxy.example.com")
+    }
+
+    @Test("Explicit https:// in operationsDomain is preserved")
+    func explicitHttpsInOperationsDomainPreserved() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://anonymizer.client.ru")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "anonymizer.client.ru")
+    }
+
+    @Test("Trailing slash in host input is stripped before path append")
+    func trailingSlashStripped() throws {
+        let builder = URLRequestBuilder(domain: "api.mindbox.ru/")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.path == "/v3/operations/async")
+        #expect(url?.host == "api.mindbox.ru")
+    }
+
     // MARK: - Rollback signals from JSON config
     //
     // Happy-path and key/type errors live in `SettingsConfigParsingTests`
