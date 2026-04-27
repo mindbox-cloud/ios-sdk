@@ -29,13 +29,10 @@ struct OperationsURLRoutingTests {
 
         let syncWrapper = Self.makeEventWrapper(.syncEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
         #expect(try builder.asURLRequest(route: EventRoute.syncEvent(syncWrapper)).url?.host == opsHost)
-    }
 
-    @Test("SDKLogsRoute uses operationsDomain when configured")
-    func sdkLogsRouteUsesOperationsDomain() throws {
-        let builder = URLRequestBuilder(domain: domain, operationsDomain: opsHost)
-        let url = try builder.asURLRequest(route: SDKLogsRoute()).url
-        #expect(url?.host == opsHost)
+        // SDK logs flow through the same `EventRoute.asyncEvent` (see `MBEventRepository.makeRoute`).
+        let logsWrapper = Self.makeEventWrapper(.sdkLogs)
+        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(logsWrapper)).url?.host == opsHost)
     }
 
     @Test("Config and geo routes always use domain")
@@ -51,10 +48,11 @@ struct OperationsURLRoutingTests {
     func noOperationsDomainFallsBackToDomain() throws {
         let builder = URLRequestBuilder(domain: domain)
         let wrapper = Self.makeEventWrapper(.installed)
+        let logsWrapper = Self.makeEventWrapper(.sdkLogs)
 
         #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url?.host == domain)
         #expect(try builder.asURLRequest(route: EventRoute.trackVisit(wrapper)).url?.host == domain)
-        #expect(try builder.asURLRequest(route: SDKLogsRoute()).url?.host == domain)
+        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(logsWrapper)).url?.host == domain)
         #expect(try builder.asURLRequest(route: FetchInAppGeoRoute()).url?.host == domain)
     }
 
