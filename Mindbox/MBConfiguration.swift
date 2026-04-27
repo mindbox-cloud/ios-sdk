@@ -32,9 +32,8 @@ public struct MBConfiguration: Codable {
     /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
     /// - Parameter shouldCreateCustomer: Flag which determines create or not anonymous users. Usable only during first initialisation. Default value is `true`.
     /// - Parameter uuidDebugEnabled: Flag which determines if uuid debugging functionality is enabled. Default value is `true`.
-    /// - Parameter operationsDomain: Optional anonymizer host for `/v3/operations/*` and
-    ///     `/v1.1/customer/mobile-track-visit`. Bare host without scheme. Overridden by the
-    ///     value from the mobile JSON config when present. Default `nil` (use `domain`).
+    /// - Parameter operationsDomain: Optional host for sending operations. Overridden by
+    ///     the value from the mobile JSON config when present. Default `nil` (use `domain`).
     ///
     /// - Throws:`MindboxError.internalError` for invalid initialization parameters
     public init(
