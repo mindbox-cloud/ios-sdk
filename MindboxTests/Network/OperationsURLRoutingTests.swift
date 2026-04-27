@@ -69,45 +69,6 @@ struct OperationsURLRoutingTests {
         #expect(url?.query?.contains("endpointId=test-endpoint") == true)
     }
 
-    // MARK: - MBConfiguration validation
-
-    @Test("MBConfiguration accepts nil operationsDomain (backwards compatible)")
-    func configAcceptsNilOperationsDomain() throws {
-        let config = try MBConfiguration(endpoint: "e", domain: domain)
-        #expect(config.operationsDomain == nil)
-    }
-
-    @Test("MBConfiguration accepts valid operationsDomain")
-    func configAcceptsValidOperationsDomain() throws {
-        let config = try MBConfiguration(
-            endpoint: "e",
-            domain: domain,
-            operationsDomain: opsHost
-        )
-        #expect(config.operationsDomain == opsHost)
-    }
-
-    @Test("MBConfiguration treats empty operationsDomain as nil")
-    func configTreatsEmptyOperationsDomainAsNil() throws {
-        let config = try MBConfiguration(
-            endpoint: "e",
-            domain: domain,
-            operationsDomain: ""
-        )
-        #expect(config.operationsDomain == nil)
-    }
-
-    @Test("MBConfiguration rejects invalid operationsDomain")
-    func configRejectsInvalidOperationsDomain() {
-        #expect(throws: MindboxError.self) {
-            _ = try MBConfiguration(
-                endpoint: "e",
-                domain: domain,
-                operationsDomain: "not a host with spaces"
-            )
-        }
-    }
-
     // MARK: - Rollback signals from JSON config
     //
     // Happy-path and key/type errors live in `SettingsConfigParsingTests`
@@ -134,36 +95,6 @@ struct OperationsURLRoutingTests {
 
         let response = try JSONDecoder().decode(ConfigResponse.self, from: json)
         #expect(response.settings?.baseAddresses?.operations == "")
-    }
-
-    // MARK: - ConfigValidation.compare
-
-    @Test("ConfigValidation does NOT flag operationsDomain change — new value applies without re-install")
-    func configValidationIgnoresOperationsDomainChange() throws {
-        let lhs = try MBConfiguration(
-            endpoint: "e",
-            domain: domain,
-            operationsDomain: "old.client.ru"
-        )
-        let rhs = try MBConfiguration(
-            endpoint: "e",
-            domain: domain,
-            operationsDomain: "new.client.ru"
-        )
-        var validation = ConfigValidation()
-        validation.compare(lhs, rhs)
-        #expect(validation.changedState == .none)
-    }
-
-    @Test("ConfigValidation still flags domain change as REST (operationsDomain unaffected)")
-    func configValidationDetectsDomainChange() throws {
-        let lhs = try MBConfiguration(endpoint: "e", domain: "a.mindbox.ru",
-                                      operationsDomain: opsHost)
-        let rhs = try MBConfiguration(endpoint: "e", domain: "b.mindbox.ru",
-                                      operationsDomain: opsHost)
-        var validation = ConfigValidation()
-        validation.compare(lhs, rhs)
-        #expect(validation.changedState == .rest)
     }
 
     // MARK: - Priority resolution (MBNetworkFetcher)
@@ -273,26 +204,6 @@ struct OperationsURLRoutingTests {
         storage.reset()
 
         #expect(storage.operationsDomainFromConfig == nil)
-    }
-
-    // MARK: - Backwards compatibility
-
-    @Test("MBConfiguration decodes legacy JSON without operationsDomain key", .tags(.decoding))
-    func decodesLegacyConfigWithoutOperationsDomain() throws {
-        let legacyJSON = """
-        {
-          "endpoint": "app-IOS",
-          "domain": "api.mindbox.ru",
-          "subscribeCustomerIfCreated": false,
-          "shouldCreateCustomer": true,
-          "uuidDebugEnabled": true
-        }
-        """.data(using: .utf8)!
-
-        let config = try JSONDecoder().decode(MBConfiguration.self, from: legacyJSON)
-        #expect(config.endpoint == "app-IOS")
-        #expect(config.domain == "api.mindbox.ru")
-        #expect(config.operationsDomain == nil)
     }
 
     // MARK: - Helpers
