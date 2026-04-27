@@ -26,8 +26,7 @@ enum OperationsDomainConfigPolicy {
             return currentlyStored == nil ? .keep : .clear
         }
 
-        guard let url = URL(string: "https://" + value),
-              URLValidator(url: url).evaluate() else {
+        guard HostNormalizer.isValidHost(value) else {
             return .keep
         }
 

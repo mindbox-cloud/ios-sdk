@@ -39,11 +39,32 @@ struct MBConfigurationTests {
         }
     }
 
-    @Test("Domain with embedded scheme throws")
-    func domainWithSchemeThrows() {
-        #expect(throws: MindboxError.self) {
-            _ = try MBConfiguration(endpoint: endpoint, domain: "https://api.mindbox.ru")
-        }
+    @Test("Domain accepts https:// prefix")
+    func domainAcceptsHttpsPrefix() throws {
+        let config = try MBConfiguration(endpoint: endpoint, domain: "https://api.mindbox.ru")
+        #expect(config.domain == "https://api.mindbox.ru")
+    }
+
+    @Test("Domain accepts http:// prefix")
+    func domainAcceptsHttpPrefix() throws {
+        let config = try MBConfiguration(endpoint: endpoint, domain: "http://proxy.example.com")
+        #expect(config.domain == "http://proxy.example.com")
+    }
+
+    @Test("Domain accepts trailing slash")
+    func domainAcceptsTrailingSlash() throws {
+        let config = try MBConfiguration(endpoint: endpoint, domain: "api.mindbox.ru/")
+        #expect(config.domain == "api.mindbox.ru/")
+    }
+
+    @Test("operationsDomain accepts https:// prefix")
+    func operationsDomainAcceptsHttpsPrefix() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "https://anonymizer.client.ru"
+        )
+        #expect(config.operationsDomain == "https://anonymizer.client.ru")
     }
 
     // MARK: - Init: endpoint validation

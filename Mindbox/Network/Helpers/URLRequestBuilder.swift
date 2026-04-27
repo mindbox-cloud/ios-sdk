@@ -38,9 +38,8 @@ struct URLRequestBuilder {
     }
 
     private func makeURLComponents(for route: Route) -> URLComponents {
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = resolvedHost(for: route)
+        let baseURL = HostNormalizer.toBaseURLString(resolvedHost(for: route))
+        var components = URLComponents(string: baseURL) ?? URLComponents()
         components.path = route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
 
