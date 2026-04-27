@@ -55,6 +55,9 @@ protocol PersistenceStorage: AnyObject {
     /// Operations host cached from `settings.baseAddresses.operations` in the mobile
     /// JSON config. Persisted across launches; takes precedence over the init-time
     /// `MBConfiguration.operationsDomain` at request time.
+    /// Excluded from `softReset()` on purpose: clearing it on a migration reset would
+    /// route operations to `domain` until the next config load, breaking the
+    /// PD-safety guarantee.
     var operationsDomainFromConfig: String? { get set }
 
     /// The version code used to track the current state of migrations.
@@ -102,9 +105,6 @@ extension PersistenceStorage {
     
     func softReset() {
         configDownloadDate = nil
-        // `operationsDomainFromConfig` is intentionally preserved: clearing it on a
-        // migration reset would route operations to `domain` until config reloads,
-        // breaking the PD-safety guarantee.
         shownDatesByInApp = nil
         handledlogRequestIds = nil
         lastInappStateChangeDate = nil
