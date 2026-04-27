@@ -108,32 +108,12 @@ struct OperationsURLRoutingTests {
         }
     }
 
-    // MARK: - Config JSON decoding (backend schema preserves `baseAddresses.operations`)
-
-    @Test("Settings decodes baseAddresses.operations", .tags(.decoding))
-    func settingsDecodesBaseAddresses() throws {
-        let json = """
-        {
-          "settings": {
-            "baseAddresses": { "operations": "anonymizer.client.ru" },
-            "ttl": { "inapps": "1.00:00:00" }
-          }
-        }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(ConfigResponse.self, from: json)
-        #expect(response.settings?.baseAddresses?.operations == "anonymizer.client.ru")
-    }
-
-    @Test("Settings tolerates missing baseAddresses", .tags(.decoding))
-    func settingsWithoutBaseAddresses() throws {
-        let json = """
-        { "settings": { "ttl": { "inapps": "1.00:00:00" } } }
-        """.data(using: .utf8)!
-
-        let response = try JSONDecoder().decode(ConfigResponse.self, from: json)
-        #expect(response.settings?.baseAddresses == nil)
-    }
+    // MARK: - Rollback signals from JSON config
+    //
+    // Happy-path and key/type errors live in `SettingsConfigParsingTests`
+    // (driven by the canonical `pkl-mobile-config` stubs). The two cases
+    // below stay here because they exercise the rollback channel that's
+    // specific to this feature and not modeled in the Pkl error stubs.
 
     @Test("Settings decodes explicit null as rollback signal", .tags(.decoding))
     func settingsDecodesNullOperationsAsRollback() throws {

@@ -561,6 +561,10 @@
 		F34A10462F455C5B0065392A /* SettingsFeatureTogglesError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A103E2F455C5B0065392A /* SettingsFeatureTogglesError.json */; };
 		F34A10472F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A10412F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */; };
 		F34A10482F455C5B0065392A /* SettingsFeatureTogglesTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F34A10422F455C5B0065392A /* SettingsFeatureTogglesTypeError.json */; };
+		F3BA10552F500A800065392A /* SettingsBaseAddressesError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3BA10512F500A800065392A /* SettingsBaseAddressesError.json */; };
+		F3BA10562F500A800065392A /* SettingsBaseAddressesTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3BA10522F500A800065392A /* SettingsBaseAddressesTypeError.json */; };
+		F3BA10572F500A800065392A /* SettingsBaseAddressesOperationsError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3BA10532F500A800065392A /* SettingsBaseAddressesOperationsError.json */; };
+		F3BA10582F500A800065392A /* SettingsBaseAddressesOperationsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = F3BA10542F500A800065392A /* SettingsBaseAddressesOperationsTypeError.json */; };
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
@@ -1290,6 +1294,10 @@
 		F34A10402F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorMissing.json; sourceTree = "<group>"; };
 		F34A10412F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json; sourceTree = "<group>"; };
 		F34A10422F455C5B0065392A /* SettingsFeatureTogglesTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsFeatureTogglesTypeError.json; sourceTree = "<group>"; };
+		F3BA10512F500A800065392A /* SettingsBaseAddressesError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsBaseAddressesError.json; sourceTree = "<group>"; };
+		F3BA10522F500A800065392A /* SettingsBaseAddressesTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsBaseAddressesTypeError.json; sourceTree = "<group>"; };
+		F3BA10532F500A800065392A /* SettingsBaseAddressesOperationsError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsBaseAddressesOperationsError.json; sourceTree = "<group>"; };
+		F3BA10542F500A800065392A /* SettingsBaseAddressesOperationsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SettingsBaseAddressesOperationsTypeError.json; sourceTree = "<group>"; };
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
@@ -2058,6 +2066,7 @@
 		4731A7E72F447C3100CBE1E5 /* SettingsJsonStubs */ = {
 			isa = PBXGroup;
 			children = (
+				F3BA10502F500A800065392A /* BaseAddressesError */,
 				F34A10432F455C5B0065392A /* FeatureTogglesError */,
 				4731A7CB2F447C3100CBE1E5 /* InappError */,
 				4731A7D92F447C3100CBE1E5 /* OperationsErrors */,
@@ -3517,6 +3526,17 @@
 			path = FeatureTogglesError;
 			sourceTree = "<group>";
 		};
+		F3BA10502F500A800065392A /* BaseAddressesError */ = {
+			isa = PBXGroup;
+			children = (
+				F3BA10512F500A800065392A /* SettingsBaseAddressesError.json */,
+				F3BA10522F500A800065392A /* SettingsBaseAddressesTypeError.json */,
+				F3BA10532F500A800065392A /* SettingsBaseAddressesOperationsError.json */,
+				F3BA10542F500A800065392A /* SettingsBaseAddressesOperationsTypeError.json */,
+			);
+			path = BaseAddressesError;
+			sourceTree = "<group>";
+		};
 		F34A45AC2B76286D00634C8B /* PublicModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -4079,6 +4099,10 @@
 				F34A10462F455C5B0065392A /* SettingsFeatureTogglesError.json in Resources */,
 				F34A10472F455C5B0065392A /* SettingsFeatureTogglesShouldSendInAppShowErrorTypeError.json in Resources */,
 				F34A10482F455C5B0065392A /* SettingsFeatureTogglesTypeError.json in Resources */,
+				F3BA10552F500A800065392A /* SettingsBaseAddressesError.json in Resources */,
+				F3BA10562F500A800065392A /* SettingsBaseAddressesTypeError.json in Resources */,
+				F3BA10572F500A800065392A /* SettingsBaseAddressesOperationsError.json in Resources */,
+				F3BA10582F500A800065392A /* SettingsBaseAddressesOperationsTypeError.json in Resources */,
 				4731A7FD2F447C3100CBE1E5 /* InAppDelayTimeTypeError.json in Resources */,
 				4731A7FE2F447C3100CBE1E5 /* MonitoringLogsTypeError.json in Resources */,
 				4731A7FF2F447C3100CBE1E5 /* SettingsInAppSettingsMissingMaxInappsPerDay.json in Resources */,
