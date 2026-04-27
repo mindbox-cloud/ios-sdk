@@ -21,6 +21,8 @@ enum EventRoute: Route {
         }
     }
 
+    var baseURLKind: RouteBaseURL { .operations }
+
     var path: String {
         switch self {
         case .syncEvent:

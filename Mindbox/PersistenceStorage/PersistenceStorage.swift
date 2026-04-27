@@ -52,6 +52,11 @@ protocol PersistenceStorage: AnyObject {
     /// It is optional and can be set to `nil` if the configuration has not yet been downloaded yet or reset.
     var configDownloadDate: Date? { get set }
 
+    /// Operations host cached from `settings.baseAddresses.operations` in the mobile
+    /// JSON config. Persisted across launches; takes precedence over the init-time
+    /// `MBConfiguration.operationsDomain` at request time.
+    var operationsDomainFromConfig: String? { get set }
+
     /// The version code used to track the current state of migrations.
     /// This value is compared to `Constants.Migration.sdkVersionCode` to determine
     /// if migrations need to be performed. If a migration fails, and the `versionCodeForMigration`
@@ -97,6 +102,9 @@ extension PersistenceStorage {
     
     func softReset() {
         configDownloadDate = nil
+        // `operationsDomainFromConfig` is intentionally preserved: clearing it on a
+        // migration reset would route operations to `domain` until config reloads,
+        // breaking the PD-safety guarantee.
         shownDatesByInApp = nil
         handledlogRequestIds = nil
         lastInappStateChangeDate = nil
@@ -119,6 +127,7 @@ extension PersistenceStorage {
         configuration = nil
         isNotificationsEnabled = nil
         configDownloadDate = nil
+        operationsDomainFromConfig = nil
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
     }

@@ -56,7 +56,10 @@ class MBNetworkFetcher: NetworkFetcher {
             return
         }
 
-        let builder = URLRequestBuilder(domain: configuration.domain)
+        let builder = URLRequestBuilder(
+            domain: configuration.domain,
+            operationsDomain: resolvedOperationsDomain(configuration: configuration)
+        )
         do {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
@@ -102,7 +105,10 @@ class MBNetworkFetcher: NetworkFetcher {
             completion(.failure(error))
             return
         }
-        let builder = URLRequestBuilder(domain: configuration.domain)
+        let builder = URLRequestBuilder(
+            domain: configuration.domain,
+            operationsDomain: resolvedOperationsDomain(configuration: configuration)
+        )
         do {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
@@ -367,5 +373,24 @@ class MBNetworkFetcher: NetworkFetcher {
         session.getAllTasks { tasks in
             tasks.forEach { $0.cancel() }
         }
+    }
+
+    private func resolvedOperationsDomain(configuration: MBConfiguration) -> String? {
+        Self.resolveOperationsDomain(
+            fromConfigJSON: persistenceStorage.operationsDomainFromConfig,
+            fromInit: configuration.operationsDomain
+        )
+    }
+
+    /// Priority: JSON config > init > nil. Empty strings count as "no value".
+    /// Static for unit-testing without a PersistenceStorage or MBConfiguration.
+    static func resolveOperationsDomain(fromConfigJSON: String?, fromInit: String?) -> String? {
+        if let fromConfig = fromConfigJSON, !fromConfig.isEmpty {
+            return fromConfig
+        }
+        if let fromInit = fromInit, !fromInit.isEmpty {
+            return fromInit
+        }
+        return nil
     }
 }

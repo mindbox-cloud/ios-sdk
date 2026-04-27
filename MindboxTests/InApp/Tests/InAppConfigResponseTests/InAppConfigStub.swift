@@ -115,10 +115,11 @@ extension InAppConfigStub {
                 viewCategory: operationType == .viewCategory ? .init(systemName: "Mobile.ViewCategory") : nil,
                 setCart: nil
             ),
-            ttl: nil, 
+            ttl: nil,
             slidingExpiration: nil,
             inapp: nil,
-            featureToggles: nil
+            featureToggles: nil,
+            baseAddresses: nil
         )
         
         // Mock method setupSettingsFromConfig.

@@ -8,6 +8,12 @@
 
 import Foundation
 
+enum RouteBaseURL {
+    case domain
+    /// Falls back to `domain` when no operations host is configured.
+    case operations
+}
+
 protocol Route {
 
     var method: HTTPMethod { get }
@@ -19,4 +25,10 @@ protocol Route {
     var queryParameters: QueryParameters { get }
 
     var body: Data? { get }
+
+    var baseURLKind: RouteBaseURL { get }
+}
+
+extension Route {
+    var baseURLKind: RouteBaseURL { .domain }
 }
