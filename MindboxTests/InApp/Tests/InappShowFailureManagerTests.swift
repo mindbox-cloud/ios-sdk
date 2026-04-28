@@ -200,6 +200,82 @@ final class InappShowFailureManagerTests: XCTestCase {
         assertCreatedEventsCountEventually(0)
     }
     
+    func testAddFailure_errorDetailsBelowLimit_isNotTruncated() throws {
+        let details = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit - 1)
+
+        manager.addFailure(inappId: "inapp-below-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, InappShowFailureManager.errorDetailsLimit - 1)
+        XCTAssertEqual(failure.errorDetails, details)
+    }
+
+    func testAddFailure_errorDetailsAtLimit_isNotTruncated() throws {
+        let details = String(repeating: "b", count: InappShowFailureManager.errorDetailsLimit)
+
+        manager.addFailure(inappId: "inapp-at-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, InappShowFailureManager.errorDetailsLimit)
+        XCTAssertEqual(failure.errorDetails, details)
+    }
+
+    func testAddFailure_errorDetailsAboveLimit_isTruncatedToLimit() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        let details = String(repeating: "c", count: limit + 500)
+
+        manager.addFailure(inappId: "inapp-above-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, limit)
+        XCTAssertEqual(failure.errorDetails, String(details.prefix(limit)))
+    }
+
+    func testAddFailure_errorDetailsNil_remainsNil() throws {
+        manager.addFailure(inappId: "inapp-nil-details", reason: .unknownError, details: nil)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertNil(failure.errorDetails)
+    }
+
+    func testAddFailure_errorDetailsEmpty_remainsEmpty() throws {
+        manager.addFailure(inappId: "inapp-empty-details", reason: .unknownError, details: "")
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails, "")
+    }
+
+    func testAddFailure_priorityReplacement_truncatesNewDetails() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        let longDetails = String(repeating: "d", count: limit + 200)
+
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .productSegmentRequestFailed, details: "short")
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .customerSegmentRequestFailed, details: longDetails)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.failureReason, .customerSegmentRequestFailed)
+        XCTAssertEqual(failure.errorDetails?.count, limit)
+        XCTAssertEqual(failure.errorDetails, String(longDetails.prefix(limit)))
+    }
+
     func testSendFailures_whenFeatureDisabled_doesNotSendAndKeepsBufferedFailures() throws {
         manager.addFailure(
             inappId: "inapp-toggle-disabled",

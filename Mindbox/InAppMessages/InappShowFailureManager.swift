@@ -16,6 +16,8 @@ protocol InappShowFailureManagerProtocol {
 }
 
 final class InappShowFailureManager: InappShowFailureManagerProtocol {
+    static let errorDetailsLimit = 1000
+
     private struct InAppShowFailuresBody: Codable {
         let failures: [InAppShowFailure]
     }
@@ -100,7 +102,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         InAppShowFailure(
             inappId: inappId,
             failureReason: reason,
-            errorDetails: details,
+            errorDetails: details.map { String($0.prefix(Self.errorDetailsLimit)) },
             dateTimeUtc: Date().toString(withFormat: .utc)
         )
     }
