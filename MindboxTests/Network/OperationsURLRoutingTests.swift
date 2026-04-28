@@ -198,27 +198,27 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — saves a new valid value when storage is empty")
     func policySavesNewValueFromEmpty() {
-        #expect(OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: nil) == .save("x.ru"))
+        #expect(OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: nil) == .save("https://x.ru"))
     }
 
     @Test("Policy — saves when value changes")
     func policySavesOnChange() {
-        #expect(OperationsDomainConfigPolicy.action(for: "new.ru", currentlyStored: "old.ru") == .save("new.ru"))
+        #expect(OperationsDomainConfigPolicy.action(for: "new.ru", currentlyStored: "https://old.ru") == .save("https://new.ru"))
     }
 
     @Test("Policy — keeps when incoming value equals stored")
     func policyKeepsOnIdenticalValue() {
-        #expect(OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "x.ru") == .keep)
+        #expect(OperationsDomainConfigPolicy.action(for: "https://x.ru", currentlyStored: "https://x.ru") == .keep)
     }
 
     @Test("Policy — clears on null/missing config when something is stored")
     func policyClearsOnNullWhenStored() {
-        #expect(OperationsDomainConfigPolicy.action(for: nil, currentlyStored: "old.ru") == .clear)
+        #expect(OperationsDomainConfigPolicy.action(for: nil, currentlyStored: "https://old.ru") == .clear)
     }
 
     @Test("Policy — clears on empty string when something is stored")
     func policyClearsOnEmptyWhenStored() {
-        #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: "old.ru") == .clear)
+        #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: "https://old.ru") == .clear)
     }
 
     @Test("Policy — no-ops when nothing stored and nothing came")
@@ -229,7 +229,43 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — preserves previous value when incoming host is format-broken")
     func policyKeepsOnInvalidFormat() {
-        #expect(OperationsDomainConfigPolicy.action(for: "host with spaces", currentlyStored: "good.ru") == .keep)
+        #expect(OperationsDomainConfigPolicy.action(for: "host with spaces", currentlyStored: "https://good.ru") == .keep)
+    }
+
+    @Test("Policy — normalizes scheme + trailing slash to canonical form")
+    func policyNormalizesSchemeAndTrailingSlash() {
+        #expect(
+            OperationsDomainConfigPolicy.action(
+                for: "https://anonymizer-api-regular.client.ru/",
+                currentlyStored: nil
+            ) == .save("https://anonymizer-api-regular.client.ru")
+        )
+    }
+
+    @Test("Policy — preserves http scheme from config (does not force https)")
+    func policyPreservesHttpScheme() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "http://x.ru/", currentlyStored: nil)
+                == .save("http://x.ru")
+        )
+    }
+
+    @Test("Policy — keeps when canonical form equals stored despite raw differences")
+    func policyKeepsWhenCanonicalFormMatches() {
+        #expect(
+            OperationsDomainConfigPolicy.action(
+                for: "https://x.ru/",
+                currentlyStored: "https://x.ru"
+            ) == .keep
+        )
+    }
+
+    @Test("Policy — upgrade path: legacy bare-host stored value re-saves once as canonical")
+    func policyUpgradesLegacyStoredValue() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "x.ru")
+                == .save("https://x.ru")
+        )
     }
 
     // MARK: - Persistence lifecycle

@@ -30,6 +30,9 @@ enum OperationsDomainConfigPolicy {
             return .keep
         }
 
-        return value == currentlyStored ? .keep : .save(value)
+        // Store canonical `scheme://host` so backend's choice of `http`/`https`
+        // is preserved across restarts and trailing slashes don't cause re-saves.
+        let normalized = HostNormalizer.toBaseURLString(value)
+        return normalized == currentlyStored ? .keep : .save(normalized)
     }
 }
