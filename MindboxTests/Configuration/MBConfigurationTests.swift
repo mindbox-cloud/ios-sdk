@@ -67,6 +67,26 @@ struct MBConfigurationTests {
         #expect(config.operationsDomain == "https://anonymizer.client.ru")
     }
 
+    @Test("operationsDomain accepts http:// prefix")
+    func operationsDomainAcceptsHttpPrefix() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "http://anonymizer-staging.client.ru"
+        )
+        #expect(config.operationsDomain == "http://anonymizer-staging.client.ru")
+    }
+
+    @Test("operationsDomain accepts trailing slash")
+    func operationsDomainAcceptsTrailingSlash() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "anonymizer.client.ru/"
+        )
+        #expect(config.operationsDomain == "anonymizer.client.ru/")
+    }
+
     // MARK: - Init: endpoint validation
 
     @Test("Empty endpoint throws")

@@ -99,6 +99,16 @@ struct OperationsURLRoutingTests {
         #expect(url?.host == "proxy.example.com")
     }
 
+    @Test("Bare operationsDomain gets default https:// scheme")
+    func bareOperationsDomainUsesHttps() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "anonymizer.client.ru")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "anonymizer.client.ru")
+    }
+
     @Test("Explicit https:// in operationsDomain is preserved")
     func explicitHttpsInOperationsDomainPreserved() throws {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://anonymizer.client.ru")
@@ -109,14 +119,49 @@ struct OperationsURLRoutingTests {
         #expect(url?.host == "anonymizer.client.ru")
     }
 
-    @Test("Trailing slash in host input is stripped before path append")
-    func trailingSlashStripped() throws {
+    @Test("Explicit http:// in operationsDomain is preserved (proxy/staging case)")
+    func explicitHttpInOperationsDomainPreserved() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "http://anonymizer-staging.client.ru")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "http")
+        #expect(url?.host == "anonymizer-staging.client.ru")
+    }
+
+    @Test("Trailing slash in domain is stripped before path append")
+    func trailingSlashInDomainStripped() throws {
         let builder = URLRequestBuilder(domain: "api.mindbox.ru/")
         let wrapper = Self.makeEventWrapper(.installed)
 
         let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
         #expect(url?.path == "/v3/operations/async")
         #expect(url?.host == "api.mindbox.ru")
+    }
+
+    @Test("Trailing slash in operationsDomain is stripped before path append")
+    func trailingSlashInOperationsDomainStripped() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://anonymizer.client.ru/")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "anonymizer.client.ru")
+        #expect(url?.path == "/v3/operations/async")
+    }
+
+    @Test("Canonical form stored by policy routes correctly end-to-end")
+    func canonicalStoredFormRoutesCorrectly() throws {
+        // Mirrors what `OperationsDomainConfigPolicy` writes to PersistenceStorage:
+        // canonical `scheme://host` form. URLRequestBuilder must accept it as-is.
+        let canonical = "https://anonymizer-api-regular.client.ru"
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: canonical)
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "anonymizer-api-regular.client.ru")
+        #expect(url?.path == "/v3/operations/async")
     }
 
     // MARK: - Rollback signals from JSON config
