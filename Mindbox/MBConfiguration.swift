@@ -164,7 +164,7 @@ public struct MBConfiguration: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let endpoint = try values.decode(String.self, forKey: .endpoint)
         let domain = try values.decode(String.self, forKey: .domain)
-        let operationsDomain = try? values.decodeIfPresent(String.self, forKey: .operationsDomain)
+        let operationsDomain = try values.decodeIfPresent(String.self, forKey: .operationsDomain)
         var previousInstallationId: String?
         if let value = try? values.decode(String.self, forKey: .previousInstallationId) {
             if !value.isEmpty {

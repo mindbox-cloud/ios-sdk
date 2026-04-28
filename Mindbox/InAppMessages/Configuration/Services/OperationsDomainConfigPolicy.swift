@@ -16,9 +16,13 @@ enum OperationsDomainConfigPolicy {
         case save(String)
         /// Config explicitly cleared the value (null / missing / empty).
         case clear
-        /// No-op: equal to stored, both empty, or incoming value is format-broken
-        /// (one bad push must not destroy a working config).
+        /// No-op: nothing stored and nothing came, or canonicalized incoming
+        /// value already equals the stored one.
         case keep
+        /// Incoming value is format-broken — previous value kept intact
+        /// (one bad push must not destroy a working config). Carries the raw
+        /// input so the caller can log it.
+        case rejected(String)
     }
 
     static func action(for raw: String?, currentlyStored: String?) -> Action {
@@ -27,7 +31,7 @@ enum OperationsDomainConfigPolicy {
         }
 
         guard URLValidator.isValidHost(HostNormalizer.extractHost(value)) else {
-            return .keep
+            return .rejected(value)
         }
 
         // Store canonical `scheme://host` so backend's choice of `http`/`https`

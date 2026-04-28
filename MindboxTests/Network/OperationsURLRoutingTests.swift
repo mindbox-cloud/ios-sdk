@@ -272,9 +272,22 @@ struct OperationsURLRoutingTests {
         #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: nil) == .keep)
     }
 
-    @Test("Policy — preserves previous value when incoming host is format-broken")
-    func policyKeepsOnInvalidFormat() {
-        #expect(OperationsDomainConfigPolicy.action(for: "host with spaces", currentlyStored: "https://good.ru") == .keep)
+    @Test("Policy — rejects format-broken incoming value (previous kept intact)")
+    func policyRejectsInvalidFormat() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "host with spaces", currentlyStored: "https://good.ru")
+                == .rejected("host with spaces")
+        )
+    }
+
+    @Test("Policy — does NOT spuriously reject when canonical form matches stored (legacy raw)")
+    func policyDoesNotRejectOnLegacyRawMatch() {
+        // Pre-fix bug: `.keep` was logged as "rejected" whenever raw != stored,
+        // even when raw was valid and just normalized to the stored form.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "https://x.ru")
+                == .keep
+        )
     }
 
     @Test("Policy — normalizes scheme + trailing slash to canonical form")
