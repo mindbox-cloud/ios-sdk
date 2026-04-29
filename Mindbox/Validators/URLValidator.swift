@@ -8,26 +8,49 @@
 
 import Foundation
 
-// FIXME: Rewrite this struct in the future
+/// Validates a bare hostname (e.g. `api.mindbox.ru`, `localhost`, `192.168.1.1`)
+/// using RFC 1123 label structure. No TLD allow-list — new TLDs (`.app`, `.dev`, …)
+/// are accepted automatically. Analogous to Android's `PatternsCompat.DOMAIN_NAME`,
+/// including its IPv4 octet-range enforcement.
+enum URLValidator {
 
-struct URLValidator {
+    /// RFC 1035: full hostname max 253 chars.
+    private static let maxHostLength = 253
 
-    let url: URL
+    /// RFC 1035: each label 1..63 chars.
+    private static let maxLabelLength = 63
 
-    // swiftlint:disable:next line_length
-    let urlPattern = "^(http|https|ftp)\\://([a-zA-Z0-9\\.\\-]+(\\:[a-zA-Z0-9\\.&amp;%\\$\\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|cloud|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|tech|[a-zA-Z]{2}))(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\?\\'\\\\\\+&amp;%\\$#\\=~_\\-]+))*$"
+    static func isValidHost(_ host: String) -> Bool {
+        guard !host.isEmpty, host.count <= maxHostLength else { return false }
 
-    func evaluate() -> Bool {
-        return matches(string: url.absoluteString, pattern: urlPattern)
+        let labels = host.split(separator: ".", omittingEmptySubsequences: false)
+
+        // Four pure-digit labels = IPv4 literal — enforce octet ranges so
+        // `999.999.999.999` is rejected (matches Android's PatternsCompat).
+        if labels.count == 4, labels.allSatisfy({ $0.allSatisfy(\.isASCII) && $0.allSatisfy(\.isNumber) }) {
+            return labels.allSatisfy(isValidIPv4Octet)
+        }
+
+        return labels.allSatisfy(isValidLabel)
     }
 
-    private func matches(string: String, pattern: String) -> Bool {
-        let regex = try! NSRegularExpression( // swiftlint:disable:this force_try
-            pattern: pattern,
-            options: [.caseInsensitive])
-        return regex.firstMatch(
-            in: string,
-            options: [],
-            range: NSRange(location: 0, length: string.utf16.count)) != nil
+    private static func isValidLabel(_ label: Substring) -> Bool {
+        guard (1...maxLabelLength).contains(label.count),
+              label.first != "-",
+              label.last != "-"
+        else { return false }
+        return label.unicodeScalars.allSatisfy(isAlnumOrHyphen)
+    }
+
+    private static func isValidIPv4Octet(_ label: Substring) -> Bool {
+        guard (1...3).contains(label.count), let value = Int(label) else { return false }
+        return (0...255).contains(value)
+    }
+
+    private static func isAlnumOrHyphen(_ scalar: Unicode.Scalar) -> Bool {
+        ("a"..."z").contains(scalar)
+            || ("A"..."Z").contains(scalar)
+            || ("0"..."9").contains(scalar)
+            || scalar == "-"
     }
 }

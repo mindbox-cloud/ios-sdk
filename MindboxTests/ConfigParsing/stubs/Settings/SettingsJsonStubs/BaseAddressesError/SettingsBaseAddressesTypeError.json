@@ -11,10 +11,10 @@
     }
   },
   "ttl": {
-    "inapps": "2.00:00:00"
+    "inapps": "1.00:00:00"
   },
   "slidingExpiration": {
-    "config": 123,
+    "config": "0.00:00:23",
     "pushTokenKeepalive": "14.00:00:00"
   },
   "inapp": {
@@ -25,7 +25,5 @@
   "featureToggles": {
     "MobileSdkShouldSendInAppShowError": false
   },
-  "baseAddresses": {
-    "operations": "anonymizer-demo-api-regular.mindbox.ru"
-  }
+  "baseAddresses": 123
 }
