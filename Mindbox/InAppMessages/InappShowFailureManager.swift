@@ -42,9 +42,9 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
 
         let truncatedDetails = details.map { original -> String in
             let truncated = original.truncated(toUTF8ByteLimit: Self.errorDetailsLimit)
-            if truncated.utf8.count < original.utf8.count {
+            if truncated != original {
                 Logger.common(
-                    message: "[InappShowFailureManager] errorDetails truncated from \(original.utf8.count) to \(truncated.utf8.count) bytes (limit \(Self.errorDetailsLimit)). inappId=\(inappId)",
+                    message: "[InappShowFailureManager] errorDetails truncated to \(truncated.utf8.count) bytes (limit \(Self.errorDetailsLimit)). inappId=\(inappId)",
                     level: .debug,
                     category: .inAppMessages
                 )
