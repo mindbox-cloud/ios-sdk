@@ -164,6 +164,18 @@ struct OperationsURLRoutingTests {
         #expect(url?.path == "/v3/operations/async")
     }
 
+    @Test("Fails fast when base URL is unparseable (no silent relative-URL request)")
+    func failsFastOnUnparseableBaseURL() {
+        // Embedded space defeats both `URLComponents(string:)` parsing and
+        // makes the prior fallback build a bogus relative URL silently.
+        let builder = URLRequestBuilder(domain: "bad host with spaces")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        #expect(throws: URLError.self) {
+            _ = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper))
+        }
+    }
+
     // MARK: - Rollback signals from JSON config
     //
     // Happy-path and key/type errors live in `SettingsConfigParsingTests`
@@ -256,12 +268,12 @@ struct OperationsURLRoutingTests {
         #expect(OperationsDomainConfigPolicy.action(for: "https://x.ru", currentlyStored: "https://x.ru") == .keep)
     }
 
-    @Test("Policy — clears on null/missing config when something is stored")
+    @Test("Policy — clears on null/missing config when something is stored (rollback)")
     func policyClearsOnNullWhenStored() {
         #expect(OperationsDomainConfigPolicy.action(for: nil, currentlyStored: "https://old.ru") == .clear)
     }
 
-    @Test("Policy — clears on empty string when something is stored")
+    @Test("Policy — clears on empty string when something is stored (rollback)")
     func policyClearsOnEmptyWhenStored() {
         #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: "https://old.ru") == .clear)
     }
@@ -282,7 +294,7 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — does NOT spuriously reject when canonical form matches stored (legacy raw)")
     func policyDoesNotRejectOnLegacyRawMatch() {
-        // Pre-fix bug: `.keep` was logged as "rejected" whenever raw != stored,
+        // Regression: `.keep` was previously logged as "rejected" whenever raw != stored,
         // even when raw was valid and just normalized to the stored form.
         #expect(
             OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "https://x.ru")

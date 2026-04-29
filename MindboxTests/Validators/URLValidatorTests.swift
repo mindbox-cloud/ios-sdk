@@ -33,10 +33,31 @@ struct URLValidatorTests {
         #expect(URLValidator.isValidHost("localhost"))
     }
 
-    @Test("IPv4 literal passes")
+    @Test("Valid IPv4 literals pass")
     func ipv4Literal() {
         #expect(URLValidator.isValidHost("192.168.1.1"))
         #expect(URLValidator.isValidHost("10.0.0.1"))
+        #expect(URLValidator.isValidHost("0.0.0.0"))
+        #expect(URLValidator.isValidHost("255.255.255.255"))
+    }
+
+    @Test("IPv4 octet > 255 fails (parity with Android PatternsCompat)")
+    func ipv4OctetOverflowFails() {
+        #expect(!URLValidator.isValidHost("999.999.999.999"))
+        #expect(!URLValidator.isValidHost("256.0.0.0"))
+        #expect(!URLValidator.isValidHost("192.168.1.256"))
+    }
+
+    @Test("Three numeric labels are NOT treated as IPv4 — fall through to hostname rules")
+    func threeNumericLabelsAreHostname() {
+        // 1.2.3 is not IPv4 (3 labels, not 4) and remains structurally a valid hostname.
+        #expect(URLValidator.isValidHost("1.2.3"))
+    }
+
+    @Test("Five numeric labels are NOT treated as IPv4 — fall through to hostname rules")
+    func fiveNumericLabelsAreHostname() {
+        // 5 labels of digits are structurally a valid hostname even though not IPv4.
+        #expect(URLValidator.isValidHost("1.2.3.4.5"))
     }
 
     @Test("Hyphens inside labels pass")

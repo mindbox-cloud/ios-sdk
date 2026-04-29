@@ -15,6 +15,7 @@ enum OperationsDomainConfigPolicy {
     enum Action: Equatable {
         case save(String)
         /// Config explicitly cleared the value (null / missing / empty).
+        /// Caller falls back through the priority chain (init → domain).
         case clear
         /// No-op: nothing stored and nothing came, or canonicalized incoming
         /// value already equals the stored one.

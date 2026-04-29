@@ -20,7 +20,7 @@ struct URLRequestBuilder {
     }
 
     func asURLRequest(route: Route) throws -> URLRequest {
-        let components = makeURLComponents(for: route)
+        let components = try makeURLComponents(for: route)
 
         guard let url = components.url else {
             Logger.common(message: "Bad url. [URL]: \(String(describing: components.url))", level: .error, category: .network)
@@ -37,9 +37,17 @@ struct URLRequestBuilder {
         return urlRequest
     }
 
-    private func makeURLComponents(for route: Route) -> URLComponents {
+    private func makeURLComponents(for route: Route) throws -> URLComponents {
         let baseURL = HostNormalizer.toBaseURLString(resolvedHost(for: route))
-        var components = URLComponents(string: baseURL) ?? URLComponents()
+
+        // Fail fast: if the base URL is unparseable, we used to fall back to an
+        // empty `URLComponents()` — `components.url` then returned a relative URL
+        // (just the path), which silently sent the request to a bogus target.
+        guard var components = URLComponents(string: baseURL) else {
+            Logger.common(message: "Failed to build base URL components. [Base]: \(baseURL)", level: .error, category: .network)
+            throw URLError(.badURL)
+        }
+
         components.path = route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
 
