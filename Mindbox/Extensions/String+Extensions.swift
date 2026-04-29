@@ -48,3 +48,24 @@ extension String {
         return hexValue.unicodeScalars.allSatisfy { hexCharacterSet.contains($0) }
     }
 }
+
+extension String {
+    /// Truncates the string so its UTF-8 byte representation does not exceed `limit`.
+    /// Cuts at extended grapheme cluster boundaries to keep multi-byte characters intact.
+    func truncated(toUTF8ByteLimit limit: Int) -> String {
+        guard limit >= 0 else { return "" }
+        guard utf8.count > limit else { return self }
+
+        var result = ""
+        var byteCount = 0
+        for character in self {
+            let characterByteCount = character.utf8.count
+            if byteCount + characterByteCount > limit {
+                break
+            }
+            byteCount += characterByteCount
+            result.append(character)
+        }
+        return result
+    }
+}

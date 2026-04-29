@@ -200,6 +200,135 @@ final class InappShowFailureManagerTests: XCTestCase {
         assertCreatedEventsCountEventually(0)
     }
     
+    func testAddFailure_errorDetailsBelowLimit_isNotTruncated() throws {
+        let details = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit - 1)
+
+        manager.addFailure(inappId: "inapp-below-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, InappShowFailureManager.errorDetailsLimit - 1)
+        XCTAssertEqual(failure.errorDetails, details)
+    }
+
+    func testAddFailure_errorDetailsAtLimit_isNotTruncated() throws {
+        let details = String(repeating: "b", count: InappShowFailureManager.errorDetailsLimit)
+
+        manager.addFailure(inappId: "inapp-at-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, InappShowFailureManager.errorDetailsLimit)
+        XCTAssertEqual(failure.errorDetails, details)
+    }
+
+    func testAddFailure_errorDetailsAboveLimit_isTruncatedToLimit() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        let details = String(repeating: "c", count: limit + 500)
+
+        manager.addFailure(inappId: "inapp-above-limit", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails?.count, limit)
+        XCTAssertEqual(failure.errorDetails, String(details.prefix(limit)))
+    }
+
+    func testAddFailure_errorDetailsNil_remainsNil() throws {
+        manager.addFailure(inappId: "inapp-nil-details", reason: .unknownError, details: nil)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertNil(failure.errorDetails)
+    }
+
+    func testAddFailure_errorDetailsEmpty_remainsEmpty() throws {
+        manager.addFailure(inappId: "inapp-empty-details", reason: .unknownError, details: "")
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.errorDetails, "")
+    }
+
+    func testAddFailure_errorDetailsMultibyte_truncatesByUTF8Bytes() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        // Cyrillic 'а' is 2 bytes in UTF-8: total = 2 * limit bytes.
+        let details = String(repeating: "а", count: limit)
+
+        manager.addFailure(inappId: "inapp-multibyte", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        let truncated = try XCTUnwrap(failure.errorDetails)
+
+        XCTAssertEqual(truncated.utf8.count, limit)
+        XCTAssertEqual(truncated.count, limit / 2)
+    }
+
+    func testAddFailure_errorDetailsMultibyte_doesNotSplitCharacter() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        let asciiPrefix = String(repeating: "x", count: limit - 1)
+        // Cyrillic 'ё' is 2 bytes — appending it would overflow by 1 byte.
+        let details = asciiPrefix + "ё"
+
+        manager.addFailure(inappId: "inapp-no-split", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        let truncated = try XCTUnwrap(failure.errorDetails)
+
+        XCTAssertEqual(truncated, asciiPrefix)
+        XCTAssertEqual(truncated.utf8.count, limit - 1)
+    }
+
+    func testAddFailure_errorDetailsEmoji_isNotSplit() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        // "🙂" is 4 UTF-8 bytes. Fill almost to the limit, then append an emoji.
+        let asciiPrefix = String(repeating: "y", count: limit - 2)
+        let details = asciiPrefix + "🙂"
+
+        manager.addFailure(inappId: "inapp-emoji", reason: .unknownError, details: details)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        let truncated = try XCTUnwrap(failure.errorDetails)
+
+        XCTAssertEqual(truncated, asciiPrefix)
+        XCTAssertLessThanOrEqual(truncated.utf8.count, limit)
+    }
+
+    func testAddFailure_priorityReplacement_truncatesNewDetails() throws {
+        let limit = InappShowFailureManager.errorDetailsLimit
+        let longDetails = String(repeating: "d", count: limit + 200)
+
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .productSegmentRequestFailed, details: "short")
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .customerSegmentRequestFailed, details: longDetails)
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.failureReason, .customerSegmentRequestFailed)
+        XCTAssertEqual(failure.errorDetails?.count, limit)
+        XCTAssertEqual(failure.errorDetails, String(longDetails.prefix(limit)))
+    }
+
     func testSendFailures_whenFeatureDisabled_doesNotSendAndKeepsBufferedFailures() throws {
         manager.addFailure(
             inappId: "inapp-toggle-disabled",

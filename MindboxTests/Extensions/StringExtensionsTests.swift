@@ -58,6 +58,23 @@ final class StringExtensionsTests: XCTestCase {
         }
     }
 
+    func test_truncatedToUTF8ByteLimit_zeroLimit_returnsEmptyString() {
+        XCTAssertEqual("hello".truncated(toUTF8ByteLimit: 0), "")
+    }
+
+    func test_truncatedToUTF8ByteLimit_zeroLimit_onEmptyString_returnsEmptyString() {
+        XCTAssertEqual("".truncated(toUTF8ByteLimit: 0), "")
+    }
+
+    func test_truncatedToUTF8ByteLimit_negativeLimit_returnsEmptyString() {
+        XCTAssertEqual("hello".truncated(toUTF8ByteLimit: -1), "")
+        XCTAssertEqual("hello".truncated(toUTF8ByteLimit: -100), "")
+    }
+
+    func test_truncatedToUTF8ByteLimit_negativeLimit_onEmptyString_returnsEmptyString() {
+        XCTAssertEqual("".truncated(toUTF8ByteLimit: -1), "")
+    }
+
     func test_parseTimeSpanToMillisNegative() throws {
         let testCases: Array = [
             "12345678901234567890.00:00:00.00",
