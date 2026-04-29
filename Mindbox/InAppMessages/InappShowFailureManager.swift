@@ -16,6 +16,7 @@ protocol InappShowFailureManagerProtocol {
 }
 
 final class InappShowFailureManager: InappShowFailureManagerProtocol {
+    /// Backend payload limit for errorDetails.
     static let errorDetailsLimit = 1000
 
     private struct InAppShowFailuresBody: Codable {
@@ -38,7 +39,19 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             Logger.common(message: "[InappShowFailureManager] addFailure ignored, feature is disabled", category: .inAppMessages)
             return
         }
-        
+
+        let truncatedDetails = details.map { original -> String in
+            let truncated = original.truncated(toUTF8ByteLimit: Self.errorDetailsLimit)
+            if truncated.utf8.count < original.utf8.count {
+                Logger.common(
+                    message: "[InappShowFailureManager] errorDetails truncated from \(original.utf8.count) to \(truncated.utf8.count) bytes (limit \(Self.errorDetailsLimit)). inappId=\(inappId)",
+                    level: .debug,
+                    category: .inAppMessages
+                )
+            }
+            return truncated
+        }
+
         queue.async { [self] in
             if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
                 guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
@@ -50,13 +63,13 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                     )
                     return
                 }
-                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: details)
+                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: truncatedDetails)
                 Logger.common(message: "[InappShowFailureManager] Failure reason updated. inappId=\(inappId), reason=\(reason.rawValue)",
                               category: .inAppMessages)
                 return
             }
-            
-            failures.append(makeFailure(inappId: inappId, reason: reason, details: details))
+
+            failures.append(makeFailure(inappId: inappId, reason: reason, details: truncatedDetails))
         }
     }
     
@@ -102,7 +115,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         InAppShowFailure(
             inappId: inappId,
             failureReason: reason,
-            errorDetails: details.map { String($0.prefix(Self.errorDetailsLimit)) },
+            errorDetails: details,
             dateTimeUtc: Date().toString(withFormat: .utc)
         )
     }

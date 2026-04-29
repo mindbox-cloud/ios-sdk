@@ -1437,39 +1437,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = InappConfigurationDataFacade;
-			sourceTree = "<group>";
-		};
-		F397DE1C2CFF568800B72DA9 /* JSONs */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = JSONs;
-			sourceTree = "<group>";
-		};
-		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = InappSessionManagerTests;
-			sourceTree = "<group>";
-		};
+		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
+		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
+		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2280,7 +2250,6 @@
 				F3BA5E000130A000C0000006 /* OperationsURLRoutingTests.swift */,
 				F3CD202C2F600A800065392A /* HostNormalizerTests.swift */,
 			);
-			name = Network;
 			path = Network;
 			sourceTree = "<group>";
 		};
@@ -2289,7 +2258,6 @@
 			children = (
 				0475E8755F63483597539A50 /* TrackVisitManagerTests.swift */,
 			);
-			name = TrackVisitManager;
 			path = TrackVisitManager;
 			sourceTree = "<group>";
 		};
@@ -2440,7 +2408,6 @@
 				F3A8B9912A3A408C00E9C055 /* SDKVersionValidator.swift */,
 				F3A8B9992A3A471800E9C055 /* ABTestVariantsValidator.swift */,
 				F3A8B99D2A3A4FD600E9C055 /* ABTestValidator.swift */,
-				F3482F292A65DCFC002A41EC /* String+Extensions.swift */,
 				F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */,
 				F31A947F2BC7E61800E6C978 /* InappFrequencyValidator.swift */,
 			);
@@ -3016,7 +2983,6 @@
 			children = (
 				A1B2C3D4E5F6A7B8C9D0E1F3 /* MotionService.swift */,
 			);
-			name = Motion;
 			path = Motion;
 			sourceTree = "<group>";
 		};
@@ -3591,6 +3557,7 @@
 				BB65630F2BE3BA430090C473 /* UIApplication+Extensions.swift */,
 				F31DB4072F56A50E00DCEB85 /* NSError+Extensions.swift */,
 				326423031CA9C6BF0E62BEFD /* Date+Extensions.swift */,
+				F3482F292A65DCFC002A41EC /* String+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
