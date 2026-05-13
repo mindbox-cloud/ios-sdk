@@ -386,16 +386,24 @@ extension TransparentView {
 
         Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
 
-        eventRepository.send(type: OperationResponse.self, event: event) { [weak self] result in
+        // HTTP 2xx → forward the raw body to JS as a Response so the JS Tracker
+        // can dispatch onSuccess / onValidationError by the body's `status`.
+        // 4xx, 5xx and network failures stay on the MindboxError → Error path.
+        eventRepository.sendRaw(event: event) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let response):
+                case .success(let data):
+                    guard let bodyString = String(data: data, encoding: .utf8) else {
+                        Logger.common(message: "[WebView] syncOperation '\(params.name)' response body is not valid UTF-8",
+                                      level: .error, category: .webViewInAppMessages)
+                        self?.sendBridgeError("Response body is not valid UTF-8", action: message.action, id: message.id)
+                        return
+                    }
                     Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
-                    let responseJSON = response.createJSON()
                     let successResponse = BridgeMessage(
                         type: .response,
                         action: message.action,
-                        payload: .string(responseJSON),
+                        payload: .string(bodyString),
                         id: message.id
                     )
                     self?.facade?.sendToJS(successResponse)

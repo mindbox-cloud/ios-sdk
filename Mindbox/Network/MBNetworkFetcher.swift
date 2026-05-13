@@ -133,6 +133,47 @@ class MBNetworkFetcher: NetworkFetcher {
         }
     }
 
+    func requestRaw(
+        route: Route,
+        completion: @escaping (Result<Data, MindboxError>) -> Void
+    ) {
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            Logger.error(error.asLoggerError())
+            completion(.failure(error))
+            return
+        }
+
+        let builder = URLRequestBuilder(
+            domain: configuration.domain,
+            operationsDomain: resolvedOperationsDomain(configuration: configuration)
+        )
+        do {
+            let urlRequest = try builder.asURLRequest(route: route)
+            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
+            let startTime = CFAbsoluteTimeGetCurrent()
+            session.dataTask(with: urlRequest) { [weak self] data, response, error in
+                let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+                self?.handleResponse(data, response, error, needBaseResponse: false, networkTimeMs: networkTimeMs) { result in
+                    switch result {
+                    case let .success(data):
+                        completion(.success(data))
+                    case let .failure(error):
+                        Logger.error(error.asLoggerError())
+                        completion(.failure(error))
+                    }
+                }
+            }.resume()
+        } catch let error {
+            let errorModel = MindboxError.unknown(error)
+            Logger.error(errorModel.asLoggerError())
+            completion(.failure(errorModel))
+        }
+    }
+
     private func handleResponse(
         _ data: Data?,
         _ response: URLResponse?,
