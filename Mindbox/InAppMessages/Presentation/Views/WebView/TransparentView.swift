@@ -391,17 +391,23 @@ extension TransparentView {
         // 4xx, 5xx and network failures stay on the MindboxError → Error path.
         eventRepository.sendRaw(event: event) { [weak self] result in
             DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
-                case .failure(let error):
-                    Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-                }
                 let outgoing = TransparentView.makeSyncOperationResponse(
                     result: result,
                     action: message.action,
                     id: message.id
                 )
+                switch outgoing.type {
+                case .response:
+                    Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
+                case .error:
+                    if case .failure(let error) = result {
+                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
+                    } else {
+                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: non-UTF-8 response body", level: .error, category: .webViewInAppMessages)
+                    }
+                default:
+                    break
+                }
                 self?.facade?.sendToJS(outgoing)
             }
         }

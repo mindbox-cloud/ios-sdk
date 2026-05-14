@@ -155,9 +155,9 @@ class MBNetworkFetcher: NetworkFetcher {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
             let startTime = CFAbsoluteTimeGetCurrent()
-            session.dataTask(with: urlRequest) { [weak self] data, response, error in
+            session.dataTask(with: urlRequest) { data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
-                self?.handleResponse(data, response, error, needBaseResponse: false, networkTimeMs: networkTimeMs) { result in
+                self.handleResponse(data, response, error, needBaseResponse: false, networkTimeMs: networkTimeMs) { result in
                     switch result {
                     case let .success(data):
                         completion(.success(data))
