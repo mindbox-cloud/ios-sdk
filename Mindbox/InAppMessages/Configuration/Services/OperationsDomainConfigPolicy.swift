@@ -27,7 +27,8 @@ enum OperationsDomainConfigPolicy {
     }
 
     static func action(for raw: String?, currentlyStored: String?) -> Action {
-        guard let value = raw, !value.isEmpty else {
+        let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = trimmed, !value.isEmpty else {
             return currentlyStored == nil ? .keep : .clear
         }
 

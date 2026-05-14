@@ -278,10 +278,36 @@ struct OperationsURLRoutingTests {
         #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: "https://old.ru") == .clear)
     }
 
+    @Test("Policy — clears on whitespace-only string when something is stored (Android parity)")
+    func policyClearsOnWhitespaceWhenStored() {
+        #expect(OperationsDomainConfigPolicy.action(for: "            ", currentlyStored: "https://old.ru") == .clear)
+        #expect(OperationsDomainConfigPolicy.action(for: "\t\n  ", currentlyStored: "https://old.ru") == .clear)
+    }
+
     @Test("Policy — no-ops when nothing stored and nothing came")
     func policyKeepsOnNothingToChange() {
         #expect(OperationsDomainConfigPolicy.action(for: nil, currentlyStored: nil) == .keep)
         #expect(OperationsDomainConfigPolicy.action(for: "", currentlyStored: nil) == .keep)
+        #expect(OperationsDomainConfigPolicy.action(for: "   ", currentlyStored: nil) == .keep)
+    }
+
+    @Test("Policy — trims surrounding whitespace before evaluating value")
+    func policyTrimsSurroundingWhitespace() {
+        // Trimmed value matches stored after canonicalization → no-op.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "  anonymizer.client.ru  ", currentlyStored: "https://anonymizer.client.ru")
+                == .keep
+        )
+        // Trimmed value differs from stored → save canonical form.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "  new.client.ru  ", currentlyStored: "https://old.ru")
+                == .save("https://new.client.ru")
+        )
+        // Trimmed value with nothing stored → save canonical form.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "  valid.host.ru  ", currentlyStored: nil)
+                == .save("https://valid.host.ru")
+        )
     }
 
     @Test("Policy — rejects format-broken incoming value (previous kept intact)")
