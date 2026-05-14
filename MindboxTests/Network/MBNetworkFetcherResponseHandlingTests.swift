@@ -639,6 +639,166 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         waitForExpectations(timeout: 1)
     }
 
+    // MARK: - requestRaw: HTTP 200 + ValidationError body → raw Data success (regression: MOBILE-164)
+
+    func test_requestRaw_http200_statusValidationError_returnsRawData() throws {
+        let fetcher = try makeFetcher()
+        let body = validationErrorData()
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success(let data):
+                XCTAssertEqual(data, body, "Raw body must reach caller byte-for-byte")
+            case .failure(let error):
+                XCTFail("HTTP 200 + ValidationError must NOT fail in requestRaw; got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: HTTP 200 + Success body → raw Data success
+
+    func test_requestRaw_http200_statusSuccess_returnsRawData() throws {
+        let fetcher = try makeFetcher()
+        let body = baseResponseData(status: "Success")
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success(let data):
+                XCTAssertEqual(data, body, "Raw body must NOT be re-serialized")
+            case .failure(let error):
+                XCTFail("Expected success, got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: HTTP 200 + arbitrary JSON without status → raw Data success
+
+    func test_requestRaw_http200_arbitraryJSON_returnsRawData() throws {
+        let fetcher = try makeFetcher()
+        // No `status` field at all — BaseResponse would fail to parse, but requestRaw must not care.
+        let body = try XCTUnwrap(#"{"customer":{"email":"a@b.c"},"foo":42}"#.data(using: .utf8))
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success(let data):
+                XCTAssertEqual(data, body)
+            case .failure(let error):
+                XCTFail("Expected success, got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: HTTP 200 + non-JSON body → still raw Data success
+
+    func test_requestRaw_http200_nonJSONBody_returnsRawData() throws {
+        let fetcher = try makeFetcher()
+        let body = try XCTUnwrap("hello world".data(using: .utf8))
+        stubResponse(statusCode: 200, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success(let data):
+                XCTAssertEqual(data, body)
+            case .failure(let error):
+                XCTFail("Expected success, got \(error)")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: HTTP 403 → protocolError (unchanged from existing pipeline)
+
+    func test_requestRaw_http403_returnsProtocolError() throws {
+        let fetcher = try makeFetcher()
+        let body = "Forbidden".data(using: .utf8)
+        stubResponse(statusCode: 403, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("HTTP 403 must NOT be success")
+            case .failure(let error):
+                guard case .protocolError(let pe) = error else {
+                    XCTFail("Expected protocolError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 403)
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: HTTP 500 → serverError (unchanged from existing pipeline)
+
+    func test_requestRaw_http500_returnsServerError() throws {
+        let fetcher = try makeFetcher()
+        let body = protocolErrorData(status: "InternalServerError", message: "Boom", httpCode: 500)
+        stubResponse(statusCode: 500, body: body)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("HTTP 500 must NOT be success")
+            case .failure(let error):
+                guard case .serverError(let pe) = error else {
+                    XCTFail("Expected serverError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(pe.httpStatusCode, 500)
+                XCTAssertEqual(pe.errorMessage, "Boom")
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
+    // MARK: - requestRaw: missing configuration → invalidConfiguration
+
+    func test_requestRaw_noConfiguration_returnsInvalidConfiguration() throws {
+        let persistenceStorage = MockPersistenceStorage()
+        // Intentionally leave persistenceStorage.configuration = nil
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let fetcher = MBNetworkFetcher(persistenceStorage: persistenceStorage, session: session)
+
+        let expectation = expectation(description: "completion")
+        fetcher.requestRaw(route: FetchInAppGeoRoute()) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected failure when configuration is nil")
+            case .failure(let error):
+                guard case .internalError(let ie) = error else {
+                    XCTFail("Expected internalError, got \(error)")
+                    expectation.fulfill()
+                    return
+                }
+                XCTAssertEqual(ie.errorKey, ErrorKey.invalidConfiguration.rawValue)
+            }
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1)
+    }
+
     // MARK: - Typed request + 200 + valid base response but invalid target type → parsing error
 
     func test_typedRequest_http200_invalidTargetType_returnsParsingError() throws {

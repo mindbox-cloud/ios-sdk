@@ -44,6 +44,14 @@ class MockNetworkFetcher: NetworkFetcher {
             }
         }
     }
-    
+
+    func requestRaw(route: Route, completion: @escaping ((Result<Data, MindboxError>) -> Void)) {
+        if let error = error {
+            completion(.failure(error))
+        } else {
+            completion(.success(data ?? Data()))
+        }
+    }
+
     func cancelAllTasks() {}
 }

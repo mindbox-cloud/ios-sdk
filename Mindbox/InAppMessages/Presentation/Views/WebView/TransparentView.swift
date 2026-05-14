@@ -386,32 +386,64 @@ extension TransparentView {
 
         Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
 
-        eventRepository.send(type: OperationResponse.self, event: event) { [weak self] result in
+        // HTTP 2xx → forward the raw body to JS as a Response so the JS Tracker
+        // can dispatch onSuccess / onValidationError by the body's `status`.
+        // 4xx, 5xx and network failures stay on the MindboxError → Error path.
+        eventRepository.sendRaw(event: event) { [weak self] result in
             DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
+                let outgoing = TransparentView.makeSyncOperationResponse(
+                    result: result,
+                    action: message.action,
+                    id: message.id
+                )
+                switch outgoing.type {
+                case .response:
                     Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
-                    let responseJSON = response.createJSON()
-                    let successResponse = BridgeMessage(
-                        type: .response,
-                        action: message.action,
-                        payload: .string(responseJSON),
-                        id: message.id
-                    )
-                    self?.facade?.sendToJS(successResponse)
-
-                case .failure(let error):
-                    Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-                    let errorJSON = error.createJSON()
-                    let errorResponse = BridgeMessage(
-                        type: .error,
-                        action: message.action,
-                        payload: .string(errorJSON),
-                        id: message.id
-                    )
-                    self?.facade?.sendToJS(errorResponse)
+                case .error:
+                    if case .failure(let error) = result {
+                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
+                    } else {
+                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: non-UTF-8 response body", level: .error, category: .webViewInAppMessages)
+                    }
+                default:
+                    break
                 }
+                self?.facade?.sendToJS(outgoing)
             }
+        }
+    }
+
+    /// Maps the raw `sendRaw` result of a `syncOperation` request to the outgoing
+    /// `BridgeMessage` sent back to JS. Pure function — no side effects — extracted
+    /// to keep the JS-bridge contract independently unit-testable.
+    static func makeSyncOperationResponse(
+        result: Result<Data, MindboxError>,
+        action: String,
+        id: UUID
+    ) -> BridgeMessage {
+        switch result {
+        case .success(let data):
+            guard let bodyString = String(data: data, encoding: .utf8) else {
+                return BridgeMessage(
+                    type: .error,
+                    action: action,
+                    payload: .object(["error": .string("Response body is not valid UTF-8")]),
+                    id: id
+                )
+            }
+            return BridgeMessage(
+                type: .response,
+                action: action,
+                payload: .string(bodyString),
+                id: id
+            )
+        case .failure(let error):
+            return BridgeMessage(
+                type: .error,
+                action: action,
+                payload: .string(error.createJSON()),
+                id: id
+            )
         }
     }
 }
