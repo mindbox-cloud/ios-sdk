@@ -28,7 +28,8 @@ public final class DateTime: MBDate {
     }
 
     override func decodeWithFormat(_ rawString: String) -> Date? {
-        return Date.fromISO8601(rawString)
+        return rawString.toDate(withFormat: .utc)
+            ?? rawString.toDate(withFormat: .utcWithMillis)
     }
 }
 
