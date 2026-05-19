@@ -27,4 +27,6 @@ extension Tag {
     @Tag static var trackVisit: Self
     @Tag static var operationsRouting: Self
     @Tag static var mbConfiguration: Self
+
+    @Tag static var dateFormatting: Self
 }

@@ -367,6 +367,7 @@
 		A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */ = {isa = PBXBuildFile; fileRef = A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */; };
 		A154E304299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */; };
 		A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */; };
+		F3DA7E001A2B3C4D5E6F7001 /* DateFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DA7E001A2B3C4D5E6F7002 /* DateFormatTests.swift */; };
 		A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */; };
 		A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E333299E110E00F8F074 /* EventRepositoryMock.swift */; };
 		A15D701629AF810E007131E7 /* SDKLogsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E381299E5B7500F8F074 /* SDKLogsRequest.swift */; };
@@ -1098,6 +1099,7 @@
 		A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithOperations.json; sourceTree = "<group>"; };
 		A154E303299C189300F8F074 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogManagerTests.swift; sourceTree = "<group>"; };
+		F3DA7E001A2B3C4D5E6F7002 /* DateFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatTests.swift; sourceTree = "<group>"; };
 		A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
 		A154E333299E110E00F8F074 /* EventRepositoryMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRepositoryMock.swift; sourceTree = "<group>"; };
 		A154E33A299E5B6D00F8F074 /* LogLevel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
@@ -2811,6 +2813,7 @@
 				A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */,
 				47A4FA772E73741700569870 /* LoggerDatabaseLoaderTests.swift */,
 				47A4FA752E735C5200569870 /* LogStoreTrimmerTests.swift */,
+				F3DA7E001A2B3C4D5E6F7002 /* DateFormatTests.swift */,
 			);
 			path = MindboxLogger;
 			sourceTree = "<group>";
@@ -4698,6 +4701,7 @@
 				F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */,
 				F35E0C4F2DF0535E00E8A768 /* InAppTrackingServiceTests.swift in Sources */,
 				A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */,
+				F3DA7E001A2B3C4D5E6F7001 /* DateFormatTests.swift in Sources */,
 				9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */,
 				D2F7E2482BADB9EF00B24BB8 /* UserVisitManagerTests.swift in Sources */,
 				BBAAC17C2BB2FC9100E1E25E /* MockEvent.swift in Sources */,
