@@ -67,6 +67,15 @@ final class InappShowFailureManagerTests: XCTestCase {
         let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
         XCTAssertFalse(failure.dateTimeUtc.isEmpty)
         XCTAssertNotNil(failure.dateTimeUtc.toDate(withFormat: .utc))
+
+        let dateTimeUtc = failure.dateTimeUtc
+        XCTAssertEqual(dateTimeUtc.count, 20)
+        XCTAssertTrue(dateTimeUtc.hasSuffix("Z"))
+        XCTAssertFalse(dateTimeUtc.contains("AM"))
+        XCTAssertFalse(dateTimeUtc.contains("PM"))
+        XCTAssertFalse(dateTimeUtc.contains(" "))
+        let pattern = #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"#
+        XCTAssertNotNil(dateTimeUtc.range(of: pattern, options: .regularExpression))
     }
 
     func testAddFailure_duplicateInappId_isIgnored() throws {
