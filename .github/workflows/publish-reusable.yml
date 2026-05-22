@@ -55,7 +55,7 @@ jobs:
       - name: Deploy to Cocoapods MindboxLogger
         run: |
           pod lib lint MindboxLogger.podspec --allow-warnings
-          pod trunk push MindboxLogger.podspec --allow-warnings --verbose
+          ./.github/pod-trunk-push.sh MindboxLogger.podspec --allow-warnings --verbose
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
           
@@ -103,7 +103,7 @@ jobs:
             pod repo update
             set -eo pipefail
             pod lib lint MindboxNotifications.podspec --allow-warnings
-            pod trunk push MindboxNotifications.podspec --allow-warnings --verbose
+            ./.github/pod-trunk-push.sh MindboxNotifications.podspec --allow-warnings --verbose
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
           
@@ -130,7 +130,7 @@ jobs:
             pod repo update
             set -eo pipefail
             pod lib lint Mindbox.podspec --allow-warnings
-            pod trunk push Mindbox.podspec --allow-warnings --verbose
+            ./.github/pod-trunk-push.sh Mindbox.podspec --allow-warnings --verbose
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
 
