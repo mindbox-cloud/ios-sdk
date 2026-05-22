@@ -1,0 +1,10 @@
+framework module Mindbox {
+  umbrella header "Mindbox.h"
+  export *
+
+  module * { export * }
+}
+
+module Mindbox.Swift {
+  header "Mindbox-Swift.h"
+}

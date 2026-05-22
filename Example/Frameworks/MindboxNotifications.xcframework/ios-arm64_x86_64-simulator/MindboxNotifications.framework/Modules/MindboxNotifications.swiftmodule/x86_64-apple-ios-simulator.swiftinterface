@@ -1,0 +1,80 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.3.2 effective-5.10 (swiftlang-6.3.2.1.108 clang-2100.1.1.101)
+// swift-module-flags: -target x86_64-apple-ios12.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -O -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name MindboxNotifications
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -formal-cxx-interoperability-mode=off -interface-compiler-version 6.3.2
+import Foundation
+@_exported import MindboxNotifications
+import Swift
+import UIKit
+import UserNotifications
+import UserNotificationsUI
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+public struct MBPushNotification : Swift::Codable {
+  public let aps: MindboxNotifications::MBAps?
+  public let clickUrl: Swift::String?
+  public let imageUrl: Swift::String?
+  public let payload: Swift::String?
+  public let buttons: [MindboxNotifications::MBPushNotificationButton]?
+  public let uniqueKey: Swift::String?
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+public struct MBAps : Swift::Codable {
+  public let alert: MindboxNotifications::MBApsAlert?
+  public let sound: Swift::String?
+  public let mutableContent: Swift::Int?
+  public let contentAvailable: Swift::Int?
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+public struct MBApsAlert : Swift::Codable {
+  public let title: Swift::String?
+  public let body: Swift::String?
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+public struct MBPushNotificationButton : Swift::Codable {
+  public let text: Swift::String?
+  public let url: Swift::String?
+  public let uniqueKey: Swift::String?
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class MindboxNotificationService : ObjectiveC::NSObject {
+  @objc public var contentHandler: ((UserNotifications::UNNotificationContent) -> Swift::Void)?
+  @objc public var bestAttemptContent: UserNotifications::UNMutableNotificationContent?
+  @objc override dynamic public init()
+  @objc deinit
+}
+public protocol MindboxPushNotificationProtocol {
+  func isMindboxPush(userInfo: [Swift::AnyHashable : Any]) -> Swift::Bool
+  func getMindboxPushData(userInfo: [Swift::AnyHashable : Any]) -> MindboxNotifications::MBPushNotification?
+}
+extension MindboxNotifications::MindboxNotificationService : MindboxNotifications::MindboxPushNotificationProtocol {
+  @objc dynamic public func isMindboxPush(userInfo: [Swift::AnyHashable : Any]) -> Swift::Bool
+  public func getMindboxPushData(userInfo: [Swift::AnyHashable : Any]) -> MindboxNotifications::MBPushNotification?
+}
+public protocol MindboxNotificationServiceProtocol : MindboxNotifications::MindboxPushNotificationProtocol {
+  var contentHandler: ((UserNotifications::UNNotificationContent) -> Swift::Void)? { get set }
+  var bestAttemptContent: UserNotifications::UNMutableNotificationContent? { get set }
+  func didReceive(_ request: UserNotifications::UNNotificationRequest, withContentHandler contentHandler: @escaping (UserNotifications::UNNotificationContent) -> Swift::Void)
+  func serviceExtensionTimeWillExpire()
+  func pushDelivered(_ request: UserNotifications::UNNotificationRequest)
+}
+extension MindboxNotifications::MindboxNotificationService : MindboxNotifications::MindboxNotificationServiceProtocol {
+  @objc dynamic public func didReceive(_ request: UserNotifications::UNNotificationRequest, withContentHandler contentHandler: @escaping (UserNotifications::UNNotificationContent) -> Swift::Void)
+  @objc dynamic public func serviceExtensionTimeWillExpire()
+  @objc dynamic public func pushDelivered(_ request: UserNotifications::UNNotificationRequest)
+}
+public protocol MindboxNotificationContentProtocol : MindboxNotifications::MindboxPushNotificationProtocol {
+  func didReceive(notification: UserNotifications::UNNotification, viewController: UIKit::UIViewController, extensionContext: Foundation::NSExtensionContext?)
+}
+extension MindboxNotifications::MindboxNotificationService : MindboxNotifications::MindboxNotificationContentProtocol {
+  @objc dynamic public func didReceive(notification: UserNotifications::UNNotification, viewController: UIKit::UIViewController, extensionContext: Foundation::NSExtensionContext?)
+}
+@_hasMissingDesignatedInitializers public class SDKVersionProvider {
+  public static let sdkVersion: Swift::String
+  @objc deinit
+}

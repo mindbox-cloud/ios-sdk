@@ -1,0 +1,10 @@
+framework module MindboxNotifications {
+  umbrella header "MindboxNotifications.h"
+  export *
+
+  module * { export * }
+}
+
+module MindboxNotifications.Swift {
+  header "MindboxNotifications-Swift.h"
+}

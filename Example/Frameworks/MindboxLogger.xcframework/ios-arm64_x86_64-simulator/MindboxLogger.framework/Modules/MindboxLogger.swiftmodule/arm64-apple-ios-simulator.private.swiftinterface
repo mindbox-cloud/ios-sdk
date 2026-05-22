@@ -1,0 +1,300 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.3.2 effective-5.10 (swiftlang-6.3.2.1.108 clang-2100.1.1.101)
+// swift-module-flags: -target arm64-apple-ios12.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -O -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name MindboxLogger
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -formal-cxx-interoperability-mode=off -interface-compiler-version 6.3.2
+import CoreData
+import Foundation
+@_exported import MindboxLogger
+import SQLite3
+import Swift
+import UIKit.UIApplication
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+import os
+@_hasMissingDesignatedInitializers public class MBLogger {
+  public static let shared: MindboxLogger::MBLogger
+  public var logLevel: MindboxLogger::LogLevel
+  public func log(level: MindboxLogger::LogLevel, message: Swift::String, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  @objc deinit
+}
+public enum DateFormat : Swift::String {
+  case api
+  case utc
+  public init?(rawValue: Swift::String)
+  public typealias RawValue = Swift::String
+  public var rawValue: Swift::String {
+    get
+  }
+}
+extension Swift::String {
+  public func toDate(withFormat format: MindboxLogger::DateFormat) -> Foundation::Date?
+}
+public struct ValidationError : Swift::Codable, Swift::CustomStringConvertible {
+  public let status: MindboxLogger::Status
+  public let validationMessages: [MindboxLogger::ValidationMessage]
+  public var description: Swift::String {
+    get
+  }
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+public struct ValidationMessage : Swift::Codable {
+  public let message: Swift::String?
+  public let location: Swift::String?
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+extension Foundation::Date {
+  public func toString() -> Swift::String
+  public func toFullString() -> Swift::String
+  public static var dateFormatter: Foundation::DateFormatter {
+    get
+  }
+  public func toString(withFormat format: MindboxLogger::DateFormat) -> Swift::String
+}
+extension Swift::Double {
+  public var asReadableDateTime: Swift::String {
+    get
+  }
+}
+public enum LogCategory : Swift::String, Swift::CaseIterable {
+  case general
+  case network
+  case database
+  case loggerDatabase
+  case delivery
+  case background
+  case notification
+  case pushTokenKeepalive
+  case visit
+  case migration
+  case inAppMessages
+  case webViewInAppMessages
+  case appDelegate
+  public init?(rawValue: Swift::String)
+  public typealias AllCases = [MindboxLogger::LogCategory]
+  public typealias RawValue = Swift::String
+  nonisolated public static var allCases: [MindboxLogger::LogCategory] {
+    get
+  }
+  public var rawValue: Swift::String {
+    get
+  }
+}
+@objc @_inheritsConvenienceInitializers nonisolated public class CDLogMessage : CoreData::NSManagedObject {
+  @objc override nonisolated dynamic public init(entity: CoreData::NSEntityDescription, insertInto context: CoreData::NSManagedObjectContext?)
+  @objc deinit
+}
+extension MindboxLogger::CDLogMessage {
+  @objc @NSManaged nonisolated dynamic public var timestamp: Foundation::Date {
+    @objc get
+    @objc set
+  }
+  @objc @NSManaged nonisolated dynamic public var message: Swift::String {
+    @objc get
+    @objc set
+  }
+}
+public struct LoggerErrorModel {
+  public init(errorType: MindboxLogger::LoggerErrorType, description: Swift::String? = nil, status: Swift::String? = nil, statusCode: Swift::Int? = nil, errorKey: Swift::String? = nil)
+}
+public enum LoggerErrorType : Swift::String {
+  case validation
+  case `protocol`
+  case server
+  case `internal`
+  case invalid
+  case connection
+  case unknown
+  public init?(rawValue: Swift::String)
+  public typealias RawValue = Swift::String
+  public var rawValue: Swift::String {
+    get
+  }
+}
+public enum SDKLogsStatus : Swift::Equatable {
+  case ok
+  case noData
+  case elderLog(date: Swift::String)
+  case latestLog(date: Swift::String)
+  case largeSize
+  public var value: Swift::String {
+    get
+  }
+  public static func == (a: MindboxLogger::SDKLogsStatus, b: MindboxLogger::SDKLogsStatus) -> Swift::Bool
+}
+public struct LoggerDBConfig {
+  public let dbSizeLimitKB: Swift::Int
+  public let lowWaterRatio: Swift::Double
+  public let minDeleteFraction: Swift::Double
+  public let maxDeleteFraction: Swift::Double
+  public let batchSize: Swift::Int
+  public let writesPerTrimCheck: Swift::Int
+  public let trimCooldownSec: Foundation::TimeInterval
+  public static let `default`: MindboxLogger::LoggerDBConfig
+}
+@_hasMissingDesignatedInitializers public class Logger {
+  public static func error(_ error: MindboxLogger::LoggerErrorModel, level: MindboxLogger::LogLevel = .error, category: MindboxLogger::LogCategory = .network, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  @available(*, deprecated, message: "Method deprecated. Use error(_ error: LoggerErrorModel:) instead")
+  public static func error(_ error: MindboxLogger::MindboxError, level: MindboxLogger::LogLevel = .error, category: MindboxLogger::LogCategory = .network, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  public static func network(request: Foundation::URLRequest, httpAdditionalHeaders: [Swift::AnyHashable : Any]? = nil, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  public static func response(data: Foundation::Data?, response: Foundation::URLResponse?, error: (any Swift::Error)?, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  public static func common(message: Swift::String, level: MindboxLogger::LogLevel = .debug, category: MindboxLogger::LogCategory = .general, subsystem: Swift::String? = nil, fileName: Swift::String = #file, line: Swift::Int = #line, funcName: Swift::String = #function)
+  @objc deinit
+}
+@objc public enum LogLevel : Swift::Int, Swift::CaseIterable, Swift::Comparable, Swift::Equatable {
+  case debug = 0
+  case info = 1
+  case `default` = 2
+  case error = 3
+  case fault = 4
+  case none = 5
+  public static func < (lhs: MindboxLogger::LogLevel, rhs: MindboxLogger::LogLevel) -> Swift::Bool
+  public init?(rawValue: Swift::Int)
+  public typealias AllCases = [MindboxLogger::LogLevel]
+  public typealias RawValue = Swift::Int
+  nonisolated public static var allCases: [MindboxLogger::LogLevel] {
+    get
+  }
+  public var rawValue: Swift::Int {
+    get
+  }
+}
+public enum UnknownDecodableError : Swift::Error {
+  case unknownValue
+  public static func == (a: MindboxLogger::UnknownDecodableError, b: MindboxLogger::UnknownDecodableError) -> Swift::Bool
+  public func hash(into hasher: inout Swift::Hasher)
+  public var hashValue: Swift::Int {
+    get
+  }
+}
+public protocol UnknownDecodable : Swift::Decodable {
+}
+public typealias UnknownCodable = MindboxLogger::UnknownDecodable & Swift::Encodable
+extension MindboxLogger::UnknownDecodable where Self : Swift::RawRepresentable, Self.RawValue == Swift::String {
+  public init(from decoder: any Swift::Decoder) throws
+}
+@objc @_inheritsConvenienceInitializers public class MBPersistentContainer : CoreData::NSPersistentContainer, @unchecked Swift::Sendable {
+  public static var applicationGroupIdentifier: Swift::String?
+  @objc override dynamic public class func defaultDirectoryURL() -> Foundation::URL
+  @objc override dynamic public init(name: Swift::String, managedObjectModel model: CoreData::NSManagedObjectModel)
+  @objc deinit
+}
+extension CoreData::NSManagedObjectContext {
+  nonisolated public func executePerformAndWait<T>(_ block: () throws -> T) rethrows -> T
+  nonisolated public func mindboxPerformAndWait<T>(_ block: () throws -> T) rethrows -> T
+}
+public struct ProtocolError : Swift::Codable, Swift::CustomStringConvertible {
+  public let status: MindboxLogger::Status
+  public let errorMessage: Swift::String
+  public let errorId: Swift::String?
+  public let httpStatusCode: Swift::Int
+  public var description: Swift::String {
+    get
+  }
+  public init(status: MindboxLogger::Status, errorMessage: Swift::String, httpStatusCode: Swift::Int, errorId: Swift::String? = nil)
+  public init(from decoder: any Swift::Decoder) throws
+  public func encode(to encoder: any Swift::Encoder) throws
+}
+@_hasMissingDesignatedInitializers public class MBLoggerCoreDataManager {
+  public static let shared: MindboxLogger::MBLoggerCoreDataManager
+  @objc deinit
+}
+extension MindboxLogger::MBLoggerCoreDataManager {
+  public func create(message: Swift::String, timestamp: Foundation::Date, completion: (() -> Swift::Void)? = nil)
+  public func getFirstLog() throws -> MindboxLogger::LogMessage?
+  public func getLastLog() throws -> MindboxLogger::LogMessage?
+  public func fetchPeriod(_ from: Foundation::Date, _ to: Foundation::Date, ascending: Swift::Bool = true) throws -> [MindboxLogger::LogMessage]
+  public func deleteOldestLogs(fraction: Swift::Double) throws
+}
+extension MindboxLogger::MBLoggerCoreDataManager {
+  public func setImmediateWrite(_ enabled: Swift::Bool = true)
+}
+extension MindboxLogger::MBLoggerCoreDataManager {
+  public func deleteAll() throws
+}
+public enum MindboxError : Foundation::LocalizedError {
+  case validationError(MindboxLogger::ValidationError)
+  case protocolError(MindboxLogger::ProtocolError)
+  case serverError(MindboxLogger::ProtocolError)
+  case internalError(MindboxLogger::InternalError)
+  case invalidResponse(Foundation::URLResponse?)
+  case connectionError
+  case unknown(any Swift::Error)
+  public var errorDescription: Swift::String? {
+    get
+  }
+  public var failureReason: Swift::String? {
+    get
+  }
+  public var errorKey: Swift::String? {
+    get
+  }
+  public init(_ error: MindboxLogger::InternalError)
+}
+extension MindboxLogger::MindboxError {
+  public func createJSON() -> Swift::String
+}
+public struct InternalError : Swift::CustomStringConvertible {
+  public init(errorKey: Swift::String, rawError: (any Swift::Error)? = nil, statusCode: Swift::Int? = nil)
+  public init(errorKey: MindboxLogger::ErrorKey, rawError: (any Swift::Error)? = nil, statusCode: Swift::Int? = nil)
+  public init(errorKey: MindboxLogger::ErrorKey, reason: Swift::String? = nil, suggestion: Swift::String? = nil)
+  public var description: Swift::String {
+    get
+  }
+}
+public enum ErrorKey : Swift::String {
+  case general
+  case parsing
+  case invalidConfiguration
+  case unknownStatusKey
+  case serverError
+  case invalidAccess
+  case validation
+  public init?(rawValue: Swift::String)
+  public typealias RawValue = Swift::String
+  public var rawValue: Swift::String {
+    get
+  }
+}
+public struct LogMessage {
+  public let timestamp: Foundation::Date
+  public let message: Swift::String
+  public var description: Swift::String {
+    get
+  }
+}
+public enum Status : Swift::String, MindboxLogger::UnknownCodable {
+  case success
+  case validationError
+  case protocolError
+  case internalServerError
+  case transactionAlreadyProcessed
+  case unknown
+  public init?(rawValue: Swift::String)
+  public typealias RawValue = Swift::String
+  public var rawValue: Swift::String {
+    get
+  }
+}
+extension MindboxLogger::DateFormat : Swift::Equatable {}
+extension MindboxLogger::DateFormat : Swift::Hashable {}
+extension MindboxLogger::DateFormat : Swift::RawRepresentable {}
+extension MindboxLogger::LogCategory : Swift::Equatable {}
+extension MindboxLogger::LogCategory : Swift::Hashable {}
+extension MindboxLogger::LogCategory : Swift::RawRepresentable {}
+extension MindboxLogger::LoggerErrorType : Swift::Equatable {}
+extension MindboxLogger::LoggerErrorType : Swift::Hashable {}
+extension MindboxLogger::LoggerErrorType : Swift::RawRepresentable {}
+extension MindboxLogger::LogLevel : Swift::Hashable {}
+extension MindboxLogger::LogLevel : Swift::RawRepresentable {}
+extension MindboxLogger::UnknownDecodableError : Swift::Equatable {}
+extension MindboxLogger::UnknownDecodableError : Swift::Hashable {}
+extension MindboxLogger::ErrorKey : Swift::Equatable {}
+extension MindboxLogger::ErrorKey : Swift::Hashable {}
+extension MindboxLogger::ErrorKey : Swift::RawRepresentable {}
+extension MindboxLogger::Status : Swift::Equatable {}
+extension MindboxLogger::Status : Swift::Hashable {}
+extension MindboxLogger::Status : Swift::RawRepresentable {}

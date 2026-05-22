@@ -1,0 +1,2865 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "MindboxNotifications",
+    "printedName": "MindboxNotifications",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MBPushNotification",
+        "printedName": "MBPushNotification",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "aps",
+            "printedName": "aps",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "MindboxNotifications.MBAps?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MBAps",
+                    "printedName": "MindboxNotifications.MBAps",
+                    "usr": "s:20MindboxNotifications5MBApsV"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV3apsAA5MBApsVSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV3apsAA5MBApsVSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "MindboxNotifications.MBAps?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MBAps",
+                        "printedName": "MindboxNotifications.MBAps",
+                        "usr": "s:20MindboxNotifications5MBApsV"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV3apsAA5MBApsVSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV3apsAA5MBApsVSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "clickUrl",
+            "printedName": "clickUrl",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV8clickUrlSSSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV8clickUrlSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV8clickUrlSSSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV8clickUrlSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "imageUrl",
+            "printedName": "imageUrl",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV8imageUrlSSSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV8imageUrlSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV8imageUrlSSSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV8imageUrlSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "payload",
+            "printedName": "payload",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV7payloadSSSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV7payloadSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV7payloadSSSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV7payloadSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "buttons",
+            "printedName": "buttons",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[MindboxNotifications.MBPushNotificationButton]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[MindboxNotifications.MBPushNotificationButton]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MBPushNotificationButton",
+                        "printedName": "MindboxNotifications.MBPushNotificationButton",
+                        "usr": "s:20MindboxNotifications24MBPushNotificationButtonV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV7buttonsSayAA0cD6ButtonVGSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV7buttonsSayAA0cD6ButtonVGSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "[MindboxNotifications.MBPushNotificationButton]?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[MindboxNotifications.MBPushNotificationButton]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "MBPushNotificationButton",
+                            "printedName": "MindboxNotifications.MBPushNotificationButton",
+                            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV7buttonsSayAA0cD6ButtonVGSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV7buttonsSayAA0cD6ButtonVGSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "uniqueKey",
+            "printedName": "uniqueKey",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV9uniqueKeySSSgvp",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV9uniqueKeySSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV9uniqueKeySSSgvg",
+                "mangledName": "$s20MindboxNotifications18MBPushNotificationV9uniqueKeySSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "MBPushNotification",
+                "printedName": "MindboxNotifications.MBPushNotification",
+                "usr": "s:20MindboxNotifications18MBPushNotificationV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications18MBPushNotificationV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s20MindboxNotifications18MBPushNotificationV6encode2toys7Encoder_p_tKF",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20MindboxNotifications18MBPushNotificationV",
+        "mangledName": "$s20MindboxNotifications18MBPushNotificationV",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MBAps",
+        "printedName": "MBAps",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "alert",
+            "printedName": "alert",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "MindboxNotifications.MBApsAlert?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MBApsAlert",
+                    "printedName": "MindboxNotifications.MBApsAlert",
+                    "usr": "s:20MindboxNotifications10MBApsAlertV"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications5MBApsV5alertAA0C5AlertVSgvp",
+            "mangledName": "$s20MindboxNotifications5MBApsV5alertAA0C5AlertVSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "MindboxNotifications.MBApsAlert?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MBApsAlert",
+                        "printedName": "MindboxNotifications.MBApsAlert",
+                        "usr": "s:20MindboxNotifications10MBApsAlertV"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications5MBApsV5alertAA0C5AlertVSgvg",
+                "mangledName": "$s20MindboxNotifications5MBApsV5alertAA0C5AlertVSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "sound",
+            "printedName": "sound",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications5MBApsV5soundSSSgvp",
+            "mangledName": "$s20MindboxNotifications5MBApsV5soundSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications5MBApsV5soundSSSgvg",
+                "mangledName": "$s20MindboxNotifications5MBApsV5soundSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "mutableContent",
+            "printedName": "mutableContent",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.Int?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications5MBApsV14mutableContentSiSgvp",
+            "mangledName": "$s20MindboxNotifications5MBApsV14mutableContentSiSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.Int?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications5MBApsV14mutableContentSiSgvg",
+                "mangledName": "$s20MindboxNotifications5MBApsV14mutableContentSiSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "contentAvailable",
+            "printedName": "contentAvailable",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.Int?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications5MBApsV16contentAvailableSiSgvp",
+            "mangledName": "$s20MindboxNotifications5MBApsV16contentAvailableSiSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.Int?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications5MBApsV16contentAvailableSiSgvg",
+                "mangledName": "$s20MindboxNotifications5MBApsV16contentAvailableSiSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "MBAps",
+                "printedName": "MindboxNotifications.MBAps",
+                "usr": "s:20MindboxNotifications5MBApsV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20MindboxNotifications5MBApsV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s20MindboxNotifications5MBApsV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications5MBApsV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s20MindboxNotifications5MBApsV6encode2toys7Encoder_p_tKF",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20MindboxNotifications5MBApsV",
+        "mangledName": "$s20MindboxNotifications5MBApsV",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MBApsAlert",
+        "printedName": "MBApsAlert",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "title",
+            "printedName": "title",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications10MBApsAlertV5titleSSSgvp",
+            "mangledName": "$s20MindboxNotifications10MBApsAlertV5titleSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications10MBApsAlertV5titleSSSgvg",
+                "mangledName": "$s20MindboxNotifications10MBApsAlertV5titleSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "body",
+            "printedName": "body",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications10MBApsAlertV4bodySSSgvp",
+            "mangledName": "$s20MindboxNotifications10MBApsAlertV4bodySSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications10MBApsAlertV4bodySSSgvg",
+                "mangledName": "$s20MindboxNotifications10MBApsAlertV4bodySSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "MBApsAlert",
+                "printedName": "MindboxNotifications.MBApsAlert",
+                "usr": "s:20MindboxNotifications10MBApsAlertV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20MindboxNotifications10MBApsAlertV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s20MindboxNotifications10MBApsAlertV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications10MBApsAlertV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s20MindboxNotifications10MBApsAlertV6encode2toys7Encoder_p_tKF",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20MindboxNotifications10MBApsAlertV",
+        "mangledName": "$s20MindboxNotifications10MBApsAlertV",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MBPushNotificationButton",
+        "printedName": "MBPushNotificationButton",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "text",
+            "printedName": "text",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV4textSSSgvp",
+            "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV4textSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications24MBPushNotificationButtonV4textSSSgvg",
+                "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV4textSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "url",
+            "printedName": "url",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV3urlSSSgvp",
+            "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV3urlSSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications24MBPushNotificationButtonV3urlSSSgvg",
+                "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV3urlSSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "uniqueKey",
+            "printedName": "uniqueKey",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV9uniqueKeySSSgvp",
+            "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV9uniqueKeySSSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications24MBPushNotificationButtonV9uniqueKeySSSgvg",
+                "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV9uniqueKeySSSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "MBPushNotificationButton",
+                "printedName": "MindboxNotifications.MBPushNotificationButton",
+                "usr": "s:20MindboxNotifications24MBPushNotificationButtonV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications24MBPushNotificationButtonV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV6encode2toys7Encoder_p_tKF",
+            "moduleName": "MindboxNotifications",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20MindboxNotifications24MBPushNotificationButtonV",
+        "mangledName": "$s20MindboxNotifications24MBPushNotificationButtonV",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UserNotifications",
+        "printedName": "UserNotifications",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "Import",
+        "name": "UserNotificationsUI",
+        "printedName": "UserNotificationsUI",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MindboxNotificationService",
+        "printedName": "MindboxNotificationService",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "contentHandler",
+            "printedName": "contentHandler",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNNotificationContent",
+                        "printedName": "UserNotifications.UNNotificationContent",
+                        "usr": "c:objc(cs)UNNotificationContent"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(py)contentHandler",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC14contentHandlerySo21UNNotificationContentCcSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage",
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "UNNotificationContent",
+                            "printedName": "UserNotifications.UNNotificationContent",
+                            "usr": "c:objc(cs)UNNotificationContent"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(im)contentHandler",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC14contentHandlerySo21UNNotificationContentCcSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "UNNotificationContent",
+                            "printedName": "UserNotifications.UNNotificationContent",
+                            "usr": "c:objc(cs)UNNotificationContent"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(im)setContentHandler:",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC14contentHandlerySo21UNNotificationContentCcSgvs",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A19NotificationServiceC14contentHandlerySo21UNNotificationContentCcSgvM",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC14contentHandlerySo21UNNotificationContentCcSgvM",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "bestAttemptContent",
+            "printedName": "bestAttemptContent",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "UserNotifications.UNMutableNotificationContent?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UNMutableNotificationContent",
+                    "printedName": "UserNotifications.UNMutableNotificationContent",
+                    "usr": "c:objc(cs)UNMutableNotificationContent"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(py)bestAttemptContent",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC18bestAttemptContentSo09UNMutablecG0CSgvp",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage",
+              "AccessControl",
+              "ObjC"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "UserNotifications.UNMutableNotificationContent?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNMutableNotificationContent",
+                        "printedName": "UserNotifications.UNMutableNotificationContent",
+                        "usr": "c:objc(cs)UNMutableNotificationContent"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(im)bestAttemptContent",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC18bestAttemptContentSo09UNMutablecG0CSgvg",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "UserNotifications.UNMutableNotificationContent?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNMutableNotificationContent",
+                        "printedName": "UserNotifications.UNMutableNotificationContent",
+                        "usr": "c:objc(cs)UNMutableNotificationContent"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(im)setBestAttemptContent:",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC18bestAttemptContentSo09UNMutablecG0CSgvs",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A19NotificationServiceC18bestAttemptContentSo09UNMutablecG0CSgvM",
+                "mangledName": "$s20MindboxNotifications0A19NotificationServiceC18bestAttemptContentSo09UNMutablecG0CSgvM",
+                "moduleName": "MindboxNotifications",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "MindboxNotificationService",
+                "printedName": "MindboxNotifications.MindboxNotificationService",
+                "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService(im)init",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceCACycfc",
+            "moduleName": "MindboxNotifications",
+            "overriding": true,
+            "objc_name": "init",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "AccessControl",
+              "Override",
+              "RawDocComment"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "isMindboxPush",
+            "printedName": "isMindboxPush(userInfo:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.AnyHashable : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "AnyHashable",
+                    "printedName": "Swift.AnyHashable",
+                    "usr": "s:s11AnyHashableV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@MindboxNotifications@objc(cs)MindboxNotificationService(im)isMindboxPushWithUserInfo:",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC02isA4Push8userInfoSbSDys11AnyHashableVypG_tF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "Dynamic",
+              "AccessControl",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getMindboxPushData",
+            "printedName": "getMindboxPushData(userInfo:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "MindboxNotifications.MBPushNotification?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MBPushNotification",
+                    "printedName": "MindboxNotifications.MBPushNotification",
+                    "usr": "s:20MindboxNotifications18MBPushNotificationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.AnyHashable : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "AnyHashable",
+                    "printedName": "Swift.AnyHashable",
+                    "usr": "s:s11AnyHashableV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A19NotificationServiceC03getA8PushData8userInfoAA06MBPushC0VSgSDys11AnyHashableVypG_tF",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC03getA8PushData8userInfoAA06MBPushC0VSgSDys11AnyHashableVypG_tF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "didReceive",
+            "printedName": "didReceive(_:withContentHandler:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotificationRequest",
+                "printedName": "UserNotifications.UNNotificationRequest",
+                "usr": "c:objc(cs)UNNotificationRequest"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UNNotificationContent",
+                    "printedName": "UserNotifications.UNNotificationContent",
+                    "usr": "c:objc(cs)UNNotificationContent"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@MindboxNotifications@objc(cs)MindboxNotificationService(im)didReceive:withContentHandler:",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC10didReceive_18withContentHandlerySo21UNNotificationRequestC_ySo0jH0CctF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "Dynamic",
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "serviceExtensionTimeWillExpire",
+            "printedName": "serviceExtensionTimeWillExpire()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@MindboxNotifications@objc(cs)MindboxNotificationService(im)serviceExtensionTimeWillExpire",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC30serviceExtensionTimeWillExpireyyF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "Dynamic",
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "pushDelivered",
+            "printedName": "pushDelivered(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotificationRequest",
+                "printedName": "UserNotifications.UNNotificationRequest",
+                "usr": "c:objc(cs)UNNotificationRequest"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@MindboxNotifications@objc(cs)MindboxNotificationService(im)pushDelivered:",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC13pushDeliveredyySo21UNNotificationRequestCF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "Dynamic",
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "didReceive",
+            "printedName": "didReceive(notification:viewController:extensionContext:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotification",
+                "printedName": "UserNotifications.UNNotification",
+                "usr": "c:objc(cs)UNNotification"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UIViewController",
+                "printedName": "UIKit.UIViewController",
+                "usr": "c:objc(cs)UIViewController"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Foundation.NSExtensionContext?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSExtensionContext",
+                    "printedName": "Foundation.NSExtensionContext",
+                    "usr": "c:objc(cs)NSExtensionContext"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@MindboxNotifications@objc(cs)MindboxNotificationService(im)didReceiveWithNotification:viewController:extensionContext:",
+            "mangledName": "$s20MindboxNotifications0A19NotificationServiceC10didReceive12notification14viewController16extensionContextySo14UNNotificationC_So06UIViewI0CSo011NSExtensionK0CSgtF",
+            "moduleName": "MindboxNotifications",
+            "declAttributes": [
+              "Dynamic",
+              "AccessControl",
+              "RawDocComment",
+              "ObjC"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@MindboxNotifications@objc(cs)MindboxNotificationService",
+        "mangledName": "$s20MindboxNotifications0A19NotificationServiceC",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl",
+          "ObjCMembers",
+          "ObjC"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "inheritsConvenienceInitializers": true,
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "MindboxPushNotificationProtocol",
+            "printedName": "MindboxPushNotificationProtocol",
+            "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP",
+            "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "MindboxNotificationContentProtocol",
+            "printedName": "MindboxNotificationContentProtocol",
+            "usr": "s:20MindboxNotifications0A27NotificationContentProtocolP",
+            "mangledName": "$s20MindboxNotifications0A27NotificationContentProtocolP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "MindboxNotificationServiceProtocol",
+            "printedName": "MindboxNotificationServiceProtocol",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MindboxPushNotificationProtocol",
+        "printedName": "MindboxPushNotificationProtocol",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "isMindboxPush",
+            "printedName": "isMindboxPush(userInfo:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.AnyHashable : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "AnyHashable",
+                    "printedName": "Swift.AnyHashable",
+                    "usr": "s:s11AnyHashableV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP02isaC08userInfoSbSDys11AnyHashableVypG_tF",
+            "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP02isaC08userInfoSbSDys11AnyHashableVypG_tF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxPushNotificationProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxPushNotificationProtocol>",
+            "protocolReq": true,
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "getMindboxPushData",
+            "printedName": "getMindboxPushData(userInfo:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "MindboxNotifications.MBPushNotification?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MBPushNotification",
+                    "printedName": "MindboxNotifications.MBPushNotification",
+                    "usr": "s:20MindboxNotifications18MBPushNotificationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.AnyHashable : Any]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "AnyHashable",
+                    "printedName": "Swift.AnyHashable",
+                    "usr": "s:s11AnyHashableV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ProtocolComposition",
+                    "printedName": "Any"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP03getaC4Data8userInfoAA06MBPushD0VSgSDys11AnyHashableVypG_tF",
+            "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP03getaC4Data8userInfoAA06MBPushD0VSgSDys11AnyHashableVypG_tF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxPushNotificationProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxPushNotificationProtocol>",
+            "protocolReq": true,
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Protocol",
+        "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP",
+        "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UserNotifications",
+        "printedName": "UserNotifications",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MindboxNotificationServiceProtocol",
+        "printedName": "MindboxNotificationServiceProtocol",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "contentHandler",
+            "printedName": "contentHandler",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNNotificationContent",
+                        "printedName": "UserNotifications.UNNotificationContent",
+                        "usr": "c:objc(cs)UNNotificationContent"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvp",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvp",
+            "moduleName": "MindboxNotifications",
+            "protocolReq": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "UNNotificationContent",
+                            "printedName": "UserNotifications.UNNotificationContent",
+                            "usr": "c:objc(cs)UNNotificationContent"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvg",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvg",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((UserNotifications.UNNotificationContent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "UNNotificationContent",
+                            "printedName": "UserNotifications.UNNotificationContent",
+                            "usr": "c:objc(cs)UNNotificationContent"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvs",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvs",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvM",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP14contentHandlerySo21UNNotificationContentCcSgvM",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "implicit": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "bestAttemptContent",
+            "printedName": "bestAttemptContent",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "UserNotifications.UNMutableNotificationContent?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UNMutableNotificationContent",
+                    "printedName": "UserNotifications.UNMutableNotificationContent",
+                    "usr": "c:objc(cs)UNMutableNotificationContent"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvp",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvp",
+            "moduleName": "MindboxNotifications",
+            "protocolReq": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "UserNotifications.UNMutableNotificationContent?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNMutableNotificationContent",
+                        "printedName": "UserNotifications.UNMutableNotificationContent",
+                        "usr": "c:objc(cs)UNMutableNotificationContent"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvg",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvg",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "UserNotifications.UNMutableNotificationContent?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UNMutableNotificationContent",
+                        "printedName": "UserNotifications.UNMutableNotificationContent",
+                        "usr": "c:objc(cs)UNMutableNotificationContent"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvs",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvs",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvM",
+                "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP18bestAttemptContentSo09UNMutablecH0CSgvM",
+                "moduleName": "MindboxNotifications",
+                "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+                "protocolReq": true,
+                "implicit": true,
+                "reqNewWitnessTableEntry": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "didReceive",
+            "printedName": "didReceive(_:withContentHandler:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotificationRequest",
+                "printedName": "UserNotifications.UNNotificationRequest",
+                "usr": "c:objc(cs)UNNotificationRequest"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(UserNotifications.UNNotificationContent) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UNNotificationContent",
+                    "printedName": "UserNotifications.UNNotificationContent",
+                    "usr": "c:objc(cs)UNNotificationContent"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP10didReceive_18withContentHandlerySo21UNNotificationRequestC_ySo0kI0CctF",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP10didReceive_18withContentHandlerySo21UNNotificationRequestC_ySo0kI0CctF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "protocolReq": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "serviceExtensionTimeWillExpire",
+            "printedName": "serviceExtensionTimeWillExpire()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP30serviceExtensionTimeWillExpireyyF",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP30serviceExtensionTimeWillExpireyyF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "protocolReq": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "pushDelivered",
+            "printedName": "pushDelivered(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotificationRequest",
+                "printedName": "UserNotifications.UNNotificationRequest",
+                "usr": "c:objc(cs)UNNotificationRequest"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP13pushDeliveredyySo21UNNotificationRequestCF",
+            "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP13pushDeliveredyySo21UNNotificationRequestCF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationServiceProtocol>",
+            "protocolReq": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Protocol",
+        "usr": "s:20MindboxNotifications0A27NotificationServiceProtocolP",
+        "mangledName": "$s20MindboxNotifications0A27NotificationServiceProtocolP",
+        "moduleName": "MindboxNotifications",
+        "genericSig": "<τ_0_0 : MindboxNotifications.MindboxPushNotificationProtocol>",
+        "sugared_genericSig": "<Self : MindboxNotifications.MindboxPushNotificationProtocol>",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "MindboxPushNotificationProtocol",
+            "printedName": "MindboxPushNotificationProtocol",
+            "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP",
+            "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "Import",
+        "name": "UserNotifications",
+        "printedName": "UserNotifications",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "Import",
+        "name": "UserNotificationsUI",
+        "printedName": "UserNotificationsUI",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "MindboxNotificationContentProtocol",
+        "printedName": "MindboxNotificationContentProtocol",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "didReceive",
+            "printedName": "didReceive(notification:viewController:extensionContext:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UNNotification",
+                "printedName": "UserNotifications.UNNotification",
+                "usr": "c:objc(cs)UNNotification"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UIViewController",
+                "printedName": "UIKit.UIViewController",
+                "usr": "c:objc(cs)UIViewController"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Foundation.NSExtensionContext?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSExtensionContext",
+                    "printedName": "Foundation.NSExtensionContext",
+                    "usr": "c:objc(cs)NSExtensionContext"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20MindboxNotifications0A27NotificationContentProtocolP10didReceive12notification14viewController16extensionContextySo14UNNotificationC_So06UIViewJ0CSo011NSExtensionL0CSgtF",
+            "mangledName": "$s20MindboxNotifications0A27NotificationContentProtocolP10didReceive12notification14viewController16extensionContextySo14UNNotificationC_So06UIViewJ0CSo011NSExtensionL0CSgtF",
+            "moduleName": "MindboxNotifications",
+            "genericSig": "<τ_0_0 where τ_0_0 : MindboxNotifications.MindboxNotificationContentProtocol>",
+            "sugared_genericSig": "<Self where Self : MindboxNotifications.MindboxNotificationContentProtocol>",
+            "protocolReq": true,
+            "declAttributes": [
+              "RawDocComment"
+            ],
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Protocol",
+        "usr": "s:20MindboxNotifications0A27NotificationContentProtocolP",
+        "mangledName": "$s20MindboxNotifications0A27NotificationContentProtocolP",
+        "moduleName": "MindboxNotifications",
+        "genericSig": "<τ_0_0 : MindboxNotifications.MindboxPushNotificationProtocol>",
+        "sugared_genericSig": "<Self : MindboxNotifications.MindboxPushNotificationProtocol>",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "MindboxPushNotificationProtocol",
+            "printedName": "MindboxPushNotificationProtocol",
+            "usr": "s:20MindboxNotifications0A24PushNotificationProtocolP",
+            "mangledName": "$s20MindboxNotifications0A24PushNotificationProtocolP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SDKVersionProvider",
+        "printedName": "SDKVersionProvider",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "sdkVersion",
+            "printedName": "sdkVersion",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20MindboxNotifications18SDKVersionProviderC10sdkVersionSSvpZ",
+            "mangledName": "$s20MindboxNotifications18SDKVersionProviderC10sdkVersionSSvpZ",
+            "moduleName": "MindboxNotifications",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20MindboxNotifications18SDKVersionProviderC10sdkVersionSSvgZ",
+                "mangledName": "$s20MindboxNotifications18SDKVersionProviderC10sdkVersionSSvgZ",
+                "moduleName": "MindboxNotifications",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:20MindboxNotifications18SDKVersionProviderC",
+        "mangledName": "$s20MindboxNotifications18SDKVersionProviderC",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "hasMissingDesignatedInitializers": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "MindboxNotifications",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": [
+    {
+      "filePath": "\/Users\/semko\/dev\/Mindbox\/ios-sdk-xcfw\/MindboxNotifications\/Models\/MBPushNotification.swift",
+      "kind": "StringLiteral",
+      "offset": 814,
+      "length": 17,
+      "value": "\"mutable-content\""
+    },
+    {
+      "filePath": "\/Users\/semko\/dev\/Mindbox\/ios-sdk-xcfw\/MindboxNotifications\/Models\/MBPushNotification.swift",
+      "kind": "StringLiteral",
+      "offset": 864,
+      "length": 19,
+      "value": "\"content-available\""
+    },
+    {
+      "filePath": "\/Users\/semko\/dev\/Mindbox\/ios-sdk-xcfw\/SDKVersionProvider\/SDKVersionProvider.swift",
+      "kind": "StringLiteral",
+      "offset": 190,
+      "length": 8,
+      "value": "\"2.15.1\""
+    },
+    {
+      "filePath": "\/Users\/semko\/dev\/Mindbox\/ios-sdk-xcfw\/MindboxNotifications\/Utilities\/Constants.swift",
+      "kind": "StringLiteral",
+      "offset": 282,
+      "length": 27,
+      "value": "\"MindBoxCategoryIdentifier\""
+    }
+  ]
+}

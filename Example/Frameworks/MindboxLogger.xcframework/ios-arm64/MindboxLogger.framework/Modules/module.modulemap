@@ -1,0 +1,10 @@
+framework module MindboxLogger {
+  umbrella header "MindboxLogger.h"
+  export *
+
+  module * { export * }
+}
+
+module MindboxLogger.Swift {
+  header "MindboxLogger-Swift.h"
+}
