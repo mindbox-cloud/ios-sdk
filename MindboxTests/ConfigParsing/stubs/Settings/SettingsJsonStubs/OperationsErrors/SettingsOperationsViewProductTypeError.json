@@ -22,5 +22,8 @@
   },
   "featureToggles": {
     "MobileSdkShouldSendInAppShowError": false
+  },
+  "baseAddresses": {
+    "operations": "anonymizer-demo-api-regular.mindbox.ru"
   }
 }

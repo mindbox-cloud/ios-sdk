@@ -50,11 +50,23 @@ class MockFailureNetworkFetcher: NetworkFetcher {
         }
     }
     
+    func requestRaw(route: any Route, completion: @escaping (Result<Data, MindboxError>) -> Void) {
+        if !hasFailed {
+            hasFailed = true
+            completion(.failure(.internalError(.init(
+                errorKey: .parsing,
+                rawError: nil
+            ))))
+        } else {
+            completion(.success(MockFailureNetworkFetcher.successData))
+        }
+    }
+
     private static let successData: Data = {
         let bundle = Bundle(for: MockNetworkFetcher.self)
         let url = bundle.url(forResource: "SuccessResponse", withExtension: "json")!
         return try! Data(contentsOf: url)
     }()
-    
+
     func cancelAllTasks() {}
 }

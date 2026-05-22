@@ -8,18 +8,19 @@
 
 import SwiftUI
 import SwiftData
+import Mindbox
 
 struct NotificationCenterView: View {
-    
+
     var viewModel: NotificationCenterViewModelProtocol
-    
+
     @State private var showAlert = false
     @State private var alertTitle = String()
     @State private var alertMessage = String()
-    
+
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -31,7 +32,7 @@ struct NotificationCenterView: View {
                             Spacer()
                         }
                     }
-                    
+
                     .contentShape(Rectangle())
                     .onTapGesture {
                         viewModel.sendOperationNCPushOpen(notification: item.mbPushNotification)
@@ -60,7 +61,7 @@ struct NotificationCenterView: View {
                 Button("OK", action: {})
             }
     }
-    
+
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             let originalOffsets = IndexSet(offsets.map { items.count - 1 - $0 })
@@ -70,11 +71,44 @@ struct NotificationCenterView: View {
                     return
                 } else {
                     modelContext.delete(items[index])
-                    
+
                 }
             }
         }
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+    }
+}
+
+// MARK: - NotificationCellView
+
+private struct NotificationCellView: View {
+    var notification: PushNotification
+
+    var body: some View {
+        HStack(alignment: .center, content: {
+            if let imageUrl = notification.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    ProgressView()
+                }
+                .frame(maxWidth: 64, maxHeight: 64)
+                .clipShape(Circle())
+            }
+
+            VStack(alignment: .leading, content: {
+                Text(notification.title ?? "Empty")
+                    .font(.headline)
+                Text(notification.body ?? "Empty")
+                    .font(.subheadline)
+                    .foregroundStyle(.gray)
+                Text(notification.clickUrl ?? "Empty")
+                    .font(.footnote)
+                    .foregroundStyle(.blue)
+            })
+        })
     }
 }
 

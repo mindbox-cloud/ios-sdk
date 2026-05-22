@@ -68,7 +68,7 @@ class MBEventRepository: EventRepository {
             deviceUUID: deviceUUID
         )
         let route = makeRoute(wrapper: wrapper)
-        fetcher.request(type: type, route: route, needBaseResponse: true, completion: { result in
+        fetcher.request(type: type, route: route, completion: { result in
             DispatchQueue.main.async {
                 switch result {
                 case let .failure(error):
@@ -78,6 +78,41 @@ class MBEventRepository: EventRepository {
                 }
             }
         })
+    }
+
+    func sendRaw(event: Event, completion: @escaping (Result<Data, MindboxError>) -> Void) {
+        guard let configuration = persistenceStorage.configuration else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "Configuration is not set"
+            ))
+            completion(.failure(error))
+            return
+        }
+        guard let deviceUUID = persistenceStorage.deviceUUID else {
+            let error = MindboxError(.init(
+                errorKey: .invalidConfiguration,
+                reason: "DeviceUUID is not set"
+            ))
+            completion(.failure(error))
+            return
+        }
+        let wrapper = EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID
+        )
+        let route = makeRoute(wrapper: wrapper)
+        fetcher.requestRaw(route: route) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case let .failure(error):
+                    completion(.failure(error))
+                case let .success(data):
+                    completion(.success(data))
+                }
+            }
+        }
     }
 
     private func makeRoute(wrapper: EventWrapper) -> Route {

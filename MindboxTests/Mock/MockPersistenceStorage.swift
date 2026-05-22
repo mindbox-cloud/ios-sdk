@@ -123,4 +123,10 @@ class MockPersistenceStorage: PersistenceStorage {
     var applicationInstanceId: String?
 
     var webViewLocalStateVersion: Int?
+
+    var operationsDomainFromConfig: String? {
+        didSet {
+            onDidChange?()
+        }
+    }
 }

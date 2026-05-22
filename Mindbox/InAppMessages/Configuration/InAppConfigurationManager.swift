@@ -86,11 +86,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             do {
                 let config = try jsonDecoder.decode(ConfigResponse.self, from: data)
                 configResponse = config
-                saveConfigToCache(data)
-                setupSettingsFromConfig(config.settings)
-                if let monitoring = config.monitoring, let logsManager = DI.inject(SDKLogsManagerProtocol.self) {
-                    logsManager.sendLogs(logs: monitoring.logs.elements)
-                }
+                applyDownloadedConfig(config, rawData: data)
             } catch {
                 applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
@@ -104,9 +100,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             applyConfigFromCache()
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
-        
+
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
+    }
+
+    private func applyDownloadedConfig(_ config: ConfigResponse, rawData: Data) {
+        saveConfigToCache(rawData)
+        setupSettingsFromConfig(config.settings)
+        sendMonitoringLogsIfNeeded(config.monitoring)
+    }
+
+    private func sendMonitoringLogsIfNeeded(_ monitoring: Monitoring?) {
+        guard let monitoring = monitoring,
+              let logsManager = DI.inject(SDKLogsManagerProtocol.self) else {
+            return
+        }
+        logsManager.sendLogs(logs: monitoring.logs.elements)
     }
 
     private func applyConfigFromCache() {
@@ -149,21 +159,44 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             return
         }
 
+        applySessionStorageSettings(settings)
+        featureToggleManager.applyFeatureToggles(settings.featureToggles)
+        persistOperationsDomain(from: settings.baseAddresses)
+        saveConfigSessionToCache(settings.slidingExpiration?.config)
+    }
+
+    private func applySessionStorageSettings(_ settings: Settings) {
+        let storage = SessionTemporaryStorage.shared
+
         if let viewCategory = settings.operations?.viewCategory {
-            SessionTemporaryStorage.shared.viewCategoryOperation = viewCategory.systemName.lowercased()
+            storage.viewCategoryOperation = viewCategory.systemName.lowercased()
         }
 
         if let viewProduct = settings.operations?.viewProduct {
-            SessionTemporaryStorage.shared.viewProductOperation = viewProduct.systemName.lowercased()
-        }
-        
-        if let inappSettings = settings.inapp {
-            SessionTemporaryStorage.shared.inAppSettings = inappSettings
+            storage.viewProductOperation = viewProduct.systemName.lowercased()
         }
 
-        featureToggleManager.applyFeatureToggles(settings.featureToggles)
-        
-        saveConfigSessionToCache(settings.slidingExpiration?.config)
+        if let inappSettings = settings.inapp {
+            storage.inAppSettings = inappSettings
+        }
+    }
+
+    private func persistOperationsDomain(from baseAddresses: Settings.BaseAddresses?) {
+        let current = persistenceStorage.operationsDomainFromConfig
+        let raw = baseAddresses?.operations
+
+        switch OperationsDomainConfigPolicy.action(for: raw, currentlyStored: current) {
+        case .keep:
+            break
+        case .clear:
+            persistenceStorage.operationsDomainFromConfig = nil
+            Logger.common(message: "[OperationsDomain] Cleared — config has no value.", level: .info, category: .inAppMessages)
+        case .save(let value):
+            persistenceStorage.operationsDomainFromConfig = value
+            Logger.common(message: "[OperationsDomain] Updated from config. [Value]: \(value)", level: .info, category: .inAppMessages)
+        case .rejected(let value):
+            Logger.common(message: "[OperationsDomain] Invalid domain from config — ignored, previous value kept. [Value]: \(value)", level: .error, category: .inAppMessages)
+        }
     }
 
     private func createTTLValidationService() -> TTLValidationProtocol {
