@@ -1,0 +1,44 @@
+platform :ios, '17.0'
+
+plugin 'cocoapods-spm'
+
+target 'Example' do
+  use_frameworks!
+  spm_pkg 'Mindbox',
+          :url => 'https://github.com/mindbox-cloud/ios-sdk.git',
+          :version => '2.15.1',
+          :products => ['Mindbox']
+end
+
+target 'MindboxNotificationServiceExtension' do
+  use_frameworks!
+  spm_pkg 'Mindbox',
+          :url => 'https://github.com/mindbox-cloud/ios-sdk.git',
+          :version => '2.15.1',
+          :products => ['MindboxNotificationsService']
+end
+
+target 'MindboxNotificationContentExtension' do
+  use_frameworks!
+  spm_pkg 'Mindbox',
+          :url => 'https://github.com/mindbox-cloud/ios-sdk.git',
+          :version => '2.15.1',
+          :products => ['MindboxNotificationsContent']
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    end
+  end
+
+  installer.aggregate_targets.each do |aggregate|
+    aggregate.user_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
+    aggregate.user_project.save
+  end
+end
