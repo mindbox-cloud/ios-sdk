@@ -15,18 +15,21 @@ public extension Date {
 
     func toFullString() -> String {
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
         return dateFormatter.string(from: self as Date)
     }
 
     static var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = "hh:mm:ss.SSSS"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm:ss.SSSS"
         return formatter
     }
 
     func toString(withFormat format: DateFormat) -> String {
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = format.value
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
         return dateFormatter.string(from: self)
@@ -36,6 +39,7 @@ public extension Date {
 public extension TimeInterval {
     private static let readableDateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
         return formatter
     }()

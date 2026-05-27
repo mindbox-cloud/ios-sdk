@@ -8,6 +8,7 @@
 
 import UIKit
 import WebKit
+import MindboxLogger
 
 private enum PayloadKey {
     static let sdkVersion = "sdkVersion"
@@ -238,7 +239,7 @@ extension MindboxWebViewFacade {
         ]
 
         if let firstInitDate = persistenceStorage.firstInitializationDateTime {
-            params[PayloadKey.firstInitializationDateTime] = firstInitDate.iso8601
+            params[PayloadKey.firstInitializationDateTime] = firstInitDate.toString(withFormat: .utc)
         }
 
         return params

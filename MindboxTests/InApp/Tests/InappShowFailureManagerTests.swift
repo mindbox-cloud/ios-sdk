@@ -9,6 +9,7 @@
 import XCTest
 import UIKit
 @testable import Mindbox
+@testable import MindboxLogger
 
 final class InappShowFailureManagerTests: XCTestCase {
     private var databaseRepository: InappShowFailureDatabaseRepositoryMock!
@@ -65,7 +66,16 @@ final class InappShowFailureManagerTests: XCTestCase {
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
         XCTAssertFalse(failure.dateTimeUtc.isEmpty)
-        XCTAssertNotNil(makeUTCFormatter().date(from: failure.dateTimeUtc))
+        XCTAssertNotNil(failure.dateTimeUtc.toDate(withFormat: .utc))
+
+        let dateTimeUtc = failure.dateTimeUtc
+        XCTAssertEqual(dateTimeUtc.count, 20)
+        XCTAssertTrue(dateTimeUtc.hasSuffix("Z"))
+        XCTAssertFalse(dateTimeUtc.contains("AM"))
+        XCTAssertFalse(dateTimeUtc.contains("PM"))
+        XCTAssertFalse(dateTimeUtc.contains(" "))
+        let pattern = #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"#
+        XCTAssertNotNil(dateTimeUtc.range(of: pattern, options: .regularExpression))
     }
 
     func testAddFailure_duplicateInappId_isIgnored() throws {
@@ -359,14 +369,6 @@ private extension InappShowFailureManagerTests {
         BodyDecoder<InAppShowFailuresBody>(decodable: event.body)?.body.failures
     }
 
-    func makeUTCFormatter() -> DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        return formatter
-    }
-    
     func applyFeatureToggle(shouldSendInAppShowError: Bool) {
         let settingsJSON = """
         {
