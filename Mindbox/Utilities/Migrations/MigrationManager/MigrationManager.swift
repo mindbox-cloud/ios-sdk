@@ -111,12 +111,14 @@ extension MigrationManager: MigrationManagerProtocol {
     /// ordering is for date correctness, not for the `isInstalled` guard.
     private func runDateFormatMigration() {
         let migration = DateFormatMigration()
-        guard migration.isNeeded else { return }
+        guard migration.isNeeded else {
+            Logger.common(message: "📅 [DateFormatMigration] Not needed — no legacy date strings to convert", level: .info, category: .migration)
+            return
+        }
         do {
             try migration.run()
-            Logger.common(message: "[Migration] Run migration: '\(migration.description)'", level: .info, category: .migration)
         } catch {
-            Logger.common(message: "[Migration] Migration failed. Description: \(migration.description). Error: \(error.localizedDescription)", level: .error, category: .migration)
+            Logger.common(message: "📅 [DateFormatMigration] ❌ Failed: \(error.localizedDescription)", level: .error, category: .migration)
         }
     }
 }

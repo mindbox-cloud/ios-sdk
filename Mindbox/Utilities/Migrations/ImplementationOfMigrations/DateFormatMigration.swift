@@ -62,13 +62,27 @@ final class DateFormatMigration: MigrationProtocol {
     }
 
     func run() throws {
+        Logger.common(message: "📅 [DateFormatMigration] Started — scanning \(dateKeys.count) persisted date key(s) for legacy values", level: .info, category: .migration)
+
+        var convertedCount = 0
         for key in dateKeys {
             guard let raw = defaults.string(forKey: key) else { continue }
             // Already migrated (or natively written in the new format) — leave untouched.
-            guard raw.toDate(withFormat: .utc) == nil else { continue }
+            guard raw.toDate(withFormat: .utc) == nil else {
+                Logger.common(message: "📅 [DateFormatMigration] Skip '\(key)' — already in .utc format: '\(raw)'", level: .debug, category: .migration)
+                continue
+            }
             // Unparseable by the legacy formatter (e.g. device locale/timezone changed) — best-effort skip.
-            guard let date = legacyFormatter.date(from: raw) else { continue }
-            defaults.set(date.toString(withFormat: .utc), forKey: key)
+            guard let date = legacyFormatter.date(from: raw) else {
+                Logger.common(message: "📅 [DateFormatMigration] ⚠️ Skip '\(key)' — value not parseable by legacy formatter: '\(raw)'", level: .error, category: .migration)
+                continue
+            }
+            let newValue = date.toString(withFormat: .utc)
+            defaults.set(newValue, forKey: key)
+            convertedCount += 1
+            Logger.common(message: "📅 [DateFormatMigration] Converted '\(key)': '\(raw)' → '\(newValue)'", level: .info, category: .migration)
         }
+
+        Logger.common(message: "📅 [DateFormatMigration] ✅ Finished — converted \(convertedCount) of \(dateKeys.count) key(s)", level: .info, category: .migration)
     }
 }
