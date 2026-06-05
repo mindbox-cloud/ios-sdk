@@ -105,8 +105,10 @@ extension MigrationManager: MigrationManagerProtocol {
         Logger.common(message: message, level: .info, category: .migration)
     }
 
-    /// Converts legacy localized date strings to fixed-pattern UTC before the `isInstalled` guard,
-    /// since `isInstalled` depends on `installationDate` parsing with the new format.
+    /// Converts legacy localized date strings to fixed-pattern UTC. Runs first so the
+    /// date-consuming migrations below see parseable `Date` values. `isInstalled` is
+    /// independent of parsing (it checks the stored string's presence), so the early
+    /// ordering is for date correctness, not for the `isInstalled` guard.
     private func runDateFormatMigration() {
         let migration = DateFormatMigration()
         guard migration.isNeeded else { return }

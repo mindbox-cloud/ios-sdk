@@ -17,8 +17,13 @@ class MBPersistenceStorage: PersistenceStorage {
     static var defaults: UserDefaults = .standard
 
     // MARK: - Property
+    // Installed state is the presence of the persisted installation date string,
+    // never its parseability. Decoupling from parsing keeps `isInstalled` stable
+    // across region/locale and 12h↔24h time-format changes, which would otherwise
+    // break a localized date string and route an existing install through the
+    // fresh-install path.
     var isInstalled: Bool {
-        installationDate != nil
+        installationDateString != nil
     }
 
     var installationDate: Date? {

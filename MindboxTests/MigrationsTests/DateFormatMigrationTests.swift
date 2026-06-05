@@ -70,16 +70,19 @@ extension DateFormatMigrationTests {
         XCTAssertNoThrow(try migration.run())
     }
 
-    func test_run_convertsLegacyInstallationDate_andRestoresIsInstalled() throws {
+    func test_run_convertsLegacyInstallationDate_andKeepsIsInstalledStable() throws {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
 
-        // Before migration: the legacy string is unparseable by the new `.utc` reader.
+        // Before migration: the legacy string is unparseable by the new `.utc` reader,
+        // so the parsed `installationDate` is nil — but `isInstalled` stays true because
+        // it depends on the stored string's presence, not on parsing it.
         let storageBefore = MBPersistenceStorage(defaults: userDefaults)
         XCTAssertNil(storageBefore.installationDate)
-        XCTAssertFalse(storageBefore.isInstalled)
+        XCTAssertTrue(storageBefore.isInstalled)
 
         try migration.run()
 
+        // After migration: the date value parses again, and `isInstalled` is unchanged.
         let storageAfter = MBPersistenceStorage(defaults: userDefaults)
         XCTAssertNotNil(storageAfter.installationDate)
         XCTAssertTrue(storageAfter.isInstalled)
@@ -120,6 +123,19 @@ extension DateFormatMigrationTests {
         try migration.run()
 
         XCTAssertEqual(userDefaults.string(forKey: installationKey), garbage)
+    }
+
+    /// Regression: an installed user must stay installed even when the stored installation
+    /// date string cannot be parsed (e.g. a region / 12h↔24h time-format change made a
+    /// legacy localized string unreadable). `isInstalled` depends on the string's presence,
+    /// not on parsing it, so it stays true without any migration having run.
+    func test_isInstalled_true_forUnparseableInstallationDate_withoutMigration() {
+        userDefaults.set("definitely not a parseable date", forKey: installationKey)
+
+        let storage = MBPersistenceStorage(defaults: userDefaults)
+
+        XCTAssertNil(storage.installationDate)
+        XCTAssertTrue(storage.isInstalled)
     }
 
     func test_run_idempotent_whenCalledTwice() throws {

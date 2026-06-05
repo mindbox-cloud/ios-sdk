@@ -13,10 +13,12 @@ import MindboxLogger
 /// formatter (`dateStyle = .full`, `timeStyle = .full`) into the canonical
 /// fixed-pattern `.utc` representation used after the formatter unification.
 ///
-/// - Important: Must run before the `isInstalled` guard in `MigrationManager.migrate()`.
-///   `isInstalled` reads `installationDate`, which now parses with `.utc`; without this
-///   conversion an upgraded user's `installationDate` reads as `nil`, flipping
-///   `isInstalled` to `false` and routing an existing install through the fresh-install path.
+/// - Important: Must run first in `MigrationManager.migrate()`, before any
+///   date-consuming migration (e.g. `FirstInitializationDateTimeMigration`,
+///   which reads `installationDate` as a parsed `Date`). Without this conversion
+///   an upgraded user's date strings stay unparseable by `.utc`, so the parsed
+///   `Date` values read as `nil`. `isInstalled` itself is independent of parsing
+///   (it checks the presence of the stored string), so it is unaffected.
 final class DateFormatMigration: MigrationProtocol {
 
     private let defaults = MBPersistenceStorage.defaults

@@ -126,8 +126,12 @@ final class CoreController {
             Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
         }
 
-        // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
-        let deviceUUID = generateDeviceUUID()
+        // Reuse the deviceUUID generated for a previous installation if present:
+        // once generated, it must stay stable until an explicit reinstall and must
+        // not depend on the ATT state (IDFA ↔ IDFV) or on a transient locale-driven
+        // re-installation. Generate a new one (may take up to 3 sec, see
+        // utilitiesFetcher.getDeviceUUID) only on a genuine first installation.
+        let deviceUUID = persistenceStorage.deviceUUID ?? generateDeviceUUID()
         startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
         install(
             deviceUUID: deviceUUID,
