@@ -28,11 +28,7 @@ public extension Date {
     }
 
     func toString(withFormat format: DateFormat) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = format.value
-        dateFormatter.timeZone = TimeZone(identifier: "UTC")
-        return dateFormatter.string(from: self)
+        return format.string(from: self)
     }
 }
 
