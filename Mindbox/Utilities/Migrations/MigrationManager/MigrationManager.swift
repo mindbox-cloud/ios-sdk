@@ -69,6 +69,8 @@ extension MigrationManager: MigrationManagerProtocol {
     /// a soft reset is performed on the persistence storage to ensure that the system remains in a consistent state.
     func migrate() {
 
+        runDateFormatMigration()
+
         guard persistenceStorage.isInstalled else {
             let firstInstallationMessage = "[Migrations] The first installation. Migrations will not be performed."
             Logger.common(message: firstInstallationMessage, level: .info, category: .migration)
@@ -101,6 +103,19 @@ extension MigrationManager: MigrationManagerProtocol {
         let message = migrationsStarted ? "[Migrations] Migrations have been successful" : "[Migrations] Migrations have been skipped"
 
         Logger.common(message: message, level: .info, category: .migration)
+    }
+
+    /// Converts legacy localized date strings to fixed-pattern UTC before the `isInstalled` guard,
+    /// since `isInstalled` depends on `installationDate` parsing with the new format.
+    private func runDateFormatMigration() {
+        let migration = DateFormatMigration()
+        guard migration.isNeeded else { return }
+        do {
+            try migration.run()
+            Logger.common(message: "[Migration] Run migration: '\(migration.description)'", level: .info, category: .migration)
+        } catch {
+            Logger.common(message: "[Migration] Migration failed. Description: \(migration.description). Error: \(error.localizedDescription)", level: .error, category: .migration)
+        }
     }
 }
 

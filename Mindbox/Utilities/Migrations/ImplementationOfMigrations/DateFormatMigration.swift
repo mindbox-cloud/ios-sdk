@@ -1,0 +1,72 @@
+//
+//  DateFormatMigration.swift
+//  Mindbox
+//
+//  Created by Akylbek Utekeshev on 04.06.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import MindboxLogger
+
+/// Converts the persisted date strings written by the previous localized
+/// formatter (`dateStyle = .full`, `timeStyle = .full`) into the canonical
+/// fixed-pattern `.utc` representation used after the formatter unification.
+///
+/// - Important: Must run before the `isInstalled` guard in `MigrationManager.migrate()`.
+///   `isInstalled` reads `installationDate`, which now parses with `.utc`; without this
+///   conversion an upgraded user's `installationDate` reads as `nil`, flipping
+///   `isInstalled` to `false` and routing an existing install through the fresh-install path.
+final class DateFormatMigration: MigrationProtocol {
+
+    private let defaults = MBPersistenceStorage.defaults
+
+    /// Raw UserDefaults keys of the six persisted dates. Kept as literals to match the
+    /// stored identifiers (mirrors `MBPersistenceStorage.UserDefaultsWrapper.Key`).
+    private let dateKeys = [
+        "MBPersistenceStorage-installationData",
+        "MBPersistenceStorage-firstInitializationDateTime",
+        "MBPersistenceStorage-apnsTokenSaveDate",
+        "MBPersistenceStorage-configDownloadDate",
+        "MBPersistenceStorage-lastInfoUpdateTime",
+        "MBPersistenceStorage-deprecatedEventsRemoveDate"
+    ]
+
+    /// Replica of the removed `MBPersistenceStorage` formatter. Localized styles are used
+    /// here solely to read legacy values written by that same formatter on this device —
+    /// never to write new data. New values are written via `.toString(withFormat: .utc)`.
+    private let legacyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .full
+        formatter.timeStyle = .full
+        return formatter
+    }()
+
+    var description: String {
+        "Migration converts persisted dates from the legacy localized format to fixed-pattern UTC."
+    }
+
+    var isNeeded: Bool {
+        dateKeys.contains { key in
+            guard let raw = defaults.string(forKey: key) else { return false }
+            return raw.toDate(withFormat: .utc) == nil && legacyFormatter.date(from: raw) != nil
+        }
+    }
+
+    /// Runs explicitly before the versioned chain in `MigrationManager`, not via the sorted array,
+    /// so it is intentionally excluded from `versionCodeForMigration` accounting.
+    var version: Int {
+        0
+    }
+
+    func run() throws {
+        for key in dateKeys {
+            guard let raw = defaults.string(forKey: key) else { continue }
+            // Already migrated (or natively written in the new format) — leave untouched.
+            guard raw.toDate(withFormat: .utc) == nil else { continue }
+            // Unparseable by the legacy formatter (e.g. device locale/timezone changed) — best-effort skip.
+            guard let date = legacyFormatter.date(from: raw) else { continue }
+            defaults.set(date.toString(withFormat: .utc), forKey: key)
+        }
+    }
+}
