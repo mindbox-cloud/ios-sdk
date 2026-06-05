@@ -26,10 +26,11 @@ final class CoreController {
     func initialization(configuration: MBConfiguration) {
 
         controllerQueue.async {
-            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
             DI.injectOrFail(MigrationManagerProtocol.self).migrate()
+
+            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
