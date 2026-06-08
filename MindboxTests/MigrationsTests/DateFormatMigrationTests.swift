@@ -50,6 +50,19 @@ final class DateFormatMigrationTests: XCTestCase {
         return formatter.string(from: date)
     }
 
+    /// Produces a legacy `.full`/`.full` string with the hour cycle pinned (e.g. `h12` / `h23`),
+    /// keeping the current device language/region. Mirrors how `DateFormatMigration` builds its
+    /// candidate locales, so a value written here is the same shape the migration must parse.
+    private func legacyString(from date: Date, hourCycle: String) -> String {
+        let base = Locale.current.identifier
+        let separator = base.contains("@") ? ";" : "@"
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: base + separator + "hours=" + hourCycle)
+        formatter.dateStyle = .full
+        formatter.timeStyle = .full
+        return formatter.string(from: date)
+    }
+
     /// Whole-second instant so legacy (`.full`) and `.utc` representations round-trip exactly.
     private var fixedDate: Date {
         Date(timeIntervalSince1970: 1_700_000_000)
@@ -89,6 +102,39 @@ extension DateFormatMigrationTests {
         XCTAssertEqual(
             storageAfter.installationDate.map { Int($0.timeIntervalSince1970) },
             Int(fixedDate.timeIntervalSince1970)
+        )
+        XCTAssertFalse(migration.isNeeded)
+    }
+
+    /// The original re-installation bug: a value written under 12h must still convert when the
+    /// migration runs (even if the device is now in 24h). The 12h candidate rescues it.
+    func test_run_convertsLegacyInstallationDate_writtenIn12hFormat() throws {
+        userDefaults.set(legacyString(from: fixedDate, hourCycle: "h12"), forKey: installationKey)
+
+        XCTAssertTrue(migration.isNeeded, "A 12h legacy value must be recognized as needing migration.")
+        try migration.run()
+
+        let raw = userDefaults.string(forKey: installationKey)
+        XCTAssertEqual(
+            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) },
+            Int(fixedDate.timeIntervalSince1970),
+            "12h legacy installation date must be converted to the correct .utc instant."
+        )
+        XCTAssertFalse(migration.isNeeded)
+    }
+
+    /// Symmetric to the 12h case: a value written under 24h converts as well.
+    func test_run_convertsLegacyInstallationDate_writtenIn24hFormat() throws {
+        userDefaults.set(legacyString(from: fixedDate, hourCycle: "h23"), forKey: installationKey)
+
+        XCTAssertTrue(migration.isNeeded, "A 24h legacy value must be recognized as needing migration.")
+        try migration.run()
+
+        let raw = userDefaults.string(forKey: installationKey)
+        XCTAssertEqual(
+            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) },
+            Int(fixedDate.timeIntervalSince1970),
+            "24h legacy installation date must be converted to the correct .utc instant."
         )
         XCTAssertFalse(migration.isNeeded)
     }
