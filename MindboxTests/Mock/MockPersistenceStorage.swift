@@ -28,8 +28,11 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
+    // Mirror production `MBPersistenceStorage`: installed state is the presence of the persisted
+    // installation-date string, never its parseability. Backing `installationDate` with a `.utc`
+    // string keeps the mock's `isInstalled` semantics identical to production.
     var isInstalled: Bool {
-        installationDate != nil
+        installationDateString != nil
     }
 
     var apnsToken: String? {
@@ -62,8 +65,14 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
+    private var installationDateString: String?
+
     var installationDate: Date? {
-        didSet {
+        get {
+            installationDateString?.toDate(withFormat: .utc)
+        }
+        set {
+            installationDateString = newValue?.toString(withFormat: .utc)
             onDidChange?()
         }
     }

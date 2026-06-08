@@ -359,6 +359,7 @@
 		9BC24E7A28F6C08700C2619C /* InAppConfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BC24E7928F6C08700C2619C /* InAppConfiguration.json */; };
 		A11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift */; };
 		A11C2D3E4F5566778899AA11 /* DeviceUUIDInitializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11C2D3E4F5566778899AA11 /* DeviceUUIDInitializationTests.swift */; };
+		A11C2D3E4F5566778899AA12 /* MBPersistenceStorageDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11C2D3E4F5566778899AA12 /* MBPersistenceStorageDateTests.swift */; };
 		A11C2D3E4F5566778899AA02 /* FirstInitializationDateTimeMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11C2D3E4F5566778899AA02 /* FirstInitializationDateTimeMigrationTests.swift */; };
 		1E28BAF922E64B9CB6E22A0B /* DateFormatMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1A11C4A4B940898BA80035 /* DateFormatMigrationTests.swift */; };
 		A11FBE8929DD76BF00F5FB7B /* InAppMessagesEventSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11FBE8829DD76BF00F5FB7B /* InAppMessagesEventSender.swift */; };
@@ -1170,6 +1171,7 @@
 		A1D23AEF29DE082E00A75179 /* InAppProductSegmentResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppProductSegmentResponse.swift; sourceTree = "<group>"; };
 		B11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirstInitializationDateTimeRuntimeTests.swift; sourceTree = "<group>"; };
 		B11C2D3E4F5566778899AA11 /* DeviceUUIDInitializationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DeviceUUIDInitializationTests.swift; sourceTree = "<group>"; };
+		B11C2D3E4F5566778899AA12 /* MBPersistenceStorageDateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBPersistenceStorageDateTests.swift; sourceTree = "<group>"; };
 		B11C2D3E4F5566778899AA02 /* FirstInitializationDateTimeMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirstInitializationDateTimeMigrationTests.swift; sourceTree = "<group>"; };
 		BF1A11C4A4B940898BA80035 /* DateFormatMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatMigrationTests.swift; sourceTree = "<group>"; };
 		B33127AE2760C53700CF747E /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
@@ -2808,6 +2810,7 @@
 			children = (
 				B11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift */,
 				B11C2D3E4F5566778899AA11 /* DeviceUUIDInitializationTests.swift */,
+				B11C2D3E4F5566778899AA12 /* MBPersistenceStorageDateTests.swift */,
 			);
 			path = InitializationTests;
 			sourceTree = "<group>";
@@ -4777,6 +4780,7 @@
 				F3AF0AD02BC40FCF0063BA58 /* InappTTLTests.swift in Sources */,
 				A11C2D3E4F5566778899AA01 /* FirstInitializationDateTimeRuntimeTests.swift in Sources */,
 				A11C2D3E4F5566778899AA11 /* DeviceUUIDInitializationTests.swift in Sources */,
+				A11C2D3E4F5566778899AA12 /* MBPersistenceStorageDateTests.swift in Sources */,
 				A11C2D3E4F5566778899AA02 /* FirstInitializationDateTimeMigrationTests.swift in Sources */,
 				1E28BAF922E64B9CB6E22A0B /* DateFormatMigrationTests.swift in Sources */,
 				5D3FCB95C2AF59DF36A61254 /* WebViewLocalStateStorageTests.swift in Sources */,
