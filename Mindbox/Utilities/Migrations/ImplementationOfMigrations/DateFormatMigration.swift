@@ -13,12 +13,13 @@ import MindboxLogger
 /// formatter (`dateStyle = .full`, `timeStyle = .full`) into the canonical
 /// fixed-pattern `.utc` representation used after the formatter unification.
 ///
-/// - Important: Must run first in `MigrationManager.migrate()`, before any
-///   date-consuming migration (e.g. `FirstInitializationDateTimeMigration`,
+/// - Important: Ordered first in `MigrationManager`'s migration chain (via the lowest
+///   `version`), before any date-consuming migration (e.g. `FirstInitializationDateTimeMigration`,
 ///   which reads `installationDate` as a parsed `Date`). Without this conversion
 ///   an upgraded user's date strings stay unparseable by `.utc`, so the parsed
 ///   `Date` values read as `nil`. `isInstalled` itself is independent of parsing
-///   (it checks the presence of the stored string), so it is unaffected.
+///   (it checks the presence of the stored string), so it is unaffected — which is
+///   why gating the whole chain behind the `isInstalled` guard is safe for upgraded users.
 final class DateFormatMigration: MigrationProtocol {
 
     private let defaults = MBPersistenceStorage.defaults
@@ -95,34 +96,35 @@ final class DateFormatMigration: MigrationProtocol {
         }
     }
 
-    /// Runs explicitly before the versioned chain in `MigrationManager`, not via the sorted array,
-    /// so it is intentionally excluded from `versionCodeForMigration` accounting.
+    /// Negative so the ascending sort in `MigrationManager` places this ahead of the historical
+    /// chain (`0…`), guaranteeing date strings are normalized before any date-consuming migration
+    /// (e.g. `FirstInitializationDateTimeMigration`) reads them.
     var version: Int {
-        0
+        -1
     }
 
     func run() throws {
-        Logger.common(message: "📅 [DateFormatMigration] Started — scanning \(dateKeys.count) persisted date key(s) for legacy values", level: .info, category: .migration)
+        Logger.common(message: "[Migrations] Started DateFormatMigration — scanning \(dateKeys.count) persisted date key(s) for legacy values", level: .info, category: .migration)
 
         var convertedCount = 0
         for key in dateKeys {
             guard let raw = defaults.string(forKey: key) else { continue }
             // Already migrated (or natively written in the new format) — leave untouched.
             guard raw.toDate(withFormat: .utc) == nil else {
-                Logger.common(message: "📅 [DateFormatMigration] Skip '\(key)' — already in .utc format: '\(raw)'", level: .debug, category: .migration)
+                Logger.common(message: "[Migrations] Skip DateFormatMigration key '\(key)' — already in .utc format: '\(raw)'", level: .debug, category: .migration)
                 continue
             }
             // Unparseable by any legacy candidate (e.g. the device language changed) — best-effort skip.
             guard let date = legacyDate(from: raw) else {
-                Logger.common(message: "📅 [DateFormatMigration] ⚠️ Skip '\(key)' — value not parseable by any legacy formatter: '\(raw)'", level: .error, category: .migration)
+                Logger.common(message: "[Migrations] Skip DateFormatMigration key '\(key)' — value not parseable by any legacy formatter: '\(raw)'", level: .error, category: .migration)
                 continue
             }
             let newValue = date.toString(withFormat: .utc)
             defaults.set(newValue, forKey: key)
             convertedCount += 1
-            Logger.common(message: "📅 [DateFormatMigration] Converted '\(key)': '\(raw)' → '\(newValue)'", level: .info, category: .migration)
+            Logger.common(message: "[Migrations] DateFormatMigration converted '\(key)': '\(raw)' → '\(newValue)'", level: .info, category: .migration)
         }
 
-        Logger.common(message: "📅 [DateFormatMigration] ✅ Finished — converted \(convertedCount) of \(dateKeys.count) key(s)", level: .info, category: .migration)
+        Logger.common(message: "[Migrations] Finished DateFormatMigration — converted \(convertedCount) of \(dateKeys.count) key(s)", level: .info, category: .migration)
     }
 }

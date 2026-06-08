@@ -184,6 +184,18 @@ extension DateFormatMigrationTests {
         XCTAssertTrue(storage.isInstalled)
     }
 
+    /// Ordering contract: `DateFormatMigration` must sort ahead of any date-consuming migration
+    /// in `MigrationManager`'s ascending-by-`version` chain. If this regresses (e.g. a renumber),
+    /// `FirstInitializationDateTimeMigration` would read an unparseable legacy `installationDate`
+    /// as `nil` and silently skip — the original upgrade bug.
+    func test_version_sortsBeforeDateConsumingMigration() {
+        XCTAssertLessThan(
+            DateFormatMigration().version,
+            FirstInitializationDateTimeMigration().version,
+            "DateFormatMigration must run before FirstInitializationDateTimeMigration."
+        )
+    }
+
     func test_run_idempotent_whenCalledTwice() throws {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
 

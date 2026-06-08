@@ -51,6 +51,7 @@ final class MigrationManager {
         self.localSdkVersionCode = Constants.Migration.sdkVersionCode
 
         self.migrations = [
+            DateFormatMigration(),
             ShownInAppsIDsMigration(),
             ShownInAppsDictionaryMigration(),
             RemoveBackgroundTaskDataMigration(),
@@ -68,8 +69,6 @@ extension MigrationManager: MigrationManagerProtocol {
     /// If any migration that involves `Constants.Migration.sdkVersionCode` and `persistenceStorage.versionCodeForMigration` fails,
     /// a soft reset is performed on the persistence storage to ensure that the system remains in a consistent state.
     func migrate() {
-
-        runDateFormatMigration()
 
         guard persistenceStorage.isInstalled else {
             let firstInstallationMessage = "[Migrations] The first installation. Migrations will not be performed."
@@ -103,23 +102,6 @@ extension MigrationManager: MigrationManagerProtocol {
         let message = migrationsStarted ? "[Migrations] Migrations have been successful" : "[Migrations] Migrations have been skipped"
 
         Logger.common(message: message, level: .info, category: .migration)
-    }
-
-    /// Converts legacy localized date strings to fixed-pattern UTC. Runs first so the
-    /// date-consuming migrations below see parseable `Date` values. `isInstalled` is
-    /// independent of parsing (it checks the stored string's presence), so the early
-    /// ordering is for date correctness, not for the `isInstalled` guard.
-    private func runDateFormatMigration() {
-        let migration = DateFormatMigration()
-        guard migration.isNeeded else {
-            Logger.common(message: "📅 [DateFormatMigration] Not needed — no legacy date strings to convert", level: .info, category: .migration)
-            return
-        }
-        do {
-            try migration.run()
-        } catch {
-            Logger.common(message: "📅 [DateFormatMigration] ❌ Failed: \(error.localizedDescription)", level: .error, category: .migration)
-        }
     }
 }
 
