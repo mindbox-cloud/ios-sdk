@@ -14,18 +14,24 @@ public extension Date {
     }
 
     func toFullString() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        return dateFormatter.string(from: self as Date)
+        return Date.fullFormatter.string(from: self as Date)
     }
 
-    static var dateFormatter: DateFormatter {
+    // Built once and reused: a fully-configured DateFormatter is thread-safe for conversion
+    // (iOS 7+), so there is no need to recreate it on every call.
+    static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "HH:mm:ss.SSSS"
         return formatter
-    }
+    }()
+
+    private static let fullFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return formatter
+    }()
 
     func toString(withFormat format: DateFormat) -> String {
         return format.string(from: self)

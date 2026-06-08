@@ -24,16 +24,21 @@ final class DateFormatMigration: MigrationProtocol {
 
     private let defaults = MBPersistenceStorage.defaults
 
-    /// Raw UserDefaults keys of the six persisted dates. Kept as literals to match the
-    /// stored identifiers (mirrors `MBPersistenceStorage.UserDefaultsWrapper.Key`).
-    private let dateKeys = [
-        "MBPersistenceStorage-installationData",
-        "MBPersistenceStorage-firstInitializationDateTime",
-        "MBPersistenceStorage-apnsTokenSaveDate",
-        "MBPersistenceStorage-configDownloadDate",
-        "MBPersistenceStorage-lastInfoUpdateTime",
-        "MBPersistenceStorage-deprecatedEventsRemoveDate"
-    ]
+    /// Raw UserDefaults keys of the six persisted dates, derived from the single source of truth
+    /// (`MBPersistenceStorage.UserDefaultsWrapper.Key`) so they cannot drift from the stored
+    /// identifiers. The `<Any>` argument is irrelevant: `Key` does not depend on the wrapper's
+    /// generic parameter.
+    private let dateKeys: [String] = {
+        let keys: [MBPersistenceStorage.UserDefaultsWrapper<Any>.Key] = [
+            .installationData,
+            .firstInitializationDateTime,
+            .apnsTokenSaveDate,
+            .configDownloadDate,
+            .lastInfoUpdateTime,
+            .deprecatedEventsRemoveDate
+        ]
+        return keys.map(\.rawValue)
+    }()
 
     /// Replicas of the removed `MBPersistenceStorage` formatter (`.full`/`.full`), used only
     /// to read legacy values written by that formatter on this device — never to write new
@@ -49,7 +54,7 @@ final class DateFormatMigration: MigrationProtocol {
     ///   - the device locale forced to 12-hour (`h12`).
     /// The first candidate that parses wins; the instant is then re-stored as `.utc` (24h/UTC),
     /// so legacy 12h values are rescued and normalized.
-    private let legacyFormatters: [DateFormatter] = {
+    private lazy var legacyFormatters: [DateFormatter] = {
         func make(_ identifier: String) -> DateFormatter {
             let formatter = DateFormatter()
             formatter.locale = Locale(identifier: identifier)

@@ -6,15 +6,20 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import Mindbox
 import MindboxLogger
 
-final class DateFormatMigrationTests: XCTestCase {
+// A class-based suite so `deinit` can restore the global `MBPersistenceStorage.defaults`
+// after every test. `.serialized` because the tests mutate that shared global.
+@Suite(.serialized)
+final class DateFormatMigrationTests {
 
-    private var migration: MigrationProtocol!
-    private var userDefaults: UserDefaults!
+    private let migration: MigrationProtocol
+    private let userDefaults: UserDefaults
     private let userDefaultsSuiteName = "DateFormatMigrationTests"
+    private let originalDefaults: UserDefaults
 
     private let installationKey = "MBPersistenceStorage-installationData"
     private let firstInitKey = "MBPersistenceStorage-firstInitializationDateTime"
@@ -27,22 +32,24 @@ final class DateFormatMigrationTests: XCTestCase {
         [installationKey, firstInitKey, apnsKey, configKey, lastInfoKey, deprecatedKey]
     }
 
-    override func setUp() {
-        super.setUp()
+    init() {
+        originalDefaults = MBPersistenceStorage.defaults
         userDefaults = UserDefaults(suiteName: userDefaultsSuiteName)!
         userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
         MBPersistenceStorage.defaults = userDefaults
         migration = DateFormatMigration()
     }
 
-    override func tearDown() {
+    deinit {
         userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
-        super.tearDown()
+        // Restore the global so this suite never leaks its private suite into other tests.
+        MBPersistenceStorage.defaults = originalDefaults
     }
 
     // MARK: - Helpers
 
-    /// Produces a string in the legacy format (replica of the removed MBPersistenceStorage formatter).
+    /// Produces a string in the legacy format (replica of the removed MBPersistenceStorage
+    /// formatter) under the device's current 12h/24h setting.
     private func legacyString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .full
@@ -50,14 +57,19 @@ final class DateFormatMigrationTests: XCTestCase {
         return formatter.string(from: date)
     }
 
-    /// Produces a legacy `.full`/`.full` string with the hour cycle pinned (e.g. `h12` / `h23`),
-    /// keeping the current device language/region. Mirrors how `DateFormatMigration` builds its
-    /// candidate locales, so a value written here is the same shape the migration must parse.
-    private func legacyString(from date: Date, hourCycle: String) -> String {
-        let base = Locale.current.identifier
-        let separator = base.contains("@") ? ";" : "@"
+    /// Independent oracle for the hour-cycle rescue: builds a legacy `.full`/`.full` string with the
+    /// hour cycle pinned through the structured `Locale.Components` API — a *different* mechanism than
+    /// the `@hours=` identifier `DateFormatMigration` assembles itself. The base stays `Locale.current`
+    /// so only the hour cycle differs from the migration's candidates (the date layout still matches).
+    /// If the migration's hour-cycle keyword were wrong, this independently-built opposite-cycle string
+    /// would fail to parse — so the test proves the rescue works, not just that both sides build the
+    /// same identifier.
+    @available(iOS 16.0, *)
+    private func independentLegacyString(from date: Date, hourCycle: Locale.HourCycle) -> String {
+        var components = Locale.Components(locale: .current)
+        components.hourCycle = hourCycle
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: base + separator + "hours=" + hourCycle)
+        formatter.locale = Locale(components: components)
         formatter.dateStyle = .full
         formatter.timeStyle = .full
         return formatter.string(from: date)
@@ -73,138 +85,156 @@ final class DateFormatMigrationTests: XCTestCase {
 
 extension DateFormatMigrationTests {
 
-    func test_isNeeded_true_whenLegacyValuePresent() {
+    @Test("isNeeded is true when a legacy value is present")
+    func isNeededTrueWhenLegacyValuePresent() {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
-        XCTAssertTrue(migration.isNeeded)
+        #expect(migration.isNeeded)
     }
 
-    func test_isNeeded_false_whenNoValues() {
-        XCTAssertFalse(migration.isNeeded)
-        XCTAssertNoThrow(try migration.run())
+    @Test("isNeeded is false and run() is a no-op when there are no values")
+    func isNeededFalseWhenNoValues() throws {
+        #expect(migration.isNeeded == false)
+        try migration.run()
     }
 
-    func test_run_convertsLegacyInstallationDate_andKeepsIsInstalledStable() throws {
+    @Test("run() converts a legacy installation date and keeps isInstalled stable")
+    func runConvertsLegacyInstallationDateAndKeepsIsInstalledStable() throws {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
 
         // Before migration: the legacy string is unparseable by the new `.utc` reader,
         // so the parsed `installationDate` is nil — but `isInstalled` stays true because
         // it depends on the stored string's presence, not on parsing it.
         let storageBefore = MBPersistenceStorage(defaults: userDefaults)
-        XCTAssertNil(storageBefore.installationDate)
-        XCTAssertTrue(storageBefore.isInstalled)
+        #expect(storageBefore.installationDate == nil)
+        #expect(storageBefore.isInstalled)
 
         try migration.run()
 
         // After migration: the date value parses again, and `isInstalled` is unchanged.
         let storageAfter = MBPersistenceStorage(defaults: userDefaults)
-        XCTAssertNotNil(storageAfter.installationDate)
-        XCTAssertTrue(storageAfter.isInstalled)
-        XCTAssertEqual(
-            storageAfter.installationDate.map { Int($0.timeIntervalSince1970) },
-            Int(fixedDate.timeIntervalSince1970)
+        #expect(storageAfter.installationDate != nil)
+        #expect(storageAfter.isInstalled)
+        #expect(
+            storageAfter.installationDate.map { Int($0.timeIntervalSince1970) }
+                == Int(fixedDate.timeIntervalSince1970)
         )
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
     }
 
     /// The original re-installation bug: a value written under 12h must still convert when the
     /// migration runs (even if the device is now in 24h). The 12h candidate rescues it.
-    func test_run_convertsLegacyInstallationDate_writtenIn12hFormat() throws {
-        userDefaults.set(legacyString(from: fixedDate, hourCycle: "h12"), forKey: installationKey)
+    @available(iOS 16.0, *)
+    @Test("run() converts a legacy installation date written in 12h format")
+    func runConvertsLegacyInstallationDateWrittenIn12hFormat() throws {
+        userDefaults.set(
+            independentLegacyString(from: fixedDate, hourCycle: .oneToTwelve),
+            forKey: installationKey
+        )
 
-        XCTAssertTrue(migration.isNeeded, "A 12h legacy value must be recognized as needing migration.")
+        #expect(migration.isNeeded, "A 12h legacy value must be recognized as needing migration.")
         try migration.run()
 
         let raw = userDefaults.string(forKey: installationKey)
-        XCTAssertEqual(
-            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) },
-            Int(fixedDate.timeIntervalSince1970),
+        #expect(
+            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) }
+                == Int(fixedDate.timeIntervalSince1970),
             "12h legacy installation date must be converted to the correct .utc instant."
         )
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
     }
 
     /// Symmetric to the 12h case: a value written under 24h converts as well.
-    func test_run_convertsLegacyInstallationDate_writtenIn24hFormat() throws {
-        userDefaults.set(legacyString(from: fixedDate, hourCycle: "h23"), forKey: installationKey)
+    @available(iOS 16.0, *)
+    @Test("run() converts a legacy installation date written in 24h format")
+    func runConvertsLegacyInstallationDateWrittenIn24hFormat() throws {
+        userDefaults.set(
+            independentLegacyString(from: fixedDate, hourCycle: .zeroToTwentyThree),
+            forKey: installationKey
+        )
 
-        XCTAssertTrue(migration.isNeeded, "A 24h legacy value must be recognized as needing migration.")
+        #expect(migration.isNeeded, "A 24h legacy value must be recognized as needing migration.")
         try migration.run()
 
         let raw = userDefaults.string(forKey: installationKey)
-        XCTAssertEqual(
-            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) },
-            Int(fixedDate.timeIntervalSince1970),
+        #expect(
+            raw?.toDate(withFormat: .utc).map { Int($0.timeIntervalSince1970) }
+                == Int(fixedDate.timeIntervalSince1970),
             "24h legacy installation date must be converted to the correct .utc instant."
         )
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
     }
 
-    func test_run_convertsAllSixKeys() throws {
+    @Test("run() converts all six persisted date keys")
+    func runConvertsAllSixKeys() throws {
         allKeys.forEach { userDefaults.set(legacyString(from: fixedDate), forKey: $0) }
 
         try migration.run()
 
         for key in allKeys {
             let raw = userDefaults.string(forKey: key)
-            XCTAssertNotNil(raw?.toDate(withFormat: .utc), "Key \(key) was not converted to .utc")
+            #expect(raw?.toDate(withFormat: .utc) != nil, "Key \(key) was not converted to .utc")
         }
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
     }
 
-    func test_run_leavesAlreadyUtcValueUntouched() throws {
+    @Test("run() leaves an already-.utc value untouched")
+    func runLeavesAlreadyUtcValueUntouched() throws {
         let utc = fixedDate.toString(withFormat: .utc)
         userDefaults.set(utc, forKey: installationKey)
 
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
         try migration.run()
 
-        XCTAssertEqual(userDefaults.string(forKey: installationKey), utc)
+        #expect(userDefaults.string(forKey: installationKey) == utc)
     }
 
-    func test_run_leavesUnparseableValueUntouched() throws {
+    @Test("run() leaves an unparseable value untouched")
+    func runLeavesUnparseableValueUntouched() throws {
         let garbage = "definitely not a date"
         userDefaults.set(garbage, forKey: installationKey)
 
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
         try migration.run()
 
-        XCTAssertEqual(userDefaults.string(forKey: installationKey), garbage)
+        #expect(userDefaults.string(forKey: installationKey) == garbage)
     }
 
     /// Regression: an installed user must stay installed even when the stored installation
     /// date string cannot be parsed (e.g. a region / 12h↔24h time-format change made a
     /// legacy localized string unreadable). `isInstalled` depends on the string's presence,
     /// not on parsing it, so it stays true without any migration having run.
-    func test_isInstalled_true_forUnparseableInstallationDate_withoutMigration() {
+    @Test("isInstalled stays true for an unparseable installation date, without migration")
+    func isInstalledTrueForUnparseableInstallationDateWithoutMigration() {
         userDefaults.set("definitely not a parseable date", forKey: installationKey)
 
         let storage = MBPersistenceStorage(defaults: userDefaults)
 
-        XCTAssertNil(storage.installationDate)
-        XCTAssertTrue(storage.isInstalled)
+        #expect(storage.installationDate == nil)
+        #expect(storage.isInstalled)
     }
 
     /// Ordering contract: `DateFormatMigration` must sort ahead of any date-consuming migration
     /// in `MigrationManager`'s ascending-by-`version` chain. If this regresses (e.g. a renumber),
     /// `FirstInitializationDateTimeMigration` would read an unparseable legacy `installationDate`
     /// as `nil` and silently skip — the original upgrade bug.
-    func test_version_sortsBeforeDateConsumingMigration() {
-        XCTAssertLessThan(
-            DateFormatMigration().version,
-            FirstInitializationDateTimeMigration().version,
+    @Test("version sorts before any date-consuming migration")
+    func versionSortsBeforeDateConsumingMigration() {
+        #expect(
+            DateFormatMigration().version < FirstInitializationDateTimeMigration().version,
             "DateFormatMigration must run before FirstInitializationDateTimeMigration."
         )
     }
 
-    func test_run_idempotent_whenCalledTwice() throws {
+    @Test("run() is idempotent when called twice")
+    func runIdempotentWhenCalledTwice() throws {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
 
         try migration.run()
         let afterFirstRun = userDefaults.string(forKey: installationKey)
-        XCTAssertFalse(migration.isNeeded)
+        #expect(migration.isNeeded == false)
 
         try migration.run()
-        XCTAssertEqual(userDefaults.string(forKey: installationKey), afterFirstRun)
-        XCTAssertFalse(migration.isNeeded)
+        #expect(userDefaults.string(forKey: installationKey) == afterFirstRun)
+        #expect(migration.isNeeded == false)
     }
 }

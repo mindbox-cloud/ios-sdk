@@ -16,36 +16,29 @@ public enum DateFormat: String {
         return self.rawValue
     }
 
-    private static let cacheLock = NSLock()
-    private static var formatters: [DateFormat: DateFormatter] = [:]
-
-    // Cached, fixed-pattern formatter: POSIX locale + explicit UTC timezone, 24h `HH`.
-    // Created once per format and reused. Must only be touched while holding `cacheLock`.
-    private var formatter: DateFormatter {
-        if let formatter = Self.formatters[self] {
-            return formatter
+    // The set of formats is fixed and tiny, so every fixed-pattern formatter is built once,
+    // up front. `static let` is initialized exactly once (thread-safe), the dictionary is then
+    // immutable, and each fully-configured `DateFormatter` is safe for concurrent string/date
+    // conversion on iOS 7+ (min target iOS 12). No lock needed.
+    // Each formatter uses POSIX locale + explicit UTC timezone, 24h `HH`.
+    private static let formatters: [DateFormat: DateFormatter] = {
+        var dict = [DateFormat: DateFormatter]()
+        for format in [DateFormat.api, .utc, .utcWithMillis] {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = format.rawValue
+            formatter.timeZone = TimeZone(identifier: "UTC")
+            dict[format] = formatter
         }
+        return dict
+    }()
 
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = value
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        Self.formatters[self] = formatter
-        return formatter
-    }
-
-    // The lock spans the actual format/parse calls, not just cache lookup:
-    // a shared DateFormatter must not be used for string/date conversion concurrently.
     func string(from date: Date) -> String {
-        Self.cacheLock.lock()
-        defer { Self.cacheLock.unlock() }
-        return formatter.string(from: date)
+        Self.formatters[self]!.string(from: date)
     }
 
     func date(from string: String) -> Date? {
-        Self.cacheLock.lock()
-        defer { Self.cacheLock.unlock() }
-        return formatter.date(from: string)
+        Self.formatters[self]!.date(from: string)
     }
 }
 
