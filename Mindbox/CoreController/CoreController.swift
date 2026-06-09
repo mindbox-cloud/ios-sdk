@@ -26,10 +26,11 @@ final class CoreController {
     func initialization(configuration: MBConfiguration) {
 
         controllerQueue.async {
-            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
             DI.injectOrFail(MigrationManagerProtocol.self).migrate()
+
+            SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
@@ -118,23 +119,27 @@ final class CoreController {
         return deviceUUID
     }
 
-    private func primaryInitialization(with configutaion: MBConfiguration) {
+    private func primaryInitialization(with configuration: MBConfiguration) {
         if persistenceStorage.firstInitializationDateTime == nil {
             let now = Date()
             persistenceStorage.firstInitializationDateTime = now
             Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
         }
 
-        // May take up to 3 sec, see utilitiesFetcher.getDeviceUUID implementation
-        let deviceUUID = generateDeviceUUID()
-        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
+        // Reuse the deviceUUID generated for a previous installation if present:
+        // once generated, it must stay stable until an explicit reinstall and must
+        // not depend on the ATT state (IDFA ↔ IDFV) or on a transient locale-driven
+        // re-installation. Generate a new one (may take up to 3 sec, see
+        // utilitiesFetcher.getDeviceUUID) only on a genuine first installation.
+        let deviceUUID = persistenceStorage.deviceUUID ?? generateDeviceUUID()
+        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configuration)
         install(
             deviceUUID: deviceUUID,
-            configuration: configutaion
+            configuration: configuration
         )
     }
 
-    private func repeatInitialization(with configutaion: MBConfiguration) {
+    private func repeatInitialization(with configuration: MBConfiguration) {
         guard let deviceUUID = persistenceStorage.deviceUUID else {
             Logger.common(message: "[Core] Unable to find deviceUUID in persistenceStorage", level: .error, category: .general)
             return
@@ -144,14 +149,14 @@ final class CoreController {
             Logger.common(message: "[Core] Mindbox Configuration changed", level: .info, category: .general)
             install(
                 deviceUUID: deviceUUID,
-                configuration: configutaion
+                configuration: configuration
             )
         } else {
             Logger.common(message: "[Core] Mindbox Configuration has no changes", level: .info, category: .general)
             checkNotificationStatus()
             persistenceStorage.configuration?.previousDeviceUUID = deviceUUID
         }
-        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configutaion)
+        startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configuration)
     }
 
     private func startUUIDDebugServiceIfNeeded(deviceUUID: String, configuration: MBConfiguration) {

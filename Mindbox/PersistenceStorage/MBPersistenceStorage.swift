@@ -16,29 +16,27 @@ class MBPersistenceStorage: PersistenceStorage {
     // MARK: - Dependency
     static var defaults: UserDefaults = .standard
 
-    private let dateFormatter: DateFormatter = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .full
-        dateFormatter.timeStyle = .full
-        return dateFormatter
-    }()
-
     // MARK: - Property
+    // Installed state is the presence of the persisted installation date string,
+    // never its parseability. Decoupling from parsing keeps `isInstalled` stable
+    // across region/locale and 12h↔24h time-format changes, which would otherwise
+    // break a localized date string and route an existing install through the
+    // fresh-install path.
     var isInstalled: Bool {
-        installationDate != nil
+        installationDateString != nil
     }
 
     var installationDate: Date? {
         get {
             if let dateString = installationDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                installationDateString = dateFormatter.string(from: date)
+                installationDateString = date.toString(withFormat: .utc)
             } else {
                 installationDateString = nil
             }
@@ -48,14 +46,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var firstInitializationDateTime: Date? {
         get {
             if let dateString = firstInitializationDateTimeString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                firstInitializationDateTimeString = dateFormatter.string(from: date)
+                firstInitializationDateTimeString = date.toString(withFormat: .utc)
             } else {
                 firstInitializationDateTimeString = nil
             }
@@ -65,14 +63,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var apnsTokenSaveDate: Date? {
         get {
             if let dateString = apnsTokenSaveDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                apnsTokenSaveDateString = dateFormatter.string(from: date)
+                apnsTokenSaveDateString = date.toString(withFormat: .utc)
             } else {
                 apnsTokenSaveDateString = nil
             }
@@ -82,7 +80,7 @@ class MBPersistenceStorage: PersistenceStorage {
     var lastInfoUpdateDate: Date? {
         get {
             if let dateString = lastInfoUpdateDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
@@ -90,7 +88,7 @@ class MBPersistenceStorage: PersistenceStorage {
         
         set {
             if let date = newValue {
-                lastInfoUpdateDateString = dateFormatter.string(from: date)
+                lastInfoUpdateDateString = date.toString(withFormat: .utc)
             } else {
                 lastInfoUpdateDateString = nil
             }
@@ -100,14 +98,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var deprecatedEventsRemoveDate: Date? {
         get {
             if let dateString = deprecatedEventsRemoveDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                deprecatedEventsRemoveDateString = dateFormatter.string(from: date)
+                deprecatedEventsRemoveDateString = date.toString(withFormat: .utc)
             } else {
                 deprecatedEventsRemoveDateString = nil
             }
@@ -133,14 +131,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var configDownloadDate: Date? {
         get {
             if let dateString = configDownloadDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                configDownloadDateString = dateFormatter.string(from: date)
+                configDownloadDateString = date.toString(withFormat: .utc)
             } else {
                 configDownloadDateString = nil
             }
