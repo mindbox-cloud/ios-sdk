@@ -39,30 +39,30 @@ struct InappScheduleManagerTests {
 
     // MARK: - No delay
 
-    @Test("In-app without delay is scheduled and presented immediately", .tags(.inAppSchedule))
+    @Test("In-app without delay is presented exactly once and the queue is cleaned up", .tags(.inAppSchedule))
     func scheduleInapp_noDelay_schedulesCorrectly() {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
+        #expect(scheduleManager.getDelay(nil) == 0)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
+        // delayTime == nil ⇒ delay 0, so the production DispatchSourceTimer is armed
+        // for `.now()` and can fire and present on its own the instant the host app is
+        // foregrounded, racing any "scheduled but not yet shown" inspection. That
+        // intermediate state is not observable here and contradicts the no-delay
+        // contract, so we assert only the deterministic end state. If the timer has not
+        // already presented (e.g. host app backgrounded), drive it manually — this is
+        // idempotent because showEligibleInapp removes the entry under `queue`, so the
+        // in-app is presented at most once whichever path wins.
         var presentationTime: TimeInterval?
-
         scheduleManager.queue.sync {
-            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
-
-            let storedInapp = self.scheduleManager.inappsByPresentationTime.values.first?.first?.inapp
-            #expect(storedInapp?.inAppId == inapp.inAppId)
-            #expect(self.presentationManagerMock.presentCallsCount == 0)
         }
 
-        guard let time = presentationTime else {
-            Issue.record("Expected presentationTime to be set")
-            return
+        if let presentationTime {
+            scheduleManager.showEligibleInapp(presentationTime)
         }
-
-        scheduleManager.showEligibleInapp(time)
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
@@ -212,23 +212,22 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
+        // An invalid delay string falls back to 0, so the timer can auto-fire and
+        // present immediately, racing inspection — see scheduleInapp_noDelay_schedulesCorrectly.
+        // Drive presentation only if the timer has not already done so.
         var presentationTime: TimeInterval?
-
         scheduleManager.queue.sync {
-            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
         }
 
-        guard let time = presentationTime else {
-            Issue.record("Expected presentationTime to be set")
-            return
+        if let presentationTime {
+            scheduleManager.showEligibleInapp(presentationTime)
         }
-
-        scheduleManager.showEligibleInapp(time)
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
             #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
         }
     }
 
@@ -239,23 +238,22 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
+        // Zero delay ⇒ the timer can auto-fire and present immediately, racing
+        // inspection — see scheduleInapp_noDelay_schedulesCorrectly. Drive presentation
+        // only if the timer has not already done so.
         var presentationTime: TimeInterval?
-
         scheduleManager.queue.sync {
-            #expect(self.scheduleManager.inappsByPresentationTime.count == 1)
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
         }
 
-        guard let time = presentationTime else {
-            Issue.record("Expected presentationTime to be set")
-            return
+        if let presentationTime {
+            scheduleManager.showEligibleInapp(presentationTime)
         }
-
-        scheduleManager.showEligibleInapp(time)
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
             #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == inapp.inAppId)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
         }
     }
 
