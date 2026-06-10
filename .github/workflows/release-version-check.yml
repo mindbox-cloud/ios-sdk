@@ -7,6 +7,9 @@ on:
       - master
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   check-rc-pattern:
     name: Check RC pattern
@@ -57,7 +60,7 @@ jobs:
           echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> "$GITHUB_ENV"
           echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> "$GITHUB_ENV"
       - name: Compare versions
-        uses: jackbilestech/semver-compare@1.0.4
+        uses: jackbilestech/semver-compare@b6b063c569b77bea4a0ab627192cbdabf75de3f5 # 1.0.4
         with:
           head: ${{ env.RELEASE_SDK_VERSION }}
           base: ${{ env.MASTER_SDK_VERSION }}

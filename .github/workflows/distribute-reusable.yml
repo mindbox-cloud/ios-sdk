@@ -14,6 +14,9 @@ on:
       GITLAB_TRIGGER_TOKEN:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   distribution:
     runs-on: ubuntu-latest
@@ -29,10 +32,11 @@ jobs:
         run: |
           set -euo pipefail
           commits="$(git log -3 --pretty=format:"%s")"
+          delim="EOF_$(openssl rand -hex 8)"
           {
-            echo "commits<<EOF"
+            echo "commits<<$delim"
             echo "$commits"
-            echo "EOF"
+            echo "$delim"
           } >> "$GITHUB_ENV"
 
       - name: Get Mindbox SDK Version

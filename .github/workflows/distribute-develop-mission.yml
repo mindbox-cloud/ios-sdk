@@ -8,10 +8,14 @@ on:
     types:
       - closed
 
+permissions:
+  contents: read
+
 jobs:
   call-reusable:
     if: ${{ github.event.pull_request.merged == true }}
     uses: ./.github/workflows/distribute-reusable.yml
     with:
       branch: ${{ github.base_ref }}
-    secrets: inherit
+    secrets:
+      GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}

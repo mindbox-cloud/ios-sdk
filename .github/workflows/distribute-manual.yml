@@ -8,10 +8,14 @@ on:
         required: false
         default: ""
 
+permissions:
+  contents: read
+
 jobs:
   call-reusable:
     uses: ./.github/workflows/distribute-reusable.yml
     with:
       branch: ${{ github.ref_name }}     # SDK branch = current branch
       app_ref: ${{ inputs.app_ref }}     # optional override for GitLab ref
-    secrets: inherit
+    secrets:
+      GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
