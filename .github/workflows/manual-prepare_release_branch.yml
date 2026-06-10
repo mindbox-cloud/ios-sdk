@@ -81,7 +81,7 @@ jobs:
           echo "→ Running bump script on $REL"
           ./.github/git-release-branch-create.sh "$VERSION"
 
-          echo "release_branch=$REL" >> $GITHUB_OUTPUT
+          echo "release_branch=$REL" >> "$GITHUB_OUTPUT"
 
       - name: Push release branch
         run: git push origin "${{ steps.bump.outputs.release_branch }}"

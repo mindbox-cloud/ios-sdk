@@ -15,12 +15,12 @@ jobs:
     steps:
       - name: Check RC pattern
         run: |
-          if [[ "${{ github.head_ref }}" =~ release/[0-9]+\.[0-9]+\.[0-9]+-rc ]]; then
+          if [[ "$HEAD_REF" =~ release/[0-9]+\.[0-9]+\.[0-9]+-rc ]]; then
             echo "Branch name contains release/version-rc pattern. Merging is not allowed. Only stable release should be merge into master"
             exit 1
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
 
   check-master-version:
     name: Check master version
@@ -54,8 +54,8 @@ jobs:
         run: |
           MASTER_SDK_VERSION=$(grep 'static let sdkVersion' master/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
           RELEASE_SDK_VERSION=$(grep 'static let sdkVersion' release/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
-          echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> $GITHUB_ENV
-          echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> $GITHUB_ENV
+          echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> "$GITHUB_ENV"
       - name: Compare versions
         uses: jackbilestech/semver-compare@1.0.4
         with:

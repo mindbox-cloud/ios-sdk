@@ -29,9 +29,11 @@ jobs:
         run: |
           set -euo pipefail
           commits="$(git log -3 --pretty=format:"%s")"
-          echo "commits<<EOF" >> "$GITHUB_ENV"
-          echo "$commits"     >> "$GITHUB_ENV"
-          echo "EOF"          >> "$GITHUB_ENV"
+          {
+            echo "commits<<EOF"
+            echo "$commits"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Get Mindbox SDK Version
         shell: bash

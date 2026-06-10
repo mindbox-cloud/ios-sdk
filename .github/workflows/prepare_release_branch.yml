@@ -22,7 +22,7 @@ jobs:
           VERSION="${BRANCH_NAME#release/}"
           VERSION="${VERSION#support/}"
           echo "VERSION: $VERSION"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           
   bump_version:
     name: Bump Version
@@ -40,7 +40,7 @@ jobs:
       - name: Ouput version
         id: bump
         run: |
-          echo "version2=${{ needs.extract_version.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "version2=${{ needs.extract_version.outputs.version }}" >> "$GITHUB_OUTPUT"
           
   check_sdk_version:
     name: Check SDK Version
@@ -80,7 +80,7 @@ jobs:
             --title "${{ github.ref_name }}" \
             --body "Updates the release version to ${{ github.ref_name }}"
           PR_URL=$(gh pr view --json url --jq '.url')
-          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+          echo "PR_URL=$PR_URL" >> "$GITHUB_ENV"
         env:
           GH_TOKEN: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
  

@@ -34,7 +34,7 @@ jobs:
       - name: Extract SDK version
         run: |
             SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-            echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
+            echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
             echo "Extracted SDK version: $SDK_VERSION"
       - name: Create tag
         run: |
@@ -162,67 +162,4 @@ jobs:
       - name: Merge Pull Request
         run: |
           pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
-          gh pr merge $pr_number --merge --auto
-          
-  message-to-loop-if-success:
-    needs: [release-github]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send message to LOOP
-        env:
-            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
-            VERSION: ${{ github.ref_name }}
-        run: |
-            MESSAGE=$(cat <<EOF
-            {
-              "text": "**🚀 iOS release was successful. Version: ${VERSION}**"
-            }
-            EOF)
-            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d "$MESSAGE"
-
-  notify-on-error:
-    needs: [unit-tests, set-tag, publish-MindboxLogger, delay, check-podspecs-with-retry, publish-Mindbox, publish-MindboxNotifications, release-github]
-    runs-on: ubuntu-latest
-    if: ${{ failure() }}
-    steps:
-      - name: Determine failed job
-        id: get-failed-job
-        run: |
-          FAILED_JOB="None"
-          if [[ "${{ needs.unit-tests.result }}" == "failure" ]]; then
-            FAILED_JOB="unit-tests"
-          elif [[ "${{ needs.set-tag.result }}" == "failure" ]]; then
-            FAILED_JOB="set-tag"
-          elif [[ "${{ needs.publish-MindboxLogger.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-MindboxLogger"
-          elif [[ "${{ needs.delay.result }}" == "failure" ]]; then
-            FAILED_JOB="delay"
-          elif [[ "${{ needs.check-podspecs-with-retry.result }}" == "failure" ]]; then
-            FAILED_JOB="check-podspecs-with-retry"
-          elif [[ "${{ needs.publish-Mindbox.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-Mindbox"
-          elif [[ "${{ needs.publish-MindboxNotifications.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-MindboxNotifications"
-          elif [[ "${{ needs.release-github.result }}" == "failure" ]]; then
-            FAILED_JOB="release-github"
-          elif [[ "${{ needs.merge.result }}" == "failure" ]]; then
-            FAILED_JOB="merge"
-          fi
-          echo "FAILED_JOB=$FAILED_JOB" >> $GITHUB_ENV
-      - name: Send message to LOOP
-        env:
-            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
-            VERSION: ${{ github.ref_name }}
-            FAILED_JOB: ${{ env.FAILED_JOB }}
-        run: |
-            MESSAGE=$(cat <<EOF
-            {
-            "text": "**❌ iOS Release failed**\n\nJob \"$FAILED_JOB\" failed in the pipeline\nSomething went wrong"
-            }
-            EOF)
-            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
-                -H "Content-Type: application/json" \
-                -d "$MESSAGE"
-
+          gh pr merge "$pr_number" --merge --auto
