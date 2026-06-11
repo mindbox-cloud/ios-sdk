@@ -22,7 +22,10 @@ class Fastfile: LaneFile {
              prelaunchSimulator: .userDefined(true),
              onlyTesting: ["MindboxTests"],
              clean: true,
+             outputDirectory: "test_output",
+             outputTypes: "junit",
              xcodebuildFormatter: "xcbeautify",
+             resultBundle: .userDefined(true),
              disableConcurrentTesting: true,
              testWithoutBuilding: .userDefined(false),
              xcargs: "CI=true"
