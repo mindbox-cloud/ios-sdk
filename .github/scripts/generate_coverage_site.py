@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds a static coverage site (index.html + history.json) from an .xcresult.
+"""Builds a static coverage site (index.html + history.json + coverage.csv) from an .xcresult.
 
 Usage: generate_coverage_site.py <path.xcresult> <output_dir> [previous_history.json]
 
@@ -12,6 +12,7 @@ survives even though every Pages deploy replaces the whole site.
 
 The page is fully self-contained: inline CSS/JS, no external resources.
 """
+import csv
 import html
 import json
 import os
@@ -19,7 +20,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
-HISTORY_LIMIT = 365
+HISTORY_LIMIT = 1000
 
 
 def pct(value):
@@ -76,6 +77,22 @@ def trend_svg(history):
     return (f'<svg width="{w}" height="{h}" class="chart">'
             f'<polyline fill="none" stroke="#2da44e" stroke-width="2" points="{coords}"/></svg>'
             f'<p class="muted">last {len(points)} deploys, {points[0]:.1f}% &rarr; {points[-1]:.1f}%</p>')
+
+
+def write_csv(path, targets, repo):
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["target", "file", "path", "executable_lines",
+                         "covered_lines", "uncovered_lines", "line_coverage_percent"])
+        for t in targets:
+            for fl in t.get("files", []):
+                writer.writerow([
+                    t["name"], fl["name"],
+                    repo_relative(fl.get("path", ""), repo) or fl.get("path", ""),
+                    fl["executableLines"], fl["coveredLines"],
+                    fl["executableLines"] - fl["coveredLines"],
+                    round(fl["lineCoverage"] * 100, 2),
+                ])
 
 
 def main():
@@ -166,6 +183,7 @@ button {{ font: inherit; padding: 5px 10px; border: 1px solid var(--line); borde
 <h1>Mindbox iOS SDK — Code Coverage</h1>
 <p class="big">{pct(overall)}</p>
 <p class="muted">{branch} @ <a href="https://github.com/{repo}/commit/{sha}">{sha}</a> &middot; <span class="ts" data-ts="{iso}">{date}</span> &middot; test bundles excluded</p>
+<p class="muted">Export: <a href="coverage.csv" download="coverage-{sha}.csv">per-file CSV</a> &middot; <a href="history.json" download="history-{sha}.json">trend JSON</a></p>
 <h2>Targets</h2>
 <table><tr><th>Target</th><th>Coverage</th><th></th><th>Lines</th></tr>{target_rows}</table>
 <h2>Trend</h2>
@@ -202,6 +220,7 @@ function filterFiles(query) {{
         f.write(page)
     with open(os.path.join(outdir, "history.json"), "w") as f:
         json.dump(history, f, indent=1)
+    write_csv(os.path.join(outdir, "coverage.csv"), targets, repo)
     print(f"coverage site: {pct(overall)} overall, {len(targets)} targets, "
           f"{len(history)} history points -> {outdir}/")
 
