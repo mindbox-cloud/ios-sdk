@@ -49,7 +49,7 @@ jobs:
           SOURCE_BRANCH: ${{ github.event.inputs.source_branch }}
         run: |
           SRC="$SOURCE_BRANCH"
-          if ! git ls-remote --heads origin "$SRC" | grep -q "$SRC"; then
+          if [ -z "$(git ls-remote --heads origin "refs/heads/$SRC")" ]; then
             echo "❌ source_branch '$SRC' does not exist on origin"
             exit 1
           fi
@@ -59,7 +59,7 @@ jobs:
           TARGET_BRANCH: ${{ github.event.inputs.target_branch }}
         run: |
           DST="$TARGET_BRANCH"
-          if ! git ls-remote --heads origin "$DST" | grep -q "$DST"; then
+          if [ -z "$(git ls-remote --heads origin "refs/heads/$DST")" ]; then
             echo "❌ target_branch '$DST' does not exist on origin"
             exit 1
           fi

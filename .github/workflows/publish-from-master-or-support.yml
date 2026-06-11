@@ -18,4 +18,6 @@ jobs:
     uses: ./.github/workflows/publish-reusable.yml
     with:
       branch: ${{ github.base_ref }}
-    secrets: inherit
+    secrets:
+      COCOAPODS_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
+      PAT_FOR_TRIGGERING_BRANCH_PROTECTION: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}

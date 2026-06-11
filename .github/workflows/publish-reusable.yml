@@ -6,6 +6,11 @@ on:
       branch:
         required: true
         type: string
+    secrets:
+      COCOAPODS_TOKEN:
+        required: true
+      PAT_FOR_TRIGGERING_BRANCH_PROTECTION:
+        required: true
 
 permissions:
   contents: read
