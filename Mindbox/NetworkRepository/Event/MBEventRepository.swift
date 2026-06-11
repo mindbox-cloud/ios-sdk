@@ -46,12 +46,19 @@ class MBEventRepository: EventRepository {
     }
 
     func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
+        // Public contract: the completion is ALWAYS delivered on the main thread - every
+        // path, including the early validation errors below, goes through `deliver`.
+        let deliver: (Result<T, MindboxError>) -> Void = { result in
+            DispatchQueue.main.async {
+                completion(result)
+            }
+        }
         guard let configuration = persistenceStorage.configuration else {
             let error = MindboxError(.init(
                 errorKey: .invalidConfiguration,
                 reason: "Configuration is not set"
             ))
-            completion(.failure(error))
+            deliver(.failure(error))
             return
         }
         guard let deviceUUID = persistenceStorage.deviceUUID else {
@@ -59,7 +66,7 @@ class MBEventRepository: EventRepository {
                 errorKey: .invalidConfiguration,
                 reason: "DeviceUUID is not set"
             ))
-            completion(.failure(error))
+            deliver(.failure(error))
             return
         }
         let wrapper = EventWrapper(
@@ -68,16 +75,7 @@ class MBEventRepository: EventRepository {
             deviceUUID: deviceUUID
         )
         let route = makeRoute(wrapper: wrapper)
-        fetcher.request(type: type, route: route, completion: { result in
-            DispatchQueue.main.async {
-                switch result {
-                case let .failure(error):
-                    completion(.failure(error))
-                case let .success(response):
-                    completion(.success(response))
-                }
-            }
-        })
+        fetcher.request(type: type, route: route, completion: deliver)
     }
 
     func sendRaw(event: Event, completion: @escaping (Result<Data, MindboxError>) -> Void) {

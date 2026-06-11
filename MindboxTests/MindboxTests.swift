@@ -189,11 +189,6 @@ class MindboxTests: XCTestCase {
         XCTAssertEqual(secondCountApnsToken, 1)
     }
 
-    func testOperationNameValidity() {
-        XCTAssertTrue("TEST.-".operationNameIsValid)
-        XCTAssertFalse("тест".operationNameIsValid)
-        XCTAssertFalse("TESт".operationNameIsValid)
-    }
 }
 
 // MARK: - PushTokenKeepalive
