@@ -1,0 +1,51 @@
+{
+  "configurations" : [
+    {
+      "id" : "5A458544-9C9E-4B2F-B5E9-8D2451CDE5B3",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true,
+    "environmentVariableEntries" : [
+      {
+        "key" : "OS_ACTIVITY_MODE",
+        "value" : "disable"
+      },
+      {
+        "key" : "IDEPreferLogStreaming",
+        "value" : "YES"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepNever"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "313B233825ADEA0F00A1CB72",
+        "name" : "MindboxTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "3333C19F2681D3CF00B60D84",
+        "name" : "MindboxNotificationsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "A17853C429AF7E950072578F",
+        "name" : "MindboxLoggerTests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -20,7 +20,7 @@ class Fastfile: LaneFile {
         scan(project: .userDefined(project),
              scheme: "Mindbox",
              prelaunchSimulator: .userDefined(true),
-             onlyTesting: ["MindboxTests"],
+             testplan: "Mindbox",
              clean: true,
              outputDirectory: "test_output",
              outputTypes: "junit",
