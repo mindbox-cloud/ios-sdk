@@ -11,21 +11,24 @@ on:
       - reopened
       - synchronize
       
+permissions:
+  contents: read
+
 jobs:
   SwiftLint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/realm/swiftlint:latest
+      image: ghcr.io/realm/swiftlint:0.63.3@sha256:b70b763c949399cc3e4fdcfbc7588944d9503d498b6d96e853dfa07a944256e6
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
   build:
     runs-on: macos-26
     timeout-minutes: 20
     steps:
-    - uses: actions/checkout@v6
-    - uses: maxim-lobanov/setup-xcode@v1
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
       with:
         xcode-version: latest-stable
 
@@ -35,7 +38,9 @@ jobs:
       run: bundle install
     - name: Install yeetd
       run: |
-          wget https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
+          YEETD_SHA256="adb04eb720581a32d94daef3ea61108c74494083a79f00836556a36214f354be"
+          wget -q https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
+          echo "$YEETD_SHA256  yeetd-normal.pkg" | shasum -a 256 -c -
           sudo installer -pkg yeetd-normal.pkg -target /
           yeetd &
     - name: Run unit tests

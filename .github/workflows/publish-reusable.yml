@@ -6,15 +6,23 @@ on:
       branch:
         required: true
         type: string
+    secrets:
+      COCOAPODS_TOKEN:
+        required: true
+      PAT_FOR_TRIGGERING_BRANCH_PROTECTION:
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
   unit-tests:
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
       - name: Update bundler
@@ -27,25 +35,35 @@ jobs:
   set-tag:
     needs: [unit-tests]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Extract SDK version
         run: |
             SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
-            echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
+            echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
             echo "Extracted SDK version: $SDK_VERSION"
       - name: Create tag
         run: |
-            git tag ${{ env.SDK_VERSION }}
-            git push origin ${{ env.SDK_VERSION }}
+            if git rev-parse -q --verify "refs/tags/$SDK_VERSION" >/dev/null; then
+              echo "Local tag $SDK_VERSION already exists."
+            else
+              git tag "$SDK_VERSION"
+            fi
+            if [ -n "$(git ls-remote --tags origin "refs/tags/$SDK_VERSION")" ]; then
+              echo "Remote tag $SDK_VERSION already exists."
+            else
+              git push origin "$SDK_VERSION"
+            fi
 
   publish-MindboxLogger:
     needs: [set-tag]
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Update bundler
@@ -70,14 +88,14 @@ jobs:
     needs: [delay]
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Update bundler
         run: gem install bundler
       - name: Install bundler dependencies
         run: bundle install
-      - uses: nick-fields/retry@v4
+      - uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 10
           max_attempts: 20
@@ -91,7 +109,7 @@ jobs:
     needs: [check-podspecs-with-retry]
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Update bundler
@@ -118,7 +136,7 @@ jobs:
     needs: [second-delay]
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Update bundler
@@ -137,14 +155,17 @@ jobs:
   release-github:
     needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
       - name: Release generation
         run: ./.github/git-release.sh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ inputs.branch }}
 
   merge:
     needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
@@ -154,7 +175,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
     steps:
       - name: Checkout develop branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: develop
       - name: Create Pull Request
@@ -162,67 +183,4 @@ jobs:
       - name: Merge Pull Request
         run: |
           pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
-          gh pr merge $pr_number --merge --auto
-          
-  message-to-loop-if-success:
-    needs: [release-github]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send message to LOOP
-        env:
-            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
-            VERSION: ${{ github.ref_name }}
-        run: |
-            MESSAGE=$(cat <<EOF
-            {
-              "text": "**🚀 iOS release was successful. Version: ${VERSION}**"
-            }
-            EOF)
-            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d "$MESSAGE"
-
-  notify-on-error:
-    needs: [unit-tests, set-tag, publish-MindboxLogger, delay, check-podspecs-with-retry, publish-Mindbox, publish-MindboxNotifications, release-github]
-    runs-on: ubuntu-latest
-    if: ${{ failure() }}
-    steps:
-      - name: Determine failed job
-        id: get-failed-job
-        run: |
-          FAILED_JOB="None"
-          if [[ "${{ needs.unit-tests.result }}" == "failure" ]]; then
-            FAILED_JOB="unit-tests"
-          elif [[ "${{ needs.set-tag.result }}" == "failure" ]]; then
-            FAILED_JOB="set-tag"
-          elif [[ "${{ needs.publish-MindboxLogger.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-MindboxLogger"
-          elif [[ "${{ needs.delay.result }}" == "failure" ]]; then
-            FAILED_JOB="delay"
-          elif [[ "${{ needs.check-podspecs-with-retry.result }}" == "failure" ]]; then
-            FAILED_JOB="check-podspecs-with-retry"
-          elif [[ "${{ needs.publish-Mindbox.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-Mindbox"
-          elif [[ "${{ needs.publish-MindboxNotifications.result }}" == "failure" ]]; then
-            FAILED_JOB="publish-MindboxNotifications"
-          elif [[ "${{ needs.release-github.result }}" == "failure" ]]; then
-            FAILED_JOB="release-github"
-          elif [[ "${{ needs.merge.result }}" == "failure" ]]; then
-            FAILED_JOB="merge"
-          fi
-          echo "FAILED_JOB=$FAILED_JOB" >> $GITHUB_ENV
-      - name: Send message to LOOP
-        env:
-            LOOP_NOTIFICATION_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK_URL }}
-            VERSION: ${{ github.ref_name }}
-            FAILED_JOB: ${{ env.FAILED_JOB }}
-        run: |
-            MESSAGE=$(cat <<EOF
-            {
-            "text": "**❌ iOS Release failed**\n\nJob \"$FAILED_JOB\" failed in the pipeline\nSomething went wrong"
-            }
-            EOF)
-            curl -X POST "$LOOP_NOTIFICATION_WEBHOOK_URL" \
-                -H "Content-Type: application/json" \
-                -d "$MESSAGE"
-
+          gh pr merge "$pr_number" --merge --auto

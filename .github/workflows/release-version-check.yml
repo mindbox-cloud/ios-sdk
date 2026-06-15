@@ -7,6 +7,9 @@ on:
       - master
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   check-rc-pattern:
     name: Check RC pattern
@@ -15,12 +18,12 @@ jobs:
     steps:
       - name: Check RC pattern
         run: |
-          if [[ "${{ github.head_ref }}" =~ release/[0-9]+\.[0-9]+\.[0-9]+-rc ]]; then
+          if [[ "$HEAD_REF" =~ release/[0-9]+\.[0-9]+\.[0-9]+-rc ]]; then
             echo "Branch name contains release/version-rc pattern. Merging is not allowed. Only stable release should be merge into master"
             exit 1
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
 
   check-master-version:
     name: Check master version
@@ -29,13 +32,13 @@ jobs:
     if: ${{ github.base_ref == 'master' && startsWith(github.head_ref, 'release/') }}
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: master
           path: master
           
       - name: Checkout release branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ github.head_ref }}
           path: release
@@ -54,10 +57,10 @@ jobs:
         run: |
           MASTER_SDK_VERSION=$(grep 'static let sdkVersion' master/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
           RELEASE_SDK_VERSION=$(grep 'static let sdkVersion' release/SDKVersionProvider/SDKVersionProvider.swift | awk -F '"' '{print $2}')
-          echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> $GITHUB_ENV
-          echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> $GITHUB_ENV
+          echo "MASTER_SDK_VERSION=$MASTER_SDK_VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_SDK_VERSION=$RELEASE_SDK_VERSION" >> "$GITHUB_ENV"
       - name: Compare versions
-        uses: jackbilestech/semver-compare@1.0.4
+        uses: jackbilestech/semver-compare@b6b063c569b77bea4a0ab627192cbdabf75de3f5 # 1.0.4
         with:
           head: ${{ env.RELEASE_SDK_VERSION }}
           base: ${{ env.MASTER_SDK_VERSION }}

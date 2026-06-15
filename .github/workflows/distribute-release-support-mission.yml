@@ -10,10 +10,14 @@ on:
       - opened
       - synchronize
 
+permissions:
+  contents: read
+
 jobs:
   call-reusable:
     if: ${{ startsWith(github.event.pull_request.head.ref, 'release/') }}
     uses: ./.github/workflows/distribute-reusable.yml
     with:
       branch: ${{ github.event.pull_request.head.ref }}
-    secrets: inherit
+    secrets:
+      GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
