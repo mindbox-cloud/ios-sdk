@@ -1,0 +1,72 @@
+{
+  "configurations" : [
+    {
+      "id" : "5A458544-9C9E-4B2F-B5E9-8D2451CDE5B3",
+      "name" : "Unit Tests",
+      "options" : {
+        "defaultTestExecutionTimeAllowance" : 120,
+        "testTimeoutsEnabled" : true
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:Mindbox.xcodeproj",
+          "identifier" : "313B232F25ADEA0F00A1CB72",
+          "name" : "Mindbox"
+        },
+        {
+          "containerPath" : "container:Mindbox.xcodeproj",
+          "identifier" : "3333C1972681D3CF00B60D84",
+          "name" : "MindboxNotifications"
+        },
+        {
+          "containerPath" : "container:Mindbox.xcodeproj",
+          "identifier" : "A17853BD29AF7E940072578F",
+          "name" : "MindboxLogger"
+        }
+      ]
+    },
+    "defaultTestExecutionTimeAllowance" : 120,
+    "environmentVariableEntries" : [
+      {
+        "key" : "OS_ACTIVITY_MODE",
+        "value" : "disable"
+      },
+      {
+        "key" : "IDEPreferLogStreaming",
+        "value" : "YES"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepNever"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "313B233825ADEA0F00A1CB72",
+        "name" : "MindboxTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "3333C19F2681D3CF00B60D84",
+        "name" : "MindboxNotificationsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Mindbox.xcodeproj",
+        "identifier" : "A17853C429AF7E950072578F",
+        "name" : "MindboxLoggerTests"
+      }
+    }
+  ],
+  "version" : 1
+}

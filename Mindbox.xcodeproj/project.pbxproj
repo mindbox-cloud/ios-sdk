@@ -752,6 +752,8 @@
 		0475E8755F63483597539A50 /* TrackVisitManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackVisitManagerTests.swift; sourceTree = "<group>"; };
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewLocalStateStorageTests.swift; sourceTree = "<group>"; };
+		17AAEE27309FA3CF568151D3 /* ThreadSanitizer.xctestplan */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = ThreadSanitizer.xctestplan; sourceTree = "<group>"; };
+		2EF2F75E4C66C001E8670EA2 /* Mindbox.xctestplan */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = Mindbox.xctestplan; sourceTree = "<group>"; };
 		30CFF46A37DD2CEE9F8517DF /* IsolatedMBLoggerCoreDataManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IsolatedMBLoggerCoreDataManager.swift; sourceTree = "<group>"; };
 		30FC619AC23245CC8CD45E63 /* SettingsRequestParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsRequestParser.swift; sourceTree = "<group>"; };
 		313B233025ADEA0F00A1CB72 /* Mindbox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Mindbox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -971,7 +973,6 @@
 		4766A8932C92FEF6002D15A4 /* SettingsOperationsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOperationsModel.swift; sourceTree = "<group>"; };
 		4766A8952C92FF3A002D15A4 /* TimeToLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeToLiveModel.swift; sourceTree = "<group>"; };
 		4766A8AD2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestsConfigParsingTests.swift; sourceTree = "<group>"; };
-		4797C9BD2FE08AD5004224E0 /* Mindbox.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Mindbox.xctestplan; sourceTree = "<group>"; };
 		47980DB02E3B96EF0020EB34 /* CheckNotificationsStatusOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNotificationsStatusOperation.swift; sourceTree = "<group>"; };
 		47A4FA6D2E7335A200569870 /* LoggerDatabaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDatabaseLoader.swift; sourceTree = "<group>"; };
 		47A4FA6F2E73421200569870 /* LoggerDBConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerDBConfig.swift; sourceTree = "<group>"; };
@@ -1000,6 +1001,7 @@
 		65709D595F60BEBEE72B7129 /* LogStoreTrimmerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LogStoreTrimmerTests.swift; sourceTree = "<group>"; };
 		6EDC7BDB5357E8B393398E83 /* MBLoggerCoreDataManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBLoggerCoreDataManagerTests.swift; sourceTree = "<group>"; };
 		6F1EAA15266A670E007A335B /* ProductListItemsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListItemsResponse.swift; sourceTree = "<group>"; };
+		6F9EA643F225F0644ABF668E /* AddressSanitizer.xctestplan */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = AddressSanitizer.xctestplan; sourceTree = "<group>"; };
 		6FDD143A266F7BD900A50C35 /* ProcessingStatusResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingStatusResponse.swift; sourceTree = "<group>"; };
 		6FDD143C266F7BEB00A50C35 /* ItemResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemResponse.swift; sourceTree = "<group>"; };
 		6FDD143E266F7BF900A50C35 /* AppliedPromotionResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppliedPromotionResponse.swift; sourceTree = "<group>"; };
@@ -1564,7 +1566,6 @@
 				6EDC7BDB5357E8B393398E83 /* MBLoggerCoreDataManagerTests.swift */,
 				B672B00D84EF4718617DD73B /* Tag+Extensions.swift */,
 			);
-			name = MindboxLoggerTests;
 			path = MindboxLoggerTests;
 			sourceTree = "<group>";
 		};
@@ -1585,7 +1586,6 @@
 		313B232625ADEA0F00A1CB72 = {
 			isa = PBXGroup;
 			children = (
-				4797C9BD2FE08AD5004224E0 /* Mindbox.xctestplan */,
 				B33127AE2760C53700CF747E /* Package.swift */,
 				313B233225ADEA0F00A1CB72 /* Mindbox */,
 				313B233D25ADEA0F00A1CB72 /* MindboxTests */,
@@ -1596,6 +1596,7 @@
 				47D395612E72186600C44CFE /* Frameworks */,
 				313B233125ADEA0F00A1CB72 /* Products */,
 				17B157F9FE3789FA97A7085E /* MindboxLoggerTests */,
+				679F15F15FBB69F994654100 /* TestPlans */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2326,6 +2327,17 @@
 			path = Network;
 			sourceTree = "<group>";
 		};
+		679F15F15FBB69F994654100 /* TestPlans */ = {
+			isa = PBXGroup;
+			children = (
+				2EF2F75E4C66C001E8670EA2 /* Mindbox.xctestplan */,
+				17AAEE27309FA3CF568151D3 /* ThreadSanitizer.xctestplan */,
+				6F9EA643F225F0644ABF668E /* AddressSanitizer.xctestplan */,
+			);
+			name = TestPlans;
+			path = TestPlans;
+			sourceTree = "<group>";
+		};
 		73662EFB100A1A3520058D4E /* TrackVisitManager */ = {
 			isa = PBXGroup;
 			children = (
@@ -2340,7 +2352,6 @@
 				4190724EF9D389EF2AD89F61 /* TestContainers.swift */,
 				30CFF46A37DD2CEE9F8517DF /* IsolatedMBLoggerCoreDataManager.swift */,
 			);
-			name = Mocks;
 			path = Mocks;
 			sourceTree = "<group>";
 		};

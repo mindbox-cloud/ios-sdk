@@ -43,8 +43,14 @@
       </EnvironmentVariables>
       <TestPlans>
          <TestPlanReference
-            reference = "container:Mindbox.xctestplan"
+            reference = "container:TestPlans/Mindbox.xctestplan"
             default = "YES">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ThreadSanitizer.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/AddressSanitizer.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <Testables>

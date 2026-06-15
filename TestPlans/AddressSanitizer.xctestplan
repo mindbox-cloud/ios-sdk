@@ -1,15 +1,19 @@
 {
   "configurations" : [
     {
-      "id" : "5A458544-9C9E-4B2F-B5E9-8D2451CDE5B3",
-      "name" : "Configuration 1",
+      "id" : "0FB280C1-5967-4CD8-9C2B-54A8DCAF407E",
+      "name" : "Address Sanitizer",
       "options" : {
-
+        "addressSanitizer" : {
+          "detectStackUseAfterReturn" : true,
+          "enabled" : true
+        },
+        "undefinedBehaviorSanitizerEnabled" : true
       }
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : true,
+    "codeCoverage" : false,
     "environmentVariableEntries" : [
       {
         "key" : "OS_ACTIVITY_MODE",
@@ -20,7 +24,6 @@
         "value" : "YES"
       }
     ],
-    "performanceAntipatternCheckerEnabled" : true,
     "uiTestingScreenshotsLifetime" : "keepNever"
   },
   "testTargets" : [
