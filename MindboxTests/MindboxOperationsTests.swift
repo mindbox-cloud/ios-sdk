@@ -15,7 +15,7 @@ import Foundation
 /// call order equals DB write order, the body is snapshotted at call time, invalid
 /// input is dropped before the hop, executeSyncOperation completions always arrive
 /// on the main thread, and track() stays synchronous.
-@Suite("Public operations contract", .tags(.customOperation))
+@Suite("Public operations contract", .serialized, .tags(.customOperation))
 struct MindboxOperationsTests {
 
     private let persistenceStorage: PersistenceStorage
