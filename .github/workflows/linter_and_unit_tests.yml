@@ -26,6 +26,10 @@ jobs:
   build:
     runs-on: macos-26
     timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
@@ -45,3 +49,44 @@ jobs:
           yeetd &
     - name: Run unit tests
       run: bundle exec fastlane unitTestLane
+
+    # trainer builds report.junit from the xcresult, so Swift Testing results
+    # survive regardless of the console formatter. Only failures are listed
+    # (include_passed: false), so the PR comment stays compact even on green runs.
+    - name: Publish unit-test summary
+      uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d # v6.4.1
+      if: ${{ !cancelled() }}
+      with:
+        report_paths: test_output/report.junit
+        check_name: Unit tests report
+        detailed_summary: true
+        include_passed: false
+        include_time_in_summary: true
+        group_suite: true
+        flaky_summary: true
+        skip_success_summary: false
+        simplified_summary: true
+        include_empty_in_summary: false
+        verbose_summary: false
+        require_tests: true
+        fail_on_failure: true
+        fail_on_parse_error: true
+        comment: ${{ github.event_name == 'pull_request' }}
+        updateComment: true
+        skip_comment_without_tests: true
+
+    - name: Upload xcresult bundle
+      id: xcresult
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      if: ${{ !cancelled() }}
+      with:
+        name: unit-tests-xcresult
+        path: test_output/*.xcresult
+
+    # Surface the artifact link in the job summary - GitHub otherwise only lists
+    # artifacts at the very bottom of the run page, easy to miss on failed runs.
+    - name: Link xcresult in summary
+      if: ${{ !cancelled() }}
+      env:
+        ART_URL: ${{ steps.xcresult.outputs.artifact-url }}
+      run: echo "⬇️ [Download Mindbox.xcresult]($ART_URL) — open in Xcode for coverage & full logs" >> "$GITHUB_STEP_SUMMARY"
