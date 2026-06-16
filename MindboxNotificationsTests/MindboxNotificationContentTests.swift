@@ -6,138 +6,81 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
+import Foundation
+import UIKit
+import UserNotifications
 @testable import MindboxNotifications
 
-// swiftlint:disable force_unwrapping force_try
+@MainActor
+@Suite("MindboxNotificationService (NotificationContent extension)", .tags(.notifications, .notificationContent))
+struct MindboxNotificationContentTests {
 
-@available(iOS 13.0, *)
-final class MindboxNotificationContentTests: XCTestCase {
+    let service = MindboxNotificationService()
+    let viewController = UIViewController()
 
-    var service: MindboxNotificationService! // MindboxNotificationContentProtocol
-    var mockViewController: UIViewController!
-    var mockExtensionContext: NSExtensionContext!
-    var mockNotificationRequest: UNNotificationRequest!
+    @Test("didReceive wires up the view controller, image view and button actions")
+    func didReceiveBuildsContentImageAndActions() throws {
+        let content = NotificationTestFixtures.makeContent(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(),
+            title: "Test title",
+            body: "Test description"
+        )
+        content.attachments = [try NotificationTestFixtures.makeImageAttachment()]
+        let request = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
+        let notification = MockUNNotification(request: request)
+        let context = MockExtensionContext()
 
-    override func setUp() {
-        super.setUp()
-        service = MindboxNotificationService()
-        mockViewController = UIViewController()
-        mockExtensionContext = MockExtensionContext()
+        #expect(!notification.request.content.attachments.isEmpty)
 
-        let aps: [AnyHashable: Any] = [
-            "mutable-content": 1,
-            "alert": [
-                "title": "Test title",
-                "body": "Test description"
-            ],
-            "content-available": 1,
-            "sound": "default"
-        ]
+        service.didReceive(notification: notification, viewController: viewController, extensionContext: context)
 
-        let userInfo: [AnyHashable: Any] = [
-            "clickUrl": "https://mindbox.ru/",
-            "payload": "{\n  \"payload\": \"data\"\n}",
-            "uniqueKey": "4cccb64d-ba46-41eb-9699-3a706f2b910b",
-            "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png",
-            "buttons": [
-                [
-                    "url": "https://developers.mindbox.ru/docs/mindbox-sdk",
-                    "text": "Documentation",
-                    "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
-                ],
-                [
-                    "url": "https://google.com",
-                    "text": "Button #1",
-                    "uniqueKey": "cff05f38-6df4-4a10-9859-ea3bf0a65068"
-                ]
-            ],
-            "aps": aps
-        ]
+        #expect(service.viewController === viewController)
+        #expect(service.context === context)
 
-        let content = UNMutableNotificationContent()
-        content.userInfo = userInfo
-        content.title = "Test title"
-        content.body = "Test description"
+        #expect(service.context?.notificationActions.count == 2)
+        let actionTitles = service.context?.notificationActions.map { $0.title }
+        #expect(actionTitles?.contains("Documentation") == true)
+        #expect(actionTitles?.contains("Button #1") == true)
 
-        let image = UIImage(systemName: "star")!
-        let imageData = image.pngData()!
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let imageFileURL = tempDirectory.appendingPathComponent("testImage.png")
-
-        try! imageData.write(to: imageFileURL)
-        let notificationAttachment = try! UNNotificationAttachment(identifier: "identifier", url: imageFileURL, options: nil)
-
-        content.attachments.append(notificationAttachment)
-
-        mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
+        let imageView = viewController.view.subviews.first { $0 is UIImageView }
+        #expect(imageView != nil, "The UIImageView should be added to the view controller")
     }
 
-    override func tearDown() {
-        service = nil
-        mockViewController = nil
-        mockExtensionContext = nil
-        mockNotificationRequest = nil
-        super.tearDown()
+    @Test("didReceive creates actions but no image view when there is no attachment")
+    func didReceiveButtonsNoAttachment() {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        let notification = MockUNNotification(request: request)
+        let context = MockExtensionContext()
+
+        service.didReceive(notification: notification, viewController: viewController, extensionContext: context)
+
+        #expect(service.context?.notificationActions.count == 2)
+        let hasImageView = viewController.view.subviews.contains { $0 is UIImageView }
+        #expect(!hasImageView)
     }
 
-    func testDidReceiveFromMindboxNotificationContentProtocol() {
-        let mockNotification = MockUNNotification(request: mockNotificationRequest)
+    @Test("didReceive creates no actions when the payload has no buttons")
+    func didReceiveNoButtons() {
+        let request = NotificationTestFixtures.makeRequest(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(includeButtons: false)
+        )
+        let notification = MockUNNotification(request: request)
+        let context = MockExtensionContext()
 
-        XCTAssertFalse(mockNotification.request.content.attachments.isEmpty)
+        service.didReceive(notification: notification, viewController: viewController, extensionContext: context)
 
-        service.didReceive(notification: mockNotification,
-                           viewController: mockViewController,
-                           extensionContext: mockExtensionContext)
-
-        XCTAssertEqual(service.viewController, mockViewController)
-        XCTAssertEqual(service.context, mockExtensionContext)
-
-        XCTAssertFalse(service.context!.notificationActions.isEmpty)
-        XCTAssertEqual(service.context!.notificationActions.count, 2)
-
-        let actionTitles = service.context!.notificationActions.map { $0.title }
-        XCTAssertTrue(actionTitles.contains("Documentation"))
-        XCTAssertTrue(actionTitles.contains("Button #1"))
-
-        let imageView = mockViewController.view.subviews.first { $0 is UIImageView } as? UIImageView
-        XCTAssertNotNil(imageView, "The UIImageView should be added to the ViewController")
-    }
-}
-
-@available(iOS 12.0, *)
-fileprivate class MockExtensionContext: NSExtensionContext {
-    var actions: [UNNotificationAction] = []
-
-    override var notificationActions: [UNNotificationAction] {
-        get {
-            return actions
-        }
-        set {
-            actions = newValue
-        }
-    }
-}
-
-@available(iOS 12.0, *)
-fileprivate class MockUNNotification: UNNotification {
-    private let mockRequest: UNNotificationRequest
-
-    init(request: UNNotificationRequest) {
-        self.mockRequest = request
-
-        let data = try! NSKeyedArchiver.archivedData(withRootObject: request, requiringSecureCoding: true)
-
-        let coder = try! NSKeyedUnarchiver(forReadingFrom: data)
-
-        super.init(coder: coder)!
+        #expect(service.context?.notificationActions.isEmpty == true)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    @Test("didReceive without an extension context creates no actions and does not crash")
+    func didReceiveNilContext() {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        let notification = MockUNNotification(request: request)
 
-    override var request: UNNotificationRequest {
-        return mockRequest
+        service.didReceive(notification: notification, viewController: viewController, extensionContext: nil)
+
+        #expect(service.context == nil)
+        #expect(service.viewController === viewController)
     }
 }

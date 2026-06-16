@@ -213,6 +213,11 @@
 		4747708B2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */; };
 		4747708F2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */; };
 		474770912C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */; };
+		06212EA5EAFF6E0B2673232F /* NotificationTestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8E942B5004DC96C644E39F /* NotificationTestFixtures.swift */; };
+		3CE2724E23B0E01A54EA3D0E /* Tag+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5624595257BF8C206167332 /* Tag+Extensions.swift */; };
+		800C44DB3C1226891455ACF8 /* ImageFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D68AD2869EF175FE754AE284 /* ImageFormatTests.swift */; };
+		EEF7A48FC34733D3D1D1E5EE /* PushNotificationParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEDFA644103A7CA5760F368C /* PushNotificationParsingTests.swift */; };
+		65CF5AEAD0D6957DC4FF2BB6 /* MindboxPushNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B909F3184E7FAE110C8D813 /* MindboxPushNotificationTests.swift */; };
 		474851C12C6A622E0026C38E /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C02C6A622E0026C38E /* NotificationService.swift */; };
 		474851C32C6A627F0026C38E /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C22C6A627F0026C38E /* Constants.swift */; };
 		474851C52C6A62AE0026C38E /* NotificationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C42C6A62AE0026C38E /* NotificationContent.swift */; };
@@ -964,6 +969,11 @@
 		4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInternalMethodsTests.swift; sourceTree = "<group>"; };
 		4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationServiceTests.swift; sourceTree = "<group>"; };
 		474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxNotificationContentTests.swift; sourceTree = "<group>"; };
+		BD8E942B5004DC96C644E39F /* NotificationTestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTestFixtures.swift; sourceTree = "<group>"; };
+		F5624595257BF8C206167332 /* Tag+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+Extensions.swift"; sourceTree = "<group>"; };
+		D68AD2869EF175FE754AE284 /* ImageFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormatTests.swift; sourceTree = "<group>"; };
+		BEDFA644103A7CA5760F368C /* PushNotificationParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationParsingTests.swift; sourceTree = "<group>"; };
+		8B909F3184E7FAE110C8D813 /* MindboxPushNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushNotificationTests.swift; sourceTree = "<group>"; };
 		474851C02C6A622E0026C38E /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		474851C22C6A627F0026C38E /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		474851C42C6A62AE0026C38E /* NotificationContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationContent.swift; sourceTree = "<group>"; };
@@ -1726,6 +1736,11 @@
 				4747708E2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift */,
 				474770902C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift */,
 				4747708A2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift */,
+				BD8E942B5004DC96C644E39F /* NotificationTestFixtures.swift */,
+				F5624595257BF8C206167332 /* Tag+Extensions.swift */,
+				D68AD2869EF175FE754AE284 /* ImageFormatTests.swift */,
+				BEDFA644103A7CA5760F368C /* PushNotificationParsingTests.swift */,
+				8B909F3184E7FAE110C8D813 /* MindboxPushNotificationTests.swift */,
 				3333C1A72681D3CF00B60D84 /* Info.plist */,
 			);
 			path = MindboxNotificationsTests;
@@ -4843,6 +4858,11 @@
 				4747708B2C6B838B00C36FC8 /* SharedInternalMethodsTests.swift in Sources */,
 				4747708F2C6B93AC00C36FC8 /* MindboxNotificationServiceTests.swift in Sources */,
 				474770912C6B9A7200C36FC8 /* MindboxNotificationContentTests.swift in Sources */,
+				06212EA5EAFF6E0B2673232F /* NotificationTestFixtures.swift in Sources */,
+				3CE2724E23B0E01A54EA3D0E /* Tag+Extensions.swift in Sources */,
+				800C44DB3C1226891455ACF8 /* ImageFormatTests.swift in Sources */,
+				EEF7A48FC34733D3D1D1E5EE /* PushNotificationParsingTests.swift in Sources */,
+				65CF5AEAD0D6957DC4FF2BB6 /* MindboxPushNotificationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
