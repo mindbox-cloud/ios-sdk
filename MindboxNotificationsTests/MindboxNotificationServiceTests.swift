@@ -6,97 +6,152 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
+import Foundation
+import UserNotifications
 @testable import MindboxNotifications
 
-// swiftlint:disable force_unwrapping
+// Serialized: the download tests register a process-global stub `URLProtocol` and share its
+// static state, so they must not run concurrently with each other.
+@Suite("MindboxNotificationService (NotificationService extension)", .tags(.notifications, .notificationService), .serialized)
+struct MindboxNotificationServiceTests {
 
-final class MindboxNotificationServiceTests: XCTestCase {
+    let service = MindboxNotificationService()
 
-    var service: MindboxNotificationServiceProtocol!
-    var mockNotificationRequest: UNNotificationRequest!
+    // MARK: - didReceive(_:withContentHandler:)
 
-    override func setUp() {
-        super.setUp()
-        service = MindboxNotificationService()
-
-        let aps: [AnyHashable: Any] = [
-            "mutable-content": 1,
-            "alert": [
-                "title": "Test title",
-                "body": "Test description"
-            ],
-            "content-available": 1,
-            "sound": "default"
-        ]
-
-        let userInfo: [AnyHashable: Any] = [
-            "clickUrl": "https://mindbox.ru/",
-            "payload": "{\n  \"payload\": \"data\"\n}",
-            "uniqueKey": "4cccb64d-ba46-41eb-9699-3a706f2b910b",
-            "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png",
-            "buttons": [
-                [
-                    "url": "https://developers.mindbox.ru/docs/mindbox-sdk",
-                    "text": "Documentation",
-                    "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
-                ],
-                [
-                    "url": "https://google.com",
-                    "text": "Button #1",
-                    "uniqueKey": "cff05f38-6df4-4a10-9859-ea3bf0a65068"
-                ]
-            ],
-            "aps": aps
-        ]
-
-        let content = UNMutableNotificationContent()
-        content.userInfo = userInfo
-        content.title = "Test title"
-        content.body = "Test description"
-        mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
-    }
-
-    override func tearDown() {
-        service = nil
-        mockNotificationRequest = nil
-        super.tearDown()
-    }
-
-    func testDidReceiveWithContentHandler() {
-        let expectation = self.expectation(description: "Content Handler Called")
-        var receivedContent: UNNotificationContent?
-
-        service.didReceive(mockNotificationRequest) { content in
-            receivedContent = content
-            expectation.fulfill()
+    @Test("didReceive serves the image via a stubbed URL protocol, sets the category and invokes the handler")
+    func didReceiveDownloadsImageAndCallsHandler() async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
         }
 
-        waitForExpectations(timeout: 1, handler: nil)
-        XCTAssertNotNil(service.contentHandler)
-        XCTAssertNotNil(service.bestAttemptContent)
-        XCTAssertEqual(service.bestAttemptContent?.userInfo["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
-        XCTAssertNotNil(receivedContent)
+        let request = NotificationTestFixtures.makeRequest(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(),
+            title: "Test title",
+            body: "Test description"
+        )
 
-        XCTAssertEqual(service.bestAttemptContent?.title, "Test title")
-        XCTAssertEqual(service.bestAttemptContent?.body, "Test description")
-        XCTAssertFalse(service.bestAttemptContent!.attachments.isEmpty)
-        XCTAssertTrue(service.bestAttemptContent!.attachments.count == 1)
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { content in
+                continuation.resume(returning: content)
+            }
+        }
+
+        #expect(StubURLProtocol.handledRequestCount > 0) // served from the stub, never the real network
+        #expect(service.contentHandler != nil)
+        #expect(service.bestAttemptContent != nil)
+        #expect(service.bestAttemptContent?.userInfo["uniqueKey"] as? String == NotificationTestFixtures.uniqueKey)
+        #expect(received.title == "Test title")
+        #expect(received.body == "Test description")
+        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(service.bestAttemptContent?.attachments.count == 1)
     }
 
-    func testServiceExtensionTimeWillExpire_CallsProceedFinalStage() {
-        let expectation = self.expectation(description: "Content Handler Called")
-        var receivedContent: UNNotificationContent?
-
-        service.didReceive(mockNotificationRequest) { content in
-            receivedContent = content
-            expectation.fulfill()
+    @Test("didReceive still delivers (no attachment) when the image download fails")
+    func didReceiveDeliversWhenDownloadFails() async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubError = URLError(.timedOut)
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
         }
+
+        let request = NotificationTestFixtures.makeRequest(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(),
+            title: "Test title",
+            body: "Test description"
+        )
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { continuation.resume(returning: $0) }
+        }
+
+        #expect(StubURLProtocol.handledRequestCount > 0)
+        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(received.attachments.isEmpty)
+    }
+
+    @Test("didReceive delivers without an attachment when the data is not a recognized image")
+    func didReceiveDeliversForUnrecognizedImageData() async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = Data([0x00, 0x01, 0x02, 0x03]) // unknown magic byte -> ImageFormat is nil
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
+        }
+
+        let request = NotificationTestFixtures.makeRequest(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(),
+            title: "Test title",
+            body: "Test description"
+        )
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { continuation.resume(returning: $0) }
+        }
+
+        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(received.attachments.isEmpty)
+    }
+
+    @Test("didReceive without an image URL delivers immediately and without an attachment")
+    func didReceiveWithoutImageProceedsImmediately() async {
+        let request = NotificationTestFixtures.makeRequest(
+            userInfo: NotificationTestFixtures.currentFormatUserInfo(includeImageUrl: false),
+            title: "No image",
+            body: "Body"
+        )
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { content in
+                continuation.resume(returning: content)
+            }
+        }
+
+        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(received.attachments.isEmpty)
+        #expect(service.bestAttemptContent?.title == "No image")
+    }
+
+    // MARK: - serviceExtensionTimeWillExpire()
+
+    @Test("serviceExtensionTimeWillExpire delivers the stored best-attempt content")
+    func serviceExtensionTimeWillExpireDelivers() {
+        let content = NotificationTestFixtures.makeContent(userInfo: [:], title: "t", body: "b")
+        service.bestAttemptContent = content
+
+        var received: UNNotificationContent?
+        service.contentHandler = { received = $0 }
 
         service.serviceExtensionTimeWillExpire()
 
-        waitForExpectations(timeout: 1, handler: nil)
-        XCTAssertNotNil(receivedContent)
-        XCTAssertEqual(receivedContent?.categoryIdentifier, Constants.categoryIdentifier)
+        #expect(received != nil)
+        #expect(received?.categoryIdentifier == Constants.categoryIdentifier)
+    }
+
+    @Test("serviceExtensionTimeWillExpire is a no-op without best-attempt content")
+    func serviceExtensionTimeWillExpireNoContent() {
+        var called = false
+        service.contentHandler = { _ in called = true }
+
+        service.serviceExtensionTimeWillExpire()
+
+        #expect(!called)
+    }
+
+    // MARK: - pushDelivered(_:)
+
+    @Test("pushDelivered runs without producing best-attempt content")
+    func pushDeliveredRuns() {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        service.pushDelivered(request)
+        #expect(service.bestAttemptContent == nil)
     }
 }

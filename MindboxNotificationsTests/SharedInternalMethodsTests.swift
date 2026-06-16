@@ -6,131 +6,74 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
-import XCTest
+import Testing
+import Foundation
+import UserNotifications
 @testable import MindboxNotifications
 
-final class SharedInternalMethodsTests: XCTestCase {
+@Suite("SharedInternalMethods", .tags(.notifications, .pushParsing))
+struct SharedInternalMethodsTests {
 
-    var service: MindboxNotificationService!
-    var mockNotificationRequest: UNNotificationRequest!
+    let service = MindboxNotificationService()
 
-    override func setUp() {
-        super.setUp()
-        service = MindboxNotificationService()
+    // MARK: - parse(request:)
 
-        let aps: [AnyHashable: Any] = [
-            "mutable-content": 1,
-            "alert": [
-                "title": "Test title",
-                "body": "Test description"
-            ],
-            "content-available": 1,
-            "sound": "default"
-        ]
+    @Test("parse maps a current-format request into a Payload")
+    func parseCurrentFormat() throws {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        let payload = try #require(service.parse(request: request))
 
-        let userInfo: [AnyHashable: Any] = [
-            "clickUrl": "https://mindbox.ru/",
-            "payload": "{\n  \"payload\": \"data\"\n}",
-            "uniqueKey": "4cccb64d-ba46-41eb-9699-3a706f2b910b",
-            "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png",
-            "buttons": [
-                [
-                    "url": "https://developers.mindbox.ru/docs/mindbox-sdk",
-                    "text": "Documentation",
-                    "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
-                ],
-                [
-                    "url": "https://google.com",
-                    "text": "Button #1",
-                    "uniqueKey": "cff05f38-6df4-4a10-9859-ea3bf0a65068"
-                ]
-            ],
-            "aps": aps
-        ]
-
-        let content = UNMutableNotificationContent()
-        content.userInfo = userInfo
-        mockNotificationRequest = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
+        let button = try #require(payload.withButton)
+        #expect(button.buttons?.first?.uniqueKey == NotificationTestFixtures.firstButtonKey)
+        #expect(button.buttons?.first?.text == "Documentation")
+        #expect(button.buttons?.last?.uniqueKey == NotificationTestFixtures.secondButtonKey)
+        #expect(button.buttons?.last?.text == "Button #1")
+        #expect(payload.withImageURL?.imageUrl == NotificationTestFixtures.imageUrl)
     }
 
-    override func tearDown() {
-        service = nil
-        mockNotificationRequest = nil
-        super.tearDown()
+    @Test("Payload.Button.debugDescription includes the unique key")
+    func payloadButtonDebugDescription() throws {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        let button = try #require(service.parse(request: request)?.withButton)
+        #expect(button.debugDescription == "uniqueKey: \(button.uniqueKey)")
     }
 
-    func testParseToPayload() {
-        let payload = service.parse(request: mockNotificationRequest)
-        XCTAssertNotNil(payload)
-        XCTAssertNotNil(payload?.withButton)
-        XCTAssertEqual(payload?.withButton?.buttons?.first?.uniqueKey, "1b112bcd-5eae-4914-8842-d77198466466")
-        XCTAssertEqual(payload?.withButton?.buttons?.first?.text, "Documentation")
-        XCTAssertEqual(payload?.withButton?.buttons?.last?.uniqueKey, "cff05f38-6df4-4a10-9859-ea3bf0a65068")
-        XCTAssertEqual(payload?.withButton?.buttons?.last?.text, "Button #1")
-        XCTAssertNotNil(payload?.withImageURL)
-        XCTAssertEqual(payload?.withImageURL?.imageUrl, "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png")
+    // parse(request:)'s nil paths are unreachable here: getUserInfo never returns nil, and the
+    // only JSONSerialization failures throw an ObjC exception that `try?` can't catch (it crashes).
+
+    // MARK: - getUserInfo(from:)
+
+    @Test("getUserInfo returns the outer payload for the current format")
+    func getUserInfoCurrentFormat() throws {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        let result = try #require(service.getUserInfo(from: request))
+
+        #expect(result["uniqueKey"] as? String == NotificationTestFixtures.uniqueKey)
+        #expect(result["clickUrl"] as? String == NotificationTestFixtures.clickUrl)
+
+        let aps = try #require(result["aps"] as? [AnyHashable: Any])
+        #expect(aps["sound"] as? String == "default")
+        #expect(aps["mutable-content"] as? Int == 1)
+        #expect(aps["content-available"] as? Int == 1)
+
+        let alert = try #require(aps["alert"] as? [String: String])
+        #expect(alert["title"] == "Test title")
+        #expect(alert["body"] == "Test description")
     }
 
-    func testGetUserInfo() {
-        let result = service.getUserInfo(from: mockNotificationRequest)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
-        XCTAssertEqual(result?["clickUrl"] as? String, "https://mindbox.ru/")
+    @Test("getUserInfo unwraps the aps dictionary for the legacy format")
+    func getUserInfoLegacyFormat() throws {
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.legacyFormatUserInfo())
+        let result = try #require(service.getUserInfo(from: request))
 
-        let apsResult = result?["aps"] as? [AnyHashable: Any]
-        XCTAssertNotNil(apsResult)
-        XCTAssertEqual(apsResult?["mutable-content"] as? Int, 1)
-        XCTAssertEqual(apsResult?["content-available"] as? Int, 1)
-        XCTAssertEqual(apsResult?["sound"] as? String, "default")
+        #expect(result["uniqueKey"] as? String == NotificationTestFixtures.uniqueKey)
+        #expect(result["clickUrl"] as? String == NotificationTestFixtures.clickUrl)
+        #expect(result["sound"] as? String == "default")
+        #expect(result["mutable-content"] as? Int == 1)
+        #expect(result["content-available"] as? Int == 1)
 
-        let alertResult = apsResult?["alert"] as? [String: String]
-        XCTAssertNotNil(alertResult)
-        XCTAssertEqual(alertResult?["title"], "Test title")
-        XCTAssertEqual(alertResult?["body"], "Test description")
-    }
-
-    func testGetUserInfoLegacyPushFormat() {
-        let aps: [AnyHashable: Any] = [
-            "aps": [
-                "mutable-content": 1,
-                "alert": [
-                    "title": "Test title",
-                    "body": "Test description"
-                ],
-                "content-available": 1,
-                "sound": "default",
-                "clickUrl": "https://mindbox.ru/",
-                "payload": "{\n  \"payload\": \"data\"\n}",
-                "uniqueKey": "4cccb64d-ba46-41eb-9699-3a706f2b910b",
-                "imageUrl": "https://mobpush-images.mindbox.ru/Mpush-test/63/5933f4cd-47e3-4317-9237-bc5aad291aa9.png",
-                "buttons": [
-                    [
-                        "url": "https://developers.mindbox.ru/docs/mindbox-sdk",
-                        "text": "Documentation",
-                        "uniqueKey": "1b112bcd-5eae-4914-8842-d77198466466"
-                    ]
-                ]
-            ]
-        ]
-
-        let userInfo: [AnyHashable: Any] = aps
-
-        let content = UNMutableNotificationContent()
-        content.userInfo = userInfo
-        let request = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
-
-        let result = service.getUserInfo(from: request)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?["uniqueKey"] as? String, "4cccb64d-ba46-41eb-9699-3a706f2b910b")
-        XCTAssertEqual(result?["clickUrl"] as? String, "https://mindbox.ru/")
-
-        XCTAssertEqual(result?["mutable-content"] as? Int, 1)
-        XCTAssertEqual(result?["content-available"] as? Int, 1)
-        XCTAssertEqual(result?["sound"] as? String, "default")
-
-        let alertResult = result?["alert"] as? [String: String]
-        XCTAssertNotNil(alertResult)
-        XCTAssertEqual(alertResult?["title"], "Test title")
-        XCTAssertEqual(alertResult?["body"], "Test description")
+        let alert = try #require(result["alert"] as? [String: String])
+        #expect(alert["title"] == "Test title")
+        #expect(alert["body"] == "Test description")
     }
 }
