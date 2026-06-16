@@ -104,16 +104,12 @@ struct InappRemainingTargetingTests {
         expectedCount: Int,
         timeout: TimeInterval = 5
     ) async {
-        let deadline = Date().addingTimeInterval(timeout)
-
-        while Date() < deadline {
-            if mockDataFacade.targetingArray.count >= expectedCount {
-                return
-            }
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+        let final = await pollUntil(deadline: timeout, pollInterval: 0.05,
+                                    value: { mockDataFacade.targetingArray },
+                                    condition: { $0.count >= expectedCount })
+        if final.count < expectedCount {
+            Issue.record("Timed out waiting for targetingArray to reach count \(expectedCount). Current: \(final)")
         }
-
-        Issue.record("Timed out waiting for targetingArray to reach count \(expectedCount). Current: \(mockDataFacade.targetingArray)")
     }
 
     // MARK: - Tests

@@ -189,10 +189,34 @@ class MindboxTests: XCTestCase {
         XCTAssertEqual(secondCountApnsToken, 1)
     }
 
-    func testOperationNameValidity() {
-        XCTAssertTrue("TEST.-".operationNameIsValid)
-        XCTAssertFalse("тест".operationNameIsValid)
-        XCTAssertFalse("TESт".operationNameIsValid)
+    // Functional validator cases live in OperationNameValidatorTests (Swift Testing).
+
+    // Regression (MOBILE-208): observe() used to invoke the host completion while
+    // holding observeSemaphore, so re-entering getDeviceUUID/getAPNSToken from inside
+    // a completion deadlocked the controller queue. Now the completion runs after the
+    // lock is released; on the old code this test fails by expectation timeout.
+    func testObserveCompletionMayReenterPublicAPIWithoutDeadlock() {
+        let deviceUUIDDelivered = expectation(description: "deviceUUID delivered")
+        let apnsTokenDelivered = expectation(description: "apns token delivered")
+
+        Mindbox.shared.getDeviceUUID { _ in
+            // Re-entrant call BEFORE fulfilling: under the old lock-held delivery this
+            // wedged right here, so the expectation below never fired.
+            Mindbox.shared.getAPNSToken { _ in
+                apnsTokenDelivered.fulfill()
+            }
+            deviceUUIDDelivered.fulfill()
+        }
+
+        let configuration = try! MBConfiguration(plistName: "TestConfig1")
+        Mindbox.shared.initialization(configuration: configuration)
+        waitForInitializationFinished()
+        wait(for: [deviceUUIDDelivered], timeout: 10)
+
+        let tokenData = Data(ConstantsForTests.token.utf8)
+        Mindbox.shared.apnsTokenUpdate(deviceToken: tokenData)
+        waitForInitializationFinished()
+        wait(for: [apnsTokenDelivered], timeout: 10)
     }
 }
 

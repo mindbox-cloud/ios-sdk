@@ -41,7 +41,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackDirect sends direct event with source=direct and sets lastTrackVisit")
     func trackDirectSendsEvent() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.trackDirect()
 
@@ -58,7 +58,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackForeground sends event with source=nil and does not modify lastTrackVisit")
     func trackForegroundDoesNotOverwriteLastTrackVisit() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         // Simulate a prior universal link track visit
         try sut.track(.universalLink(makeUserActivity()))
@@ -75,7 +75,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackForeground does not affect skipNextDirectTrackVisit flag")
     func trackForegroundDoesNotAffectSkipFlag() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.trackForeground()
         try sut.trackDirect()
@@ -88,7 +88,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackDirect is skipped after universal link")
     func trackDirectSkippedAfterUniversalLink() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
         try sut.trackDirect()
@@ -101,7 +101,7 @@ struct TrackVisitManagerTests {
 
     @Test("universal link event contains source=link and requestUrl")
     func universalLinkEventBody() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
         let url = "https://test-site.s.mindbox.ru/some/path"
 
         try sut.track(.universalLink(makeUserActivity(url: url)))
@@ -117,7 +117,7 @@ struct TrackVisitManagerTests {
 
     @Test("skip flag resets after one skip — second trackDirect sends direct")
     func skipFlagResetsAfterSkip() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
         try sut.trackDirect()  // skipped
@@ -134,7 +134,7 @@ struct TrackVisitManagerTests {
 
     @Test("second universal link resets flag — only one direct is skipped")
     func multipleUniversalLinks() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
         try sut.track(.universalLink(makeUserActivity(url: "https://test-site.g.mindbox.ru")))
@@ -151,7 +151,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackForeground between universal link and trackDirect does not consume skip flag")
     func keepaliveBetweenLinkAndDirect() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
         try sut.trackForeground()  // keepalive — should not consume flag
@@ -182,7 +182,7 @@ struct TrackVisitManagerTests {
 
     @Test("trackDirect sends event when no push or link preceded it")
     func trackDirectWithoutPrecedingPushOrLink() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.trackDirect()
         try sut.trackDirect()
@@ -196,7 +196,7 @@ struct TrackVisitManagerTests {
 
     @Test("track launch with nil options does not create event")
     func trackLaunchNilOptions() throws {
-        let (sut, dbSpy, sessionSpy) = makeSUT()
+        let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.launch(nil))
 
