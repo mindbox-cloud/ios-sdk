@@ -1,499 +1,394 @@
 //
 //  MBLoggerCoreDataManagerTests.swift
-//  MindboxTests
+//  MindboxLoggerTests
 //
 //  Created by Akylbek Utekeshev on 15.02.2023.
 //  Copyright © 2023 Mikhail Barilov. All rights reserved.
 //
 
-import XCTest
-@testable import MindboxLogger
+import Testing
+import Foundation
+import UIKit
+@preconcurrency @testable import MindboxLogger
 
-final class MBLoggerCoreDataManagerTests: XCTestCase {
+/// Serialized: several tests post global `UIApplication` background/foreground
+/// notifications, which every live `MBLoggerCoreDataManager` instance observes.
+/// Under Swift Testing's default parallelism those posts would flip
+/// `writesImmediately` on other tests' managers mid-run (XCTest masked this by
+/// running a class's methods serially).
+@Suite("MBLoggerCoreDataManager", .tags(.storage, .storageState), .serialized)
+struct MBLoggerCoreDataManagerTests {
 
-    private var batchSizeConstant: Int!
-    var manager: MBLoggerCoreDataManager!
+    let manager: MBLoggerCoreDataManager
+    let batchSizeConstant: Int
 
-    override func setUpWithError() throws {
-        try super.setUpWithError()
+    init() {
         manager = MBLoggerCoreDataManager.makeIsolated()
         MBLoggerCoreDataManager.waitUntilReady(manager)
-
         try? manager.deleteAll()
         MBLoggerCoreDataManager.drainQueue(manager)
-
         batchSizeConstant = manager.debugBatchSize
     }
 
-    override func tearDown() {
-        manager = nil
-        super.tearDown()
-    }
+    // MARK: - CRUD
 
-    func test_measure_create_one_batch() throws {
-        measure {
-            let exp = expectation(description: "Fetch created log")
-            exp.expectedFulfillmentCount = batchSizeConstant
-            createMessages(range: 1...batchSizeConstant) { _, _ in exp.fulfill() }
-            wait(for: [exp])
-        }
-    }
-
-    func test_measure_create_1_000() throws {
-        let logsCount = 1_000
-        measure {
-            let exp = expectation(description: "Fetch created log")
-            exp.expectedFulfillmentCount = logsCount
-            createMessages(range: 0..<logsCount, timeStrategy: .sequentialDefault) { _, _ in exp.fulfill() }
-            wait(for: [exp])
-        }
-    }
-
-    func testCreateWithBatch() throws {
-        let manual = 1
-        let exp = expectation(description: "Fetch created log")
-        exp.expectedFulfillmentCount = batchSizeConstant
-
+    @Test("A full batch is flushed and queryable by period")
+    func createWithBatch() async throws {
         let message = "Test message"
         let timestamp = Date()
-        manager.create(message: message, timestamp: timestamp) { exp.fulfill() }
 
-        createRemainingMessages(basedOn: manual, timeStrategy: .sequential(interval: 10)) { _, _ in exp.fulfill() }
-        wait(for: [exp])
-
-        let check = expectation(description: "Fetch period logs")
-        manager.debugSerialQueue.async {
-            do {
-                let r = try self.manager.fetchPeriod(timestamp, timestamp)
-                XCTAssertEqual(r.count, 1)
-                XCTAssertEqual(r.first?.message, message)
-                XCTAssertEqual(r.first?.timestamp, timestamp)
-                check.fulfill()
-            } catch {}
+        await create(manager, message: message, timestamp: timestamp)
+        // Fill the rest of the batch with far-future timestamps so only the first is in range.
+        let base = Date()
+        for index in 1..<batchSizeConstant {
+            await create(manager, message: "Log: \(index)",
+                         timestamp: base.addingTimeInterval(Double(index) * 10))
         }
-        wait(for: [check])
+
+        let result = try manager.fetchPeriod(timestamp, timestamp)
+        #expect(result.count == 1)
+        #expect(result.first?.message == message)
+        #expect(result.first?.timestamp == timestamp)
     }
 
-    func testFetchFirstLog() throws {
-        let message1 = "Test message 1"
-        let message2 = "Test message 2"
-        let message3 = "Test message 3"
+    @Test("getFirstLog returns the oldest record")
+    func fetchFirstLog() async throws {
         let t1 = Date().addingTimeInterval(-60)
         let t2 = Date().addingTimeInterval(-30)
         let t3 = Date()
 
-        let exp = expectation(description: "created")
-        exp.expectedFulfillmentCount = batchSizeConstant
-
-        manager.create(message: message1, timestamp: t1) { exp.fulfill() }
-        manager.create(message: message2, timestamp: t2) { exp.fulfill() }
-        manager.create(message: message3, timestamp: t3) { exp.fulfill() }
-        createRemainingMessages(basedOn: 3) { _, _ in exp.fulfill() }
-        wait(for: [exp])
+        await create(manager, message: "Test message 1", timestamp: t1)
+        await create(manager, message: "Test message 2", timestamp: t2)
+        await create(manager, message: "Test message 3", timestamp: t3)
+        await createRemaining(basedOn: 3) // fill to a full batch -> flush
 
         let first = try manager.getFirstLog()
-        XCTAssertEqual(first?.message, message1)
-        XCTAssertEqual(first?.timestamp, t1)
+        #expect(first?.message == "Test message 1")
+        #expect(first?.timestamp == t1)
     }
 
-    func testFetchLastLog() throws {
-        let message1 = "Test message 1"
-        let message2 = "Test message 2"
-        let message3 = "Test message 3"
+    @Test("getLastLog returns the newest record")
+    func fetchLastLog() async throws {
         let t1 = Date().addingTimeInterval(-60)
         let t2 = Date().addingTimeInterval(-30)
         let t3 = Date()
 
-        let exp = expectation(description: "created")
-        exp.expectedFulfillmentCount = batchSizeConstant
-
-        manager.create(message: message1, timestamp: t1) { exp.fulfill() }
-        manager.create(message: message2, timestamp: t2) { exp.fulfill() }
-        createRemainingMessages(basedOn: 3, timeStrategy: .reverseDefault) { _, _ in exp.fulfill() }
-        manager.create(message: message3, timestamp: t3) { exp.fulfill() }
-        wait(for: [exp])
+        await create(manager, message: "Test message 1", timestamp: t1)
+        await create(manager, message: "Test message 2", timestamp: t2)
+        await createRemaining(basedOn: 3, strategy: .reverseDefault)
+        await create(manager, message: "Test message 3", timestamp: t3)
 
         let last = try manager.getLastLog()
-        XCTAssertEqual(last?.message, message3)
-        XCTAssertEqual(last?.timestamp, t3)
+        #expect(last?.message == "Test message 3")
+        #expect(last?.timestamp == t3)
     }
 
-    func testFetchPeriod() throws {
-        let message1 = "Test message 1"
-        let message2 = "Test message 2"
-        let message3 = "Test message 3"
+    @Test("fetchPeriod returns the records inside the window, sorted ascending")
+    func fetchPeriod() async throws {
         let t1 = Date().addingTimeInterval(-60)
         let t2 = Date().addingTimeInterval(-30)
         let t3 = Date()
 
-        let exp = expectation(description: "created")
-        exp.expectedFulfillmentCount = batchSizeConstant * 2
+        await createRemaining(strategy: .reverse(interval: 100)) // far in the past
+        await create(manager, message: "Test message 1", timestamp: t1)
+        await create(manager, message: "Test message 2", timestamp: t2)
+        await create(manager, message: "Test message 3", timestamp: t3)
+        await createRemaining(basedOn: 3, strategy: .sequentialDefault) // near future
 
-        createRemainingMessages(timeStrategy: .reverse(interval: 100)) { _, _ in exp.fulfill() }
-        manager.create(message: message1, timestamp: t1) { exp.fulfill() }
-        manager.create(message: message2, timestamp: t2) { exp.fulfill() }
-        manager.create(message: message3, timestamp: t3) { exp.fulfill() }
-        createRemainingMessages(basedOn: 3, timeStrategy: .sequentialDefault) { _, _ in exp.fulfill() }
-        wait(for: [exp])
-
-        let r = try manager.fetchPeriod(t1, t2)
-        XCTAssertEqual(r.count, 2)
-        XCTAssertEqual(r[0].message, message1)
-        XCTAssertEqual(r[0].timestamp, t1)
-        XCTAssertEqual(r[1].message, message2)
-        XCTAssertEqual(r[1].timestamp, t2)
+        let result = try manager.fetchPeriod(t1, t2)
+        #expect(result.count == 2)
+        #expect(result[0].message == "Test message 1")
+        #expect(result[0].timestamp == t1)
+        #expect(result[1].message == "Test message 2")
+        #expect(result[1].timestamp == t2)
     }
 
-    func testFlushBufferWhenApplicationDidEnterBackgroundReturnsInvalidInTestsAndChangesAppState() throws {
-        XCTAssertFalse(manager.debugWritesImmediately)
+    // MARK: - Background / foreground state
 
-        let half = expectation(description: "half-batch")
-        half.expectedFulfillmentCount = batchSizeConstant / 2
-        createMessages(range: 1...batchSizeConstant/2, timeStrategy: .sequentialDefault) { _, _ in
-            half.fulfill()
-        }
-        wait(for: [half])
+    @Test("didEnterBackground turns on immediate writes (background task is .invalid in tests)")
+    func enterBackgroundEnablesImmediateWrite() async {
+        #expect(await onQueue { self.manager.debugWritesImmediately } == false)
 
+        await createMessages(range: 1...(batchSizeConstant / 2), strategy: .sequentialDefault)
         NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
 
-        let check = expectation(description: "writesImmediately true")
-        manager.debugSerialQueue.async {
-            XCTAssertTrue(self.manager.debugWritesImmediately)
-            check.fulfill()
-        }
-        wait(for: [check])
+        #expect(await onQueue { self.manager.debugWritesImmediately } == true)
     }
 
-    func testFlushBufferInBackground() throws {
-        XCTAssertFalse(manager.debugWritesImmediately)
+    @Test("flushBufferInBackground persists the buffer and enables immediate writes")
+    func flushBufferInBackground() async throws {
+        #expect(await onQueue { self.manager.debugWritesImmediately } == false)
 
-        let half = expectation(description: "half-batch")
-        half.expectedFulfillmentCount = batchSizeConstant / 2
-        createMessages(range: 1...batchSizeConstant/2, timeStrategy: .sequentialDefault) { _, _ in
-            half.fulfill()
-        }
-        wait(for: [half])
+        let half = batchSizeConstant / 2
+        await createMessages(range: 1...half, strategy: .sequentialDefault)
 
         manager.debugFlushBufferInBackground()
-
-        let check = expectation(description: "flushed")
-        manager.debugSerialQueue.async {
-            do {
-                let last = try self.manager.getLastLog()
-                XCTAssertEqual(last?.message, "Log: \(self.batchSizeConstant/2)")
-                XCTAssertTrue(self.manager.debugWritesImmediately)
-                check.fulfill()
-            } catch {}
-        }
-        wait(for: [check])
-    }
-
-    func testFlagTogglesOnApplicationStateChanges() throws {
-        let toggle = expectation(description: "Flag toggled 3 times")
-        toggle.expectedFulfillmentCount = 3
-
-        XCTAssertFalse(manager.debugWritesImmediately)
-
-        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        manager.debugSerialQueue.async {
-            XCTAssertTrue(self.manager.debugWritesImmediately)
-            toggle.fulfill()
-        }
-
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        manager.debugSerialQueue.async {
-            XCTAssertFalse(self.manager.debugWritesImmediately)
-            toggle.fulfill()
-        }
-
-        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        manager.debugSerialQueue.async {
-            XCTAssertTrue(self.manager.debugWritesImmediately)
-            toggle.fulfill()
-        }
-
-        wait(for: [toggle])
-    }
-
-    func testSingleLogModeWritesEachMessageImmediately() throws {
-        manager.setImmediateWrite(true)
-
-        let maxCountOfLogs = Int.random(in: 1..<batchSizeConstant)
-        let exp = expectation(description: "created")
-        exp.expectedFulfillmentCount = maxCountOfLogs
-
-        createMessages(range: 1...maxCountOfLogs, timeStrategy: .sequentialDefault) { index, ts in
-            let last = try? self.manager.getLastLog()
-            XCTAssertEqual(last?.timestamp, ts)
-            XCTAssertEqual(last?.message, "Log: \(index)")
-            exp.fulfill()
-        }
-        wait(for: [exp])
+        await drain(manager)
 
         let last = try manager.getLastLog()
-        XCTAssertEqual(last?.message, "Log: \(maxCountOfLogs)")
-
-        let all = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(all.count, maxCountOfLogs)
+        #expect(last?.message == "Log: \(half)")
+        #expect(await onQueue { self.manager.debugWritesImmediately } == true)
     }
 
-    func testTrim_CapsAtMaxFraction_WhenWayOverLimit() throws {
-        XCTAssertTrue(manager.debugIsStoreLoaded)
+    @Test("The immediate-write flag toggles with background/foreground transitions")
+    func flagTogglesOnApplicationStateChanges() async {
+        #expect(await onQueue { self.manager.debugWritesImmediately } == false)
+
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        #expect(await onQueue { self.manager.debugWritesImmediately } == true)
+
+        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        #expect(await onQueue { self.manager.debugWritesImmediately } == false)
+
+        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        #expect(await onQueue { self.manager.debugWritesImmediately } == true)
+    }
+
+    @Test("Single-log mode persists each message immediately")
+    func singleLogModeWritesEachMessageImmediately() async throws {
+        manager.setImmediateWrite(true)
+        await drain(manager)
+
+        let count = Int.random(in: 1..<batchSizeConstant)
+        let base = Date()
+        for index in 1...count {
+            let timestamp = base.addingTimeInterval(Double(index))
+            await create(manager, message: "Log: \(index)", timestamp: timestamp)
+            let last = try manager.getLastLog()
+            #expect(last?.timestamp == timestamp)
+            #expect(last?.message == "Log: \(index)")
+        }
+
+        #expect(try manager.getLastLog()?.message == "Log: \(count)")
+        #expect(try manager.fetchPeriod(.distantPast, .distantFuture).count == count)
+    }
+
+    // MARK: - Trimming
+
+    @Test("Trim caps at the max fraction when way over the limit", .tags(.trimming))
+    func trimCapsAtMaxFractionWhenWayOverLimit() async throws {
+        #expect(manager.debugIsStoreLoaded)
         manager.debugResetCooldown()
         manager.setImmediateWrite(true)
+        await drain(manager)
 
         let total = 100
-        let created = expectation(description: "created"); created.expectedFulfillmentCount = total
-        createMessages(range: 0..<total, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
-        wait(for: [created]); MBLoggerCoreDataManager.drainQueue(manager)
+        await createMessages(range: 0..<total, strategy: .sequentialDefault)
 
         manager.debugSerialQueue.async { self.manager.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
-        MBLoggerCoreDataManager.drainQueue(manager)
+        await drain(manager)
 
         let left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, total/2)
-        XCTAssertEqual(left.first?.message, "Log: \(total/2)")
-        XCTAssertEqual(left.last?.message, "Log: \(total-1)")
+        #expect(left.count == total / 2)
+        #expect(left.first?.message == "Log: \(total / 2)")
+        #expect(left.last?.message == "Log: \(total - 1)")
     }
 
-    func testTrim_NoOperation_WhenBelowOrEqualLimit() throws {
-        XCTAssertTrue(manager.debugIsStoreLoaded)
+    @Test("Trim is a no-op at or below the limit", .tags(.trimming))
+    func trimNoOperationWhenBelowOrEqualLimit() async throws {
+        #expect(manager.debugIsStoreLoaded)
         manager.debugResetCooldown()
         manager.setImmediateWrite(true)
+        await drain(manager)
 
         let total = 20
-        let created = expectation(description: "created"); created.expectedFulfillmentCount = total
-        createMessages(range: 0..<total, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
-        wait(for: [created]); MBLoggerCoreDataManager.drainQueue(manager)
+        await createMessages(range: 0..<total, strategy: .sequentialDefault)
 
         manager.debugSerialQueue.async { self.manager.debugTrimIfNeeded(precomputedSizeKB: 50) }
-        MBLoggerCoreDataManager.drainQueue(manager)
-        var left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, total)
+        await drain(manager)
+        #expect(try manager.fetchPeriod(.distantPast, .distantFuture).count == total)
 
         manager.debugSerialQueue.async { self.manager.debugTrimIfNeeded(precomputedSizeKB: 128) }
-        MBLoggerCoreDataManager.drainQueue(manager)
-        left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, total)
+        await drain(manager)
+        #expect(try manager.fetchPeriod(.distantPast, .distantFuture).count == total)
     }
 
-    func testTrim_RespectsMinFraction_WhenSlightlyOverLimit() throws {
-        XCTAssertTrue(manager.debugIsStoreLoaded)
+    @Test("Trim respects the min fraction when slightly over the limit", .tags(.trimming))
+    func trimRespectsMinFractionWhenSlightlyOverLimit() async throws {
+        #expect(manager.debugIsStoreLoaded)
         manager.debugResetCooldown()
         manager.setImmediateWrite(true)
+        await drain(manager)
 
         let total = 100
-        let created = expectation(description: "created"); created.expectedFulfillmentCount = total
-        createMessages(range: 0..<total, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
-        wait(for: [created]); MBLoggerCoreDataManager.drainQueue(manager)
+        await createMessages(range: 0..<total, strategy: .sequentialDefault)
 
-        let limitKB = 128
-        let sizeKB  = 129
-        guard let fraction = manager.debugComputeTrimFraction(sizeKB: sizeKB, limitKB: limitKB) else {
-            return XCTFail("fraction must be computed")
-        }
+        let fraction = try #require(manager.debugComputeTrimFraction(sizeKB: 129, limitKB: 128))
         try manager.deleteOldestLogs(fraction: fraction)
 
         let left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 84)
-        XCTAssertEqual(left.first?.message, "Log: 16") // deleted 0…15
+        #expect(left.count == 84)
+        #expect(left.first?.message == "Log: 16") // deleted 0…15
     }
 
-    func testTrim_RoundingBehavior() throws {
-        XCTAssertTrue(manager.debugIsStoreLoaded)
+    @Test("Trim rounds the delete count to the nearest whole record", .tags(.trimming))
+    func trimRoundingBehavior() async throws {
+        #expect(manager.debugIsStoreLoaded)
         manager.debugResetCooldown()
         manager.setImmediateWrite(true)
+        await drain(manager)
 
-        let total = 3
-        let created = expectation(description: "created"); created.expectedFulfillmentCount = total
-        createMessages(range: 0..<total, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
-        wait(for: [created]); MBLoggerCoreDataManager.drainQueue(manager)
+        await createMessages(range: 0..<3, strategy: .sequentialDefault)
 
-        try manager.deleteOldestLogs(fraction: 1.0/3.0) // round(1) = 1
+        try manager.deleteOldestLogs(fraction: 1.0 / 3.0) // round(1.0) = 1
         var left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 2)
-        XCTAssertEqual(left.first?.message, "Log: 1")
+        #expect(left.count == 2)
+        #expect(left.first?.message == "Log: 1")
 
-        try manager.deleteOldestLogs(fraction: 2.0/3.0) // 2 → round(1.333) = 1
+        try manager.deleteOldestLogs(fraction: 2.0 / 3.0) // round(1.333) = 1
         left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 1)
-        XCTAssertEqual(left.first?.message, "Log: 2")
+        #expect(left.count == 1)
+        #expect(left.first?.message == "Log: 2")
     }
 
-    func testTrim_RespectsCooldown() throws {
+    @Test("Trim respects the cooldown between runs", .tags(.trimming))
+    func trimRespectsCooldown() async throws {
         let m = MBLoggerCoreDataManager.makeIsolated(config: .default)
-
-        XCTAssertTrue(m.debugIsStoreLoaded)
+        #expect(m.debugIsStoreLoaded)
         m.debugResetCooldown()
         m.setImmediateWrite(true)
+        await drain(m)
 
         let total = 40
-        let created = expectation(description: "created")
-        created.expectedFulfillmentCount = total
-
         let base = Date()
-        for i in 0..<total {
-            m.create(message: "Log: \(i)", timestamp: base.addingTimeInterval(Double(i))) {
-                created.fulfill()
-            }
+        for index in 0..<total {
+            await create(m, message: "Log: \(index)", timestamp: base.addingTimeInterval(Double(index)))
         }
-        wait(for: [created])
-        MBLoggerCoreDataManager.drainQueue(m)
 
-        // 1st trim: trim to 20
+        // 1st trim: down to 20.
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
-        MBLoggerCoreDataManager.drainQueue(m)
+        await drain(m)
         var left = try m.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 20)
-        XCTAssertEqual(left.first?.message, "Log: 20")
+        #expect(left.count == 20)
+        #expect(left.first?.message == "Log: 20")
 
-        // 2nd call under cooldown — no changes
+        // 2nd call under cooldown — no change.
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
-        MBLoggerCoreDataManager.drainQueue(m)
+        await drain(m)
         left = try m.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 20)
+        #expect(left.count == 20)
 
-        // Reset the cooldown and trim again — up to 10
+        // Reset the cooldown and trim again — down to 10.
         m.debugResetCooldown()
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
-        MBLoggerCoreDataManager.drainQueue(m)
+        await drain(m)
         left = try m.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 10)
-        XCTAssertEqual(left.first?.message, "Log: 30")
+        #expect(left.count == 10)
+        #expect(left.first?.message == "Log: 30")
     }
 
-    func testTrim_DeletesOldestFirst() throws {
-        XCTAssertTrue(manager.debugIsStoreLoaded)
+    @Test("Trim deletes the oldest records first", .tags(.trimming))
+    func trimDeletesOldestFirst() async throws {
+        #expect(manager.debugIsStoreLoaded)
         manager.debugResetCooldown()
         manager.setImmediateWrite(true)
+        await drain(manager)
 
         let base = Date()
-        for i in 0..<5 { manager.create(message: "OLD\(i)", timestamp: base.addingTimeInterval(Double(i))) {} }
-        for i in 0..<5 { manager.create(message: "NEW\(i)", timestamp: base.addingTimeInterval(Double(100+i))) {} }
-        MBLoggerCoreDataManager.drainQueue(manager)
+        for index in 0..<5 {
+            await create(manager, message: "OLD\(index)", timestamp: base.addingTimeInterval(Double(index)))
+        }
+        for index in 0..<5 {
+            await create(manager, message: "NEW\(index)", timestamp: base.addingTimeInterval(Double(100 + index)))
+        }
 
         try manager.deleteOldestLogs(fraction: 0.5)
         let left = try manager.fetchPeriod(.distantPast, .distantFuture)
-        XCTAssertEqual(left.count, 5)
-        XCTAssertTrue(left.allSatisfy { $0.message.hasPrefix("NEW") })
+        #expect(left.count == 5)
+        #expect(left.allSatisfy { $0.message.hasPrefix("NEW") })
     }
 
-    func testWriteCounter() throws {
-        let logsToCreate = batchSizeConstant * manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1
-        let created = expectation(description: "created all"); created.expectedFulfillmentCount = logsToCreate
-        createMessages(range: 1...logsToCreate, timeStrategy: .sequentialDefault) { _, _ in created.fulfill() }
-        wait(for: [created])
+    @Test("The write counter resets after the configured number of writes", .tags(.trimming))
+    func writeCounter() async {
+        let perTrim = manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired
+        let logsToCreate = batchSizeConstant * perTrim - 1
 
-        let drained = expectation(description: "queue drained")
-        manager.debugSerialQueue.async { drained.fulfill() }
-        wait(for: [drained])
+        await createMessages(range: 1...logsToCreate, strategy: .sequentialDefault)
+        #expect(await onQueue { self.manager.debugWriteCount } == perTrim - 1)
 
-        XCTAssertEqual(manager.debugWriteCount,
-                       manager.debugLimitTheNumberOfOperationsBeforeCheckingIfDeletionIsRequired - 1)
-
-        let lastOne = expectation(description: "last")
-        createMessageWithIndex(index: 0, baseDate: Date(), timeStrategy: .sequentialDefault) { _, _ in lastOne.fulfill() }
-        wait(for: [lastOne])
-
-        XCTAssertEqual(manager.debugWriteCount, 0)
+        await create(manager, message: "Log: 0", timestamp: Date())
+        #expect(await onQueue { self.manager.debugWriteCount } == 0)
     }
 
-    func testBootstrap_Enabled_SetsContextFlags_andIsWritableTrue() {
+    // MARK: - Bootstrap
+
+    @Test("Bootstrap enables storage and sets the context flags")
+    func bootstrapEnabledSetsContextFlags() {
         let m = MBLoggerCoreDataManager.makeIsolated()
         MBLoggerCoreDataManager.waitUntilReady(m)
 
-        XCTAssertEqual(m.storageState, .enabled)
-        XCTAssertTrue(m.debugHasPersistentStore)
-        XCTAssertNotNil(m.debugContext)
-        XCTAssertTrue(m.debugIsStoreLoaded)
-        XCTAssertGreaterThanOrEqual(m.debugLogBufferCapacity, m.debugBatchSize)
+        #expect(m.storageState == .enabled)
+        #expect(m.debugHasPersistentStore)
+        #expect(m.debugContext != nil)
+        #expect(m.debugIsStoreLoaded)
+        #expect(m.debugLogBufferCapacity >= m.debugBatchSize)
     }
 
-    func testBootstrap_Disabled_WhenLoaderFails() {
+    @Test("Bootstrap disables storage when the loader fails")
+    func bootstrapDisabledWhenLoaderFails() {
         let failing = MBLoggerCoreDataManager(debug: true, config: .default, loader: AlwaysFailLoader())
         MBLoggerCoreDataManager.waitUntilReady(failing)
 
-        XCTAssertEqual(failing.storageState, .disabled)
-        XCTAssertFalse(failing.debugHasPersistentStore)
-        XCTAssertNil(failing.debugContext)
-        XCTAssertFalse(failing.debugIsStoreLoaded)
+        #expect(failing.storageState == .disabled)
+        #expect(failing.debugHasPersistentStore == false)
+        #expect(failing.debugContext == nil)
+        #expect(failing.debugIsStoreLoaded == false)
     }
 }
 
-// MARK: - Helpers
+// MARK: - Async helpers
 
 private extension MBLoggerCoreDataManagerTests {
 
     enum TimeStrategy {
         case none
-        case sequential(interval: TimeInterval) // adds a sequential interval to the time (for example, 10 seconds, 20 seconds, etc.)
-        case reverse(interval: TimeInterval) // adds a reverse interval (-10 seconds, -20 seconds, etc.)
-        case custom(date: Date, interval: TimeInterval) // arbitrary date and interval
+        case sequential(interval: TimeInterval)
+        case reverse(interval: TimeInterval)
 
         static let sequentialDefault = TimeStrategy.sequential(interval: 1)
         static let reverseDefault = TimeStrategy.reverse(interval: 1)
-    }
 
-    func createMessageWithIndex(
-        index: Int,
-        message: String? = nil,
-        baseDate: Date,
-        timeStrategy: TimeStrategy,
-        completion: ((Int, Date) -> Void)?
-    ) {
-        let timestamp: Date
-
-        switch timeStrategy {
-        case .none:
-            timestamp = baseDate
-        case .sequential(let interval):
-            timestamp = baseDate.addingTimeInterval(Double(index) * interval)
-        case .reverse(let interval):
-            timestamp = baseDate.addingTimeInterval(Double(index) * -interval)
-        case .custom(let date, let interval):
-            timestamp = date.addingTimeInterval(Double(index) * interval)
-        }
-
-        let message = message ?? "Log: \(index)"
-        manager.create(message: message, timestamp: timestamp) {
-            completion?(index, timestamp)
+        func timestamp(baseDate: Date, index: Int) -> Date {
+            switch self {
+            case .none: return baseDate
+            case .sequential(let interval): return baseDate.addingTimeInterval(Double(index) * interval)
+            case .reverse(let interval): return baseDate.addingTimeInterval(Double(index) * -interval)
+            }
         }
     }
 
-    func createRemainingMessages(
-        basedOn countOfManuallyCreatedMessages: Int = 0,
-        timeStrategy: TimeStrategy = .none,
-        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
-    ) {
-        let remainsBatchSize = batchSizeConstant - countOfManuallyCreatedMessages
+    /// Awaits a single `create` completion.
+    func create(_ m: MBLoggerCoreDataManager, message: String, timestamp: Date) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            m.create(message: message, timestamp: timestamp) { continuation.resume() }
+        }
+    }
+
+    /// Awaits the manager's serial queue draining.
+    func drain(_ m: MBLoggerCoreDataManager) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            m.debugSerialQueue.async { continuation.resume() }
+        }
+    }
+
+    /// Reads a value on the manager's serial queue (matches the production access pattern).
+    func onQueue<T>(_ body: @escaping () -> T) async -> T {
+        await withCheckedContinuation { (continuation: CheckedContinuation<T, Never>) in
+            manager.debugSerialQueue.async { continuation.resume(returning: body()) }
+        }
+    }
+
+    func createMessages<R: RangeExpression>(range: R, strategy: TimeStrategy = .none) async where R.Bound == Int {
         let baseDate = Date()
-
-        for i in 1...remainsBatchSize {
-            createMessageWithIndex(index: i,
-                                   baseDate: baseDate,
-                                   timeStrategy: timeStrategy,
-                                   completion: completion)
+        for index in range.relative(to: 0..<Int.max) {
+            await create(manager, message: "Log: \(index)", timestamp: strategy.timestamp(baseDate: baseDate, index: index))
         }
     }
 
-    func createMessages<R: RangeExpression>(
-        message: String? = nil,
-        range: R,
-        timeStrategy: TimeStrategy = .none,
-        completion: ((_ index: Int, _ timestamp: Date) -> Void)? = nil
-    ) where R.Bound == Int {
+    func createRemaining(basedOn manual: Int = 0, strategy: TimeStrategy = .none) async {
         let baseDate = Date()
-
-        let resolvedRange = range.relative(to: 0..<Int.max)
-
-        for i in resolvedRange {
-            createMessageWithIndex(
-                index: i,
-                message: message,
-                baseDate: baseDate,
-                timeStrategy: timeStrategy,
-                completion: completion
-            )
+        for index in 1...(batchSizeConstant - manual) {
+            await create(manager, message: "Log: \(index)", timestamp: strategy.timestamp(baseDate: baseDate, index: index))
         }
     }
 }

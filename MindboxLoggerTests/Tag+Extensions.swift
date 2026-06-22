@@ -23,4 +23,6 @@ extension Tag {
     /// Enable / disable & graceful-degradation behaviour: bootstrap state,
     /// App Group fallback, and storage-state introspection.
     @Tag static var storageState: Self
+    /// Log retention / size-limit trimming policy.
+    @Tag static var trimming: Self
 }
