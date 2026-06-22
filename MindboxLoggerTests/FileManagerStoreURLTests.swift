@@ -25,7 +25,7 @@ import CoreData
 /// `containerURL(forSecurityApplicationGroupIdentifier:)` vends a container for any
 /// *non-empty* identifier, so only the empty string deterministically yields a
 /// `nil` container in a unit test.
-@Suite("FileManager.storeURL App Group resolution")
+@Suite("FileManager.storeURL App Group resolution", .tags(.storage, .storageState))
 struct FileManagerStoreURLTests {
 
     @Test("storeURL throws .containerUnavailable instead of crashing when the container is unavailable")
