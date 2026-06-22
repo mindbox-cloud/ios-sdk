@@ -588,6 +588,7 @@
 		F361284D2BA31E36000382D9 /* PushPermissionActionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */; };
 		F367301B2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */; };
 		F367301D2B7B8B6A00DD0039 /* NotificationFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */; };
+		F367D3782FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F367D3772FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift */; };
 		F370940B2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */; };
 		F37613E12A6A8CFF009F2EE4 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */; };
 		F382F20B2BAC50D000BC97FF /* VisitTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */; };
@@ -1335,6 +1336,7 @@
 		F361284C2BA31E36000382D9 /* PushPermissionActionUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushPermissionActionUseCase.swift; sourceTree = "<group>"; };
 		F367301A2B7B6E7600DD0039 /* MindboxPushValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidatorTests.swift; sourceTree = "<group>"; };
 		F367301C2B7B8B6A00DD0039 /* NotificationFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationFormatTests.swift; sourceTree = "<group>"; };
+		F367D3772FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalViewControllerLayoutTests.swift; sourceTree = "<group>"; };
 		F370940A2B8F9CDE00655AC7 /* InAppConfigurationDataFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppConfigurationDataFacade.swift; sourceTree = "<group>"; };
 		F37613E02A6A8CFF009F2EE4 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
 		F382F20A2BAC50D000BC97FF /* VisitTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitTargeting.swift; sourceTree = "<group>"; };
@@ -2751,6 +2753,7 @@
 		9B5256FD28D1A86F0029B1BC /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F367D3772FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
@@ -4786,6 +4789,7 @@
 				84FCD3B525CA0FD300D1E574 /* MockPersistenceStorage.swift in Sources */,
 				F3A8B99C2A3A47F800E9C055 /* ABTestVariantsValidatorTests.swift in Sources */,
 				848A89592620C3AE00EDFB6D /* APNSTokenGenerator.swift in Sources */,
+				F367D3782FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift in Sources */,
 				F32E536F2C3F2B05002C7CA0 /* DITests.swift in Sources */,
 				F3D818B32A3885F50002957C /* ABTestDeviceMixerTests.swift in Sources */,
 				F391170B2AB2E74F00852298 /* InappFilterServiceTests.swift in Sources */,
