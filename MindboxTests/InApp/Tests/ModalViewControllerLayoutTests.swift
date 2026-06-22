@@ -124,7 +124,7 @@ struct ModalViewControllerLayoutTests {
     /// `removeAll()` + recreate, the count would stay 1 even if the size guard were
     /// removed and the loop returned. Object identity catches a re-run that count cannot.
     @Test("Stable size does not re-run setupElements (element instance is reused)")
-    func setupElementsNotReRunOnStableSize() throws {
+    func setupElementsNoGrowthOnStableSize() throws {
         let key = "image-key"
         let vc = makeController(model: try makeModel(imageKey: key), imagesDict: [key: makeImage()])
         let window = host(vc, size: CGSize(width: 320, height: 568))
@@ -135,7 +135,7 @@ struct ModalViewControllerLayoutTests {
         for _ in 0..<20 {
             vc.viewDidLayoutSubviews()
             #expect(vc.elements.first === initialElement,
-                    "setupElements must not re-run at a stable size — the size guard broke the layout loop")
+                    "setupElements must not growth at a stable size — the size guard broke the layout loop")
         }
     }
 
