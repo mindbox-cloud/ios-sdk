@@ -29,20 +29,31 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         return bundle
     }()
 
+    /// Identifier of the shared App Group container used for the SDK's persistent
+    /// storage (the events database and the `UserDefaults` suite).
+    ///
+    /// Returns an empty string when the host bundle identifier is missing or the
+    /// App Group container is unavailable, so the SDK can fall back to local
+    /// storage instead of crashing the host process (see issue #705).
+    ///
+    /// The SDK must never crash the host over this — not even in Debug. Automated
+    /// device farms run Debug builds on real devices and frequently lack a
+    /// configured App Group (signing/capability is easy to forget for test builds),
+    /// so any trap (fatalError/assertionFailure/precondition) would break exactly
+    /// the automated-testing scenario issue #705 is about. The misconfiguration is
+    /// surfaced as a `.fault` log instead, on every platform.
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
-            fatalError("CFBundleShortVersionString not found for host app")
+            Logger.common(message: "[MBUtilitiesFetcher] Host application bundle identifier is unavailable", level: .fault, category: .general)
+            return ""
         }
         let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
-        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
-        guard url != nil else {
-            #if targetEnvironment(simulator)
-            return ""
-            #else
-            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
+        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
+            let message = "App Group '\(identifier)' container is unavailable. "
+                + "Enable the App Group capability with this exact value on every target (app + extensions). "
+                + "See developers.mindbox.ru/docs/ios-sdk-initialization"
             Logger.common(message: message, level: .fault, category: .general)
-            fatalError(message)
-            #endif
+            return ""
         }
         return identifier
     }
