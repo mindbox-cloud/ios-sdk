@@ -30,6 +30,9 @@ final class CoreController {
 
             DI.injectOrFail(MigrationManagerProtocol.self).migrate()
 
+            // Report a local-fallback → App Group storage transition if one happened (issue #705 follow-up).
+            AppGroupStorageTransitionReporter().reportIfNeeded()
+
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)

@@ -351,3 +351,58 @@ fileprivate extension UserDefaults {
         return object(forKey: key) != nil
     }
 }
+
+// MARK: - Install-state probing across stores
+
+extension MBPersistenceStorage {
+
+    /// Backing key for `isInstalled`, exposed so the storage-transition reporter can probe a
+    /// specific store (`.standard` vs. the App Group suite) without duplicating the raw string.
+    static var installationDataKey: String {
+        UserDefaultsWrapper<String>.Key.installationData.rawValue
+    }
+
+    /// Whether install state is present in `defaults`, independent of the active store.
+    static func isInstalled(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: installationDataKey) != nil
+    }
+}
+
+/// Reports (issue #705 follow-up) when install state is present in BOTH the local `.standard`
+/// fallback store and the App Group suite — the fingerprint of a device that ran in local
+/// fallback while the App Group was unavailable and silently re-registered once it became
+/// available. Read-only by design: it never mutates either store, so a re-break stays a
+/// continuing install and any cleanup is left to a future carry-over migration. Fires on the
+/// launch after the fix (the suite is empty until re-registration) and on each cold start
+/// while the fingerprint persists.
+struct AppGroupStorageTransitionReporter {
+
+    private let localDefaults: UserDefaults
+    private let sharedDefaults: UserDefaults?
+
+    /// `activeDefaults` is the store the SDK currently persists to (the App Group suite when
+    /// available, else `.standard`); when it *is* the local store there is nothing to compare.
+    init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
+         localDefaults: UserDefaults = .standard) {
+        self.localDefaults = localDefaults
+        self.sharedDefaults = (activeDefaults == localDefaults) ? nil : activeDefaults
+    }
+
+    @discardableResult
+    func reportIfNeeded() -> Bool {
+        guard let sharedDefaults else { return false }
+        guard MBPersistenceStorage.isInstalled(in: localDefaults),
+              MBPersistenceStorage.isInstalled(in: sharedDefaults) else { return false }
+
+        Logger.common(
+            message: "[Storage] Install state found in BOTH the local fallback store and the "
+                + "App Group suite. The device ran in local-storage fallback (App Group "
+                + "unavailable) and the App Group has since become available, so the install was "
+                + "re-registered on the shared container (deviceUUID stays stable via IDFV; "
+                + "in-app caps/counters reset).",
+            level: .fault,
+            category: .general
+        )
+        return true
+    }
+}
