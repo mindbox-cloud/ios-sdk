@@ -16,16 +16,12 @@ class MBLoggerUtilitiesFetcher {
         return bundle
     }()
 
-    /// Identifier of the shared App Group container the logger persists its
-    /// database in, or `nil` when no shared container is available.
+    /// Identifier of the shared App Group container the logger persists its database in,
+    /// or `nil` when none is available (missing/misconfigured/unprovisioned capability).
     ///
-    /// Returns `nil` when the host bundle identifier is missing or the App Group
-    /// container is unavailable (a missing, misconfigured, or unprovisioned capability).
-    /// A `nil` identifier makes `LoggerDatabaseLoader` fall back to the app's local
-    /// (caches) store, so
-    /// the logger keeps working — just not in the shared container — instead of
-    /// being disabled. This must never `fatalError`: the SDK must not bring down
-    /// its host over an unavailable container, on simulator or device (issue #705).
+    /// `nil` makes `LoggerDatabaseLoader` fall back to the app's local caches store, so the
+    /// logger keeps working instead of being disabled. Must never trap — the SDK must not
+    /// bring down its host over an unavailable container, on simulator or device (issue #705).
     var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
             return nil

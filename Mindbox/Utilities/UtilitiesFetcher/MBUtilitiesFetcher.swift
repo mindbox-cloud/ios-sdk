@@ -29,19 +29,13 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         return bundle
     }()
 
-    /// Identifier of the shared App Group container used for the SDK's persistent
-    /// storage (the events database and the `UserDefaults` suite).
+    /// Identifier of the shared App Group container for the SDK's persistent storage
+    /// (events database + `UserDefaults` suite).
     ///
-    /// Returns an empty string when the host bundle identifier is missing or the
-    /// App Group container is unavailable, so the SDK can fall back to local
-    /// storage instead of crashing the host process (see issue #705).
-    ///
-    /// The SDK must never crash the host over this — not even in Debug. Automated
-    /// device farms run Debug builds on real devices and frequently lack a
-    /// configured App Group (signing/capability is easy to forget for test builds),
-    /// so any trap (fatalError/assertionFailure/precondition) would break exactly
-    /// the automated-testing scenario issue #705 is about. The misconfiguration is
-    /// surfaced as a `.fault` log instead, on every platform.
+    /// Returns `""` when the host bundle id is missing or the container is unavailable,
+    /// so the SDK falls back to local storage instead of crashing the host (issue #705).
+    /// Must never trap — not even in Debug: Debug builds on device farms routinely lack a
+    /// configured App Group, the exact scenario #705 is about. Surfaced as a `.fault` log.
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
             Logger.common(message: "[MBUtilitiesFetcher] Host application bundle identifier is unavailable", level: .fault, category: .general)

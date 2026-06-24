@@ -385,7 +385,7 @@ struct AppGroupStorageTransitionReporter {
     init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
          localDefaults: UserDefaults = .standard) {
         self.localDefaults = localDefaults
-        self.sharedDefaults = (activeDefaults == localDefaults) ? nil : activeDefaults
+        self.sharedDefaults = (activeDefaults === localDefaults) ? nil : activeDefaults
     }
 
     @discardableResult

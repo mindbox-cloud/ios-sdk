@@ -34,18 +34,8 @@ extension MBContainer {
 
             guard !appGroup.isEmpty else {
                 // App Group unavailable (already reported by the fetcher) — fall back to
-                // local defaults so the SDK keeps working without the shared suite instead
-                // of crashing the host (issue #705).
-                //
-                // Broken→fixed transition (future reference): while the group is missing,
-                // install identity (deviceUUID, installationDate, …) is written to
-                // `.standard`. If the integrator later fixes the App Group, the now-used
-                // suite is empty, so the SDK sees `isInstalled == false` and re-registers
-                // the install. deviceUUID is re-derived from IDFV and stays stable on the
-                // same device (no duplicate device), but a fresh install event is sent and
-                // local state (in-app caps, counters) resets. This is accepted rather than
-                // migrating `.standard`→suite; a one-shot carry-over could be added later
-                // if re-registration churn becomes a problem.
+                // `.standard` so the SDK keeps working instead of crashing the host (issue #705).
+                // A later App Group fix re-registers the install; see `AppGroupStorageTransitionReporter`.
                 return MBPersistenceStorage(defaults: .standard)
             }
 
