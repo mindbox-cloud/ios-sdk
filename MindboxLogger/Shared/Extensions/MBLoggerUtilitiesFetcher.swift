@@ -16,19 +16,23 @@ class MBLoggerUtilitiesFetcher {
         return bundle
     }()
 
-    var applicationGroupIdentifier: String {
+    /// Identifier of the shared App Group container the logger persists its
+    /// database in, or `nil` when no shared container is available.
+    ///
+    /// Returns `nil` when the host bundle identifier is missing or the App Group
+    /// container is unavailable (a missing, misconfigured, or unprovisioned capability).
+    /// A `nil` identifier makes `LoggerDatabaseLoader` fall back to the app's local
+    /// (caches) store, so
+    /// the logger keeps working — just not in the shared container — instead of
+    /// being disabled. This must never `fatalError`: the SDK must not bring down
+    /// its host over an unavailable container, on simulator or device (issue #705).
+    var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
-            fatalError("CFBundleShortVersionString not found for host app")
+            return nil
         }
         let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
-        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
-        guard url != nil else {
-            #if targetEnvironment(simulator)
-            return ""
-            #else
-            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
-            fatalError(message)
-            #endif
+        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
+            return nil
         }
 
         return identifier
