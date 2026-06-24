@@ -78,7 +78,9 @@ public struct SwiftDataManager {
                 print("Application Support directory already exists at \(applicationSupportURL.path)")
             }
         } else {
-            fatalError("Could not find App Group container URL.")
+            // Best-effort: the SwiftData store falls back to the app's default
+            // location, so a missing App Group container must not crash the host.
+            print("App Group container URL is unavailable; skipping SwiftData directory setup.")
         }
     }
 }
