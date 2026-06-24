@@ -52,7 +52,14 @@ struct AppGroupUnavailableTests {
     /// fetcher reporting `""`.
     @Test
     func persistenceStorageFallsBackToStandardWhenAppGroupEmpty() {
-        defer { MBInject.mode = .standard }
+        // `buildTestContainer` and `mode` are global; restore both so this minimal
+        // container can't leak into later `.test`-mode tests that expect the full stub builder.
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
 
         MBInject.buildTestContainer = {
             let container = MBContainer()
