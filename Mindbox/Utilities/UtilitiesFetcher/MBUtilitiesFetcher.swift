@@ -51,7 +51,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
             let message = "App Group '\(identifier)' container is unavailable. "
                 + "Enable the App Group capability with this exact value on every target (app + extensions). "
-                + "See developers.mindbox.ru/docs/ios-sdk-initialization"
+                + "See https://developers.mindbox.ru/docs/ios-sdk-initialization"
             Logger.common(message: message, level: .fault, category: .general)
             return ""
         }

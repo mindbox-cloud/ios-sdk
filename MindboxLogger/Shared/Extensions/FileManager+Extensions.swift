@@ -23,7 +23,7 @@ extension FileManager {
             case .containerUnavailable(let appGroup):
                 return "App Group container '\(appGroup)' is unavailable. "
                     + "Set up your AppGroup correctly — it must be the same for all your targets. "
-                    + "Read the documentation: developers.mindbox.ru/docs/ios-sdk-initialization"
+                    + "Read the documentation: https://developers.mindbox.ru/docs/ios-sdk-initialization"
             }
         }
     }
