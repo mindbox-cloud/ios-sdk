@@ -195,4 +195,25 @@ struct MindboxOperationsTests {
         #expect(result?.onMain == true)
         #expect(result?.isFailure == true)
     }
+
+    @Test("executeSyncOperation with invalid JSON delivers a .failure on the main thread")
+    func syncInvalidJSONDeliversFailureOnMain() async throws {
+        // Configure the SDK so the only path to a failure is the invalid-JSON branch, not
+        // the "Configuration is not set" early error. This pins the regression where invalid
+        // JSON dropped the operation without ever invoking `completion`, hanging the caller.
+        persistenceStorage.configuration = try MBConfiguration(endpoint: "test-endpoint", domain: "api.mindbox.ru")
+        persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000001"
+
+        let box = ResultBox<(onMain: Bool, isFailure: Bool)>()
+        Mindbox.shared.executeSyncOperation(operationSystemName: "Test.Sync", json: "not json at all") { result in
+            if case .failure = result {
+                box.set((Thread.isMainThread, true))
+            } else {
+                box.set((Thread.isMainThread, false))
+            }
+        }
+        let result = await waitForValue(in: box)
+        #expect(result?.onMain == true, "completion not delivered (nil) or delivered off main")
+        #expect(result?.isFailure == true, "invalid JSON must deliver a .failure, not a .success")
+    }
 }

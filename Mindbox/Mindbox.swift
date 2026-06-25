@@ -423,8 +423,8 @@ public class Mindbox: NSObject {
 
     /// Off-main tail of the executeSyncOperation overloads: build the sync event on
     /// eventQueue and hand it to EventRepository, which delivers `completion` on main.
-    /// Invalid JSON drops the operation without invoking `completion` - long-standing
-    /// behavior, fix ticketed. The repository is resolved at call time on purpose.
+    /// Invalid JSON fails the operation with a `.parsing` error delivered on main, so the
+    /// completion contract holds on every path. The repository is resolved at call time on purpose.
     private func enqueueSyncEvent<P: OperationResponseType>(
         operationSystemName: String,
         payloadJSON: String,
@@ -435,6 +435,9 @@ public class Mindbox: NSObject {
         eventQueue.async { [self] in
             if validatePayloadAsJSON, !Self.isValidJSON(payloadJSON) {
                 Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
+                // Match the EventRepository contract: completion is always delivered, on main.
+                let error = MindboxError(.init(errorKey: .parsing, reason: "Operation body is not valid JSON"))
+                DispatchQueue.main.async { completion(.failure(error)) }
                 return
             }
             let customEvent = CustomEvent(name: operationSystemName, payload: payloadJSON)
