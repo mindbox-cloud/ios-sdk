@@ -372,9 +372,11 @@ extension MBPersistenceStorage {
 /// fallback store and the App Group suite — the fingerprint of a device that ran in local
 /// fallback while the App Group was unavailable and silently re-registered once it became
 /// available. Read-only by design: it never mutates either store, so a re-break stays a
-/// continuing install and any cleanup is left to a future carry-over migration. Fires on the
-/// launch after the fix (the suite is empty until re-registration) and on each cold start
-/// while the fingerprint persists.
+/// continuing install and any cleanup is left to a future carry-over migration.
+///
+/// `reportIfNeeded()` runs before re-registration writes the marker to the suite, so the recovery
+/// launch itself does not fire (the suite is still empty then); it first fires on the next cold
+/// start, and on every cold start after while the fingerprint persists.
 struct AppGroupStorageTransitionReporter {
 
     private let localDefaults: UserDefaults
