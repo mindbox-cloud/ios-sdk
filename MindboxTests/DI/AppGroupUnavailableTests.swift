@@ -52,13 +52,17 @@ struct AppGroupUnavailableTests {
     /// fetcher reporting `""`.
     @Test
     func persistenceStorageFallsBackToStandardWhenAppGroupEmpty() {
-        // `buildTestContainer` and `mode` are global; restore both so this minimal
-        // container can't leak into later `.test`-mode tests that expect the full stub builder.
+        // `buildTestContainer` and `mode` are global; restore both so this minimal container
+        // can't leak into later `.test`-mode tests that expect the full stub builder.
+        // `MBPersistenceStorage(defaults:)` also writes the static `MBPersistenceStorage.defaults`,
+        // so save/restore that too.
         let savedBuilder = MBInject.buildTestContainer
         let savedMode = MBInject.mode
+        let savedDefaults = MBPersistenceStorage.defaults
         defer {
             MBInject.buildTestContainer = savedBuilder
             MBInject.mode = savedMode
+            MBPersistenceStorage.defaults = savedDefaults
         }
 
         MBInject.buildTestContainer = {
@@ -142,5 +146,32 @@ struct AppGroupStorageTransitionReporterTests {
 
         #expect(didReport == false)
         #expect(MBPersistenceStorage.isInstalled(in: store) == true)
+    }
+
+    /// Production-fidelity guard for the reporter's core assumption (issue #705 review): a real App
+    /// Group suite must NOT read through to `.standard`'s domain. If it did, `isInstalled(in: suite)`
+    /// would be true whenever `.standard` holds the marker, collapsing the "in BOTH stores" check and
+    /// firing on the recovery launch regardless of re-registration. Confirmed on a real device
+    /// (re-registration runs ⇒ the suite didn't see `.standard`'s marker) and locked in here — the
+    /// test runner, unlike a command-line process, has a real bundle id, so the search lists are real.
+    @Test("A real App Group suite does not read through to .standard's install marker")
+    func suiteDoesNotReadThroughToStandard() {
+        let key = MBPersistenceStorage.installationDataKey
+        let group = "group.cloud.Mindbox.ReadThroughProbe"
+        let suite = UserDefaults(suiteName: group)!
+
+        // Save/restore `.standard`'s real value so this can't pollute the (serialized) run.
+        let savedStandard = UserDefaults.standard.object(forKey: key)
+        defer {
+            if let savedStandard { UserDefaults.standard.set(savedStandard, forKey: key) }
+            else { UserDefaults.standard.removeObject(forKey: key) }
+            suite.removePersistentDomain(forName: group)
+        }
+
+        suite.removePersistentDomain(forName: group)                  // suite's own domain empty
+        UserDefaults.standard.set("23.05.2026 10:00:00", forKey: key) // marker only in .standard
+
+        #expect(MBPersistenceStorage.isInstalled(in: .standard) == true)
+        #expect(MBPersistenceStorage.isInstalled(in: suite) == false) // no read-through
     }
 }
