@@ -329,7 +329,6 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  abbrev
   cocoapods
   fastlane
 
