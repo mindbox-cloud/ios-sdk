@@ -368,8 +368,8 @@ extension MBPersistenceStorage {
 
 /// Reports (issue #705 follow-up) a fallback-then-recovery fingerprint: install state in BOTH the
 /// `.standard` fallback and the App Group suite. Read-only by design (cleanup deferred to a future
-/// migration). Runs before re-registration, so it first fires on the cold start after the recovery
-/// launch, then on every cold start while the fingerprint persists.
+/// migration). Runs after re-registration, so it fires on the recovery launch itself and on every
+/// cold start while the fingerprint persists.
 struct AppGroupStorageTransitionReporter {
 
     private let localDefaults: UserDefaults
