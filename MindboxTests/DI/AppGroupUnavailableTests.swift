@@ -11,9 +11,8 @@ import CoreData
 import MindboxLogger
 @testable import Mindbox
 
-/// Regression coverage for issue #705 on the core SDK path: when the App Group container is
-/// unavailable the SDK must degrade to local storage, not crash the host. Serialized — the cases
-/// mutate global `MBInject` / `MBPersistenceStorage.defaults` / `MBPersistentContainer`.
+/// #705 core-SDK fallback: an unavailable App Group must degrade to local storage, not crash.
+/// Serialized — the cases mutate global `MBInject` / `MBPersistenceStorage.defaults` / `MBPersistentContainer`.
 @Suite("App Group unavailable — core SDK fallback", .serialized)
 struct AppGroupUnavailableTests {
 
@@ -34,7 +33,6 @@ struct AppGroupUnavailableTests {
         #expect(id.isEmpty || id.hasPrefix("group.cloud.Mindbox."))
     }
 
-    /// Empty App Group → the DI factory must back storage with `UserDefaults.standard`, not crash.
     @Test
     func persistenceStorageFallsBackToStandardWhenAppGroupEmpty() {
         // All three are global (and `MBPersistenceStorage(defaults:)` writes the static `.defaults`);
@@ -60,14 +58,15 @@ struct AppGroupUnavailableTests {
         #expect(MBPersistenceStorage.defaults === UserDefaults.standard)
     }
 
-    /// Empty App Group → `containerURL("")` is nil, so the events store's `defaultDirectoryURL()`
-    /// must fall through to `super`'s app-local directory rather than crash.
-    @Test
-    func eventsStoreFallsBackToLocalDirectoryWhenAppGroupEmpty() {
+    /// Unavailable App Group (nil id from the logger path, "" from the core fetcher) → the events
+    /// store's directory must fall through to the app-local default rather than crash. Covers both
+    /// `MBPersistentContainer.defaultDirectoryURL()` fallbacks: the nil guard and `containerURL("") ?? super`.
+    @Test(arguments: [nil, ""] as [String?])
+    func eventsStoreFallsBackToLocalDirectory(groupId: String?) {
         let saved = MBPersistentContainer.applicationGroupIdentifier
         defer { MBPersistentContainer.applicationGroupIdentifier = saved }
 
-        MBPersistentContainer.applicationGroupIdentifier = ""
+        MBPersistentContainer.applicationGroupIdentifier = groupId
         #expect(MBPersistentContainer.defaultDirectoryURL() == NSPersistentContainer.defaultDirectoryURL())
     }
 }
@@ -123,23 +122,24 @@ struct AppGroupStorageTransitionReporterTests {
         #expect(MBPersistenceStorage.isInstalled(in: store) == true)
     }
 
-    /// The reporter assumes a real App Group suite does NOT read through to `.standard`; if it did,
+    /// The reporter relies on the App Group suite NOT reading through to `.standard`; otherwise
     /// `isInstalled(in: suite)` would be true whenever `.standard` holds the marker and it would
-    /// mis-fire. Verified on device; locked here (the runner has a real bundle id → real search lists).
-    @Test("A real App Group suite does not read through to .standard's install marker")
+    /// mis-fire. A separately-registered suite is its own read domain, so this holds — the real
+    /// provisioned-App-Group case was confirmed on device; the runner exercises the same isolation.
+    @Test("A separate UserDefaults suite does not read through to .standard's install marker")
     func suiteDoesNotReadThroughToStandard() {
         let key = MBPersistenceStorage.installationDataKey
         let group = "group.cloud.Mindbox.ReadThroughProbe"
         let suite = UserDefaults(suiteName: group)!
 
-        let savedStandard = UserDefaults.standard.object(forKey: key)   // save/restore: don't pollute the run
+        let savedStandard = UserDefaults.standard.object(forKey: key)
         defer {
             if let savedStandard { UserDefaults.standard.set(savedStandard, forKey: key) }
             else { UserDefaults.standard.removeObject(forKey: key) }
             suite.removePersistentDomain(forName: group)
         }
 
-        suite.removePersistentDomain(forName: group)                   // suite's own domain empty
+        suite.removePersistentDomain(forName: group)
         UserDefaults.standard.set("23.05.2026 10:00:00", forKey: key)  // marker only in .standard
 
         #expect(MBPersistenceStorage.isInstalled(in: .standard) == true)
