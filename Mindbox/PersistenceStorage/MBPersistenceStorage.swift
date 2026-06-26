@@ -356,34 +356,27 @@ fileprivate extension UserDefaults {
 
 extension MBPersistenceStorage {
 
-    /// Backing key for `isInstalled`, exposed so the storage-transition reporter can probe a
-    /// specific store (`.standard` vs. the App Group suite) without duplicating the raw string.
+    /// Backing key for `isInstalled`, exposed so the reporter can probe a specific store.
     static var installationDataKey: String {
         UserDefaultsWrapper<String>.Key.installationData.rawValue
     }
 
-    /// Whether install state is present in `defaults`, independent of the active store.
     static func isInstalled(in defaults: UserDefaults) -> Bool {
         defaults.object(forKey: installationDataKey) != nil
     }
 }
 
-/// Reports (issue #705 follow-up) when install state is present in BOTH the local `.standard`
-/// fallback store and the App Group suite — the fingerprint of a device that ran in local
-/// fallback while the App Group was unavailable and silently re-registered once it became
-/// available. Read-only by design: it never mutates either store, so a re-break stays a
-/// continuing install and any cleanup is left to a future carry-over migration.
-///
-/// `reportIfNeeded()` runs before re-registration writes the marker to the suite, so the recovery
-/// launch itself does not fire (the suite is still empty then); it first fires on the next cold
-/// start, and on every cold start after while the fingerprint persists.
+/// Reports (issue #705 follow-up) when install state is in BOTH the local `.standard` fallback and
+/// the App Group suite — the fingerprint of a device that ran in fallback while the App Group was
+/// unavailable, then re-registered once it became available. Read-only: never mutates either store;
+/// cleanup is left to a future carry-over migration. Runs before re-registration, so it first fires
+/// on the cold start *after* the recovery launch, then on every cold start while the fingerprint persists.
 struct AppGroupStorageTransitionReporter {
 
     private let localDefaults: UserDefaults
     private let sharedDefaults: UserDefaults?
 
-    /// `activeDefaults` is the store the SDK currently persists to (the App Group suite when
-    /// available, else `.standard`); when it *is* the local store there is nothing to compare.
+    /// In fallback the active store *is* `.standard`, so there's nothing to compare.
     init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
          localDefaults: UserDefaults = .standard) {
         self.localDefaults = localDefaults
