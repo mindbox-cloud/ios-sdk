@@ -366,11 +366,10 @@ extension MBPersistenceStorage {
     }
 }
 
-/// Reports (issue #705 follow-up) when install state is in BOTH the local `.standard` fallback and
-/// the App Group suite — the fingerprint of a device that ran in fallback while the App Group was
-/// unavailable, then re-registered once it became available. Read-only: never mutates either store;
-/// cleanup is left to a future carry-over migration. Runs before re-registration, so it first fires
-/// on the cold start *after* the recovery launch, then on every cold start while the fingerprint persists.
+/// Reports (issue #705 follow-up) a fallback-then-recovery fingerprint: install state in BOTH the
+/// `.standard` fallback and the App Group suite. Read-only by design (cleanup deferred to a future
+/// migration). Runs before re-registration, so it first fires on the cold start after the recovery
+/// launch, then on every cold start while the fingerprint persists.
 struct AppGroupStorageTransitionReporter {
 
     private let localDefaults: UserDefaults
@@ -393,7 +392,7 @@ struct AppGroupStorageTransitionReporter {
             message: "[Storage] Install state found in BOTH the local fallback store and the "
                 + "App Group suite. The device ran in local-storage fallback (App Group "
                 + "unavailable) and the App Group has since become available, so the install was "
-                + "re-registered on the shared container (deviceUUID stays stable via IDFV; "
+                + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
                 + "in-app caps/counters reset).",
             level: .fault,
             category: .general
