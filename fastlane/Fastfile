@@ -1,0 +1,72 @@
+PROJECT = "Mindbox.xcodeproj"
+
+desc "Build for testing"
+lane :buildLane do
+  scan(
+    project: PROJECT,
+    scheme: "Mindbox",
+    xcodebuild_formatter: "",
+    derived_data_path: "derivedData",
+    build_for_testing: true,
+    xcargs: "CI=true"
+  )
+end
+
+desc "Run unit tests"
+lane :unitTestLane do
+  scan(
+    project: PROJECT,
+    scheme: "Mindbox",
+    prelaunch_simulator: true,
+    testplan: "Mindbox",
+    clean: true,
+    output_directory: "test_output",
+    output_types: "junit",
+    xcodebuild_formatter: "xcbeautify",
+    result_bundle: true,
+    disable_concurrent_testing: true,
+    test_without_building: false,
+    xcargs: "CI=true"
+  )
+end
+
+# MARK: - Sanitizer lanes (nightly scaffolding — intentionally NOT wired into CI yet)
+# Each runs the full unit-test set under a dedicated sanitizer test plan.
+# They are expected to stay red until the data races ThreadSanitizer surfaced
+# are fixed, so keep them off the PR/develop pipeline and run on a schedule.
+
+desc "Run tests under ThreadSanitizer (nightly; not wired to CI yet)"
+lane :threadSanitizerLane do
+  scan(
+    project: PROJECT,
+    scheme: "Mindbox",
+    prelaunch_simulator: true,
+    testplan: "ThreadSanitizer",
+    clean: true,
+    output_directory: "test_output_tsan",
+    output_types: "junit",
+    xcodebuild_formatter: "xcbeautify",
+    result_bundle: true,
+    disable_concurrent_testing: true,
+    test_without_building: false,
+    xcargs: "CI=true"
+  )
+end
+
+desc "Run tests under AddressSanitizer (nightly; not wired to CI yet)"
+lane :addressSanitizerLane do
+  scan(
+    project: PROJECT,
+    scheme: "Mindbox",
+    prelaunch_simulator: true,
+    testplan: "AddressSanitizer",
+    clean: true,
+    output_directory: "test_output_asan",
+    output_types: "junit",
+    xcodebuild_formatter: "xcbeautify",
+    result_bundle: true,
+    disable_concurrent_testing: true,
+    test_without_building: false,
+    xcargs: "CI=true"
+  )
+end
