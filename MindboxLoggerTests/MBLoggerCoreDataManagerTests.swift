@@ -11,11 +11,9 @@ import Foundation
 import UIKit
 @preconcurrency @testable import MindboxLogger
 
-/// Serialized: several tests post global `UIApplication` background/foreground
-/// notifications, which every live `MBLoggerCoreDataManager` instance observes.
-/// Under Swift Testing's default parallelism those posts would flip
-/// `writesImmediately` on other tests' managers mid-run (XCTest masked this by
-/// running a class's methods serially).
+/// Serialized so the global `UIApplication` background/foreground notifications these
+/// tests post don't interleave *within this suite* (the posts flip `writesImmediately`
+/// on every live manager). Note: `.serialized` orders only this suite, not parallel ones.
 @Suite("MBLoggerCoreDataManager", .tags(.storage, .storageState), .serialized)
 struct MBLoggerCoreDataManagerTests {
 

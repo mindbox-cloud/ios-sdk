@@ -57,8 +57,8 @@ struct FileManagerStoreURLTests {
             descriptions: nil
         )
         let loader = LoggerDatabaseLoader(config)
-        defer { try? loader.destroyIfExists() }
-
+        // No teardown: this resolves to the real Caches store that
+        // `MBLoggerCoreDataManager.shared` uses, so destroying it would race sibling suites.
         let (container, _) = try loader.loadContainer()
 
         let stores = container.persistentStoreCoordinator.persistentStores

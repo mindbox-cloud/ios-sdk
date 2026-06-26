@@ -31,12 +31,18 @@ struct LoggerPersistenceInternalsTests {
         #expect(manager.debugLogBufferCount == 0)
         #expect(manager.debugLogBufferCapacity >= manager.debugBatchSize)
 
-        // getter/setter round-trips
-        let context = manager.debugContext
-        manager.debugContext = context
-        let state = manager.debugStorageState
-        manager.debugStorageState = state
-        #expect(manager.debugStorageState == state)
+        // Setters actually persist the value: flip to a distinct value, assert, restore.
+        let originalState = manager.debugStorageState
+        manager.debugStorageState = .disabled
+        #expect(manager.debugStorageState == .disabled)
+        manager.debugStorageState = originalState
+        #expect(manager.debugStorageState == originalState)
+
+        let originalContext = manager.debugContext
+        manager.debugContext = nil
+        #expect(manager.debugContext == nil)
+        manager.debugContext = originalContext
+        #expect(manager.debugContext === originalContext)
 
         manager.debugWriteBufferToCD()
         MBLoggerCoreDataManager.drainQueue(manager)

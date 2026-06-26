@@ -9,35 +9,32 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-/// `MBLogger.shared.logLevel` is a process-wide, unsynchronized property. Rather than
-/// mutate it (which would race with every other suite that reads it through `Logger.*`),
-/// these tests only *read* the ambient level and pick a message level relative to it —
-/// keeping the suite race-free under parallel execution.
+/// `logLevel` is process-wide and unsynchronized, so these tests only *read* it (mutating it
+/// would race every suite that logs through `Logger.*`). They're smoke tests: each drives a
+/// `log(...)` dispatch path for coverage and asserts only that it doesn't trap — the OS-log /
+/// shared-CD side effects aren't observable here without a production seam.
 @Suite("MBLogger singleton", .tags(.loggingAPI))
 struct MBLoggerTests {
 
-    @Test("Internal log writes through to the OS writer when the level meets the threshold")
-    func internalLogProceeds() {
-        // Logging *at* the configured level satisfies `logLevel <= level`, so the message
-        // reaches makeWriter() / OSLogWriter.writeMessage.
+    @Test("Internal log at/above threshold runs the full write path without trapping")
+    func internalLogAtThresholdDoesNotTrap() {
         let level = MBLogger.shared.logLevel
         MBLogger.shared.log(level: level, message: "passes threshold",
                             date: Date(), category: .general, subsystem: "cloud.Mindbox")
     }
 
-    @Test("Internal log short-circuits when the message level is below the threshold")
-    func internalLogBelowThreshold() {
-        // Pick a level strictly below the configured one so the level guard returns early.
-        // (.debug is the lowest level; if logging is already at .debug there is nothing
-        // below it, so the early-return branch is only exercised when it is reachable.)
+    @Test("Internal log below threshold short-circuits without trapping")
+    func internalLogBelowThresholdDoesNotTrap() {
+        // .debug is the lowest level; if logging is already there the early-return arm is
+        // unreachable, so only exercise it when a strictly-lower level exists.
         let level = MBLogger.shared.logLevel
         guard level > .debug else { return }
         MBLogger.shared.log(level: .debug, message: "below threshold",
                             date: Date(), category: .general, subsystem: "cloud.Mindbox")
     }
 
-    @Test("Public log forwards to Logger.common")
-    func publicLogForwards() {
+    @Test("Public log entry point runs without trapping")
+    func publicLogDoesNotTrap() {
         MBLogger.shared.log(level: .debug, message: "public entry point")
     }
 }
