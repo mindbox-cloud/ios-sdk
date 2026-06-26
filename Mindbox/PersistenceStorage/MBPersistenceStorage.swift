@@ -394,7 +394,7 @@ struct AppGroupStorageTransitionReporter {
                 + "unavailable) and the App Group has since become available, so the install was "
                 + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
                 + "in-app caps/counters reset).",
-            level: .fault,
+            level: .info,
             category: .general
         )
         return true
