@@ -29,20 +29,25 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         return bundle
     }()
 
+    /// Identifier of the shared App Group container for the SDK's persistent storage
+    /// (events database + `UserDefaults` suite).
+    ///
+    /// Returns `""` when the host bundle id is missing or the container is unavailable,
+    /// so the SDK falls back to local storage instead of crashing the host (issue #705).
+    /// Must never trap — not even in Debug: Debug builds on device farms routinely lack a
+    /// configured App Group, the exact scenario #705 is about. Surfaced as a `.fault` log.
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
-            fatalError("CFBundleShortVersionString not found for host app")
+            Logger.common(message: "[MBUtilitiesFetcher] Host application bundle identifier is unavailable", level: .fault, category: .general)
+            return ""
         }
         let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
-        let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
-        guard url != nil else {
-            #if targetEnvironment(simulator)
-            return ""
-            #else
-            let message = "AppGroup for \(hostApplicationName) not found. Add AppGroup with value: \(identifier)"
+        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
+            let message = "App Group '\(identifier)' container is unavailable. "
+                + "Enable the App Group capability with this exact value on every target (app + extensions). "
+                + "See https://developers.mindbox.ru/docs/ios-sdk-initialization"
             Logger.common(message: message, level: .fault, category: .general)
-            fatalError(message)
-            #endif
+            return ""
         }
         return identifier
     }

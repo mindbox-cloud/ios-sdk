@@ -351,3 +351,52 @@ fileprivate extension UserDefaults {
         return object(forKey: key) != nil
     }
 }
+
+// MARK: - Install-state probing across stores
+
+extension MBPersistenceStorage {
+
+    /// Backing key for `isInstalled`, exposed so the reporter can probe a specific store.
+    static var installationDataKey: String {
+        UserDefaultsWrapper<String>.Key.installationData.rawValue
+    }
+
+    static func isInstalled(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: installationDataKey) != nil
+    }
+}
+
+/// Reports (issue #705 follow-up) a fallback-then-recovery fingerprint: install state in BOTH the
+/// `.standard` fallback and the App Group suite. Read-only by design (cleanup deferred to a future
+/// migration). Runs after re-registration, so it fires on the recovery launch itself and on every
+/// cold start while the fingerprint persists.
+struct AppGroupStorageTransitionReporter {
+
+    private let localDefaults: UserDefaults
+    private let sharedDefaults: UserDefaults?
+
+    /// In fallback the active store *is* `.standard`, so there's nothing to compare.
+    init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
+         localDefaults: UserDefaults = .standard) {
+        self.localDefaults = localDefaults
+        self.sharedDefaults = (activeDefaults === localDefaults) ? nil : activeDefaults
+    }
+
+    @discardableResult
+    func reportIfNeeded() -> Bool {
+        guard let sharedDefaults else { return false }
+        guard MBPersistenceStorage.isInstalled(in: localDefaults),
+              MBPersistenceStorage.isInstalled(in: sharedDefaults) else { return false }
+
+        Logger.common(
+            message: "[Storage] Install state found in BOTH the local fallback store and the "
+                + "App Group suite. The device ran in local-storage fallback (App Group "
+                + "unavailable) and the App Group has since become available, so the install was "
+                + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
+                + "in-app caps/counters reset).",
+            level: .info,
+            category: .general
+        )
+        return true
+    }
+}

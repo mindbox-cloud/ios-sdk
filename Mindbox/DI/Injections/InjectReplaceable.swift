@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MindboxLogger
 
 extension MBContainer {
     func registerReplaceableUtilities() -> Self {
@@ -29,10 +30,21 @@ extension MBContainer {
 
         register(PersistenceStorage.self) {
             let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-            guard let defaults = UserDefaults(suiteName: utilitiesFetcher.applicationGroupIdentifier) else {
-                assertionFailure("Failed to create UserDefaults with suite name: \(utilitiesFetcher.applicationGroupIdentifier). Check and set up your AppGroups correctly.")
-                return MBPersistenceStorage(defaults: UserDefaults.standard)
+            let appGroup = utilitiesFetcher.applicationGroupIdentifier
+
+            guard !appGroup.isEmpty else {
+                // App Group unavailable (already reported by the fetcher) — fall back to
+                // `.standard` so the SDK keeps working instead of crashing the host (issue #705).
+                // A later App Group fix re-registers the install; see `AppGroupStorageTransitionReporter`.
+                return MBPersistenceStorage(defaults: .standard)
             }
+
+            guard let defaults = UserDefaults(suiteName: appGroup) else {
+                // Unreachable for a resolved App Group id; degrade without trapping (issue #705).
+                Logger.common(message: "[PersistenceStorage] UserDefaults(suiteName: \(appGroup)) failed; using .standard.", level: .fault, category: .general)
+                return MBPersistenceStorage(defaults: .standard)
+            }
+
             return MBPersistenceStorage(defaults: defaults)
         }
 

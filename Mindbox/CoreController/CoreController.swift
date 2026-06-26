@@ -40,6 +40,8 @@ final class CoreController {
                 self.repeatInitialization(with: configuration)
             }
 
+            AppGroupStorageTransitionReporter().reportIfNeeded()
+
             self.guaranteedDeliveryManager.canScheduleOperations = true
 
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
