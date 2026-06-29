@@ -303,7 +303,10 @@ public class Mindbox: NSObject {
         operationBody: T,
         completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
     ) where T: OperationBodyRequestType {
-        guard validateOperationName(operationSystemName) else { return }
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
+            return
+        }
         // Caller-side encode: same mutable-body snapshot contract as executeAsyncOperation.
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON, completion: completion)
@@ -322,7 +325,10 @@ public class Mindbox: NSObject {
         json: String,
         completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
     ) {
-        guard validateOperationName(operationSystemName) else { return }
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
+            return
+        }
         enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: json, validatePayloadAsJSON: true, completion: completion)
     }
 
@@ -343,7 +349,10 @@ public class Mindbox: NSObject {
         customResponseType: P.Type,
         completion: @escaping (Result<P, MindboxError>) -> Void
     ) where T: OperationBodyRequestType, P: OperationResponseType {
-        guard validateOperationName(operationSystemName) else { return }
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
+            return
+        }
         // Caller-side encode: same mutable-body snapshot contract as executeAsyncOperation.
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
         enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON, completion: completion)
@@ -396,6 +405,20 @@ public class Mindbox: NSObject {
         return true
     }
 
+    /// Delivers a `.validationError` failure on the main thread for sync operation overloads
+    /// that detect an invalid input before reaching the event queue.
+    private func failSyncOperation<P>(
+        reason: String,
+        location: String = "operationSystemName",
+        completion: @escaping (Result<P, MindboxError>) -> Void
+    ) {
+        let error = MindboxError.validationError(ValidationError(
+            status: .validationError,
+            validationMessages: [ValidationMessage(message: reason, location: location)]
+        ))
+        DispatchQueue.main.async { completion(.failure(error)) }
+    }
+
     /// Off-main tail of the executeAsyncOperation overloads: build the event on eventQueue
     /// and persist it for guaranteed delivery. `payloadJSON` must be an immutable snapshot
     /// taken on the caller; host-provided JSON strings are validated here, off-main.
@@ -423,8 +446,8 @@ public class Mindbox: NSObject {
 
     /// Off-main tail of the executeSyncOperation overloads: build the sync event on
     /// eventQueue and hand it to EventRepository, which delivers `completion` on main.
-    /// Invalid JSON drops the operation without invoking `completion` - long-standing
-    /// behavior, fix ticketed. The repository is resolved at call time on purpose.
+    /// Invalid JSON fails the operation with a `.validationError` delivered on main, so the
+    /// completion contract holds on every path. The repository is resolved at call time on purpose.
     private func enqueueSyncEvent<P: OperationResponseType>(
         operationSystemName: String,
         payloadJSON: String,
@@ -435,6 +458,7 @@ public class Mindbox: NSObject {
         eventQueue.async { [self] in
             if validatePayloadAsJSON, !Self.isValidJSON(payloadJSON) {
                 Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
+                self.failSyncOperation(reason: "Operation body is not valid JSON", location: "operationBody", completion: completion)
                 return
             }
             let customEvent = CustomEvent(name: operationSystemName, payload: payloadJSON)

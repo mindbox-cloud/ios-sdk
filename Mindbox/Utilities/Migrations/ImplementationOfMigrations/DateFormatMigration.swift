@@ -64,11 +64,27 @@ final class DateFormatMigration: MigrationProtocol {
         }
 
         let base = Locale.current.identifier
-        // Join the hour-cycle Unicode keyword with the correct separator: `@` for the first
-        // keyword, `;` if the current identifier already carries one (e.g. `@calendar=…`).
+        // Rebuild the identifier with the hour cycle forced. iOS encodes the device's 12h/24h
+        // setting straight into `Locale.current` as an `@hours=…` keyword, so naively appending a
+        // second `hours=` would produce a duplicate (`…@hours=h12;hours=h23`) that ICU resolves to
+        // the *first* occurrence — silently defeating the override and leaving every candidate on
+        // the device's own hour cycle. We therefore strip any pre-existing hour-cycle keyword
+        // (`hours`/`hc`) before adding ours, while preserving the rest (language, region, calendar…).
         func identifier(forcingHourCycle hourCycle: String) -> String {
-            let separator = base.contains("@") ? ";" : "@"
-            return base + separator + "hours=" + hourCycle
+            let parts = base.split(separator: "@", maxSplits: 1, omittingEmptySubsequences: false)
+            let languageAndRegion = String(parts[0])
+            var keywords: [(key: String, value: String)] = []
+            if parts.count == 2 {
+                for keyword in parts[1].split(separator: ";") {
+                    let pair = keyword.split(separator: "=", maxSplits: 1)
+                    guard pair.count == 2 else { continue }
+                    keywords.append((String(pair[0]), String(pair[1])))
+                }
+            }
+            keywords.removeAll { $0.key == "hours" || $0.key == "hc" }
+            keywords.append(("hours", hourCycle))
+            let keywordString = keywords.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
+            return languageAndRegion + "@" + keywordString
         }
 
         return [
