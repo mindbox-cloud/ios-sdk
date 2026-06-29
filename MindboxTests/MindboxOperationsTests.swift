@@ -196,41 +196,41 @@ struct MindboxOperationsTests {
         #expect(result?.isFailure == true)
     }
 
-    @Test("executeSyncOperation with invalid name delivers a .failure on the main thread")
-    func syncInvalidNameDeliversFailureOnMain() async {
+    @Test("executeSyncOperation with invalid name delivers a .validationError on the main thread")
+    func syncInvalidNameDeliversValidationErrorOnMain() async {
         // configuration is nil after reset() in init, but name validation fires before
         // enqueueSyncEvent is called — so the completion must arrive regardless.
-        let box = ResultBox<(onMain: Bool, isFailure: Bool)>()
+        let box = ResultBox<(onMain: Bool, isValidationError: Bool)>()
         Mindbox.shared.executeSyncOperation(operationSystemName: "плохое имя", json: "{}") { result in
-            if case .failure = result {
-                box.set((Thread.isMainThread, true))
+            if case .failure(.validationError(let error)) = result {
+                box.set((Thread.isMainThread, error.validationMessages.first?.location == "operationSystemName"))
             } else {
                 box.set((Thread.isMainThread, false))
             }
         }
         let result = await waitForValue(in: box)
         #expect(result?.onMain == true, "completion not delivered (nil) or delivered off main")
-        #expect(result?.isFailure == true, "invalid name must deliver a .failure, not a .success")
+        #expect(result?.isValidationError == true, "invalid name must deliver a .validationError located on operationSystemName")
     }
 
-    @Test("executeSyncOperation with invalid JSON delivers a .failure on the main thread")
-    func syncInvalidJSONDeliversFailureOnMain() async throws {
+    @Test("executeSyncOperation with invalid JSON delivers a .validationError on the main thread")
+    func syncInvalidJSONDeliversValidationErrorOnMain() async throws {
         // Configure the SDK so the only path to a failure is the invalid-JSON branch, not
         // the "Configuration is not set" early error. This pins the regression where invalid
         // JSON dropped the operation without ever invoking `completion`, hanging the caller.
         persistenceStorage.configuration = try MBConfiguration(endpoint: "test-endpoint", domain: "api.mindbox.ru")
         persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000001"
 
-        let box = ResultBox<(onMain: Bool, isFailure: Bool)>()
+        let box = ResultBox<(onMain: Bool, isValidationError: Bool)>()
         Mindbox.shared.executeSyncOperation(operationSystemName: "Test.Sync", json: "not json at all") { result in
-            if case .failure = result {
-                box.set((Thread.isMainThread, true))
+            if case .failure(.validationError(let error)) = result {
+                box.set((Thread.isMainThread, error.validationMessages.first?.location == "operationBody"))
             } else {
                 box.set((Thread.isMainThread, false))
             }
         }
         let result = await waitForValue(in: box)
         #expect(result?.onMain == true, "completion not delivered (nil) or delivered off main")
-        #expect(result?.isFailure == true, "invalid JSON must deliver a .failure, not a .success")
+        #expect(result?.isValidationError == true, "invalid JSON must deliver a .validationError located on operationBody")
     }
 }

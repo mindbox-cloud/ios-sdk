@@ -409,11 +409,12 @@ public class Mindbox: NSObject {
     /// that detect an invalid input before reaching the event queue.
     private func failSyncOperation<P>(
         reason: String,
+        location: String = "operationSystemName",
         completion: @escaping (Result<P, MindboxError>) -> Void
     ) {
         let error = MindboxError.validationError(ValidationError(
             status: .validationError,
-            validationMessages: [ValidationMessage(message: reason, location: "operationSystemName")]
+            validationMessages: [ValidationMessage(message: reason, location: location)]
         ))
         DispatchQueue.main.async { completion(.failure(error)) }
     }
@@ -445,7 +446,7 @@ public class Mindbox: NSObject {
 
     /// Off-main tail of the executeSyncOperation overloads: build the sync event on
     /// eventQueue and hand it to EventRepository, which delivers `completion` on main.
-    /// Invalid JSON fails the operation with a `.parsing` error delivered on main, so the
+    /// Invalid JSON fails the operation with a `.validationError` delivered on main, so the
     /// completion contract holds on every path. The repository is resolved at call time on purpose.
     private func enqueueSyncEvent<P: OperationResponseType>(
         operationSystemName: String,
@@ -457,7 +458,7 @@ public class Mindbox: NSObject {
         eventQueue.async { [self] in
             if validatePayloadAsJSON, !Self.isValidJSON(payloadJSON) {
                 Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
-                self.failSyncOperation(reason: "Operation body is not valid JSON", completion: completion)
+                self.failSyncOperation(reason: "Operation body is not valid JSON", location: "operationBody", completion: completion)
                 return
             }
             let customEvent = CustomEvent(name: operationSystemName, payload: payloadJSON)
