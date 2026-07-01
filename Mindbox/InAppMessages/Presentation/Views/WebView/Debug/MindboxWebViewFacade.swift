@@ -400,6 +400,7 @@ final class WebViewShowProfiler {
     private var t0: CFAbsoluteTime?
     private var marks: [(label: String, ms: Double)] = []
     private var jsMarks: [String: Int] = [:]
+    private var jsByendpointUrl = ""
     private var mode = "?"
     private var finalized = false
 
@@ -445,7 +446,11 @@ final class WebViewShowProfiler {
         }
         lock.lock()
         for (key, value) in dict {
-            if let number = value as? NSNumber { jsMarks[key] = number.intValue }
+            if let number = value as? NSNumber {
+                jsMarks[key] = number.intValue
+            } else if key == "byendpointUrl", let str = value as? String {
+                jsByendpointUrl = str
+            }
         }
         lock.unlock()
         logSummary()
@@ -464,14 +469,15 @@ final class WebViewShowProfiler {
         let jsStr = jsOrder
             .compactMap { key in jsMarks[key].map { "\(key)=\(navStart + $0)" } }
             .joined(separator: " ")
-        let extra = ["resourceCount", "imageCount", "transferBytes", "lcpSize", "finalizedByCap"]
+        let extra = ["resourceCount", "imageCount", "transferBytes", "lcpSize", "byendpointDur", "byendpointEnd", "finalizedByCap"]
             .compactMap { key in jsMarks[key].map { "\(key)=\($0)" } }
             .joined(separator: " ")
         let currentMode = mode
+        let beUrl = jsByendpointUrl
         lock.unlock()
 
         Logger.common(
-            message: "[WVProfile] SUMMARY mode=\(currentMode) | NATIVE \(nativeStr) | JS(from t0) \(jsStr) | \(extra)",
+            message: "[WVProfile] SUMMARY mode=\(currentMode) | NATIVE \(nativeStr) | JS(from t0) \(jsStr) | \(extra) | showBE=\(beUrl)",
             level: .info,
             category: .webViewInAppMessages
         )
@@ -503,8 +509,18 @@ final class WebViewShowProfiler {
         "https://mobile-static.mindbox.ru/stable/inapps/webview/content/main.js?v=1.0.29"
     ]
     private static let cacherFontsCSS = "https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
+
+    /// byendpoint.js with the SAME cachebust the tracker runtime uses: floor(now_ms / 5min).
+    /// (See tracker-frontend BatchedModulesLoader `Math.floor(now / FIVE_MINUTES)`.) Proven cacheable
+    /// within a 5-min bucket, so a prewarm in the same bucket as the show → cache hit → the first
+    /// show skips the ~322ms byendpoint download. Prototype: endpoint id hardcoded (`mpush-test.webview`);
+    /// a shipped cacher would derive it from the config endpoint.
+    private static var byendpointURL: String {
+        let bucket = Int(Date().timeIntervalSince1970 / 300)
+        return "https://web-static.mindbox.ru/js/byendpoint/mpush-test.webview.js?_=\(bucket)"
+    }
     private static var cacherHTML: String {
-        let scripts = cacherResources.map { "<script src=\"\($0)\"></script>" }.joined()
+        let scripts = (cacherResources + [byendpointURL]).map { "<script src=\"\($0)\"></script>" }.joined()
         return "<html><head><meta charset=\"utf-8\"><link rel=\"stylesheet\" href=\"\(cacherFontsCSS)\">\(scripts)</head><body></body></html>"
     }
 
@@ -523,7 +539,7 @@ final class WebViewShowProfiler {
             webView.loadHTMLString(cacherHTML, baseURL: URL(string: "https://inapp.local/popup"))
             warmWebView = webView
             warmIsForReuse = reuse
-            Logger.common(message: "[WVProfile] prewarm: cacher loaded, warming process (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral"))",
+            Logger.common(message: "[WVProfile] prewarm: cacher loaded (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral")) cacherBE=\(byendpointURL)",
                           level: .info, category: .webViewInAppMessages)
         }
     }
@@ -599,6 +615,9 @@ final class WebViewShowProfiler {
           rec('lastResourceEnd', lastResEnd);
           if (imgs.length) rec('lastImageEnd', lastImgEnd);
           rec('transferBytes', bytes);
+          // byendpoint.js timing — duration ~0 means it was served from cache, large means network.
+          var be = res.filter(function (r) { return /byendpoint/i.test(r.name); }).pop();
+          if (be) { rec('byendpointDur', be.duration); rec('byendpointEnd', be.responseEnd); marks.byendpointUrl = be.name; }
           rec('finalizedByCap', byCap ? 1 : 0);
           window.webkit.messageHandlers.MBProfiler.postMessage(marks);
         } catch (e) {
