@@ -50,6 +50,8 @@ public final class MindboxWebBridge: NSObject {
         super.init()
 
         let controller = webView.configuration.userContentController
+        // Idempotent: a reused WebView may still carry a previous show's handler of this name.
+        controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         controller.add(self, name: Constants.WebViewBridgeJS.handlerName)
         webView.navigationDelegate = self
     }

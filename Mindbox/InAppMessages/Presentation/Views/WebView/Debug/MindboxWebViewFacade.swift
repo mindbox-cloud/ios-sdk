@@ -92,8 +92,8 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         //   -MBWVReuseInstance   → reuse the pre-warmed WKWebView (live process) instead of a fresh one.
         let usesPersistentStore = WebViewShowProfiler.usesPersistentStore
         let webView: WKWebView
-        if let warm = WebViewShowProfiler.takeWarmWebViewForReuse() {
-            // Reused: process already alive; store + UA already set at prewarm.
+        if let warm = WebViewShowProfiler.borrowWarmWebView() {
+            // Reused: same live instance/process is kept across shows (hidden, not destroyed).
             webView = warm
             WebViewShowProfiler.shared.setMode((usesPersistentStore ? "persistent" : "ephemeral") + "+reuse")
         } else {
@@ -106,10 +106,13 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
             WebViewShowProfiler.shared.setMode(usesPersistentStore ? "persistent" : "ephemeral")
         }
 
-        // MEASUREMENT (throwaway): inject the timing probe + its handler; applies to the next
-        // (real) content load, whether the WebView is fresh or the reused warm one.
-        webView.configuration.userContentController.add(WebViewProfilerScriptHandler(), name: "MBProfiler")
-        webView.configuration.userContentController.addUserScript(
+        // MEASUREMENT (throwaway): inject the timing probe + its handler. Idempotent
+        // (remove-then-add) so reusing the same instance across shows never duplicates a handler.
+        let ucc = webView.configuration.userContentController
+        ucc.removeScriptMessageHandler(forName: "MBProfiler")
+        ucc.removeAllUserScripts()
+        ucc.add(WebViewProfilerScriptHandler(), name: "MBProfiler")
+        ucc.addUserScript(
             WKUserScript(source: WebViewShowProfiler.probeJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         )
         WebViewShowProfiler.shared.mark("webViewCreated")
@@ -479,14 +482,23 @@ final class WebViewShowProfiler {
         ProcessInfo.processInfo.arguments.contains("-MBWVPersistentStore")
     }
 
-    // MEASUREMENT (throwaway): pre-warming the WebKit web-content process. A warm WKWebView
-    // (matching data store + UA) that has loaded a page keeps a live process ready. Two modes:
+    // MEASUREMENT (throwaway): a session-persistent warm WKWebView. Created once at in-app
+    // subsystem start, loads a local "cacher" page (pulls tracker.js into the persistent cache
+    // and keeps the web-content process alive). Two modes:
     //   -MBWVPrewarm       → hold a throwaway warm WebView (WebKit reuses its prewarmed process).
-    //   -MBWVReuseInstance → hold it AND reuse the SAME instance for the show (live process,
-    //                        aims to remove the residual ~300ms spin-up left by prewarm-only).
-    // Invoked once at in-app subsystem start (seconds before any show).
+    //   -MBWVReuseInstance → hold it AND reuse the SAME live instance for EVERY show — it is
+    //                        borrowed (not consumed) and kept across shows (hidden, not destroyed),
+    //                        so show #2, #3… stay as fast as show #1.
     private static var warmWebView: WKWebView?
     private static var warmIsForReuse = false
+
+    /// Local cacher page: warms the process and seeds the persistent cache with tracker.js.
+    /// (Prototype: tracker.js URL hardcoded to the one this test in-app uses; a shipped cacher
+    /// would come from the backend and know the current tracker version + could preload forms.)
+    private static let trackerJSURL = "https://api.mindbox.ru/scripts/v1/tracker.js?v=1.0.29"
+    private static var cacherHTML: String {
+        "<html><head><meta charset=\"utf-8\"><script src=\"\(trackerJSURL)\"></script></head><body></body></html>"
+    }
 
     static func prewarmIfRequested() {
         let reuse = ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
@@ -500,19 +512,20 @@ final class WebViewShowProfiler {
             config.allowsInlineMediaPlayback = true
             config.mediaTypesRequiringUserActionForPlayback = []
             let webView = WKWebView(frame: .zero, configuration: config)
-            webView.loadHTMLString("<html><body></body></html>", baseURL: nil)
+            webView.loadHTMLString(cacherHTML, baseURL: URL(string: "https://inapp.local/popup"))
             warmWebView = webView
             warmIsForReuse = reuse
-            Logger.common(message: "[WVProfile] prewarm: warming web-content process (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral"))",
+            Logger.common(message: "[WVProfile] prewarm: cacher loaded, warming process (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral"))",
                           level: .info, category: .webViewInAppMessages)
         }
     }
 
-    /// Consumes the warm WebView for actual reuse (only under -MBWVReuseInstance); nil otherwise.
-    static func takeWarmWebViewForReuse() -> WKWebView? {
+    /// Borrows the persistent warm WebView for a show WITHOUT consuming it — the reference is
+    /// kept so the same live instance/process serves the next show too. Detaches it from any
+    /// previous show's view hierarchy first. nil unless -MBWVReuseInstance.
+    static func borrowWarmWebView() -> WKWebView? {
         guard warmIsForReuse, let webView = warmWebView else { return nil }
-        warmWebView = nil
-        warmIsForReuse = false
+        webView.removeFromSuperview()
         return webView
     }
 
