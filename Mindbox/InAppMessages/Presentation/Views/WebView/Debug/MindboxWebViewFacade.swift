@@ -483,9 +483,15 @@ final class WebViewShowProfiler {
         )
     }
 
-    /// `true` when launched with `-MBWVPersistentStore` → use a persistent WebKit data store.
+    /// MEASUREMENT (throwaway): when true, the FULL stack (persistent cache + prewarm + reuse) is active
+    /// on a NORMAL launch — no -MBWV flags needed. Lets you feel it on a physical device, where scheme
+    /// launch args are NOT passed on a tap-launch (only when Xcode launches the app). Set back to false
+    /// to restore flag-gated behavior (production default = .nonPersistent()).
+    static let forceAllLeversOn = true
+
+    /// `true` when the full stack is forced on, or launched with `-MBWVPersistentStore`.
     static var usesPersistentStore: Bool {
-        ProcessInfo.processInfo.arguments.contains("-MBWVPersistentStore")
+        forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVPersistentStore")
     }
 
     // MEASUREMENT (throwaway): a session-persistent warm WKWebView. Created once at in-app
@@ -525,7 +531,7 @@ final class WebViewShowProfiler {
     }
 
     static func prewarmIfRequested() {
-        let reuse = ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
+        let reuse = forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
         let prewarmOnly = ProcessInfo.processInfo.arguments.contains("-MBWVPrewarm")
         guard reuse || prewarmOnly else { return }
         DispatchQueue.main.async {
