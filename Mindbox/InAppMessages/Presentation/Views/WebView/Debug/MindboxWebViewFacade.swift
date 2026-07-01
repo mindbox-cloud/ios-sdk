@@ -492,12 +492,20 @@ final class WebViewShowProfiler {
     private static var warmWebView: WKWebView?
     private static var warmIsForReuse = false
 
-    /// Local cacher page: warms the process and seeds the persistent cache with tracker.js.
-    /// (Prototype: tracker.js URL hardcoded to the one this test in-app uses; a shipped cacher
-    /// would come from the backend and know the current tracker version + could preload forms.)
-    private static let trackerJSURL = "https://api.mindbox.ru/scripts/v1/tracker.js?v=1.0.29"
+    /// Local cacher page: warms the process and seeds the persistent cache with the SHARED static
+    /// runtime (tracker.js + main.js + fonts). These are the resources every WebView in-app shares.
+    /// NOTE: byendpoint.js is NOT cacheable this way — it is loaded by the runtime per endpoint at
+    /// show time, so caching it needs the "load content without formId" approach (no form renders,
+    /// but the runtime pulls byendpoint). Prototype: URLs hardcoded to what this test in-app uses;
+    /// a shipped cacher would be a bundled/backend page knowing the current versions.
+    private static let cacherResources = [
+        "https://api.mindbox.ru/scripts/v1/tracker.js?v=1.0.29",
+        "https://mobile-static.mindbox.ru/stable/inapps/webview/content/main.js?v=1.0.29"
+    ]
+    private static let cacherFontsCSS = "https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
     private static var cacherHTML: String {
-        "<html><head><meta charset=\"utf-8\"><script src=\"\(trackerJSURL)\"></script></head><body></body></html>"
+        let scripts = cacherResources.map { "<script src=\"\($0)\"></script>" }.joined()
+        return "<html><head><meta charset=\"utf-8\"><link rel=\"stylesheet\" href=\"\(cacherFontsCSS)\">\(scripts)</head><body></body></html>"
     }
 
     static func prewarmIfRequested() {
