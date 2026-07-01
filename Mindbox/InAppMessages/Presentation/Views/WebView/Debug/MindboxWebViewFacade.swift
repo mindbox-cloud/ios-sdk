@@ -87,13 +87,32 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 inAppId: String = "",
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        let config = WKWebViewConfiguration()
-        config.websiteDataStore = .nonPersistent()
-        config.applicationNameForUserAgent = userAgent
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
+        // MEASUREMENT (throwaway): caching prototype toggle + instance reuse.
+        //   -MBWVPersistentStore → persistent WebKit data store (cache ON).
+        //   -MBWVReuseInstance   → reuse the pre-warmed WKWebView (live process) instead of a fresh one.
+        let usesPersistentStore = WebViewShowProfiler.usesPersistentStore
+        let webView: WKWebView
+        if let warm = WebViewShowProfiler.takeWarmWebViewForReuse() {
+            // Reused: process already alive; store + UA already set at prewarm.
+            webView = warm
+            WebViewShowProfiler.shared.setMode((usesPersistentStore ? "persistent" : "ephemeral") + "+reuse")
+        } else {
+            let config = WKWebViewConfiguration()
+            config.websiteDataStore = usesPersistentStore ? .default() : .nonPersistent()
+            config.applicationNameForUserAgent = userAgent
+            config.allowsInlineMediaPlayback = true
+            config.mediaTypesRequiringUserActionForPlayback = []
+            webView = WKWebView(frame: .zero, configuration: config)
+            WebViewShowProfiler.shared.setMode(usesPersistentStore ? "persistent" : "ephemeral")
+        }
 
-        let webView = WKWebView(frame: .zero, configuration: config)
+        // MEASUREMENT (throwaway): inject the timing probe + its handler; applies to the next
+        // (real) content load, whether the WebView is fresh or the reused warm one.
+        webView.configuration.userContentController.add(WebViewProfilerScriptHandler(), name: "MBProfiler")
+        webView.configuration.userContentController.addUserScript(
+            WKUserScript(source: WebViewShowProfiler.probeJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        )
+        WebViewShowProfiler.shared.mark("webViewCreated")
         #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
@@ -117,10 +136,11 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     public func loadHTML(baseUrl: String,
                          contentUrl: String,
                          onFailure: @escaping () -> Void) {
+        WebViewShowProfiler.shared.mark("loadHTMLStart")
         let url = URL(string: baseUrl)
         let contentURL = URL(string: contentUrl)
         bridge.updateContentURL(contentURL)
-        
+
         fetchHTML(from: contentUrl) { [weak webView] html in
             guard let webView else {
                 DispatchQueue.main.async {
@@ -131,6 +151,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 
             if let html {
                 DispatchQueue.main.async {
+                    WebViewShowProfiler.shared.mark("loadHTMLString")
                     webView.loadHTMLString(html, baseURL: url)
                 }
             } else {
@@ -342,10 +363,246 @@ extension MindboxWebViewFacade {
                 return
             }
 
+            WebViewShowProfiler.shared.mark("htmlFetchEnd")
             self?.log("HTML loaded successfully (\(htmlString.count) chars)")
             completion(htmlString)
         }
 
+        WebViewShowProfiler.shared.mark("htmlFetchStart")
         task.resume()
+    }
+}
+
+// swiftlint:disable file_length
+// MARK: - MEASUREMENT / THROWAWAY profiling harness
+//
+// Records per-step timestamps for ONE WebView in-app show and emits a single
+// `[WVProfile] SUMMARY` line for offline analysis. This is profiling scaffolding for the
+// caching prototype, NOT production code — remove before ship. Lives in this file (already
+// in the build) to avoid pbxproj surgery for a throwaway class.
+//
+// Native marks (ms from t0 = viewDidLoad):
+//   begin → setupWebView → webViewCreated → loadHTMLStart → htmlFetchStart →
+//   htmlFetchEnd → loadHTMLString → navStart → navFinish → jsReadyCheck → initMessage
+// JS marks (from the injected probe, stitched onto the native timeline at navStart):
+//   firstPaint / fcp / lcp (best-effort; WebKit may not emit), domContentLoaded,
+//   domComplete, loadEventEnd, largestImgEnd — the last two are the robust
+//   "content actually visible/loaded" signals (heavy images load AFTER navFinish).
+
+final class WebViewShowProfiler {
+
+    static let shared = WebViewShowProfiler()
+
+    private let lock = NSLock()
+    private var t0: CFAbsoluteTime?
+    private var marks: [(label: String, ms: Double)] = []
+    private var jsMarks: [String: Int] = [:]
+    private var mode = "?"
+    private var finalized = false
+
+    private init() {}
+
+    /// Caching mode in effect for this show (persistent / ephemeral). Set at WKWebView creation.
+    func setMode(_ mode: String) {
+        lock.lock(); self.mode = mode; lock.unlock()
+    }
+
+    /// Resets the timeline and sets t0. Call once at the very start of the show (viewDidLoad).
+    func begin() {
+        // MEASUREMENT (throwaway): force os_log to capture our .info marks without UI taps.
+        if ProcessInfo.processInfo.arguments.contains("-MBWVForceInfoLog") {
+            MBLogger.shared.logLevel = .info
+        }
+        let now = CFAbsoluteTimeGetCurrent()
+        lock.lock()
+        t0 = now
+        marks = [(label: "begin", ms: 0)]
+        jsMarks = [:]
+        finalized = false
+        lock.unlock()
+        Logger.common(message: "[WVProfile] mark begin +0ms", level: .info, category: .webViewInAppMessages)
+    }
+
+    /// Records a native lifecycle mark. Safe to call from any thread.
+    func mark(_ label: String) {
+        let now = CFAbsoluteTimeGetCurrent()
+        lock.lock()
+        if t0 == nil { t0 = now; marks = []; jsMarks = [:]; finalized = false }
+        let ms = (now - (t0 ?? now)) * 1000
+        marks.append((label: label, ms: ms))
+        lock.unlock()
+        Logger.common(message: "[WVProfile] mark \(label) +\(Int(ms))ms", level: .info, category: .webViewInAppMessages)
+    }
+
+    /// Ingests the consolidated JS payload from the injected probe and emits the SUMMARY.
+    func ingestJS(_ body: Any) {
+        guard let dict = body as? [String: Any] else {
+            Logger.common(message: "[WVProfile] JS payload not a dict: \(body)", level: .info, category: .webViewInAppMessages)
+            return
+        }
+        lock.lock()
+        for (key, value) in dict {
+            if let number = value as? NSNumber { jsMarks[key] = number.intValue }
+        }
+        lock.unlock()
+        logSummary()
+    }
+
+    private func logSummary() {
+        lock.lock()
+        guard !finalized, t0 != nil else { lock.unlock(); return }
+        finalized = true
+
+        let navStart = Int(marks.first(where: { $0.label == "navStart" })?.ms ?? 0)
+        let nativeStr = marks.map { "\($0.label)=\(Int($0.ms))" }.joined(separator: " ")
+
+        // JS timings are document-relative → stitch onto the native timeline at navStart.
+        let jsOrder = ["firstPaint", "fcp", "lcp", "domContentLoaded", "domComplete", "loadEventEnd", "lastImageEnd", "lastResourceEnd"]
+        let jsStr = jsOrder
+            .compactMap { key in jsMarks[key].map { "\(key)=\(navStart + $0)" } }
+            .joined(separator: " ")
+        let extra = ["resourceCount", "imageCount", "transferBytes", "lcpSize", "finalizedByCap"]
+            .compactMap { key in jsMarks[key].map { "\(key)=\($0)" } }
+            .joined(separator: " ")
+        let currentMode = mode
+        lock.unlock()
+
+        Logger.common(
+            message: "[WVProfile] SUMMARY mode=\(currentMode) | NATIVE \(nativeStr) | JS(from t0) \(jsStr) | \(extra)",
+            level: .info,
+            category: .webViewInAppMessages
+        )
+    }
+
+    /// `true` when launched with `-MBWVPersistentStore` → use a persistent WebKit data store.
+    static var usesPersistentStore: Bool {
+        ProcessInfo.processInfo.arguments.contains("-MBWVPersistentStore")
+    }
+
+    // MEASUREMENT (throwaway): pre-warming the WebKit web-content process. A warm WKWebView
+    // (matching data store + UA) that has loaded a page keeps a live process ready. Two modes:
+    //   -MBWVPrewarm       → hold a throwaway warm WebView (WebKit reuses its prewarmed process).
+    //   -MBWVReuseInstance → hold it AND reuse the SAME instance for the show (live process,
+    //                        aims to remove the residual ~300ms spin-up left by prewarm-only).
+    // Invoked once at in-app subsystem start (seconds before any show).
+    private static var warmWebView: WKWebView?
+    private static var warmIsForReuse = false
+
+    static func prewarmIfRequested() {
+        let reuse = ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
+        let prewarmOnly = ProcessInfo.processInfo.arguments.contains("-MBWVPrewarm")
+        guard reuse || prewarmOnly else { return }
+        DispatchQueue.main.async {
+            guard warmWebView == nil else { return }
+            let config = WKWebViewConfiguration()
+            config.websiteDataStore = usesPersistentStore ? .default() : .nonPersistent()
+            config.applicationNameForUserAgent = measurementUserAgent()
+            config.allowsInlineMediaPlayback = true
+            config.mediaTypesRequiringUserActionForPlayback = []
+            let webView = WKWebView(frame: .zero, configuration: config)
+            webView.loadHTMLString("<html><body></body></html>", baseURL: nil)
+            warmWebView = webView
+            warmIsForReuse = reuse
+            Logger.common(message: "[WVProfile] prewarm: warming web-content process (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral"))",
+                          level: .info, category: .webViewInAppMessages)
+        }
+    }
+
+    /// Consumes the warm WebView for actual reuse (only under -MBWVReuseInstance); nil otherwise.
+    static func takeWarmWebViewForReuse() -> WKWebView? {
+        guard warmIsForReuse, let webView = warmWebView else { return nil }
+        warmWebView = nil
+        warmIsForReuse = false
+        return webView
+    }
+
+    /// Same UA formula as WebViewController.createUserAgent() — all inputs are static per app run,
+    /// so the prewarmed WebView's UA matches the show's.
+    private static func measurementUserAgent() -> String {
+        let uf = DI.injectOrFail(UtilitiesFetcher.self)
+        let sdkVersion = uf.sdkVersion ?? "unknown"
+        let appVersion = uf.appVerson ?? "unknown"
+        let appName = uf.hostApplicationName ?? "unknown"
+        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+    }
+
+    /// JS injected at documentStart. Installs paint/LCP observers and, after window load,
+    /// posts ONE consolidated timing payload to the native `MBProfiler` handler.
+    static let probeJS = """
+    (function () {
+      var marks = {};
+      var lastResAt = 0;      // performance.now() when the most recent resource finished
+      var loaded = false;
+      var done = false;
+      function rec(k, v) { if (typeof v === 'number' && isFinite(v)) marks[k] = Math.round(v); }
+      try {
+        new PerformanceObserver(function (l) {
+          l.getEntries().forEach(function (e) {
+            if (e.name === 'first-paint') rec('firstPaint', e.startTime);
+            if (e.name === 'first-contentful-paint') rec('fcp', e.startTime);
+          });
+        }).observe({ type: 'paint', buffered: true });
+      } catch (e) {}
+      try {
+        new PerformanceObserver(function (l) {
+          var es = l.getEntries(); var last = es[es.length - 1];
+          rec('lcp', last.startTime); rec('lcpSize', last.size);
+        }).observe({ type: 'largest-contentful-paint', buffered: true });
+      } catch (e) {}
+      try {
+        new PerformanceObserver(function (l) {
+          l.getEntries().forEach(function (r) { if (r.responseEnd > lastResAt) lastResAt = r.responseEnd; });
+        }).observe({ type: 'resource', buffered: true });
+      } catch (e) {}
+      function finalize(byCap) {
+        if (done) return; done = true;
+        try {
+          var nav = performance.getEntriesByType('navigation')[0];
+          if (nav) {
+            rec('domContentLoaded', nav.domContentLoadedEventEnd);
+            rec('domComplete', nav.domComplete);
+            rec('loadEventEnd', nav.loadEventEnd);
+          }
+          var res = performance.getEntriesByType('resource');
+          rec('resourceCount', res.length);
+          var imgs = res.filter(function (r) {
+            return r.initiatorType === 'img' || r.initiatorType === 'css' ||
+                   /\\.(png|jpe?g|webp|gif|svg)(\\?|$)/i.test(r.name);
+          });
+          rec('imageCount', imgs.length);
+          // Cross-origin resources report 0 bytes (no Timing-Allow-Origin), but responseEnd
+          // timing IS available — use the latest finish time as the "content loaded" signal.
+          var lastResEnd = 0, lastImgEnd = 0, bytes = 0;
+          res.forEach(function (r) { if (r.responseEnd > lastResEnd) lastResEnd = r.responseEnd; bytes += (r.transferSize || r.encodedBodySize || 0); });
+          imgs.forEach(function (r) { if (r.responseEnd > lastImgEnd) lastImgEnd = r.responseEnd; });
+          rec('lastResourceEnd', lastResEnd);
+          if (imgs.length) rec('lastImageEnd', lastImgEnd);
+          rec('transferBytes', bytes);
+          rec('finalizedByCap', byCap ? 1 : 0);
+          window.webkit.messageHandlers.MBProfiler.postMessage(marks);
+        } catch (e) {
+          try { window.webkit.messageHandlers.MBProfiler.postMessage({ jsError: String(e) }); } catch (_) {}
+        }
+      }
+      // Finalize when the network goes idle (no new resource for 1200ms after load), capped at 9s.
+      var startedAt = performance.now();
+      var iv = setInterval(function () {
+        var now = performance.now();
+        if (done) { clearInterval(iv); return; }
+        if (loaded && (now - lastResAt) > 1200) { clearInterval(iv); finalize(false); }
+        else if (now - startedAt > 9000) { clearInterval(iv); finalize(true); }
+      }, 250);
+      function onLoad() { loaded = true; lastResAt = Math.max(lastResAt, performance.now()); }
+      if (document.readyState === 'complete') { onLoad(); }
+      else { window.addEventListener('load', onLoad); }
+    })();
+    """
+}
+
+/// Forwards the JS probe's consolidated payload to the profiler. MEASUREMENT-ONLY.
+final class WebViewProfilerScriptHandler: NSObject, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
+        WebViewShowProfiler.shared.ingestJS(message.body)
     }
 }

@@ -132,6 +132,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     override var canBecomeFirstResponder: Bool { true }
 
     override func viewDidLoad() {
+        WebViewShowProfiler.shared.begin() // MEASUREMENT (throwaway): t0 for the show profile.
         super.viewDidLoad()
         view.backgroundColor = .black.withAlphaComponent(Constants.defaultAlphaBackgroundColor)
         let onTapDimmedViewGesture = UITapGestureRecognizer(
@@ -140,6 +141,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         )
         view.addGestureRecognizer(onTapDimmedViewGesture)
         view.isUserInteractionEnabled = true
+        WebViewShowProfiler.shared.mark("setupWebView")
         setupWebView()
         addLifecycleObservers()
     }

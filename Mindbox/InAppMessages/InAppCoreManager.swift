@@ -92,6 +92,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         sendEvent(.start)
         isInAppManagerLaunched = true
+        WebViewShowProfiler.prewarmIfRequested() // MEASUREMENT (throwaway): warm web-content process early.
         configManager.delegate = self
         configManager.prepareConfiguration()
     }

@@ -174,6 +174,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             if isMotionServiceInitialized { motionService.stopMonitoring() }
             webViewAction?.onClose()
         case .`init`:
+            WebViewShowProfiler.shared.mark("initMessage")
             quizInitTimeoutWorkItem?.cancel()
             hapticService.prepare()
             webViewAction?.onInit()
@@ -254,6 +255,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
             switch result {
             case .success(let anyValue):
+                WebViewShowProfiler.shared.mark("jsReadyCheck")
                 let hasReady = (anyValue as? Bool) ?? false
                 Logger.common(
                     message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",

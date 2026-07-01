@@ -183,10 +183,12 @@ extension MindboxWebBridge: WKScriptMessageHandler {
 
 extension MindboxWebBridge: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        WebViewShowProfiler.shared.mark("navStart")
         navigationDelegate?.webBridge(self, didStartProvisionalNavigation: webView.url)
     }
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        WebViewShowProfiler.shared.mark("navFinish")
         navigationDelegate?.webBridge(self, didFinishNavigation: contentURL ?? webView.url)
     }
 
