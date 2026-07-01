@@ -92,7 +92,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
 
         sendEvent(.start)
         isInAppManagerLaunched = true
-        WebViewShowProfiler.prewarmIfRequested() // MEASUREMENT (throwaway): warm web-content process early.
+        // NB: WebView prewarm moved earlier — to Mindbox.initialization() — so it no longer waits for
+        // session-active / trackDirect. (MEASUREMENT / throwaway.)
         configManager.delegate = self
         configManager.prepareConfiguration()
     }

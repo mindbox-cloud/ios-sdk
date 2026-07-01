@@ -534,18 +534,31 @@ final class WebViewShowProfiler {
         let reuse = forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
         let prewarmOnly = ProcessInfo.processInfo.arguments.contains("-MBWVPrewarm")
         guard reuse || prewarmOnly else { return }
+        // MEASUREMENT (throwaway): raise log level early — prewarm runs before any show's begin().
+        if forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVForceInfoLog") {
+            MBLogger.shared.logLevel = .info
+        }
+        // waitedMs = how long the main queue was busy (launch work) before this block ran;
+        // createMs = main-thread cost of WKWebView allocation; mainBlockMs = total main-thread block
+        // this prewarm adds. Everything after loadHTMLString (process spin-up, network) is off-main.
+        let scheduledAt = CFAbsoluteTimeGetCurrent()
         DispatchQueue.main.async {
             guard warmWebView == nil else { return }
+            let waitedMs = (CFAbsoluteTimeGetCurrent() - scheduledAt) * 1000
+            let t0 = CFAbsoluteTimeGetCurrent()
             let config = WKWebViewConfiguration()
             config.websiteDataStore = usesPersistentStore ? .default() : .nonPersistent()
             config.applicationNameForUserAgent = measurementUserAgent()
             config.allowsInlineMediaPlayback = true
             config.mediaTypesRequiringUserActionForPlayback = []
             let webView = WKWebView(frame: .zero, configuration: config)
+            let createMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
             webView.loadHTMLString(cacherHTML, baseURL: URL(string: "https://inapp.local/popup"))
+            let mainBlockMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
             warmWebView = webView
             warmIsForReuse = reuse
-            Logger.common(message: "[WVProfile] prewarm: cacher loaded (reuse=\(reuse), store=\(usesPersistentStore ? "persistent" : "ephemeral")) cacherBE=\(byendpointURL)",
+            let store = usesPersistentStore ? "persistent" : "ephemeral"
+            Logger.common(message: "[WVProfile] prewarm: cacher loaded (reuse=\(reuse), store=\(store)) waitedMs=\(Int(waitedMs)) createMs=\(Int(createMs)) mainBlockMs=\(Int(mainBlockMs))",
                           level: .info, category: .webViewInAppMessages)
         }
     }
