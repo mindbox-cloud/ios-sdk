@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ускорение WebView-инаппа — бриф для команды</title>
+<style>
+  :root{
+    --ink:#15181f; --ink-soft:#4a505c; --ink-faint:#7a828f;
+    --paper:#f4f4f2; --surface:#ffffff; --line:#e4e4df;
+    --teal:#0f5f57; --teal-bright:#0f9b8e; --teal-wash:#e7f4f1;
+    --amber:#9a5b13; --amber-wash:#fbf1e2;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.55;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:780px;margin:0 auto;padding:40px 22px 72px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);
+    font-weight:700;margin:0 0 10px}
+  h1{font-size:34px;line-height:1.12;letter-spacing:-.02em;margin:0 0 8px;font-weight:750;text-wrap:balance}
+  .sub{font-size:17px;color:var(--ink-soft);margin:0 0 18px}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+    color:var(--teal);background:var(--teal-wash);border:1px solid #cfe7e1;border-radius:999px;padding:5px 12px}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--teal-bright)}
+
+  section{margin-top:38px}
+  h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);
+    font-weight:700;margin:0 0 16px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+
+  .hero{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:26px 28px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 26px}
+  .hero .big{font-size:52px;font-weight:750;letter-spacing:-.03em;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .hero .big em{font-style:normal;color:var(--teal-bright)}
+  .hero .cap{font-size:15px;color:var(--ink-soft);max-width:320px}
+  .hero .mult{font-size:15px;font-weight:700;color:var(--teal);background:var(--teal-wash);
+    border-radius:8px;padding:3px 10px;font-variant-numeric:tabular-nums}
+  .heronote{margin:14px 2px 0;font-size:14px;color:var(--ink-soft)}
+
+  p{margin:0 0 12px}
+  code{font-family:var(--mono);font-size:.88em;background:#ecece9;border-radius:5px;padding:1px 5px;color:#25303a}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line)}
+  th{font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;background:#fafafa}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13.5px}
+  .win{color:var(--teal);font-weight:700}
+  .row-label{font-weight:600}
+
+  .levers{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  .levers li{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:14px 16px;
+    display:flex;gap:13px;align-items:flex-start}
+  .levers .n{flex:none;width:24px;height:24px;border-radius:7px;background:var(--teal);color:#fff;
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .levers b{font-weight:700}
+  .levers .d{color:var(--ink-soft);font-size:14.5px}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:15px 16px}
+  .card h3{margin:0 0 5px;font-size:15px;font-weight:700}
+  .card p{margin:0;font-size:14px;color:var(--ink-soft)}
+  .card .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    color:var(--amber);background:var(--amber-wash);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+
+  .phases{display:grid;gap:10px}
+  .phase{display:flex;gap:14px;align-items:baseline;padding:13px 16px;background:var(--surface);
+    border:1px solid var(--line);border-radius:11px}
+  .phase .k{flex:none;font-weight:750;color:var(--teal);font-size:14px;width:58px}
+  .phase .t{font-size:14.5px}
+  .phase .t b{font-weight:700}
+  .phase .t span{color:var(--ink-faint)}
+
+  .status{background:#fffdf8;border:1px solid #f0e4cd;border-radius:12px;padding:16px 18px}
+  .status ul{margin:8px 0 0;padding-left:18px}
+  .status li{margin:6px 0;font-size:14.5px;color:var(--ink-soft)}
+  .status li b{color:var(--ink)}
+
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:13.5px;color:var(--ink-faint)}
+  footer code{background:#ecece9}
+
+  @media(max-width:560px){
+    h1{font-size:27px}
+    .hero .big{font-size:40px}
+    .cards{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">iOS SDK · WebView in-app</p>
+  <h1>Ускорение показа WebView-инаппа</h1>
+  <p class="sub">Что нашли, что предлагаем, что нужно решить команде.</p>
+  <span class="pill"><span class="dot"></span>Прототип провалидирован · ветка <code style="background:none;padding:0;color:inherit">prototype/webview-cache-profiling</code></span>
+
+  <div class="hero">
+    <div class="big">~3.4&nbsp;с <em>→</em> ~0.4&nbsp;с</div>
+    <span class="mult">≈7–9×</span>
+    <div class="cap">полный показ инаппа; navStart ~620→~50&nbsp;мс, byendpoint из кэша. Всё на стороне SDK — без бэка и фронта.</div>
+  </div>
+  <p class="heronote">Сейчас кэш WebView в SDK <b>выключен</b> (<code>.nonPersistent()</code>) → каждый показ качает всё заново: byendpoint 826&nbsp;КБ + картинки ~2.9&nbsp;МБ. Три рычага это убирают.</p>
+
+  <section>
+    <h2>Замерено — два инаппа подряд в одной сессии</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Показ</th><th class="num">как сейчас</th><th class="num">со стеком</th><th class="num">быстрее</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">№1 стирашка <span style="color:var(--ink-faint)">(2 карт., ~2.9 МБ)</span></td><td class="num">2976 мс</td><td class="num win">396 мс</td><td class="num">~7.5×</td></tr>
+          <tr><td class="row-label">№2 онбординг <span style="color:var(--ink-faint)">(3 карт.)</span></td><td class="num">2440 мс</td><td class="num win">266 мс</td><td class="num">~9.2×</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-faint);margin:10px 2px 0">Медианы, симулятор. Показ №2 <b style="color:var(--ink-soft)">быстрее</b> №1, хотя онбординг тяжелее — переиспользованный «тёплый» WebView уже показывал контент.</p>
+  </section>
+
+  <section>
+    <h2>Как это работает — три рычага (все в SDK)</h2>
+    <ul class="levers">
+      <li><span class="n">1</span><div><b>Персистентный кэш.</b> <span class="d"><code>.nonPersistent()</code> → <code>.default()</code>: ресурсы кэшируются по заголовкам CDN и переживают перезапуск. → повторный показ ~3–4×.</span></div></li>
+      <li><span class="n">2</span><div><b>Прогрев + переиспользование.</b> <span class="d">Один тёплый <code>WKWebView</code> на старте, одалживается каждому показу (не уничтожается). → убирает ~530&nbsp;мс спин-апа с каждого показа.</span></div></li>
+      <li><span class="n">3</span><div><b>Cacher.</b> <span class="d">На прогреве тянет общий рантайм (tracker + byendpoint) в кэш → первый показ за них уже не платит.</span></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Что нужно решить</h2>
+    <div class="cards">
+      <div class="card"><span class="tag">приватность</span><h3>Идём в персистентный кэш?</h3><p><code>.default()</code> персистит и cookies/localStorage — нужен разбор приватности. Главный рычаг.</p></div>
+      <div class="card"><span class="tag">iOS</span><h3>Какой стор</h3><p><code>.default()</code> (просто) vs iOS 17+ изолированный <code>forIdentifier</code> (чище по приватности).</p></div>
+      <div class="card"><span class="tag">бэкенд</span><h3>Стабильный URL byendpoint</h3><p>Сейчас кэш-бастинг каждые 5 мин → перекачка. Стабильный URL от бэка → кэшируется всегда.</p></div>
+      <div class="card"><span class="tag">android</span><h3>Включить кэш на Android</h3><p>Гипотеза <code>LOAD_NO_CACHE → LOAD_DEFAULT</code>. Не проверяли — нет окружения.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>План — фазами</h2>
+    <div class="phases">
+      <div class="phase"><span class="k">Фаза 1</span><span class="t"><b>Кэш + reuse</b> — чистый SDK, даёт основной выигрыш. <span>Риск: разбор приватности <code>.default()</code>.</span></span></div>
+      <div class="phase"><span class="k">Фаза 2</span><span class="t"><b>Cacher</b> грузит реальный <code>index.html</code> без formId (актуальные версии). <span>Чистый SDK.</span></span></div>
+      <div class="phase"><span class="k">Фаза 3</span><span class="t"><b>Серверный cacher</b> + префетч статичных картинок форм. <span>Опц., нужен фронт/бэк.</span></span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Статус и честные оговорки</h2>
+    <div class="status">
+      <ul>
+        <li><b>Работает на реальном устройстве</b> — стек ощущается вживую, не только в замерах.</li>
+        <li><b>Открытый инж-вопрос:</b> где поднимать прогрев. Создание первого <code>WKWebView</code> стоит ~100&nbsp;мс main-потока — это переносится со «первого показа» на «старт», не новая цена. Нужен профиль на устройстве (регрессия time-to-first-frame) → решаем место.</li>
+        <li><b>Прогреву нужна фора:</b> если показ почти сразу за стартом, кэш ещё не докачан — не поможет.</li>
+        <li><b>Перед шипом:</b> убрать прототипный тумблер/метки; кэш best-effort (вытесняется), офлайн не цель.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Полный разбор (инвентарь ресурсов, TTL кэша, API <code>WKWebsiteDataStore</code>, варианты хостинга cacher, сырые замеры):
+    <code>docs/webview-cache-solution.md</code> + <code>webview-cache-overview.md</code> + <code>webview-show-profile.md</code>.
+  </footer>
+</div>
+</body>
+</html>
