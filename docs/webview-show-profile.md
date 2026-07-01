@@ -197,6 +197,23 @@ async-операции `APIMethodForReleaseExampleIos`:
 (borrow-not-consume, скрывать не уничтожать); per-inapp прогрузка не нужна. Показ №1 быстрый,
 №2/№3… ещё быстрее.
 
+## Cacher: что он кэширует, включая byendpoint (792КБ)
+
+Cacher — хардкод HTML-строкой в Swift, грузится в `prewarmIfRequested()`. Кэширует общий рантайм:
+`tracker.js` + `main.js` + шрифты + **byendpoint.js**.
+
+**byendpoint кэшируется, несмотря на кэш-бастинг** (проверено):
+- Два показа одного endpoint за сессию: `byendpointDur` 322мс (№1, холодный) → **0мс** (№2, из кэша).
+  Значит в пределах 5-мин окна byendpoint кэшируем.
+- Кэш-бастинг воспроизведён точь-в-точь: `floor(now_ms / 5мин)` (как в tracker-frontend
+  `BatchedModulesLoader`). Cacher строит тот же URL, что и рантайм показа.
+- С byendpoint-cacher первый показ: URL cacher'а = URL показа (`?_=5943018`) →
+  **`byendpointDur=3мс` вместо ~345мс**. Первый холодный показ экономит ~345мс на byendpoint.
+
+**Кэвиат — граница 5-мин окна:** если прогрев и показ попадают в разные бакеты (у границы окна),
+кэш-бастинг разный → промах (наблюдали один `byendpointDur=345`). Редко; лечится либо повторным
+прогревом ближе к показу, либо (правильно) стабильным URL byendpoint на бэке.
+
 ## Сырые данные
 
 - baseline: `docs/webview-show-profile-raw.txt`
