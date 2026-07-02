@@ -90,7 +90,8 @@ extension MBContainer {
     func registerInappPresentation() -> Self {
         register(InAppMessagesTracker.self) {
             let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-            return InAppMessagesTracker(databaseRepository: databaseRepository)
+            let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+            return InAppMessagesTracker(databaseRepository: databaseRepository, featureToggleManager: featureToggleManager)
         }
 
         register(PresentationDisplayUseCase.self) {
