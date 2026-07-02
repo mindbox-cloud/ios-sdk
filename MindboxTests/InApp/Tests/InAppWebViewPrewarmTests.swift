@@ -132,10 +132,12 @@ struct InAppWebViewPrewarmServiceGuardTests {
 
     private final class SpyWebView: WKWebView {
         private(set) var loadedHTMLCount = 0
+        private(set) var loadedBaseURLs: [URL?] = []
         private(set) var stopLoadingCount = 0
 
         override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
             loadedHTMLCount += 1
+            loadedBaseURLs.append(baseURL)
             return nil // spy only — keep WebKit from actually navigating in unit tests
         }
 
@@ -148,17 +150,24 @@ struct InAppWebViewPrewarmServiceGuardTests {
     private let service: InAppWebViewPrewarmService
 
     init() throws {
+        self = try Self.init(cachedConfig: nil)
+    }
+
+    private init(cachedConfig: ConfigResponse?) throws {
         let spy = SpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
         self.spy = spy
 
         let storage = MockPersistenceStorage()
         storage.configuration = try MBConfiguration(endpoint: "Test.Endpoint", domain: "api.mindbox.ru")
+        storage.deviceUUID = "test-device-uuid"
         let defaults = try #require(UserDefaults(suiteName: "PrewarmGuardTests-\(UUID().uuidString)"))
 
         service = InAppWebViewPrewarmService(
             persistenceStorage: storage,
             learnedHostsStore: InAppWebViewLearnedHostsStore(defaults: defaults),
-            makeWebView: { spy }
+            makeWebView: { spy },
+            fetchHTML: { _, completion in completion("<html><body>content</body></html>") },
+            loadCachedConfig: { cachedConfig }
         )
     }
 
@@ -170,6 +179,15 @@ struct InAppWebViewPrewarmServiceGuardTests {
         }
     }
 
+    /// The cached-config head start hops through a background queue first — poll for its
+    /// main-queue effects instead of assuming scheduling order.
+    private func waitUntil(_ condition: @autoclosure () -> Bool) async throws {
+        for _ in 0..<100 where !condition() {
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        #expect(condition())
+    }
+
     @Test("Process warm-up creates the instance once")
     func processWarmUpIsIdempotent() async {
         service.prewarmProcess()
@@ -177,6 +195,16 @@ struct InAppWebViewPrewarmServiceGuardTests {
         await drainMainQueue()
 
         #expect(spy.loadedHTMLCount == 1)
+    }
+
+    @Test("A cached config with webview in-apps starts the resource prewarm at init")
+    func headStartRunsFromCachedConfig() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+
+        suite.service.prewarmProcess()
+
+        // blank + preconnect + content page
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 3)
     }
 
     @Test("Borrow stops in-flight loading, tears the prewarm page down, and keeps the instance")
@@ -192,29 +220,41 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(service.borrowWarmWebView() === spy)
     }
 
-    @Test("Stage 2 never navigates a borrowed instance")
-    func stageTwoSkippedAfterBorrow() async throws {
+    @Test("Resource prewarm never navigates a borrowed instance")
+    func resourcePrewarmSkippedAfterBorrow() async throws {
         service.prewarmProcess()
         await drainMainQueue()
         _ = service.borrowWarmWebView()
 
-        service.prewarmConnections(for: try loadPrewarmTestConfig("InAppWebviewValid"))
+        service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
+        await drainMainQueue()
         await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 2) // stage-1 blank + borrow hard-kill; no preconnect
+        #expect(spy.loadedHTMLCount == 2) // stage-1 blank + borrow hard-kill; nothing more
     }
 
-    @Test("Stage 2 loads the preconnect page exactly once")
-    func stageTwoLoadsOnce() async throws {
+    @Test("Resource prewarm runs once: preconnect page, then the content page with the stub bridge")
+    func resourcePrewarmRunsOnce() async throws {
         service.prewarmProcess()
         await drainMainQueue()
 
         let config = try loadPrewarmTestConfig("InAppWebviewValid")
-        service.prewarmConnections(for: config)
-        service.prewarmConnections(for: config)
+        service.prewarmResources(for: config)
+        service.prewarmResources(for: config)
+        await drainMainQueue()
         await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 2) // stage-1 blank + one preconnect page
+        #expect(spy.loadedHTMLCount == 3) // blank + one preconnect + one content page
+
+        // Both prewarm pages live under the shows' cache partition from the config.
+        let contentBaseURL = try #require(spy.loadedBaseURLs.last ?? nil)
+        #expect(contentBaseURL.host == "inapp.local")
+
+        // The content page got the Android-style sync-bridge stub with our identifiers.
+        let stub = spy.configuration.userContentController.userScripts.first { $0.source.contains("SdkBridge") }
+        let stubSource = try #require(stub?.source)
+        #expect(stubSource.contains("Test.Endpoint"))
+        #expect(stubSource.contains("test-device-uuid"))
     }
 
     @Test("A config without webview in-apps releases the unused warm instance")
@@ -222,7 +262,7 @@ struct InAppWebViewPrewarmServiceGuardTests {
         service.prewarmProcess()
         await drainMainQueue()
 
-        service.prewarmConnections(for: ConfigResponse())
+        service.prewarmResources(for: ConfigResponse())
         await drainMainQueue()
 
         #expect(service.borrowWarmWebView() == nil)
