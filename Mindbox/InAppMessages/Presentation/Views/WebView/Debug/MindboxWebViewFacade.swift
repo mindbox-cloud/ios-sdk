@@ -87,23 +87,21 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 inAppId: String = "",
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        // MEASUREMENT (throwaway): caching prototype toggle + instance reuse.
-        //   -MBWVPersistentStore → persistent WebKit data store (cache ON).
-        //   -MBWVReuseInstance   → reuse the pre-warmed WKWebView (live process) instead of a fresh one.
-        let usesPersistentStore = WebViewShowProfiler.usesPersistentStore
+        // Borrow the prewarmed live instance when available (kept across shows — hidden,
+        // not destroyed); otherwise create one on the same shared persistent data store so
+        // cached resources stay visible either way.
         let webView: WKWebView
-        if let warm = WebViewShowProfiler.borrowWarmWebView() {
-            // Reused: same live instance/process is kept across shows (hidden, not destroyed).
+        if let warm = DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).borrowWarmWebView() {
             webView = warm
-            WebViewShowProfiler.shared.setMode((usesPersistentStore ? "persistent" : "ephemeral") + "+reuse")
+            WebViewShowProfiler.shared.setMode("persistent+reuse")
         } else {
             let config = WKWebViewConfiguration()
-            config.websiteDataStore = usesPersistentStore ? .default() : .nonPersistent()
+            config.websiteDataStore = InAppWebViewDataStore.shared()
             config.applicationNameForUserAgent = userAgent
             config.allowsInlineMediaPlayback = true
             config.mediaTypesRequiringUserActionForPlayback = []
             webView = WKWebView(frame: .zero, configuration: config)
-            WebViewShowProfiler.shared.setMode(usesPersistentStore ? "persistent" : "ephemeral")
+            WebViewShowProfiler.shared.setMode("persistent")
         }
 
         // MEASUREMENT (throwaway): inject the timing probe + its handler. Idempotent
@@ -337,12 +335,13 @@ extension MindboxWebViewFacade {
             completion(nil)
             return
         }
-        
-        let config = URLSessionConfiguration.ephemeral
-        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        config.urlCache = nil
-        
-        let session = URLSession(configuration: config)
+
+        // Standard header-driven caching (max-age=600 + ETag today): repeat shows within the
+        // server-declared freshness window skip the network entirely, after it a conditional
+        // GET revalidates with a ~0-byte 304. NOTE: the staleness bound is a CDN header
+        // contract — index.html must keep shipping explicit Cache-Control/Expires; with only
+        // Last-Modified, URLCache would fall back to unbounded heuristic freshness.
+        let session = URLSession.shared
         
         log("Fetching HTML from \(url.absoluteString)")
         
@@ -482,197 +481,6 @@ final class WebViewShowProfiler {
             level: .info,
             category: .webViewInAppMessages
         )
-    }
-
-    /// MEASUREMENT (throwaway): when true, the FULL chosen stack (persistent cache + reuse + prod
-    /// two-stage prewarm) is active on a NORMAL launch — no -MBWV flags needed. Lets you feel it on
-    /// a physical device, where scheme launch args are NOT passed on a tap-launch (only when Xcode
-    /// launches the app). Set back to false for flag-gated measurement runs — variant-comparison
-    /// harnesses select via launch args, and this flag OVERRIDES -MBWVPrewarmVariant.
-    static let forceAllLeversOn = true
-
-    /// Prewarm strategy. `prod` is the CHOSEN solution (see docs/webview-cache-solution.md):
-    /// blank local page at SDK init (warms the web-content process), then a preconnect page whose
-    /// hosts are DERIVED from the downloaded in-app config — zero hardcoded knowledge. The measured
-    /// alternatives (hardcoded preconnect / cacher / real-index) lost or tied while carrying
-    /// hardcodes; their code lives at checkpoint commit 80f1e32e if a re-measure is ever needed.
-    /// Selected per-launch via `-MBWVPrewarmVariant prod` (a `-key value` launch arg lands in
-    /// UserDefaults' argument domain; simctl launch passes it).
-    enum PrewarmVariant: String {
-        case off                     // no prewarm at all
-        case prod                    // process warm at init + config-derived preconnect on config arrival
-        case prodPage = "prod-page"  // process warm at init + load the config's contentUrl itself (no show params)
-    }
-
-    static var prewarmVariant: PrewarmVariant {
-        if forceAllLeversOn { return .prod }
-        guard let raw = UserDefaults.standard.string(forKey: "MBWVPrewarmVariant"),
-              let variant = PrewarmVariant(rawValue: raw) else { return .off }
-        return variant
-    }
-
-    /// `true` when the full stack is forced on, or launched with `-MBWVPersistentStore`.
-    static var usesPersistentStore: Bool {
-        forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVPersistentStore")
-    }
-
-    // MEASUREMENT (throwaway): a session-persistent warm WKWebView. Created once at SDK init with a
-    // blank local page (warms the web-content process, zero network); upgraded to a config-derived
-    // preconnect page when the in-app config arrives (see prodPreconnectIfRequested).
-    //   -MBWVReuseInstance → reuse the SAME live instance for EVERY show — it is borrowed (not
-    //                        consumed) and kept across shows (hidden, not destroyed), so show #2, #3…
-    //                        stay as fast as show #1.
-    private static var warmWebView: WKWebView?
-    private static var warmIsForReuse = false
-    private static var warmWasBorrowed = false
-
-    static func prewarmIfRequested() {
-        let variant = prewarmVariant
-        let reuse = forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
-        guard variant != .off || reuse else { return }
-        // MEASUREMENT (throwaway): raise log level early — prewarm runs before any show's begin().
-        if forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVForceInfoLog") {
-            MBLogger.shared.logLevel = .info
-        }
-        // waitedMs = how long the main queue was busy (launch work) before this block ran;
-        // createMs = main-thread cost of WKWebView allocation; mainBlockMs = total main-thread block
-        // this prewarm adds. Everything after the load call (process spin-up, network) is off-main.
-        let scheduledAt = CFAbsoluteTimeGetCurrent()
-        DispatchQueue.main.async {
-            guard warmWebView == nil else { return }
-            let waitedMs = (CFAbsoluteTimeGetCurrent() - scheduledAt) * 1000
-            let t0 = CFAbsoluteTimeGetCurrent()
-            let config = WKWebViewConfiguration()
-            config.websiteDataStore = usesPersistentStore ? .default() : .nonPersistent()
-            config.applicationNameForUserAgent = measurementUserAgent()
-            config.allowsInlineMediaPlayback = true
-            config.mediaTypesRequiringUserActionForPlayback = []
-            let webView = WKWebView(frame: .zero, configuration: config)
-            let createMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
-            // Stage 1: blank page — process warm only. Preconnect content arrives with the config,
-            // because before it nothing about hosts is known (and nothing is guessed).
-            webView.loadHTMLString("<html><head><meta charset=\"utf-8\"></head><body></body></html>",
-                                   baseURL: URL(string: "https://inapp.local/popup"))
-            let mainBlockMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
-            warmWebView = webView
-            warmIsForReuse = reuse
-            let store = usesPersistentStore ? "persistent" : "ephemeral"
-            Logger.common(message: "[WVProfile] prewarm variant=\(variant.rawValue) (reuse=\(reuse), store=\(store)) waitedMs=\(Int(waitedMs)) createMs=\(Int(createMs)) mainBlockMs=\(Int(mainBlockMs))",
-                          level: .info, category: .webViewInAppMessages)
-        }
-    }
-
-    /// Preconnect-only page: `<link rel=preconnect>` makes WebKit's network process open DNS+TCP+TLS
-    /// to each host WITHOUT downloading anything; the real show reuses those pooled connections.
-    private static func preconnectHTML(hosts: [String]) -> String {
-        let links = hosts.map { "<link rel=\"preconnect\" href=\"\($0)\" crossorigin><link rel=\"dns-prefetch\" href=\"\($0)\">" }.joined()
-        return "<html><head><meta charset=\"utf-8\">\(links)</head><body></body></html>"
-    }
-
-    // MARK: prod variants — stage 2 driven by the downloaded config, ZERO hardcoded knowledge
-
-    private static var prodStage2Loaded = false
-
-    /// PROD-shaped prewarm, stage 2. Called when the in-app config has just been parsed (once per
-    /// download); does nothing unless the config contains webview layers. Two flavors:
-    ///  - `.prod`: the warm instance loads a preconnect page whose hosts are DERIVED from the config
-    ///    (every webview layer's contentUrl host + the configured API domain). Nothing is downloaded;
-    ///    byendpoint/image/font hosts are the web runtime's private knowledge and stay untouched.
-    ///  - `.prodPage`: simpler logic — the warm instance loads the config's contentUrl ITSELF (the
-    ///    same page a show loads) with NO show params/bridge. Seeds tracker.js/main.js into the cache
-    ///    (~100 KB per launch); byendpoint still can't load (the runtime learns the endpoint only
-    ///    from the show's bridge init).
-    static func prodPrewarmOnConfig(_ config: ConfigResponse?) {
-        guard let config else { return }
-        let variant = prewarmVariant
-        let webviewLayers = webviewLayers(in: config)
-        guard !webviewLayers.isEmpty else {
-            if variant != .off {
-                Logger.common(message: "[WVProfile] prod prewarm: no webview in-apps in config — staying process-warm only",
-                              level: .info, category: .webViewInAppMessages)
-            }
-            return
-        }
-        switch variant {
-        case .off:
-            return
-        case .prod:
-            var hosts = Set(webviewLayers.compactMap { layer -> String? in
-                guard let contentUrl = layer.contentUrl, let host = URL(string: contentUrl)?.host else { return nil }
-                return "https://\(host)"
-            })
-            if let domain = DI.injectOrFail(PersistenceStorage.self).configuration?.domain {
-                hosts.insert("https://\(domain)")
-            }
-            let sorted = hosts.sorted()
-            loadIntoWarmInstanceOnce {
-                $0.loadHTMLString(preconnectHTML(hosts: sorted), baseURL: URL(string: "https://inapp.local/popup"))
-                return "preconnect upgraded from config, hosts=\(sorted.joined(separator: ","))"
-            }
-        case .prodPage:
-            guard let contentUrl = webviewLayers.compactMap(\.contentUrl).first,
-                  let url = URL(string: contentUrl) else { return }
-            loadIntoWarmInstanceOnce {
-                $0.load(URLRequest(url: url))
-                return "content page loading (no show params): \(url.absoluteString)"
-            }
-        }
-    }
-
-    private static func webviewLayers(in config: ConfigResponse) -> [WebviewContentBackgroundLayerDTO] {
-        var result: [WebviewContentBackgroundLayerDTO] = []
-        for inapp in config.inapps?.elements ?? [] {
-            for variant in inapp.form.variants ?? [] {
-                let layers: [ContentBackgroundLayerDTO]?
-                switch variant {
-                case .modal(let modal): layers = modal.content?.background?.layers
-                case .snackbar(let snackbar): layers = snackbar.content?.background?.layers
-                case .unknown: layers = nil
-                }
-                for layer in layers ?? [] {
-                    if case .webview(let webview) = layer {
-                        result.append(webview)
-                    }
-                }
-            }
-        }
-        return result
-    }
-
-    private static func loadIntoWarmInstanceOnce(_ load: @escaping (WKWebView) -> String) {
-        DispatchQueue.main.async {
-            // Never navigate an instance a show has borrowed: config arrival and the first
-            // show race on the main queue, and a prewarm load must not land in a live show.
-            // After a real show the connections are warmer than any preconnect anyway.
-            guard let webView = warmWebView, !prodStage2Loaded, !warmWasBorrowed else { return }
-            prodStage2Loaded = true
-            let message = load(webView)
-            Logger.common(message: "[WVProfile] prod prewarm: \(message)",
-                          level: .info, category: .webViewInAppMessages)
-        }
-    }
-
-    /// Borrows the persistent warm WebView for a show WITHOUT consuming it — the reference is
-    /// kept so the same live instance/process serves the next show too. Detaches it from any
-    /// previous show's view hierarchy first. nil unless -MBWVReuseInstance.
-    static func borrowWarmWebView() -> WKWebView? {
-        guard warmIsForReuse, let webView = warmWebView else { return nil }
-        warmWasBorrowed = true
-        // The instance belongs to the show from here: kill any in-flight prewarm
-        // navigation so its callbacks can't reach the show's freshly attached delegate.
-        webView.stopLoading()
-        webView.removeFromSuperview()
-        return webView
-    }
-
-    /// Same UA formula as WebViewController.createUserAgent() — all inputs are static per app run,
-    /// so the prewarmed WebView's UA matches the show's.
-    private static func measurementUserAgent() -> String {
-        let uf = DI.injectOrFail(UtilitiesFetcher.self)
-        let sdkVersion = uf.sdkVersion ?? "unknown"
-        let appVersion = uf.appVerson ?? "unknown"
-        let appName = uf.hostApplicationName ?? "unknown"
-        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
     }
 
     /// JS injected at documentStart. Installs paint/LCP observers and, after window load,

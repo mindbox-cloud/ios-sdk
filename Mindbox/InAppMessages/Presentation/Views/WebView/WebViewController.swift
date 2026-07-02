@@ -84,6 +84,8 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         NotificationCenter.default.removeObserver(self)
         Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
+        // Stop the closed in-app's JS from running hidden on the parked warm instance.
+        DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).parkWarmWebView()
     }
 
     private func setupWebView() {
@@ -200,13 +202,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func createUserAgent() -> String {
-        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-
-        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
-        let appVersion = utilitiesFetcher.appVerson ?? "unknown"
-        let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
-
-        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+        InAppWebViewUserAgent.build()
     }
 }
 

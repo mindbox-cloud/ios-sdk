@@ -121,7 +121,10 @@ internal extension InappScheduleManager {
                 stopwatch.stop()
                 let timeToDisplay = processingDuration + presentationTime
                 let timeToDisplayString = timeToDisplay.toTimeSpan()
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
+                Logger.common(
+                    message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)",
+                    level: .info
+                )
                 do {
                     try self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
                 } catch {

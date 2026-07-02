@@ -83,10 +83,10 @@ public class Mindbox: NSObject {
      */
     public func initialization(configuration: MBConfiguration) {
         coreController?.initialization(configuration: configuration)
-        // MEASUREMENT (throwaway): warm the WebView web-content process as early as possible.
-        // Safe here — assembly() (in init) has already built DI, so UtilitiesFetcher is available;
-        // and the cacher hardcodes its URLs, so it needs neither the in-app config nor session-active.
-        WebViewShowProfiler.prewarmIfRequested()
+        // Warm the WebView web-content process as early as possible so the first webview
+        // in-app show doesn't pay process startup. Safe here — assembly() (in init) has
+        // already built DI. Preconnect follows later, when the in-app config arrives.
+        DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).prewarmProcess()
     }
 
     private var observeTokens: [UUID] = []

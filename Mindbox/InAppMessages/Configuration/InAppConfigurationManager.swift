@@ -33,19 +33,22 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
     private let featureToggleManager: FeatureToggleManager
+    private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inappMapper: InappMapperProtocol?,
         persistenceStorage: PersistenceStorage,
-        featureToggleManager: FeatureToggleManager
+        featureToggleManager: FeatureToggleManager,
+        webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.persistenceStorage = persistenceStorage
         self.featureToggleManager = featureToggleManager
+        self.webViewPrewarmService = webViewPrewarmService
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -101,8 +104,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
-        // MEASUREMENT (throwaway): prod-variant prewarm stage 2 — config-derived warm-up content.
-        WebViewShowProfiler.prodPrewarmOnConfig(configResponse)
+        // Prewarm stage 2: preconnect to the hosts the config's webview in-apps will hit
+        // (or release the warm instance when the config proves there are none).
+        if let configResponse {
+            webViewPrewarmService.prewarmConnections(for: configResponse)
+        }
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
     }

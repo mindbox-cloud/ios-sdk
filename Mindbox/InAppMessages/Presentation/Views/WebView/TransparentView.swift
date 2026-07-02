@@ -102,6 +102,16 @@ final class TransparentView: UIView {
         facade?.cleanWebView()
     }
 
+    /// Persists the hosts this show's resources actually came from (host names only) so the
+    /// next launch's prewarm can preconnect to them — the config only knows the content host,
+    /// while the heavy resources (runtime, images, fonts) live on hosts it never mentions.
+    private func captureObservedResourceHosts() {
+        facade?.evaluateJavaScript(InAppWebViewPrewarmPlanner.observedHostsScript) { result in
+            guard case .success(let value) = result, let hosts = value as? [String] else { return }
+            DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).rememberObservedHosts(hosts)
+        }
+    }
+
     func cancelTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         quizInitTimeoutWorkItem = nil
@@ -172,6 +182,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             quizInitTimeoutWorkItem?.cancel()
             hapticService.stopPattern()
             if isMotionServiceInitialized { motionService.stopMonitoring() }
+            captureObservedResourceHosts()
             webViewAction?.onClose()
         case .`init`:
             WebViewShowProfiler.shared.mark("initMessage")
