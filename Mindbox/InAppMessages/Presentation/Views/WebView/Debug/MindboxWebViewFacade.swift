@@ -487,7 +487,26 @@ final class WebViewShowProfiler {
     /// on a NORMAL launch — no -MBWV flags needed. Lets you feel it on a physical device, where scheme
     /// launch args are NOT passed on a tap-launch (only when Xcode launches the app). Set back to false
     /// to restore flag-gated behavior (production default = .nonPersistent()).
-    static let forceAllLeversOn = true
+    /// false for the variant-comparison runs: everything is selected via launch args (see PrewarmVariant).
+    static let forceAllLeversOn = false
+
+    /// Which prewarm strategy runs at SDK init. Selected per-launch via `-MBWVPrewarmVariant <raw>`
+    /// (a `-key value` launch arg lands in UserDefaults' argument domain; simctl launch passes it),
+    /// so variants are compared without rebuilding.
+    enum PrewarmVariant: String {
+        case off = "off"                 // no prewarm at all
+        case process = "process"         // blank local page: warms the web-content process, zero network
+        case preconnect = "preconnect"   // preconnect-only page: process + DNS/TCP/TLS to CDNs, no downloads
+        case cacher = "cacher"           // hardcoded runtime seed (tracker+main+fonts+byendpoint)
+        case realIndex = "real-index"    // the show's REAL index.html fetched fresh, loaded without formId
+        case prod = "prod"               // production-shaped: blank at init, then config-derived preconnect
+    }
+
+    static var prewarmVariant: PrewarmVariant {
+        guard let raw = UserDefaults.standard.string(forKey: "MBWVPrewarmVariant"),
+              let variant = PrewarmVariant(rawValue: raw) else { return .off }
+        return variant
+    }
 
     /// `true` when the full stack is forced on, or launched with `-MBWVPersistentStore`.
     static var usesPersistentStore: Bool {
@@ -497,7 +516,7 @@ final class WebViewShowProfiler {
     // MEASUREMENT (throwaway): a session-persistent warm WKWebView. Created once at in-app
     // subsystem start, loads a local "cacher" page (pulls tracker.js into the persistent cache
     // and keeps the web-content process alive). Two modes:
-    //   -MBWVPrewarm       → hold a throwaway warm WebView (WebKit reuses its prewarmed process).
+    //   -MBWVPrewarmVariant <v> → hold a throwaway warm WebView loaded per the variant (see PrewarmVariant).
     //   -MBWVReuseInstance → hold it AND reuse the SAME live instance for EVERY show — it is
     //                        borrowed (not consumed) and kept across shows (hidden, not destroyed),
     //                        so show #2, #3… stay as fast as show #1.
@@ -523,6 +542,8 @@ final class WebViewShowProfiler {
     /// a shipped cacher would derive it from the config endpoint.
     private static var byendpointURL: String {
         let bucket = Int(Date().timeIntervalSince1970 / 300)
+        // hardcoded to the Mpush-test.WebView test endpoint's forms — exactly the host/endpoint/bucket
+        // fragility this variant is being measured against (see webview-cache-solution.md).
         return "https://web-static.mindbox.ru/js/byendpoint/mpush-test.webview.js?_=\(bucket)"
     }
     private static var cacherHTML: String {
@@ -531,16 +552,16 @@ final class WebViewShowProfiler {
     }
 
     static func prewarmIfRequested() {
+        let variant = prewarmVariant
         let reuse = forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVReuseInstance")
-        let prewarmOnly = ProcessInfo.processInfo.arguments.contains("-MBWVPrewarm")
-        guard reuse || prewarmOnly else { return }
+        guard variant != .off || reuse else { return }
         // MEASUREMENT (throwaway): raise log level early — prewarm runs before any show's begin().
         if forceAllLeversOn || ProcessInfo.processInfo.arguments.contains("-MBWVForceInfoLog") {
             MBLogger.shared.logLevel = .info
         }
         // waitedMs = how long the main queue was busy (launch work) before this block ran;
         // createMs = main-thread cost of WKWebView allocation; mainBlockMs = total main-thread block
-        // this prewarm adds. Everything after loadHTMLString (process spin-up, network) is off-main.
+        // this prewarm adds. Everything after the load call (process spin-up, network) is off-main.
         let scheduledAt = CFAbsoluteTimeGetCurrent()
         DispatchQueue.main.async {
             guard warmWebView == nil else { return }
@@ -553,14 +574,126 @@ final class WebViewShowProfiler {
             config.mediaTypesRequiringUserActionForPlayback = []
             let webView = WKWebView(frame: .zero, configuration: config)
             let createMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
-            webView.loadHTMLString(cacherHTML, baseURL: URL(string: "https://inapp.local/popup"))
+            loadPrewarmContent(variant, into: webView)
             let mainBlockMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
             warmWebView = webView
             warmIsForReuse = reuse
             let store = usesPersistentStore ? "persistent" : "ephemeral"
-            Logger.common(message: "[WVProfile] prewarm: cacher loaded (reuse=\(reuse), store=\(store)) waitedMs=\(Int(waitedMs)) createMs=\(Int(createMs)) mainBlockMs=\(Int(mainBlockMs))",
+            Logger.common(message: "[WVProfile] prewarm variant=\(variant.rawValue) (reuse=\(reuse), store=\(store)) waitedMs=\(Int(waitedMs)) createMs=\(Int(createMs)) mainBlockMs=\(Int(mainBlockMs))",
                           level: .info, category: .webViewInAppMessages)
         }
+    }
+
+    /// Loads the variant's warm-up content into the freshly created warm WebView.
+    /// `.off`/`.process` load a blank local page (still warms the web-content process — a warm
+    /// instance is needed whenever reuse is on); `.realIndex` fetches the show's actual entry page
+    /// with the show's own fresh-fetch semantics and loads it WITHOUT formId, so the runtime inits
+    /// and pulls its own dependencies with THEIR current versions/cachebust — nothing duplicated here.
+    private static func loadPrewarmContent(_ variant: PrewarmVariant, into webView: WKWebView) {
+        let baseURL = URL(string: "https://inapp.local/popup")
+        switch variant {
+        case .off, .process, .prod:
+            // .prod starts process-warm only; the preconnect page arrives later, derived from the
+            // downloaded in-app config (see prodPreconnectIfRequested) — nothing is known before it.
+            webView.loadHTMLString("<html><head><meta charset=\"utf-8\"></head><body></body></html>", baseURL: baseURL)
+        case .preconnect:
+            webView.loadHTMLString(preconnectHTML, baseURL: baseURL)
+        case .cacher:
+            webView.loadHTMLString(cacherHTML, baseURL: baseURL)
+        case .realIndex:
+            fetchFresh(realIndexURL) { html in
+                DispatchQueue.main.async {
+                    guard let html else {
+                        Logger.common(message: "[WVProfile] prewarm real-index: fetch failed, instance stays process-warm only",
+                                      level: .info, category: .webViewInAppMessages)
+                        webView.loadHTMLString("<html><head><meta charset=\"utf-8\"></head><body></body></html>", baseURL: baseURL)
+                        return
+                    }
+                    webView.loadHTMLString(html, baseURL: baseURL)
+                }
+            }
+        }
+    }
+
+    /// The in-app's contentUrl from the test config — a shipped version would take it from the
+    /// fetched in-app config instead of hardcoding. Fetched fresh (same semantics as the show path).
+    private static let realIndexURL = "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html"
+
+    /// Preconnect-only page (mirrors the Android prewarm variant): warms DNS+TCP+TLS to the CDN
+    /// hosts the runtime and forms load from, without downloading anything.
+    private static var preconnectHTML: String {
+        preconnectHTML(hosts: [
+            "https://web-static.mindbox.ru",
+            "https://api.mindbox.ru",
+            "https://mobile-static.mindbox.ru",
+            "https://personalization-web.g.mindbox.ru",
+            "https://personalization-web-stable.mindbox.ru",
+            "https://fonts.googleapis.com",
+            "https://fonts.gstatic.com"
+        ])
+    }
+
+    private static func preconnectHTML(hosts: [String]) -> String {
+        let links = hosts.map { "<link rel=\"preconnect\" href=\"\($0)\" crossorigin><link rel=\"dns-prefetch\" href=\"\($0)\">" }.joined()
+        return "<html><head><meta charset=\"utf-8\">\(links)</head><body></body></html>"
+    }
+
+    // MARK: prod variant — config-derived preconnect, ZERO hardcoded knowledge
+
+    private static var prodPreconnectLoaded = false
+
+    /// PROD-shaped prewarm, stage 2. Called when the in-app config has just been parsed (once per
+    /// download). If the config contains webview layers, the warm instance (created process-only at
+    /// init) loads a preconnect page whose hosts are DERIVED from what the SDK already knows:
+    /// every webview layer's contentUrl host + the configured API domain. No other host is guessed —
+    /// byendpoint/image/font hosts are the web runtime's private knowledge and stay untouched.
+    static func prodPreconnectIfRequested(_ config: ConfigResponse?) {
+        guard prewarmVariant == .prod, let config else { return }
+        var hosts = Set<String>()
+        for inapp in config.inapps?.elements ?? [] {
+            for variant in inapp.form.variants ?? [] {
+                let layers: [ContentBackgroundLayerDTO]?
+                switch variant {
+                case .modal(let modal): layers = modal.content?.background?.layers
+                case .snackbar(let snackbar): layers = snackbar.content?.background?.layers
+                case .unknown: layers = nil
+                }
+                for layer in layers ?? [] {
+                    if case .webview(let webview) = layer,
+                       let contentUrl = webview.contentUrl,
+                       let host = URL(string: contentUrl)?.host {
+                        hosts.insert("https://\(host)")
+                    }
+                }
+            }
+        }
+        guard !hosts.isEmpty else {
+            Logger.common(message: "[WVProfile] prod prewarm: no webview in-apps in config — staying process-warm only",
+                          level: .info, category: .webViewInAppMessages)
+            return
+        }
+        if let domain = DI.injectOrFail(PersistenceStorage.self).configuration?.domain {
+            hosts.insert("https://\(domain)")
+        }
+        let sorted = hosts.sorted()
+        DispatchQueue.main.async {
+            guard let webView = warmWebView, !prodPreconnectLoaded else { return }
+            prodPreconnectLoaded = true
+            webView.loadHTMLString(preconnectHTML(hosts: sorted), baseURL: URL(string: "https://inapp.local/popup"))
+            Logger.common(message: "[WVProfile] prod prewarm: preconnect upgraded from config, hosts=\(sorted.joined(separator: ","))",
+                          level: .info, category: .webViewInAppMessages)
+        }
+    }
+
+    /// Same fresh-fetch semantics as the show path's fetchHTML (no URL cache involved).
+    private static func fetchFresh(_ urlString: String, completion: @escaping (String?) -> Void) {
+        guard let url = URL(string: urlString) else { completion(nil); return }
+        let config = URLSessionConfiguration.ephemeral
+        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        config.urlCache = nil
+        URLSession(configuration: config).dataTask(with: url) { data, _, _ in
+            completion(data.flatMap { String(data: $0, encoding: .utf8) })
+        }.resume()
     }
 
     /// Borrows the persistent warm WebView for a show WITHOUT consuming it — the reference is

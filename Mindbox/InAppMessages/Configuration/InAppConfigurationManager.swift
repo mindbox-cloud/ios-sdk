@@ -101,6 +101,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
+        // MEASUREMENT (throwaway): prod-variant prewarm stage 2 — config-derived preconnect.
+        WebViewShowProfiler.prodPreconnectIfRequested(configResponse)
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
     }
