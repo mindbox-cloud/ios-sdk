@@ -144,7 +144,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         let contentURL = URL(string: contentUrl)
         bridge.updateContentURL(contentURL)
 
-        fetchHTML(from: contentUrl) { [weak webView] html in
+        fetchHTML(from: contentUrl) { [weak webView, bridge] html in
             guard let webView else {
                 DispatchQueue.main.async {
                     onFailure()
@@ -155,7 +155,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
             if let html {
                 DispatchQueue.main.async {
                     WebViewShowProfiler.shared.mark("loadHTMLString")
-                    webView.loadHTMLString(html, baseURL: url)
+                    bridge.expectContentNavigation(webView.loadHTMLString(html, baseURL: url))
                 }
             } else {
                 DispatchQueue.main.async {
@@ -166,8 +166,9 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     }
     
     public func reloadWebView() {
-        DispatchQueue.main.async { [weak webView] in
-            webView?.reload()
+        DispatchQueue.main.async { [weak webView, bridge] in
+            guard let webView else { return }
+            bridge.expectContentNavigation(webView.reload())
         }
     }
     
@@ -523,6 +524,7 @@ final class WebViewShowProfiler {
     //                        stay as fast as show #1.
     private static var warmWebView: WKWebView?
     private static var warmIsForReuse = false
+    private static var warmWasBorrowed = false
 
     static func prewarmIfRequested() {
         let variant = prewarmVariant
@@ -639,7 +641,10 @@ final class WebViewShowProfiler {
 
     private static func loadIntoWarmInstanceOnce(_ load: @escaping (WKWebView) -> String) {
         DispatchQueue.main.async {
-            guard let webView = warmWebView, !prodStage2Loaded else { return }
+            // Never navigate an instance a show has borrowed: config arrival and the first
+            // show race on the main queue, and a prewarm load must not land in a live show.
+            // After a real show the connections are warmer than any preconnect anyway.
+            guard let webView = warmWebView, !prodStage2Loaded, !warmWasBorrowed else { return }
             prodStage2Loaded = true
             let message = load(webView)
             Logger.common(message: "[WVProfile] prod prewarm: \(message)",
@@ -652,6 +657,10 @@ final class WebViewShowProfiler {
     /// previous show's view hierarchy first. nil unless -MBWVReuseInstance.
     static func borrowWarmWebView() -> WKWebView? {
         guard warmIsForReuse, let webView = warmWebView else { return nil }
+        warmWasBorrowed = true
+        // The instance belongs to the show from here: kill any in-flight prewarm
+        // navigation so its callbacks can't reach the show's freshly attached delegate.
+        webView.stopLoading()
         webView.removeFromSuperview()
         return webView
     }

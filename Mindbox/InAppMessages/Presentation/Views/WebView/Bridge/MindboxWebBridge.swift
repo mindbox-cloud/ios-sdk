@@ -45,6 +45,14 @@ public final class MindboxWebBridge: NSObject {
     private var pendingRequestIds = Set<UUID>()
     private var contentURL: URL?
 
+    // A reused (pre-warmed) WKWebView can deliver navigation callbacks that belong to a
+    // previous owner's load — e.g. a prewarm page still in flight when this bridge attaches.
+    // The ready check in TransparentView closes the in-app on the first didFinish it sees,
+    // so such leftovers must never reach the navigation delegate. Main-thread only.
+    private var expectedNavigation: WKNavigation?
+    private var expectedNavigationFinished = false
+    private var contentLoadIssued = false
+
     init(webView: WKWebView) {
         self.webView = webView
         super.init()
@@ -57,6 +65,10 @@ public final class MindboxWebBridge: NSObject {
     }
 
     deinit {
+        // On a reused WebView the next show's bridge may already have taken over
+        // (it re-adds the script handler and reassigns the delegate in its init).
+        // Tearing down unconditionally would rip out the successor's wiring.
+        guard webView?.navigationDelegate === self else { return }
         webView?.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         webView?.navigationDelegate = nil
     }
@@ -134,6 +146,28 @@ public final class MindboxWebBridge: NSObject {
     func updateContentURL(_ url: URL?) {
         contentURL = url
     }
+
+    /// Registers the navigation issued by this show's own load (loadHTMLString/reload).
+    /// Until it finishes, callbacks for any other navigation are treated as stale leftovers.
+    func expectContentNavigation(_ navigation: WKNavigation?) {
+        contentLoadIssued = true
+        expectedNavigation = navigation
+        expectedNavigationFinished = false
+    }
+
+    private func isStaleNavigation(_ navigation: WKNavigation?) -> Bool {
+        if expectedNavigationFinished { return false }
+        guard contentLoadIssued else { return true }
+        guard let expected = expectedNavigation else { return false }
+        return navigation !== expected
+    }
+
+    private func logStaleNavigation(_ event: String) {
+        Logger.common(
+            message: "[WebView] Bridge: ignoring stale navigation \(event) (leftover load on reused WebView)",
+            category: .webViewInAppMessages
+        )
+    }
 }
 
 extension MindboxWebBridge: WKScriptMessageHandler {
@@ -185,11 +219,24 @@ extension MindboxWebBridge: WKScriptMessageHandler {
 
 extension MindboxWebBridge: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        guard !isStaleNavigation(navigation) else {
+            WebViewShowProfiler.shared.mark("staleNavStart")
+            logStaleNavigation("start")
+            return
+        }
         WebViewShowProfiler.shared.mark("navStart")
         navigationDelegate?.webBridge(self, didStartProvisionalNavigation: webView.url)
     }
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard !isStaleNavigation(navigation) else {
+            WebViewShowProfiler.shared.mark("staleNavFinish")
+            logStaleNavigation("finish")
+            return
+        }
+        if navigation === expectedNavigation {
+            expectedNavigationFinished = true
+        }
         WebViewShowProfiler.shared.mark("navFinish")
         navigationDelegate?.webBridge(self, didFinishNavigation: contentURL ?? webView.url)
     }
@@ -197,12 +244,20 @@ extension MindboxWebBridge: WKNavigationDelegate {
     public func webView(_ webView: WKWebView,
                         didFailProvisionalNavigation navigation: WKNavigation!,
                         withError error: Error) {
+        guard !isStaleNavigation(navigation) else {
+            logStaleNavigation("provisional failure: \(error.localizedDescription)")
+            return
+        }
         navigationDelegate?.webBridge(self, didFailProvisionalNavigation: webView.url, error: error)
     }
 
     public func webView(_ webView: WKWebView,
                         didFail navigation: WKNavigation!,
                         withError error: Error) {
+        guard !isStaleNavigation(navigation) else {
+            logStaleNavigation("failure: \(error.localizedDescription)")
+            return
+        }
         navigationDelegate?.webBridge(self, didFailProvisionalNavigation: webView.url, error: error)
     }
     
