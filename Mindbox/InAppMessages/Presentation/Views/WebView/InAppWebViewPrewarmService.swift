@@ -228,12 +228,33 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             Logger.common(message: "[WebView] Prewarm: web-content process warm-up started",
                           level: .info, category: .webViewInAppMessages)
         }
+        // MEASUREMENT (throwaway experiment): content-page prewarm needs a head start over
+        // launch-triggered shows, so it boots from the PREVIOUS launch's cached config —
+        // the fresh config's own prewarm would lose the race to the show by design.
+        if Self.isPagePrewarmExperimentEnabled {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                guard let self,
+                      let data = InAppConfigurationRepository().fetchConfigFromCache(),
+                      let config = try? JSONDecoder().decode(ConfigResponse.self, from: data) else { return }
+                let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
+                guard !layers.isEmpty else { return }
+                self.loadContentPagePrewarm(layers: layers)
+            }
+        }
     }
 
     func prewarmConnections(for config: ConfigResponse) {
         let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
         guard !layers.isEmpty else {
             releaseUnusedWarmWebView()
+            return
+        }
+
+        // MEASUREMENT (throwaway experiment): fresh install has no cached config, so the
+        // page prewarm falls back to running at config arrival (usually loses to a
+        // launch-triggered show — the borrow guards make that safe, just not faster).
+        if Self.isPagePrewarmExperimentEnabled {
+            loadContentPagePrewarm(layers: layers)
             return
         }
 
@@ -309,6 +330,57 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     private static let blankPage = "<html><head><meta charset=\"utf-8\"></head><body></body></html>"
+
+    // MARK: MEASUREMENT (throwaway experiment): content-page prewarm behind -MBWVPrewarmPage.
+    //
+    // Loads the REAL content page (index.html fetched natively, injected under the config's
+    // baseUrl so it fills the shows' cache partition) with a stubbed `window.SdkBridge`:
+    // main.js answers its own `ready` locally from receiveParam — endpointId/deviceUuid come
+    // from PersistenceStorage, popUpId is null so no form renders — and the tracker then
+    // downloads the byendpoint bundle straight into the cache. Runtime operations fall into
+    // the stub's no-op postMessage, so nothing is tracked during prewarm.
+
+    private static var isPagePrewarmExperimentEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("-MBWVPrewarmPage")
+    }
+
+    private func loadContentPagePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
+        guard let configuration = persistenceStorage.configuration,
+              let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
+              let contentUrlString = layers.first(where: { $0.contentUrl != nil })?.contentUrl,
+              let contentURL = URL(string: contentUrlString) else { return }
+        let endpoint = configuration.endpoint
+        let deviceUUID = persistenceStorage.deviceUUID ?? ""
+
+        URLSession.shared.dataTask(with: contentURL) { [weak self] data, response, _ in
+            guard let self,
+                  let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
+                  let data, let html = String(data: data, encoding: .utf8) else { return }
+            DispatchQueue.main.async {
+                guard !self.hasBeenBorrowed, !self.hasLoadedPreconnect else { return }
+                self.hasLoadedPreconnect = true
+                if self.warmWebView == nil {
+                    self.warmWebView = self.makeWebView()
+                }
+                let stub = """
+                window.SdkBridge = {
+                  receiveParam: function (name) {
+                    if (name === 'endpointId') { return '\(endpoint)'; }
+                    if (name === 'deviceUuid') { return '\(deviceUUID)'; }
+                    return null;
+                  },
+                  postMessage: function () {}
+                };
+                """
+                self.warmWebView?.configuration.userContentController.addUserScript(
+                    WKUserScript(source: stub, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+                )
+                self.warmWebView?.loadHTMLString(html, baseURL: baseURL)
+                Logger.common(message: "[WebView] Prewarm (experimental): content page with stub bridge under \(baseURL.absoluteString), endpoint \(endpoint)",
+                              level: .info, category: .webViewInAppMessages)
+            }
+        }.resume()
+    }
 
     private static func makeDefaultWebView() -> WKWebView {
         let config = WKWebViewConfiguration()
