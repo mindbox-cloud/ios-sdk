@@ -623,6 +623,7 @@
 		F39B67AE2A3C737F005C0CCA /* ImageDownloadServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */; };
 		F39B67B82A3FAA75005C0CCA /* ABTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39B67B72A3FAA75005C0CCA /* ABTests.swift */; };
 		F3A0B0022F28A00100CE7E63 /* TransparentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */; };
+		B3CB4E1F3C50BFACE12951CB /* InAppWebViewPrewarmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6C01962993A9BDA31B5F7E /* InAppWebViewPrewarmTests.swift */; };
 		F3A22CBA2E169F3F005817F2 /* InappScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */; };
 		F3A49BE32DDF070D00C52AB6 /* InAppSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */; };
 		F3A4EFDC2D5224C700DB96A8 /* SlidingExpirationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */; };
@@ -1355,6 +1356,7 @@
 		F39B67AD2A3C737F005C0CCA /* ImageDownloadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownloadServiceTests.swift; sourceTree = "<group>"; };
 		F39B67B72A3FAA75005C0CCA /* ABTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTests.swift; sourceTree = "<group>"; };
 		F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransparentViewTests.swift; sourceTree = "<group>"; };
+		2D6C01962993A9BDA31B5F7E /* InAppWebViewPrewarmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewPrewarmTests.swift; sourceTree = "<group>"; };
 		F3A22CB92E169F3F005817F2 /* InappScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManager.swift; sourceTree = "<group>"; };
 		F3A49BE22DDF070D00C52AB6 /* InAppSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppSettingsModel.swift; sourceTree = "<group>"; };
 		F3A4EFDB2D5224C700DB96A8 /* SlidingExpirationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingExpirationModel.swift; sourceTree = "<group>"; };
@@ -2692,6 +2694,7 @@
 				F3B70A022F250A0100AABB02 /* ForegroundStopwatchTests.swift */,
 				F3B70A042F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift */,
 				F3A0B0012F28A00100CE7E63 /* TransparentViewTests.swift */,
+				2D6C01962993A9BDA31B5F7E /* InAppWebViewPrewarmTests.swift */,
 				F3C1A0052F5B100100ABC001 /* InappShowFailureManagerTests.swift */,
 				2B4C84F6EDD4B7D977F67A95 /* WebView */,
 				A1B2C3D400000007E1010101 /* Permissions */,
@@ -4688,6 +4691,7 @@
 				F3B70A032F250A0100AABB02 /* ForegroundStopwatchTests.swift in Sources */,
 				F3B70A052F250A0100AABB03 /* TimeToDisplayBackgroundTests.swift in Sources */,
 				F3A0B0022F28A00100CE7E63 /* TransparentViewTests.swift in Sources */,
+				B3CB4E1F3C50BFACE12951CB /* InAppWebViewPrewarmTests.swift in Sources */,
 				F3C1A0062F5B100100ABC001 /* InappShowFailureManagerTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				D216DE532C0716B80020F58A /* TimeIntervalTimeSpanTests.swift in Sources */,
