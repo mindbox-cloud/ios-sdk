@@ -104,10 +104,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
-        // Prewarm stage 2: preconnect to the hosts the config's webview in-apps will hit
+        // Prewarm stage 2: warm the resources the config's webview in-apps will need
         // (or release the warm instance when the config proves there are none).
         if let configResponse {
-            webViewPrewarmService.prewarmConnections(for: configResponse)
+            webViewPrewarmService.prewarmResources(for: configResponse)
         }
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)

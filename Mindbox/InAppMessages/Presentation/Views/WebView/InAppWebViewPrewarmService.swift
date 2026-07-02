@@ -171,19 +171,19 @@ final class InAppWebViewLearnedHostsStore {
 
 protocol InAppWebViewPrewarmServiceProtocol: AnyObject {
     /// Stage 1, at SDK initialization: spins up the WebKit web-content process with a blank
-    /// page so the first show doesn't pay process startup (~0.5s cold).
+    /// page, then — when the previous launch left a cached config with webview in-apps —
+    /// starts the resource prewarm right away, ahead of the fresh config download.
     func prewarmProcess()
 
-    /// Stage 2, when the in-app config has been parsed: if the config contains webview
-    /// in-apps, loads a preconnect page (derived from the config + learned hosts) into the
-    /// warm instance under the shows' cache partition. If it contains none, the stage-1
-    /// instance is released — most host apps never show webview in-apps and must not pay
-    /// for an idle web-content process.
-    func prewarmConnections(for config: ConfigResponse)
+    /// Stage 2, when a freshly downloaded config has been parsed: starts the resource
+    /// prewarm if it hasn't run from the cached config yet. If the config contains no
+    /// webview in-apps, the stage-1 instance is released — most host apps never show
+    /// webview in-apps and must not pay for an idle web-content process.
+    func prewarmResources(for config: ConfigResponse)
 
     /// Hands the warm instance to a show. The reference is kept (borrow, not consume) so the
-    /// same live instance serves subsequent shows too. Never returns an instance with a
-    /// prewarm navigation still able to reach the show's delegate.
+    /// same live instance serves subsequent shows too. Any prewarm page is torn down hard —
+    /// nothing of it may compete with the show or reach the show's delegate.
     func borrowWarmWebView() -> WKWebView?
 
     /// Called when a show is torn down: navigates the parked instance to a blank page so the
@@ -201,21 +201,28 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private let persistenceStorage: PersistenceStorage
     private let learnedHostsStore: InAppWebViewLearnedHostsStore
     private let makeWebView: () -> WKWebView
+    private let fetchHTML: (URL, @escaping (String?) -> Void) -> Void
+    private let loadCachedConfig: () -> ConfigResponse?
 
     // Main-thread confined (WKWebView requirement); all mutations below hop to main.
-    // The borrowed/preconnect flags latch for the rest of the launch by design: after the
-    // first borrow the pooled connections are warmer than any preconnect page could make
-    // them, and re-running stage 2 would navigate a live show's webview.
+    // The flags latch for the rest of the launch by design: after the first borrow the
+    // cache and connections are warmer than any prewarm could make them, and re-running
+    // the prewarm would navigate a live show's webview.
     private var warmWebView: WKWebView?
     private var hasBeenBorrowed = false
-    private var hasLoadedPreconnect = false
+    private var hasStartedResourcePrewarm = false
+    private var hasLoadedContentPage = false
 
     init(persistenceStorage: PersistenceStorage,
          learnedHostsStore: InAppWebViewLearnedHostsStore = InAppWebViewLearnedHostsStore(),
-         makeWebView: @escaping () -> WKWebView = InAppWebViewPrewarmService.makeDefaultWebView) {
+         makeWebView: @escaping () -> WKWebView = InAppWebViewPrewarmService.makeDefaultWebView,
+         fetchHTML: @escaping (URL, @escaping (String?) -> Void) -> Void = InAppWebViewPrewarmService.defaultFetchHTML,
+         loadCachedConfig: @escaping () -> ConfigResponse? = InAppWebViewPrewarmService.defaultLoadCachedConfig) {
         self.persistenceStorage = persistenceStorage
         self.learnedHostsStore = learnedHostsStore
         self.makeWebView = makeWebView
+        self.fetchHTML = fetchHTML
+        self.loadCachedConfig = loadCachedConfig
     }
 
     func prewarmProcess() {
@@ -228,63 +235,25 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             Logger.common(message: "[WebView] Prewarm: web-content process warm-up started",
                           level: .info, category: .webViewInAppMessages)
         }
-        // MEASUREMENT (throwaway experiment): content-page prewarm needs a head start over
-        // launch-triggered shows, so it boots from the PREVIOUS launch's cached config —
-        // the fresh config's own prewarm would lose the race to the show by design.
-        if Self.isPagePrewarmExperimentEnabled {
-            DispatchQueue.global(qos: .utility).async { [weak self] in
-                guard let self,
-                      let data = InAppConfigurationRepository().fetchConfigFromCache(),
-                      let config = try? JSONDecoder().decode(ConfigResponse.self, from: data) else { return }
-                let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
-                guard !layers.isEmpty else { return }
-                self.loadContentPagePrewarm(layers: layers)
-            }
+        // The resource prewarm needs a head start over launch-triggered shows, so it boots
+        // from the PREVIOUS launch's cached config — waiting for the fresh config would
+        // lose the race to the show by design. A stale contentUrl/baseUrl here is harmless:
+        // the next launch picks up the fresh one.
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self, let config = self.loadCachedConfig() else { return }
+            let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
+            guard !layers.isEmpty else { return }
+            self.startResourcePrewarm(layers: layers)
         }
     }
 
-    func prewarmConnections(for config: ConfigResponse) {
+    func prewarmResources(for config: ConfigResponse) {
         let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
         guard !layers.isEmpty else {
             releaseUnusedWarmWebView()
             return
         }
-
-        // MEASUREMENT (throwaway experiment): fresh install has no cached config, so the
-        // page prewarm falls back to running at config arrival (usually loses to a
-        // launch-triggered show — the borrow guards make that safe, just not faster).
-        if Self.isPagePrewarmExperimentEnabled {
-            loadContentPagePrewarm(layers: layers)
-            return
-        }
-
-        guard let configuration = persistenceStorage.configuration else { return }
-        guard let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers) else {
-            Logger.common(message: "[WebView] Prewarm: webview layers carry no usable baseUrl — skipping preconnect",
-                          level: .info, category: .webViewInAppMessages)
-            return
-        }
-
-        let hosts = InAppWebViewPrewarmPlanner.preconnectHosts(
-            layers: layers,
-            apiDomain: configuration.domain,
-            learnedHosts: learnedHostsStore.hosts(endpoint: configuration.endpoint)
-        )
-        guard !hosts.isEmpty else { return }
-
-        DispatchQueue.main.async {
-            // Config arrival and the first show race on the main queue: never navigate an
-            // instance a show has borrowed, and load the preconnect page at most once —
-            // after a real show the pooled connections are warmer than any preconnect.
-            guard !self.hasBeenBorrowed, !self.hasLoadedPreconnect else { return }
-            self.hasLoadedPreconnect = true
-            if self.warmWebView == nil {
-                self.warmWebView = self.makeWebView()
-            }
-            self.warmWebView?.loadHTMLString(InAppWebViewPrewarmPlanner.preconnectHTML(hosts: hosts), baseURL: baseURL)
-            Logger.common(message: "[WebView] Prewarm: preconnect to \(hosts.joined(separator: ",")) under \(baseURL.absoluteString)",
-                          level: .info, category: .webViewInAppMessages)
-        }
+        startResourcePrewarm(layers: layers)
     }
 
     func borrowWarmWebView() -> WKWebView? {
@@ -316,13 +285,82 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         learnedHostsStore.remember(hosts, endpoint: configuration.endpoint)
     }
 
+    // MARK: Resource prewarm
+
+    /// Two steps on the warm instance, both under the shows' cache partition (`baseUrl`
+    /// from the config's webview layer):
+    ///  1. A preconnect page opens DNS+TCP+TLS to every known host — including image/font
+    ///     hosts learned from previous shows, which the content page never touches because
+    ///     no form renders during prewarm.
+    ///  2. The real content page (index.html fetched natively) with a stubbed
+    ///     `window.SdkBridge` — the Android sync-bridge contract main.js checks first —
+    ///     so the web runtime boots and downloads its bundles (tracker, byendpoint)
+    ///     straight into the HTTP cache. `popUpId` is null: no form renders, nothing is
+    ///     tracked; runtime operations land in the stub's no-op `postMessage`. If the web
+    ///     runtime ever drops that contract, this degrades to a plain page warm — shows
+    ///     are unaffected.
+    private func startResourcePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
+        guard let configuration = persistenceStorage.configuration,
+              let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
+              let contentUrlString = layers.first(where: { $0.contentUrl != nil })?.contentUrl,
+              let contentURL = URL(string: contentUrlString) else { return }
+
+        let hosts = InAppWebViewPrewarmPlanner.preconnectHosts(
+            layers: layers,
+            apiDomain: configuration.domain,
+            learnedHosts: learnedHostsStore.hosts(endpoint: configuration.endpoint)
+        )
+        let endpoint = configuration.endpoint
+        let deviceUUID = persistenceStorage.deviceUUID ?? ""
+
+        DispatchQueue.main.async {
+            guard !self.hasBeenBorrowed, !self.hasStartedResourcePrewarm else { return }
+            self.hasStartedResourcePrewarm = true
+            if self.warmWebView == nil {
+                self.warmWebView = self.makeWebView()
+            }
+            if !hosts.isEmpty {
+                self.warmWebView?.loadHTMLString(InAppWebViewPrewarmPlanner.preconnectHTML(hosts: hosts), baseURL: baseURL)
+                Logger.common(message: "[WebView] Prewarm: preconnect to \(hosts.joined(separator: ",")) under \(baseURL.absoluteString)",
+                              level: .info, category: .webViewInAppMessages)
+            }
+            self.fetchHTML(contentURL) { html in
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, let html, !self.hasBeenBorrowed, !self.hasLoadedContentPage else { return }
+                    self.hasLoadedContentPage = true
+                    self.warmWebView?.configuration.userContentController.addUserScript(
+                        WKUserScript(source: Self.syncBridgeStub(endpoint: endpoint, deviceUUID: deviceUUID),
+                                     injectionTime: .atDocumentStart,
+                                     forMainFrameOnly: true)
+                    )
+                    self.warmWebView?.loadHTMLString(html, baseURL: baseURL)
+                    Logger.common(message: "[WebView] Prewarm: content page with stub bridge under \(baseURL.absoluteString), endpoint \(endpoint)",
+                                  level: .info, category: .webViewInAppMessages)
+                }
+            }
+        }
+    }
+
+    private static func syncBridgeStub(endpoint: String, deviceUUID: String) -> String {
+        """
+        window.SdkBridge = {
+          receiveParam: function (name) {
+            if (name === 'endpointId') { return '\(endpoint)'; }
+            if (name === 'deviceUuid') { return '\(deviceUUID)'; }
+            return null;
+          },
+          postMessage: function () {}
+        };
+        """
+    }
+
     /// Most Mindbox host apps have no webview in-apps: once the config proves that, drop the
     /// stage-1 instance so they don't keep an idle web-content process for the app lifetime.
     /// A later config with webview layers recreates it (or the show creates its own on the
     /// same shared store).
     private func releaseUnusedWarmWebView() {
         DispatchQueue.main.async {
-            guard !self.hasBeenBorrowed, !self.hasLoadedPreconnect, self.warmWebView != nil else { return }
+            guard !self.hasBeenBorrowed, self.warmWebView != nil else { return }
             self.warmWebView = nil
             Logger.common(message: "[WebView] Prewarm: no webview in-apps in config — releasing the warm instance",
                           level: .info, category: .webViewInAppMessages)
@@ -331,57 +369,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     private static let blankPage = "<html><head><meta charset=\"utf-8\"></head><body></body></html>"
 
-    // MARK: MEASUREMENT (throwaway experiment): content-page prewarm behind -MBWVPrewarmPage.
-    //
-    // Loads the REAL content page (index.html fetched natively, injected under the config's
-    // baseUrl so it fills the shows' cache partition) with a stubbed `window.SdkBridge`:
-    // main.js answers its own `ready` locally from receiveParam — endpointId/deviceUuid come
-    // from PersistenceStorage, popUpId is null so no form renders — and the tracker then
-    // downloads the byendpoint bundle straight into the cache. Runtime operations fall into
-    // the stub's no-op postMessage, so nothing is tracked during prewarm.
-
-    private static var isPagePrewarmExperimentEnabled: Bool {
-        ProcessInfo.processInfo.arguments.contains("-MBWVPrewarmPage")
-    }
-
-    private func loadContentPagePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
-        guard let configuration = persistenceStorage.configuration,
-              let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
-              let contentUrlString = layers.first(where: { $0.contentUrl != nil })?.contentUrl,
-              let contentURL = URL(string: contentUrlString) else { return }
-        let endpoint = configuration.endpoint
-        let deviceUUID = persistenceStorage.deviceUUID ?? ""
-
-        URLSession.shared.dataTask(with: contentURL) { [weak self] data, response, _ in
-            guard let self,
-                  let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
-                  let data, let html = String(data: data, encoding: .utf8) else { return }
-            DispatchQueue.main.async {
-                guard !self.hasBeenBorrowed, !self.hasLoadedPreconnect else { return }
-                self.hasLoadedPreconnect = true
-                if self.warmWebView == nil {
-                    self.warmWebView = self.makeWebView()
-                }
-                let stub = """
-                window.SdkBridge = {
-                  receiveParam: function (name) {
-                    if (name === 'endpointId') { return '\(endpoint)'; }
-                    if (name === 'deviceUuid') { return '\(deviceUUID)'; }
-                    return null;
-                  },
-                  postMessage: function () {}
-                };
-                """
-                self.warmWebView?.configuration.userContentController.addUserScript(
-                    WKUserScript(source: stub, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-                )
-                self.warmWebView?.loadHTMLString(html, baseURL: baseURL)
-                Logger.common(message: "[WebView] Prewarm (experimental): content page with stub bridge under \(baseURL.absoluteString), endpoint \(endpoint)",
-                              level: .info, category: .webViewInAppMessages)
-            }
-        }.resume()
-    }
-
     private static func makeDefaultWebView() -> WKWebView {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = InAppWebViewDataStore.shared()
@@ -389,5 +376,25 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         return WKWebView(frame: .zero, configuration: config)
+    }
+
+    /// Always revalidates with the server (ETag → 304 keeps the body transfer at ~0), so the
+    /// prewarm never renders an index the server hasn't just confirmed — the same freshness
+    /// guarantee the shows' own fetch gives.
+    private static func defaultFetchHTML(url: URL, completion: @escaping (String?) -> Void) {
+        let request = URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
+                  let data, let html = String(data: data, encoding: .utf8) else {
+                completion(nil)
+                return
+            }
+            completion(html)
+        }.resume()
+    }
+
+    private static func defaultLoadCachedConfig() -> ConfigResponse? {
+        guard let data = InAppConfigurationRepository().fetchConfigFromCache() else { return nil }
+        return try? JSONDecoder().decode(ConfigResponse.self, from: data)
     }
 }

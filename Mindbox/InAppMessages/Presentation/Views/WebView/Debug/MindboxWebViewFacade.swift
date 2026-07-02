@@ -336,16 +336,17 @@ extension MindboxWebViewFacade {
             return
         }
 
-        // Standard header-driven caching (max-age=600 + ETag today): repeat shows within the
-        // server-declared freshness window skip the network entirely, after it a conditional
-        // GET revalidates with a ~0-byte 304. NOTE: the staleness bound is a CDN header
-        // contract — index.html must keep shipping explicit Cache-Control/Expires; with only
-        // Last-Modified, URLCache would fall back to unbounded heuristic freshness.
+        // Every show still asks the server for index.html — the same freshness guarantee
+        // the old ephemeral no-cache fetch gave (a stale index is never rendered without
+        // the server confirming it; staleness is bounded by the CDN edge alone, which no
+        // client policy can bypass). The cache only saves the body transfer: on ETag match
+        // the server answers a ~0-byte 304 and URLCache supplies the stored body.
         let session = URLSession.shared
+        let request = URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
         
         log("Fetching HTML from \(url.absoluteString)")
         
-        let task = session.dataTask(with: url) { [weak self] data, response, error in
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
             if let error {
                 self?.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
