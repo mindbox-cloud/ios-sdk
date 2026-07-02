@@ -23,6 +23,9 @@ fileprivate enum FeatureTogglesConfig: String, Configurable {
     case settingsFeatureTogglesShouldSendInAppShowErrorMissing = "SettingsFeatureTogglesShouldSendInAppShowErrorMissing" // Missing `shouldSendInAppShowError`
     case settingsFeatureTogglesShouldSendInAppShowErrorTypeError = "SettingsFeatureTogglesShouldSendInAppShowErrorTypeError" // Type of `shouldSendInAppShowError` is String instead of Bool
     case settingsFeatureTogglesShouldSendInAppShowErrorFalse = "SettingsFeatureTogglesShouldSendInAppShowErrorFalse" // `shouldSendInAppShowError` is false
+
+    case settingsFeatureTogglesShouldSendInAppTagsFalse = "SettingsFeatureTogglesShouldSendInAppTagsFalse" // `shouldSendInAppTags` is false
+    case settingsFeatureTogglesShouldSendInAppTagsTypeError = "SettingsFeatureTogglesShouldSendInAppTagsTypeError" // Type of `shouldSendInAppTags` is String instead of Bool
 }
 
 final class FeatureTogglesConfigParsingTests: XCTestCase {
@@ -91,9 +94,56 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppShowErrorTypeError.getConfig()
 
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
-        
+
         let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
         featureToggleManager.applyFeatureToggles(config.featureToggles)
         XCTAssertTrue(featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError))
+    }
+
+    // MARK: - FeatureToggles: MobileSdkShouldSendInAppTags
+
+    func test_SettingsConfig_withFeatureTogglesTagsTrue_shouldParseSuccessfully() {
+        // `shouldSendInAppTags` is true
+        let config = try! FeatureTogglesConfig.configWithSettings.getConfig()
+
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+
+        let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+        featureToggleManager.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
+    }
+
+    func test_SettingsConfig_withFeatureTogglesTagsFalse_shouldParseSuccessfully() {
+        // `shouldSendInAppTags` is false
+        let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppTagsFalse.getConfig()
+
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+        XCTAssertEqual(config.featureToggles?.shouldSendInAppTags, false, "shouldSendInAppTags must be false")
+
+        let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+        featureToggleManager.applyFeatureToggles(config.featureToggles)
+        XCTAssertFalse(featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
+    }
+
+    func test_SettingsConfig_withFeatureTogglesMissingShouldSendInAppTags_shouldDefaultToTrue() {
+        // Missing `shouldSendInAppTags`
+        let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppShowErrorMissing.getConfig()
+
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+
+        let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+        featureToggleManager.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
+    }
+
+    func test_SettingsConfig_withFeatureTogglesShouldSendInAppTagsTypeError_shouldDefaultToTrue() {
+        // Type of `shouldSendInAppTags` is String instead of Bool
+        let config = try! FeatureTogglesConfig.settingsFeatureTogglesShouldSendInAppTagsTypeError.getConfig()
+
+        XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+
+        let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+        featureToggleManager.applyFeatureToggles(config.featureToggles)
+        XCTAssertTrue(featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
     }
 }

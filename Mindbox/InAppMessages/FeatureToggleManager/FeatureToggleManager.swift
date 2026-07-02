@@ -11,10 +11,13 @@ import MindboxLogger
 
 enum FeatureFlag {
     case shouldSendInAppShowError
+    case shouldSendInAppTags
 
     var defaultValue: Bool {
         switch self {
         case .shouldSendInAppShowError:
+            return true
+        case .shouldSendInAppTags:
             return true
         }
     }
@@ -27,7 +30,8 @@ final class FeatureToggleManager {
     func applyFeatureToggles(_ featureToggles: Settings.FeatureToggles?) {
         self.featureToggles = featureToggles
         let flags: [String] = [
-            featureToggles?.shouldSendInAppShowError.map { "MobileSdkShouldSendInAppShowError=\($0)" }
+            featureToggles?.shouldSendInAppShowError.map { "MobileSdkShouldSendInAppShowError=\($0)" },
+            featureToggles?.shouldSendInAppTags.map { "MobileSdkShouldSendInAppTags=\($0)" }
         ].compactMap { $0 }
         Logger.common(
             message: "[FeatureToggles] \(flags)",
@@ -40,6 +44,8 @@ final class FeatureToggleManager {
         switch feature {
         case .shouldSendInAppShowError:
             return featureToggles?.shouldSendInAppShowError ?? feature.defaultValue
+        case .shouldSendInAppTags:
+            return featureToggles?.shouldSendInAppTags ?? feature.defaultValue
         }
     }
 }
