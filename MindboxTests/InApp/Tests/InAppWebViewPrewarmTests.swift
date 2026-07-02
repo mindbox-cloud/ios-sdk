@@ -257,6 +257,23 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(stubSource.contains("test-device-uuid"))
     }
 
+    @Test("Borrow strips the prewarm's user scripts — the stub bridge must never reach a show")
+    func borrowRemovesPrewarmUserScripts() async throws {
+        service.prewarmProcess()
+        await drainMainQueue()
+        service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
+        await drainMainQueue()
+        await drainMainQueue()
+        let scriptsBeforeBorrow = spy.configuration.userContentController.userScripts
+        #expect(scriptsBeforeBorrow.contains { $0.source.contains("SdkBridge") })
+
+        _ = service.borrowWarmWebView()
+
+        // User scripts persist across navigations; a leftover stub would make the show's
+        // page treat the SDK as legacy (empty popUpId) and never render the form.
+        #expect(spy.configuration.userContentController.userScripts.isEmpty)
+    }
+
     @Test("A config without webview in-apps releases the unused warm instance")
     func noWebviewConfigReleasesInstance() async {
         service.prewarmProcess()

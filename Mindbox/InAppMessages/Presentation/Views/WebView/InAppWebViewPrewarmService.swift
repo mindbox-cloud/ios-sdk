@@ -266,6 +266,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // The show's own load supersedes the blank one, and the bridge's staleness filter
         // ignores both leftovers' callbacks.
         webView.stopLoading()
+        // User scripts persist across navigations: without this, the prewarm's SdkBridge
+        // stub would reach the show's page, which would take it for the legacy-SDK bridge
+        // (empty popUpId) and never render the form.
+        webView.configuration.userContentController.removeAllUserScripts()
         webView.loadHTMLString(Self.blankPage, baseURL: nil)
         webView.removeFromSuperview()
         return webView
