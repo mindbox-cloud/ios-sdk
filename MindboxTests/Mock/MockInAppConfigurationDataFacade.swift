@@ -42,7 +42,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         completion()
     }
 
-    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
@@ -62,11 +62,11 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>) {
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]?]) {
         collectedTargetingFailureIds.append(failedTargetingInappIds)
     }
-    
-    func trackTargeting(id: String?) {
+
+    func trackTargeting(id: String?, tags: [String: String]?) {
         if let id = id {
             if showArray.isEmpty {
                 showArray.append(id)

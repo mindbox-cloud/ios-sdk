@@ -91,7 +91,10 @@ class InappMapper: InappMapperProtocol {
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
             let suitableIds = Set(suitableInapps.map(\.inAppId))
             let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
-            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds)
+            let tagsByInappId: [String: [String: String]?] = inapps.reduce(into: [:]) { result, inapp in
+                result[inapp.id] = inapp.tags
+            }
+            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds, tagsByInappId: tagsByInappId)
 
             if suitableInapps.isEmpty {
                 completion(nil)
@@ -152,7 +155,7 @@ class InappMapper: InappMapperProtocol {
                 for imageValue in imageValues {
                     group.enter()
                     Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-                    self.dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId) { result in
+                    self.dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId, tags: inapp.tags) { result in
                         defer {
                             group.leave()
                         }
@@ -189,7 +192,7 @@ class InappMapper: InappMapperProtocol {
             group.notify(queue: .main) {
                 DispatchQueue.main.async { [weak self] in
                     if let id = formData?.inAppId {
-                        self?.dataFacade.trackTargeting(id: id)
+                        self?.dataFacade.trackTargeting(id: id, tags: formData?.tags)
                         self?.shownInappIDWithHashValue[id] = self?.getEventHashValue()
                     }
 
@@ -239,7 +242,7 @@ class InappMapper: InappMapperProtocol {
                 if self.shownInappIDWithHashValue[inapp.inAppId] != self.getEventHashValue(),
                    let inapp = self.inappFilterService.validInapps.first(where: { $0.id == inapp.inAppId }),
                     self.targetingChecker.check(targeting: inapp.targeting) {
-                       self.dataFacade.trackTargeting(id: inapp.id)
+                       self.dataFacade.trackTargeting(id: inapp.id, tags: inapp.tags)
                 }
             }
             

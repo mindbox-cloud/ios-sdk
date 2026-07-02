@@ -461,6 +461,7 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
         let inappId: String
         let reason: InAppShowFailureReason
         let details: String?
+        let tags: [String: String]?
     }
 
     private(set) var addFailureCallCount = 0
@@ -468,9 +469,9 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
     private(set) var sendFailuresCallCount = 0
     private(set) var addFailureCalls: [AddFailureCall] = []
 
-    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
+    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         addFailureCallCount += 1
-        addFailureCalls.append(AddFailureCall(inappId: inappId, reason: reason, details: details))
+        addFailureCalls.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
     func clearFailures() {
