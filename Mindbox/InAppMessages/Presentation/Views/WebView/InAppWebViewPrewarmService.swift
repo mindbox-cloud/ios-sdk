@@ -345,13 +345,24 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         """
         window.SdkBridge = {
           receiveParam: function (name) {
-            if (name === 'endpointId') { return '\(endpoint)'; }
-            if (name === 'deviceUuid') { return '\(deviceUUID)'; }
+            if (name === 'endpointId') { return \(jsStringLiteral(endpoint)); }
+            if (name === 'deviceUuid') { return \(jsStringLiteral(deviceUUID)); }
             return null;
           },
           postMessage: function () {}
         };
         """
+    }
+
+    /// Both values are identifiers under our control (endpoint id, UUID), but a JS string
+    /// literal must never depend on that staying true.
+    private static func jsStringLiteral(_ value: String) -> String {
+        let escaped = value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+        return "'\(escaped)'"
     }
 
     /// Most Mindbox host apps have no webview in-apps: once the config proves that, drop the
