@@ -326,15 +326,50 @@ iOS), те же инаппы (стирашка + онбординг), тот ж�
 Оговорка: всё на эмуляторе (занижает сеть/спин-ап) — на реальном девайсе/3G и кэш, и preconnect должны
 давать больше; стоит перемерить на устройстве.
 
+### Продакшн-итерация Android (2026-07-02): конфиг-driven прогрев
+
+Прототип с хардкод-хостами заменён продакшн-версией — перенос итоговой iOS-архитектуры,
+минус reuse (не нужен на Android). Всё выводится из мобильного конфига, хардкода нет:
+
+- **Кэш** — `LOAD_DEFAULT` безусловно (`AndroidWebViewController`, kmp-common).
+- **Прогрев, стадия 1 (init):** head start из **кэшированного** конфига прошлого запуска
+  (лёгкий парс webview-слоёв с тем же sdkVersion-гейтом, что у основного пайплайна).
+- **Прогрев, стадия 2 (после парса конфига):** `prewarmResources` — once-per-launch; если
+  в конфиге нет webview-инаппов, тёплый инстанс освобождается.
+- **Ресурсный прогрев:** скрытый WebView загружает (а) preconnect-страницу (origins =
+  хосты слоёв конфига + API-домен + выученные хосты), затем (б) **настоящий index.html**
+  слоя под его же `baseUrl` со стаб-бриджем legacy-контракта (`SdkBridge.receiveParam`
+  отдаёт endpointId/deviceUuid, пустой popUpId → рантайм тянет byendpoint в кэш, форма
+  не рендерится, в SDK ничего не уходит).
+- **Преемпция:** реальный показ убивает прогрев (`stopLoading`+`destroy`) — сеть отдаётся
+  показу; плюс авто-освобождение через 30 с после загрузки.
+- **Learned hosts:** на `close` показа JS-пробой снимаются реальные https-хосты страницы
+  (image-CDN, fonts — их нет в конфиге) и персистятся per-endpoint (cap 12) → preconnect
+  следующего запуска.
+
+Замер (эмулятор, «холодный» HTTP-кэш перед каждым прогоном, show1 = авто-показ стирашки
+при запуске — гонка прогрева с реальным показом, show2 = онбординг по операции;
+`Inapp.Show timeToDisplay`, медианы N=10):
+
+| Вариант | show1 (стирашка) | show2 (онбординг) |
+|---|--:|--:|
+| только кэш (прогрев off) | 774 (405–1549) | 144 |
+| кэш + preconnect-only | 339 (204–1732) | 131 |
+| **кэш + полный прогрев (прод)** | **233** (156–659) | 131 |
+
+Полный прогрев даёт **~3.3×** к show1 на холодном кэше против «только кэш» и ~30% против
+preconnect-only, плюс срезает хвост (max 659 vs 1732): контент-страница успевает засеять
+byendpoint/рантайм в кэш до авто-показа (head start от кэшированного конфига ~1.5–2 с).
+
 ### Где лежит (Android)
 
-Три вложенных git-репо, ветка `prototype/webview-cache-profiling` в каждой (запушено):
+Три вложенных git-репо, ветка `prototype/webview-cache-profiling` в каждой:
 
 | Репо | Коммит | Файлы |
 |---|---|---|
-| **kmp-common-sdk** (github, сабмодуль в android-sdk) | `6ebb04b` | `MindboxWebViewLab.kt` (флаги + preconnect-прогрев + профайлер) · `WebViewAndroid.kt` (кэш-тумблер) |
-| **android-sdk** (github, сабмодуль в android-app) | `8d6fc35a` | `sdk/…/Mindbox.kt` (вызов `prewarm()` в init) |
-| **android-app** (GitLab) | `56f241ba` | `CompleteDataFragment.kt` (хардкод-триггер операции для замера) |
+| **kmp-common-sdk** (github, сабмодуль в android-sdk) | `43e0e15` | `InAppWebViewPrewarmPlanner.kt` (commonMain, чистый планировщик + тесты) · `InAppWebViewPrewarmEngine.kt` (androidMain, скрытый WebView + стаб-бридж) · `WebViewAndroid.kt` (кэш прод) · `MindboxWebViewLab.kt` (только замерные свитчи/профайлер, throwaway) |
+| **android-sdk** (github, сабмодуль в android-app) | `7dbcfaaa` | `InAppWebViewPrewarmService.kt` (оркестрация, хуки init/config) · `InAppWebViewLearnedHostsStore.kt` · `MobileConfigRepositoryImpl` (стадия 2) · `Mindbox.kt` (стадия 1) · `WebViewInappViewHolder` (преемпция + capture) · unit-тесты |
+| **android-app** (GitLab) | `7920590f` | `CompleteDataFragment` + layout: 5 кнопок-триггеров (зеркало ios-app) |
 
 Зависимость снизу вверх: app → android-sdk (ветка) → kmp-common-sdk (ветка).
 
