@@ -134,6 +134,30 @@ public enum JSONValue: Codable, Equatable {
     private var containerValue: Any {
         anyValue ?? NSNull()
     }
+
+    /// Merges in-app tags into the root of a custom operation `body`.
+    ///
+    /// - No `tags` key (or `null`) in `body` → sets it to the tags object.
+    /// - `tags` already an object → adds only missing keys; existing client keys win.
+    /// - `tags` present but not an object (string/array/etc.) → left untouched.
+    static func mergingInAppTags(_ tags: [String: String]?, into body: JSONValue) -> JSONValue {
+        guard let tags, !tags.isEmpty else { return body }
+        guard case .object(var dict) = body else { return body }
+
+        switch dict["tags"] {
+        case .none, .some(.null):
+            dict["tags"] = .object(tags.mapValues { .string($0) })
+        case .some(.object(var existingTags)):
+            for (key, value) in tags where existingTags[key] == nil {
+                existingTags[key] = .string(value)
+            }
+            dict["tags"] = .object(existingTags)
+        default:
+            break
+        }
+
+        return .object(dict)
+    }
 }
 
 @_spi(Internal)
