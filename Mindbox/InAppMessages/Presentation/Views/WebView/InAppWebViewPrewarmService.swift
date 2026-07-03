@@ -170,9 +170,11 @@ final class InAppWebViewLearnedHostsStore {
 // MARK: - Prewarm service
 
 protocol InAppWebViewPrewarmServiceProtocol: AnyObject {
-    /// Stage 1, at SDK initialization: spins up the WebKit web-content process with a blank
-    /// page, then — when the previous launch left a cached config with webview in-apps —
-    /// starts the resource prewarm right away, ahead of the fresh config download.
+    /// Stage 1, at SDK initialization: when the previous launch left a cached config with
+    /// webview in-apps, creates the warm instance and starts the resource prewarm right
+    /// away, ahead of the fresh config download. Hosts without webview in-apps never pay
+    /// for a web-content process — nothing is created until a config proves it's needed
+    /// (the very first launch has no cache, so its prewarm starts with the fresh config).
     func prewarmProcess()
 
     /// Stage 2, when a freshly downloaded config has been parsed: starts the resource
@@ -226,19 +228,12 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     func prewarmProcess() {
-        DispatchQueue.main.async {
-            guard self.warmWebView == nil else { return }
-            self.warmWebView = self.makeWebView()
-            // Blank page, no baseURL: nothing is fetched, so the cache partition is
-            // irrelevant here — this only starts the web-content process.
-            self.warmWebView?.loadHTMLString(Self.blankPage, baseURL: nil)
-            Logger.common(message: "[WebView] Prewarm: web-content process warm-up started",
-                          level: .info, category: .webViewInAppMessages)
-        }
         // The resource prewarm needs a head start over launch-triggered shows, so it boots
         // from the PREVIOUS launch's cached config — waiting for the fresh config would
         // lose the race to the show by design. A stale contentUrl/baseUrl here is harmless:
-        // the next launch picks up the fresh one.
+        // the next launch picks up the fresh one. The instance itself is created inside
+        // startResourcePrewarm (its first load pays the web-content spin-up), so a host
+        // whose config has no webview in-apps never starts a web-content process at all.
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self, let config = self.loadCachedConfig() else { return }
             let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
@@ -258,8 +253,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     func borrowWarmWebView() -> WKWebView? {
         assert(Thread.isMainThread, "borrowWarmWebView() must be called on the main thread")
-        guard let webView = warmWebView else { return nil }
+        // Latch even when there is nothing to hand out: a show is starting, and a resource
+        // prewarm kicked off after this point would compete with it for bandwidth.
         hasBeenBorrowed = true
+        guard let webView = warmWebView else { return nil }
         // The instance belongs to the show from here. stopLoading() kills an in-flight
         // prewarm navigation; the blank load tears down an already-loaded prewarm page —
         // its JS (in-flight fetches, timers) must not compete with the show for bandwidth.

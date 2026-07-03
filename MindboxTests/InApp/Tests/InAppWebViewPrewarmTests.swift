@@ -188,13 +188,16 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(condition())
     }
 
-    @Test("Process warm-up creates the instance once")
-    func processWarmUpIsIdempotent() async {
+    @Test("Without a cached webview config nothing is created at init")
+    func initWithoutCachedConfigCreatesNothing() async {
         service.prewarmProcess()
         service.prewarmProcess()
         await drainMainQueue()
+        await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 1)
+        // Hosts that don't use webview in-apps must never pay for a web-content process.
+        #expect(spy.loadedHTMLCount == 0)
+        #expect(service.borrowWarmWebView() == nil)
     }
 
     @Test("A cached config with webview in-apps starts the resource prewarm at init")
@@ -203,48 +206,59 @@ struct InAppWebViewPrewarmServiceGuardTests {
 
         suite.service.prewarmProcess()
 
-        // blank + preconnect + content page
-        try await suite.waitUntil(suite.spy.loadedHTMLCount == 3)
+        // preconnect + content page (the instance is created lazily by the prewarm itself)
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
     }
 
     @Test("Borrow stops in-flight loading, tears the prewarm page down, and keeps the instance")
-    func borrowStopsLoadingAndKeepsInstance() async {
-        service.prewarmProcess()
-        await drainMainQueue()
+    func borrowStopsLoadingAndKeepsInstance() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
 
-        let borrowed = service.borrowWarmWebView()
+        let borrowed = suite.service.borrowWarmWebView()
 
-        #expect(borrowed === spy)
-        #expect(spy.stopLoadingCount == 1)
-        #expect(spy.loadedHTMLCount == 2) // stage-1 blank + the hard-kill blank at borrow
-        #expect(service.borrowWarmWebView() === spy)
+        #expect(borrowed === suite.spy)
+        #expect(suite.spy.stopLoadingCount == 1)
+        #expect(suite.spy.loadedHTMLCount == 3) // preconnect + content + the hard-kill blank at borrow
+        #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
     @Test("Resource prewarm never navigates a borrowed instance")
     func resourcePrewarmSkippedAfterBorrow() async throws {
-        service.prewarmProcess()
-        await drainMainQueue()
-        _ = service.borrowWarmWebView()
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        _ = suite.service.borrowWarmWebView()
+
+        suite.service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
+        await suite.drainMainQueue()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.loadedHTMLCount == 3) // head start + borrow hard-kill; nothing more
+    }
+
+    @Test("A show starting before any prewarm blocks later resource prewarms")
+    func showBeforePrewarmBlocksLaterPrewarm() async throws {
+        #expect(service.borrowWarmWebView() == nil)
 
         service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
         await drainMainQueue()
         await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 2) // stage-1 blank + borrow hard-kill; nothing more
+        // The show already owns the network; a late prewarm must not compete with it.
+        #expect(spy.loadedHTMLCount == 0)
     }
 
     @Test("Resource prewarm runs once: preconnect page, then the content page with the stub bridge")
     func resourcePrewarmRunsOnce() async throws {
-        service.prewarmProcess()
-        await drainMainQueue()
-
         let config = try loadPrewarmTestConfig("InAppWebviewValid")
         service.prewarmResources(for: config)
         service.prewarmResources(for: config)
         await drainMainQueue()
         await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 3) // blank + one preconnect + one content page
+        #expect(spy.loadedHTMLCount == 2) // one preconnect + one content page
 
         // Both prewarm pages live under the shows' cache partition from the config.
         let contentBaseURL = try #require(spy.loadedBaseURLs.last ?? nil)
@@ -259,8 +273,6 @@ struct InAppWebViewPrewarmServiceGuardTests {
 
     @Test("Borrow strips the prewarm's user scripts — the stub bridge must never reach a show")
     func borrowRemovesPrewarmUserScripts() async throws {
-        service.prewarmProcess()
-        await drainMainQueue()
         service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
         await drainMainQueue()
         await drainMainQueue()
@@ -275,26 +287,28 @@ struct InAppWebViewPrewarmServiceGuardTests {
     }
 
     @Test("A config without webview in-apps releases the unused warm instance")
-    func noWebviewConfigReleasesInstance() async {
-        service.prewarmProcess()
-        await drainMainQueue()
+    func noWebviewConfigReleasesInstance() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
 
-        service.prewarmResources(for: ConfigResponse())
-        await drainMainQueue()
+        suite.service.prewarmResources(for: ConfigResponse())
+        await suite.drainMainQueue()
 
-        #expect(service.borrowWarmWebView() == nil)
+        #expect(suite.service.borrowWarmWebView() == nil)
     }
 
     @Test("Parking an idle borrowed instance loads a blank page to stop hidden JS")
-    func parkingLoadsBlankPage() async {
-        service.prewarmProcess()
-        await drainMainQueue()
-        _ = service.borrowWarmWebView()
+    func parkingLoadsBlankPage() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        _ = suite.service.borrowWarmWebView()
 
-        service.parkWarmWebView()
-        await drainMainQueue()
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 3) // stage-1 blank + borrow hard-kill + park blank
+        #expect(suite.spy.loadedHTMLCount == 4) // head start (2) + borrow hard-kill + park blank
     }
 }
 
