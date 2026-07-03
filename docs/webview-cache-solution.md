@@ -259,6 +259,23 @@ SDK грузит её в прогретый WebView (`loadHTMLString`/`load`), �
 - **C:** бэк — хостит `cacher.html`, шаблонит текущие версии, перечисляет статичные карт-URL из byendpoint.
   Фронт — 0 (если картинки вписывает бэк).
 
+## Официальный prewarm-контракт с веб-рантаймом (проверяется через Proxyman)
+
+Сейчас прогрев-страница маскируется под легаси Android-бридж (`window.SdkBridge.receiveParam`,
+пустой `popUpId`) — ветка обратной совместимости, которую фронт рано или поздно выпилит.
+Согласованный с фронтом официальный режим: SDK добавляет к baseURL **прогревочной**
+контент-страницы `?prewarm=1&endpointId=<endpoint>&deviceUuid=<uuid>`; main.js,
+увидев параметры, бутит только трекер (create с no-op операциями) — без `ready`, без
+PopMechanic, форма не рендерится по построению, byendpoint уходит в кэш. Старый main.js
+параметры игнорирует → работает легаси-стаб (SDK шлёт и то и другое). Реальный показ
+параметры не получает никогда.
+
+Обе SDK (iOS `InAppWebViewPrewarmPlanner.prewarmContentBaseURL`, kmp
+`InAppWebViewPrewarmPlanner.prewarmContentBaseUrl`) уже шлют параметры. Локальные
+патченные страницы для проверки подменой: `~/Downloads/webview-prewarm-pages/` (README
+внутри). Веб-стороне останется: helper `parsePrewarmParams` + ветка в `main.ts` +
+`%VITE_PRECONNECT_LINKS%` в index.html (см. репу `mobile-webview-inapps`).
+
 ## Риски и ограничения
 
 - Приватность `.default()` (cookies/localStorage) — разбор до прода (главный риск).
