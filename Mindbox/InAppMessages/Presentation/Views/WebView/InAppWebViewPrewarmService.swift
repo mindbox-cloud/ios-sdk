@@ -106,7 +106,7 @@ enum InAppWebViewPrewarmPlanner {
     /// with these parameters on its document URL (`loadHTMLString` baseURL → `location.search`),
     /// and a runtime that knows the contract boots tracker-only — no `ready` handshake, no
     /// form, byendpoint straight into the HTTP cache. Runtimes that predate the contract
-    /// ignore the parameters and fall back to the legacy stub bridge injected alongside.
+    /// ignore the parameters, degrading the prewarm to a plain page warm.
     /// Shows never get these parameters — only the hidden prewarm page does.
     static func prewarmContentBaseURL(from baseURL: URL, endpoint: String, deviceUUID: String) -> URL {
         guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else { return baseURL }
@@ -279,10 +279,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // The show's own load supersedes the blank one, and the bridge's staleness filter
         // ignores both leftovers' callbacks.
         webView.stopLoading()
-        // User scripts persist across navigations: without this, the prewarm's SdkBridge
-        // stub would reach the show's page, which would take it for the legacy-SDK bridge
-        // (empty popUpId) and never render the form.
-        webView.configuration.userContentController.removeAllUserScripts()
         webView.loadHTMLString(Self.blankPage, baseURL: nil)
         webView.removeFromSuperview()
         return webView
@@ -312,11 +308,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     ///  2. The real content page (index.html fetched natively), loaded with the official
     ///     prewarm parameters on its baseURL (`prewarm=1` + ids): a runtime that
     ///     knows the contract boots tracker-only and downloads its bundles (tracker,
-    ///     byendpoint) straight into the HTTP cache — no form, nothing tracked. For
-    ///     runtimes that predate the contract a stubbed `window.SdkBridge` (the legacy
-    ///     Android sync-bridge main.js checks first) is injected alongside: they boot the
-    ///     legacy path with a null `popUpId`, which also renders nothing. If both paths
-    ///     ever vanish, this degrades to a plain page warm — shows are unaffected.
+    ///     byendpoint) straight into the HTTP cache — no form, nothing tracked, nothing
+    ///     reaches the SDK. A runtime that predates the contract ignores the parameters
+    ///     and this degrades to a plain page warm (index/main/tracker cached, byendpoint
+    ///     not) — shows are unaffected either way.
     private func startResourcePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
         guard let configuration = persistenceStorage.configuration,
               let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
@@ -346,11 +341,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                 DispatchQueue.main.async { [weak self] in
                     guard let self, let html, !self.hasBeenBorrowed, !self.hasLoadedContentPage else { return }
                     self.hasLoadedContentPage = true
-                    self.warmWebView?.configuration.userContentController.addUserScript(
-                        WKUserScript(source: Self.syncBridgeStub(endpoint: endpoint, deviceUUID: deviceUUID),
-                                     injectionTime: .atDocumentStart,
-                                     forMainFrameOnly: true)
-                    )
                     let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
                         from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
                     )
@@ -360,30 +350,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                 }
             }
         }
-    }
-
-    private static func syncBridgeStub(endpoint: String, deviceUUID: String) -> String {
-        """
-        window.SdkBridge = {
-          receiveParam: function (name) {
-            if (name === 'endpointId') { return \(jsStringLiteral(endpoint)); }
-            if (name === 'deviceUuid') { return \(jsStringLiteral(deviceUUID)); }
-            return null;
-          },
-          postMessage: function () {}
-        };
-        """
-    }
-
-    /// Both values are identifiers under our control (endpoint id, UUID), but a JS string
-    /// literal must never depend on that staying true.
-    private static func jsStringLiteral(_ value: String) -> String {
-        let escaped = value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "'", with: "\\'")
-            .replacingOccurrences(of: "\n", with: "\\n")
-            .replacingOccurrences(of: "\r", with: "\\r")
-        return "'\(escaped)'"
     }
 
     /// Most Mindbox host apps have no webview in-apps: once the config proves that, drop the
