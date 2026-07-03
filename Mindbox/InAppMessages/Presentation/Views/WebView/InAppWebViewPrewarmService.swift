@@ -102,6 +102,22 @@ enum InAppWebViewPrewarmPlanner {
         return "<html><head><meta charset=\"utf-8\">\(links)</head><body></body></html>"
     }
 
+    /// The official prewarm contract with the web runtime: the prewarm content page is loaded
+    /// with these parameters on its document URL (`loadHTMLString` baseURL → `location.search`),
+    /// and a runtime that knows the contract boots tracker-only — no `ready` handshake, no
+    /// form, byendpoint straight into the HTTP cache. Runtimes that predate the contract
+    /// ignore the parameters and fall back to the legacy stub bridge injected alongside.
+    /// Shows never get these parameters — only the hidden prewarm page does.
+    static func prewarmContentBaseURL(from baseURL: URL, endpoint: String, deviceUUID: String) -> URL {
+        guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else { return baseURL }
+        var queryItems = components.queryItems ?? []
+        queryItems.append(URLQueryItem(name: "prewarm", value: "1"))
+        queryItems.append(URLQueryItem(name: "endpointId", value: endpoint))
+        queryItems.append(URLQueryItem(name: "deviceUuid", value: deviceUUID))
+        components.queryItems = queryItems
+        return components.url ?? baseURL
+    }
+
     static func webviewLayers(in config: ConfigResponse) -> [WebviewContentBackgroundLayerDTO] {
         var result: [WebviewContentBackgroundLayerDTO] = []
         for inapp in config.inapps?.elements ?? [] {
@@ -293,13 +309,14 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     ///  1. A preconnect page opens DNS+TCP+TLS to every known host — including image/font
     ///     hosts learned from previous shows, which the content page never touches because
     ///     no form renders during prewarm.
-    ///  2. The real content page (index.html fetched natively) with a stubbed
-    ///     `window.SdkBridge` — the Android sync-bridge contract main.js checks first —
-    ///     so the web runtime boots and downloads its bundles (tracker, byendpoint)
-    ///     straight into the HTTP cache. `popUpId` is null: no form renders, nothing is
-    ///     tracked; runtime operations land in the stub's no-op `postMessage`. If the web
-    ///     runtime ever drops that contract, this degrades to a plain page warm — shows
-    ///     are unaffected.
+    ///  2. The real content page (index.html fetched natively), loaded with the official
+    ///     prewarm parameters on its baseURL (`prewarm=1` + ids): a runtime that
+    ///     knows the contract boots tracker-only and downloads its bundles (tracker,
+    ///     byendpoint) straight into the HTTP cache — no form, nothing tracked. For
+    ///     runtimes that predate the contract a stubbed `window.SdkBridge` (the legacy
+    ///     Android sync-bridge main.js checks first) is injected alongside: they boot the
+    ///     legacy path with a null `popUpId`, which also renders nothing. If both paths
+    ///     ever vanish, this degrades to a plain page warm — shows are unaffected.
     private func startResourcePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
         guard let configuration = persistenceStorage.configuration,
               let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
@@ -334,8 +351,11 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                                      injectionTime: .atDocumentStart,
                                      forMainFrameOnly: true)
                     )
-                    self.warmWebView?.loadHTMLString(html, baseURL: baseURL)
-                    Logger.common(message: "[WebView] Prewarm: content page with stub bridge under \(baseURL.absoluteString), endpoint \(endpoint)",
+                    let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
+                        from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
+                    )
+                    self.warmWebView?.loadHTMLString(html, baseURL: prewarmBaseURL)
+                    Logger.common(message: "[WebView] Prewarm: content page under \(prewarmBaseURL.absoluteString), endpoint \(endpoint)",
                                   level: .info, category: .webViewInAppMessages)
                 }
             }
