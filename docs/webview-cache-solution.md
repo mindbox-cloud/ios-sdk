@@ -261,14 +261,14 @@ SDK грузит её в прогретый WebView (`loadHTMLString`/`load`), �
 
 ## Официальный prewarm-контракт с веб-рантаймом (проверяется через Proxyman)
 
-Сейчас прогрев-страница маскируется под легаси Android-бридж (`window.SdkBridge.receiveParam`,
-пустой `popUpId`) — ветка обратной совместимости, которую фронт рано или поздно выпилит.
 Согласованный с фронтом официальный режим: SDK добавляет к baseURL **прогревочной**
 контент-страницы `?prewarm=1&endpointId=<endpoint>&deviceUuid=<uuid>`; main.js,
 увидев параметры, бутит только трекер (create с no-op операциями) — без `ready`, без
-PopMechanic, форма не рендерится по построению, byendpoint уходит в кэш. Старый main.js
-параметры игнорирует → работает легаси-стаб (SDK шлёт и то и другое). Реальный показ
-параметры не получает никогда.
+PopMechanic, форма не рендерится по построению, byendpoint уходит в кэш. Реальный показ
+параметры не получает никогда. Легаси-стаб (`window.SdkBridge.receiveParam`) из SDK
+ВЫРЕЗАН: против старого main.js (до выката веб-ветки) прогрев деградирует до page-warm
+(index/main/tracker в кэше, без byendpoint) — показы не страдают. Проверено live на
+обеих платформах, в т.ч. стаб-лесс сборками.
 
 Обе SDK (iOS `InAppWebViewPrewarmPlanner.prewarmContentBaseURL`, kmp
 `InAppWebViewPrewarmPlanner.prewarmContentBaseUrl`) уже шлют параметры. Локальные
