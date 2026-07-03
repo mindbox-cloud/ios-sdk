@@ -98,6 +98,41 @@ struct InAppWebViewPrewarmPlannerTests {
         #expect(!html.contains("<img"))
     }
 
+    // MARK: Prewarm content baseURL (official web prewarm contract)
+
+    @Test("Prewarm content baseURL carries the official prewarm query parameters")
+    func prewarmContentBaseURLAppendsContract() throws {
+        let baseURL = try #require(URL(string: "https://inapp.local/popup"))
+
+        let url = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
+            from: baseURL, endpoint: "Mpush-test.WebView", deviceUUID: "abc-123"
+        )
+
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        #expect(components.host == "inapp.local")
+        #expect(components.path == "/popup")
+        let query = try #require(components.queryItems)
+        #expect(query.contains(URLQueryItem(name: "prewarm", value: "1")))
+        #expect(query.contains(URLQueryItem(name: "endpointId", value: "Mpush-test.WebView")))
+        #expect(query.contains(URLQueryItem(name: "deviceUuid", value: "abc-123")))
+    }
+
+    @Test("Existing baseURL query survives and unsafe values are percent-encoded")
+    func prewarmContentBaseURLKeepsQueryAndEncodes() throws {
+        let baseURL = try #require(URL(string: "https://inapp.local/popup?keep=me"))
+
+        let url = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
+            from: baseURL, endpoint: "End point&x", deviceUUID: "uuid"
+        )
+
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let query = try #require(components.queryItems)
+        #expect(query.contains(URLQueryItem(name: "keep", value: "me")))
+        // URLComponents decodes on read; the raw string must not leak a bare '&' into the query.
+        #expect(query.contains(URLQueryItem(name: "endpointId", value: "End point&x")))
+        #expect(url.absoluteString.contains("endpointId=End%20point%26x"))
+    }
+
     // MARK: Config extraction (end to end on a real parsed config)
 
     @Test("Webview layers and prewarm inputs are extracted from a parsed config")
@@ -260,9 +295,14 @@ struct InAppWebViewPrewarmServiceGuardTests {
 
         #expect(spy.loadedHTMLCount == 2) // one preconnect + one content page
 
-        // Both prewarm pages live under the shows' cache partition from the config.
+        // Both prewarm pages live under the shows' cache partition from the config,
+        // and the content page carries the official prewarm contract parameters.
         let contentBaseURL = try #require(spy.loadedBaseURLs.last ?? nil)
         #expect(contentBaseURL.host == "inapp.local")
+        let query = try #require(URLComponents(url: contentBaseURL, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(query.contains(URLQueryItem(name: "prewarm", value: "1")))
+        #expect(query.contains(URLQueryItem(name: "endpointId", value: "Test.Endpoint")))
+        #expect(query.contains(URLQueryItem(name: "deviceUuid", value: "test-device-uuid")))
 
         // The content page got the Android-style sync-bridge stub with our identifiers.
         let stub = spy.configuration.userContentController.userScripts.first { $0.source.contains("SdkBridge") }
