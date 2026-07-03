@@ -285,7 +285,7 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(spy.loadedHTMLCount == 0)
     }
 
-    @Test("Resource prewarm runs once: preconnect page, then the content page with the stub bridge")
+    @Test("Resource prewarm runs once: preconnect page, then the content page with the prewarm params")
     func resourcePrewarmRunsOnce() async throws {
         let config = try loadPrewarmTestConfig("InAppWebviewValid")
         service.prewarmResources(for: config)
@@ -304,25 +304,8 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(query.contains(URLQueryItem(name: "endpointId", value: "Test.Endpoint")))
         #expect(query.contains(URLQueryItem(name: "deviceUuid", value: "test-device-uuid")))
 
-        // The content page got the Android-style sync-bridge stub with our identifiers.
-        let stub = spy.configuration.userContentController.userScripts.first { $0.source.contains("SdkBridge") }
-        let stubSource = try #require(stub?.source)
-        #expect(stubSource.contains("Test.Endpoint"))
-        #expect(stubSource.contains("test-device-uuid"))
-    }
-
-    @Test("Borrow strips the prewarm's user scripts — the stub bridge must never reach a show")
-    func borrowRemovesPrewarmUserScripts() async throws {
-        service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
-        await drainMainQueue()
-        await drainMainQueue()
-        let scriptsBeforeBorrow = spy.configuration.userContentController.userScripts
-        #expect(scriptsBeforeBorrow.contains { $0.source.contains("SdkBridge") })
-
-        _ = service.borrowWarmWebView()
-
-        // User scripts persist across navigations; a leftover stub would make the show's
-        // page treat the SDK as legacy (empty popUpId) and never render the form.
+        // The prewarm injects nothing into the page: user scripts persist across
+        // navigations and would leak into the borrowed instance's shows.
         #expect(spy.configuration.userContentController.userScripts.isEmpty)
     }
 
