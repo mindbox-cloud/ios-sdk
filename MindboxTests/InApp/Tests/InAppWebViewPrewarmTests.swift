@@ -360,7 +360,21 @@ struct InAppWebViewPrewarmServiceGuardTests {
         suite.service.prewarmResources(for: ConfigResponse())
         await suite.drainMainQueue()
 
+        // Symmetric with the memory-warning path: an in-flight prewarm navigation must
+        // not keep burning bandwidth if anything briefly retains the dropped instance.
+        #expect(suite.spy.stopLoadingCount == 1)
         #expect(suite.service.borrowWarmWebView() == nil)
+    }
+
+    @Test("The prewarm instance is pinned by the navigation policy until a show takes over")
+    func prewarmArmsNavigationPolicy() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+
+        // Hidden instance: page-initiated navigation must be refused by policy (the show
+        // path installs its own delegate — the bridge — at borrow).
+        #expect(suite.spy.navigationDelegate is InAppWebViewPrewarmNavigationPolicy)
     }
 
     @Test("Parking an idle borrowed instance loads a blank page to stop hidden JS")
@@ -407,6 +421,33 @@ struct InAppWebViewPrewarmServiceGuardTests {
     }
 }
 
+/// A hidden prewarm WebView must never be able to wander off: without a delegate, a
+/// page-initiated redirect could keep the instance fetching arbitrary URLs under the
+/// shows' cache partition for the whole app lifetime.
+@Suite("InApp WebView prewarm navigation policy", .tags(.webView))
+@MainActor
+struct InAppWebViewPrewarmNavigationPolicyTests {
+
+    private let policy = InAppWebViewPrewarmNavigationPolicy()
+
+    @Test("SDK-issued documents are allowed; anything else on the main frame is cancelled")
+    func pinsMainFrameToIssuedDocuments() throws {
+        let issued = try #require(URL(string: "https://inapp.local/popup?prewarm=1"))
+        policy.allow(issued)
+
+        #expect(policy.decision(for: issued, targetIsMainFrame: true) == .allow)
+        #expect(policy.decision(for: URL(string: "https://evil.example/landing"), targetIsMainFrame: true) == .cancel)
+        // The park/borrow blank load is always ours.
+        #expect(policy.decision(for: URL(string: "about:blank"), targetIsMainFrame: true) == .allow)
+    }
+
+    @Test("Subframes stay the page's own business; a nil target frame (window.open) is pinned")
+    func subframesAllowedNilTargetPinned() {
+        #expect(policy.decision(for: URL(string: "https://ads.example/frame"), targetIsMainFrame: false) == .allow)
+        #expect(policy.decision(for: URL(string: "https://popup.example/win"), targetIsMainFrame: nil) == .cancel)
+    }
+}
+
 /// The staleness filter is the confirmed first-show-race fix: a reused (pre-warmed)
 /// WebView delivers navigation callbacks from previous owners' loads, and the ready check
 /// closes the in-app on the first didFinish it sees — leftovers must never reach the
@@ -419,9 +460,13 @@ struct MindboxWebBridgeStalenessTests {
         private(set) var startCount = 0
         private(set) var finishCount = 0
         private(set) var failCount = 0
+        private(set) var finishURLs: [URL?] = []
 
         func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) { startCount += 1 }
-        func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) { finishCount += 1 }
+        func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
+            finishCount += 1
+            finishURLs.append(url)
+        }
         func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) { failCount += 1 }
         func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType,
                        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -432,6 +477,10 @@ struct MindboxWebBridgeStalenessTests {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let spy: DelegateSpy
+    // Source of REAL, distinct WKNavigation objects (unsafe casts of NSObject trap in
+    // debug). Separate from `webView` so its loads' async delegate callbacks can never
+    // pollute the spy's counters.
+    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
 
     init() {
         webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
@@ -440,11 +489,9 @@ struct MindboxWebBridgeStalenessTests {
         bridge.navigationDelegate = spy
     }
 
-    /// `makeNavigation()` traps at runtime (not meant to be instantiated). The staleness
-    /// filter only ever compares navigations by identity (`===`) and never calls into
-    /// them, so a reinterpreted plain object is a safe stand-in for tests.
     private func makeNavigation() -> WKNavigation {
-        unsafeDowncast(NSObject(), to: WKNavigation.self)
+        // swiftlint:disable:next force_unwrapping
+        navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
     }
 
     @Test("Before the show's own load every navigation callback is stale")
@@ -504,6 +551,134 @@ struct MindboxWebBridgeStalenessTests {
                        withError: NSError(domain: "test", code: 1))
 
         #expect(spy.failCount == 0)
+    }
+
+    @Test("A nil CALLBACK navigation fails open, mirroring the nil-expected case")
+    func nilCallbackNavigationFailsOpen() {
+        bridge.expectContentNavigation(makeNavigation())
+
+        // WebKit occasionally delivers nil navigations (early provisional failures).
+        // Treating them as stale would swallow a real failure and hang the show
+        // invisibly until the init timeout.
+        bridge.webView(webView, didFailProvisionalNavigation: nil, withError: NSError(domain: "test", code: 2))
+        #expect(spy.failCount == 1)
+
+        bridge.webView(webView, didFinish: nil)
+        #expect(spy.finishCount == 1)
+    }
+
+    @Test("Only the show's own finish reports the content URL; page navigations report their real URL")
+    func finishReportsPerNavigationURL() {
+        let contentURL = URL(string: "https://content.mindbox.ru/index.html")
+        bridge.updateContentURL(contentURL)
+        let expected = makeNavigation()
+        bridge.expectContentNavigation(expected)
+
+        bridge.webView(webView, didFinish: expected)
+        // A page-initiated navigation after the filter opened: its URL is the webView's
+        // actual URL (nil on this unloaded test instance), NOT the content URL — otherwise
+        // the ready-check dedupe would key two different documents to one string.
+        bridge.webView(webView, didFinish: makeNavigation())
+
+        #expect(spy.finishURLs.count == 2)
+        #expect(spy.finishURLs.first == contentURL)
+        #expect(spy.finishURLs.last == URL?.none)
+    }
+}
+
+/// Navigations have the staleness filter; script MESSAGES need their own gate. Until the
+/// show's own document commits, a reused WebView's previous document (e.g. a dying prewarm
+/// page retrying its handshake) can still post to the freshly attached handler — answering
+/// it could flash the prewarm page as a phantom presentation.
+@Suite("MindboxWebBridge message gate", .tags(.webView))
+@MainActor
+struct MindboxWebBridgeMessageGateTests {
+
+    private final class MessageSpy: WebBridgeMessageDelegate {
+        private(set) var received: [BridgeMessage] = []
+        func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
+            received.append(message)
+        }
+    }
+
+    /// WKScriptMessage's real initializer is WebKit-internal; the bridge only reads
+    /// `name` and `body`, so an override-based fake is a safe stand-in.
+    private final class FakeScriptMessage: WKScriptMessage {
+        private let fakeName: String
+        private let fakeBody: Any
+
+        init(name: String, body: Any) {
+            self.fakeName = name
+            self.fakeBody = body
+            super.init()
+        }
+
+        override var name: String { fakeName }
+        override var body: Any { fakeBody }
+    }
+
+    private let webView: WKWebView
+    private let bridge: MindboxWebBridge
+    private let spy: MessageSpy
+    // Real, distinct WKNavigation objects; separate instance so its async delegate
+    // callbacks can't reach the bridge under test.
+    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+
+    init() {
+        webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        bridge = MindboxWebBridge(webView: webView)
+        spy = MessageSpy()
+        bridge.messageDelegate = spy
+    }
+
+    private func makeNavigation() -> WKNavigation {
+        // swiftlint:disable:next force_unwrapping
+        navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
+    }
+
+    private func postValidMessage() throws {
+        let message = try #require(BridgeMessage(type: .request, action: "log", payload: "hi"))
+        let body = try #require(message.jsonString())
+        bridge.userContentController(
+            webView.configuration.userContentController,
+            didReceive: FakeScriptMessage(name: Constants.WebViewBridgeJS.handlerName, body: body)
+        )
+    }
+
+    @Test("Messages are dropped until the show's own navigation commits")
+    func messagesGatedUntilExpectedCommit() throws {
+        // Before any load is issued: whoever posts is not this show's page.
+        try postValidMessage()
+        #expect(spy.received.isEmpty)
+
+        let expected = makeNavigation()
+        bridge.expectContentNavigation(expected)
+
+        // Load issued but the old document still owns the web process until commit.
+        try postValidMessage()
+        #expect(spy.received.isEmpty)
+
+        // A stale (stranger) commit must not open the gate either.
+        bridge.webView(webView, didCommit: makeNavigation())
+        try postValidMessage()
+        #expect(spy.received.isEmpty)
+
+        // The expected commit swaps the document: messages are the show's from here.
+        bridge.webView(webView, didCommit: expected)
+        try postValidMessage()
+        #expect(spy.received.count == 1)
+    }
+
+    @Test("A nil expected navigation opens the gate at the first commit (fail-open)")
+    func nilExpectedNavigationGateOpensOnCommit() throws {
+        bridge.expectContentNavigation(nil)
+
+        try postValidMessage()
+        #expect(spy.received.isEmpty)
+
+        bridge.webView(webView, didCommit: makeNavigation())
+        try postValidMessage()
+        #expect(spy.received.count == 1)
     }
 }
 
