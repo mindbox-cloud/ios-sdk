@@ -153,6 +153,13 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         becomeFirstResponder()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        // Every dismissal path (close action, dim-tap, timeout) goes through here while
+        // the page is still alive — the last moment the learned-hosts capture can run.
+        transparentWebView?.captureObservedResourceHosts()
+        super.viewWillDisappear(animated)
+    }
+
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         if motion == .motionShake {
             transparentWebView?.handleSystemShake()

@@ -32,12 +32,19 @@ enum InAppWebViewDataStore {
     // swiftlint:disable:next force_unwrapping
     private static let identifier = UUID(uuidString: "8F0FD79A-4A3B-4B9C-9F5E-2D6B1C6A7E01")!
 
-    static func shared() -> WKWebsiteDataStore {
+    // One live store object for the whole process: disk-level sharing already holds via
+    // the identifier, but a single instance also guarantees prewarm and shows share the
+    // same in-memory session (connection pool, memory cache) by construction.
+    private static let instance: WKWebsiteDataStore = {
         if #available(iOS 17.0, *) {
             return WKWebsiteDataStore(forIdentifier: identifier)
         } else {
             return WKWebsiteDataStore.default()
         }
+    }()
+
+    static func shared() -> WKWebsiteDataStore {
+        instance
     }
 }
 
@@ -65,16 +72,18 @@ enum InAppWebViewPrewarmPlanner {
     /// WebKit partitions its HTTP cache by the top-level document's registrable domain, which
     /// for `loadHTMLString` is the `baseURL` host. Entries cached under one host are invisible
     /// under another, so the prewarm page MUST use the same `baseUrl` the shows use — taken
-    /// from the config's webview layer, never hardcoded. Only layers that can actually show
-    /// (carrying a contentUrl) and baseUrls with a real host qualify.
-    static func partitionBaseURL(for layers: [WebviewContentBackgroundLayerDTO]) -> URL? {
-        layers.lazy
-            .filter { $0.contentUrl != nil }
-            .compactMap { layer -> URL? in
-                guard let url = layer.baseUrl.flatMap(URL.init(string:)), url.host != nil else { return nil }
-                return url
-            }
-            .first
+    /// from the config's webview layer, never hardcoded.
+    ///
+    /// Both URLs come from the SAME layer — the first one that is fully showable (valid
+    /// https-ish baseUrl with a host AND a parseable contentUrl). Mixing layers would warm
+    /// one layer's content under another layer's cache partition, invisible to its show.
+    static func prewarmSource(for layers: [WebviewContentBackgroundLayerDTO]) -> (baseURL: URL, contentURL: URL)? {
+        for layer in layers {
+            guard let baseURL = layer.baseUrl.flatMap(URL.init(string:)), baseURL.host != nil,
+                  let contentURL = layer.contentUrl.flatMap(URL.init(string:)) else { continue }
+            return (baseURL, contentURL)
+        }
+        return nil
     }
 
     /// Hosts worth opening DNS+TCP+TLS to before the first show: every webview layer's
@@ -174,13 +183,21 @@ final class InAppWebViewLearnedHostsStore {
     func remember(_ observed: [String], endpoint: String) {
         guard !observed.isEmpty else { return }
         var merged = hosts(endpoint: endpoint)
-        for host in observed where !host.isEmpty && !merged.contains(host) {
+        for host in observed where Self.isValidHost(host) && !merged.contains(host) {
             merged.append(host)
         }
         if merged.count > Self.maxHosts {
             merged.removeFirst(merged.count - Self.maxHosts)
         }
         defaults.set(merged, forKey: Self.keyPrefix + endpoint)
+    }
+
+    /// The observed values come from page JS and end up interpolated into the preconnect
+    /// HTML — accept only strings that round-trip as a bare https host, so a compromised
+    /// page cannot persist markup/script into every subsequent launch.
+    static func isValidHost(_ host: String) -> Bool {
+        guard !host.isEmpty, URL(string: "https://\(host)")?.host == host else { return false }
+        return true
     }
 }
 
@@ -306,6 +323,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // prewarm kicked off after this point would compete with it for bandwidth.
         hasBeenBorrowed = true
         guard let webView = warmWebView else { return nil }
+        // Self-defense against concurrent shows: presentation is serialized upstream
+        // (isPresentingInAppMessage), but that flag has known races — never let a second
+        // show steal the instance out of an on-screen in-app.
+        guard !isLentToShow else { return nil }
         // Never hand out an instance whose prewarm navigation hasn't settled: the show's
         // load would land on top of a half-committed document, and its didFinish can fire
         // before the page's module scripts have evaluated — the ready check then closes a
@@ -370,9 +391,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     ///     not) — shows are unaffected either way.
     private func startResourcePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
         guard let configuration = persistenceStorage.configuration,
-              let baseURL = InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers),
-              let contentUrlString = layers.first(where: { $0.contentUrl != nil })?.contentUrl,
-              let contentURL = URL(string: contentUrlString) else { return }
+              let (baseURL, contentURL) = InAppWebViewPrewarmPlanner.prewarmSource(for: layers) else { return }
 
         let hosts = InAppWebViewPrewarmPlanner.preconnectHosts(
             layers: layers,
@@ -395,7 +414,15 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             }
             self.fetchHTML(contentURL) { html in
                 DispatchQueue.main.async { [weak self] in
-                    guard let self, let html, !self.hasBeenBorrowed, !self.hasLoadedContentPage else { return }
+                    guard let self else { return }
+                    guard let html else {
+                        // No retry by design (the latch stands): this launch degrades to
+                        // preconnect-only — but say so instead of failing silently.
+                        Logger.common(message: "[WebView] Prewarm: content page fetch failed, launch degrades to preconnect-only",
+                                      level: .info, category: .webViewInAppMessages)
+                        return
+                    }
+                    guard !self.hasBeenBorrowed, !self.hasLoadedContentPage else { return }
                     self.hasLoadedContentPage = true
                     let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
                         from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
@@ -410,8 +437,9 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     /// Most Mindbox host apps have no webview in-apps: once the config proves that, drop the
     /// stage-1 instance so they don't keep an idle web-content process for the app lifetime.
-    /// A later config with webview layers recreates it (or the show creates its own on the
-    /// same shared store).
+    /// The prewarm does NOT restart within this launch even if a later config brings webview
+    /// layers back (`hasStartedResourcePrewarm` stands) — a show then simply creates its own
+    /// WebView on the same shared store.
     private func releaseUnusedWarmWebView() {
         DispatchQueue.main.async {
             guard !self.hasBeenBorrowed, self.warmWebView != nil else { return }

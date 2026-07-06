@@ -89,6 +89,7 @@ final class TransparentView: UIView {
     private let inAppId: String
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
+    private var hasCapturedObservedHosts = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -171,7 +172,11 @@ final class TransparentView: UIView {
     /// Persists the hosts this show's resources actually came from (host names only) so the
     /// next launch's prewarm can preconnect to them — the config only knows the content host,
     /// while the heavy resources (runtime, images, fonts) live on hosts it never mentions.
-    private func captureObservedResourceHosts() {
+    /// Called from every dismissal path (bridge `close` action AND the VC's disappearance,
+    /// covering dim-tap/timeout closes); the once-flag keeps it a single capture per show.
+    func captureObservedResourceHosts() {
+        guard !hasCapturedObservedHosts else { return }
+        hasCapturedObservedHosts = true
         facade?.evaluateJavaScript(InAppWebViewPrewarmPlanner.observedHostsScript) { result in
             guard case .success(let value) = result, let hosts = value as? [String] else { return }
             DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).rememberObservedHosts(hosts)

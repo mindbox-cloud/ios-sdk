@@ -64,14 +64,11 @@ public final class MindboxWebBridge: NSObject {
         webView.navigationDelegate = self
     }
 
-    deinit {
-        // On a reused WebView the next show's bridge may already have taken over
-        // (it re-adds the script handler and reassigns the delegate in its init).
-        // Tearing down unconditionally would rip out the successor's wiring.
-        guard webView?.navigationDelegate === self else { return }
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
-        webView?.navigationDelegate = nil
-    }
+    // No deinit teardown — and none is possible: `navigationDelegate` is weak, so while
+    // this bridge deallocates, reading it back already yields nil and a guard comparing
+    // it to `self` can never pass (was verified dead code). The reused-WebView handover
+    // is safe without it: the successor's init does remove-then-add on the script
+    // handler, and weak-zeroing clears the navigation delegate automatically.
 
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else {
