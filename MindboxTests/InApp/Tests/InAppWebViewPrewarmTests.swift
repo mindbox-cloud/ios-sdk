@@ -355,6 +355,36 @@ struct InAppWebViewPrewarmServiceGuardTests {
 
         #expect(suite.spy.loadedHTMLCount == 4) // head start (2) + borrow hard-kill + park blank
     }
+
+    @Test("A memory warning frees the parked instance; the disk cache keeps the prewarm benefit")
+    func memoryWarningFreesParkedInstance() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+
+        NotificationCenter.default.post(name: UIApplication.didReceiveMemoryWarningNotification, object: nil)
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.stopLoadingCount == 1)
+        // The next show creates its own WKWebView on the shared store instead.
+        #expect(suite.service.borrowWarmWebView() == nil)
+    }
+
+    @Test("A memory warning never touches an instance lent to a live show")
+    func memoryWarningSparesLentInstance() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        _ = suite.service.borrowWarmWebView()
+
+        NotificationCenter.default.post(name: UIApplication.didReceiveMemoryWarningNotification, object: nil)
+        await suite.drainMainQueue()
+
+        // Still owned by the show and still reusable after it closes.
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+        #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
 }
 
 @Suite("InApp WebView learned hosts store", .tags(.webView))
