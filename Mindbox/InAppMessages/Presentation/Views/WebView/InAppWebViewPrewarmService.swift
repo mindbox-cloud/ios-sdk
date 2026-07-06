@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 import WebKit
 import MindboxLogger
 
@@ -230,6 +231,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private var hasBeenBorrowed = false
     private var hasStartedResourcePrewarm = false
     private var hasLoadedContentPage = false
+    // True between borrow and park: the instance is presented (or about to be) by a live
+    // show — `superview` alone can't tell (there is a window between borrow and addSubview).
+    private var isLentToShow = false
+    private var memoryWarningObserver: NSObjectProtocol?
 
     init(persistenceStorage: PersistenceStorage,
          learnedHostsStore: InAppWebViewLearnedHostsStore = InAppWebViewLearnedHostsStore(),
@@ -241,6 +246,34 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         self.makeWebView = makeWebView
         self.fetchHTML = fetchHTML
         self.loadCachedConfig = loadCachedConfig
+        startMemoryWarningObserver()
+    }
+
+    deinit {
+        // Always unregisters — block-based observers are not auto-removed (only
+        // selector-based ones are, since iOS 9). The token is optional solely because
+        // its block captures self and so cannot be created during two-phase init;
+        // after init it is always set.
+        if let memoryWarningObserver {
+            NotificationCenter.default.removeObserver(memoryWarningObserver)
+        }
+    }
+
+    /// Frees the parked warm instance under memory pressure: the HTTP cache is disk-level
+    /// and survives, so the next show only re-pays the web-content process spin-up. An
+    /// instance lent to a live show is left alone — the show owns it.
+    private func startMemoryWarningObserver() {
+        memoryWarningObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, let webView = self.warmWebView, !self.isLentToShow else { return }
+            webView.stopLoading()
+            self.warmWebView = nil
+            Logger.common(message: "[WebView] Prewarm: memory warning — releasing the parked warm instance",
+                          level: .info, category: .webViewInAppMessages)
+        }
     }
 
     func prewarmProcess() {
@@ -296,14 +329,22 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         webView.stopLoading()
         webView.loadHTMLString(Self.blankPage, baseURL: nil)
         webView.removeFromSuperview()
+        isLentToShow = true
         return webView
     }
 
     func parkWarmWebView() {
         DispatchQueue.main.async {
-            // Only park an instance no live show is presenting. Late navigation callbacks
-            // from this blank load are ignored by the next show's bridge (staleness filter).
-            guard let webView = self.warmWebView, webView.superview == nil else { return }
+            guard let webView = self.warmWebView else {
+                self.isLentToShow = false
+                return
+            }
+            // Only park an instance no live show is presenting (a newer show may have
+            // borrowed it before this teardown arrived — then it is still lent). Late
+            // navigation callbacks from the blank load are ignored by the next show's
+            // bridge (staleness filter).
+            guard webView.superview == nil else { return }
+            self.isLentToShow = false
             webView.loadHTMLString(Self.blankPage, baseURL: nil)
         }
     }
