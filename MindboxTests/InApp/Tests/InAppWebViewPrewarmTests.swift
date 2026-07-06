@@ -61,6 +61,17 @@ struct InAppWebViewPrewarmPlannerTests {
         #expect(InAppWebViewPrewarmPlanner.prewarmSource(for: [hostless, noContent]) == nil)
     }
 
+    @Test("Non-https layers never donate a prewarm source (kmp parity)")
+    func prewarmSourceRequiresHttps() throws {
+        let httpBase = webviewLayer(baseUrl: "http://insecure.local/popup")
+        let httpContent = webviewLayer(contentUrl: "http://cdn.example/index.html")
+        let valid = webviewLayer()
+
+        #expect(InAppWebViewPrewarmPlanner.prewarmSource(for: [httpBase, httpContent]) == nil)
+        let source = try #require(InAppWebViewPrewarmPlanner.prewarmSource(for: [httpBase, httpContent, valid]))
+        #expect(source.baseURL.host == "inapp.local")
+    }
+
     @Test("Base and content URLs always come from the same layer — never mixed across layers")
     func prewarmSourceNeverMixesLayers() throws {
         // Layer A: valid contentUrl but broken baseUrl; layer B: both valid. Mixing would
@@ -108,6 +119,18 @@ struct InAppWebViewPrewarmPlannerTests {
         #expect(html.contains("<link rel=\"dns-prefetch\" href=\"https://b.example\">"))
         #expect(!html.contains("<script"))
         #expect(!html.contains("<img"))
+    }
+
+    @Test("Every host is re-validated at the markup choke point — config values included")
+    func preconnectHTMLRejectsNonHostValues() {
+        // Learned hosts are validated at write, but apiDomain/contentUrl hosts reach this
+        // point straight from the config — a corrupt value must never become markup.
+        let html = InAppWebViewPrewarmPlanner.preconnectHTML(
+            hosts: ["ok.example", "evil\"><script>alert(1)</script>", "spaced host.ru"]
+        )
+        #expect(html.contains("https://ok.example"))
+        #expect(!html.contains("<script"))
+        #expect(!html.contains("spaced host.ru"))
     }
 
     // MARK: Prewarm content baseURL (official web prewarm contract)
