@@ -74,13 +74,16 @@ enum InAppWebViewPrewarmPlanner {
     /// under another, so the prewarm page MUST use the same `baseUrl` the shows use — taken
     /// from the config's webview layer, never hardcoded.
     ///
-    /// Both URLs come from the SAME layer — the first one that is fully showable (valid
-    /// https-ish baseUrl with a host AND a parseable contentUrl). Mixing layers would warm
-    /// one layer's content under another layer's cache partition, invisible to its show.
+    /// Both URLs come from the SAME layer — the first one that is fully showable (an https
+    /// baseUrl with a host AND an https contentUrl; kmp's planner requires https for both,
+    /// keep the platforms in lockstep). Mixing layers would warm one layer's content under
+    /// another layer's cache partition, invisible to its show.
     static func prewarmSource(for layers: [WebviewContentBackgroundLayerDTO]) -> (baseURL: URL, contentURL: URL)? {
         for layer in layers {
-            guard let baseURL = layer.baseUrl.flatMap(URL.init(string:)), baseURL.host != nil,
-                  let contentURL = layer.contentUrl.flatMap(URL.init(string:)) else { continue }
+            guard let baseURL = layer.baseUrl.flatMap(URL.init(string:)),
+                  baseURL.scheme?.lowercased() == "https", baseURL.host != nil,
+                  let contentURL = layer.contentUrl.flatMap(URL.init(string:)),
+                  contentURL.scheme?.lowercased() == "https" else { continue }
             return (baseURL, contentURL)
         }
         return nil
@@ -105,8 +108,14 @@ enum InAppWebViewPrewarmPlanner {
 
     /// A page of `<link rel="preconnect">` hints: WebKit's network process opens pooled
     /// connections to each host without downloading anything; the show reuses the pool.
+    ///
+    /// Every host is re-validated at this single choke point (not just the learned ones at
+    /// their write): hosts get interpolated into markup, and the config's `apiDomain` or a
+    /// contentUrl host must be exactly as unable to become HTML as a page-controlled value —
+    /// kmp's planner applies the same rule via `httpsOrigin`.
     static func preconnectHTML(hosts: [String]) -> String {
         let links = hosts
+            .filter(InAppWebViewLearnedHostsStore.isValidHost)
             .map { "<link rel=\"preconnect\" href=\"https://\($0)\" crossorigin><link rel=\"dns-prefetch\" href=\"https://\($0)\">" }
             .joined()
         return "<html><head><meta charset=\"utf-8\">\(links)</head><body></body></html>"
