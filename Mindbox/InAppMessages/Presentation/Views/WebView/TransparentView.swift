@@ -10,6 +10,71 @@ import WebKit
 import SafariServices
 import MindboxLogger
 
+/// Polls the page for the JS bridge instead of deciding on a single didFinish-time probe.
+///
+/// Module scripts can finish evaluating a beat after the navigation's load event — reliably
+/// visible under navigation churn on a reused (prewarmed) WebView, and possible on slow
+/// devices generally — so one early `false` must not close a healthy in-app. The check
+/// re-runs on a short cadence and gives up only after the full budget; a new navigation
+/// cancels the previous checker outright.
+final class WebViewReadyChecker {
+    typealias Evaluate = (_ script: String, _ completion: @escaping (Result<Any?, Error>) -> Void) -> Void
+    typealias Schedule = (_ delay: TimeInterval, _ work: @escaping () -> Void) -> Void
+
+    static let maxAttempts = 8
+    static let retryDelay: TimeInterval = 0.15
+
+    private let evaluate: Evaluate
+    private let schedule: Schedule
+    private var isCancelled = false
+
+    init(evaluate: @escaping Evaluate,
+         schedule: @escaping Schedule = { delay, work in
+             DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+         }) {
+        self.evaluate = evaluate
+        self.schedule = schedule
+    }
+
+    func run(onReady: @escaping () -> Void, onGiveUp: @escaping (_ lastFailure: String) -> Void) {
+        attempt(1, onReady: onReady, onGiveUp: onGiveUp)
+    }
+
+    /// Abandons the poll without calling either completion — the caller's new navigation
+    /// (or teardown) owns readiness from here.
+    func cancel() {
+        isCancelled = true
+    }
+
+    private func attempt(_ number: Int, onReady: @escaping () -> Void, onGiveUp: @escaping (String) -> Void) {
+        guard !isCancelled else { return }
+        evaluate(Constants.WebViewBridgeJS.bridgeFunctionReadyCheck) { [weak self] result in
+            guard let self, !self.isCancelled else { return }
+
+            let failure: String
+            switch result {
+            case .success(let anyValue) where (anyValue as? Bool) == true:
+                onReady()
+                return
+            case .success:
+                failure = "window.bridgeMessagesHandlers.emit is missing"
+            case .failure(let error):
+                // Transient by nature during navigation churn (a page mid-teardown rejects
+                // evaluation) — retry these on the same budget as a plain `false`.
+                failure = "evaluateJavaScript error: \(error.localizedDescription)"
+            }
+
+            guard number < Self.maxAttempts else {
+                onGiveUp(failure)
+                return
+            }
+            self.schedule(Self.retryDelay) { [weak self] in
+                self?.attempt(number + 1, onReady: onReady, onGiveUp: onGiveUp)
+            }
+        }
+    }
+}
+
 // swiftlint:disable file_length
 final class TransparentView: UIView {
 
@@ -23,7 +88,7 @@ final class TransparentView: UIView {
     private let userAgent: String
     private let inAppId: String
     private var lastReadyCheckedUrl: String?
-    private var isReadyCheckInFlight = false
+    private var readyChecker: WebViewReadyChecker?
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -65,6 +130,7 @@ final class TransparentView: UIView {
     }
 
     deinit {
+        readyChecker?.cancel()
         if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
@@ -246,44 +312,42 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
         // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
-        isReadyCheckInFlight = false
+        readyChecker?.cancel()
+        readyChecker = nil
     }
-    
+
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
         Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
-        guard !isReadyCheckInFlight else { return }
         guard lastReadyCheckedUrl != urlString else { return }
         lastReadyCheckedUrl = urlString
-        isReadyCheckInFlight = true
 
-        let script = Constants.WebViewBridgeJS.bridgeFunctionReadyCheck
-        facade?.evaluateJavaScript(script) { [weak self] result in
-            guard let self else { return }
-            self.isReadyCheckInFlight = false
-
-            switch result {
-            case .success(let anyValue):
-                WebViewShowProfiler.shared.mark("jsReadyCheck")
-                let hasReady = (anyValue as? Bool) ?? false
-                Logger.common(
-                    message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",
-                    category: .webViewInAppMessages
-                )
-                if !hasReady {
-                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.bridgeMessagesHandlers.emit is missing for URL \(urlString)")
-                }
-
-            case .failure(let error):
-                Logger.common(
-                    message: "[WebView] JS ready check failed for URL \(urlString). Error: \(error.localizedDescription)",
-                    category: .webViewInAppMessages
-                )
-                self.delegate?.closeJSReadyMissingWebViewVC(reason: "evaluateJavaScript error for URL \(urlString): \(error.localizedDescription)")
+        readyChecker?.cancel()
+        let checker = WebViewReadyChecker(evaluate: { [weak self] script, completion in
+            guard let facade = self?.facade else {
+                completion(.failure(NSError(domain: "cloud.Mindbox.WebView", code: -1,
+                                            userInfo: [NSLocalizedDescriptionKey: "facade is gone"])))
+                return
             }
-        }
+            facade.evaluateJavaScript(script, completion: completion)
+        })
+        readyChecker = checker
+        checker.run(onReady: {
+            WebViewShowProfiler.shared.mark("jsReadyCheck")
+            Logger.common(
+                message: "[WebView] JS ready check for URL \(urlString): true",
+                category: .webViewInAppMessages
+            )
+        }, onGiveUp: { [weak self] lastFailure in
+            WebViewShowProfiler.shared.mark("jsReadyCheck")
+            Logger.common(
+                message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
+                category: .webViewInAppMessages
+            )
+            self?.delegate?.closeJSReadyMissingWebViewVC(reason: "\(lastFailure) for URL \(urlString)")
+        })
     }
     
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {

@@ -273,6 +273,21 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // prewarm kicked off after this point would compete with it for bandwidth.
         hasBeenBorrowed = true
         guard let webView = warmWebView else { return nil }
+        // Never hand out an instance whose prewarm navigation hasn't settled: the show's
+        // load would land on top of a half-committed document, and its didFinish can fire
+        // before the page's module scripts have evaluated — the ready check then closes a
+        // healthy in-app. Tightest on first install: with no cached config, the prewarm
+        // starts at the same config-parsed instant as a launch-triggered show. Park the
+        // instance instead (teardown below) and let the show create a fresh WKWebView on
+        // the same shared store — it pays the process spin-up but keeps the HTTP cache,
+        // and the parked instance serves the next show.
+        guard !webView.isLoading else {
+            webView.stopLoading()
+            webView.loadHTMLString(Self.blankPage, baseURL: nil)
+            Logger.common(message: "[WebView] Prewarm: instance is mid-navigation at borrow — parking it, the show gets a fresh WebView",
+                          level: .info, category: .webViewInAppMessages)
+            return nil
+        }
         // The instance belongs to the show from here. stopLoading() kills an in-flight
         // prewarm navigation; the blank load tears down an already-loaded prewarm page —
         // its JS (in-flight fetches, timers) must not compete with the show for bandwidth.
