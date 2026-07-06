@@ -9,7 +9,7 @@
 import Foundation
 import Testing
 import WebKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 private func loadPrewarmTestConfig(_ name: String) throws -> ConfigResponse {
     let bundle = Bundle(for: MindboxTests.self)
@@ -27,38 +27,50 @@ struct InAppWebViewPrewarmPlannerTests {
         WebviewContentBackgroundLayerDTO(baseUrl: baseUrl, contentUrl: contentUrl, params: nil)
     }
 
-    // MARK: Partition baseURL
+    // MARK: Prewarm source (partition baseURL + contentURL from one layer)
 
-    @Test("Partition baseURL is taken from the first layer carrying a valid baseUrl")
-    func partitionBaseURLPicksFirstValid() throws {
+    @Test("Prewarm source is taken from the first fully showable layer")
+    func prewarmSourcePicksFirstValid() throws {
         let layers = [
             webviewLayer(baseUrl: nil),
             webviewLayer(baseUrl: "https://inapp.local/popup"),
             webviewLayer(baseUrl: "https://other.example/popup")
         ]
-        let url = try #require(InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers))
-        #expect(url.absoluteString == "https://inapp.local/popup")
+        let source = try #require(InAppWebViewPrewarmPlanner.prewarmSource(for: layers))
+        #expect(source.baseURL.absoluteString == "https://inapp.local/popup")
     }
 
-    @Test("No layer with a usable baseUrl yields no partition URL", arguments: [
+    @Test("No layer with a usable baseUrl yields no prewarm source", arguments: [
         [] as [String?],
         [nil],
         [""]
     ])
-    func partitionBaseURLMissing(baseUrls: [String?]) {
+    func prewarmSourceMissing(baseUrls: [String?]) {
         let layers = baseUrls.map { webviewLayer(baseUrl: $0) }
-        #expect(InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers) == nil)
+        #expect(InAppWebViewPrewarmPlanner.prewarmSource(for: layers) == nil)
     }
 
-    @Test("Host-less baseUrls and layers without contentUrl don't donate a partition URL")
-    func partitionBaseURLRequiresHostAndContent() throws {
+    @Test("Host-less baseUrls and layers without contentUrl don't donate a prewarm source")
+    func prewarmSourceRequiresHostAndContent() throws {
         let hostless = webviewLayer(baseUrl: "popup")
         let noContent = webviewLayer(contentUrl: nil)
         let valid = webviewLayer()
 
-        let url = try #require(InAppWebViewPrewarmPlanner.partitionBaseURL(for: [hostless, noContent, valid]))
-        #expect(url.host == "inapp.local")
-        #expect(InAppWebViewPrewarmPlanner.partitionBaseURL(for: [hostless, noContent]) == nil)
+        let source = try #require(InAppWebViewPrewarmPlanner.prewarmSource(for: [hostless, noContent, valid]))
+        #expect(source.baseURL.host == "inapp.local")
+        #expect(InAppWebViewPrewarmPlanner.prewarmSource(for: [hostless, noContent]) == nil)
+    }
+
+    @Test("Base and content URLs always come from the same layer — never mixed across layers")
+    func prewarmSourceNeverMixesLayers() throws {
+        // Layer A: valid contentUrl but broken baseUrl; layer B: both valid. Mixing would
+        // warm A's content under B's cache partition — invisible to A's real show.
+        let broken = webviewLayer(baseUrl: "not a url", contentUrl: "https://cdn.a/index.html")
+        let valid = webviewLayer(baseUrl: "https://inapp.local/popup", contentUrl: "https://cdn.b/index.html")
+
+        let source = try #require(InAppWebViewPrewarmPlanner.prewarmSource(for: [broken, valid]))
+        #expect(source.baseURL.host == "inapp.local")
+        #expect(source.contentURL.absoluteString == "https://cdn.b/index.html")
     }
 
     // MARK: Preconnect hosts
@@ -141,8 +153,8 @@ struct InAppWebViewPrewarmPlannerTests {
         let layers = InAppWebViewPrewarmPlanner.webviewLayers(in: config)
         #expect(!layers.isEmpty)
 
-        let baseURL = try #require(InAppWebViewPrewarmPlanner.partitionBaseURL(for: layers))
-        #expect(baseURL.host == "inapp.local")
+        let source = try #require(InAppWebViewPrewarmPlanner.prewarmSource(for: layers))
+        #expect(source.baseURL.host == "inapp.local")
 
         let hosts = InAppWebViewPrewarmPlanner.preconnectHosts(layers: layers, apiDomain: "api.mindbox.ru", learnedHosts: [])
         let contentUrl = try #require(layers.first?.contentUrl)
@@ -259,6 +271,14 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(borrowed === suite.spy)
         #expect(suite.spy.stopLoadingCount == 1)
         #expect(suite.spy.loadedHTMLCount == 3) // preconnect + content + the hard-kill blank at borrow
+
+        // While lent to a live show the instance must never be stolen by a second borrow —
+        // presentation is serialized upstream, but that flag has known races.
+        #expect(suite.service.borrowWarmWebView() == nil)
+
+        // After the show parks it, the same instance serves the next show.
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
@@ -387,6 +407,106 @@ struct InAppWebViewPrewarmServiceGuardTests {
     }
 }
 
+/// The staleness filter is the confirmed first-show-race fix: a reused (pre-warmed)
+/// WebView delivers navigation callbacks from previous owners' loads, and the ready check
+/// closes the in-app on the first didFinish it sees — leftovers must never reach the
+/// show's delegate.
+@Suite("MindboxWebBridge navigation staleness", .tags(.webView))
+@MainActor
+struct MindboxWebBridgeStalenessTests {
+
+    private final class DelegateSpy: WebBridgeNavigationDelegate {
+        private(set) var startCount = 0
+        private(set) var finishCount = 0
+        private(set) var failCount = 0
+
+        func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) { startCount += 1 }
+        func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) { finishCount += 1 }
+        func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) { failCount += 1 }
+        func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType,
+                       decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            decisionHandler(.allow)
+        }
+    }
+
+    private let webView: WKWebView
+    private let bridge: MindboxWebBridge
+    private let spy: DelegateSpy
+
+    init() {
+        webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        bridge = MindboxWebBridge(webView: webView)
+        spy = DelegateSpy()
+        bridge.navigationDelegate = spy
+    }
+
+    /// `makeNavigation()` traps at runtime (not meant to be instantiated). The staleness
+    /// filter only ever compares navigations by identity (`===`) and never calls into
+    /// them, so a reinterpreted plain object is a safe stand-in for tests.
+    private func makeNavigation() -> WKNavigation {
+        unsafeDowncast(NSObject(), to: WKNavigation.self)
+    }
+
+    @Test("Before the show's own load every navigation callback is stale")
+    func everythingIsStaleBeforeContentLoad() {
+        // A leftover prewarm/blank navigation finishing right after the bridge attaches.
+        bridge.webView(webView, didStartProvisionalNavigation: makeNavigation())
+        bridge.webView(webView, didFinish: makeNavigation())
+
+        #expect(spy.startCount == 0)
+        #expect(spy.finishCount == 0)
+    }
+
+    @Test("Only the expected navigation's callbacks reach the delegate; strangers are filtered")
+    func strangerNavigationsAreFiltered() {
+        let expected = makeNavigation()
+        bridge.expectContentNavigation(expected)
+
+        let stranger = makeNavigation()
+        bridge.webView(webView, didStartProvisionalNavigation: stranger)
+        bridge.webView(webView, didFinish: stranger)
+        #expect(spy.startCount == 0)
+        #expect(spy.finishCount == 0)
+
+        bridge.webView(webView, didStartProvisionalNavigation: expected)
+        bridge.webView(webView, didFinish: expected)
+        #expect(spy.startCount == 1)
+        #expect(spy.finishCount == 1)
+    }
+
+    @Test("After the expected navigation finished the filter opens for page-initiated navigations")
+    func filterOpensAfterExpectedFinish() {
+        let expected = makeNavigation()
+        bridge.expectContentNavigation(expected)
+        bridge.webView(webView, didFinish: expected)
+        #expect(spy.finishCount == 1)
+
+        // e.g. an in-page reload / SPA navigation initiated by the shown page itself.
+        bridge.webView(webView, didFinish: makeNavigation())
+        #expect(spy.finishCount == 2)
+    }
+
+    @Test("A nil expected navigation (loadHTMLString returned nil) fails open, not closed")
+    func nilExpectedNavigationFailsOpen() {
+        bridge.expectContentNavigation(nil)
+
+        bridge.webView(webView, didFinish: makeNavigation())
+
+        // Filtering everything here would strand the show (no didFinish → no ready check).
+        #expect(spy.finishCount == 1)
+    }
+
+    @Test("Stale failure callbacks never close the show")
+    func staleFailuresAreFiltered() {
+        bridge.expectContentNavigation(makeNavigation())
+
+        bridge.webView(webView, didFailProvisionalNavigation: makeNavigation(),
+                       withError: NSError(domain: "test", code: 1))
+
+        #expect(spy.failCount == 0)
+    }
+}
+
 @Suite("InApp WebView learned hosts store", .tags(.webView))
 struct InAppWebViewLearnedHostsStoreTests {
 
@@ -437,6 +557,29 @@ struct InAppWebViewLearnedHostsStoreTests {
 
         #expect(store.hosts(endpoint: "Endpoint").isEmpty)
         #expect(defaults.object(forKey: "MBInAppWebViewLearnedHosts.Endpoint") == nil)
+    }
+
+    @Test("Page-controlled strings that are not bare hosts are rejected on write")
+    func rejectsNonHostStrings() {
+        defer { cleanUp() }
+        let store = InAppWebViewLearnedHostsStore(defaults: defaults)
+
+        // The values come from page JS and are later interpolated into preconnect HTML —
+        // anything that doesn't round-trip as a bare https host must never be persisted.
+        store.remember(
+            [
+                "cdn.ok.example",
+                "x\"><script>alert(1)</script>",
+                "bad host with spaces",
+                "https://full.url/path",
+                "host/with/path",
+                "evil.example\"><link>",
+                ""
+            ],
+            endpoint: "Endpoint"
+        )
+
+        #expect(store.hosts(endpoint: "Endpoint") == ["cdn.ok.example"])
     }
 
     @Test("Hosts are scoped per endpoint")
