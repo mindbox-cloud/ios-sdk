@@ -169,6 +169,9 @@ struct InAppWebViewPrewarmServiceGuardTests {
         private(set) var loadedHTMLCount = 0
         private(set) var loadedBaseURLs: [URL?] = []
         private(set) var stopLoadingCount = 0
+        var stubbedIsLoading = false
+
+        override var isLoading: Bool { stubbedIsLoading }
 
         override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
             loadedHTMLCount += 1
@@ -256,6 +259,25 @@ struct InAppWebViewPrewarmServiceGuardTests {
         #expect(borrowed === suite.spy)
         #expect(suite.spy.stopLoadingCount == 1)
         #expect(suite.spy.loadedHTMLCount == 3) // preconnect + content + the hard-kill blank at borrow
+        #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
+
+    @Test("Borrow refuses an instance whose prewarm navigation hasn't settled and parks it for the next show")
+    func borrowRefusesMidNavigationInstance() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        suite.spy.stubbedIsLoading = true
+
+        // A mid-navigation document must never reach a show: its didFinish can fire before
+        // module scripts evaluate and the ready check would close a healthy in-app.
+        #expect(suite.service.borrowWarmWebView() == nil)
+        // The prewarm page is still torn down so it can't compete with the show's bandwidth.
+        #expect(suite.spy.stopLoadingCount == 1)
+        #expect(suite.spy.loadedHTMLCount == 3) // head start (2) + park blank
+
+        // Once the parked blank settles, the same instance serves the next show.
+        suite.spy.stubbedIsLoading = false
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
