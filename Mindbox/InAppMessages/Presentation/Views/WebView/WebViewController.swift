@@ -12,7 +12,6 @@ protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
-    func closeJSReadyMissingWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -230,16 +229,6 @@ extension WebViewController: WebVCDelegate {
         Logger.common(message: "[WebView] WebViewVC closeLoadFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
         reportErrorAndClose(
             .webviewLoadFailed(reason)
-        )
-    }
-
-    func closeJSReadyMissingWebViewVC(reason: String) {
-        Logger.common(
-            message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
-            category: .webViewInAppMessages
-        )
-        reportErrorAndClose(
-            .webviewPresentationFailed(reason)
         )
     }
 }

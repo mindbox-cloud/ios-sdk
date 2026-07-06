@@ -53,6 +53,12 @@ public final class MindboxWebBridge: NSObject {
     private var expectedNavigationFinished = false
     private var contentLoadIssued = false
 
+    // Script MESSAGES need their own gate: the document swap happens at didCommit, and
+    // until the show's own navigation commits, the only script that can post here is the
+    // previous document of a reused WebView (e.g. a dying prewarm page retrying its
+    // handshake) — answering it could flash the prewarm page as a phantom presentation.
+    private var expectedNavigationCommitted = false
+
     init(webView: WKWebView) {
         self.webView = webView
         super.init()
@@ -155,6 +161,11 @@ public final class MindboxWebBridge: NSObject {
     private func isStaleNavigation(_ navigation: WKNavigation?) -> Bool {
         if expectedNavigationFinished { return false }
         guard contentLoadIssued else { return true }
+        // WebKit occasionally delivers a nil navigation (best documented for early
+        // provisional failures). A nil cannot be proven to be a leftover — fail open,
+        // mirroring the nil-EXPECTED case below: swallowing a real failure would hang
+        // the show until the init timeout instead of closing with the actual reason.
+        guard let navigation else { return false }
         guard let expected = expectedNavigation else { return false }
         return navigation !== expected
     }
@@ -173,6 +184,16 @@ extension MindboxWebBridge: WKScriptMessageHandler {
         guard message.name == Constants.WebViewBridgeJS.handlerName else {
             Logger.common(
                 message: "[WebView] Bridge: received message with wrong handler name: \(message.name)",
+                category: .webViewInAppMessages
+            )
+            return
+        }
+
+        // Mirror of the navigation staleness filter at message level: until the show's own
+        // document has committed, whoever is posting is not this show's page — drop it.
+        guard expectedNavigationCommitted else {
+            Logger.common(
+                message: "[WebView] Bridge: ignoring JS message before the show's document committed (leftover page on reused WebView)",
                 category: .webViewInAppMessages
             )
             return
@@ -225,17 +246,30 @@ extension MindboxWebBridge: WKNavigationDelegate {
         navigationDelegate?.webBridge(self, didStartProvisionalNavigation: webView.url)
     }
 
+    public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        guard !isStaleNavigation(navigation) else {
+            logStaleNavigation("commit")
+            return
+        }
+        // The old document is gone from this point: script messages are now this show's.
+        expectedNavigationCommitted = true
+    }
+
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard !isStaleNavigation(navigation) else {
             WebViewShowProfiler.shared.mark("staleNavFinish")
             logStaleNavigation("finish")
             return
         }
-        if navigation === expectedNavigation {
+        // Report the content URL only for the show's own load; a page-initiated navigation
+        // gets its real URL, otherwise every finish would carry the same string and the
+        // ready-check dedupe upstream could key two different documents to one URL.
+        let isExpected = navigation === expectedNavigation
+        if isExpected {
             expectedNavigationFinished = true
         }
         WebViewShowProfiler.shared.mark("navFinish")
-        navigationDelegate?.webBridge(self, didFinishNavigation: contentURL ?? webView.url)
+        navigationDelegate?.webBridge(self, didFinishNavigation: isExpected ? (contentURL ?? webView.url) : webView.url)
     }
 
     public func webView(_ webView: WKWebView,

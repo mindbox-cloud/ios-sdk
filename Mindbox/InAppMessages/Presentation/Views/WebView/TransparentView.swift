@@ -345,13 +345,16 @@ extension TransparentView: WebBridgeNavigationDelegate {
                 message: "[WebView] JS ready check for URL \(urlString): true",
                 category: .webViewInAppMessages
             )
-        }, onGiveUp: { [weak self] lastFailure in
+        }, onGiveUp: { lastFailure in
             WebViewShowProfiler.shared.mark("jsReadyCheck")
+            // Record only — closing stays with the init timeout: the checker's ~1.2s budget
+            // can expire while a slow page is still booting its bridge or an allowed
+            // navigation is in flight, cases the timeout would have accepted (the window
+            // is invisible until `init` either way, so nothing broken can flash).
             Logger.common(
                 message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
                 category: .webViewInAppMessages
             )
-            self?.delegate?.closeJSReadyMissingWebViewVC(reason: "\(lastFailure) for URL \(urlString)")
         })
     }
     

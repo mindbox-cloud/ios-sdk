@@ -201,6 +201,44 @@ final class InAppWebViewLearnedHostsStore {
     }
 }
 
+// MARK: - Prewarm navigation policy
+
+/// Pins the hidden prewarm instance to the documents the SDK itself loads: any
+/// page-initiated main-frame navigation (JS redirect, meta refresh, a legacy runtime
+/// navigating away) is cancelled. A hidden WebView must never be able to wander off
+/// and keep fetching arbitrary URLs under the shows' cache partition. Only active
+/// until the first borrow — the show's bridge installs its own delegate then.
+final class InAppWebViewPrewarmNavigationPolicy: NSObject, WKNavigationDelegate {
+
+    // Main-thread confined, like every WKWebView interaction around it.
+    private var allowedURLs: Set<String> = ["about:blank"]
+
+    /// Registers a document URL the service is about to load itself.
+    func allow(_ url: URL) {
+        allowedURLs.insert(url.absoluteString)
+    }
+
+    /// Pure decision core, unit-tested directly (WKNavigationAction cannot be faked
+    /// safely). Subframe navigation is the page's own business; a nil target frame
+    /// (window.open) and the top frame are pinned to the SDK-issued documents.
+    func decision(for url: URL?, targetIsMainFrame: Bool?) -> WKNavigationActionPolicy {
+        if targetIsMainFrame == false { return .allow }
+        return allowedURLs.contains(url?.absoluteString ?? "about:blank") ? .allow : .cancel
+    }
+
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        let verdict = decision(for: navigationAction.request.url,
+                               targetIsMainFrame: navigationAction.targetFrame?.isMainFrame)
+        if verdict == .cancel {
+            Logger.common(message: "[WebView] Prewarm: blocked page-initiated navigation to \(navigationAction.request.url?.absoluteString ?? "nil")",
+                          level: .info, category: .webViewInAppMessages)
+        }
+        decisionHandler(verdict)
+    }
+}
+
 // MARK: - Prewarm service
 
 protocol InAppWebViewPrewarmServiceProtocol: AnyObject {
@@ -252,6 +290,9 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     // show — `superview` alone can't tell (there is a window between borrow and addSubview).
     private var isLentToShow = false
     private var memoryWarningObserver: NSObjectProtocol?
+    // Retained here because navigationDelegate is weak; armed on the warm instance until
+    // the first borrow hands navigation over to the show's bridge.
+    private let prewarmNavigationPolicy = InAppWebViewPrewarmNavigationPolicy()
 
     init(persistenceStorage: PersistenceStorage,
          learnedHostsStore: InAppWebViewLearnedHostsStore = InAppWebViewLearnedHostsStore(),
@@ -366,6 +407,14 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             // bridge (staleness filter).
             guard webView.superview == nil else { return }
             self.isLentToShow = false
+            // Fully detach the finished show: WKUserContentController retains its script
+            // handlers, so without this the previous show's bridge (inert but live) would
+            // sit on the parked instance until the next show replaces it.
+            if #available(iOS 14.0, *) {
+                webView.configuration.userContentController.removeAllScriptMessageHandlers()
+            } else {
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+            }
             webView.loadHTMLString(Self.blankPage, baseURL: nil)
         }
     }
@@ -406,33 +455,39 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             self.hasStartedResourcePrewarm = true
             if self.warmWebView == nil {
                 self.warmWebView = self.makeWebView()
+                self.warmWebView?.navigationDelegate = self.prewarmNavigationPolicy
             }
             if !hosts.isEmpty {
+                self.prewarmNavigationPolicy.allow(baseURL)
                 self.warmWebView?.loadHTMLString(InAppWebViewPrewarmPlanner.preconnectHTML(hosts: hosts), baseURL: baseURL)
                 Logger.common(message: "[WebView] Prewarm: preconnect to \(hosts.joined(separator: ",")) under \(baseURL.absoluteString)",
                               level: .info, category: .webViewInAppMessages)
             }
             self.fetchHTML(contentURL) { html in
                 DispatchQueue.main.async { [weak self] in
-                    guard let self else { return }
-                    guard let html else {
-                        // No retry by design (the latch stands): this launch degrades to
-                        // preconnect-only — but say so instead of failing silently.
-                        Logger.common(message: "[WebView] Prewarm: content page fetch failed, launch degrades to preconnect-only",
-                                      level: .info, category: .webViewInAppMessages)
-                        return
-                    }
-                    guard !self.hasBeenBorrowed, !self.hasLoadedContentPage else { return }
-                    self.hasLoadedContentPage = true
-                    let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
-                        from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
-                    )
-                    self.warmWebView?.loadHTMLString(html, baseURL: prewarmBaseURL)
-                    Logger.common(message: "[WebView] Prewarm: content page under \(prewarmBaseURL.absoluteString), endpoint \(endpoint)",
-                                  level: .info, category: .webViewInAppMessages)
+                    self?.loadPrewarmContentPage(html: html, baseURL: baseURL, endpoint: endpoint, deviceUUID: deviceUUID)
                 }
             }
         }
+    }
+
+    private func loadPrewarmContentPage(html: String?, baseURL: URL, endpoint: String, deviceUUID: String) {
+        guard let html else {
+            // No retry by design (the latch stands): this launch degrades to
+            // preconnect-only — but say so instead of failing silently.
+            Logger.common(message: "[WebView] Prewarm: content page fetch failed, launch degrades to preconnect-only",
+                          level: .info, category: .webViewInAppMessages)
+            return
+        }
+        guard !hasBeenBorrowed, !hasLoadedContentPage else { return }
+        hasLoadedContentPage = true
+        let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
+            from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
+        )
+        prewarmNavigationPolicy.allow(prewarmBaseURL)
+        warmWebView?.loadHTMLString(html, baseURL: prewarmBaseURL)
+        Logger.common(message: "[WebView] Prewarm: content page under \(prewarmBaseURL.absoluteString), endpoint \(endpoint)",
+                      level: .info, category: .webViewInAppMessages)
     }
 
     /// Most Mindbox host apps have no webview in-apps: once the config proves that, drop the
@@ -442,7 +497,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     /// WebView on the same shared store.
     private func releaseUnusedWarmWebView() {
         DispatchQueue.main.async {
-            guard !self.hasBeenBorrowed, self.warmWebView != nil else { return }
+            guard !self.hasBeenBorrowed, let webView = self.warmWebView else { return }
+            // Symmetric with the memory-warning path: don't let an in-flight prewarm
+            // navigation keep burning bandwidth if anything briefly retains the instance.
+            webView.stopLoading()
             self.warmWebView = nil
             Logger.common(message: "[WebView] Prewarm: no webview in-apps in config — releasing the warm instance",
                           level: .info, category: .webViewInAppMessages)
