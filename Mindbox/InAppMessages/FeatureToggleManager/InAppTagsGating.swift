@@ -15,3 +15,10 @@ extension Optional where Wrapped == [String: String] {
         return self
     }
 }
+
+extension FeatureToggleManager {
+    /// Returns `tags` when `MobileSdkShouldSendInAppTags` is enabled and the dictionary is non-empty, `nil` otherwise.
+    func gatedTags(_ tags: [String: String]?) -> [String: String]? {
+        tags.gatedTags(isTagsFeatureEnabled: isFeatureEnabled(.shouldSendInAppTags))
+    }
+}

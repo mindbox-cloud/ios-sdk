@@ -23,36 +23,11 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackPro
         let inappId: String
         let timeToDisplay: String?
         let tags: [String: String]?
-
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(inappId, forKey: .inappId)
-            try container.encodeIfPresent(timeToDisplay, forKey: .timeToDisplay)
-            if let tags = tags, !tags.isEmpty {
-                try container.encode(tags, forKey: .tags)
-            }
-        }
-
-        private enum CodingKeys: String, CodingKey {
-            case inappId, timeToDisplay, tags
-        }
     }
 
     struct InAppBody: Encodable {
         let inappId: String
         let tags: [String: String]?
-
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(inappId, forKey: .inappId)
-            if let tags = tags, !tags.isEmpty {
-                try container.encode(tags, forKey: .tags)
-            }
-        }
-
-        private enum CodingKeys: String, CodingKey {
-            case inappId, tags
-        }
     }
 
     private let databaseRepository: DatabaseRepositoryProtocol
@@ -64,23 +39,22 @@ class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackPro
     }
 
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {
-        let gatedTags = tags.gatedTags(isTagsFeatureEnabled: featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
-        let encodable = InAppShowBody(inappId: id, timeToDisplay: timeToDisplay, tags: gatedTags)
+        let encodable = InAppShowBody(inappId: id, timeToDisplay: timeToDisplay, tags: featureToggleManager.gatedTags(tags))
         let event = Event(type: .inAppViewEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 
     func trackClick(id: String, tags: [String: String]?) throws {
-        let gatedTags = tags.gatedTags(isTagsFeatureEnabled: featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
-        let encodable = InAppBody(inappId: id, tags: gatedTags)
-        let event = Event(type: .inAppClickEvent, body: BodyEncoder(encodable: encodable).body)
-        try databaseRepository.create(event: event)
+        try track(id: id, tags: tags, type: .inAppClickEvent)
     }
 
     func trackTargeting(id: String, tags: [String: String]?) throws {
-        let gatedTags = tags.gatedTags(isTagsFeatureEnabled: featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
-        let encodable = InAppBody(inappId: id, tags: gatedTags)
-        let event = Event(type: .inAppTargetingEvent, body: BodyEncoder(encodable: encodable).body)
+        try track(id: id, tags: tags, type: .inAppTargetingEvent)
+    }
+
+    private func track(id: String, tags: [String: String]?, type: Event.Operation) throws {
+        let encodable = InAppBody(inappId: id, tags: featureToggleManager.gatedTags(tags))
+        let event = Event(type: type, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 }

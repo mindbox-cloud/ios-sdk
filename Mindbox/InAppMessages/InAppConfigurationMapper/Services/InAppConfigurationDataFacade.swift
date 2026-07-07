@@ -16,7 +16,7 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]?])
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
     func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
 }
@@ -70,7 +70,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]?]) {
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
         defer {
             pendingTargetingFailureDetails.removeAll()
         }
@@ -82,7 +82,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         pendingTargetingFailureDetails.forEach { reason, details in
             let inappIds = inappIds(for: reason)
             failedTargetingInappIds.intersection(inappIds).forEach {
-                failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0] ?? nil)
+                failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0])
             }
         }
     }

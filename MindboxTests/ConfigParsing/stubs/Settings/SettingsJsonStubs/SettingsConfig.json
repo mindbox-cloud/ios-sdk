@@ -23,7 +23,8 @@
     "minIntervalBetweenShows": "0.00:00:10"
   },
   "featureToggles": {
-    "MobileSdkShouldSendInAppShowError": true
+    "MobileSdkShouldSendInAppShowError": true,
+    "MobileSdkShouldSendInAppTags": true
   },
   "baseAddresses": {
     "operations": "anonymizer-demo-api-regular.mindbox.ru"

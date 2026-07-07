@@ -452,16 +452,9 @@ private extension InappShowFailureManagerTests {
     }
 
     func applyTagsFeatureToggle(shouldSendInAppTags: Bool) {
-        let settingsJSON = """
-        {
-          "featureToggles": {
-            "MobileSdkShouldSendInAppTags": \(shouldSendInAppTags ? "true" : "false")
-          }
-        }
-        """
-        let settingsData = settingsJSON.data(using: .utf8) ?? Data()
-        let settings = try? JSONDecoder().decode(Settings.self, from: settingsData)
-        featureToggleManager.applyFeatureToggles(settings?.featureToggles)
+        featureToggleManager.applyFeatureToggles(
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: shouldSendInAppTags)
+        )
     }
 
     func assertCreatedEventsCountEventually(

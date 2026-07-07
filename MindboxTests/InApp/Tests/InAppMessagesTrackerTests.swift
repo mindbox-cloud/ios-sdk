@@ -72,16 +72,9 @@ final class InAppMessagesTrackerTests {
     }
 
     private func applyTagsToggle(enabled: Bool) {
-        let settingsJSON = """
-        {
-          "featureToggles": {
-            "MobileSdkShouldSendInAppTags": \(enabled ? "true" : "false")
-          }
-        }
-        """
-        let settingsData = settingsJSON.data(using: .utf8) ?? Data()
-        let settings = try? JSONDecoder().decode(Settings.self, from: settingsData)
-        featureToggleManager.applyFeatureToggles(settings?.featureToggles)
+        featureToggleManager.applyFeatureToggles(
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: enabled)
+        )
     }
 }
 

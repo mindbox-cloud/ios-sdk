@@ -340,8 +340,7 @@ extension TransparentView {
     }
 
     private func mergedOperationBodyString(_ body: JSONValue) -> String? {
-        let isTagsFeatureEnabled = featureToggleManager.isFeatureEnabled(.shouldSendInAppTags)
-        let gatedTags = tags.gatedTags(isTagsFeatureEnabled: isTagsFeatureEnabled)
+        let gatedTags = featureToggleManager.gatedTags(tags)
         let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
 
         guard let bodyData = try? JSONEncoder().encode(mergedBody) else {

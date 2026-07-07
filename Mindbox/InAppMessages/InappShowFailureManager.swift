@@ -40,7 +40,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             return
         }
 
-        let gatedTags = tags.gatedTags(isTagsFeatureEnabled: featureToggleManager.isFeatureEnabled(.shouldSendInAppTags))
+        let gatedTags = featureToggleManager.gatedTags(tags)
 
         let truncatedDetails = details.map { original -> String in
             let truncated = original.truncated(toUTF8ByteLimit: Self.errorDetailsLimit)

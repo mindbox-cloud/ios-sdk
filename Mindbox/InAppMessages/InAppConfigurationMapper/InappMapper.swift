@@ -91,8 +91,9 @@ class InappMapper: InappMapperProtocol {
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
             let suitableIds = Set(suitableInapps.map(\.inAppId))
             let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
-            let tagsByInappId: [String: [String: String]?] = inapps.reduce(into: [:]) { result, inapp in
-                result[inapp.id] = inapp.tags
+            let tagsByInappId: [String: [String: String]] = inapps.reduce(into: [:]) { result, inapp in
+                guard failedTargetingInappIds.contains(inapp.id), let tags = inapp.tags else { return }
+                result[inapp.id] = tags
             }
             self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds, tagsByInappId: tagsByInappId)
 

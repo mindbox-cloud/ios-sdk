@@ -107,6 +107,7 @@ final class FeatureTogglesConfigParsingTests: XCTestCase {
         let config = try! FeatureTogglesConfig.configWithSettings.getConfig()
 
         XCTAssertNotNil(config.featureToggles, "FeatureToggles must be successfully parsed")
+        XCTAssertEqual(config.featureToggles?.shouldSendInAppTags, true, "shouldSendInAppTags must be true")
 
         let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
         featureToggleManager.applyFeatureToggles(config.featureToggles)

@@ -62,7 +62,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]?]) {
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
         collectedTargetingFailureIds.append(failedTargetingInappIds)
     }
 
