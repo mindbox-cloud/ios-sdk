@@ -74,6 +74,15 @@ final class TransparentViewJSBridgeTests {
         #expect(facade.sentMessages.last?.type == .error)
     }
 
+    @Test("asyncOperation with an empty operation name responds with a bridge error and queues nothing", .tags(.inAppTags, .webView))
+    func asyncOperationWithEmptyNameSendsBridgeError() throws {
+        let view = makeView(tags: ["templateType": "Popup"])
+        send(.asyncOperation, payload: #"{"operation":"","body":{"field":"value"}}"#, to: view)
+
+        #expect(databaseRepository.createdEvents.isEmpty)
+        #expect(facade.sentMessages.last?.type == .error)
+    }
+
     // MARK: - syncOperation
 
     @Test("syncOperation merges in-app tags into the operation body when the feature is enabled", .tags(.inAppTags, .webView))

@@ -334,6 +334,7 @@ extension TransparentView {
               let data = str.data(using: .utf8),
               let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
               case .string(let operation) = dict["operation"],
+              !operation.isEmpty,
               let body = dict["body"] else {
             return nil
         }
