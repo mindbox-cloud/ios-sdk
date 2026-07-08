@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AE190755CA97473B83E1568D /* MBContainerConcurrencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */; };
+		3FDBA6E4D39A49369A335CF4 /* SDKUserAgentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */; };
 		16311BEB069E4B3983FAF594 /* InAppWebViewCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */; };
 		28375259024D42658E146900 /* InAppWebViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1627DAC8D54E448C6D7BF0 /* InAppWebViewFactory.swift */; };
 		B58D5207F49F4531AA1C516B /* InAppWebViewHTMLFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */; };
@@ -749,6 +751,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBContainerConcurrencyTests.swift; sourceTree = "<group>"; };
+		4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SDKUserAgentTests.swift; sourceTree = "<group>"; };
 		895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppWebViewCacheTests.swift; sourceTree = "<group>"; };
 		FD1627DAC8D54E448C6D7BF0 /* InAppWebViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewFactory.swift; sourceTree = "<group>"; };
 		A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewHTMLFetcher.swift; sourceTree = "<group>"; };
@@ -2278,6 +2282,7 @@
 		64FD3F7576619DCF106D10B6 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */,
 				97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */,
 				F3BA5E000130A000C0000006 /* OperationsURLRoutingTests.swift */,
 				F3CD202C2F600A800065392A /* HostNormalizerTests.swift */,
@@ -2466,6 +2471,7 @@
 		84B625F525C98EE000AB6228 /* DI */ = {
 			isa = PBXGroup;
 			children = (
+				4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */,
 				F3FEEAA72C25CC8F000E9D0F /* Injections */,
 				F3FEEA9E2C25AF39000E9D0F /* StubContainer.swift */,
 				F32E536E2C3F2B05002C7CA0 /* DITests.swift */,
@@ -4694,6 +4700,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE190755CA97473B83E1568D /* MBContainerConcurrencyTests.swift in Sources */,
+				3FDBA6E4D39A49369A335CF4 /* SDKUserAgentTests.swift in Sources */,
 				16311BEB069E4B3983FAF594 /* InAppWebViewCacheTests.swift in Sources */,
 				B9025268DDC24820B95ADE10 /* WebViewTimeoutErrorTests.swift in Sources */,
 				CB91323FAD66404B9422B6E0 /* WebViewReadyCheckerTests.swift in Sources */,
