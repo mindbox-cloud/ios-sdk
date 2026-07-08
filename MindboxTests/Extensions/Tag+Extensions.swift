@@ -28,4 +28,6 @@ extension Tag {
     @Tag static var operationsRouting: Self
     @Tag static var mbConfiguration: Self
     @Tag static var inAppTags: Self
+    @Tag static var userAgent: Self
+    @Tag static var dependencyInjection: Self
 }
