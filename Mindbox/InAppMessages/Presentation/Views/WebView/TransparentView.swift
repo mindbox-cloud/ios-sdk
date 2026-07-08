@@ -32,6 +32,7 @@ final class TransparentView: UIView {
     /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
+    private var hasCapturedObservedHosts = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -115,6 +116,19 @@ final class TransparentView: UIView {
 
     func cleanUp() {
         facade?.cleanWebView()
+    }
+
+    /// Persists the hosts this show's resources actually came from so the next launch's
+    /// prewarm can preconnect to them. Called from `viewWillDisappear`, which every
+    /// dismissal path (close action, dim-tap, timeout) goes through while the page is still
+    /// alive; the once-flag is a cheap guard against a repeated disappear.
+    func captureObservedResourceHosts() {
+        guard !hasCapturedObservedHosts else { return }
+        hasCapturedObservedHosts = true
+        facade?.evaluateJavaScript(InAppWebViewPrewarmPlanner.observedHostsScript) { result in
+            guard case .success(let value) = result, let hosts = value as? [String] else { return }
+            DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).rememberObservedHosts(hosts)
+        }
     }
 
     func cancelTimeoutTimer() {
