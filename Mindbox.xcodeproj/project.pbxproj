@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B9025268DDC24820B95ADE10 /* WebViewTimeoutErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */; };
+		CB91323FAD66404B9422B6E0 /* WebViewReadyCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */; };
+		C830BF4C287849CE95BB4ED9 /* WebViewReadyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */; };
+		46E95250B5904CC18E079C54 /* SDKUserAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68184C936B4243C28CC10829 /* SDKUserAgent.swift */; };
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
 		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
@@ -733,6 +737,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewTimeoutErrorTests.swift; sourceTree = "<group>"; };
+		4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewReadyCheckerTests.swift; sourceTree = "<group>"; };
+		F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewReadyChecker.swift; sourceTree = "<group>"; };
+		68184C936B4243C28CC10829 /* SDKUserAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKUserAgent.swift; sourceTree = "<group>"; };
 		0475E8755F63483597539A50 /* TrackVisitManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackVisitManagerTests.swift; sourceTree = "<group>"; };
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewLocalStateStorageTests.swift; sourceTree = "<group>"; };
@@ -1503,6 +1511,8 @@
 		2B4C84F6EDD4B7D977F67A95 /* WebView */ = {
 			isa = PBXGroup;
 			children = (
+				11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */,
+				4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */,
 				0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */,
 				A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */,
 				BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */,
@@ -1643,6 +1653,7 @@
 		31A20D4A25B6E09900AAA0A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				68184C936B4243C28CC10829 /* SDKUserAgent.swift */,
 				47CFDAB82F3A05430034F310 /* SystemInfo */,
 				F31909972E979D8200373E2F /* AppDelegateProxy */,
 				47BD5BF82C578AD700F965C0 /* Migrations */,
@@ -3016,6 +3027,7 @@
 		B4E4386F2D8AFA5700603F3A /* WebView */ = {
 			isa = PBXGroup;
 			children = (
+				F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */,
 				47B1B6A92F6174E0000A4B67 /* LocalState */,
 				F3BD9F802F273BC800647BAF /* Bridge */,
 				F30654B92F1A83430058808C /* Debug */,
@@ -4261,6 +4273,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C830BF4C287849CE95BB4ED9 /* WebViewReadyChecker.swift in Sources */,
+				46E95250B5904CC18E079C54 /* SDKUserAgent.swift in Sources */,
 				47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */,
 				F331DD062A83A56500222120 /* ModalViewController.swift in Sources */,
 				F331DCC12A80993600222120 /* ContentElement.swift in Sources */,
@@ -4637,6 +4651,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9025268DDC24820B95ADE10 /* WebViewTimeoutErrorTests.swift in Sources */,
+				CB91323FAD66404B9422B6E0 /* WebViewReadyCheckerTests.swift in Sources */,
 				F349753A2DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift in Sources */,
 				4766A8AE2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift in Sources */,
 				F3FEEA9F2C25AF39000E9D0F /* StubContainer.swift in Sources */,

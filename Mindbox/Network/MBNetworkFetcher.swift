@@ -27,10 +27,8 @@ class MBNetworkFetcher: NetworkFetcher {
 
     private static func makeSession(utilitiesFetcher: UtilitiesFetcher) -> URLSession {
         let sessionConfiguration: URLSessionConfiguration = .default
-        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknow"
-        let appVersion = utilitiesFetcher.appVerson ?? "unknow"
-        let appName = utilitiesFetcher.hostApplicationName ?? "unknow"
-        let userAgent: String = "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
+        let userAgent = SDKUserAgent.build(utilitiesFetcher: utilitiesFetcher)
         sessionConfiguration.httpAdditionalHeaders = [
             "Mindbox-Integration": "iOS-SDK",
             "Mindbox-Integration-Version": sdkVersion,
