@@ -12,7 +12,6 @@ protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
-    func closeJSReadyMissingWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -201,13 +200,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func createUserAgent() -> String {
-        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-
-        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
-        let appVersion = utilitiesFetcher.appVerson ?? "unknown"
-        let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
-
-        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+        SDKUserAgent.build()
     }
 }
 
@@ -220,24 +213,23 @@ extension WebViewController: WebVCDelegate {
     func closeTimeoutWebViewVC() {
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         reportErrorAndClose(
-            .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(id).")
+            Self.timeoutError(readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true, inAppId: id)
         )
+    }
+
+    /// The init timeout is the single closing authority, but monitoring must still tell
+    /// "the page loaded and its JS bridge never appeared" (a content defect) apart from
+    /// "the page never finished loading" (a load defect).
+    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String) -> InAppPresentationError {
+        readyCheckGaveUp
+            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).")
+            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).")
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
         Logger.common(message: "[WebView] WebViewVC closeLoadFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
         reportErrorAndClose(
             .webviewLoadFailed(reason)
-        )
-    }
-
-    func closeJSReadyMissingWebViewVC(reason: String) {
-        Logger.common(
-            message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
-            category: .webViewInAppMessages
-        )
-        reportErrorAndClose(
-            .webviewPresentationFailed(reason)
         )
     }
 }

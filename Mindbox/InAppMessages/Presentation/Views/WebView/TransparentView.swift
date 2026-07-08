@@ -24,7 +24,14 @@ final class TransparentView: UIView {
     private let inAppId: String
     private let tags: [String: String]?
     private var lastReadyCheckedUrl: String?
-    private var isReadyCheckInFlight = false
+    private var readyChecker: WebViewReadyChecker?
+    /// True when the page finished loading but the JS bridge never appeared within the
+    /// ready-check budget — lets the init timeout report the accurate failure category.
+    private(set) var readyCheckDidGiveUp = false
+    /// True once the page has sent `init`. After that the init timeout is cancelled, so a
+    /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
+    /// closing authority — it must close the show itself.
+    private var hasReceivedInit = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -72,6 +79,7 @@ final class TransparentView: UIView {
     }
 
     deinit {
+        readyChecker?.cancel()
         if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
@@ -181,6 +189,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             if isMotionServiceInitialized { motionService.stopMonitoring() }
             webViewAction?.onClose()
         case .`init`:
+            hasReceivedInit = true
             quizInitTimeoutWorkItem?.cancel()
             hapticService.prepare()
             webViewAction?.onInit()
@@ -241,43 +250,49 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
         // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
-        isReadyCheckInFlight = false
+        readyCheckDidGiveUp = false
+        readyChecker?.cancel()
+        readyChecker = nil
     }
-    
+
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
         Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
-        guard !isReadyCheckInFlight else { return }
         guard lastReadyCheckedUrl != urlString else { return }
         lastReadyCheckedUrl = urlString
-        isReadyCheckInFlight = true
 
-        let script = Constants.WebViewBridgeJS.bridgeFunctionReadyCheck
-        facade?.evaluateJavaScript(script) { [weak self] result in
+        readyChecker?.cancel()
+        let checker = WebViewReadyChecker(evaluate: { [weak self] script, completion in
+            // Teardown: abandon the poll silently, exactly like cancel().
+            guard let facade = self?.facade else { return }
+            facade.evaluateJavaScript(script, completion: completion)
+        })
+        readyChecker = checker
+        checker.run(onReady: {
+            Logger.common(
+                message: "[WebView] JS ready check for URL \(urlString): true",
+                category: .webViewInAppMessages
+            )
+        }, onGiveUp: { [weak self] lastFailure in
             guard let self else { return }
-            self.isReadyCheckInFlight = false
-
-            switch result {
-            case .success(let anyValue):
-                let hasReady = (anyValue as? Bool) ?? false
-                Logger.common(
-                    message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",
-                    category: .webViewInAppMessages
-                )
-                if !hasReady {
-                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.bridgeMessagesHandlers.emit is missing for URL \(urlString)")
-                }
-
-            case .failure(let error):
-                Logger.common(
-                    message: "[WebView] JS ready check failed for URL \(urlString). Error: \(error.localizedDescription)",
-                    category: .webViewInAppMessages
-                )
-                self.delegate?.closeJSReadyMissingWebViewVC(reason: "evaluateJavaScript error for URL \(urlString): \(error.localizedDescription)")
+            self.readyCheckDidGiveUp = true
+            Logger.common(
+                message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
+                category: .webViewInAppMessages
+            )
+            // Before `init` the 7s timeout owns closing: its budget can expire while a slow
+            // page is still booting the bridge, and the window is invisible until `init`
+            // anyway; the flag above lets that timeout report the real category. After
+            // `init` the timeout is already cancelled, so a give-up here (a post-load
+            // navigation dropped the bridge) is the only signal left — close now, else the
+            // in-app stays up with a dead bridge. The give-up flag makes this report
+            // webview_presentation_failed, matching the pre-refactor behavior.
+            if self.hasReceivedInit {
+                self.delegate?.closeTimeoutWebViewVC()
             }
-        }
+        })
     }
     
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {

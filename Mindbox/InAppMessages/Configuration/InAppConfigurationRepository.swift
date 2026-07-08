@@ -29,7 +29,10 @@ class InAppConfigurationRepository {
 
     func saveConfigToCache(_ data: Data) {
         do {
-            try data.write(to: inAppConfigFileUrl)
+            // Atomic (write-then-rename): the init-time prewarm reads this file from a
+            // background queue while the config download rewrites it — a concurrent
+            // reader must see the old or the new config, never a torn file.
+            try data.write(to: inAppConfigFileUrl, options: .atomic)
             Logger.common(message: "Successfuly saved config file on a disk.", level: .debug, category: .inAppMessages)
         } catch {
             Logger.common(message: "Failed to save config file on a disk. Error: \(error.localizedDescription)", level: .debug, category: .inAppMessages)
