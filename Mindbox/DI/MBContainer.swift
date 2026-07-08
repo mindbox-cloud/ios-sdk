@@ -16,15 +16,21 @@ enum ObjectScope {
 class MBContainer {
     private var factories: [String: (ObjectScope, () -> Any)] = [:]
     private var singletons: [String: Any] = [:]
+    // Recursive: factories resolve their own dependencies on the same thread.
+    private let lock = NSRecursiveLock()
 
     func register<T>(_ type: T.Type, scope: ObjectScope = .container, factory: @escaping () -> T) {
         let key = String(describing: type)
+        lock.lock()
+        defer { lock.unlock() }
         factories[key] = (scope, factory)
     }
 
     func resolve<T>(_ type: T.Type) -> T? {
         let key = String(describing: type)
 
+        lock.lock()
+        defer { lock.unlock() }
         if let (scope, factory) = factories[key] {
             switch scope {
             case .container:
