@@ -12,10 +12,14 @@ extension Settings {
     struct FeatureToggles: Decodable, Equatable {
         let shouldSendInAppShowError: Bool?
         let shouldSendInAppTags: Bool?
+        let shouldPrewarmInAppWebView: Bool?
+        let shouldCacheInAppWebView: Bool?
 
         enum CodingKeys: String, CodingKey {
             case shouldSendInAppShowError = "MobileSdkShouldSendInAppShowError"
             case shouldSendInAppTags = "MobileSdkShouldSendInAppTags"
+            case shouldPrewarmInAppWebView = "MobileSdkShouldPrewarmInAppWebView"
+            case shouldCacheInAppWebView = "MobileSdkShouldCacheInAppWebView"
         }
     }
 }
@@ -25,5 +29,7 @@ extension Settings.FeatureToggles {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.shouldSendInAppShowError = try? container.decodeIfPresent(Bool.self, forKey: .shouldSendInAppShowError)
         self.shouldSendInAppTags = try? container.decodeIfPresent(Bool.self, forKey: .shouldSendInAppTags)
+        self.shouldPrewarmInAppWebView = try? container.decodeIfPresent(Bool.self, forKey: .shouldPrewarmInAppWebView)
+        self.shouldCacheInAppWebView = try? container.decodeIfPresent(Bool.self, forKey: .shouldCacheInAppWebView)
     }
 }
