@@ -566,6 +566,7 @@
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
 		F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1C12CE5F23A0053423E /* InappMapperTests.swift */; };
 		F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C32CE60CA90053423E /* 1-Targeting.json */; };
+		7A3F1B2C9D4E5F60718293A7 /* Tags-FailedTargeting.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A3F1B2C9D4E5F60718293A6 /* Tags-FailedTargeting.json */; };
 		F351F1C62CE626450053423E /* 15-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C52CE626450053423E /* 15-Targeting.json */; };
 		F351F1C82CE72B300053423E /* 44-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C72CE72B300053423E /* 44-Targeting.json */; };
 		F351F1CB2CE72D460053423E /* 46-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1CA2CE72D460053423E /* 46-Targeting.json */; };
@@ -1304,6 +1305,7 @@
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
 		F351F1C12CE5F23A0053423E /* InappMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapperTests.swift; sourceTree = "<group>"; };
 		F351F1C32CE60CA90053423E /* 1-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "1-Targeting.json"; sourceTree = "<group>"; };
+		7A3F1B2C9D4E5F60718293A6 /* Tags-FailedTargeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "Tags-FailedTargeting.json"; sourceTree = "<group>"; };
 		F351F1C52CE626450053423E /* 15-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "15-Targeting.json"; sourceTree = "<group>"; };
 		F351F1C72CE72B300053423E /* 44-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "44-Targeting.json"; sourceTree = "<group>"; };
 		F351F1C92CE72D460053423E /* 45-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "45-Targeting.json"; sourceTree = "<group>"; };
@@ -3098,6 +3100,7 @@
 			isa = PBXGroup;
 			children = (
 				F351F1C32CE60CA90053423E /* 1-Targeting.json */,
+				7A3F1B2C9D4E5F60718293A6 /* Tags-FailedTargeting.json */,
 				F31470882B96387C00E01E5C /* 3-4-5-TargetingRequests.json */,
 				F314708B2B96464900E01E5C /* 7-TargetingRequests.json */,
 				F314708D2B964BFF00E01E5C /* 8-TargetingRequests.json */,
@@ -4192,6 +4195,7 @@
 				F39117112AB4BD4500852298 /* missingBackgroundSection.json in Resources */,
 				F31470962B96681F00E01E5C /* 27-TargetingRequests.json in Resources */,
 				F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */,
+				7A3F1B2C9D4E5F60718293A7 /* Tags-FailedTargeting.json in Resources */,
 				31EB907425C402F900368FFB /* TestConfig2.plist in Resources */,
 				31EB907325C402F900368FFB /* TestConfig3.plist in Resources */,
 				F391170F2AB4B31800852298 /* unknownVariantType.json in Resources */,
