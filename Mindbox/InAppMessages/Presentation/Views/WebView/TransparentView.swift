@@ -16,7 +16,7 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: InappWebViewFacadeProtocol?
+    var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
@@ -28,7 +28,9 @@ final class TransparentView: UIView {
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
-    private lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+    lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+    lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+    lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
     private var isMotionServiceInitialized = false
     private lazy var motionService: MotionServiceProtocol = {
         isMotionServiceInitialized = true
@@ -375,7 +377,6 @@ extension TransparentView {
         let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
 
-        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         do {
             try databaseRepository.create(event: event)
             Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
@@ -397,7 +398,6 @@ extension TransparentView {
 
         let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
 
         Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
 

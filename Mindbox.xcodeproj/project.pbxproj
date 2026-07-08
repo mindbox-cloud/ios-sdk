@@ -668,6 +668,7 @@
 		FA39EE97042009DCEC24E971 /* InAppTagsGatingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045EA348681AB859FB298A57 /* InAppTagsGatingTests.swift */; };
 		1E316CC518D9111F0BD25590 /* InAppMessagesTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60DC2E1435521EBF0E2C5E4 /* InAppMessagesTrackerTests.swift */; };
 		AB0E83C770AAB9A2DC8E9BF5 /* JSONValueTagsMergeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55E67F6257F15F143DEA87DE /* JSONValueTagsMergeTests.swift */; };
+		7A3F1B2C9D4E5F60718293A5 /* TransparentViewJSBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3F1B2C9D4E5F60718293A4 /* TransparentViewJSBridgeTests.swift */; };
 		F3CD20262F600A800065392A /* MBConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD20272F600A800065392A /* MBConfigurationTests.swift */; };
 		F3CD20292F600A800065392A /* HostNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD202A2F600A800065392A /* HostNormalizer.swift */; };
 		F3CD202B2F600A800065392A /* HostNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CD202C2F600A800065392A /* HostNormalizerTests.swift */; };
@@ -1405,6 +1406,7 @@
 		045EA348681AB859FB298A57 /* InAppTagsGatingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTagsGatingTests.swift; sourceTree = "<group>"; };
 		F60DC2E1435521EBF0E2C5E4 /* InAppMessagesTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppMessagesTrackerTests.swift; sourceTree = "<group>"; };
 		55E67F6257F15F143DEA87DE /* JSONValueTagsMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValueTagsMergeTests.swift; sourceTree = "<group>"; };
+		7A3F1B2C9D4E5F60718293A4 /* TransparentViewJSBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransparentViewJSBridgeTests.swift; sourceTree = "<group>"; };
 		F3CD20272F600A800065392A /* MBConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBConfigurationTests.swift; sourceTree = "<group>"; };
 		F3CD202A2F600A800065392A /* HostNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostNormalizer.swift; sourceTree = "<group>"; };
 		F3CD202C2F600A800065392A /* HostNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostNormalizerTests.swift; sourceTree = "<group>"; };
@@ -1518,6 +1520,7 @@
 			children = (
 				0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */,
 				55E67F6257F15F143DEA87DE /* JSONValueTagsMergeTests.swift */,
+				7A3F1B2C9D4E5F60718293A4 /* TransparentViewJSBridgeTests.swift */,
 				A1B2C3D400000006E1010101 /* BridgeMessagePermissionTests.swift */,
 				BD1BE43AA9EAEA03F8ED400C /* HapticRequestParserTests.swift */,
 				BD1BE43AA9EAEA03F8ED400D /* HapticRequestValidatorTests.swift */,
@@ -4709,6 +4712,7 @@
 				FA39EE97042009DCEC24E971 /* InAppTagsGatingTests.swift in Sources */,
 				1E316CC518D9111F0BD25590 /* InAppMessagesTrackerTests.swift in Sources */,
 				AB0E83C770AAB9A2DC8E9BF5 /* JSONValueTagsMergeTests.swift in Sources */,
+				7A3F1B2C9D4E5F60718293A5 /* TransparentViewJSBridgeTests.swift in Sources */,
 				D216DE512C0716B70020F58A /* StringExtensionsTests.swift in Sources */,
 				D216DE532C0716B80020F58A /* TimeIntervalTimeSpanTests.swift in Sources */,
 				A17958812978B3FA00609E91 /* InAppResponseModelTests.swift in Sources */,
