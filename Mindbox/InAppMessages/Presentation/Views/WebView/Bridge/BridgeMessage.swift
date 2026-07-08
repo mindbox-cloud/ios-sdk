@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 @_spi(Internal)
 public enum JSONValue: Codable, Equatable {
@@ -148,12 +149,22 @@ public enum JSONValue: Codable, Equatable {
         case .none, .some(.null):
             dict["tags"] = .object(tags.mapValues { .string($0) })
         case .some(.object(var existingTags)):
-            for (key, value) in tags where existingTags[key] == nil {
+            for (key, value) in tags {
+                if existingTags[key] != nil {
+                    Logger.common(
+                        message: "[WebView] Tags merge: key '\(key)' already present in operation body, keeping client value",
+                        category: .inAppMessages
+                    )
+                    continue
+                }
                 existingTags[key] = .string(value)
             }
             dict["tags"] = .object(existingTags)
         default:
-            break
+            Logger.common(
+                message: "[WebView] Tags merge: 'tags' in operation body is not an object, keeping client value",
+                category: .inAppMessages
+            )
         }
 
         return .object(dict)
