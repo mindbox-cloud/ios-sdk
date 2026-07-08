@@ -35,6 +35,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let id: String
     private let imagesDict: [String: UIImage]
     private let operation: (name: String, body: String)?
+    private let tags: [String: String]?
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
@@ -62,12 +63,14 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onCloseInApp: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
-        operation: (name: String, body: String)?
+        operation: (name: String, body: String)?,
+        tags: [String: String]?
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
         self.operation = operation
+        self.tags = tags
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
         self.onError = onError
@@ -96,7 +99,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
+            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)

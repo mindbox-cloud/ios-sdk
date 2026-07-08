@@ -16,9 +16,9 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>)
-    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
-    func trackTargeting(id: String?)
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
+    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
+    func trackTargeting(id: String?, tags: [String: String]?)
 }
 
 extension InAppConfigurationDataFacadeProtocol {
@@ -70,7 +70,7 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>) {
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
         defer {
             pendingTargetingFailureDetails.removeAll()
         }
@@ -82,12 +82,12 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         pendingTargetingFailureDetails.forEach { reason, details in
             let inappIds = inappIds(for: reason)
             failedTargetingInappIds.intersection(inappIds).forEach {
-                failureManager.addFailure(inappId: $0, reason: reason, details: details)
+                failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0])
             }
         }
     }
 
-    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             if case .failure(let error) = result {
                 switch error {
@@ -96,7 +96,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
                     self.failureManager.addFailure(
                         inappId: inappId,
                         reason: .imageDownloadFailed,
-                        details: details
+                        details: details,
+                        tags: tags
                     )
                 default:
                     break
@@ -106,10 +107,10 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func trackTargeting(id: String?) {
+    func trackTargeting(id: String?, tags: [String: String]?) {
         if let id = id {
             do {
-                try self.tracker.trackTargeting(id: id)
+                try self.tracker.trackTargeting(id: id, tags: tags)
                 Logger.common(message: "Track InApp.Targeting. Id \(id)", level: .info, category: .inAppMessages)
             } catch {
                 Logger.common(message: "Track InApp.Targeting failed with error: \(error)", level: .error, category: .inAppMessages)

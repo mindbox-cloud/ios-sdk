@@ -153,7 +153,8 @@ internal extension InappScheduleManager {
                 self.failureManager.addFailure(
                     inappId: inapp.inAppId,
                     reason: error.failureReason,
-                    details: error.failureDetails
+                    details: error.failureDetails,
+                    tags: inapp.tags
                 )
                 self.failureManager.sendFailures()
             }

@@ -150,5 +150,5 @@ final class InAppMessagesTrackerSpyMock: InAppMessagesTrackerProtocol {
         lastTimeToDisplay = timeToDisplay
     }
 
-    func trackClick(id: String) throws {}
+    func trackClick(id: String, tags: [String: String]?) throws {}
 }

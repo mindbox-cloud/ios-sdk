@@ -16,17 +16,21 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: InappWebViewFacadeProtocol?
+    var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
     private let userAgent: String
     private let inAppId: String
+    private let tags: [String: String]?
     private var lastReadyCheckedUrl: String?
     private var isReadyCheckInFlight = false
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
+    lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+    lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+    lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
     private var isMotionServiceInitialized = false
     private lazy var motionService: MotionServiceProtocol = {
         isMotionServiceInitialized = true
@@ -37,11 +41,12 @@ final class TransparentView: UIView {
         return service
     }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
         self.inAppId = inAppId
+        self.tags = tags
         super.init(frame: frame)
         commonInit()
     }
@@ -51,6 +56,7 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.tags = nil
         super.init(frame: frame)
         commonInit()
     }
@@ -60,6 +66,7 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.tags = nil
         super.init(coder: coder)
         commonInit()
     }
@@ -322,18 +329,27 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
 extension TransparentView {
 
-    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: String)? {
+    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: JSONValue)? {
         guard case .string(let str) = message.payload,
               let data = str.data(using: .utf8),
               let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
               case .string(let operation) = dict["operation"],
-              let body = dict["body"],
-              let bodyData = try? JSONEncoder().encode(body),
-              let bodyString = String(data: bodyData, encoding: .utf8) else {
+              !operation.isEmpty,
+              let body = dict["body"] else {
             return nil
         }
 
-        return (operation, bodyString)
+        return (operation, body)
+    }
+
+    private func mergedOperationBodyString(_ body: JSONValue) -> String? {
+        let gatedTags = featureToggleManager.gatedTags(tags)
+        let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
+
+        guard let bodyData = try? JSONEncoder().encode(mergedBody) else {
+            return nil
+        }
+        return String(data: bodyData, encoding: .utf8)
     }
 
     private func sendBridgeSuccess(action: String, id: UUID) {
@@ -353,15 +369,15 @@ extension TransparentView {
     }
 
     private func handleAsyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+        guard let params = extractOperationParams(from: message),
+              let bodyString = mergedOperationBodyString(params.body) else {
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
-        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
 
-        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         do {
             try databaseRepository.create(event: event)
             Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
@@ -375,14 +391,14 @@ extension TransparentView {
     }
 
     private func handleSyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+        guard let params = extractOperationParams(from: message),
+              let bodyString = mergedOperationBodyString(params.body) else {
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
-        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
 
         Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
 

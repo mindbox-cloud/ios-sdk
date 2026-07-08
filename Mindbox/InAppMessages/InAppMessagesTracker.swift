@@ -9,60 +9,52 @@
 import Foundation
 
 protocol InappTargetingTrackProtocol: AnyObject {
-    func trackTargeting(id: String) throws
+    func trackTargeting(id: String, tags: [String: String]?) throws
 }
 
 protocol InAppMessagesTrackerProtocol: AnyObject {
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws
-    func trackClick(id: String) throws
+    func trackClick(id: String, tags: [String: String]?) throws
 }
 
 class InAppMessagesTracker: InAppMessagesTrackerProtocol, InappTargetingTrackProtocol {
-    
+
     struct InAppShowBody: Encodable {
         let inappId: String
         let timeToDisplay: String?
         let tags: [String: String]?
-
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(inappId, forKey: .inappId)
-            try container.encodeIfPresent(timeToDisplay, forKey: .timeToDisplay)
-            if let tags = tags, !tags.isEmpty {
-                try container.encode(tags, forKey: .tags)
-            }
-        }
-
-        private enum CodingKeys: String, CodingKey {
-            case inappId, timeToDisplay, tags
-        }
     }
 
-    struct InAppBody: Codable {
+    struct InAppBody: Encodable {
         let inappId: String
+        let tags: [String: String]?
     }
 
     private let databaseRepository: DatabaseRepositoryProtocol
+    private let featureToggleManager: FeatureToggleManager
 
-    init(databaseRepository: DatabaseRepositoryProtocol) {
+    init(databaseRepository: DatabaseRepositoryProtocol, featureToggleManager: FeatureToggleManager) {
         self.databaseRepository = databaseRepository
+        self.featureToggleManager = featureToggleManager
     }
 
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {
-        let encodable = InAppShowBody(inappId: id, timeToDisplay: timeToDisplay, tags: tags)
+        let encodable = InAppShowBody(inappId: id, timeToDisplay: timeToDisplay, tags: featureToggleManager.gatedTags(tags))
         let event = Event(type: .inAppViewEvent, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 
-    func trackClick(id: String) throws {
-        let encodable = InAppBody(inappId: id)
-        let event = Event(type: .inAppClickEvent, body: BodyEncoder(encodable: encodable).body)
-        try databaseRepository.create(event: event)
+    func trackClick(id: String, tags: [String: String]?) throws {
+        try track(id: id, tags: tags, type: .inAppClickEvent)
     }
 
-    func trackTargeting(id: String) throws {
-        let encodable = InAppBody(inappId: id)
-        let event = Event(type: .inAppTargetingEvent, body: BodyEncoder(encodable: encodable).body)
+    func trackTargeting(id: String, tags: [String: String]?) throws {
+        try track(id: id, tags: tags, type: .inAppTargetingEvent)
+    }
+
+    private func track(id: String, tags: [String: String]?, type: Event.Operation) throws {
+        let encodable = InAppBody(inappId: id, tags: featureToggleManager.gatedTags(tags))
+        let event = Event(type: type, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
     }
 }

@@ -37,7 +37,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-1",
             reason: .presentationFailed,
-            details: "No window available"
+            details: "No window available",
+            tags: nil
         )
 
         manager.sendFailures()
@@ -57,7 +58,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-2",
             reason: .unknownError,
-            details: nil
+            details: nil,
+            tags: nil
         )
 
         manager.sendFailures()
@@ -82,12 +84,14 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-duplicate",
             reason: .imageDownloadFailed,
-            details: "first"
+            details: "first",
+            tags: nil
         )
         manager.addFailure(
             inappId: "inapp-duplicate",
             reason: .unknownError,
-            details: "second"
+            details: "second",
+            tags: nil
         )
 
         manager.sendFailures()
@@ -104,17 +108,20 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-priority",
             reason: .productSegmentRequestFailed,
-            details: "product"
+            details: "product",
+            tags: nil
         )
         manager.addFailure(
             inappId: "inapp-priority",
             reason: .geoRequestFailed,
-            details: "geo"
+            details: "geo",
+            tags: nil
         )
         manager.addFailure(
             inappId: "inapp-priority",
             reason: .customerSegmentRequestFailed,
-            details: "segment"
+            details: "segment",
+            tags: nil
         )
 
         manager.sendFailures()
@@ -131,17 +138,20 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-priority-no-downgrade",
             reason: .customerSegmentRequestFailed,
-            details: "segment"
+            details: "segment",
+            tags: nil
         )
         manager.addFailure(
             inappId: "inapp-priority-no-downgrade",
             reason: .geoRequestFailed,
-            details: "geo"
+            details: "geo",
+            tags: nil
         )
         manager.addFailure(
             inappId: "inapp-priority-no-downgrade",
             reason: .productSegmentRequestFailed,
-            details: "product"
+            details: "product",
+            tags: nil
         )
 
         manager.sendFailures()
@@ -158,7 +168,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-clear",
             reason: .presentationFailed,
-            details: "clear me"
+            details: "clear me",
+            tags: nil
         )
         manager.clearFailures()
         manager.sendFailures()
@@ -170,7 +181,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-send-success",
             reason: .presentationFailed,
-            details: nil
+            details: nil,
+            tags: nil
         )
 
         manager.sendFailures()
@@ -183,7 +195,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-retry",
             reason: .unknownError,
-            details: "will retry"
+            details: "will retry",
+            tags: nil
         )
         databaseRepository.createError = InappShowFailureRepositoryError.createFailed
 
@@ -201,7 +214,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-add-disabled",
             reason: .presentationFailed,
-            details: "should be ignored"
+            details: "should be ignored",
+            tags: nil
         )
         
         applyFeatureToggle(shouldSendInAppShowError: true)
@@ -213,7 +227,7 @@ final class InappShowFailureManagerTests: XCTestCase {
     func testAddFailure_errorDetailsBelowLimit_isNotTruncated() throws {
         let details = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit - 1)
 
-        manager.addFailure(inappId: "inapp-below-limit", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-below-limit", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -226,7 +240,7 @@ final class InappShowFailureManagerTests: XCTestCase {
     func testAddFailure_errorDetailsAtLimit_isNotTruncated() throws {
         let details = String(repeating: "b", count: InappShowFailureManager.errorDetailsLimit)
 
-        manager.addFailure(inappId: "inapp-at-limit", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-at-limit", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -240,7 +254,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         let limit = InappShowFailureManager.errorDetailsLimit
         let details = String(repeating: "c", count: limit + 500)
 
-        manager.addFailure(inappId: "inapp-above-limit", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-above-limit", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -251,7 +265,7 @@ final class InappShowFailureManagerTests: XCTestCase {
     }
 
     func testAddFailure_errorDetailsNil_remainsNil() throws {
-        manager.addFailure(inappId: "inapp-nil-details", reason: .unknownError, details: nil)
+        manager.addFailure(inappId: "inapp-nil-details", reason: .unknownError, details: nil, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -261,7 +275,7 @@ final class InappShowFailureManagerTests: XCTestCase {
     }
 
     func testAddFailure_errorDetailsEmpty_remainsEmpty() throws {
-        manager.addFailure(inappId: "inapp-empty-details", reason: .unknownError, details: "")
+        manager.addFailure(inappId: "inapp-empty-details", reason: .unknownError, details: "", tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -275,7 +289,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         // Cyrillic 'а' is 2 bytes in UTF-8: total = 2 * limit bytes.
         let details = String(repeating: "а", count: limit)
 
-        manager.addFailure(inappId: "inapp-multibyte", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-multibyte", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -293,7 +307,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         // Cyrillic 'ё' is 2 bytes — appending it would overflow by 1 byte.
         let details = asciiPrefix + "ё"
 
-        manager.addFailure(inappId: "inapp-no-split", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-no-split", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -311,7 +325,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         let asciiPrefix = String(repeating: "y", count: limit - 2)
         let details = asciiPrefix + "🙂"
 
-        manager.addFailure(inappId: "inapp-emoji", reason: .unknownError, details: details)
+        manager.addFailure(inappId: "inapp-emoji", reason: .unknownError, details: details, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -327,8 +341,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         let limit = InappShowFailureManager.errorDetailsLimit
         let longDetails = String(repeating: "d", count: limit + 200)
 
-        manager.addFailure(inappId: "inapp-priority-truncate", reason: .productSegmentRequestFailed, details: "short")
-        manager.addFailure(inappId: "inapp-priority-truncate", reason: .customerSegmentRequestFailed, details: longDetails)
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .productSegmentRequestFailed, details: "short", tags: nil)
+        manager.addFailure(inappId: "inapp-priority-truncate", reason: .customerSegmentRequestFailed, details: longDetails, tags: nil)
         manager.sendFailures()
 
         assertCreatedEventsCountEventually(1)
@@ -343,7 +357,8 @@ final class InappShowFailureManagerTests: XCTestCase {
         manager.addFailure(
             inappId: "inapp-toggle-disabled",
             reason: .presentationFailed,
-            details: "disabled"
+            details: "disabled",
+            tags: nil
         )
         applyFeatureToggle(shouldSendInAppShowError: false)
 
@@ -357,6 +372,60 @@ final class InappShowFailureManagerTests: XCTestCase {
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
         XCTAssertEqual(failure.inappId, "inapp-toggle-disabled")
+    }
+
+    func testAddFailure_includesTags_whenTagsFeatureEnabled() throws {
+        manager.addFailure(
+            inappId: "inapp-tags-enabled",
+            reason: .presentationFailed,
+            details: nil,
+            tags: ["templateType": "Popup"]
+        )
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.tags, ["templateType": "Popup"])
+    }
+
+    func testAddFailure_omitsTags_whenTagsFeatureDisabled() throws {
+        applyTagsFeatureToggle(shouldSendInAppTags: false)
+
+        manager.addFailure(
+            inappId: "inapp-tags-disabled",
+            reason: .presentationFailed,
+            details: nil,
+            tags: ["templateType": "Popup"]
+        )
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertNil(failure.tags)
+    }
+
+    func testAddFailure_priorityReplacement_alsoReplacesTags() throws {
+        manager.addFailure(
+            inappId: "inapp-priority-tags",
+            reason: .productSegmentRequestFailed,
+            details: "product",
+            tags: ["templateType": "First"]
+        )
+        manager.addFailure(
+            inappId: "inapp-priority-tags",
+            reason: .customerSegmentRequestFailed,
+            details: "segment",
+            tags: ["templateType": "Second"]
+        )
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failure = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(failure.failureReason, .customerSegmentRequestFailed)
+        XCTAssertEqual(failure.tags, ["templateType": "Second"])
     }
 }
 
@@ -380,6 +449,12 @@ private extension InappShowFailureManagerTests {
         let settingsData = settingsJSON.data(using: .utf8) ?? Data()
         let settings = try? JSONDecoder().decode(Settings.self, from: settingsData)
         featureToggleManager.applyFeatureToggles(settings?.featureToggles)
+    }
+
+    func applyTagsFeatureToggle(shouldSendInAppTags: Bool) {
+        featureToggleManager.applyFeatureToggles(
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: shouldSendInAppTags)
+        )
     }
 
     func assertCreatedEventsCountEventually(
@@ -713,7 +788,8 @@ final class WebViewControllerWindowProviderTests: XCTestCase {
             onCloseInApp: {},
             onError: { _ in },
             windowProvider: { window },
-            operation: nil
+            operation: nil,
+            tags: nil
         )
 
         sut.onInit()
@@ -734,7 +810,7 @@ final class WebViewControllerWindowProviderTests: XCTestCase {
 
 private final class InAppMessagesTrackerMock: InAppMessagesTrackerProtocol {
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {}
-    func trackClick(id: String) throws {}
+    func trackClick(id: String, tags: [String: String]?) throws {}
 }
 
 private final class PresentationStrategyMock: PresentationStrategyProtocol {

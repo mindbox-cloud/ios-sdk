@@ -77,7 +77,7 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
             wrappedTapAction = onTapAction
         } else {
             wrappedTapAction = { [weak self] url, payload in
-                self?.clickTracker.trackClick(id: model.inAppId)
+                self?.clickTracker.trackClick(id: model.inAppId, tags: model.tags)
                 onTapAction(url, payload)
             }
         }
@@ -90,7 +90,8 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
                                                onTapAction: wrappedTapAction,
                                                onClose: onClose,
                                                onError: onError,
-                                               operation: model.operation)
+                                               operation: model.operation,
+                                               tags: model.tags)
 
         guard let viewController = factory.create(with: parameters) else {
             onError(.failed("[PresentationDisplayUseCase] Failed to create in-app view controller."))

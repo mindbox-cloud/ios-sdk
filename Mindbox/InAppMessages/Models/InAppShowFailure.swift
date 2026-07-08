@@ -24,4 +24,5 @@ struct InAppShowFailure: Codable {
     let failureReason: InAppShowFailureReason
     let errorDetails: String?
     let dateTimeUtc: String
+    let tags: [String: String]?
 }
