@@ -64,7 +64,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
         operation: (name: String, body: String)?,
-        tags: [String: String]? = nil
+        tags: [String: String]?
     ) {
         self.model = model
         self.id = id

@@ -788,7 +788,8 @@ final class WebViewControllerWindowProviderTests: XCTestCase {
             onCloseInApp: {},
             onError: { _ in },
             windowProvider: { window },
-            operation: nil
+            operation: nil,
+            tags: nil
         )
 
         sut.onInit()

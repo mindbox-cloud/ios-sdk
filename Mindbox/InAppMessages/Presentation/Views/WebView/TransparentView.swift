@@ -41,7 +41,7 @@ final class TransparentView: UIView {
         return service
     }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]? = nil) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
