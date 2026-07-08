@@ -87,18 +87,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 inAppId: String = "",
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        let config = WKWebViewConfiguration()
-        config.websiteDataStore = .nonPersistent()
-        config.applicationNameForUserAgent = userAgent
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
-
-        let webView = WKWebView(frame: .zero, configuration: config)
-        #if DEBUG
-        if #available(iOS 16.4, *) {
-            webView.isInspectable = true
-        }
-        #endif
+        let webView = InAppWebViewFactory.make(userAgent: userAgent)
         let bridge = MindboxWebBridge(webView: webView)
 
         self.webView = webView
@@ -313,15 +302,11 @@ extension MindboxWebViewFacade {
             return
         }
         
-        let config = URLSessionConfiguration.ephemeral
-        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        config.urlCache = nil
-        
-        let session = URLSession(configuration: config)
-        
+        let (session, request) = InAppWebViewHTMLFetcher.sessionAndRequest(for: url)
+
         log("Fetching HTML from \(url.absoluteString)")
-        
-        let task = session.dataTask(with: url) { [weak self] data, response, error in
+
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
             if let error {
                 self?.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
