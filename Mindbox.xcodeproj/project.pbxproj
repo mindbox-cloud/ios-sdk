@@ -1470,6 +1470,7 @@
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
+		A8C878878353491FA01AC096 /* WebViewPrewarmTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WebViewPrewarmTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2715,6 +2716,7 @@
 			isa = PBXGroup;
 			children = (
 				F367D3772FE43B2900455DB0 /* ModalViewControllerLayoutTests.swift */,
+				A8C878878353491FA01AC096 /* WebViewPrewarmTests */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
 				F39B67B62A3FAA62005C0CCA /* ABTesting */,
@@ -3921,6 +3923,7 @@
 				313B233C25ADEA0F00A1CB72 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				A8C878878353491FA01AC096 /* WebViewPrewarmTests */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
 				F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */,
