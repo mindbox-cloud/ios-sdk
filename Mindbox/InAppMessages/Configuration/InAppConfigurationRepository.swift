@@ -27,6 +27,14 @@ class InAppConfigurationRepository {
         }
     }
 
+    /// The single home of the lenient cached-config decode for launch-time readers (the
+    /// prewarm stages, the WebView cache toggle). The config manager keeps its own richer
+    /// variant with per-outcome logging.
+    func fetchDecodedConfigFromCache() -> ConfigResponse? {
+        guard let data = fetchConfigFromCache() else { return nil }
+        return try? JSONDecoder().decode(ConfigResponse.self, from: data)
+    }
+
     func saveConfigToCache(_ data: Data) {
         do {
             // Atomic (write-then-rename): the init-time prewarm reads this file from a
