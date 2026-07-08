@@ -364,6 +364,17 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.sendFailuresCallCount == 1)
     }
 
+    @Test("In-app error callback propagates the in-app tags into the show failure", .tags(.inAppSchedule, .inAppTags))
+    func presentInapp_onError_propagatesTags() {
+        let tags = ["templateType": "Modal"]
+        let inapp = createInAppFormData(id: "error-tags-id", isPriority: false, delayTime: nil, tags: tags)
+
+        scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
+        presentationManagerMock.receivedOnError?(.failedToLoadWindow)
+
+        #expect(failureManagerMock.addFailureCalls.first?.tags == tags)
+    }
+
     @Test("In-app error callback maps error to show failure payload", .tags(.inAppSchedule))
     func presentInapp_onError_mapsToFailureReasonAndDetails() {
         let cases: [(InAppPresentationError, InAppShowFailureReason, String)] = [
@@ -418,7 +429,7 @@ struct InappScheduleManagerTests {
 
     // MARK: - Helpers
 
-    private func createInAppFormData(id: String, isPriority: Bool, delayTime: String?) -> InAppFormData {
+    private func createInAppFormData(id: String, isPriority: Bool, delayTime: String?, tags: [String: String]? = nil) -> InAppFormData {
         let modalVariant = ModalFormVariant(content: createMockContent())
         let content: MindboxFormVariant = .modal(modalVariant)
         let onceFrequency = OnceFrequency(kind: .session)
@@ -431,7 +442,8 @@ struct InappScheduleManagerTests {
             imagesDict: [:],
             firstImageValue: "",
             content: content,
-            frequency: frequency
+            frequency: frequency,
+            tags: tags
         )
     }
 
