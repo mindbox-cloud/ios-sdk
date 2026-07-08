@@ -205,4 +205,6 @@ private final class EventRepositorySpy: EventRepository {
         sentRawEvents.append(event)
         completion(.success(Data(#"{"status":"Success"}"#.utf8)))
     }
+
+    func cancelAllRequests() {}
 }
