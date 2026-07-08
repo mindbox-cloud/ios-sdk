@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A881A16C702E41AE93848BD3 /* InAppWebViewLearnedHostsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B76146361C3402193A00F88 /* InAppWebViewLearnedHostsStore.swift */; };
+		F389B3A639904206A3DADFFA /* InAppWebViewPrewarmPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCC6F9CEEF24C2BAB624DD5 /* InAppWebViewPrewarmPlanner.swift */; };
+		8A94D721DAEF4395A360C5B2 /* InAppWebViewPrewarmNavigationPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A50D5650094A23A2C667CE /* InAppWebViewPrewarmNavigationPolicy.swift */; };
+		23335221BB1D4F8C8D5C864D /* InAppWebViewPrewarmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F423FA6C2E243F68A76E9C2 /* InAppWebViewPrewarmService.swift */; };
 		23E4A509BFE94104BD01B61A /* MindboxWebBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC5ED4F76B046798978B4B9 /* MindboxWebBridgeTests.swift */; };
 		AE190755CA97473B83E1568D /* MBContainerConcurrencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */; };
 		3FDBA6E4D39A49369A335CF4 /* SDKUserAgentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */; };
@@ -744,6 +748,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1B76146361C3402193A00F88 /* InAppWebViewLearnedHostsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewLearnedHostsStore.swift; sourceTree = "<group>"; };
+		DDCC6F9CEEF24C2BAB624DD5 /* InAppWebViewPrewarmPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewPrewarmPlanner.swift; sourceTree = "<group>"; };
+		96A50D5650094A23A2C667CE /* InAppWebViewPrewarmNavigationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewPrewarmNavigationPolicy.swift; sourceTree = "<group>"; };
+		1F423FA6C2E243F68A76E9C2 /* InAppWebViewPrewarmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewPrewarmService.swift; sourceTree = "<group>"; };
 		9CC5ED4F76B046798978B4B9 /* MindboxWebBridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MindboxWebBridgeTests.swift; sourceTree = "<group>"; };
 		4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBContainerConcurrencyTests.swift; sourceTree = "<group>"; };
 		4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SDKUserAgentTests.swift; sourceTree = "<group>"; };
@@ -3042,6 +3050,17 @@
 			path = InAppTargetingChecker;
 			sourceTree = "<group>";
 		};
+		0E8BCE24EE9540D6BD7F655D /* Prewarm */ = {
+			isa = PBXGroup;
+			children = (
+				1B76146361C3402193A00F88 /* InAppWebViewLearnedHostsStore.swift */,
+				DDCC6F9CEEF24C2BAB624DD5 /* InAppWebViewPrewarmPlanner.swift */,
+				96A50D5650094A23A2C667CE /* InAppWebViewPrewarmNavigationPolicy.swift */,
+				1F423FA6C2E243F68A76E9C2 /* InAppWebViewPrewarmService.swift */,
+			);
+			path = Prewarm;
+			sourceTree = "<group>";
+		};
 		B4E4386F2D8AFA5700603F3A /* WebView */ = {
 			isa = PBXGroup;
 			children = (
@@ -3049,6 +3068,7 @@
 				A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */,
 				6D096F433EBB44C8B3490CF6 /* InAppWebViewDataStore.swift */,
 				F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */,
+				0E8BCE24EE9540D6BD7F655D /* Prewarm */,
 				47B1B6A92F6174E0000A4B67 /* LocalState */,
 				F3BD9F802F273BC800647BAF /* Bridge */,
 				F30654B92F1A83430058808C /* Debug */,
@@ -4294,6 +4314,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A881A16C702E41AE93848BD3 /* InAppWebViewLearnedHostsStore.swift in Sources */,
+				F389B3A639904206A3DADFFA /* InAppWebViewPrewarmPlanner.swift in Sources */,
+				8A94D721DAEF4395A360C5B2 /* InAppWebViewPrewarmNavigationPolicy.swift in Sources */,
+				23335221BB1D4F8C8D5C864D /* InAppWebViewPrewarmService.swift in Sources */,
 				28375259024D42658E146900 /* InAppWebViewFactory.swift in Sources */,
 				B58D5207F49F4531AA1C516B /* InAppWebViewHTMLFetcher.swift in Sources */,
 				2DBF19F24FEA48AAA39C33E6 /* InAppWebViewDataStore.swift in Sources */,
