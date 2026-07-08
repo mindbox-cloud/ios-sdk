@@ -26,6 +26,17 @@ final class InAppMessagesTrackerTests {
         return BodyDecoder<DecodedBody>(decodable: event.body)?.body
     }
 
+    /// Returns the top-level keys of the encoded event body. Used to assert that the
+    /// `tags` key is entirely absent (not merely `null`), which is what the contract requires.
+    private func bodyKeys() -> Set<String>? {
+        guard let event = databaseRepository.createdEvents.first,
+              let data = event.body.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return Set(object.keys)
+    }
+
     @Test("trackView includes tags when the feature is enabled", .tags(.inAppTags))
     func trackViewIncludesTagsWhenEnabled() throws {
         try tracker.trackView(id: "inapp-1", timeToDisplay: "150", tags: ["templateType": "Popup"])
@@ -36,7 +47,7 @@ final class InAppMessagesTrackerTests {
     func trackViewOmitsTagsWhenDisabled() throws {
         applyTagsToggle(enabled: false)
         try tracker.trackView(id: "inapp-1", timeToDisplay: "150", tags: ["templateType": "Popup"])
-        #expect(decodedBody()?.tags == nil)
+        #expect(bodyKeys()?.contains("tags") == false)
     }
 
     @Test("trackClick includes tags when the feature is enabled", .tags(.inAppTags))
@@ -49,7 +60,7 @@ final class InAppMessagesTrackerTests {
     func trackClickOmitsTagsWhenDisabled() throws {
         applyTagsToggle(enabled: false)
         try tracker.trackClick(id: "inapp-2", tags: ["templateType": "Snackbar"])
-        #expect(decodedBody()?.tags == nil)
+        #expect(bodyKeys()?.contains("tags") == false)
     }
 
     @Test("trackTargeting includes tags when the feature is enabled", .tags(.inAppTags))
@@ -62,13 +73,13 @@ final class InAppMessagesTrackerTests {
     func trackTargetingOmitsTagsWhenDisabled() throws {
         applyTagsToggle(enabled: false)
         try tracker.trackTargeting(id: "inapp-3", tags: ["templateType": "Modal"])
-        #expect(decodedBody()?.tags == nil)
+        #expect(bodyKeys()?.contains("tags") == false)
     }
 
     @Test("trackClick omits tags when nil tags are passed", .tags(.inAppTags))
     func trackClickOmitsNilTags() throws {
         try tracker.trackClick(id: "inapp-4", tags: nil)
-        #expect(decodedBody()?.tags == nil)
+        #expect(bodyKeys()?.contains("tags") == false)
     }
 
     private func applyTagsToggle(enabled: Bool) {
