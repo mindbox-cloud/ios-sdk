@@ -120,6 +120,25 @@ struct MindboxWebBridgeStalenessTests {
         #expect(spy.failCount == 0)
     }
 
+    @Test("Stale non-provisional failures are filtered too")
+    func staleDidFailIsFiltered() {
+        bridge.expectContentNavigation(makeNavigation())
+
+        bridge.webView(webView, didFail: makeNavigation(), withError: NSError(domain: "test", code: 3))
+
+        #expect(spy.failCount == 0)
+    }
+
+    @Test("The expected navigation's non-provisional failure reaches the delegate")
+    func expectedDidFailReachesDelegate() {
+        let expected = makeNavigation()
+        bridge.expectContentNavigation(expected)
+
+        bridge.webView(webView, didFail: expected, withError: NSError(domain: "test", code: 4))
+
+        #expect(spy.failCount == 1)
+    }
+
     @Test("Only the show's own finish reports the content URL; page navigations report their real URL")
     func finishReportsPerNavigationURL() {
         let contentURL = URL(string: "https://content.mindbox.ru/index.html")
