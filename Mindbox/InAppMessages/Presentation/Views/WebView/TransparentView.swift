@@ -371,7 +371,7 @@ extension TransparentView {
     private func handleAsyncOperation(message: BridgeMessage) {
         guard let params = extractOperationParams(from: message),
               let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
@@ -393,7 +393,7 @@ extension TransparentView {
     private func handleSyncOperation(message: BridgeMessage) {
         guard let params = extractOperationParams(from: message),
               let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
