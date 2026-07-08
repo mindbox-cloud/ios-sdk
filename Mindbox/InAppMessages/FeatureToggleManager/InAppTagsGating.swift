@@ -8,17 +8,15 @@
 
 import Foundation
 
-extension Optional where Wrapped == [String: String] {
-    /// Returns `self` when the tags feature is enabled and the dictionary is non-empty, `nil` otherwise.
-    func gatedTags(isTagsFeatureEnabled: Bool) -> [String: String]? {
-        guard isTagsFeatureEnabled, let self, !self.isEmpty else { return nil }
-        return self
-    }
-}
-
 extension FeatureToggleManager {
+    /// Returns `tags` when `isEnabled` is `true` and the dictionary is non-empty, `nil` otherwise.
+    static func gatedTags(_ tags: [String: String]?, isEnabled: Bool) -> [String: String]? {
+        guard isEnabled, let tags, !tags.isEmpty else { return nil }
+        return tags
+    }
+
     /// Returns `tags` when `MobileSdkShouldSendInAppTags` is enabled and the dictionary is non-empty, `nil` otherwise.
     func gatedTags(_ tags: [String: String]?) -> [String: String]? {
-        tags.gatedTags(isTagsFeatureEnabled: isFeatureEnabled(.shouldSendInAppTags))
+        Self.gatedTags(tags, isEnabled: isFeatureEnabled(.shouldSendInAppTags))
     }
 }
