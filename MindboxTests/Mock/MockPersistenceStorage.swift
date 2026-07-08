@@ -132,6 +132,13 @@ class MockPersistenceStorage: PersistenceStorage {
 
     var webViewLocalStateVersion: Int?
 
+    // Counts writes so a no-op-write regression (rewriting an unchanged dictionary) is
+    // observable — the persisted value alone can't distinguish "written again" from "unchanged".
+    var webViewLearnedHostsWriteCount = 0
+    var webViewLearnedHosts: [String: [String]]? {
+        didSet { webViewLearnedHostsWriteCount += 1 }
+    }
+
     var operationsDomainFromConfig: String? {
         didSet {
             onDidChange?()
