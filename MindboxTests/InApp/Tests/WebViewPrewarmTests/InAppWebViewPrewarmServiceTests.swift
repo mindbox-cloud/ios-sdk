@@ -264,6 +264,42 @@ struct InAppWebViewPrewarmServiceTests {
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
+    @Test("Observed hosts are persisted under the configuration endpoint")
+    func rememberObservedHostsPersistsUnderEndpoint() throws {
+        let storage = MockPersistenceStorage()
+        storage.configuration = try MBConfiguration(endpoint: "Test.Endpoint", domain: "api.mindbox.ru")
+        let service = InAppWebViewPrewarmService(
+            persistenceStorage: storage,
+            makeWebView: { SpyWebView(frame: .zero, configuration: WKWebViewConfiguration()) },
+            fetchHTML: { _, completion in completion(nil) },
+            loadCachedConfig: { nil }
+        )
+
+        service.rememberObservedHosts(["a.example", "b.example"])
+
+        #expect(storage.webViewLearnedHosts?["Test.Endpoint"] == ["a.example", "b.example"])
+    }
+
+    @Test("A content-page fetch failure degrades to preconnect-only")
+    func contentFetchFailureLeavesPreconnectOnly() async throws {
+        let storage = MockPersistenceStorage()
+        storage.configuration = try MBConfiguration(endpoint: "Test.Endpoint", domain: "api.mindbox.ru")
+        let spy = SpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        let service = InAppWebViewPrewarmService(
+            persistenceStorage: storage,
+            makeWebView: { spy },
+            fetchHTML: { _, completion in completion(nil) },
+            loadCachedConfig: { nil }
+        )
+
+        service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
+        await drainMainQueue()
+        await drainMainQueue()
+
+        // Preconnect page loaded; the failed content fetch adds nothing.
+        #expect(spy.loadedHTMLCount == 1)
+    }
+
     // MARK: Feature toggle
 
     /// The valid webview config with an explicit `featureToggles` section.
