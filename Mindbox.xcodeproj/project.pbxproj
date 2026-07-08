@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		23E4A509BFE94104BD01B61A /* MindboxWebBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC5ED4F76B046798978B4B9 /* MindboxWebBridgeTests.swift */; };
 		AE190755CA97473B83E1568D /* MBContainerConcurrencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */; };
 		3FDBA6E4D39A49369A335CF4 /* SDKUserAgentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */; };
 		16311BEB069E4B3983FAF594 /* InAppWebViewCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */; };
@@ -751,6 +752,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9CC5ED4F76B046798978B4B9 /* MindboxWebBridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MindboxWebBridgeTests.swift; sourceTree = "<group>"; };
 		4B4F5CEE405E4BE29F97E43B /* MBContainerConcurrencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MBContainerConcurrencyTests.swift; sourceTree = "<group>"; };
 		4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SDKUserAgentTests.swift; sourceTree = "<group>"; };
 		895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppWebViewCacheTests.swift; sourceTree = "<group>"; };
@@ -1540,6 +1542,7 @@
 		2B4C84F6EDD4B7D977F67A95 /* WebView */ = {
 			isa = PBXGroup;
 			children = (
+				9CC5ED4F76B046798978B4B9 /* MindboxWebBridgeTests.swift */,
 				895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */,
 				11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */,
 				4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */,
@@ -4700,6 +4703,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23E4A509BFE94104BD01B61A /* MindboxWebBridgeTests.swift in Sources */,
 				AE190755CA97473B83E1568D /* MBContainerConcurrencyTests.swift in Sources */,
 				3FDBA6E4D39A49369A335CF4 /* SDKUserAgentTests.swift in Sources */,
 				16311BEB069E4B3983FAF594 /* InAppWebViewCacheTests.swift in Sources */,
