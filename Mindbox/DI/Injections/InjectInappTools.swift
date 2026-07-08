@@ -130,6 +130,11 @@ extension MBContainer {
             )
         }
 
+        register(InAppWebViewPrewarmServiceProtocol.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            return InAppWebViewPrewarmService(persistenceStorage: persistenceStorage)
+        }
+
         return self
     }
 }

@@ -83,6 +83,9 @@ public class Mindbox: NSObject {
      */
     public func initialization(configuration: MBConfiguration) {
         coreController?.initialization(configuration: configuration)
+        // Prewarm stage 1: warm the web-content process as early as possible so the first
+        // webview show doesn't pay process startup. Safe here — assembly() has built DI.
+        DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).prewarmProcess()
     }
 
     private var observeTokens: [UUID] = []

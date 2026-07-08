@@ -48,7 +48,8 @@ extension MBContainer {
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inappMapper: DI.injectOrFail(InappMapperProtocol.self),
                 persistenceStorage: persistenceStorage,
-                featureToggleManager: featureToggleManager)
+                featureToggleManager: featureToggleManager,
+                webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self))
         }
         
         register(CheckNotifWork.self) {
