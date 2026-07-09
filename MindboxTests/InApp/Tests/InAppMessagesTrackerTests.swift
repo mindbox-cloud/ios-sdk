@@ -84,7 +84,7 @@ final class InAppMessagesTrackerTests {
 
     private func applyTagsToggle(enabled: Bool) {
         featureToggleManager.applyFeatureToggles(
-            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: enabled)
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: enabled, shouldPrewarmInAppWebView: nil, shouldCacheInAppWebView: nil)
         )
     }
 }
