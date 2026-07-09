@@ -49,7 +49,7 @@ enum InAppWebViewDataStore {
         } else {
             // Product decision: no isolated named stores before iOS 17, and some disk
             // cache beats none — Mindbox web content shares the host app's default store
-            // (cookies/storage included) on old systems. Toggle off → .nonPersistent().
+            // (cookies/storage included) on old systems.
             return WKWebsiteDataStore.default()
         }
     }()
