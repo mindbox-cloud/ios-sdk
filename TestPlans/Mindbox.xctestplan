@@ -4,7 +4,7 @@
       "id" : "5A458544-9C9E-4B2F-B5E9-8D2451CDE5B3",
       "name" : "Unit Tests",
       "options" : {
-        "defaultTestExecutionTimeAllowance" : 120,
+        "defaultTestExecutionTimeAllowance" : 60,
         "testTimeoutsEnabled" : true
       }
     }
@@ -29,7 +29,7 @@
         }
       ]
     },
-    "defaultTestExecutionTimeAllowance" : 120,
+    "defaultTestExecutionTimeAllowance" : 60,
     "environmentVariableEntries" : [
       {
         "key" : "OS_ACTIVITY_MODE",
