@@ -258,18 +258,15 @@ extension MindboxWebViewFacade {
         return params
     }
 
-    // Add operation data
     private func addOperationParams(to params: inout [String: Any]) {
         guard let operation else { return }
         params[PayloadKey.operationName] = operation.name
         params[PayloadKey.operationBody] = operation.body
     }
 
-    // Add system info (theme, platform, locale, version)
     private func addSystemInfo(to params: inout [String: Any], systemInfoProvider: SystemInfoProvider) {
         params.merge(systemInfoProvider.getBasicSystemInfo()) { _, new in new }
 
-        // Add safe area insets
         let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
         params[PayloadKey.Insets.key] = [
             PayloadKey.Insets.top: insets.top,
@@ -278,14 +275,12 @@ extension MindboxWebViewFacade {
             PayloadKey.Insets.right: insets.right
         ]
 
-        // Add granted permissions
         let permissions = systemInfoProvider.getGrantedPermissions()
         if !permissions.isEmpty {
             params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
         }
     }
 
-    // Merge params from configuration
     private func mergeCustomParams(into params: inout [String: Any]) {
         guard let customParams = self.params, !customParams.isEmpty else { return }
         for (key, value) in customParams {
@@ -293,7 +288,6 @@ extension MindboxWebViewFacade {
         }
     }
 
-    // Add last track-visit data
     private func addTrackVisitParams(to params: inout [String: Any]) {
         guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
         if let source = lastTrackVisit.source {
@@ -304,7 +298,6 @@ extension MindboxWebViewFacade {
         }
     }
 
-    // Serialize to JSON string
     private func serializeToJSONString(_ params: [String: Any]) -> JSONValue {
         do {
             let data = try JSONSerialization.data(withJSONObject: params, options: [])
