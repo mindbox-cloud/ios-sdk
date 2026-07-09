@@ -307,6 +307,7 @@ struct InAppWebViewPrewarmServiceTests {
         let base = try loadPrewarmTestConfig("InAppWebviewValid")
         let toggles = Settings.FeatureToggles(
             shouldSendInAppShowError: nil,
+            shouldSendInAppTags: nil,
             shouldPrewarmInAppWebView: prewarmToggle,
             shouldCacheInAppWebView: nil
         )

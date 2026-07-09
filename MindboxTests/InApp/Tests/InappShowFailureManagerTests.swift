@@ -453,7 +453,7 @@ private extension InappShowFailureManagerTests {
 
     func applyTagsFeatureToggle(shouldSendInAppTags: Bool) {
         featureToggleManager.applyFeatureToggles(
-            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: shouldSendInAppTags)
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: shouldSendInAppTags, shouldPrewarmInAppWebView: nil, shouldCacheInAppWebView: nil)
         )
     }
 
