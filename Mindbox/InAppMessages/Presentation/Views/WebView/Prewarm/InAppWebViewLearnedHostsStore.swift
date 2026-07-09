@@ -11,8 +11,7 @@ import Foundation
 /// Persists resource hosts observed during real shows, per endpoint. These are the hosts
 /// the config cannot know (image CDNs, the web runtime's static hosts, fonts) and they
 /// let the next launch's preconnect cover the heavy part of the page. A stale entry is
-/// harmless — preconnect to an unused host is a no-op. Backed by `PersistenceStorage`
-/// like the rest of the SDK's state.
+/// harmless — preconnect to an unused host is a no-op.
 final class InAppWebViewLearnedHostsStore {
     static let maxHosts = 12
 
