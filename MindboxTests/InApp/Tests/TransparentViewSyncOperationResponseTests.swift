@@ -209,6 +209,37 @@ struct TransparentViewSyncOperationResponseTests {
         #expect(payload["errorName"] as? String == "Broken body")
     }
 
+    @Test("Invalid response payload is the data contents with httpStatusCode from the response")
+    func invalidResponse_payloadIsDataContentsOnly() throws {
+        let url = try #require(URL(string: "https://api.mindbox.ru/v3/operations/sync"))
+        let httpResponse = try #require(HTTPURLResponse(url: url, statusCode: 403, httpVersion: nil, headerFields: nil))
+
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.invalidResponse(httpResponse)),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["httpStatusCode"] as? String == "403")
+        #expect((payload["errorMessage"] as? String)?.isEmpty == false)
+    }
+
+    @Test("Unknown error payload is the data contents with errorKey 'unknown'")
+    func unknownError_payloadIsDataContentsOnly() throws {
+        let underlying = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "Something exploded"])
+
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.unknown(underlying)),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["errorKey"] as? String == "unknown")
+        #expect(payload["errorMessage"] as? String == "Something exploded")
+    }
+
     // MARK: - id and action propagated
 
     @Test("Action and id from the request are preserved on the outgoing message")
