@@ -486,7 +486,7 @@ extension TransparentView {
             return BridgeMessage(
                 type: .error,
                 action: action,
-                payload: .string(error.createJSON()),
+                payload: .string(error.createDataJSON()),
                 id: id
             )
         }
