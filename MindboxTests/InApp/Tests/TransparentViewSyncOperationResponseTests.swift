@@ -118,43 +118,95 @@ struct TransparentViewSyncOperationResponseTests {
         }
     }
 
-    // MARK: - Failure (.connectionError) → .error with createJSON payload
+    // MARK: - Failure payloads: data contents only, no {type, data} envelope (MOBILE-197)
 
-    @Test("Connection failure becomes .error with MindboxError.createJSON payload")
-    func connectionError_becomesError() {
-        let outgoing = TransparentView.makeSyncOperationResponse(
-            result: .failure(.connectionError),
-            action: action,
-            id: requestId
-        )
-
+    private func decodedErrorPayload(_ outgoing: BridgeMessage) throws -> [String: Any] {
         #expect(outgoing.type == .error)
-        if case .string(let value) = outgoing.payload {
-            #expect(value.contains("NetworkError"), "createJSON for connectionError produces a NetworkError envelope")
-            #expect(value.contains("Connection error"))
-        } else {
-            Issue.record("Expected .string payload")
-        }
+        var jsonString: String?
+        if case .string(let value) = outgoing.payload { jsonString = value }
+        let json = try #require(jsonString, "Expected .string payload, got \(String(describing: outgoing.payload))")
+        let data = try #require(json.data(using: .utf8))
+        let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["type"] == nil, "Payload must not carry the {type, data} envelope")
+        #expect(object["data"] == nil, "Payload must not carry the {type, data} envelope")
+        return object
     }
 
-    // MARK: - Failure (.protocolError) → .error with createJSON payload
-
-    @Test("Protocol error becomes .error with MindboxError.createJSON payload")
-    func protocolError_becomesError() {
-        let pe = ProtocolError(status: .protocolError, errorMessage: "Bad", httpStatusCode: 400)
+    @Test("Protocol error payload is the data contents: status, errorMessage, httpStatusCode, errorId")
+    func protocolError_payloadIsDataContentsOnly() throws {
+        let pe = ProtocolError(status: .protocolError, errorMessage: "Operation Test not found", httpStatusCode: 400, errorId: "error-id-1")
         let outgoing = TransparentView.makeSyncOperationResponse(
             result: .failure(.protocolError(pe)),
             action: action,
             id: requestId
         )
 
-        #expect(outgoing.type == .error)
-        if case .string(let value) = outgoing.payload {
-            #expect(value.contains("MindboxError"))
-            #expect(value.contains("ProtocolError"))
-        } else {
-            Issue.record("Expected .string payload")
-        }
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["status"] as? String == "ProtocolError")
+        #expect(payload["errorMessage"] as? String == "Operation Test not found")
+        #expect(payload["httpStatusCode"] as? String == "400")
+        #expect(payload["errorId"] as? String == "error-id-1")
+    }
+
+    @Test("Server error payload is the data contents with InternalServerError status")
+    func serverError_payloadIsDataContentsOnly() throws {
+        let pe = ProtocolError(status: .internalServerError, errorMessage: "Something went wrong", httpStatusCode: 500)
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.serverError(pe)),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["status"] as? String == "InternalServerError")
+        #expect(payload["errorMessage"] as? String == "Something went wrong")
+        #expect(payload["httpStatusCode"] as? String == "500")
+    }
+
+    @Test("Connection failure payload is the data contents without the NetworkError envelope")
+    func connectionError_payloadIsDataContentsOnly() throws {
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.connectionError),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["httpStatusCode"] as? String == "null")
+        #expect(payload["errorMessage"] as? String == "Connection error")
+    }
+
+    @Test("Validation error payload is the data contents with validationMessages")
+    func validationError_payloadIsDataContentsOnly() throws {
+        let ve = ValidationError(
+            status: .validationError,
+            validationMessages: [ValidationMessage(message: "Invalid email", location: "/customer/email")]
+        )
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.validationError(ve)),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["status"] as? String == "ValidationError")
+        let messages = try #require(payload["validationMessages"] as? [[String: Any]])
+        #expect(messages.count == 1)
+        #expect(messages.first?["message"] as? String == "Invalid email")
+        #expect(messages.first?["location"] as? String == "/customer/email")
+    }
+
+    @Test("Internal error payload is the data contents with errorKey")
+    func internalError_payloadIsDataContentsOnly() throws {
+        let outgoing = TransparentView.makeSyncOperationResponse(
+            result: .failure(.internalError(InternalError(errorKey: .parsing, reason: "Broken body"))),
+            action: action,
+            id: requestId
+        )
+
+        let payload = try decodedErrorPayload(outgoing)
+        #expect(payload["errorKey"] as? String == "Error_parsing")
+        #expect(payload["errorName"] as? String == "Broken body")
     }
 
     // MARK: - id and action propagated
