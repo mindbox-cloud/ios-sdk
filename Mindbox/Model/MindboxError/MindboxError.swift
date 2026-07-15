@@ -128,17 +128,7 @@ public extension MindboxError {
             guard
                 let errorData = try? JSONEncoder().encode(self),
                 let errorString = String(data: errorData, encoding: .utf8) else {
-                return
-                    """
-                    {
-                        type: "InternalError",
-                        data: {
-                            errroKey: "\(self.data.errorKey ?? "null")",
-                            errroName: "JSON encoding error",
-                            errorMessage: "Unable to convert Data to JSON",
-                        }
-                    }
-                    """
+                return #"{"type":"InternalError","data":{"errorKey":"\#(self.data.errorKey ?? "null")","errorName":"JSON encoding error","errorMessage":"Unable to convert Data to JSON"}}"#
             }
             return errorString
         }
