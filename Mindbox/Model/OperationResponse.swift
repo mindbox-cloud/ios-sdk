@@ -75,6 +75,8 @@ open class OperationResponse: OperationResponseType {
         // Encode-only: both productList shapes decode from the `productList` wire key,
         // but have always re-encoded under their own property names — kept that way
         // so the bridge payload only gains promoActions, nothing else moves.
+        // TODO: MOBILE-303 — drop this key in 3.0 and re-encode both shapes under
+        // `productList`, making the bridge payload fully wire-faithful (as on Android).
         case productListItems
         case recommendations
         case customerSegmentations
