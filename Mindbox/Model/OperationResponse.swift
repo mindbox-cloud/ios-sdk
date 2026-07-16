@@ -21,6 +21,8 @@ open class OperationResponse: OperationResponseType {
     public let personalOffers: [PersonalOffersResponse]?
     public let balances: [BalanceResponse]?
     public let discountCards: [DiscountCardResponse]?
+    // TODO: MOBILE-303 — rename to `promoActions` in 3.0: the API key is plural,
+    // the singular property name is a source-breaking legacy we keep until a major release.
     public let promoAction: [PromoActionsResponse]?
     public let retailOrderStatistics: RetailOrderStatisticsResponse?
 
