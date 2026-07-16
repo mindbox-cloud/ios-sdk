@@ -121,6 +121,85 @@ struct OperationResponseTests {
         #expect(!dict.keys.contains("productList"))
     }
 
+    /// Shape of a production sync-operation response reported in MOBILE-303, fully
+    /// anonymized: fractional seconds longer than the `.SSS` parse pattern (6 and 5
+    /// digits), sibling non-Utc date keys, `timeZoneMode`, and custom fields mixing
+    /// booleans with strings. All values are synthetic; the key set and the date
+    /// string formats are what mirror the real payload.
+    private static let productionShapedJSON = Data("""
+    {
+        "status": "Success",
+        "promoActions": [
+            {
+                "ids": { "externalId": "promo-12345678" },
+                "description": "First promo description",
+                "endDateTime": "2026-12-31T21:00:00Z",
+                "endDateTimeUtc": "2026-12-31T21:00:00Z",
+                "name": "First promo",
+                "startDateTime": "2026-01-02T03:04:05.256574Z",
+                "startDateTimeUtc": "2026-01-02T03:04:05.256574Z",
+                "timeZoneMode": "project",
+                "customFields": {
+                    "offerEnabled": true,
+                    "offerPlacement": "top",
+                    "imageUrl": "https://example.com/promo-1.png",
+                    "inAppOperation": "Mobile.SomeOperation",
+                    "modalVariant": "text",
+                    "buttonText": "Accept",
+                    "actionUrl": "https://example.com",
+                    "formId": "1"
+                }
+            },
+            {
+                "ids": { "externalId": "promo-87654321" },
+                "description": "Second promo description",
+                "endDateTime": "2026-12-31T21:00:00Z",
+                "endDateTimeUtc": "2026-12-31T21:00:00Z",
+                "name": "Second promo",
+                "startDateTime": "2026-01-02T03:04:06.94785Z",
+                "startDateTimeUtc": "2026-01-02T03:04:06.94785Z",
+                "timeZoneMode": "project",
+                "customFields": {
+                    "offerEnabled": true,
+                    "offerPlacement": "top",
+                    "imageUrl": "https://example.com/promo-2.webp",
+                    "inAppOperation": "Mobile.SomeOperation",
+                    "modalVariant": "image",
+                    "modalImageUrl": "https://example.com/modal-2.jpg",
+                    "buttonText": "Get two",
+                    "actionUrl": "https://example.com",
+                    "formId": "2"
+                }
+            }
+        ]
+    }
+    """.utf8)
+
+    @Test("A production-shaped payload decodes and survives re-encoding")
+    func decodesProductionShapedPayload() throws {
+        let response = try JSONDecoder().decode(OperationResponse.self, from: Self.productionShapedJSON)
+
+        let actions = try #require(response.promoAction)
+        try #require(actions.count == 2)
+        #expect(actions[0].name == "First promo")
+        #expect(actions[0].ids?["externalId"] == "promo-12345678")
+
+        // ICU truncates fractional seconds beyond 3 digits on parse (.256574 → .256);
+        // a regression to "N digits = N milliseconds" would shift this by ~4 minutes.
+        let reference = try #require(ISO8601DateFormatter().date(from: "2026-01-02T03:04:05Z"))
+        let start = try #require(actions[0].startDateTimeUtc).date
+        #expect(abs(start.timeIntervalSince(reference)) < 1.0)
+
+        let dict = try reEncodedDictionary(of: response)
+        let encodedActions = try #require(dict["promoActions"] as? [[String: Any]])
+        try #require(encodedActions.count == 2)
+        // CustomFields must round-trip JSON types untouched — booleans stay booleans.
+        let customFields = try #require(encodedActions[0]["customFields"] as? [String: Any])
+        #expect(customFields["offerEnabled"] as? Bool == true)
+        #expect(customFields["offerPlacement"] as? String == "top")
+        #expect(customFields["formId"] as? String == "1")
+    }
+
     @Test("A response without promo actions decodes with a nil field and no error")
     func decodesWithoutPromoActions() throws {
         let response = try JSONDecoder().decode(OperationResponse.self,
