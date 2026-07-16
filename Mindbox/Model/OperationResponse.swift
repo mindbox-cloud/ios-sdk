@@ -42,14 +42,38 @@ open class OperationResponse: OperationResponseType {
         personalOffers = try container.decodeIfPresent([PersonalOffersResponse].self, forKey: .personalOffers)
         balances = try container.decodeIfPresent([BalanceResponse].self, forKey: .balances)
         discountCards = try container.decodeIfPresent([DiscountCardResponse].self, forKey: .discountCards)
-        promoAction = try container.decodeIfPresent([PromoActionsResponse].self, forKey: .promoAction)
+        promoAction = try container.decodeIfPresent([PromoActionsResponse].self, forKey: .promoActions)
         retailOrderStatistics = try container.decodeIfPresent(RetailOrderStatisticsResponse.self, forKey: .retailOrderStatistics)
+    }
+
+    // `encode(to:)` must stay in sync with `Keys` — the compiler can't synthesize it
+    // from this enum (it isn't named `CodingKeys`), and synthesized encoding by
+    // property names is exactly what hid the promoAction/promoActions mismatch.
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: Keys.self)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(customer, forKey: .customer)
+        try container.encodeIfPresent(productList, forKey: .productList)
+        try container.encodeIfPresent(productListItems, forKey: .productListItems)
+        try container.encodeIfPresent(recommendations, forKey: .recommendations)
+        try container.encodeIfPresent(customerSegmentations, forKey: .customerSegmentations)
+        try container.encodeIfPresent(setProductCountInList, forKey: .setProductCountInList)
+        try container.encodeIfPresent(promoCode, forKey: .promoCode)
+        try container.encodeIfPresent(personalOffers, forKey: .personalOffers)
+        try container.encodeIfPresent(balances, forKey: .balances)
+        try container.encodeIfPresent(discountCards, forKey: .discountCards)
+        try container.encodeIfPresent(promoAction, forKey: .promoActions)
+        try container.encodeIfPresent(retailOrderStatistics, forKey: .retailOrderStatistics)
     }
 
     enum Keys: String, CodingKey {
         case status
         case customer
         case productList
+        // Encode-only: both productList shapes decode from the `productList` wire key,
+        // but have always re-encoded under their own property names — kept that way
+        // so the bridge payload only gains promoActions, nothing else moves.
+        case productListItems
         case recommendations
         case customerSegmentations
         case setProductCountInList
@@ -57,7 +81,9 @@ open class OperationResponse: OperationResponseType {
         case personalOffers
         case balances
         case discountCards
-        case promoAction
+        // The API sends the plural key; the `promoAction` property keeps its
+        // historical singular name because renaming it would break the public SDK surface.
+        case promoActions
         case retailOrderStatistics
     }
 }
