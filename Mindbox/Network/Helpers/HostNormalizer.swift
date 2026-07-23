@@ -9,7 +9,8 @@
 import Foundation
 
 /// Scheme-aware normalization for `domain` / `operationsDomain` inputs.
-/// Accepts `host`, `https://host`, `http://host`, with or without trailing slash.
+/// Accepts `host`, `https://host`, `http://host`, optionally followed by a path
+/// prefix (`host/api/v2`), with or without trailing slash. The path is preserved.
 enum HostNormalizer {
 
     private static let httpsPrefix = "https://"

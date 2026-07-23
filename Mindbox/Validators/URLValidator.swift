@@ -20,6 +20,24 @@ enum URLValidator {
     /// RFC 1035: each label 1..63 chars.
     private static let maxLabelLength = 63
 
+    /// Path-prefix rule for `isValidHostWithOptionalPath`: zero or more non-empty
+    /// segments of unreserved URL characters. Query, fragment and empty segments
+    /// do not match.
+    private static let pathPrefixPattern = "^(?:/[A-Za-z0-9._~%-]+)*$"
+
+    /// Validates `host` or `host/path-prefix` (scheme must already be stripped,
+    /// e.g. via `HostNormalizer.extractHost`). Used for `operationsDomain`, which
+    /// may carry a path prefix (e.g. `domain.com/api/v2`) — operation endpoints
+    /// are appended after it. Path segments must be non-empty; query and fragment
+    /// are rejected.
+    static func isValidHostWithOptionalPath(_ value: String) -> Bool {
+        guard let slashIndex = value.firstIndex(of: "/") else { return isValidHost(value) }
+        let host = String(value[..<slashIndex])
+        let path = String(value[slashIndex...])
+        return isValidHost(host)
+            && path.range(of: pathPrefixPattern, options: .regularExpression) != nil
+    }
+
     static func isValidHost(_ host: String) -> Bool {
         guard !host.isEmpty, host.count <= maxHostLength else { return false }
 

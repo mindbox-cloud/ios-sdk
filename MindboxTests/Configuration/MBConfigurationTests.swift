@@ -135,6 +135,55 @@ struct MBConfigurationTests {
         }
     }
 
+    @Test("operationsDomain accepts path prefix (MOBILE-258)")
+    func operationsDomainAcceptsPathPrefix() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular"
+        )
+        #expect(config.operationsDomain == "https://api-v2.letu.ru/api/mindbox-regular")
+    }
+
+    @Test("operationsDomain accepts bare host with path prefix")
+    func operationsDomainAcceptsBareHostWithPathPrefix() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "domain.com/api/v2"
+        )
+        #expect(config.operationsDomain == "domain.com/api/v2")
+    }
+
+    @Test("operationsDomain with query string throws")
+    func operationsDomainWithQueryThrows() {
+        #expect(throws: MindboxError.self) {
+            _ = try MBConfiguration(
+                endpoint: endpoint,
+                domain: domain,
+                operationsDomain: "domain.com/api?x=1"
+            )
+        }
+    }
+
+    @Test("operationsDomain with empty path segment throws")
+    func operationsDomainWithEmptyPathSegmentThrows() {
+        #expect(throws: MindboxError.self) {
+            _ = try MBConfiguration(
+                endpoint: endpoint,
+                domain: domain,
+                operationsDomain: "domain.com//api"
+            )
+        }
+    }
+
+    @Test("domain with path prefix still throws — domain stays host-only")
+    func domainWithPathPrefixThrows() {
+        #expect(throws: MindboxError.self) {
+            _ = try MBConfiguration(endpoint: endpoint, domain: "api.mindbox.ru/api/v2")
+        }
+    }
+
     // MARK: - Init: previousInstallationId / previousDeviceUUID UUID handling
 
     @Test("Valid previousInstallationId UUID is stored")

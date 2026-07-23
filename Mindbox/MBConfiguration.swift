@@ -27,8 +27,9 @@ public struct MBConfiguration: Codable {
     ///
     /// - Parameter endpoint: Used for app identification
     /// - Parameter domain: Used for generating baseurl for REST
-    /// - Parameter operationsDomain: Optional host for sending operations. Overridden by
-    ///     the value from the mobile JSON config when present. Default `nil` (use `domain`).
+    /// - Parameter operationsDomain: Optional host for sending operations, optionally with
+    ///     a path prefix (e.g. `domain.com/api/v2`) — operation endpoints are appended after it.
+    ///     Overridden by the value from the mobile JSON config when present. Default `nil` (use `domain`).
     /// - Parameter previousInstallationId: Used to create tracking continuity by uuid
     /// - Parameter previousDeviceUUID: Used instead of the generated value
     /// - Parameter subscribeCustomerIfCreated: Flag which determines subscription status of the user. Default value is `false`.
@@ -63,7 +64,7 @@ public struct MBConfiguration: Codable {
         }
 
         if let operationsDomain = operationsDomain, !operationsDomain.isEmpty {
-            guard URLValidator.isValidHost(HostNormalizer.extractHost(operationsDomain)) else {
+            guard URLValidator.isValidHostWithOptionalPath(HostNormalizer.extractHost(operationsDomain)) else {
                 let error = MindboxError(.init(errorKey: .invalidConfiguration, reason: "Invalid operationsDomain. Host is unreachable. [OperationsDomain]: \(operationsDomain)"))
                 Logger.error(error.asLoggerError())
                 throw error
