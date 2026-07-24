@@ -32,7 +32,7 @@ enum OperationsDomainConfigPolicy {
             return currentlyStored == nil ? .keep : .clear
         }
 
-        guard URLValidator.isValidHost(HostNormalizer.extractHost(value)) else {
+        guard URLValidator.isValidHostWithOptionalPath(HostNormalizer.extractHost(value)) else {
             return .rejected(value)
         }
 

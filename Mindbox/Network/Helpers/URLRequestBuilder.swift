@@ -48,7 +48,9 @@ struct URLRequestBuilder {
             throw URLError(.badURL)
         }
 
-        components.path = route.path
+        // The base may carry a path prefix (anonymizer case: `host/api/mindbox-regular`);
+        // operation endpoints are appended after it, not instead of it.
+        components.path += route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
 
         return components
