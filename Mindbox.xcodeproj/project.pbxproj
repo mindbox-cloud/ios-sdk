@@ -464,6 +464,8 @@
 		B4547ECA2CFA0EC6001478AD /* TokenData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4547EC92CFA0EC6001478AD /* TokenData.swift */; };
 		B4E438692D8AF94300603F3A /* WebviewContentBackgroundLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */; };
 		B4E438702D8AFA5700603F3A /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E4386E2D8AFA5700603F3A /* WebViewController.swift */; };
+		D7F41A2C6B3E48D2A9C10002 /* MindboxWebViewBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F41A2C6B3E48D2A9C10001 /* MindboxWebViewBlock.swift */; };
+		D7F41A2C6B3E48D2A9C10005 /* MindboxStoriesBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F41A2C6B3E48D2A9C10004 /* MindboxStoriesBlock.swift */; };
 		B4E438722D8AFA6700603F3A /* WebViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438712D8AFA6700603F3A /* WebViewFactory.swift */; };
 		B4E438742D8AFAA700603F3A /* WebviewPresentationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E438732D8AFAA700603F3A /* WebviewPresentationStrategy.swift */; };
 		B7705CA22E0A1F0000C0FFEE /* AppGroupUnavailableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7705CA12E0A1F0000C0FFEE /* AppGroupUnavailableTests.swift */; };
@@ -1212,6 +1214,8 @@
 		B4547EC92CFA0EC6001478AD /* TokenData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenData.swift; sourceTree = "<group>"; };
 		B4E438682D8AF94300603F3A /* WebviewContentBackgroundLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewContentBackgroundLayer.swift; sourceTree = "<group>"; };
 		B4E4386E2D8AFA5700603F3A /* WebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
+		D7F41A2C6B3E48D2A9C10001 /* MindboxWebViewBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxWebViewBlock.swift; sourceTree = "<group>"; };
+		D7F41A2C6B3E48D2A9C10004 /* MindboxStoriesBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxStoriesBlock.swift; sourceTree = "<group>"; };
 		B4E438712D8AFA6700603F3A /* WebViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewFactory.swift; sourceTree = "<group>"; };
 		B4E438732D8AFAA700603F3A /* WebviewPresentationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewPresentationStrategy.swift; sourceTree = "<group>"; };
 		B7705CA12E0A1F0000C0FFEE /* AppGroupUnavailableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupUnavailableTests.swift; sourceTree = "<group>"; };
@@ -3100,8 +3104,18 @@
 				CB3F1C529E728059367459B7 /* Haptic */,
 				8BBC34EAB0824F46BF68D563 /* Settings */,
 				A1B2C3D4E5F6A7B8C9D0E1F4 /* Motion */,
+				D7F41A2C6B3E48D2A9C10003 /* EmbeddedBlock */,
 			);
 			path = WebView;
+			sourceTree = "<group>";
+		};
+		D7F41A2C6B3E48D2A9C10003 /* EmbeddedBlock */ = {
+			isa = PBXGroup;
+			children = (
+				D7F41A2C6B3E48D2A9C10001 /* MindboxWebViewBlock.swift */,
+				D7F41A2C6B3E48D2A9C10004 /* MindboxStoriesBlock.swift */,
+			);
+			path = EmbeddedBlock;
 			sourceTree = "<group>";
 		};
 		CB3F1C529E728059367459B7 /* Haptic */ = {
@@ -4596,6 +4610,8 @@
 				F3FEEAAD2C25FD1F000E9D0F /* InjectABTestUtilities.swift in Sources */,
 				6FDD1465266F7CFE00A50C35 /* ItemProductResponse.swift in Sources */,
 				B4E438702D8AFA5700603F3A /* WebViewController.swift in Sources */,
+				D7F41A2C6B3E48D2A9C10002 /* MindboxWebViewBlock.swift in Sources */,
+				D7F41A2C6B3E48D2A9C10005 /* MindboxStoriesBlock.swift in Sources */,
 				3337E6A92664C16A006949EB /* CustomerResponse.swift in Sources */,
 				F3FEEAA42C25B765000E9D0F /* InjectUtilities.swift in Sources */,
 				F3BDA0382F27444500647BAF /* MindboxWebBridge.swift in Sources */,

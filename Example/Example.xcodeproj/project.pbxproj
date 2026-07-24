@@ -289,7 +289,7 @@
 			mainGroup = 0AEDBC6D2BB6F8F200EE8722;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */,
+				47F703BC2F87C5BA0058A954 /* XCLocalSwiftPackageReference ".." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0AEDBC772BB6F8F200EE8722 /* Products */;
@@ -697,31 +697,27 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mindbox-cloud/ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.15.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		47F703BC2F87C5BA0058A954 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		47F703BD2F87C5BA0058A954 /* Mindbox */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
+			package = 47F703BC2F87C5BA0058A954 /* XCLocalSwiftPackageReference ".." */;
 			productName = Mindbox;
 		};
 		47F703BF2F87C5BA0058A954 /* MindboxNotificationsContent */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
+			package = 47F703BC2F87C5BA0058A954 /* XCLocalSwiftPackageReference ".." */;
 			productName = MindboxNotificationsContent;
 		};
 		47F703C12F87C5BA0058A954 /* MindboxNotificationsService */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
+			package = 47F703BC2F87C5BA0058A954 /* XCLocalSwiftPackageReference ".." */;
 			productName = MindboxNotificationsService;
 		};
 /* End XCSwiftPackageProductDependency section */

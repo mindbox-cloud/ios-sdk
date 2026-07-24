@@ -12,6 +12,7 @@ struct MainView: View {
     
     var viewModel: MainViewModel
     @State private var showingAlert = !UserDefaults.standard.bool(forKey: "ShownAlert")
+    @State private var showWebViewPOC = ProcessInfo.processInfo.arguments.contains("-webviewPOC")
     
     var body: some View {
         NavigationStack {
@@ -35,6 +36,15 @@ struct MainView: View {
                         .cornerRadius(16)
                         .tint(.white)
                     }
+                    NavigationLink("WebView Memory POC") {
+                        WebViewMemoryPOCView()
+                            .ignoresSafeArea(edges: .bottom)
+                    }
+                    .frame(maxWidth: 250)
+                    .frame(maxHeight: 50)
+                    .background(Color.mbGreen)
+                    .cornerRadius(16)
+                    .tint(.white)
                 }
             }.onAppear {
                 viewModel.setupData()
@@ -45,6 +55,9 @@ struct MainView: View {
             }
             .alert("In-App can only be shown once per session", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) {}
+            }
+            .fullScreenCover(isPresented: $showWebViewPOC) {
+                WebViewMemoryPOCView()
             }
         }
     }

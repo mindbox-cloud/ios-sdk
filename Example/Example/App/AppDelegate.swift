@@ -19,6 +19,12 @@ final class AppDelegate: MindboxAppDelegate {
     ) -> Bool {
         super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
+        // WebView memory POC mode: skip SDK initialization so no in-app message
+        // covers the POC screen and SDK activity doesn't skew memory measurements.
+        guard !ProcessInfo.processInfo.arguments.contains("-webviewPOC") else {
+            return true
+        }
+
         do {
             // To run the application on a physical device you need to change the endpoint
             // You should also change the application bundle ID in all targets, more details in the readme
