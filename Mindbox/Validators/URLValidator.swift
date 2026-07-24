@@ -21,9 +21,12 @@ enum URLValidator {
     private static let maxLabelLength = 63
 
     /// Path-prefix rule for `isValidHostWithOptionalPath`: zero or more non-empty
-    /// segments of unreserved URL characters. Query, fragment and empty segments
-    /// do not match.
-    private static let pathPrefixPattern = "^(?:/[A-Za-z0-9._~%-]+)*$"
+    /// segments made of unreserved URL characters or complete `%XX` percent-encoded
+    /// octets. Query, fragment, empty segments, and a bare/incomplete `%` (not
+    /// followed by two hex digits) do not match — an incomplete escape parses fine
+    /// here but corrupts (or fails) `URLComponents` at request time, so it must be
+    /// rejected at validation, not discovered later as a runtime `badURL`.
+    private static let pathPrefixPattern = "^(?:/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+)*$"
 
     /// Validates `host` or `host/path-prefix` (scheme must already be stripped,
     /// e.g. via `HostNormalizer.extractHost`). Used for `operationsDomain`, which

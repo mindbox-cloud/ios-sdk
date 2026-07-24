@@ -457,6 +457,32 @@ struct OperationsURLRoutingTests {
         )
     }
 
+    @Test("Policy — accepts valid percent-encoded octet in path")
+    func policyAcceptsValidPercentEncoding() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%20b", currentlyStored: nil)
+                == .save("https://x.ru/a%20b")
+        )
+    }
+
+    @Test("Policy — rejects non-hex percent escape from config")
+    func policyRejectsNonHexPercentEscape() {
+        // Regression: "%zz" is not a valid percent-encoded octet — it would corrupt
+        // (or fail to build) the request URL at runtime if accepted here.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%zz", currentlyStored: "https://good.ru")
+                == .rejected("x.ru/a%zz")
+        )
+    }
+
+    @Test("Policy — rejects dangling percent at end of path from config")
+    func policyRejectsDanglingPercent() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%", currentlyStored: "https://good.ru")
+                == .rejected("x.ru/a%")
+        )
+    }
+
     // MARK: - Persistence lifecycle
 
     @Test("softReset preserves operationsDomainFromConfig (no PD leak on migration reset)")

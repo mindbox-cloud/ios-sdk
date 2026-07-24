@@ -177,6 +177,40 @@ struct MBConfigurationTests {
         }
     }
 
+    @Test("operationsDomain accepts valid percent-encoded octet in path")
+    func operationsDomainAcceptsValidPercentEncoding() throws {
+        let config = try MBConfiguration(
+            endpoint: endpoint,
+            domain: domain,
+            operationsDomain: "domain.com/a%20b"
+        )
+        #expect(config.operationsDomain == "domain.com/a%20b")
+    }
+
+    @Test("operationsDomain with non-hex percent escape throws")
+    func operationsDomainWithNonHexPercentEscapeThrows() {
+        // Regression: "%zz" parsed fine at validation but corrupted (or failed)
+        // URLComponents at request time — must be rejected here instead.
+        #expect(throws: MindboxError.self) {
+            _ = try MBConfiguration(
+                endpoint: endpoint,
+                domain: domain,
+                operationsDomain: "domain.com/a%zz"
+            )
+        }
+    }
+
+    @Test("operationsDomain with dangling percent at end of path throws")
+    func operationsDomainWithDanglingPercentThrows() {
+        #expect(throws: MindboxError.self) {
+            _ = try MBConfiguration(
+                endpoint: endpoint,
+                domain: domain,
+                operationsDomain: "domain.com/a%"
+            )
+        }
+    }
+
     @Test("domain with path prefix still throws — domain stays host-only")
     func domainWithPathPrefixThrows() {
         #expect(throws: MindboxError.self) {
