@@ -19,6 +19,13 @@ enum InAppWebViewFactory {
         config.applicationNameForUserAgent = userAgent
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+        config.userContentController.addUserScript(
+            WKUserScript(
+                source: Constants.WebViewHTTPErrorJS.detectionScript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false
+            )
+        )
         let webView = WKWebView(frame: .zero, configuration: config)
         #if DEBUG
         if #available(iOS 16.4, *) {

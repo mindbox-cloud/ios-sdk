@@ -60,4 +60,28 @@ enum InAppWebViewDataStore {
         guard isCacheFeatureEnabled else { return WKWebsiteDataStore.nonPersistent() }
         return instance
     }
+
+    static func purgeCache(forHostOf urlString: String?, completion: @escaping () -> Void) {
+        let cacheTypes: Set<String> = [WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
+        let store = shared()
+        let host = urlString.flatMap(URL.init(string:))?.host?.lowercased()
+        let isIsolatedStore: Bool = {
+            if #available(iOS 17.0, *) { return isCacheFeatureEnabled }
+            return false
+        }()
+        store.fetchDataRecords(ofTypes: cacheTypes) { records in
+            let matching = records.filter { record in
+                guard let host else { return false }
+                let domain = record.displayName.lowercased()
+                return host == domain || host.hasSuffix("." + domain)
+            }
+            if !matching.isEmpty {
+                store.removeData(ofTypes: cacheTypes, for: matching, completionHandler: completion)
+            } else if isIsolatedStore {
+                store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast, completionHandler: completion)
+            } else {
+                completion()
+            }
+        }
+    }
 }

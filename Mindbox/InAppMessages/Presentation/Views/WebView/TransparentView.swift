@@ -33,6 +33,9 @@ final class TransparentView: UIView {
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
     private var hasCapturedObservedHosts = false
+    private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
+        InAppWebViewDataStore.isCacheFeatureEnabled
+    }
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
@@ -140,6 +143,12 @@ final class TransparentView: UIView {
         setupTimeoutTimer()
     }
 
+    var noCacheRetryTelemetryDetail: String? {
+        noCacheRetryPolicy.lastHTTPErrorDetail.map { detail in
+            "Last script HTTP error: \(detail); no-cache retry attempted: \(noCacheRetryPolicy.hasRetried)."
+        }
+    }
+
     private func setupTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
@@ -205,6 +214,9 @@ extension TransparentView: WebBridgeMessageDelegate {
         case .`init`:
             hasReceivedInit = true
             quizInitTimeoutWorkItem?.cancel()
+            // The page has proven it can boot — drop the retained retry content (mirror of
+            // Android's handleInitAction cleanup; the policy's one-shot state stays).
+            facade?.releaseRetainedContent()
             hapticService.prepare()
             webViewAction?.onInit()
         case .click:
@@ -309,6 +321,29 @@ extension TransparentView: WebBridgeNavigationDelegate {
         })
     }
     
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?) {
+        let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url, status: status)
+        Logger.common(
+            message: "[WebView] HTTP error \(status.map(String.init) ?? "nil") for \(url ?? "nil")",
+            level: isRecoverable ? .default : .debug,
+            category: .webViewInAppMessages
+        )
+        guard noCacheRetryPolicy.onHTTPError(url: url, status: status, hasReceivedInit: hasReceivedInit) else { return }
+        retryContentPageBypassingCache(failedURL: url)
+    }
+
+    private func retryContentPageBypassingCache(failedURL: String?) {
+        Logger.common(
+            message: "[WebView] Retrying In-App content load with cache bypassed (\(noCacheRetryPolicy.lastHTTPErrorDetail ?? "unknown"))",
+            level: .info,
+            category: .webViewInAppMessages
+        )
+        readyChecker?.cancel()
+        readyChecker = nil
+        restartTimeoutTimer()
+        facade?.retryContentLoadBypassingCache(failedURL: failedURL)
+    }
+
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
         delegate?.closeLoadFailedWebViewVC(

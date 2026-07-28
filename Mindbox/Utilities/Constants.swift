@@ -60,6 +60,47 @@ enum Constants {
         static let bridgeFunctionReadyCheck = "(() => typeof window.bridgeMessagesHandlers !== 'undefined' && typeof window.bridgeMessagesHandlers.emit === 'function')()"
     }
 
+    enum WebViewHTTPErrorJS {
+        static let handlerName = "SdkHttpErrorMonitor"
+
+        static let detectionScript = """
+        (function () {
+          if (window.__mbxHttpErrorMonitorInstalled) { return; }
+          window.__mbxHttpErrorMonitorInstalled = true;
+          var reported = {};
+          function report(url, status) {
+            try {
+              url = String(url || '');
+              if (!url || reported[url]) { return; }
+              reported[url] = true;
+              window.webkit.messageHandlers.\(handlerName).postMessage({
+                type: 'httpError',
+                url: url,
+                status: (typeof status === 'number') ? status : null
+              });
+            } catch (_) {}
+          }
+          try {
+            new PerformanceObserver(function (list) {
+              var entries = list.getEntries();
+              for (var i = 0; i < entries.length; i++) {
+                var e = entries[i];
+                if (typeof e.responseStatus === 'number' && e.responseStatus >= 400) {
+                  report(e.name, e.responseStatus);
+                }
+              }
+            }).observe({ type: 'resource', buffered: true });
+          } catch (_) {}
+          window.addEventListener('error', function (e) {
+            var target = e && e.target;
+            if (target && target.tagName && (target.src || target.href)) {
+              report(target.src || target.href, null);
+            }
+          }, true);
+        })();
+        """
+    }
+
     /// Constants used for migration management.
     enum Migration {
 

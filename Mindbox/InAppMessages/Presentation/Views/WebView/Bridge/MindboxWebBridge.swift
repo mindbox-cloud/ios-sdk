@@ -22,6 +22,12 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?)
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?)
+}
+
+@_spi(Internal)
+public extension WebBridgeNavigationDelegate {
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?) {}
 }
 
 protocol BridgePendingStore: AnyObject {
@@ -62,6 +68,10 @@ public final class MindboxWebBridge: NSObject {
         // Idempotent: a reused WebView may still carry a previous show's handler of this name.
         controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         controller.add(self, name: Constants.WebViewBridgeJS.handlerName)
+        // Take over the HTTP-error detection channel too: on a borrowed instance the
+        // prewarm's monitor still owns it — from here the errors belong to this show.
+        controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        controller.add(self, name: Constants.WebViewHTTPErrorJS.handlerName)
         webView.navigationDelegate = self
     }
 
@@ -172,6 +182,20 @@ public final class MindboxWebBridge: NSObject {
 extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
+        if message.name == Constants.WebViewHTTPErrorJS.handlerName {
+            // Same staleness gate as bridge messages below: a leftover page's error on a
+            // reused WebView must not consume this show's one-shot retry. The show's own
+            // subresources only start loading after its document commits, so nothing real
+            // is lost.
+            guard expectedNavigationCommitted else {
+                logStaleNavigation("http error message")
+                return
+            }
+            guard let httpError = InAppWebViewHTTPError.message(from: message.body) else { return }
+            navigationDelegate?.webBridge(self, didReceiveHTTPError: httpError.url, status: httpError.status)
+            return
+        }
+
         guard message.name == Constants.WebViewBridgeJS.handlerName else {
             Logger.common(
                 message: "[WebView] Bridge: received message with wrong handler name: \(message.name)",

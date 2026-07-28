@@ -50,6 +50,15 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
+    func retryContentLoadBypassingCache(failedURL: String?)
+    func releaseRetainedContent()
+}
+
+@_spi(Internal)
+public extension InappWebViewFacadeProtocol {
+    // Defaults so existing conformers (mocks, test apps) keep compiling.
+    func retryContentLoadBypassingCache(failedURL: String?) {}
+    func releaseRetainedContent() {}
 }
 
 @_spi(Internal)
@@ -88,6 +97,13 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     // in-flight fetch is cancelled outright on teardown.
     private var fetchTask: URLSessionDataTask?
     private var isClosed = false
+
+    // Main-confined. The content page is retained so a poisoned-cache HTTP error can be
+    // answered by reloading the exact same page after the purge (mirror of Android's
+    // `lastLoadedContent`). Released on `init` — after it the page has proven it can boot
+    // and a reload would tear down a live in-app.
+    private var retainedContentHTML: String?
+    private var retainedContentBaseURL: URL?
 
     public init(params: [String: JSONValue]?,
                 operation: (name: String, body: String)? = nil,
@@ -145,8 +161,30 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                     onFailure()
                     return
                 }
+                self.retainedContentHTML = html
+                self.retainedContentBaseURL = url
                 self.bridge.expectContentNavigation(self.webView.loadHTMLString(html, baseURL: url))
             }
+        }
+    }
+
+    public func retryContentLoadBypassingCache(failedURL: String?) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.isClosed, let html = self.retainedContentHTML else { return }
+            let baseURL = self.retainedContentBaseURL
+            InAppWebViewDataStore.purgeCache(forHostOf: failedURL) { [weak self] in
+                // The reload must be sequenced strictly after the purge completes —
+                // re-fetching before the poisoned entry is gone would just replay it.
+                guard let self, !self.isClosed else { return }
+                self.bridge.expectContentNavigation(self.webView.loadHTMLString(html, baseURL: baseURL))
+            }
+        }
+    }
+
+    public func releaseRetainedContent() {
+        DispatchQueue.main.async { [weak self] in
+            self?.retainedContentHTML = nil
+            self?.retainedContentBaseURL = nil
         }
     }
 
