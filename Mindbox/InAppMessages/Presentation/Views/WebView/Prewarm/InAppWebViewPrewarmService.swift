@@ -65,6 +65,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private var lastPrewarmContentPage: (html: String, baseURL: URL)?
     private var hasHealedPrewarmContentPage = false
     private let isCacheEnabled: () -> Bool
+    // Contract: must call `completion` on the main thread — the reload it sequences
+    // navigates the webview. The default (`InAppWebViewDataStore.purgeCache`) guarantees it.
     private let purgeCache: (_ failedURL: String?, _ completion: @escaping () -> Void) -> Void
     private let httpErrorMonitor = PrewarmHTTPErrorMonitor()
 

@@ -64,11 +64,19 @@ enum InAppWebViewDataStore {
     static func purgeCache(forHostOf urlString: String?, completion: @escaping () -> Void) {
         let cacheTypes: Set<String> = [WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
         let store = shared()
-        let host = urlString.flatMap(URL.init(string:))?.host?.lowercased()
+        // Trimmed the same way the recoverability predicate trims, so a padded URL that
+        // passed it still resolves to a host here.
+        let trimmedURLString = urlString?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let host = trimmedURLString.flatMap(URL.init(string:))?.host?.lowercased()
         let isIsolatedStore: Bool = {
             if #available(iOS 17.0, *) { return isCacheFeatureEnabled }
             return false
         }()
+        // Callers reload a WKWebView from this completion; WebKit calls these handlers on
+        // the main thread today, but the docs don't promise it.
+        let finish: () -> Void = {
+            if Thread.isMainThread { completion() } else { DispatchQueue.main.async(execute: completion) }
+        }
         store.fetchDataRecords(ofTypes: cacheTypes) { records in
             let matching = records.filter { record in
                 guard let host else { return false }
@@ -76,11 +84,11 @@ enum InAppWebViewDataStore {
                 return host == domain || host.hasSuffix("." + domain)
             }
             if !matching.isEmpty {
-                store.removeData(ofTypes: cacheTypes, for: matching, completionHandler: completion)
+                store.removeData(ofTypes: cacheTypes, for: matching, completionHandler: finish)
             } else if isIsolatedStore {
-                store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast, completionHandler: completion)
+                store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast, completionHandler: finish)
             } else {
-                completion()
+                finish()
             }
         }
     }
