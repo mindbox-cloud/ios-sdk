@@ -312,7 +312,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
               warmWebView != nil, let page = lastPrewarmContentPage else { return }
         healAttemptsUsed += 1
         isHealPurgeInFlight = true
-        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.statusDescription(status)) for script \(failedURL ?? "nil") — purging its host's cache and reloading the content page (attempt \(healAttemptsUsed)/\(Self.maxHealAttempts))",
+        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.statusDescription(status)) for script \(failedURL ?? "nil")"
+                        + " — purging its host's cache and reloading the content page (attempt \(healAttemptsUsed)/\(Self.maxHealAttempts))",
                       level: .info, category: .webViewInAppMessages)
         purgeCache(failedURL) { [weak self] didRemoveAnything in
             guard let self else { return }
