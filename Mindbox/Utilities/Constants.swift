@@ -68,15 +68,19 @@ enum Constants {
           if (window.__mbxHttpErrorMonitorInstalled) { return; }
           window.__mbxHttpErrorMonitorInstalled = true;
           var reported = {};
+          var reportedWithStatus = {};
           function report(url, status) {
             try {
               url = String(url || '');
-              if (!url || reported[url]) { return; }
+              var hasStatus = (typeof status === 'number');
+              if (!url) { return; }
+              if (hasStatus ? reportedWithStatus[url] : reported[url]) { return; }
               reported[url] = true;
+              if (hasStatus) { reportedWithStatus[url] = true; }
               window.webkit.messageHandlers.\(handlerName).postMessage({
                 type: 'httpError',
                 url: url,
-                status: (typeof status === 'number') ? status : null
+                status: hasStatus ? status : null
               });
             } catch (_) {}
           }

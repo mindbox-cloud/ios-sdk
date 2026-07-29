@@ -17,6 +17,10 @@ enum InAppWebViewHTTPError {
         return status >= minErrorStatus && isScriptResourceURL(url)
     }
 
+    static func statusDescription(_ status: Int?) -> String {
+        status.map { "HTTP \($0)" } ?? "load failure (no HTTP status on WebKit)"
+    }
+
     static func message(from body: Any) -> (url: String?, status: Int?)? {
         guard let dict = body as? [String: Any],
               dict["type"] as? String == "httpError" else { return nil }

@@ -84,7 +84,16 @@ struct WebViewNoCacheRetryPolicyTests {
         let policy = policy()
 
         #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
-        #expect(policy.lastHTTPErrorDetail == "HTTP ? for \(trackerURL)")
+        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
+    }
+
+    @Test
+    func lateStatusReportUpgradesTelemetryWithoutASecondRetry() {
+        let policy = policy()
+
+        #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.lastHTTPErrorDetail == "HTTP 404 for \(trackerURL)")
     }
 
     @Test

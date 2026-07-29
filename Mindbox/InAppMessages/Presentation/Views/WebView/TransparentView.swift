@@ -324,7 +324,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?) {
         let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url, status: status)
         Logger.common(
-            message: "[WebView] HTTP error \(status.map(String.init) ?? "nil") for \(url ?? "nil")",
+            message: "[WebView] Subresource error: \(InAppWebViewHTTPError.statusDescription(status)) for \(url ?? "nil")",
             level: isRecoverable ? .default : .debug,
             category: .webViewInAppMessages
         )

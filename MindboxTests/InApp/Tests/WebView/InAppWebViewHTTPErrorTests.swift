@@ -55,6 +55,12 @@ struct InAppWebViewHTTPErrorTests {
     }
 
     @Test
+    func statusDescriptionNamesTheStatusOrThePlatformGap() {
+        #expect(InAppWebViewHTTPError.statusDescription(404) == "HTTP 404")
+        #expect(InAppWebViewHTTPError.statusDescription(nil) == "load failure (no HTTP status on WebKit)")
+    }
+
+    @Test
     func parsesDetectionScriptMessage() throws {
         let parsed = try #require(InAppWebViewHTTPError.message(from: [
             "type": "httpError",

@@ -293,11 +293,16 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     func healPrewarmContentPage(failedURL: String?, status: Int?) {
+        // Observation log for every incoming report (mirrors the show path): the heal
+        // below is one-shot, so a follow-up status-bearing report would otherwise
+        // leave no trace of the actual HTTP status.
+        Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.statusDescription(status)) for \(failedURL ?? "nil")",
+                      level: .debug, category: .webViewInAppMessages)
         guard InAppWebViewHTTPError.isRecoverable(url: failedURL, status: status) else { return }
         guard !hasBeenBorrowed, !hasHealedPrewarmContentPage,
               warmWebView != nil, let page = lastPrewarmContentPage else { return }
         hasHealedPrewarmContentPage = true
-        Logger.common(message: "[WebView] Prewarm: HTTP \(status.map(String.init) ?? "?") for script \(failedURL ?? "nil") — purging its host's cache and reloading the content page",
+        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.statusDescription(status)) for script \(failedURL ?? "nil") — purging its host's cache and reloading the content page",
                       level: .info, category: .webViewInAppMessages)
         purgeCache(failedURL) { [weak self] in
             // Re-check after the async purge: a show may have borrowed the instance (or a

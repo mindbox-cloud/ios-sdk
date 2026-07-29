@@ -14,7 +14,7 @@ final class WebViewNoCacheRetryPolicy {
 
     func onHTTPError(url: String?, status: Int?, hasReceivedInit: Bool) -> Bool {
         guard InAppWebViewHTTPError.isRecoverable(url: url, status: status) else { return false }
-        lastHTTPErrorDetail = "HTTP \(status.map(String.init) ?? "?") for \(url ?? "nil")"
+        lastHTTPErrorDetail = "\(InAppWebViewHTTPError.statusDescription(status)) for \(url ?? "nil")"
         guard !hasReceivedInit else { return false }
         guard !hasRetried else { return false }
         guard isCacheFeatureEnabled() else { return false }
