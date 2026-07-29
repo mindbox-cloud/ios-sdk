@@ -50,14 +50,14 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
-    func retryContentLoadBypassingCache(failedURL: String?)
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void)
     func releaseRetainedContent()
 }
 
 @_spi(Internal)
 public extension InappWebViewFacadeProtocol {
     // Defaults so existing conformers (mocks, test apps) keep compiling.
-    func retryContentLoadBypassingCache(failedURL: String?) {}
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
     func releaseRetainedContent() {}
 }
 
@@ -168,11 +168,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         }
     }
 
-    public func retryContentLoadBypassingCache(failedURL: String?) {
+    public func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {
         DispatchQueue.main.async { [weak self] in
             guard let self, !self.isClosed, let html = self.retainedContentHTML else { return }
             let baseURL = self.retainedContentBaseURL
-            InAppWebViewDataStore.purgeCache(forHostOf: failedURL) { [weak self] in
+            InAppWebViewDataStore.purgeCache(forHostOf: failedURL) { [weak self] didRemoveAnything in
+                onPurgeOutcome(didRemoveAnything)
                 // The reload must be sequenced strictly after the purge completes —
                 // re-fetching before the poisoned entry is gone would just replay it.
                 guard let self, !self.isClosed else { return }

@@ -9,7 +9,6 @@
 import Testing
 @testable import Mindbox
 
-/// Mirror of the Android SDK's `WebViewNoCacheRetryPolicyTest`.
 @Suite("WebView no-cache retry policy", .tags(.webView))
 struct WebViewNoCacheRetryPolicyTests {
 
@@ -34,14 +33,41 @@ struct WebViewNoCacheRetryPolicyTests {
     }
 
     @Test
-    func grantsOnlyOneRetryPerShowSession() {
+    func successfulPurgeLatchesTheRetryForTheShowSession() {
         let policy = policy()
 
         #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        policy.notePurgeOutcome(didRemoveAnything: true)
+        // The purge provably removed the poisoned entry — a later error means the poison
+        // is upstream, another reload would just replay the failure.
         #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
         // The later error still refreshes the telemetry detail.
         #expect(!policy.onHTTPError(url: "https://cdn.test/other.js", status: 500, hasReceivedInit: false))
         #expect(policy.lastHTTPErrorDetail == "HTTP 500 for https://cdn.test/other.js")
+    }
+
+    @Test
+    func emptyPurgeAllowsExactlyOneMoreAttempt() {
+        let policy = policy()
+
+        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        policy.notePurgeOutcome(didRemoveAnything: false)
+        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        policy.notePurgeOutcome(didRemoveAnything: false)
+        // Hard cap: two attempts per show session whatever the purge outcomes were —
+        // repeated empty purges mean the poison is not in the client cache (offline/CDN).
+        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.attemptsUsed == WebViewNoCacheRetryPolicy.maxAttempts)
+    }
+
+    @Test
+    func noSecondGrantWhileThePurgeOutcomeIsPending() {
+        let policy = policy()
+
+        #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        policy.notePurgeOutcome(didRemoveAnything: false)
+        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
     }
 
     @Test

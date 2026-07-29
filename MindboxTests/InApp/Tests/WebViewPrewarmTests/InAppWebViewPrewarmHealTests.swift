@@ -20,13 +20,14 @@ struct InAppWebViewPrewarmHealTests {
 
     private final class PurgeSpy {
         private(set) var purgedURLs: [String?] = []
-        var pendingCompletions: [() -> Void] = []
+        var pendingCompletions: [(Bool) -> Void] = []
         var completesImmediately = true
+        var didRemoveAnythingResult = true
 
-        func purge(_ failedURL: String?, completion: @escaping () -> Void) {
+        func purge(_ failedURL: String?, completion: @escaping (Bool) -> Void) {
             purgedURLs.append(failedURL)
             if completesImmediately {
-                completion()
+                completion(didRemoveAnythingResult)
             } else {
                 pendingCompletions.append(completion)
             }
@@ -99,8 +100,60 @@ struct InAppWebViewPrewarmHealTests {
         service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
         #expect(spy.loadedHTMLCount == 2) // purge still in flight — no reload yet
 
-        purgeSpy.pendingCompletions.forEach { $0() }
+        purgeSpy.pendingCompletions.forEach { $0(true) }
         #expect(spy.loadedHTMLCount == 3)
+    }
+
+    @Test("An empty purge grants a second heal; the cap stops the third")
+    func emptyPurgeGrantsASecondHealAttempt() async throws {
+        try await runPrewarm()
+        purgeSpy.didRemoveAnythingResult = false
+
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 1)
+        #expect(spy.loadedHTMLCount == 3)
+
+        // The reloaded page hits the (now persisted) poison and reports again.
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 2)
+        #expect(spy.loadedHTMLCount == 4)
+
+        // Hard cap: two attempts per content load, whatever the purge outcomes were.
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 2)
+        #expect(spy.loadedHTMLCount == 4)
+    }
+
+    @Test("A purge that removed the entry latches the heal even below the attempt cap")
+    func successfulPurgeLatchesTheHeal() async throws {
+        try await runPrewarm()
+        purgeSpy.didRemoveAnythingResult = true
+
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 1)
+
+        // The entry was provably removed — a repeated error means the poison is upstream.
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 1)
+        #expect(spy.loadedHTMLCount == 3)
+    }
+
+    @Test("No second heal while the purge is in flight")
+    func noSecondHealWhileThePurgeIsInFlight() async throws {
+        try await runPrewarm()
+        purgeSpy.completesImmediately = false
+
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: nil)
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 1)
+
+        // The empty purge reports back — the next error may use the second attempt.
+        purgeSpy.pendingCompletions.forEach { $0(false) }
+        purgeSpy.pendingCompletions.removeAll()
+        #expect(spy.loadedHTMLCount == 3)
+
+        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        #expect(purgeSpy.purgedURLs.count == 2)
     }
 
     @Test("Non-recoverable errors do not trigger the heal")

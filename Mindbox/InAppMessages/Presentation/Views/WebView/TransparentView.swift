@@ -341,7 +341,16 @@ extension TransparentView: WebBridgeNavigationDelegate {
         readyChecker?.cancel()
         readyChecker = nil
         restartTimeoutTimer()
-        facade?.retryContentLoadBypassingCache(failedURL: failedURL)
+        facade?.retryContentLoadBypassingCache(failedURL: failedURL) { [weak self] didRemoveAnything in
+            self?.noCacheRetryPolicy.notePurgeOutcome(didRemoveAnything: didRemoveAnything)
+            if !didRemoveAnything {
+                Logger.common(
+                    message: "[WebView] Cache purge found no entry for the failed script (write-behind race?) — one more retry may follow",
+                    level: .debug,
+                    category: .webViewInAppMessages
+                )
+            }
+        }
     }
 
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {

@@ -7,6 +7,7 @@
 //
 
 import WebKit
+import MindboxLogger
 
 /// The single `WKWebsiteDataStore` used by every Mindbox WebView (prewarm and shows alike).
 ///
@@ -61,7 +62,7 @@ enum InAppWebViewDataStore {
         return instance
     }
 
-    static func purgeCache(forHostOf urlString: String?, completion: @escaping () -> Void) {
+    static func purgeCache(forHostOf urlString: String?, completion: @escaping (_ didRemoveAnything: Bool) -> Void) {
         let cacheTypes: Set<String> = [WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]
         let store = shared()
         // Trimmed the same way the recoverability predicate trims, so a padded URL that
@@ -74,8 +75,12 @@ enum InAppWebViewDataStore {
         }()
         // Callers reload a WKWebView from this completion; WebKit calls these handlers on
         // the main thread today, but the docs don't promise it.
-        let finish: () -> Void = {
-            if Thread.isMainThread { completion() } else { DispatchQueue.main.async(execute: completion) }
+        let finish: (Bool) -> Void = { didRemoveAnything in
+            if Thread.isMainThread {
+                completion(didRemoveAnything)
+            } else {
+                DispatchQueue.main.async { completion(didRemoveAnything) }
+            }
         }
         store.fetchDataRecords(ofTypes: cacheTypes) { records in
             let matching = records.filter { record in
@@ -83,12 +88,16 @@ enum InAppWebViewDataStore {
                 let domain = record.displayName.lowercased()
                 return host == domain || host.hasSuffix("." + domain)
             }
+            Logger.common(message: "[WebView] Cache purge for host \(host ?? "nil"): \(matching.isEmpty ? "no matching records" : "removing \(matching.count) record(s)")",
+                          level: .debug, category: .webViewInAppMessages)
             if !matching.isEmpty {
-                store.removeData(ofTypes: cacheTypes, for: matching, completionHandler: finish)
+                store.removeData(ofTypes: cacheTypes, for: matching) { finish(true) }
             } else if isIsolatedStore {
-                store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast, completionHandler: finish)
+                // Fallback full wipe of the isolated store: still reported as "removed
+                // nothing" — the host's record was not found, which is the race signal.
+                store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast) { finish(false) }
             } else {
-                finish()
+                finish(false)
             }
         }
     }
