@@ -60,6 +60,31 @@ enum Constants {
         static let bridgeFunctionReadyCheck = "(() => typeof window.bridgeMessagesHandlers !== 'undefined' && typeof window.bridgeMessagesHandlers.emit === 'function')()"
     }
 
+    enum WebViewHTTPErrorJS {
+        static let handlerName = "SdkHttpErrorMonitor"
+
+        static let detectionScript = """
+        (function () {
+          if (window.__mbxHttpErrorMonitorInstalled) { return; }
+          window.__mbxHttpErrorMonitorInstalled = true;
+          var reported = {};
+          window.addEventListener('error', function (e) {
+            var target = e && e.target;
+            if (!target || !target.tagName || !(target.src || target.href)) { return; }
+            try {
+              var url = String(target.src || target.href || '');
+              if (!url || reported[url]) { return; }
+              reported[url] = true;
+              window.webkit.messageHandlers.\(handlerName).postMessage({
+                type: 'httpError',
+                url: url
+              });
+            } catch (_) {}
+          }, true);
+        })();
+        """
+    }
+
     /// Constants used for migration management.
     enum Migration {
 

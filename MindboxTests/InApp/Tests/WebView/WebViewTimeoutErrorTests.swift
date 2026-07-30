@@ -25,4 +25,25 @@ struct WebViewTimeoutErrorTests {
             return
         }
     }
+
+    @Test
+    func timeoutCarriesTheScriptHTTPErrorDetail() throws {
+        let detail = "Last script HTTP error: HTTP 404 for https://cdn.test/tracker.js; no-cache retry attempted: true."
+
+        guard case .webviewLoadFailed(let description) = WebViewController.timeoutError(
+            readyCheckGaveUp: false, inAppId: "x", httpErrorDetail: detail
+        ) else {
+            Issue.record("expected webviewLoadFailed")
+            return
+        }
+        #expect(description.hasSuffix(" \(detail)"))
+
+        guard case .webviewLoadFailed(let plain) = WebViewController.timeoutError(
+            readyCheckGaveUp: false, inAppId: "x", httpErrorDetail: nil
+        ) else {
+            Issue.record("expected webviewLoadFailed")
+            return
+        }
+        #expect(!plain.contains("Last script HTTP error"))
+    }
 }

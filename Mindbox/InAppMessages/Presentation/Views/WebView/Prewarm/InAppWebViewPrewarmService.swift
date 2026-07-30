@@ -62,16 +62,37 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     // Retained here because navigationDelegate is weak; armed until the first borrow.
     private let prewarmNavigationPolicy = InAppWebViewPrewarmNavigationPolicy()
 
+    private var lastPrewarmContentPage: (html: String, baseURL: URL)?
+    // Heal attempt bookkeeping — same scheme as WebViewNoCacheRetryPolicy (spec D2):
+    // a purge that provably removed nothing keeps the heal armed for one more attempt
+    // (WebKit's write-behind cache persistence races the first purge), hard-capped.
+    private var healAttemptsUsed = 0
+    private var healPurgeRemovedEntry = false
+    private var isHealPurgeInFlight = false
+    private static let maxHealAttempts = WebViewNoCacheRetryPolicy.maxAttempts
+    private let isCacheEnabled: () -> Bool
+    // Contract: must call `completion` on the main thread — the reload it sequences
+    // navigates the webview. The default (`InAppWebViewDataStore.purgeCache`) guarantees it.
+    private let purgeCache: (_ failedURL: String?, _ completion: @escaping (_ didRemoveAnything: Bool) -> Void) -> Void
+    private let httpErrorMonitor = PrewarmHTTPErrorMonitor()
+
     init(persistenceStorage: PersistenceStorage,
          makeWebView: @escaping () -> WKWebView = { InAppWebViewFactory.make() },
          fetchHTML: @escaping (URL, @escaping (String?) -> Void) -> Void = InAppWebViewPrewarmService.defaultFetchHTML,
-         loadCachedConfig: @escaping () -> ConfigResponse? = InAppWebViewPrewarmService.defaultLoadCachedConfig) {
+         loadCachedConfig: @escaping () -> ConfigResponse? = InAppWebViewPrewarmService.defaultLoadCachedConfig,
+         isCacheEnabled: @escaping () -> Bool = { InAppWebViewDataStore.isCacheFeatureEnabled },
+         purgeCache: @escaping (_ failedURL: String?, _ completion: @escaping (_ didRemoveAnything: Bool) -> Void) -> Void = InAppWebViewDataStore.purgeCache) {
         self.persistenceStorage = persistenceStorage
         self.learnedHostsStore = InAppWebViewLearnedHostsStore(persistenceStorage: persistenceStorage)
         self.makeWebView = makeWebView
         self.fetchHTML = fetchHTML
         self.loadCachedConfig = loadCachedConfig
+        self.isCacheEnabled = isCacheEnabled
+        self.purgeCache = purgeCache
         startMemoryWarningObserver()
+        httpErrorMonitor.onHTTPError = { [weak self] url in
+            self?.healPrewarmContentPage(failedURL: url)
+        }
     }
 
     deinit {
@@ -94,6 +115,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             guard let self, let webView = self.warmWebView, !self.isLentToShow else { return }
             webView.stopLoading()
             self.warmWebView = nil
+            self.lastPrewarmContentPage = nil
             Logger.common(message: "[WebView] Prewarm: memory warning — releasing the parked warm instance",
                           level: .info, category: .webViewInAppMessages)
         }
@@ -150,6 +172,9 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // Latch even when there is nothing to hand out: a show is starting, and a
         // resource prewarm kicked off after this point would compete with it.
         hasBeenBorrowed = true
+        // The prewarm's healing days are over (the show runs its own retry policy);
+        // don't keep the page HTML reachable for the rest of the process.
+        lastPrewarmContentPage = nil
         guard let webView = warmWebView else { return nil }
         // Presentation is serialized upstream, but that flag has known races — never let
         // a second show steal the instance out of an on-screen in-app.
@@ -192,6 +217,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                 webView.configuration.userContentController.removeAllScriptMessageHandlers()
             } else {
                 webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
             }
             webView.loadHTMLString(Self.blankPage, baseURL: nil)
         }
@@ -227,6 +253,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             if self.warmWebView == nil {
                 self.warmWebView = self.makeWebView()
                 self.warmWebView?.navigationDelegate = self.prewarmNavigationPolicy
+                self.installHTTPErrorMonitor(on: self.warmWebView)
             }
             if !hosts.isEmpty {
                 self.prewarmNavigationPolicy.allow(baseURL)
@@ -257,9 +284,49 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
         )
         prewarmNavigationPolicy.allow(prewarmBaseURL)
+        lastPrewarmContentPage = isCacheEnabled() ? (html, prewarmBaseURL) : nil
+        healAttemptsUsed = 0
+        healPurgeRemovedEntry = false
+        isHealPurgeInFlight = false
         warmWebView.loadHTMLString(html, baseURL: prewarmBaseURL)
         Logger.common(message: "[WebView] Prewarm: content page under \(prewarmBaseURL.absoluteString), endpoint \(endpoint)",
                       level: .info, category: .webViewInAppMessages)
+    }
+
+    private func installHTTPErrorMonitor(on webView: WKWebView?) {
+        guard let controller = webView?.configuration.userContentController else { return }
+        // Idempotent remove-then-add, same as the bridge: never crash on a leftover handler.
+        controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        controller.add(httpErrorMonitor, name: Constants.WebViewHTTPErrorJS.handlerName)
+    }
+
+    func healPrewarmContentPage(failedURL: String?) {
+        // Observation log for every incoming report (mirrors the show path): heal
+        // attempts are capped, so later reports would otherwise vanish without a trace.
+        Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.loadFailureDescription) for \(failedURL ?? "nil")",
+                      level: .debug, category: .webViewInAppMessages)
+        guard InAppWebViewHTTPError.isRecoverable(url: failedURL) else { return }
+        guard !hasBeenBorrowed, !healPurgeRemovedEntry, !isHealPurgeInFlight,
+              healAttemptsUsed < Self.maxHealAttempts,
+              warmWebView != nil, let page = lastPrewarmContentPage else { return }
+        healAttemptsUsed += 1
+        isHealPurgeInFlight = true
+        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.loadFailureDescription) for script \(failedURL ?? "nil")"
+                        + " — purging its host's cache and reloading the content page (attempt \(healAttemptsUsed)/\(Self.maxHealAttempts))",
+                      level: .info, category: .webViewInAppMessages)
+        purgeCache(failedURL) { [weak self] didRemoveAnything in
+            guard let self else { return }
+            self.isHealPurgeInFlight = false
+            // A purge that found the host's record latches the heal: the reload it
+            // sequences is the only one that can help. An empty purge is the
+            // write-behind race signal — the next error report may try once more.
+            if didRemoveAnything { self.healPurgeRemovedEntry = true }
+            // Re-check after the async purge: a show may have borrowed the instance (or a
+            // release dropped it) while the purge was in flight — the prewarm must never
+            // navigate a webview it no longer owns.
+            guard !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
+            warmWebView.loadHTMLString(page.html, baseURL: page.baseURL)
+        }
     }
 
     private enum ReleaseReason: String {
@@ -275,6 +342,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             // Latch before the guard: even with nothing to drop yet, a stage-1 hop that
             // lands after this release must not start a prewarm the config just killed.
             self.resourcePrewarmLatched = true
+            self.lastPrewarmContentPage = nil
             guard !self.hasBeenBorrowed, let webView = self.warmWebView else { return }
             webView.stopLoading()
             self.warmWebView = nil
@@ -303,5 +371,17 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     private static func defaultLoadCachedConfig() -> ConfigResponse? {
         InAppConfigurationRepository().fetchDecodedConfigFromCache()
+    }
+}
+
+private final class PrewarmHTTPErrorMonitor: NSObject, WKScriptMessageHandler {
+
+    var onHTTPError: ((_ url: String?) -> Void)?
+
+    func userContentController(_ userContentController: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
+        guard message.name == Constants.WebViewHTTPErrorJS.handlerName,
+              let failedURL = InAppWebViewHTTPError.failedResourceURL(from: message.body) else { return }
+        onHTTPError?(failedURL)
     }
 }

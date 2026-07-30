@@ -222,17 +222,24 @@ extension WebViewController: WebVCDelegate {
     func closeTimeoutWebViewVC() {
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         reportErrorAndClose(
-            Self.timeoutError(readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true, inAppId: id)
+            Self.timeoutError(
+                readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
+                inAppId: id,
+                httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
+            )
         )
     }
 
     /// The init timeout is the single closing authority, but monitoring must still tell
     /// "the page loaded and its JS bridge never appeared" (a content defect) apart from
-    /// "the page never finished loading" (a load defect).
-    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String) -> InAppPresentationError {
-        readyCheckGaveUp
-            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).")
-            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).")
+    /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
+    /// concrete cause when a script subresource answered with an HTTP error — with it a
+    /// poisoned-cache death names the resource and status instead of a generic timeout.
+    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+        let suffix = httpErrorDetail.map { " \($0)" } ?? ""
+        return readyCheckGaveUp
+            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
+            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
     }
 
     func closeLoadFailedWebViewVC(reason: String) {

@@ -18,7 +18,11 @@
 		28375259024D42658E146900 /* InAppWebViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1627DAC8D54E448C6D7BF0 /* InAppWebViewFactory.swift */; };
 		B58D5207F49F4531AA1C516B /* InAppWebViewHTMLFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */; };
 		2DBF19F24FEA48AAA39C33E6 /* InAppWebViewDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D096F433EBB44C8B3490CF6 /* InAppWebViewDataStore.swift */; };
+		7A1E4C0DA3B24F6E90C11A02 /* InAppWebViewHTTPError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E4C0DA3B24F6E90C11A01 /* InAppWebViewHTTPError.swift */; };
+		7A1E4C0DA3B24F6E90C11A04 /* WebViewNoCacheRetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E4C0DA3B24F6E90C11A03 /* WebViewNoCacheRetryPolicy.swift */; };
 		B9025268DDC24820B95ADE10 /* WebViewTimeoutErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */; };
+		7A1E4C0DA3B24F6E90C11A06 /* InAppWebViewHTTPErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E4C0DA3B24F6E90C11A05 /* InAppWebViewHTTPErrorTests.swift */; };
+		7A1E4C0DA3B24F6E90C11A08 /* WebViewNoCacheRetryPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E4C0DA3B24F6E90C11A07 /* WebViewNoCacheRetryPolicyTests.swift */; };
 		CB91323FAD66404B9422B6E0 /* WebViewReadyCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */; };
 		C830BF4C287849CE95BB4ED9 /* WebViewReadyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */; };
 		46E95250B5904CC18E079C54 /* SDKUserAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68184C936B4243C28CC10829 /* SDKUserAgent.swift */; };
@@ -765,9 +769,13 @@
 		4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SDKUserAgentTests.swift; sourceTree = "<group>"; };
 		895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppWebViewCacheTests.swift; sourceTree = "<group>"; };
 		FD1627DAC8D54E448C6D7BF0 /* InAppWebViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewFactory.swift; sourceTree = "<group>"; };
+		7A1E4C0DA3B24F6E90C11A01 /* InAppWebViewHTTPError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewHTTPError.swift; sourceTree = "<group>"; };
+		7A1E4C0DA3B24F6E90C11A03 /* WebViewNoCacheRetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewNoCacheRetryPolicy.swift; sourceTree = "<group>"; };
 		A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewHTMLFetcher.swift; sourceTree = "<group>"; };
 		6D096F433EBB44C8B3490CF6 /* InAppWebViewDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewDataStore.swift; sourceTree = "<group>"; };
 		11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewTimeoutErrorTests.swift; sourceTree = "<group>"; };
+		7A1E4C0DA3B24F6E90C11A05 /* InAppWebViewHTTPErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InAppWebViewHTTPErrorTests.swift; sourceTree = "<group>"; };
+		7A1E4C0DA3B24F6E90C11A07 /* WebViewNoCacheRetryPolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewNoCacheRetryPolicyTests.swift; sourceTree = "<group>"; };
 		4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewReadyCheckerTests.swift; sourceTree = "<group>"; };
 		F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewReadyChecker.swift; sourceTree = "<group>"; };
 		68184C936B4243C28CC10829 /* SDKUserAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKUserAgent.swift; sourceTree = "<group>"; };
@@ -1555,6 +1563,8 @@
 				895F8C05EA8B4716B2A2941A /* InAppWebViewCacheTests.swift */,
 				11E54FE3B51649DCBD5ABE33 /* WebViewTimeoutErrorTests.swift */,
 				4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */,
+				7A1E4C0DA3B24F6E90C11A05 /* InAppWebViewHTTPErrorTests.swift */,
+				7A1E4C0DA3B24F6E90C11A07 /* WebViewNoCacheRetryPolicyTests.swift */,
 				0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */,
 				55E67F6257F15F143DEA87DE /* JSONValueTagsMergeTests.swift */,
 				7A3F1B2C9D4E5F60718293A4 /* TransparentViewJSBridgeTests.swift */,
@@ -3090,6 +3100,8 @@
 				FD1627DAC8D54E448C6D7BF0 /* InAppWebViewFactory.swift */,
 				A85CCBEB1D874078954BB771 /* InAppWebViewHTMLFetcher.swift */,
 				6D096F433EBB44C8B3490CF6 /* InAppWebViewDataStore.swift */,
+				7A1E4C0DA3B24F6E90C11A01 /* InAppWebViewHTTPError.swift */,
+				7A1E4C0DA3B24F6E90C11A03 /* WebViewNoCacheRetryPolicy.swift */,
 				F2DAFC2435264F15B8033CCE /* WebViewReadyChecker.swift */,
 				0E8BCE24EE9540D6BD7F655D /* Prewarm */,
 				47B1B6A92F6174E0000A4B67 /* LocalState */,
@@ -4351,6 +4363,8 @@
 				28375259024D42658E146900 /* InAppWebViewFactory.swift in Sources */,
 				B58D5207F49F4531AA1C516B /* InAppWebViewHTMLFetcher.swift in Sources */,
 				2DBF19F24FEA48AAA39C33E6 /* InAppWebViewDataStore.swift in Sources */,
+				7A1E4C0DA3B24F6E90C11A02 /* InAppWebViewHTTPError.swift in Sources */,
+				7A1E4C0DA3B24F6E90C11A04 /* WebViewNoCacheRetryPolicy.swift in Sources */,
 				C830BF4C287849CE95BB4ED9 /* WebViewReadyChecker.swift in Sources */,
 				46E95250B5904CC18E079C54 /* SDKUserAgent.swift in Sources */,
 				47EFBB2F2CB92B240023A4B9 /* SegmentationCheckResponse.swift in Sources */,
@@ -4736,6 +4750,8 @@
 				16311BEB069E4B3983FAF594 /* InAppWebViewCacheTests.swift in Sources */,
 				B9025268DDC24820B95ADE10 /* WebViewTimeoutErrorTests.swift in Sources */,
 				CB91323FAD66404B9422B6E0 /* WebViewReadyCheckerTests.swift in Sources */,
+				7A1E4C0DA3B24F6E90C11A06 /* InAppWebViewHTTPErrorTests.swift in Sources */,
+				7A1E4C0DA3B24F6E90C11A08 /* WebViewNoCacheRetryPolicyTests.swift in Sources */,
 				F349753A2DEE2CB700BEC667 /* ShownInAppsDictionaryMigrationTests.swift in Sources */,
 				4766A8AE2C9325B0002D15A4 /* ABTestsConfigParsingTests.swift in Sources */,
 				F3FEEA9F2C25AF39000E9D0F /* StubContainer.swift in Sources */,
