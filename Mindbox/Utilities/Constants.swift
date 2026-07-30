@@ -68,38 +68,19 @@ enum Constants {
           if (window.__mbxHttpErrorMonitorInstalled) { return; }
           window.__mbxHttpErrorMonitorInstalled = true;
           var reported = {};
-          var reportedWithStatus = {};
-          function report(url, status) {
+          window.addEventListener('error', function (e) {
+            var target = e && e.target;
+            if (!target || !target.tagName || !(target.src || target.href)) { return; }
             try {
-              url = String(url || '');
-              var hasStatus = (typeof status === 'number');
-              if (!url) { return; }
-              if (hasStatus ? reportedWithStatus[url] : reported[url]) { return; }
+              var url = String(target.src || target.href || '');
+              if (!url || reported[url]) { return; }
               reported[url] = true;
-              if (hasStatus) { reportedWithStatus[url] = true; }
               window.webkit.messageHandlers.\(handlerName).postMessage({
                 type: 'httpError',
                 url: url,
-                status: hasStatus ? status : null
+                status: null
               });
             } catch (_) {}
-          }
-          try {
-            new PerformanceObserver(function (list) {
-              var entries = list.getEntries();
-              for (var i = 0; i < entries.length; i++) {
-                var e = entries[i];
-                if (typeof e.responseStatus === 'number' && e.responseStatus >= 400) {
-                  report(e.name, e.responseStatus);
-                }
-              }
-            }).observe({ type: 'resource', buffered: true });
-          } catch (_) {}
-          window.addEventListener('error', function (e) {
-            var target = e && e.target;
-            if (target && target.tagName && (target.src || target.href)) {
-              report(target.src || target.href, null);
-            }
           }, true);
         })();
         """

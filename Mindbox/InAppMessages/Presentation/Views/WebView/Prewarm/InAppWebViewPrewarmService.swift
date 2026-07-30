@@ -301,9 +301,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     func healPrewarmContentPage(failedURL: String?, status: Int?) {
-        // Observation log for every incoming report (mirrors the show path): the heal
-        // attempts are capped, so a follow-up status-bearing report would otherwise
-        // leave no trace of the actual HTTP status.
+        // Observation log for every incoming report (mirrors the show path): heal
+        // attempts are capped, so later reports would otherwise vanish without a trace.
         Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.statusDescription(status)) for \(failedURL ?? "nil")",
                       level: .debug, category: .webViewInAppMessages)
         guard InAppWebViewHTTPError.isRecoverable(url: failedURL, status: status) else { return }
