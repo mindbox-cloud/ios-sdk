@@ -81,13 +81,13 @@ struct InAppWebViewPrewarmHealTests {
     func healsOncePerContentLoad() async throws {
         try await runPrewarm()
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(purgeSpy.purgedURLs.first == poisonedScript)
         #expect(spy.loadedHTMLCount == 3)
 
         // One-shot: the same (or another) error must not loop the reload.
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
     }
@@ -97,7 +97,7 @@ struct InAppWebViewPrewarmHealTests {
         try await runPrewarm()
         purgeSpy.completesImmediately = false
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(spy.loadedHTMLCount == 2) // purge still in flight — no reload yet
 
         purgeSpy.pendingCompletions.forEach { $0(true) }
@@ -109,17 +109,17 @@ struct InAppWebViewPrewarmHealTests {
         try await runPrewarm()
         purgeSpy.didRemoveAnythingResult = false
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
 
         // The reloaded page hits the (now persisted) poison and reports again.
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 2)
         #expect(spy.loadedHTMLCount == 4)
 
         // Hard cap: two attempts per content load, whatever the purge outcomes were.
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 2)
         #expect(spy.loadedHTMLCount == 4)
     }
@@ -129,11 +129,11 @@ struct InAppWebViewPrewarmHealTests {
         try await runPrewarm()
         purgeSpy.didRemoveAnythingResult = true
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
 
         // The entry was provably removed — a repeated error means the poison is upstream.
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
     }
@@ -143,8 +143,8 @@ struct InAppWebViewPrewarmHealTests {
         try await runPrewarm()
         purgeSpy.completesImmediately = false
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: nil)
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
 
         // The empty purge reports back — the next error may use the second attempt.
@@ -152,7 +152,7 @@ struct InAppWebViewPrewarmHealTests {
         purgeSpy.pendingCompletions.removeAll()
         #expect(spy.loadedHTMLCount == 3)
 
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 2)
     }
 
@@ -160,8 +160,7 @@ struct InAppWebViewPrewarmHealTests {
     func ignoresNonRecoverableErrors() async throws {
         try await runPrewarm()
 
-        service.healPrewarmContentPage(failedURL: "https://cdn.test/banner.png", status: 404)
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 200)
+        service.healPrewarmContentPage(failedURL: "https://cdn.test/banner.png")
 
         #expect(purgeSpy.purgedURLs.isEmpty)
         #expect(spy.loadedHTMLCount == 2)
@@ -175,7 +174,7 @@ struct InAppWebViewPrewarmHealTests {
         await suite.drainMainQueue()
         #expect(suite.spy.loadedHTMLCount == 2)
 
-        suite.service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        suite.service.healPrewarmContentPage(failedURL: poisonedScript)
 
         #expect(suite.purgeSpy.purgedURLs.isEmpty)
         #expect(suite.spy.loadedHTMLCount == 2)
@@ -186,7 +185,7 @@ struct InAppWebViewPrewarmHealTests {
         try await runPrewarm()
 
         _ = service.borrowWarmWebView()
-        service.healPrewarmContentPage(failedURL: poisonedScript, status: 404)
+        service.healPrewarmContentPage(failedURL: poisonedScript)
 
         #expect(purgeSpy.purgedURLs.isEmpty)
         // borrow itself parks the page with one blank load; the heal must add nothing.

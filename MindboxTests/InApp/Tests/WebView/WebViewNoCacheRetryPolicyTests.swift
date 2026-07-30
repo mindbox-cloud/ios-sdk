@@ -19,121 +19,85 @@ struct WebViewNoCacheRetryPolicyTests {
     }
 
     @Test
-    func grantsARetryForAScript404BeforeInit() {
+    func grantsARetryForAFailedScriptBeforeInit() {
         let policy = policy()
 
-        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         #expect(policy.hasRetried)
-        #expect(policy.lastHTTPErrorDetail == "HTTP 404 for \(trackerURL)")
-    }
-
-    @Test
-    func grantsARetryForAServerErrorOnAScript() {
-        #expect(policy().onHTTPError(url: "https://cdn.test/main.js", status: 503, hasReceivedInit: false))
+        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
     }
 
     @Test
     func successfulPurgeLatchesTheRetryForTheShowSession() {
         let policy = policy()
 
-        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: true)
         // The purge provably removed the poisoned entry — a later error means the poison
         // is upstream, another reload would just replay the failure.
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         // The later error still refreshes the telemetry detail.
-        #expect(!policy.onHTTPError(url: "https://cdn.test/other.js", status: 500, hasReceivedInit: false))
-        #expect(policy.lastHTTPErrorDetail == "HTTP 500 for https://cdn.test/other.js")
+        #expect(!policy.onHTTPError(url: "https://cdn.test/other.js", hasReceivedInit: false))
+        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for https://cdn.test/other.js")
     }
 
+    /// Write-behind race (spec D2a): on the very first poisoning the entry may not be
+    /// visible to the purge yet. An empty purge keeps the retry armed for one more attempt.
     @Test
     func emptyPurgeAllowsExactlyOneMoreAttempt() {
         let policy = policy()
 
-        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: false)
-        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: false)
         // Hard cap: two attempts per show session whatever the purge outcomes were —
         // repeated empty purges mean the poison is not in the client cache (offline/CDN).
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         #expect(policy.attemptsUsed == WebViewNoCacheRetryPolicy.maxAttempts)
     }
 
+    /// A second error report (another failing script, or a duplicate message posted by
+    /// page JS) must not double-fire the retry while the first purge has not reported back.
     @Test
     func noSecondGrantWhileThePurgeOutcomeIsPending() {
         let policy = policy()
 
-        #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: "https://cdn.test/other.js", hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: false)
-        #expect(policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(policy.onHTTPError(url: "https://cdn.test/other.js", hasReceivedInit: false))
     }
 
     @Test
     func doesNotRetryAfterTheRuntimeInitialized() {
         let policy = policy()
 
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: true))
+        #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: true))
         #expect(!policy.hasRetried)
         // A live in-app must not be reloaded, but the error is still worth remembering.
-        #expect(policy.lastHTTPErrorDetail == "HTTP 404 for \(trackerURL)")
+        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
     }
 
     @Test
     func doesNotRetryNonScriptResources() {
         let policy = policy()
 
-        #expect(!policy.onHTTPError(url: "https://cdn.test/banner.png", status: 404, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: "https://cdn.test/banner.png", hasReceivedInit: false))
         #expect(!policy.onHTTPError(
             url: "https://personalization-speedtest.g.mindbox.ru/client-stats?x=1",
-            status: 404,
             hasReceivedInit: false
         ))
         #expect(policy.lastHTTPErrorDetail == nil)
     }
 
     @Test
-    func doesNotRetryOnStatusesBelow400() {
-        let policy = policy()
-
-        #expect(!policy.onHTTPError(url: trackerURL, status: 302, hasReceivedInit: false))
-        #expect(!policy.onHTTPError(url: trackerURL, status: 200, hasReceivedInit: false))
-        #expect(policy.lastHTTPErrorDetail == nil)
-        #expect(!policy.hasRetried)
-    }
-
-    /// Platform difference vs Android (spec D1): the JS detector can only say "the script
-    /// failed" on WebKit without `responseStatus` — a nil status on a script grants the retry.
-    @Test
-    func nilStatusOnAScriptGrantsTheRetry() {
-        let policy = policy()
-
-        #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
-        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
-    }
-
-    @Test
-    func lateStatusReportUpgradesTelemetryWithoutASecondRetry() {
-        let policy = policy()
-
-        #expect(policy.onHTTPError(url: trackerURL, status: nil, hasReceivedInit: false))
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
-        #expect(policy.lastHTTPErrorDetail == "HTTP 404 for \(trackerURL)")
-    }
-
-    @Test
-    func retriesOnTheBoundaryStatus400() {
-        #expect(policy().onHTTPError(url: trackerURL, status: 400, hasReceivedInit: false))
-    }
-
-    @Test
     func cacheFeatureOffBlocksTheRetryButKeepsTheTelemetryDetail() {
         let policy = policy(cacheEnabled: false)
 
-        #expect(!policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false))
+        #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         #expect(!policy.hasRetried)
-        #expect(policy.lastHTTPErrorDetail == "HTTP 404 for \(trackerURL)")
+        #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
     }
 
     @Test
@@ -144,13 +108,13 @@ struct WebViewNoCacheRetryPolicyTests {
             return true
         }
 
-        _ = policy.onHTTPError(url: "https://cdn.test/banner.png", status: 404, hasReceivedInit: false)
+        _ = policy.onHTTPError(url: "https://cdn.test/banner.png", hasReceivedInit: false)
         #expect(consulted == 0)
 
-        _ = policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: true)
+        _ = policy.onHTTPError(url: trackerURL, hasReceivedInit: true)
         #expect(consulted == 0)
 
-        _ = policy.onHTTPError(url: trackerURL, status: 404, hasReceivedInit: false)
+        _ = policy.onHTTPError(url: trackerURL, hasReceivedInit: false)
         #expect(consulted == 1)
     }
 }

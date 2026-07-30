@@ -22,12 +22,12 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?)
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
-    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?)
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?)
 }
 
 @_spi(Internal)
 public extension WebBridgeNavigationDelegate {
-    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?) {}
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {}
 }
 
 protocol BridgePendingStore: AnyObject {
@@ -191,8 +191,8 @@ extension MindboxWebBridge: WKScriptMessageHandler {
                 logStaleNavigation("http error message")
                 return
             }
-            guard let httpError = InAppWebViewHTTPError.message(from: message.body) else { return }
-            navigationDelegate?.webBridge(self, didReceiveHTTPError: httpError.url, status: httpError.status)
+            guard let failedURL = InAppWebViewHTTPError.failedResourceURL(from: message.body) else { return }
+            navigationDelegate?.webBridge(self, didReceiveHTTPError: failedURL)
             return
         }
 

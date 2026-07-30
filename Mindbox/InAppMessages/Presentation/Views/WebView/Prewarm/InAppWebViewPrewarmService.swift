@@ -90,8 +90,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         self.isCacheEnabled = isCacheEnabled
         self.purgeCache = purgeCache
         startMemoryWarningObserver()
-        httpErrorMonitor.onHTTPError = { [weak self] url, status in
-            self?.healPrewarmContentPage(failedURL: url, status: status)
+        httpErrorMonitor.onHTTPError = { [weak self] url in
+            self?.healPrewarmContentPage(failedURL: url)
         }
     }
 
@@ -300,18 +300,18 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         controller.add(httpErrorMonitor, name: Constants.WebViewHTTPErrorJS.handlerName)
     }
 
-    func healPrewarmContentPage(failedURL: String?, status: Int?) {
+    func healPrewarmContentPage(failedURL: String?) {
         // Observation log for every incoming report (mirrors the show path): heal
         // attempts are capped, so later reports would otherwise vanish without a trace.
-        Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.statusDescription(status)) for \(failedURL ?? "nil")",
+        Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.loadFailureDescription) for \(failedURL ?? "nil")",
                       level: .debug, category: .webViewInAppMessages)
-        guard InAppWebViewHTTPError.isRecoverable(url: failedURL, status: status) else { return }
+        guard InAppWebViewHTTPError.isRecoverable(url: failedURL) else { return }
         guard !hasBeenBorrowed, !healPurgeRemovedEntry, !isHealPurgeInFlight,
               healAttemptsUsed < Self.maxHealAttempts,
               warmWebView != nil, let page = lastPrewarmContentPage else { return }
         healAttemptsUsed += 1
         isHealPurgeInFlight = true
-        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.statusDescription(status)) for script \(failedURL ?? "nil")"
+        Logger.common(message: "[WebView] Prewarm: \(InAppWebViewHTTPError.loadFailureDescription) for script \(failedURL ?? "nil")"
                         + " — purging its host's cache and reloading the content page (attempt \(healAttemptsUsed)/\(Self.maxHealAttempts))",
                       level: .info, category: .webViewInAppMessages)
         purgeCache(failedURL) { [weak self] didRemoveAnything in
@@ -376,12 +376,12 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
 private final class PrewarmHTTPErrorMonitor: NSObject, WKScriptMessageHandler {
 
-    var onHTTPError: ((_ url: String?, _ status: Int?) -> Void)?
+    var onHTTPError: ((_ url: String?) -> Void)?
 
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
         guard message.name == Constants.WebViewHTTPErrorJS.handlerName,
-              let httpError = InAppWebViewHTTPError.message(from: message.body) else { return }
-        onHTTPError?(httpError.url, httpError.status)
+              let failedURL = InAppWebViewHTTPError.failedResourceURL(from: message.body) else { return }
+        onHTTPError?(failedURL)
     }
 }

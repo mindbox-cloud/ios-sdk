@@ -2,7 +2,7 @@ import Foundation
 
 enum InAppWebViewHTTPError {
 
-    static let minErrorStatus = 400
+    static let loadFailureDescription = "load failure (no HTTP status on WebKit)"
 
     static func isScriptResourceURL(_ url: String?) -> Bool {
         let raw = url?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -12,18 +12,13 @@ enum InAppWebViewHTTPError {
         return path.lowercased().hasSuffix(".js")
     }
 
-    static func isRecoverable(url: String?, status: Int?) -> Bool {
-        guard let status else { return isScriptResourceURL(url) }
-        return status >= minErrorStatus && isScriptResourceURL(url)
+    static func isRecoverable(url: String?) -> Bool {
+        isScriptResourceURL(url)
     }
 
-    static func statusDescription(_ status: Int?) -> String {
-        status.map { "HTTP \($0)" } ?? "load failure (no HTTP status on WebKit)"
-    }
-
-    static func message(from body: Any) -> (url: String?, status: Int?)? {
+    static func failedResourceURL(from body: Any) -> String? {
         guard let dict = body as? [String: Any],
               dict["type"] as? String == "httpError" else { return nil }
-        return (dict["url"] as? String, (dict["status"] as? NSNumber)?.intValue)
+        return dict["url"] as? String
     }
 }

@@ -77,8 +77,7 @@ enum Constants {
               reported[url] = true;
               window.webkit.messageHandlers.\(handlerName).postMessage({
                 type: 'httpError',
-                url: url,
-                status: null
+                url: url
               });
             } catch (_) {}
           }, true);

@@ -20,9 +20,9 @@ final class WebViewNoCacheRetryPolicy {
         self.isCacheFeatureEnabled = isCacheFeatureEnabled
     }
 
-    func onHTTPError(url: String?, status: Int?, hasReceivedInit: Bool) -> Bool {
-        guard InAppWebViewHTTPError.isRecoverable(url: url, status: status) else { return false }
-        lastHTTPErrorDetail = "\(InAppWebViewHTTPError.statusDescription(status)) for \(url ?? "nil")"
+    func onHTTPError(url: String?, hasReceivedInit: Bool) -> Bool {
+        guard InAppWebViewHTTPError.isRecoverable(url: url) else { return false }
+        lastHTTPErrorDetail = "\(InAppWebViewHTTPError.loadFailureDescription) for \(url ?? "nil")"
         guard !hasReceivedInit else { return false }
         guard !purgeRemovedEntry, !isPurgeOutcomePending, attemptsUsed < Self.maxAttempts else { return false }
         guard isCacheFeatureEnabled() else { return false }

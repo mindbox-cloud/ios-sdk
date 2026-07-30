@@ -321,14 +321,14 @@ extension TransparentView: WebBridgeNavigationDelegate {
         })
     }
     
-    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?, status: Int?) {
-        let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url, status: status)
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {
+        let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url)
         Logger.common(
-            message: "[WebView] Subresource error: \(InAppWebViewHTTPError.statusDescription(status)) for \(url ?? "nil")",
+            message: "[WebView] Subresource error: \(InAppWebViewHTTPError.loadFailureDescription) for \(url ?? "nil")",
             level: isRecoverable ? .default : .debug,
             category: .webViewInAppMessages
         )
-        guard noCacheRetryPolicy.onHTTPError(url: url, status: status, hasReceivedInit: hasReceivedInit) else { return }
+        guard noCacheRetryPolicy.onHTTPError(url: url, hasReceivedInit: hasReceivedInit) else { return }
         retryContentPageBypassingCache(failedURL: url)
     }
 

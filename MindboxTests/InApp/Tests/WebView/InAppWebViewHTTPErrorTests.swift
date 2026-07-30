@@ -30,63 +30,30 @@ struct InAppWebViewHTTPErrorTests {
         #expect(!InAppWebViewHTTPError.isScriptResourceURL("https://cdn.test/tracker.json"))
     }
 
+
     @Test
-    func recoverableRequiresErrorStatusAndScript() {
-        #expect(InAppWebViewHTTPError.isRecoverable(url: "https://api.example.com/scripts/v1/tracker.js", status: 404))
-        #expect(InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js", status: 500))
-        // Boundary: exactly minErrorStatus.
-        #expect(InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js", status: InAppWebViewHTTPError.minErrorStatus))
+    func recoverableMeansAFailedScript() {
+        #expect(InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js"))
+        #expect(!InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/banner.png"))
+        #expect(!InAppWebViewHTTPError.isRecoverable(url: nil))
     }
 
     @Test
-    func nonRecoverableCases() {
-        // Success / redirect are not errors.
-        #expect(!InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js", status: 200))
-        #expect(!InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js", status: 302))
-        // Error status but not a script resource.
-        #expect(!InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/banner.png", status: 404))
-    }
-
-    @Test
-    func nilStatusSoftensToScriptCheck() {
-        #expect(InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/main.js", status: nil))
-        #expect(!InAppWebViewHTTPError.isRecoverable(url: "https://cdn.test/banner.png", status: nil))
-        #expect(!InAppWebViewHTTPError.isRecoverable(url: nil, status: nil))
-    }
-
-    @Test
-    func statusDescriptionNamesTheStatusOrThePlatformGap() {
-        #expect(InAppWebViewHTTPError.statusDescription(404) == "HTTP 404")
-        #expect(InAppWebViewHTTPError.statusDescription(nil) == "load failure (no HTTP status on WebKit)")
-    }
-
-    @Test
-    func parsesDetectionScriptMessage() throws {
-        let parsed = try #require(InAppWebViewHTTPError.message(from: [
+    func parsesDetectionScriptMessage() {
+        let url = InAppWebViewHTTPError.failedResourceURL(from: [
             "type": "httpError",
-            "url": "https://cdn.test/main.js",
-            "status": NSNumber(value: 404)
-        ] as [String: Any]))
-        #expect(parsed.url == "https://cdn.test/main.js")
-        #expect(parsed.status == 404)
-    }
-
-    @Test
-    func parsesNullStatusAsNil() throws {
-        // The fallback error-listener posts `status: null`, which crosses the bridge as NSNull.
-        let parsed = try #require(InAppWebViewHTTPError.message(from: [
-            "type": "httpError",
-            "url": "https://cdn.test/main.js",
-            "status": NSNull()
-        ] as [String: Any]))
-        #expect(parsed.url == "https://cdn.test/main.js")
-        #expect(parsed.status == nil)
+            "url": "https://cdn.test/main.js"
+        ] as [String: Any])
+        #expect(url == "https://cdn.test/main.js")
     }
 
     @Test
     func rejectsForeignMessages() {
-        #expect(InAppWebViewHTTPError.message(from: ["type": "somethingElse", "url": "x"] as [String: Any]) == nil)
-        #expect(InAppWebViewHTTPError.message(from: "not a dictionary") == nil)
-        #expect(InAppWebViewHTTPError.message(from: ["url": "x"] as [String: Any]) == nil)
+        #expect(InAppWebViewHTTPError.failedResourceURL(from: ["type": "somethingElse", "url": "x"] as [String: Any]) == nil)
+        #expect(InAppWebViewHTTPError.failedResourceURL(from: "not a dictionary") == nil)
+        #expect(InAppWebViewHTTPError.failedResourceURL(from: ["url": "x"] as [String: Any]) == nil)
+        // An httpError message without a usable URL is dropped at the parsing layer.
+        #expect(InAppWebViewHTTPError.failedResourceURL(from: ["type": "httpError"] as [String: Any]) == nil)
+        #expect(InAppWebViewHTTPError.failedResourceURL(from: ["type": "httpError", "url": NSNull()] as [String: Any]) == nil)
     }
 }
