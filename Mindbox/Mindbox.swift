@@ -43,7 +43,9 @@ public class Mindbox: NSObject {
     private var sessionTemporaryStorage: SessionTemporaryStorage?
     private var trackVisitManager: TrackVisitCommonTrackProtocol?
 
-    private let queue = DispatchQueue(label: "com.Mindbox.initialization", attributes: .concurrent)
+    /// Serial queue for off-main event creation/persistence so public operation calls return
+    /// without blocking the caller (main) thread. Serial preserves event ordering.
+    private let eventQueue = DispatchQueue(label: "com.Mindbox.eventQueue")
 
     var coreController: CoreController?
 
@@ -81,6 +83,9 @@ public class Mindbox: NSObject {
      */
     public func initialization(configuration: MBConfiguration) {
         coreController?.initialization(configuration: configuration)
+        // Prewarm stage 1: warm the web-content process as early as possible so the first
+        // webview show doesn't pay process startup. Safe here — assembly() has built DI.
+        DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).prewarmProcess()
     }
 
     private var observeTokens: [UUID] = []
@@ -128,10 +133,17 @@ public class Mindbox: NSObject {
             let token = UUID()
             persistenceStorage?.onDidChange = { [weak self] in
                 guard let self = self else { return }
-                self.observeSemaphore.lock {
-                    guard let value = value(), let index = self.observeTokens.firstIndex(of: token) else { return }
+                // Resolve under the lock, invoke the host completion AFTER unlocking: the
+                // non-recursive semaphore would self-deadlock if the callback re-enters
+                // getDeviceUUID/getAPNSToken. Delivery stays synchronous on the notifying
+                // thread - long-standing public contract (encoded in MindboxTests).
+                let resolved: String? = self.observeSemaphore.lock {
+                    guard let value = value(), let index = self.observeTokens.firstIndex(of: token) else { return nil }
                     self.observeTokens.remove(at: index)
-                    completion(value)
+                    return value
+                }
+                if let resolved {
+                    completion(resolved)
                 }
             }
             observeTokens.append(token)
@@ -250,16 +262,7 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(uniqueKey: String, buttonUniqueKey: String? = nil) {
-        guard let tracker = DI.inject(ClickNotificationManager.self) else {
-            return
-        }
-
-        do {
-            try tracker.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey)
-            Logger.common(message: "Track Click", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "Track UNNotificationResponse failed with error: \(error)", level: .error, category: .notification)
-        }
+        enqueueClickTracking { try $0.track(uniqueKey: uniqueKey, buttonUniqueKey: buttonUniqueKey) }
     }
 
     /**
@@ -270,21 +273,12 @@ public class Mindbox: NSObject {
         - operationBody: Provided `OperationBodyRequestBase` payload to send.
      */
     public func executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName: String, operationBody: T) {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
-            return
-        }
+        guard validateOperationName(operationSystemName) else { return }
+        // Encode on the caller: operation bodies are mutable classes, so the snapshot
+        // must be taken before the queue hop or it races host mutations. Only the
+        // immutable JSON string crosses to the queue.
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
-        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
-
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
-        do {
-            try databaseRepository?.create(event: event)
-            Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "Track executeAsyncOperation failed with error: \(error)", level: .error, category: .notification)
-        }
+        enqueueAsyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON)
     }
 
     /**
@@ -295,24 +289,8 @@ public class Mindbox: NSObject {
         - json: String which contains JSON to send.
      */
     public func executeAsyncOperation(operationSystemName: String, json: String) {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
-            return
-        }
-        guard let jsonData = json.data(using: .utf8),
-              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
-            Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
-            return
-        }
-        let customEvent = CustomEvent(name: operationSystemName, payload: json)
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendCustomEventInapps(operationSystemName, jsonString: json)
-        do {
-            try databaseRepository?.create(event: event)
-            Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "Track executeAsyncOperation failed with error: \(error)", level: .error, category: .notification)
-        }
+        guard validateOperationName(operationSystemName) else { return }
+        enqueueAsyncEvent(operationSystemName: operationSystemName, payloadJSON: json, validatePayloadAsJSON: true)
     }
 
     /**
@@ -328,17 +306,13 @@ public class Mindbox: NSObject {
         operationBody: T,
         completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
     ) where T: OperationBodyRequestType {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
             return
         }
+        // Caller-side encode: same mutable-body snapshot contract as executeAsyncOperation.
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
-        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
-        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
-        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
-        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
-        Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
+        enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON, completion: completion)
     }
 
     /**
@@ -354,21 +328,11 @@ public class Mindbox: NSObject {
         json: String,
         completion: @escaping (Result<OperationResponse, MindboxError>) -> Void
     ) {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
             return
         }
-        guard let jsonData = json.data(using: .utf8),
-              (try? JSONSerialization.jsonObject(with: jsonData)) != nil else {
-            Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
-            return
-        }
-        let customEvent = CustomEvent(name: operationSystemName, payload: json)
-        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
-        eventRepository.send(type: OperationResponse.self, event: event, completion: completion)
-        sendCustomEventInapps(operationSystemName, jsonString: json)
-        Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
+        enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: json, validatePayloadAsJSON: true, completion: completion)
     }
 
     /**
@@ -388,17 +352,13 @@ public class Mindbox: NSObject {
         customResponseType: P.Type,
         completion: @escaping (Result<P, MindboxError>) -> Void
     ) where T: OperationBodyRequestType, P: OperationResponseType {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+        guard validateOperationName(operationSystemName) else {
+            failSyncOperation(reason: "Invalid operation name: \(operationSystemName)", completion: completion)
             return
         }
+        // Caller-side encode: same mutable-body snapshot contract as executeAsyncOperation.
         let operationBodyJSON = BodyEncoder(encodable: operationBody).body
-        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
-        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
-        eventRepository.send(type: P.self, event: event, completion: completion)
-        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
-        Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
+        enqueueSyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON, completion: completion)
     }
 
     /**
@@ -414,20 +374,107 @@ public class Mindbox: NSObject {
      */
     @available(*, deprecated, message: "Use `executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T)` instead.")
     public func executeAsyncOperation<T: Encodable>(operationSystemName: String, operationBody: T) {
-        guard operationSystemName.operationNameIsValid else {
-            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+        guard validateOperationName(operationSystemName) else { return }
+        // Caller-side encode: same mutable-body snapshot contract as the generic overload.
+        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
+        enqueueAsyncEvent(operationSystemName: operationSystemName, payloadJSON: operationBodyJSON)
+    }
+
+    // MARK: - Operations pipeline
+
+    /// Shared tail of the pushClicked overloads: resolve the tracker on the caller,
+    /// persist the click off-main on eventQueue.
+    private func enqueueClickTracking(_ track: @escaping (ClickNotificationManager) throws -> Void) {
+        guard let tracker = DI.inject(ClickNotificationManager.self) else {
+            Logger.common(message: "Track Click dropped: ClickNotificationManager is nil", level: .error, category: .notification)
             return
         }
-        let operationBodyJSON = BodyEncoder(encodable: operationBody).body
-        let customEvent = CustomEvent(name: operationSystemName, payload: operationBodyJSON)
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-        sendCustomEventInapps(operationSystemName, jsonString: operationBodyJSON)
-        do {
-            try databaseRepository?.create(event: event)
-            Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "Track executeAsyncOperation failed with error: \(error)", level: .error, category: .notification)
+        eventQueue.async {
+            do {
+                try track(tracker)
+                Logger.common(message: "Track Click", level: .info, category: .notification)
+            } catch {
+                Logger.common(message: "Track UNNotificationResponse failed with error: \(error)", level: .error, category: .notification)
+            }
         }
+    }
+
+    /// Shared validation guard of every operation overload; logs the drop reason once.
+    private func validateOperationName(_ operationSystemName: String) -> Bool {
+        guard OperationNameValidator.isValid(operationSystemName) else {
+            Logger.common(message: "Invalid operation name: \(operationSystemName)", level: .error, category: .notification)
+            return false
+        }
+        return true
+    }
+
+    /// Delivers a `.validationError` failure on the main thread for sync operation overloads
+    /// that detect an invalid input before reaching the event queue.
+    private func failSyncOperation<P>(
+        reason: String,
+        location: String = "operationSystemName",
+        completion: @escaping (Result<P, MindboxError>) -> Void
+    ) {
+        let error = MindboxError.validationError(ValidationError(
+            status: .validationError,
+            validationMessages: [ValidationMessage(message: reason, location: location)]
+        ))
+        DispatchQueue.main.async { completion(.failure(error)) }
+    }
+
+    /// Off-main tail of the executeAsyncOperation overloads: build the event on eventQueue
+    /// and persist it for guaranteed delivery. `payloadJSON` must be an immutable snapshot
+    /// taken on the caller; host-provided JSON strings are validated here, off-main.
+    private func enqueueAsyncEvent(operationSystemName: String, payloadJSON: String, validatePayloadAsJSON: Bool = false) {
+        eventQueue.async { [self] in
+            if validatePayloadAsJSON, !Self.isValidJSON(payloadJSON) {
+                Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
+                return
+            }
+            let customEvent = CustomEvent(name: operationSystemName, payload: payloadJSON)
+            let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+            self.sendCustomEventInapps(operationSystemName, jsonString: payloadJSON)
+            guard let databaseRepository = self.databaseRepository else {
+                Logger.common(message: "Track executeAsyncOperation dropped: databaseRepository is nil", level: .error, category: .notification)
+                return
+            }
+            do {
+                try databaseRepository.create(event: event)
+                Logger.common(message: "Track executeAsyncOperation", level: .info, category: .notification)
+            } catch {
+                Logger.common(message: "Track executeAsyncOperation failed with error: \(error)", level: .error, category: .notification)
+            }
+        }
+    }
+
+    /// Off-main tail of the executeSyncOperation overloads: build the sync event on
+    /// eventQueue and hand it to EventRepository, which delivers `completion` on main.
+    /// Invalid JSON fails the operation with a `.validationError` delivered on main, so the
+    /// completion contract holds on every path. The repository is resolved at call time on purpose.
+    private func enqueueSyncEvent<P: OperationResponseType>(
+        operationSystemName: String,
+        payloadJSON: String,
+        validatePayloadAsJSON: Bool = false,
+        completion: @escaping (Result<P, MindboxError>) -> Void
+    ) {
+        let eventRepository = DI.injectOrFail(EventRepository.self)
+        eventQueue.async { [self] in
+            if validatePayloadAsJSON, !Self.isValidJSON(payloadJSON) {
+                Logger.common(message: "Operation body is not valid JSON", level: .error, category: .notification)
+                self.failSyncOperation(reason: "Operation body is not valid JSON", location: "operationBody", completion: completion)
+                return
+            }
+            let customEvent = CustomEvent(name: operationSystemName, payload: payloadJSON)
+            let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+            eventRepository.send(type: P.self, event: event, completion: completion)
+            self.sendCustomEventInapps(operationSystemName, jsonString: payloadJSON)
+            Logger.common(message: "Track executeSyncOperation", level: .info, category: .notification)
+        }
+    }
+
+    private static func isValidJSON(_ json: String) -> Bool {
+        guard let jsonData = json.data(using: .utf8) else { return false }
+        return (try? JSONSerialization.jsonObject(with: jsonData)) != nil
     }
 
     /**
@@ -438,15 +485,7 @@ public class Mindbox: NSObject {
 
      */
     public func pushClicked(response: UNNotificationResponse) {
-        guard let tracker = DI.inject(ClickNotificationManager.self) else {
-            return
-        }
-        do {
-            try tracker.track(response: response)
-            Logger.common(message: "Track Click", level: .info, category: .notification)
-        } catch {
-            Logger.common(message: "Track UNNotificationResponse failed with error: \(error)", level: .error, category: .notification)
-        }
+        enqueueClickTracking { try $0.track(response: response) }
     }
 
     /**
@@ -458,8 +497,13 @@ public class Mindbox: NSObject {
      */
     public func track(_ type: TrackVisitType) {
         guard let trackVisitManager = trackVisitManager else {
+            Logger.common(message: "Track Visit dropped: trackVisitManager is nil", level: .error, category: .visit)
             return
         }
+        // Deliberately NOT deferred to eventQueue: handlePush/handleUniversalLink set
+        // skipNextDirectTrackVisit, which trackDirect consumes on controllerQueue. The
+        // flag write must happen-before that dispatch, or a queued track(.push) races it:
+        // duplicate direct visit now, the next legitimate one wrongly skipped.
         do {
             try trackVisitManager.track(type)
         } catch {
@@ -476,8 +520,10 @@ public class Mindbox: NSObject {
      */
     public func track(data: TrackVisitData) {
         guard let trackVisitManager = trackVisitManager else {
+            Logger.common(message: "Track Visit dropped: trackVisitManager is nil", level: .error, category: .visit)
             return
         }
+        // Synchronous on purpose: same skipNextDirectTrackVisit contract as track(_:) above.
         do {
             try trackVisitManager.track(data: data)
         } catch {
@@ -578,6 +624,7 @@ public class Mindbox: NSObject {
     }
 
     private func sendCustomEventInapps(_ operationSystemName: String, jsonString: String?) {
+        // Reached only from the eventQueue operation blocks - i.e. off the main thread.
         guard let inappMessageEventSender = DI.inject(InappMessageEventSender.self) else {
             return
         }

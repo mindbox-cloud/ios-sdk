@@ -26,6 +26,7 @@ fileprivate enum InappTargetingConfig: String, Configurable {
     case fortyFourTargeting            = "44-Targeting"
     case fortyFiveTargeting            = "45-Targeting"
     case fortySixTargeting             = "46-Targeting"
+    case tagsFailedTargeting           = "Tags-FailedTargeting"
 }
 
 // MARK: - Suite
@@ -58,6 +59,7 @@ struct InappRemainingTargetingTests {
         self.mockDataFacade = mock
         self.mockDataFacade.cleanTargetingArray()
         self.mockDataFacade.cleanImageDownloadFailures()
+        self.mockDataFacade.cleanCollectedTargetingFailureIds()
 
         self.mapper = DI.injectOrFail(InappMapperProtocol.self)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -104,16 +106,12 @@ struct InappRemainingTargetingTests {
         expectedCount: Int,
         timeout: TimeInterval = 5
     ) async {
-        let deadline = Date().addingTimeInterval(timeout)
-
-        while Date() < deadline {
-            if mockDataFacade.targetingArray.count >= expectedCount {
-                return
-            }
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+        let final = await pollUntil(deadline: timeout, pollInterval: 0.05,
+                                    value: { mockDataFacade.targetingArray },
+                                    condition: { $0.count >= expectedCount })
+        if final.count < expectedCount {
+            Issue.record("Timed out waiting for targetingArray to reach count \(expectedCount). Current: \(final)")
         }
-
-        Issue.record("Timed out waiting for targetingArray to reach count \(expectedCount). Current: \(mockDataFacade.targetingArray)")
     }
 
     // MARK: - Tests
@@ -158,6 +156,31 @@ struct InappRemainingTargetingTests {
         assertTargetingEquals(ids: ["1", "2"])
     }
     
+    @Test("Failed targeting collects tags only for failed in-apps that have them", .tags(.remainingTargeting, .inAppTags))
+    func failedTargeting_collectsTagsOnlyForFailedInappsWithTags() async throws {
+        let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
+
+        await handleInapps(event: nil, config: config)
+
+        // In-apps "1" (with tags) and "3" (without tags) fail segment targeting, "2" passes.
+        #expect(mockDataFacade.collectedTargetingFailureIds == [Set(["1", "3"])])
+        #expect(mockDataFacade.collectedTagsByInappId == [
+            ["1": ["templateType": "Popup", "abTestVariant": "control"]]
+        ])
+    }
+
+    @Test("Shown in-app propagates its tags into trackTargeting and downloadImage", .tags(.remainingTargeting, .inAppTags))
+    func shownInapp_propagatesTagsToTrackTargetingAndDownloadImage() async throws {
+        let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
+
+        await handleInapps(event: nil, config: config)
+
+        assertTargetingShows(id: "2")
+        let trackedTags = mockDataFacade.trackTargetingCalls.first(where: { $0.id == "2" })?.tags
+        #expect(trackedTags == ["templateType": "Snackbar"])
+        #expect(mockDataFacade.downloadImageTags["2"] == ["templateType": "Snackbar"])
+    }
+
     @Test("Image download error adds in-app show failure", .tags(.remainingTargeting))
     func imageDownloadError_addsFailure() async throws {
         let config = try InappTargetingConfig.oneTargeting.getConfig()

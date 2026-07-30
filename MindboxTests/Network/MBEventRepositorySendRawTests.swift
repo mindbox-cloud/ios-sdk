@@ -7,15 +7,17 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-@Suite("MBEventRepository.sendRaw")
+@Suite("MBEventRepository")
 struct MBEventRepositorySendRawTests {
 
     // MARK: - Test doubles
 
     private final class FakeNetworkFetcher: NetworkFetcher, @unchecked Sendable {
         var requestRawResult: Result<Data, MindboxError> = .success(Data())
+        var requestTypedRawResponse: Result<Data, MindboxError> = .success(Data(#"{"status":"Success"}"#.utf8))
         private(set) var capturedRoute: Route?
         private(set) var requestRawCallCount = 0
+        private(set) var requestTypedCallCount = 0
 
         func request<T>(
             type: T.Type,
@@ -23,7 +25,15 @@ struct MBEventRepositorySendRawTests {
             needBaseResponse: Bool,
             completion: @escaping ((Result<T, MindboxError>) -> Void)
         ) where T: Decodable {
-            // not used by sendRaw
+            requestTypedCallCount += 1
+            capturedRoute = route
+            switch requestTypedRawResponse {
+            case .success(let data):
+                // A fixture/type mismatch is a test bug - crash loudly rather than mask it.
+                completion(.success(try! JSONDecoder().decode(T.self, from: data)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
 
         func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
@@ -207,5 +217,67 @@ struct MBEventRepositorySendRawTests {
         }
 
         #expect(isMain)
+    }
+
+    // MARK: - send<T>: completion always on the main queue (MOBILE-208 contract)
+
+    @Test("send<T> network-path completion is delivered on the main queue")
+    func sendTyped_completion_onMainQueue() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage())
+
+        let outcome: (isMain: Bool, isSuccess: Bool) = await withCheckedContinuation { cont in
+            repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in
+                if case .success = result {
+                    cont.resume(returning: (Thread.isMainThread, true))
+                } else {
+                    cont.resume(returning: (Thread.isMainThread, false))
+                }
+            }
+        }
+
+        #expect(outcome.isMain)
+        #expect(outcome.isSuccess)
+        #expect(fetcher.requestTypedCallCount == 1)
+    }
+
+    @Test("send<T> early error (missing configuration) is delivered on the main queue")
+    func sendTyped_missingConfiguration_errorOnMainQueue() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage(configured: false))
+
+        let outcome: (isMain: Bool, errorKey: String?) = await withCheckedContinuation { cont in
+            repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in
+                guard case .failure(.internalError(let ie)) = result else {
+                    cont.resume(returning: (Thread.isMainThread, nil))
+                    return
+                }
+                cont.resume(returning: (Thread.isMainThread, ie.errorKey))
+            }
+        }
+
+        #expect(outcome.isMain)
+        #expect(outcome.errorKey == ErrorKey.invalidConfiguration.rawValue)
+        #expect(fetcher.requestTypedCallCount == 0, "Fetcher must not be called when configuration is missing")
+    }
+
+    @Test("send<T> early error (missing deviceUUID) is delivered on the main queue")
+    func sendTyped_missingDeviceUUID_errorOnMainQueue() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage(deviceUUID: nil))
+
+        let outcome: (isMain: Bool, errorKey: String?) = await withCheckedContinuation { cont in
+            repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in
+                guard case .failure(.internalError(let ie)) = result else {
+                    cont.resume(returning: (Thread.isMainThread, nil))
+                    return
+                }
+                cont.resume(returning: (Thread.isMainThread, ie.errorKey))
+            }
+        }
+
+        #expect(outcome.isMain)
+        #expect(outcome.errorKey == ErrorKey.invalidConfiguration.rawValue)
+        #expect(fetcher.requestTypedCallCount == 0, "Fetcher must not be called when deviceUUID is missing")
     }
 }

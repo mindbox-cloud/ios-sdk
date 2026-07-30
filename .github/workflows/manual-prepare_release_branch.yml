@@ -15,14 +15,19 @@ on:
         required: true
         default: 'master'
 
+permissions:
+  contents: read
+
 jobs:
   validate-input:
     name: Validate release_version format
     runs-on: ubuntu-latest
     steps:
       - name: Check version matches semver or semver-rc
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
         run: |
-          VER="${{ github.event.inputs.release_version }}"
+          VER="$RELEASE_VERSION"
           echo "→ release_version = $VER"
           if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$ ]]; then
             echo "❌ release_version must be X.Y.Z or X.Y.Z-rc"
@@ -35,22 +40,26 @@ jobs:
     needs: validate-input
     steps:
       - name: Checkout minimal repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
       - name: Validate source branch exists
+        env:
+          SOURCE_BRANCH: ${{ github.event.inputs.source_branch }}
         run: |
-          SRC="${{ github.event.inputs.source_branch }}"
-          if ! git ls-remote --heads origin "$SRC" | grep -q "$SRC"; then
+          SRC="$SOURCE_BRANCH"
+          if [ -z "$(git ls-remote --heads origin "refs/heads/$SRC")" ]; then
             echo "❌ source_branch '$SRC' does not exist on origin"
             exit 1
           fi
 
       - name: Validate target branch exists
+        env:
+          TARGET_BRANCH: ${{ github.event.inputs.target_branch }}
         run: |
-          DST="${{ github.event.inputs.target_branch }}"
-          if ! git ls-remote --heads origin "$DST" | grep -q "$DST"; then
+          DST="$TARGET_BRANCH"
+          if [ -z "$(git ls-remote --heads origin "refs/heads/$DST")" ]; then
             echo "❌ target_branch '$DST' does not exist on origin"
             exit 1
           fi
@@ -59,20 +68,25 @@ jobs:
     name: Create release branch & bump version
     runs-on: macos-26
     needs: validate-branches
+    permissions:
+      contents: write
     outputs:
       release_branch: ${{ steps.bump.outputs.release_branch }}
     steps:
       - name: Checkout source branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ github.event.inputs.source_branch }}
           fetch-depth: 0
 
       - name: Create release branch & bump version
         id: bump
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+          SOURCE_BRANCH: ${{ github.event.inputs.source_branch }}
         run: |
-          VERSION="${{ github.event.inputs.release_version }}"
-          SRC="${{ github.event.inputs.source_branch }}"
+          VERSION="$RELEASE_VERSION"
+          SRC="$SOURCE_BRANCH"
           REL="release/$VERSION"
 
           echo "→ Branching from $SRC into $REL"
@@ -81,10 +95,12 @@ jobs:
           echo "→ Running bump script on $REL"
           ./.github/git-release-branch-create.sh "$VERSION"
 
-          echo "release_branch=$REL" >> $GITHUB_OUTPUT
+          echo "release_branch=$REL" >> "$GITHUB_OUTPUT"
 
       - name: Push release branch
-        run: git push origin "${{ steps.bump.outputs.release_branch }}"
+        env:
+          RELEASE_BRANCH: ${{ steps.bump.outputs.release_branch }}
+        run: git push origin "$RELEASE_BRANCH"
 
   check_sdk_version:
     name: Check SDK Version
@@ -92,7 +108,7 @@ jobs:
     needs: bump_and_branch
     steps:
       - name: Checkout the release branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ needs.bump_and_branch.outputs.release_branch }}
           fetch-depth: 0
@@ -101,8 +117,10 @@ jobs:
         run: git pull
 
       - name: Validate sdkVersion
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
         run: |
-          EXPECT="${{ github.event.inputs.release_version }}"
+          EXPECT="$RELEASE_VERSION"
           SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
           echo "→ Found in code: $SDK_VERSION, expected: $EXPECT"
           if [ "$SDK_VERSION" != "$EXPECT" ]; then
@@ -121,11 +139,12 @@ jobs:
           SRC: ${{ needs.bump_and_branch.outputs.release_branch }}
           DST: ${{ github.event.inputs.target_branch }}
           REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
         run: |
           echo "→ Creating PR from $SRC into $DST"
           gh pr create \
             --repo "$REPO" \
             --base "$DST" \
             --head "$SRC" \
-            --title "Release ${{ github.event.inputs.release_version }}" \
-            --body "Updates the release version to ${{ github.event.inputs.release_version }}. Automated PR: merge $SRC into $DST"
+            --title "Release $RELEASE_VERSION" \
+            --body "Updates the release version to $RELEASE_VERSION. Automated PR: merge $SRC into $DST"

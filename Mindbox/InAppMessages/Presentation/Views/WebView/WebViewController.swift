@@ -12,7 +12,6 @@ protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
-    func closeJSReadyMissingWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -35,6 +34,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let id: String
     private let imagesDict: [String: UIImage]
     private let operation: (name: String, body: String)?
+    private let tags: [String: String]?
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
@@ -62,12 +62,14 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onCloseInApp: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
-        operation: (name: String, body: String)?
+        operation: (name: String, body: String)?,
+        tags: [String: String]?
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
         self.operation = operation
+        self.tags = tags
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
         self.onError = onError
@@ -84,6 +86,8 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         NotificationCenter.default.removeObserver(self)
         Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
+        // Stop the closed in-app's JS from running hidden on the parked warm instance.
+        DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).parkWarmWebView()
     }
 
     private func setupWebView() {
@@ -96,7 +100,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id)
+            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)
@@ -149,6 +153,13 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         becomeFirstResponder()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        // Every dismissal path (close action, dim-tap, timeout) goes through here while
+        // the page is still alive — the last moment the learned-hosts capture can run.
+        transparentWebView?.captureObservedResourceHosts()
+        super.viewWillDisappear(animated)
+    }
+
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         if motion == .motionShake {
             transparentWebView?.handleSystemShake()
@@ -198,13 +209,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func createUserAgent() -> String {
-        let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
-
-        let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"
-        let appVersion = utilitiesFetcher.appVerson ?? "unknown"
-        let appName = utilitiesFetcher.hostApplicationName ?? "unknown"
-
-        return "mindbox.sdk/\(sdkVersion) (\(DeviceModelHelper.os) \(DeviceModelHelper.iOSVersion); \(DeviceModelHelper.model)) \(appName)/\(appVersion)"
+        SDKUserAgent.build()
     }
 }
 
@@ -217,24 +222,30 @@ extension WebViewController: WebVCDelegate {
     func closeTimeoutWebViewVC() {
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         reportErrorAndClose(
-            .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(id).")
+            Self.timeoutError(
+                readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
+                inAppId: id,
+                httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
+            )
         )
+    }
+
+    /// The init timeout is the single closing authority, but monitoring must still tell
+    /// "the page loaded and its JS bridge never appeared" (a content defect) apart from
+    /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
+    /// concrete cause when a script subresource answered with an HTTP error — with it a
+    /// poisoned-cache death names the resource and status instead of a generic timeout.
+    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+        let suffix = httpErrorDetail.map { " \($0)" } ?? ""
+        return readyCheckGaveUp
+            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
+            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
         Logger.common(message: "[WebView] WebViewVC closeLoadFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
         reportErrorAndClose(
             .webviewLoadFailed(reason)
-        )
-    }
-
-    func closeJSReadyMissingWebViewVC(reason: String) {
-        Logger.common(
-            message: "[WebView] WebViewVC closeJSReadyMissingWebViewVC. Reason: \(reason)",
-            category: .webViewInAppMessages
-        )
-        reportErrorAndClose(
-            .webviewPresentationFailed(reason)
         )
     }
 }

@@ -50,6 +50,7 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     private let onTapAction: InAppMessageTapAction
 
     private var viewWillAppearWasCalled = false
+    private var lastElementsLayoutSize: CGSize = .zero
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.2
@@ -96,14 +97,21 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        if let inappView = layers.first(where: { $0 is InAppImageOnlyView }) {
-            Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
-            Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
+        guard let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
+            return
         }
 
-        elements.forEach({
-            $0.removeFromSuperview()
-        })
+        // Rebuild elements only when the content size actually changes.
+        // Doing it on every pass is not allowed: addSubview + activate(constraints)
+        // mark the layout dirty again → infinite viewDidLayoutSubviews loop.
+        let size = inappView.frame.size
+        guard size != lastElementsLayoutSize else {
+            return
+        }
+        lastElementsLayoutSize = size
+
+        Logger.common(message: "In-app modal height: [\(inappView.frame.height) pt]")
+        Logger.common(message: "In-app modal width: [\(inappView.frame.width) pt]")
 
         setupElements()
     }
@@ -141,6 +149,9 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
     }
 
     private func setupElements() {
+        elements.forEach { $0.removeFromSuperview() }
+        elements.removeAll()
+
         guard let elements = model.content.elements,
               let inappView = layers.first(where: { $0 is InAppImageOnlyView }) else {
             return

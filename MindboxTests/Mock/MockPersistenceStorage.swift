@@ -28,8 +28,10 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
+    // Mirror production `MBPersistenceStorage`: installed state is the presence of a persisted
+    // installation-date marker, never its parseability — not `installationDate != nil` directly.
     var isInstalled: Bool {
-        installationDate != nil
+        installationDateString != nil
     }
 
     var apnsToken: String? {
@@ -62,8 +64,14 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
+    // Presence marker for `isInstalled`, mirroring production's installation-date string. The Date
+    // itself is stored as-is (no `.utc` flooring) so the mock keeps full precision like its other
+    // date properties — only `isInstalled` is derived from the marker's presence.
+    private var installationDateString: String?
+
     var installationDate: Date? {
         didSet {
+            installationDateString = installationDate?.toString(withFormat: .utc)
             onDidChange?()
         }
     }
@@ -123,6 +131,13 @@ class MockPersistenceStorage: PersistenceStorage {
     var applicationInstanceId: String?
 
     var webViewLocalStateVersion: Int?
+
+    // Counts writes so a no-op-write regression (rewriting an unchanged dictionary) is
+    // observable — the persisted value alone can't distinguish "written again" from "unchanged".
+    var webViewLearnedHostsWriteCount = 0
+    var webViewLearnedHosts: [String: [String]]? {
+        didSet { webViewLearnedHostsWriteCount += 1 }
+    }
 
     var operationsDomainFromConfig: String? {
         didSet {

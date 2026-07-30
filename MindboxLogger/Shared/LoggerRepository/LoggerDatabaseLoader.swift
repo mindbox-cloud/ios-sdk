@@ -174,7 +174,7 @@ final class LoggerDatabaseLoader: LoggerDatabaseLoading {
             return explicitURL
         }
         if let applicationGroupId = configuration.applicationGroupId {
-            return FileManager.storeURL(for: applicationGroupId, databaseName: configuration.modelName)
+            return try FileManager.storeURL(for: applicationGroupId, databaseName: configuration.modelName)
         }
         let cachesDirectory = try FileManager.default.url(
             for: .cachesDirectory,

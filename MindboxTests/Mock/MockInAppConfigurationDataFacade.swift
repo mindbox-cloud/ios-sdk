@@ -20,9 +20,12 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     public var showArray: [String] = []
     public var targetingArray: [String] = []
+    public var trackTargetingCalls: [(id: String?, tags: [String: String]?)] = []
     public var downloadImageError: MindboxError?
     public var imageDownloadFailures: [(inappId: String, details: String?)] = []
+    public var downloadImageTags: [String: [String: String]?] = [:]
     public var collectedTargetingFailureIds: [Set<String>] = []
+    public var collectedTagsByInappId: [[String: [String: String]]] = []
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -42,7 +45,8 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         completion()
     }
 
-    func downloadImage(withUrl url: String, inappId: String, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+        downloadImageTags[inappId] = tags
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
@@ -62,11 +66,13 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>) {
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
         collectedTargetingFailureIds.append(failedTargetingInappIds)
+        collectedTagsByInappId.append(tagsByInappId)
     }
-    
-    func trackTargeting(id: String?) {
+
+    func trackTargeting(id: String?, tags: [String: String]?) {
+        trackTargetingCalls.append((id: id, tags: tags))
         if let id = id {
             if showArray.isEmpty {
                 showArray.append(id)
@@ -78,13 +84,16 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     func cleanTargetingArray() {
         targetingArray = []
+        trackTargetingCalls = []
     }
-    
+
     func cleanImageDownloadFailures() {
         imageDownloadFailures = []
+        downloadImageTags = [:]
     }
 
     func cleanCollectedTargetingFailureIds() {
         collectedTargetingFailureIds = []
+        collectedTagsByInappId = []
     }
 }

@@ -16,17 +16,32 @@ final class TransparentView: UIView {
     weak var delegate: WebVCDelegate?
     weak var webViewAction: WebViewAction?
 
-    private var facade: InappWebViewFacadeProtocol?
+    var facade: InappWebViewFacadeProtocol?
     private var quizInitTimeoutWorkItem: DispatchWorkItem?
     private var params: [String: JSONValue]?
     private var operation: (name: String, body: String)?
     private let userAgent: String
     private let inAppId: String
+    private let tags: [String: String]?
     private var lastReadyCheckedUrl: String?
-    private var isReadyCheckInFlight = false
+    private var readyChecker: WebViewReadyChecker?
+    /// True when the page finished loading but the JS bridge never appeared within the
+    /// ready-check budget — lets the init timeout report the accurate failure category.
+    private(set) var readyCheckDidGiveUp = false
+    /// True once the page has sent `init`. After that the init timeout is cancelled, so a
+    /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
+    /// closing authority — it must close the show itself.
+    private var hasReceivedInit = false
+    private var hasCapturedObservedHosts = false
+    private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
+        InAppWebViewDataStore.isCacheFeatureEnabled
+    }
     private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
+    lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+    lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
+    lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
     private var isMotionServiceInitialized = false
     private lazy var motionService: MotionServiceProtocol = {
         isMotionServiceInitialized = true
@@ -37,11 +52,12 @@ final class TransparentView: UIView {
         return service
     }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String) {
+    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
         self.inAppId = inAppId
+        self.tags = tags
         super.init(frame: frame)
         commonInit()
     }
@@ -51,6 +67,7 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.tags = nil
         super.init(frame: frame)
         commonInit()
     }
@@ -60,11 +77,13 @@ final class TransparentView: UIView {
         self.operation = nil
         self.userAgent = ""
         self.inAppId = ""
+        self.tags = nil
         super.init(coder: coder)
         commonInit()
     }
 
     deinit {
+        readyChecker?.cancel()
         if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
@@ -102,6 +121,19 @@ final class TransparentView: UIView {
         facade?.cleanWebView()
     }
 
+    /// Persists the hosts this show's resources actually came from so the next launch's
+    /// prewarm can preconnect to them. Called from `viewWillDisappear`, which every
+    /// dismissal path (close action, dim-tap, timeout) goes through while the page is still
+    /// alive; the once-flag is a cheap guard against a repeated disappear.
+    func captureObservedResourceHosts() {
+        guard !hasCapturedObservedHosts else { return }
+        hasCapturedObservedHosts = true
+        facade?.evaluateJavaScript(InAppWebViewPrewarmPlanner.observedHostsScript) { result in
+            guard case .success(let value) = result, let hosts = value as? [String] else { return }
+            DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).rememberObservedHosts(hosts)
+        }
+    }
+
     func cancelTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         quizInitTimeoutWorkItem = nil
@@ -109,6 +141,12 @@ final class TransparentView: UIView {
 
     func restartTimeoutTimer() {
         setupTimeoutTimer()
+    }
+
+    var noCacheRetryTelemetryDetail: String? {
+        noCacheRetryPolicy.lastHTTPErrorDetail.map { detail in
+            "Last script HTTP error: \(detail); no-cache retry attempted: \(noCacheRetryPolicy.hasRetried)."
+        }
     }
 
     private func setupTimeoutTimer() {
@@ -174,7 +212,11 @@ extension TransparentView: WebBridgeMessageDelegate {
             if isMotionServiceInitialized { motionService.stopMonitoring() }
             webViewAction?.onClose()
         case .`init`:
+            hasReceivedInit = true
             quizInitTimeoutWorkItem?.cancel()
+            // The page has proven it can boot — drop the retained retry content (mirror of
+            // Android's handleInitAction cleanup; the policy's one-shot state stays).
+            facade?.releaseRetainedContent()
             hapticService.prepare()
             webViewAction?.onInit()
         case .click:
@@ -234,45 +276,83 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
         // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
-        isReadyCheckInFlight = false
+        readyCheckDidGiveUp = false
+        readyChecker?.cancel()
+        readyChecker = nil
     }
-    
+
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
         Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
-        guard !isReadyCheckInFlight else { return }
         guard lastReadyCheckedUrl != urlString else { return }
         lastReadyCheckedUrl = urlString
-        isReadyCheckInFlight = true
 
-        let script = Constants.WebViewBridgeJS.bridgeFunctionReadyCheck
-        facade?.evaluateJavaScript(script) { [weak self] result in
+        readyChecker?.cancel()
+        let checker = WebViewReadyChecker(evaluate: { [weak self] script, completion in
+            // Teardown: abandon the poll silently, exactly like cancel().
+            guard let facade = self?.facade else { return }
+            facade.evaluateJavaScript(script, completion: completion)
+        })
+        readyChecker = checker
+        checker.run(onReady: {
+            Logger.common(
+                message: "[WebView] JS ready check for URL \(urlString): true",
+                category: .webViewInAppMessages
+            )
+        }, onGiveUp: { [weak self] lastFailure in
             guard let self else { return }
-            self.isReadyCheckInFlight = false
+            self.readyCheckDidGiveUp = true
+            Logger.common(
+                message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
+                category: .webViewInAppMessages
+            )
+            // Before `init` the 7s timeout owns closing: its budget can expire while a slow
+            // page is still booting the bridge, and the window is invisible until `init`
+            // anyway; the flag above lets that timeout report the real category. After
+            // `init` the timeout is already cancelled, so a give-up here (a post-load
+            // navigation dropped the bridge) is the only signal left — close now, else the
+            // in-app stays up with a dead bridge. The give-up flag makes this report
+            // webview_presentation_failed, matching the pre-refactor behavior.
+            if self.hasReceivedInit {
+                self.delegate?.closeTimeoutWebViewVC()
+            }
+        })
+    }
+    
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {
+        let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url)
+        Logger.common(
+            message: "[WebView] Subresource error: \(InAppWebViewHTTPError.loadFailureDescription) for \(url ?? "nil")",
+            level: isRecoverable ? .default : .debug,
+            category: .webViewInAppMessages
+        )
+        guard noCacheRetryPolicy.onHTTPError(url: url, hasReceivedInit: hasReceivedInit) else { return }
+        retryContentPageBypassingCache(failedURL: url)
+    }
 
-            switch result {
-            case .success(let anyValue):
-                let hasReady = (anyValue as? Bool) ?? false
+    private func retryContentPageBypassingCache(failedURL: String?) {
+        Logger.common(
+            message: "[WebView] Retrying In-App content load with cache bypassed (\(noCacheRetryPolicy.lastHTTPErrorDetail ?? "unknown"))",
+            level: .info,
+            category: .webViewInAppMessages
+        )
+        readyChecker?.cancel()
+        readyChecker = nil
+        restartTimeoutTimer()
+        facade?.retryContentLoadBypassingCache(failedURL: failedURL) { [weak self] didRemoveAnything in
+            self?.noCacheRetryPolicy.notePurgeOutcome(didRemoveAnything: didRemoveAnything)
+            if !didRemoveAnything {
                 Logger.common(
-                    message: "[WebView] JS ready check for URL \(urlString): \(hasReady)",
+                    message: "[WebView] Cache purge found no entry for the failed script (write-behind race?) — one more retry may follow",
+                    level: .debug,
                     category: .webViewInAppMessages
                 )
-                if !hasReady {
-                    self.delegate?.closeJSReadyMissingWebViewVC(reason: "window.bridgeMessagesHandlers.emit is missing for URL \(urlString)")
-                }
-
-            case .failure(let error):
-                Logger.common(
-                    message: "[WebView] JS ready check failed for URL \(urlString). Error: \(error.localizedDescription)",
-                    category: .webViewInAppMessages
-                )
-                self.delegate?.closeJSReadyMissingWebViewVC(reason: "evaluateJavaScript error for URL \(urlString): \(error.localizedDescription)")
             }
         }
     }
-    
+
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
         delegate?.closeLoadFailedWebViewVC(
@@ -322,18 +402,27 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
 extension TransparentView {
 
-    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: String)? {
+    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: JSONValue)? {
         guard case .string(let str) = message.payload,
               let data = str.data(using: .utf8),
               let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
               case .string(let operation) = dict["operation"],
-              let body = dict["body"],
-              let bodyData = try? JSONEncoder().encode(body),
-              let bodyString = String(data: bodyData, encoding: .utf8) else {
+              !operation.isEmpty,
+              let body = dict["body"] else {
             return nil
         }
 
-        return (operation, bodyString)
+        return (operation, body)
+    }
+
+    private func mergedOperationBodyString(_ body: JSONValue) -> String? {
+        let gatedTags = featureToggleManager.gatedTags(tags)
+        let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
+
+        guard let bodyData = try? JSONEncoder().encode(mergedBody) else {
+            return nil
+        }
+        return String(data: bodyData, encoding: .utf8)
     }
 
     private func sendBridgeSuccess(action: String, id: UUID) {
@@ -353,15 +442,15 @@ extension TransparentView {
     }
 
     private func handleAsyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+        guard let params = extractOperationParams(from: message),
+              let bodyString = mergedOperationBodyString(params.body) else {
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
-        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
 
-        let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         do {
             try databaseRepository.create(event: event)
             Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
@@ -375,14 +464,14 @@ extension TransparentView {
     }
 
     private func handleSyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty operation", action: message.action, id: message.id)
+        guard let params = extractOperationParams(from: message),
+              let bodyString = mergedOperationBodyString(params.body) else {
+            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
             return
         }
 
-        let customEvent = CustomEvent(name: params.name, payload: params.body)
+        let customEvent = CustomEvent(name: params.name, payload: bodyString)
         let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-        let eventRepository = DI.injectOrFail(EventRepository.self)
 
         Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
 
@@ -441,7 +530,7 @@ extension TransparentView {
             return BridgeMessage(
                 type: .error,
                 action: action,
-                payload: .string(error.createJSON()),
+                payload: .string(error.createDataJSON()),
                 id: id
             )
         }

@@ -10,7 +10,7 @@ import Foundation
 import MindboxLogger
 
 protocol InappShowFailureManagerProtocol {
-    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?)
+    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
     func clearFailures()
     func sendFailures()
 }
@@ -34,11 +34,13 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         self.featureToggleManager = featureToggleManager
     }
     
-    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?) {
+    func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
             Logger.common(message: "[InappShowFailureManager] addFailure ignored, feature is disabled", category: .inAppMessages)
             return
         }
+
+        let gatedTags = featureToggleManager.gatedTags(tags)
 
         let truncatedDetails = details.map { original -> String in
             let truncated = original.truncated(toUTF8ByteLimit: Self.errorDetailsLimit)
@@ -63,13 +65,13 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                     )
                     return
                 }
-                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: truncatedDetails)
+                failures[existingIndex] = makeFailure(inappId: inappId, reason: reason, details: truncatedDetails, tags: gatedTags)
                 Logger.common(message: "[InappShowFailureManager] Failure reason updated. inappId=\(inappId), reason=\(reason.rawValue)",
                               category: .inAppMessages)
                 return
             }
 
-            failures.append(makeFailure(inappId: inappId, reason: reason, details: truncatedDetails))
+            failures.append(makeFailure(inappId: inappId, reason: reason, details: truncatedDetails, tags: gatedTags))
         }
     }
     
@@ -111,12 +113,13 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
-    private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?) -> InAppShowFailure {
+    private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) -> InAppShowFailure {
         InAppShowFailure(
             inappId: inappId,
             failureReason: reason,
             errorDetails: details,
-            dateTimeUtc: Date().toString(withFormat: .utc)
+            dateTimeUtc: Date().toString(withFormat: .utc),
+            tags: tags
         )
     }
 

@@ -19,6 +19,7 @@ struct ViewFactoryParameters {
     let onClose: () -> Void
     let onError: (InAppPresentationError) -> Void
     let operation: (name: String, body: String)?
+    let tags: [String: String]?
 }
 
 protocol ViewFactoryProtocol {

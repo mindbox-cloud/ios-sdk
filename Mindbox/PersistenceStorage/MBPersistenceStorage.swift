@@ -16,29 +16,27 @@ class MBPersistenceStorage: PersistenceStorage {
     // MARK: - Dependency
     static var defaults: UserDefaults = .standard
 
-    private let dateFormatter: DateFormatter = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .full
-        dateFormatter.timeStyle = .full
-        return dateFormatter
-    }()
-
     // MARK: - Property
+    // Installed state is the presence of the persisted installation date string,
+    // never its parseability. Decoupling from parsing keeps `isInstalled` stable
+    // across region/locale and 12h↔24h time-format changes, which would otherwise
+    // break a localized date string and route an existing install through the
+    // fresh-install path.
     var isInstalled: Bool {
-        installationDate != nil
+        installationDateString != nil
     }
 
     var installationDate: Date? {
         get {
             if let dateString = installationDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                installationDateString = dateFormatter.string(from: date)
+                installationDateString = date.toString(withFormat: .utc)
             } else {
                 installationDateString = nil
             }
@@ -48,14 +46,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var firstInitializationDateTime: Date? {
         get {
             if let dateString = firstInitializationDateTimeString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                firstInitializationDateTimeString = dateFormatter.string(from: date)
+                firstInitializationDateTimeString = date.toString(withFormat: .utc)
             } else {
                 firstInitializationDateTimeString = nil
             }
@@ -65,14 +63,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var apnsTokenSaveDate: Date? {
         get {
             if let dateString = apnsTokenSaveDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                apnsTokenSaveDateString = dateFormatter.string(from: date)
+                apnsTokenSaveDateString = date.toString(withFormat: .utc)
             } else {
                 apnsTokenSaveDateString = nil
             }
@@ -82,7 +80,7 @@ class MBPersistenceStorage: PersistenceStorage {
     var lastInfoUpdateDate: Date? {
         get {
             if let dateString = lastInfoUpdateDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
@@ -90,7 +88,7 @@ class MBPersistenceStorage: PersistenceStorage {
         
         set {
             if let date = newValue {
-                lastInfoUpdateDateString = dateFormatter.string(from: date)
+                lastInfoUpdateDateString = date.toString(withFormat: .utc)
             } else {
                 lastInfoUpdateDateString = nil
             }
@@ -100,14 +98,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var deprecatedEventsRemoveDate: Date? {
         get {
             if let dateString = deprecatedEventsRemoveDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                deprecatedEventsRemoveDateString = dateFormatter.string(from: date)
+                deprecatedEventsRemoveDateString = date.toString(withFormat: .utc)
             } else {
                 deprecatedEventsRemoveDateString = nil
             }
@@ -133,14 +131,14 @@ class MBPersistenceStorage: PersistenceStorage {
     var configDownloadDate: Date? {
         get {
             if let dateString = configDownloadDateString {
-                return dateFormatter.date(from: dateString)
+                return dateString.toDate(withFormat: .utc)
             } else {
                 return nil
             }
         }
         set {
             if let date = newValue {
-                configDownloadDateString = dateFormatter.string(from: date)
+                configDownloadDateString = date.toString(withFormat: .utc)
             } else {
                 configDownloadDateString = nil
             }
@@ -268,6 +266,9 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .webViewLocalStateVersion, defaultValue: nil)
     var webViewLocalStateVersion: Int?
 
+    @UserDefaultsWrapper(key: .webViewLearnedHosts, defaultValue: nil)
+    var webViewLearnedHosts: [String: [String]]?
+
     @UserDefaultsWrapper(key: .operationsDomainFromConfig, defaultValue: nil)
     var operationsDomainFromConfig: String? {
         didSet {
@@ -313,6 +314,7 @@ extension MBPersistenceStorage {
             case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
             case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
+            case webViewLearnedHosts = "MBPersistenceStorage-webViewLearnedHosts"
             case operationsDomainFromConfig = "MBPersistenceStorage-operationsDomainFromConfig"
 
             // MARK: - Deprecated Keys
@@ -351,5 +353,54 @@ fileprivate extension UserDefaults {
 
     func isValueExists(forKey key: String) -> Bool {
         return object(forKey: key) != nil
+    }
+}
+
+// MARK: - Install-state probing across stores
+
+extension MBPersistenceStorage {
+
+    /// Backing key for `isInstalled`, exposed so the reporter can probe a specific store.
+    static var installationDataKey: String {
+        UserDefaultsWrapper<String>.Key.installationData.rawValue
+    }
+
+    static func isInstalled(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: installationDataKey) != nil
+    }
+}
+
+/// Reports (issue #705 follow-up) a fallback-then-recovery fingerprint: install state in BOTH the
+/// `.standard` fallback and the App Group suite. Read-only by design (cleanup deferred to a future
+/// migration). Runs after re-registration, so it fires on the recovery launch itself and on every
+/// cold start while the fingerprint persists.
+struct AppGroupStorageTransitionReporter {
+
+    private let localDefaults: UserDefaults
+    private let sharedDefaults: UserDefaults?
+
+    /// In fallback the active store *is* `.standard`, so there's nothing to compare.
+    init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
+         localDefaults: UserDefaults = .standard) {
+        self.localDefaults = localDefaults
+        self.sharedDefaults = (activeDefaults === localDefaults) ? nil : activeDefaults
+    }
+
+    @discardableResult
+    func reportIfNeeded() -> Bool {
+        guard let sharedDefaults else { return false }
+        guard MBPersistenceStorage.isInstalled(in: localDefaults),
+              MBPersistenceStorage.isInstalled(in: sharedDefaults) else { return false }
+
+        Logger.common(
+            message: "[Storage] Install state found in BOTH the local fallback store and the "
+                + "App Group suite. The device ran in local-storage fallback (App Group "
+                + "unavailable) and the App Group has since become available, so the install was "
+                + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
+                + "in-app caps/counters reset).",
+            level: .info,
+            category: .general
+        )
+        return true
     }
 }

@@ -8,6 +8,7 @@
 
 import UIKit
 import WebKit
+import MindboxLogger
 
 private enum PayloadKey {
     static let sdkVersion = "sdkVersion"
@@ -49,6 +50,15 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?)
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void)
+    func releaseRetainedContent()
+}
+
+@_spi(Internal)
+public extension InappWebViewFacadeProtocol {
+    // Defaults so existing conformers (mocks, test apps) keep compiling.
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
+    func releaseRetainedContent() {}
 }
 
 @_spi(Internal)
@@ -80,24 +90,39 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     private let log: WebViewLog
     private let logError: WebViewLogError
 
+    // Main-confined. A borrowed prewarmed `webView` outlives this facade (the prewarm
+    // service keeps it warm across shows), so a `[weak webView]` guard is not enough to
+    // stop a slow fetch that completes after the show closed — it would load the dead
+    // show's page into the parked hidden instance. `isClosed` gates the load and the
+    // in-flight fetch is cancelled outright on teardown.
+    private var fetchTask: URLSessionDataTask?
+    private var isClosed = false
+
+    // Main-confined. The content page is retained so a poisoned-cache HTTP error can be
+    // answered by reloading the exact same page after the purge (mirror of Android's
+    // `lastLoadedContent`). Released on `init` — after it the page has proven it can boot
+    // and a reload would tear down a live in-app.
+    private var retainedContentHTML: String?
+    private var retainedContentBaseURL: URL?
+
     public init(params: [String: JSONValue]?,
                 operation: (name: String, body: String)? = nil,
                 userAgent: String,
                 inAppId: String = "",
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
-        let config = WKWebViewConfiguration()
-        config.websiteDataStore = .nonPersistent()
-        config.applicationNameForUserAgent = userAgent
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
-
-        let webView = WKWebView(frame: .zero, configuration: config)
-        #if DEBUG
-        if #available(iOS 16.4, *) {
-            webView.isInspectable = true
+        // Borrow the prewarmed live instance when available (kept across shows — hidden,
+        // not destroyed); otherwise create one on the same shared data store so cached
+        // resources stay visible either way. A warm instance can only serve a caller that
+        // wants the stock UA: its applicationNameForUserAgent was baked at prewarm
+        // creation and cannot change on a live WKWebView.
+        let webView: WKWebView
+        if userAgent == SDKUserAgent.build(),
+           let warm = DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).borrowWarmWebView() {
+            webView = warm
+        } else {
+            webView = InAppWebViewFactory.make(userAgent: userAgent)
         }
-        #endif
         let bridge = MindboxWebBridge(webView: webView)
 
         self.webView = webView
@@ -107,6 +132,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         self.inAppId = inAppId
         self.log = log
         self.logError = logError
+    }
+
+    deinit {
+        // The fetch completion holds only a weak self, so a pending request can outlive
+        // the facade; cancel it so it can never resume work against a reused webView.
+        fetchTask?.cancel()
     }
 
     public func makeView() -> UIView {
@@ -120,36 +151,58 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         let contentURL = URL(string: contentUrl)
         bridge.updateContentURL(contentURL)
         
-        fetchHTML(from: contentUrl) { [weak webView] html in
-            guard let webView else {
-                DispatchQueue.main.async {
+        fetchHTML(from: contentUrl) { [weak self] html in
+            DispatchQueue.main.async {
+                // A show that closed while the fetch was in flight must not load into the
+                // (possibly reused) webView, and must not re-report failure — it is already
+                // tearing down.
+                guard let self, !self.isClosed else { return }
+                guard let html else {
                     onFailure()
+                    return
                 }
-                return
+                self.retainedContentHTML = html
+                self.retainedContentBaseURL = url
+                self.bridge.expectContentNavigation(self.webView.loadHTMLString(html, baseURL: url))
             }
+        }
+    }
 
-            if let html {
-                DispatchQueue.main.async {
-                    webView.loadHTMLString(html, baseURL: url)
-                }
-            } else {
-                DispatchQueue.main.async {
-                    onFailure()
-                }
+    public func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.isClosed, let html = self.retainedContentHTML else { return }
+            let baseURL = self.retainedContentBaseURL
+            InAppWebViewDataStore.purgeCache(forHostOf: failedURL) { [weak self] didRemoveAnything in
+                onPurgeOutcome(didRemoveAnything)
+                // The reload must be sequenced strictly after the purge completes —
+                // re-fetching before the poisoned entry is gone would just replay it.
+                guard let self, !self.isClosed else { return }
+                self.bridge.expectContentNavigation(self.webView.loadHTMLString(html, baseURL: baseURL))
             }
         }
     }
-    
-    public func reloadWebView() {
-        DispatchQueue.main.async { [weak webView] in
-            webView?.reload()
+
+    public func releaseRetainedContent() {
+        DispatchQueue.main.async { [weak self] in
+            self?.retainedContentHTML = nil
+            self?.retainedContentBaseURL = nil
         }
     }
-    
+
+    public func reloadWebView() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.isClosed else { return }
+            self.bridge.expectContentNavigation(self.webView.reload())
+        }
+    }
+
     public func cleanWebView() {
-        DispatchQueue.main.async { [weak webView] in
-            guard let webView else { return }
-            webView.stopLoading()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isClosed = true
+            self.fetchTask?.cancel()
+            self.fetchTask = nil
+            self.webView.stopLoading()
         }
     }
     
@@ -238,24 +291,21 @@ extension MindboxWebViewFacade {
         ]
 
         if let firstInitDate = persistenceStorage.firstInitializationDateTime {
-            params[PayloadKey.firstInitializationDateTime] = firstInitDate.iso8601
+            params[PayloadKey.firstInitializationDateTime] = firstInitDate.toString(withFormat: .utc)
         }
 
         return params
     }
 
-    // Add operation data
     private func addOperationParams(to params: inout [String: Any]) {
         guard let operation else { return }
         params[PayloadKey.operationName] = operation.name
         params[PayloadKey.operationBody] = operation.body
     }
 
-    // Add system info (theme, platform, locale, version)
     private func addSystemInfo(to params: inout [String: Any], systemInfoProvider: SystemInfoProvider) {
         params.merge(systemInfoProvider.getBasicSystemInfo()) { _, new in new }
 
-        // Add safe area insets
         let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
         params[PayloadKey.Insets.key] = [
             PayloadKey.Insets.top: insets.top,
@@ -264,14 +314,12 @@ extension MindboxWebViewFacade {
             PayloadKey.Insets.right: insets.right
         ]
 
-        // Add granted permissions
         let permissions = systemInfoProvider.getGrantedPermissions()
         if !permissions.isEmpty {
             params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
         }
     }
 
-    // Merge params from configuration
     private func mergeCustomParams(into params: inout [String: Any]) {
         guard let customParams = self.params, !customParams.isEmpty else { return }
         for (key, value) in customParams {
@@ -279,7 +327,6 @@ extension MindboxWebViewFacade {
         }
     }
 
-    // Add last track-visit data
     private func addTrackVisitParams(to params: inout [String: Any]) {
         guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
         if let source = lastTrackVisit.source {
@@ -290,7 +337,6 @@ extension MindboxWebViewFacade {
         }
     }
 
-    // Serialize to JSON string
     private func serializeToJSONString(_ params: [String: Any]) -> JSONValue {
         do {
             let data = try JSONSerialization.data(withJSONObject: params, options: [])
@@ -311,16 +357,12 @@ extension MindboxWebViewFacade {
             completion(nil)
             return
         }
-        
-        let config = URLSessionConfiguration.ephemeral
-        config.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        config.urlCache = nil
-        
-        let session = URLSession(configuration: config)
-        
+
+        let (session, request) = InAppWebViewHTMLFetcher.sessionAndRequest(for: url)
+
         log("Fetching HTML from \(url.absoluteString)")
-        
-        let task = session.dataTask(with: url) { [weak self] data, response, error in
+
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
             if let error {
                 self?.logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
@@ -345,6 +387,9 @@ extension MindboxWebViewFacade {
             completion(htmlString)
         }
 
+        // Retained so teardown can cancel an in-flight request. Main-confined: `loadHTML`
+        // (the sole caller) runs on the main thread.
+        fetchTask = task
         task.resume()
     }
 }

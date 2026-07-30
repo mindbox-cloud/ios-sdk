@@ -75,6 +75,10 @@ protocol PersistenceStorage: AnyObject {
     /// Version of the WebView localState, managed by JS via localState.init
     var webViewLocalStateVersion: Int? { get set }
 
+    /// Resource hosts observed by webview in-app shows, keyed by endpoint — feeds the next
+    /// launch's preconnect. See `InAppWebViewLearnedHostsStore`.
+    var webViewLearnedHosts: [String: [String]]? { get set }
+
     // Reset functions
 
     func softReset()
@@ -130,5 +134,6 @@ extension PersistenceStorage {
         operationsDomainFromConfig = nil
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
+        webViewLearnedHosts = nil
     }
 }

@@ -267,6 +267,7 @@ Package.resolved
 
 fastlane/report.xml
 fastlane/Preview.html
+fastlane/README.md
 fastlane/screenshots
 fastlane/test_output
 test_output
@@ -307,7 +308,5 @@ tags
 !*.xcodeproj/xcshareddata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
-
-FastlaneRunner
 
 # End of https://www.gitignore.io/api/osx,vim,ruby,macos,xcode,swift,appcode,swiftpm,carthage,intellij,cocoapods,swiftpackagemanager

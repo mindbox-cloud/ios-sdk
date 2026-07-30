@@ -128,59 +128,68 @@ public extension MindboxError {
             guard
                 let errorData = try? JSONEncoder().encode(self),
                 let errorString = String(data: errorData, encoding: .utf8) else {
-                return
-                    """
-                    {
-                        type: "InternalError",
-                        data: {
-                            errroKey: "\(self.data.errorKey ?? "null")",
-                            errroName: "JSON encoding error",
-                            errorMessage: "Unable to convert Data to JSON",
-                        }
-                    }
-                    """
+                return #"{"type":"InternalError","data":{"errorKey":"\#(self.data.errorKey ?? "null")","errorName":"JSON encoding error","errorMessage":"Unable to convert Data to JSON"}}"#
+            }
+            return errorString
+        }
+
+        func convertDataToString() -> String {
+            guard
+                let errorData = try? JSONEncoder().encode(data),
+                let errorString = String(data: errorData, encoding: .utf8) else {
+                return #"{"errorMessage":"Unable to convert Data to JSON"}"#
             }
             return errorString
         }
     }
 
     func createJSON() -> String {
+        makeErrorJSON().convertToString()
+    }
+
+    /// Data-only JSON without the `{type, data}` envelope — the WebView JS-bridge
+    /// `onError` contract. `createJSON()` must keep the envelope: RN/Flutter dispatch on it.
+    internal func createDataJSON() -> String {
+        makeErrorJSON().convertDataToString()
+    }
+
+    private func makeErrorJSON() -> MindboxErrorJSON {
         switch self {
         case .validationError(let error):
             return MindboxErrorJSON(status: error.status,
-                                    validationMessages: error.validationMessages).convertToString()
+                                    validationMessages: error.validationMessages)
         case .protocolError(let error):
             return MindboxErrorJSON(status: error.status,
                                     errorMessage: error.errorMessage,
                                     errorId: error.errorId ?? "",
-                                    httpStatusCode: error.httpStatusCode).convertToString()
+                                    httpStatusCode: error.httpStatusCode)
         case .serverError(let error):
             return MindboxErrorJSON(status: error.status,
                                     errorMessage: error.errorMessage,
                                     errorId: error.errorId ?? "",
-                                    httpStatusCode: error.httpStatusCode).convertToString()
+                                    httpStatusCode: error.httpStatusCode)
         case .internalError(let error):
             return MindboxErrorJSON(errorKey: error.errorKey,
                                     errorName: error.reason ?? "",
-                                    errorMessage: error.description).convertToString()
+                                    errorMessage: error.description)
         case .invalidResponse(let response):
             if let httpResponse = response as? HTTPURLResponse {
                 let httpStatusCode = String(httpResponse.statusCode)
                 let errorMessage = httpResponse.description
 
                 return MindboxErrorJSON(httpStatusCode: httpStatusCode,
-                                        errorMessage: errorMessage).convertToString()
+                                        errorMessage: errorMessage)
             } else {
                 return MindboxErrorJSON(httpStatusCode: "null",
-                                        errorMessage: "Connection error").convertToString()
+                                        errorMessage: "Connection error")
             }
         case .connectionError:
             return MindboxErrorJSON(httpStatusCode: "null",
-                                    errorMessage: "Connection error").convertToString()
+                                    errorMessage: "Connection error")
         case .unknown(let error):
             return MindboxErrorJSON(errorKey: "unknown",
                                     errorName: "",
-                                    errorMessage: error.localizedDescription).convertToString()
+                                    errorMessage: error.localizedDescription)
         }
     }
 }

@@ -14,12 +14,15 @@ on:
       GITLAB_TRIGGER_TOKEN:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   distribution:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.branch }}
           fetch-depth: 3
@@ -29,9 +32,12 @@ jobs:
         run: |
           set -euo pipefail
           commits="$(git log -3 --pretty=format:"%s")"
-          echo "commits<<EOF" >> "$GITHUB_ENV"
-          echo "$commits"     >> "$GITHUB_ENV"
-          echo "EOF"          >> "$GITHUB_ENV"
+          delim="EOF_$(openssl rand -hex 8)"
+          {
+            echo "commits<<$delim"
+            echo "$commits"
+            echo "$delim"
+          } >> "$GITHUB_ENV"
 
       - name: Get Mindbox SDK Version
         shell: bash
