@@ -120,10 +120,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     private func sendMonitoringLogsIfNeeded(_ monitoring: Monitoring?) {
-        guard let monitoring = monitoring,
-              let logsManager = DI.inject(SDKLogsManagerProtocol.self) else {
+        guard let monitoring = monitoring else { return }
+        guard let logsManager = DI.inject(SDKLogsManagerProtocol.self) else {
+            Logger.common(message: "[SDKLogs] Unable to send monitoring logs: SDKLogsManager is not registered in DI", level: .error, category: .general)
             return
         }
+        Logger.common(message: "[SDKLogs] Monitoring config contains \(monitoring.logs.elements.count) log request(s)", level: .debug, category: .general)
         logsManager.sendLogs(logs: monitoring.logs.elements)
     }
 
