@@ -37,7 +37,7 @@ class SDKLogsManager: SDKLogsManagerProtocol {
                 handledLogsRequestIds.append(log.requestId)
                 guard let from = log.from.toDate(withFormat: .utc),
                       let  to = log.to.toDate(withFormat: .utc) else {
-                    return
+                    continue
                 }
 
                 do {
