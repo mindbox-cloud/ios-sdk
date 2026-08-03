@@ -259,6 +259,7 @@ final class CoreController {
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
         userVisitManager: UserVisitManagerProtocol
     ) {
+        Logger.common(message: "════════════════ [Cold start] SDK initialization ════════════════", level: .info, category: .general)
         self.persistenceStorage = persistenceStorage
         self.utilitiesFetcher = utilitiesFetcher
         self.databaseRepository = databaseRepository

@@ -70,6 +70,7 @@ final class InappSessionManager: InappSessionManagerProtocol {
         let timeBetweenVisitsSeconds = now.timeIntervalSince(lastTimestamp)
         if timeBetweenVisitsSeconds > Double(sessionTimeInSeconds) {
             updatingInappSession = true
+            Logger.common(message: "──────────────── [New session] ────────────────", level: .info, category: .general)
             Logger.common(message: "[InappSessionManager] Session expired. Need to update session...")
             updateInappSession()
         } else {
