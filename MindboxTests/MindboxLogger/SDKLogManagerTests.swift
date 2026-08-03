@@ -96,6 +96,18 @@ final class SDKLogManagerTests: XCTestCase {
         XCTAssertEqual(eventRepositoryMock.requests.count, 0)
     }
 
+    func testBody_withMalformedDatesEntry_shouldStillProcessSubsequentEntries() {
+        let logs = [
+            Monitoring.Logs(requestId: "1", target: Stub.target, from: "not-a-date", to: "not-a-date"),
+            makeLog(requestId: "2", target: Stub.target)
+        ]
+
+        logsManager.sendLogs(logs: logs)
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 1, "The valid entry after the malformed one must still be sent")
+        XCTAssertEqual(persistenceStorageMock.handledlogRequestIds, ["1", "2"], "Both entries must be marked handled and persisted")
+    }
+
     func test_status_shouldReturnOk() throws {
         let dateFrom = Date().addingTimeInterval(-60)
         let dateTo = Date()
