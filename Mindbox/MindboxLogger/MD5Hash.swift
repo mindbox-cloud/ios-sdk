@@ -7,6 +7,9 @@
 //
 
 import CommonCrypto
+// CryptoKit is auto-weak-linked (deployment target < iOS 13, LC_LOAD_WEAK_DYLIB
+// in the linked binary), so this import cannot break iOS 12 startup; the
+// #available guard below keeps its symbols untouched there.
 import CryptoKit
 import Foundation
 
