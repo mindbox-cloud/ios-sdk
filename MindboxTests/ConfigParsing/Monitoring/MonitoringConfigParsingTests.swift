@@ -42,10 +42,10 @@ final class MonitoringConfigParsingTests: XCTestCase {
 
         for log in config.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.target)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
@@ -73,10 +73,10 @@ final class MonitoringConfigParsingTests: XCTestCase {
 
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.target)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
@@ -90,10 +90,10 @@ final class MonitoringConfigParsingTests: XCTestCase {
 
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.target)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
