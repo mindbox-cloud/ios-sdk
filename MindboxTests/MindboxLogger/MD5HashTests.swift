@@ -14,11 +14,12 @@ import Testing
 // produce the same target on iOS, Android and the server.
 private let sharedMD5Vectors: [(String, String)] = [
     ("216e6225-3170-4089-a6f0-3d1ed8f64153", "334db432a8f72f64a89664682f7bc032"),
+    // the same uuid uppercased → the same hash: MD5Hash lowercases the input before hashing
+    // (raw md5 of the UPPERCASE string itself would be 2a482810731225da19199c17a956a560)
+    ("216E6225-3170-4089-A6F0-3D1ED8F64153", "334db432a8f72f64a89664682f7bc032"),
     ("126e6225-3170-4089-a6f0-3d1ed8f64153", "248eccb79da2bbca61c133c59e4a1516"),
     // hash with leading zeros — catches broken hex padding
     ("7e570ddf-8270-40a8-a369-b584ff5e9ff0", "000baa91b37b3c201e3f8604c7845201"),
-    // an uppercase uuid produces the same hash: the input is lowercased before hashing
-    ("216E6225-3170-4089-A6F0-3D1ED8F64153", "334db432a8f72f64a89664682f7bc032"),
     // md5 of zero bytes — the well-known constant
     ("", "d41d8cd98f00b204e9800998ecf8427e")
 ]
