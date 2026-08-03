@@ -13,7 +13,7 @@ struct Monitoring: Decodable, Equatable {
 
     struct Logs: Decodable, Equatable {
         let requestId: String
-        let deviceUUID: String
+        let target: String
         let from: String
         let to: String
     }

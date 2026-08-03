@@ -28,10 +28,12 @@ class SDKLogsManager: SDKLogsManagerProtocol {
     }
 
     func sendLogs(logs: [Monitoring.Logs]) {
-        guard !logs.isEmpty else { return }
+        guard !logs.isEmpty,
+              let deviceUUID = persistenceStorage.deviceUUID, !deviceUUID.isEmpty else { return }
+        let deviceTarget = MD5Hash(deviceUUID: deviceUUID)
         var handledLogsRequestIds = persistenceStorage.handledlogRequestIds ?? []
         for log in logs {
-            if !handledLogsRequestIds.contains(log.requestId) && persistenceStorage.deviceUUID == log.deviceUUID.uppercased() {
+            if !handledLogsRequestIds.contains(log.requestId) && deviceTarget == MD5Hash(hex: log.target) {
                 handledLogsRequestIds.append(log.requestId)
                 guard let from = log.from.toDate(withFormat: .utc),
                       let  to = log.to.toDate(withFormat: .utc) else {
