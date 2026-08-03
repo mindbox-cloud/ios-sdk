@@ -28,23 +28,40 @@ class SDKLogsManager: SDKLogsManagerProtocol {
     }
 
     func sendLogs(logs: [Monitoring.Logs]) {
-        guard !logs.isEmpty,
-              let deviceUUID = persistenceStorage.deviceUUID, !deviceUUID.isEmpty else { return }
+        guard !logs.isEmpty else { return }
+        guard let deviceUUID = persistenceStorage.deviceUUID, !deviceUUID.isEmpty else {
+            Logger.common(message: "[SDKLogs] Skip monitoring logs: deviceUUID is missing", level: .error, category: .general)
+            return
+        }
         let deviceTarget = MD5Hash(deviceUUID: deviceUUID)
         var handledLogsRequestIds = persistenceStorage.handledlogRequestIds ?? []
         for log in logs {
-            if !handledLogsRequestIds.contains(log.requestId) && deviceTarget == MD5Hash(hex: log.target) {
-                handledLogsRequestIds.append(log.requestId)
-                guard let from = log.from.toDate(withFormat: .utc),
-                      let  to = log.to.toDate(withFormat: .utc) else {
-                    continue
-                }
+            guard !handledLogsRequestIds.contains(log.requestId) else {
+                Logger.common(message: "[SDKLogs] Skip request \(log.requestId): already handled", level: .debug, category: .general)
+                continue
+            }
+            guard deviceTarget == MD5Hash(hex: log.target) else {
+                Logger.common(message: "[SDKLogs] Skip request \(log.requestId): target \(log.target) doesn't match device target \(deviceTarget.hex)", level: .debug, category: .general)
+                continue
+            }
+            handledLogsRequestIds.append(log.requestId)
+            guard let from = log.from.toDate(withFormat: .utc),
+                  let to = log.to.toDate(withFormat: .utc) else {
+                Logger.common(message: "[SDKLogs] Skip request \(log.requestId): malformed dates from: \"\(log.from)\", to: \"\(log.to)\"", level: .error, category: .general)
+                continue
+            }
 
-                do {
-                    let body = try getBody(from: from, to: to, requestID: log.requestId)
-                    let event = Event(type: .sdkLogs, body: BodyEncoder(encodable: body).body)
-                    eventRepository.send(event: event) { _ in }
-                } catch {}
+            do {
+                let body = try getBody(from: from, to: to, requestID: log.requestId)
+                let event = Event(type: .sdkLogs, body: BodyEncoder(encodable: body).body)
+                Logger.common(message: "[SDKLogs] Sending logs for request \(log.requestId), period \(log.from) – \(log.to), status: \(body.status), lines: \(body.content.count)", level: .info, category: .general)
+                eventRepository.send(event: event) { result in
+                    if case let .failure(error) = result {
+                        Logger.common(message: "[SDKLogs] Sending logs for request \(log.requestId) failed: \(error.localizedDescription)", level: .error, category: .general)
+                    }
+                }
+            } catch {
+                Logger.common(message: "[SDKLogs] Failed to build logs body for request \(log.requestId): \(error.localizedDescription)", level: .error, category: .general)
             }
         }
 
