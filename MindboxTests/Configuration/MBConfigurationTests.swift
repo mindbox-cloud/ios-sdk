@@ -135,7 +135,7 @@ struct MBConfigurationTests {
         }
     }
 
-    @Test("operationsDomain accepts path prefix (MOBILE-258)")
+    @Test("operationsDomain accepts path prefix")
     func operationsDomainAcceptsPathPrefix() throws {
         let config = try MBConfiguration(
             endpoint: endpoint,

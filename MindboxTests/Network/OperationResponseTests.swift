@@ -10,7 +10,7 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-/// Wire-contract tests for `OperationResponse` (MOBILE-303): the API returns promo
+/// Wire-contract tests for `OperationResponse`: the API returns promo
 /// actions under the plural `promoActions` key, and the JSON re-encoded for the
 /// hybrid bridges (`createJSON`) must use the same wire keys as the decoder —
 /// otherwise a field silently vanishes between the API and the JS layer.
@@ -96,7 +96,7 @@ struct OperationResponseTests {
 
     // The two productList shapes share one wire key on decode, but have always
     // re-encoded under their own property names (synthesized behavior). Locked
-    // down here so the MOBILE-303 encode(to:) rewrite changes nothing but promoActions.
+    // down here so the encode(to:) rewrite changes nothing but promoActions.
     @Test("An array productList re-encodes under the productList key")
     func productListArrayKeepsItsKey() throws {
         let response = try JSONDecoder().decode(
@@ -121,7 +121,7 @@ struct OperationResponseTests {
         #expect(!dict.keys.contains("productList"))
     }
 
-    /// Shape of a production sync-operation response reported in MOBILE-303, fully
+    /// Shape of a production sync-operation response from a client report, fully
     /// anonymized: fractional seconds longer than the `.SSS` parse pattern (6 and 5
     /// digits), sibling non-Utc date keys, `timeZoneMode`, and custom fields mixing
     /// booleans with strings. All values are synthetic; the key set and the date

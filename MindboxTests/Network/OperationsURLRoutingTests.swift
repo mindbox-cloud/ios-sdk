@@ -164,7 +164,7 @@ struct OperationsURLRoutingTests {
         #expect(url?.path == "/v3/operations/async")
     }
 
-    // MARK: - Path prefix in operationsDomain (MOBILE-258)
+    // MARK: - Path prefix in operationsDomain
 
     @Test("operationsDomain with path prefix appends operation endpoint after the prefix")
     func pathPrefixAppendsEndpointAfterPrefix() throws {
@@ -415,7 +415,7 @@ struct OperationsURLRoutingTests {
         )
     }
 
-    @Test("Policy — saves value with path prefix in canonical form (MOBILE-258)")
+    @Test("Policy — saves value with path prefix in canonical form")
     func policySavesPathPrefixValue() {
         #expect(
             OperationsDomainConfigPolicy.action(for: "api-v2.letu.ru/api/mindbox-regular", currentlyStored: nil)

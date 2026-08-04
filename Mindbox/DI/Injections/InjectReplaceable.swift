@@ -34,13 +34,13 @@ extension MBContainer {
 
             guard !appGroup.isEmpty else {
                 // App Group unavailable (already reported by the fetcher) — fall back to
-                // `.standard` so the SDK keeps working instead of crashing the host (issue #705).
+                // `.standard` so the SDK keeps working instead of crashing the host.
                 // A later App Group fix re-registers the install; see `AppGroupStorageTransitionReporter`.
                 return MBPersistenceStorage(defaults: .standard)
             }
 
             guard let defaults = UserDefaults(suiteName: appGroup) else {
-                // Unreachable for a resolved App Group id; degrade without trapping (issue #705).
+                // Unreachable for a resolved App Group id; degrade without trapping.
                 Logger.common(message: "[PersistenceStorage] UserDefaults(suiteName: \(appGroup)) failed; using .standard.", level: .fault, category: .general)
                 return MBPersistenceStorage(defaults: .standard)
             }

@@ -639,7 +639,7 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         waitForExpectations(timeout: 1)
     }
 
-    // MARK: - requestRaw: HTTP 200 + ValidationError body → raw Data success (regression: MOBILE-164)
+    // MARK: - requestRaw: HTTP 200 + ValidationError body → raw Data success (regression)
 
     func test_requestRaw_http200_statusValidationError_returnsRawData() throws {
         let fetcher = try makeFetcher()

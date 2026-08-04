@@ -33,9 +33,9 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
     /// (events database + `UserDefaults` suite).
     ///
     /// Returns `""` when the host bundle id is missing or the container is unavailable,
-    /// so the SDK falls back to local storage instead of crashing the host (issue #705).
+    /// so the SDK falls back to local storage instead of crashing the host.
     /// Must never trap — not even in Debug: Debug builds on device farms routinely lack a
-    /// configured App Group, the exact scenario #705 is about. Surfaced as a `.fault` log.
+    /// configured App Group — the exact scenario this guards. Surfaced as a `.fault` log.
     var applicationGroupIdentifier: String {
         guard let hostApplicationName = hostApplicationName else {
             Logger.common(message: "[MBUtilitiesFetcher] Host application bundle identifier is unavailable", level: .fault, category: .general)

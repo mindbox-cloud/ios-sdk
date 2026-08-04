@@ -13,7 +13,7 @@ struct TransparentViewSyncOperationResponseTests {
     private let action = "syncOperation"
     private let requestId = UUID()
 
-    // MARK: - HTTP 200 + ValidationError body → .response with raw body (regression: MOBILE-164)
+    // MARK: - HTTP 200 + ValidationError body → .response with raw body (regression)
 
     @Test("HTTP 200 ValidationError body becomes .response with raw body string")
     func validationErrorBody_becomesResponseWithRawBody() throws {
@@ -118,7 +118,7 @@ struct TransparentViewSyncOperationResponseTests {
         }
     }
 
-    // MARK: - Failure payloads: data contents only, no {type, data} envelope (MOBILE-197)
+    // MARK: - Failure payloads: data contents only, no {type, data} envelope
 
     private func decodedErrorPayload(_ outgoing: BridgeMessage) throws -> [String: Any] {
         #expect(outgoing.type == .error)
