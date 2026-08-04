@@ -10,8 +10,8 @@ import Foundation
 import Testing
 @testable import Mindbox
 
-// Shared vectors from android-sdk PR #749 (MOBILE-281): the same deviceUUID must
-// produce the same target on iOS, Android and the server.
+// Shared cross-platform vectors: the same deviceUUID must produce the same target
+// on iOS, Android and the server.
 private let sharedMD5Vectors: [(String, String)] = [
     ("216e6225-3170-4089-a6f0-3d1ed8f64153", "334db432a8f72f64a89664682f7bc032"),
     // the same uuid uppercased → the same hash: MD5Hash lowercases the input before hashing

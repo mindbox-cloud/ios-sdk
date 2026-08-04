@@ -12,7 +12,7 @@ import XCTest
 
 final class SDKLogManagerTests: XCTestCase {
 
-    // Shared cross-platform vectors (android-sdk PR #749): target is the MD5 hex of the lowercased deviceUUID.
+    // Shared cross-platform vectors: target is the MD5 hex of the lowercased deviceUUID.
     private enum Stub {
         static let deviceUUID = "216E6225-3170-4089-A6F0-3D1ED8F64153" // persisted uppercased, as the real SDK stores it
         static let target = "334db432a8f72f64a89664682f7bc032"
