@@ -21,7 +21,7 @@ class MBLoggerUtilitiesFetcher {
     ///
     /// `nil` makes `LoggerDatabaseLoader` fall back to the app's local caches store, so the
     /// logger keeps working instead of being disabled. Must never trap — the SDK must not
-    /// bring down its host over an unavailable container, on simulator or device (issue #705).
+    /// bring down its host over an unavailable container, on simulator or device.
     var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
             return nil
