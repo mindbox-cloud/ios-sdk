@@ -13,10 +13,9 @@ import CommonCrypto
 import CryptoKit
 import Foundation
 
-/// Match token for monitoring log requests (MOBILE-340): MD5 hex of the lowercased
-/// deviceUUID. Both the hash input and the hex are lowercased, so comparison is
-/// case-insensitive. Must stay in sync with the server contract and Android's
-/// `Md5Hash` (android-sdk #749).
+/// Match token for monitoring log requests: MD5 hex of the lowercased deviceUUID.
+/// Both the hash input and the hex are lowercased, so comparison is case-insensitive.
+/// Must stay in sync with the server contract and the Android SDK.
 struct MD5Hash: Equatable {
     let hex: String
 
