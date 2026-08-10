@@ -1501,6 +1501,7 @@
 		17B157F9FE3789FA97A7085E /* MindboxLoggerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MindboxLoggerTests; sourceTree = "<group>"; };
 		471D4C2D2FEECF8800856EA5 /* MindboxNotificationsTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MindboxNotificationsTests; sourceTree = "<group>"; };
 		471D4C3B2FEED16200856EA5 /* TestPlans */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TestPlans; sourceTree = "<group>"; };
+		57A1B3230000000000000300 /* EmbeddedBlocks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EmbeddedBlocks; sourceTree = "<group>"; };
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
@@ -1646,6 +1647,7 @@
 				31A20D4225B6B6D700AAA0A3 /* PersistenceStorage */,
 				A179589C2979708B00609E91 /* Resources */,
 				33EBF0AE264E6269002A35D5 /* SessionManager */,
+				57A1B3230000000000000300 /* EmbeddedBlocks */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
@@ -3954,6 +3956,9 @@
 			);
 			dependencies = (
 				A170EDDF29B0883800CE547F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				57A1B3230000000000000300 /* EmbeddedBlocks */,
 			);
 			name = Mindbox;
 			productName = MindBox;
