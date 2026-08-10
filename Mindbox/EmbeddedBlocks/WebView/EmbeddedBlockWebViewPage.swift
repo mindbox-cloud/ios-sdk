@@ -6,6 +6,7 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
+import UIKit
 import WebKit
 import MindboxLogger
 
