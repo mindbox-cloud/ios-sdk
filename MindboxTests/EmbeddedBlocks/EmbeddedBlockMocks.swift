@@ -177,3 +177,21 @@ final class EmbeddedBlockTestBed {
                                                      makePage: { pageFactory.make($0) })
     }
 }
+
+final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
+
+    enum Event: Equatable {
+        case loaded
+        case failed
+    }
+
+    private(set) var events: [Event] = []
+
+    func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView) {
+        events.append(.loaded)
+    }
+
+    func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView) {
+        events.append(.failed)
+    }
+}
