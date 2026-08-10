@@ -1501,6 +1501,7 @@
 		17B157F9FE3789FA97A7085E /* MindboxLoggerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MindboxLoggerTests; sourceTree = "<group>"; };
 		471D4C2D2FEECF8800856EA5 /* MindboxNotificationsTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MindboxNotificationsTests; sourceTree = "<group>"; };
 		471D4C3B2FEED16200856EA5 /* TestPlans */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TestPlans; sourceTree = "<group>"; };
+		57A1B3230000000000000203 /* EmbeddedBlocks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EmbeddedBlocks; sourceTree = "<group>"; };
 		57A1B3230000000000000300 /* EmbeddedBlocks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EmbeddedBlocks; sourceTree = "<group>"; };
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
@@ -1678,6 +1679,7 @@
 				84B625F525C98EE000AB6228 /* DI */,
 				84B625EE25C98A8000AB6228 /* Validators */,
 				F3CD20282F600A800065392A /* Configuration */,
+				57A1B3230000000000000203 /* EmbeddedBlocks */,
 				313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */,
 				A1B2C3D4E5F60718293A4B02 /* MindboxOperationsTests.swift */,
 				84DC49D525D185A600D5D758 /* Supporting Files */,
@@ -3979,6 +3981,7 @@
 				313B233C25ADEA0F00A1CB72 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				57A1B3230000000000000203 /* EmbeddedBlocks */,
 				A8C878878353491FA01AC096 /* WebViewPrewarmTests */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
