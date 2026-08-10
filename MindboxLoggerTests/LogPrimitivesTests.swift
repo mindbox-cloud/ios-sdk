@@ -14,7 +14,7 @@ struct LogPrimitivesTests {
 
     @Test("Every LogCategory exposes a non-empty emoji")
     func categoryEmoji() {
-        #expect(LogCategory.allCases.count == 13)
+        #expect(LogCategory.allCases.count == 14)
         for category in LogCategory.allCases {
             #expect(!category.emoji.isEmpty, "\(category) has no emoji")
         }

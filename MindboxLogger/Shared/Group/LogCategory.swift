@@ -23,6 +23,7 @@ public enum LogCategory: String, CaseIterable {
     case inAppMessages
     case webViewInAppMessages
     case appDelegate
+    case embeddedBlocks
 
     var emoji: String {
         switch self {
@@ -52,6 +53,8 @@ public enum LogCategory: String, CaseIterable {
             return "🕸️"
         case .appDelegate:
             return "🪄"
+        case .embeddedBlocks:
+            return "📚"
         }
     }
 }
