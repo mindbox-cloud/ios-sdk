@@ -115,6 +115,15 @@ enum Constants {
         static let timeoutSeconds = 7
     }
 
+    enum EmbeddedBlock {
+        /// Сколько встроенный блок ждёт, пока страница объявит себя готовой, прежде чем свернуться.
+        ///
+        /// Бюджет свой, а не общий с инаппами, даже при совпадающем значении: блок стоит в вёрстке
+        /// хоста, и его терпение — самостоятельное продуктовое решение, а не следствие таймаута
+        /// инаппов.
+        static let readyTimeoutSeconds = 7
+    }
+
     enum MagicNumbers {
         static let daysToKeepInappShowTimes = 2
     }
