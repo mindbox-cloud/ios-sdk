@@ -519,13 +519,14 @@ struct MindboxEmbeddedBlockViewTests {
     /// Контейнер, а не контент, гарантирует, что вёрстка хоста не будет ждать вечно: молчащая
     /// страница за бюджетом сворачивается и сообщает об ошибке.
     @Test("Silent block times out, collapses and reports didFail")
-    func silentBlockTimesOut() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func silentBlockTimesOut() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
 
         block.attachToWindow()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events == [.failed])
@@ -534,14 +535,16 @@ struct MindboxEmbeddedBlockViewTests {
     }
 
     @Test("Block shown in time is not failed by the timeout")
-    func shownBlockIsNotTimedOut() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func shownBlockIsNotTimedOut() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
 
         block.attachToWindow()
         block.page?.send(.ready(height: 96))
-        try await Task.sleep(nanoseconds: 200_000_000)
+        // Показанный блок снял бюджет, поэтому объявленное «время вышло» его уже не касается.
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(delegate.events == [.loaded])
@@ -550,14 +553,15 @@ struct MindboxEmbeddedBlockViewTests {
 
     /// Уход из окна уже остановил контент — снятый таймаут не должен валить то, что не работает.
     @Test("Leaving the window disarms the timeout")
-    func leavingWindowDisarmsTimeout() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func leavingWindowDisarmsTimeout() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
 
         block.attachToWindow()
         block.removeFromWindow()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(delegate.events.isEmpty)
         #expect(block.view.intrinsicContentSize.height == 120)
@@ -568,20 +572,22 @@ struct MindboxEmbeddedBlockViewTests {
     /// ни разу не побывав на экране. Что бюджет при этом продолжается с остатка, а не выдаётся
     /// заново, проверяют тесты самого `EmbeddedBlockReadyTimeout`.
     @Test("Timeout pauses in the background and resumes on return")
-    func timeoutPausesInBackground() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func timeoutPausesInBackground() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
         block.attachToWindow()
 
-        NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.enterBackground()
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(delegate.events.isEmpty)
 
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.enterForeground()
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events == [.failed])
@@ -589,14 +595,17 @@ struct MindboxEmbeddedBlockViewTests {
 
     /// Блок вне окна ничего не грузит, поэтому и бюджет ему не нужен.
     @Test("Returning from the background does not arm a timeout outside a window")
-    func foregroundOutsideWindowArmsNothing() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func foregroundOutsideWindowArmsNothing() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
 
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.enterForeground()
+        block.expireTimeout()
+        await mainQueueTurn()
 
+        // Отсчёт не просто не сработал — его вовсе не заводили.
+        #expect(block.timeoutBed.scheduler.lastDelay == nil)
         #expect(delegate.events.isEmpty)
         #expect(block.view.intrinsicContentSize.height == 120)
     }
@@ -638,15 +647,16 @@ struct MindboxEmbeddedBlockViewTests {
 
     /// Новая попытка получает и новый бюджет — иначе перезагруженный блок висел бы в загрузке вечно.
     @Test("Reload arms the timeout again")
-    func reloadArmsTheTimeoutAgain() async throws {
-        let block = BlockFixture(readyTimeout: 0.05)
+    func reloadArmsTheTimeoutAgain() async {
+        let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
         block.attachToWindow()
         block.page?.send(.ready(height: 96))
 
         block.view.reload()
-        try await Task.sleep(nanoseconds: 200_000_000)
+        block.expireTimeout()
+        await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events.last == .failed)
@@ -671,6 +681,11 @@ struct MindboxEmbeddedBlockViewTests {
 private final class BlockFixture {
 
     let bed: EmbeddedBlockTestBed
+
+    /// Бюджет отдаётся вью снаружи, поэтому «время вышло» здесь наступает по команде теста, а не
+    /// через сон: `expireTimeout()`.
+    let timeoutBed: EmbeddedBlockTimeoutBed
+
     let view: MindboxEmbeddedBlockView
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
@@ -678,14 +693,15 @@ private final class BlockFixture {
     var page: EmbeddedBlockPageMock? { bed.page }
 
     init(height: CGFloat = 120,
-         readyTimeout: TimeInterval = 5,
          resolution: EmbeddedBlockResolution = .content(.stub)) {
         let bed = EmbeddedBlockTestBed(resolution: resolution)
+        let timeoutBed = EmbeddedBlockTimeoutBed()
         self.bed = bed
+        self.timeoutBed = timeoutBed
         self.view = MindboxEmbeddedBlockView(id: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
-                                             readyTimeout: readyTimeout)
+                                             timeout: timeoutBed.timeout)
     }
 
     func attachToWindow() {
@@ -694,5 +710,18 @@ private final class BlockFixture {
 
     func removeFromWindow() {
         view.removeFromSuperview()
+    }
+
+    /// Объявляет, что бюджет ожидания вышел.
+    func expireTimeout() {
+        timeoutBed.scheduler.fireAll()
+    }
+
+    func enterBackground() {
+        timeoutBed.enterBackground()
+    }
+
+    func enterForeground() {
+        timeoutBed.enterForeground()
     }
 }

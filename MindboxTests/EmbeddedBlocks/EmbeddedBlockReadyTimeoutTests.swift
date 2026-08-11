@@ -8,14 +8,19 @@
 
 import Testing
 import Foundation
+import UIKit
 @testable import Mindbox
 
-/// Сколько бюджета «уже потрачено», тесты задают подменёнными часами, а ждут только тот огрызок,
-/// который остался. Иначе проверка «продолжается остаток, а не выдаётся полный бюджет» сводилась бы
-/// к измерению задержек секундомером.
+/// Ни часы, ни планировщик здесь не настоящие. Сколько бюджета «уже потрачено», тесты задают
+/// подменёнными часами, а момент «время вышло» наступает по их команде. Реальным временем не
+/// ждётся ничего: бюджет — это арифметика над потраченным, и проверять её секундомером значило бы
+/// платить полсекунды за тест и флакать на загруженном раннере.
 ///
-/// Уход в фон и возврат из него здесь не проверяются: это глобальные нотификации, они долетят до
-/// блоков из тестов, идущих рядом. Провод от них к паузе проверяет контейнер, у которого блок один.
+/// Отсюда же главная проверка большинства тестов — не «истёк или нет», а с какой задержкой завели
+/// отсчёт: именно она и есть остаток бюджета.
+///
+/// Уход в фон и возврат из него идут через свой центр нотификаций у каждого стенда: на глобальном
+/// такое уведомление долетело бы до блоков из тестов, идущих рядом.
 private let budget: TimeInterval = 0.4
 
 @Suite("Embedded block ready timeout", .tags(.embeddedBlocks))
@@ -23,32 +28,35 @@ private let budget: TimeInterval = 0.4
 struct EmbeddedBlockReadyTimeoutTests {
 
     @Test("A budget that is never paused expires on its own")
-    func unpausedBudgetExpires() async throws {
+    func unpausedBudgetExpires() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
-        try await Task.sleep(nanoseconds: 600_000_000)
+
+        #expect(bed.scheduler.lastDelay == budget)
+
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 1)
     }
 
     /// Пока блока никто не ждёт, бюджет не тратится и не истекает.
     @Test("A paused budget does not expire")
-    func pausedBudgetDoesNotExpire() async throws {
+    func pausedBudgetDoesNotExpire() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
         bed.timeout.pause()
-        try await Task.sleep(nanoseconds: 600_000_000)
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 0)
         #expect(bed.timeout.isRunning == false)
     }
 
     /// Главное: пауза останавливает счёт, а не начинает его заново. Потрачено почти всё, поэтому
-    /// после возобновления блоку остаётся крохотный остаток — а не полный бюджет.
+    /// после возобновления отсчёт заводится на крохотный остаток — а не на полный бюджет.
     @Test("Resuming continues the remaining budget instead of granting a new one")
-    func resumeContinuesTheRemainder() async throws {
+    func resumeContinuesTheRemainder() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
@@ -56,8 +64,10 @@ struct EmbeddedBlockReadyTimeoutTests {
         bed.timeout.pause()
 
         bed.timeout.armIfNeeded()
-        // Ждём меньше полного бюджета: он к этому моменту истечь ещё не успел бы.
-        try await Task.sleep(nanoseconds: 200_000_000)
+
+        #expect(isClose(bed.scheduler.lastDelay, to: 0.02))
+
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 1)
     }
@@ -65,7 +75,7 @@ struct EmbeddedBlockReadyTimeoutTests {
     /// Ровно тот сценарий, из-за которого пауза со сбросом непригодна: пользователь, дёргающий
     /// приложение туда-обратно, не должен уметь продлевать ожидание блока бесконечно.
     @Test("Repeated pause and resume cannot stretch the budget past its duration")
-    func repeatedPausesCannotStretchTheBudget() async throws {
+    func repeatedPausesCannotStretchTheBudget() {
         let bed = TimeoutBed()
 
         for _ in 0..<5 {
@@ -79,14 +89,17 @@ struct EmbeddedBlockReadyTimeoutTests {
         // Пять отрезков по четверти — бюджет выбран целиком, и следующий завод не даёт блоку больше
         // ни секунды.
         bed.timeout.armIfNeeded()
-        try await Task.sleep(nanoseconds: 200_000_000)
+
+        #expect(bed.scheduler.lastDelay == 0)
+
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 1)
     }
 
     /// А новая попытка — другое дело: её ждут с полного бюджета.
     @Test("Reset gives the next attempt a full budget again")
-    func resetGrantsAFullBudget() async throws {
+    func resetGrantsAFullBudget() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
@@ -94,23 +107,17 @@ struct EmbeddedBlockReadyTimeoutTests {
         bed.timeout.reset()
 
         bed.timeout.armIfNeeded()
-        try await Task.sleep(nanoseconds: 200_000_000)
 
-        // Полного бюджета ещё не прошло — попытка жива.
-        #expect(bed.expirations == 0)
-
-        try await Task.sleep(nanoseconds: 400_000_000)
-
-        #expect(bed.expirations == 1)
+        #expect(bed.scheduler.lastDelay == budget)
     }
 
     @Test("Reset stops a running budget")
-    func resetStopsTheCountdown() async throws {
+    func resetStopsTheCountdown() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
         bed.timeout.reset()
-        try await Task.sleep(nanoseconds: 600_000_000)
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 0)
     }
@@ -118,59 +125,129 @@ struct EmbeddedBlockReadyTimeoutTests {
     /// Бюджет нужен только пока исход неизвестен и блок на виду — это знает контейнер, и его ответ
     /// спрашивается на каждом заводе.
     @Test("A budget nobody needs is not armed at all")
-    func unneededBudgetIsNotArmed() async throws {
+    func unneededBudgetIsNotArmed() {
         let bed = TimeoutBed(isNeeded: false)
 
         bed.timeout.armIfNeeded()
 
         #expect(bed.timeout.isRunning == false)
+        #expect(bed.scheduler.lastDelay == nil)
 
-        try await Task.sleep(nanoseconds: 600_000_000)
+        bed.scheduler.fireAll()
 
         #expect(bed.expirations == 0)
     }
 
+    // MARK: - Background
+
+    /// Пока приложение в фоне, блока никто не ждёт — значит и бюджет тратиться не должен.
+    @Test("Going to the background pauses a running budget")
+    func backgroundPausesTheCountdown() {
+        let bed = TimeoutBed()
+
+        bed.timeout.armIfNeeded()
+        bed.enterBackground()
+
+        #expect(bed.timeout.isRunning == false)
+
+        bed.scheduler.fireAll()
+
+        #expect(bed.expirations == 0)
+    }
+
+    /// И ровно то, ради чего заведён учёт потраченного: возврат из фона продолжает бюджет с остатка,
+    /// а не выдаёт его заново.
+    @Test("Returning from the background continues the remaining budget")
+    func foregroundContinuesTheRemainder() {
+        let bed = TimeoutBed()
+
+        bed.timeout.armIfNeeded()
+        bed.clock.advance(budget - 0.02)
+        bed.enterBackground()
+        bed.enterForeground()
+
+        #expect(isClose(bed.scheduler.lastDelay, to: 0.02))
+
+        bed.scheduler.fireAll()
+
+        #expect(bed.expirations == 1)
+    }
+
+    /// Фон, заставший блок вне отсчёта, тратить не может ничего: следующая попытка получает бюджет
+    /// целиком.
+    @Test("Going to the background outside a countdown consumes nothing")
+    func backgroundOutsideCountdownConsumesNothing() {
+        let bed = TimeoutBed()
+
+        bed.enterBackground()
+        bed.clock.advance(budget)
+
+        bed.timeout.armIfNeeded()
+
+        #expect(bed.scheduler.lastDelay == budget)
+    }
+
+    /// Возврат из фона к блоку, которого уже никто не ждёт, отсчёт не воскрешает: нужен ли он,
+    /// решает контейнер, и его ответ спрашивается на каждом заводе.
+    @Test("Returning from the background does not arm a budget nobody needs")
+    func foregroundDoesNotArmAnUnneededBudget() {
+        let bed = TimeoutBed(isNeeded: false)
+
+        bed.enterForeground()
+
+        #expect(bed.timeout.isRunning == false)
+        #expect(bed.scheduler.lastDelay == nil)
+    }
+
+    // MARK: - Arming
+
     /// Завод идемпотентен: вход в окно, возврат из фона и перезагрузка зовут его как попало, и
     /// второй вызов не должен ставить второй отсчёт.
     @Test("Arming twice runs a single countdown")
-    func armingTwiceRunsOneCountdown() async throws {
+    func armingTwiceRunsOneCountdown() {
         let bed = TimeoutBed()
 
         bed.timeout.armIfNeeded()
         bed.timeout.armIfNeeded()
-        try await Task.sleep(nanoseconds: 600_000_000)
+        bed.scheduler.fireAll()
 
+        // Завелись бы два отсчёта — истечений было бы столько же.
         #expect(bed.expirations == 1)
     }
 }
 
-/// Бюджет с управляемыми часами и счётчиком истечений.
+/// Остаток бюджета — арифметика над `Double`, поэтому сравнивается с допуском.
+private func isClose(_ value: TimeInterval?, to expected: TimeInterval) -> Bool {
+    guard let value else { return false }
+
+    return abs(value - expected) < 0.0001
+}
+
+/// Общий стенд бюджета плюс счётчик истечений: здесь бюджет проверяется сам по себе, поэтому
+/// `isNeeded` задаётся тестом напрямую, а не спрашивается у контейнера.
 @MainActor
 private final class TimeoutBed {
 
-    let clock = TestClock()
-    let timeout: EmbeddedBlockReadyTimeout
+    private let bed = EmbeddedBlockTimeoutBed(duration: budget)
 
     private(set) var expirations = 0
 
+    var timeout: EmbeddedBlockReadyTimeout { bed.timeout }
+    var clock: TestClock { bed.clock }
+    var scheduler: TestScheduler { bed.scheduler }
+
     init(isNeeded: Bool = true) {
-        let clock = self.clock
-        timeout = EmbeddedBlockReadyTimeout(blockId: "block-id",
-                                            duration: budget,
-                                            now: { clock.now })
-        timeout.isNeeded = { isNeeded }
-        timeout.onExpire = { [weak self] in
+        bed.timeout.isNeeded = { isNeeded }
+        bed.timeout.onExpire = { [weak self] in
             self?.expirations += 1
         }
     }
-}
 
-/// Часы, которые идут только когда их просят.
-private final class TestClock {
+    func enterBackground() {
+        bed.enterBackground()
+    }
 
-    private(set) var now = Date(timeIntervalSince1970: 1_000_000)
-
-    func advance(_ seconds: TimeInterval) {
-        now = now.addingTimeInterval(seconds)
+    func enterForeground() {
+        bed.enterForeground()
     }
 }

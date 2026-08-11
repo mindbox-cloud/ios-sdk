@@ -145,6 +145,80 @@ final class EmbeddedBlockURLOpenerMock: EmbeddedBlockURLOpening {
     }
 }
 
+/// Часы, которые идут только когда их просят.
+final class TestClock {
+
+    private(set) var now = Date(timeIntervalSince1970: 1_000_000)
+
+    func advance(_ seconds: TimeInterval) {
+        now = now.addingTimeInterval(seconds)
+    }
+}
+
+/// Планировщик, который сам не срабатывает никогда: «время вышло» объявляет тест.
+///
+/// Благодаря ему бюджет ожидания проверяется без единого сна: и его собственные тесты, и тесты
+/// контейнера, которому бюджет отдают снаружи.
+final class TestScheduler {
+
+    /// Задержка последнего завода — она же остаток бюджета, отданный отсчёту.
+    private(set) var lastDelay: TimeInterval?
+
+    private var pending: [DispatchWorkItem] = []
+
+    func schedule(_ delay: TimeInterval, _ work: DispatchWorkItem) {
+        lastDelay = delay
+        pending.append(work)
+    }
+
+    /// Выполняет заведённую работу, пропуская отменённую: `pause()` и `reset()` отменяют её ровно
+    /// так же, как отменяли бы работу настоящей очереди.
+    func fireAll() {
+        let scheduled = pending
+        pending = []
+        scheduled.forEach { work in
+            guard !work.isCancelled else { return }
+
+            work.perform()
+        }
+    }
+}
+
+/// Бюджет ожидания с подменёнными часами, планировщиком и центром нотификаций — всё, чем он
+/// отличается от настоящего, собрано в одном месте.
+final class EmbeddedBlockTimeoutBed {
+
+    let clock: TestClock
+    let scheduler: TestScheduler
+
+    /// Свой на каждый стенд: фон и возврат из него должны доставаться только этому бюджету.
+    let center: NotificationCenter
+
+    let timeout: EmbeddedBlockReadyTimeout
+
+    init(blockId: String = "block-id", duration: TimeInterval = 5) {
+        let clock = TestClock()
+        let scheduler = TestScheduler()
+        let center = NotificationCenter()
+        self.clock = clock
+        self.scheduler = scheduler
+        self.center = center
+        timeout = EmbeddedBlockReadyTimeout(blockId: blockId,
+                                            duration: duration,
+                                            now: { clock.now },
+                                            notificationCenter: center,
+                                            schedule: { scheduler.schedule($0, $1) })
+    }
+
+    func enterBackground() {
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    func enterForeground() {
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+}
+
 /// Провайдер со всеми подменёнными зависимостями — общая заготовка для тестов провайдера и
 /// контейнера. Контейнер тестируется через настоящий провайдер: единственный шов внутри блока —
 /// страница, и подменять больше нечего.

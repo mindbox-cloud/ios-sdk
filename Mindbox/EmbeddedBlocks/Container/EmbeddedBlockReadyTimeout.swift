@@ -25,6 +25,10 @@ import MindboxLogger
 /// Полный бюджет заново получает только новая попытка — `reset()`.
 ///
 /// Загрузку пауза не трогает: она идёт своим чередом, в фоне её тормозит система, а не SDK.
+
+/// Кто выполнит работу, когда истечёт заданный остаток бюджета.
+typealias EmbeddedBlockTimeoutScheduling = (TimeInterval, DispatchWorkItem) -> Void
+
 final class EmbeddedBlockReadyTimeout {
 
     /// Нужен ли отсчёт прямо сейчас: исход ещё неизвестен и блок на виду. Спрашивается заново на
@@ -43,6 +47,15 @@ final class EmbeddedBlockReadyTimeout {
     /// целиком — им нужно уметь сказать, что время прошло.
     private let now: () -> Date
 
+    /// Нотификации отдельным швом по той же причине, что и часы: на глобальном центре уход в фон
+    /// проверить нельзя — тестовое уведомление долетело бы до блоков из тестов, идущих рядом.
+    private let notificationCenter: NotificationCenter
+
+    /// Планировщик тем же швом и по той же причине: зашитая очередь заставляла бы тесты бюджета
+    /// ждать его настоящим временем — то есть спать на каждую проверку и флакать на нагруженной
+    /// машине.
+    private let schedule: EmbeddedBlockTimeoutScheduling
+
     private var workItem: DispatchWorkItem?
 
     /// Сколько бюджета съели прошлые отрезки ожидания.
@@ -53,23 +66,31 @@ final class EmbeddedBlockReadyTimeout {
 
     private var remaining: TimeInterval { max(0, duration - consumed) }
 
-    init(blockId: String, duration: TimeInterval, now: @escaping () -> Date = { Date() }) {
+    init(blockId: String,
+         duration: TimeInterval,
+         now: @escaping () -> Date = { Date() },
+         notificationCenter: NotificationCenter = .default,
+         schedule: @escaping EmbeddedBlockTimeoutScheduling = { delay, work in
+             DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+         }) {
         self.blockId = blockId
         self.duration = duration
         self.now = now
+        self.notificationCenter = notificationCenter
+        self.schedule = schedule
 
-        NotificationCenter.default.addObserver(self,
-                                              selector: #selector(applicationDidEnterBackground),
-                                              name: UIApplication.didEnterBackgroundNotification,
-                                              object: nil)
-        NotificationCenter.default.addObserver(self,
-                                              selector: #selector(applicationWillEnterForeground),
-                                              name: UIApplication.willEnterForegroundNotification,
-                                              object: nil)
+        notificationCenter.addObserver(self,
+                                       selector: #selector(applicationDidEnterBackground),
+                                       name: UIApplication.didEnterBackgroundNotification,
+                                       object: nil)
+        notificationCenter.addObserver(self,
+                                       selector: #selector(applicationWillEnterForeground),
+                                       name: UIApplication.willEnterForegroundNotification,
+                                       object: nil)
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
         workItem?.cancel()
     }
 
@@ -92,9 +113,11 @@ final class EmbeddedBlockReadyTimeout {
             self.onExpire()
         }
 
+        // Работа записывается в свойство до того, как её заведут: планировщик вправе выполнить её
+        // тут же, и она должна застать бюджет в согласованном состоянии.
         resumedAt = now()
         workItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + remaining, execute: work)
+        schedule(remaining, work)
     }
 
     /// Останавливает отсчёт, запомнив потраченное. Попытку это не отменяет: `armIfNeeded()`
