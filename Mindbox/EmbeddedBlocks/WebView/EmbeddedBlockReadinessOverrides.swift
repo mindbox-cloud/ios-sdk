@@ -9,33 +9,33 @@
 import Foundation
 import MindboxLogger
 
-/// Отладочная подмена условия готовности блока.
+/// A debug override of the block readiness condition.
 protocol EmbeddedBlockReadinessOverriding: AnyObject {
 
-    /// `true` — блок становится готовым по факту загруженного документа, не дожидаясь `ready` от
-    /// страницы.
+    /// `true` — the block becomes ready on the fact of a loaded document, without waiting for
+    /// `ready` from the page.
     var treatsLoadedPageAsReady: Bool { get }
 }
 
-/// Временный костыль для страниц, которые ещё не умеют веб-контракт.
+/// A temporary crutch for pages that do not implement the web contract yet.
 ///
-/// Обычное правило блока — готовность объявляет только сама страница: загруженный документ ничего
-/// не говорит о том, есть ли блоку что показать, поэтому молчащую страницу добивает таймаут
-/// контейнера. Пока контракт не реализован на вебе, проверить вёрстку блока этим правилом
-/// невозможно: любая страница сворачивается в ноль через таймаут.
+/// The block's usual rule is that only the page itself declares readiness: a loaded document says
+/// nothing about whether the block has anything to show, so a silent page is finished off by the
+/// container timeout. While the contract is not implemented on the web side, checking the block
+/// layout under this rule is impossible: any page collapses to zero on the timeout.
 ///
-/// Подмена снимает ровно это ограничение и ничего больше: загрузился документ — показываем. Она
-/// выключена по умолчанию и включается только явно из кода приложения, потому что со включённой
-/// подменой сломанная страница выглядит как рабочая — а это ровно то, от чего защищает обычное
-/// правило.
+/// The override lifts exactly this restriction and nothing more: the document has loaded — we show
+/// it. It is off by default and turned on only explicitly from the app code, because with the
+/// override on a broken page looks like a working one — which is exactly what the usual rule
+/// protects against.
 ///
-/// Уедет вместе с первой страницей, которая научится присылать `ready`.
+/// Goes away together with the first page that learns to send `ready`.
 final class EmbeddedBlockReadinessOverrides: EmbeddedBlockReadinessOverriding {
 
     static let shared = EmbeddedBlockReadinessOverrides()
 
-    /// Флаг ставят из кода приложения, а читает его провайдер на главном потоке — потоки могут не
-    /// совпасть.
+    /// The flag is set from the app code, while the provider reads it on the main thread — the
+    /// threads may differ.
     private let lock = NSLock()
 
     private var isLoadedPageTreatedAsReady = false

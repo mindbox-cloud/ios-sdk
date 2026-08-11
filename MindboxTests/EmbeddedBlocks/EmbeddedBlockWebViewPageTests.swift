@@ -10,15 +10,16 @@ import Testing
 import WebKit
 @testable import Mindbox
 
-/// Страница судит только о своём: загрузка не состоялась или документ доехал. Здесь проверяется
-/// именно это разделение — и главное, что отменённая навигация в провалы не попадает.
+/// The page only judges its own business: the load failed or the document arrived. It is exactly
+/// this separation that is checked here — and above all, that a cancelled navigation does not end up
+/// among the failures.
 @Suite("Embedded block web view page", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockWebViewPageTests {
 
-    /// Навигацию отменяют в двух совершенно обычных случаях: её вытеснил клиентский редирект и её
-    /// остановил наш собственный `cancel()` на уехавшем с экрана блоке. Ни то, ни другое не значит,
-    /// что блок сломан, — а провал сворачивает его насовсем.
+    /// A navigation is cancelled in two perfectly ordinary cases: it was superseded by a client-side
+    /// redirect, and it was stopped by our own `cancel()` on a block that went off screen. Neither
+    /// means the block is broken — while a failure collapses it for good.
     @Test("A cancelled provisional navigation is not a load failure")
     func cancelledProvisionalNavigationIsNotAFailure() {
         let bed = PageBed()
@@ -37,7 +38,7 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 0)
     }
 
-    /// А настоящая ошибка сети — это ровно то, о чём страница обязана сказать.
+    /// A real network error, on the other hand, is exactly what the page must report.
     @Test("A real provisional navigation error is a load failure")
     func realProvisionalErrorIsAFailure() {
         let bed = PageBed()
@@ -56,8 +57,7 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 1)
     }
 
-    /// Отмена одной навигации не должна глушить страницу: следующая настоящая ошибка приходит как
-    /// обычно.
+    /// Cancelling one navigation must not mute the page: the next real error arrives as usual.
     @Test("A cancellation does not swallow the failure that comes after it")
     func cancellationDoesNotSwallowLaterFailures() {
         let bed = PageBed()
@@ -79,8 +79,8 @@ struct EmbeddedBlockWebViewPageTests {
     }
 }
 
-/// Настоящая страница с настоящим вебвью, но без сети: тесты сами зовут методы навигационного
-/// делегата — именно их разбор здесь и проверяется.
+/// A real page with a real web view, but without the network: the tests call the navigation delegate
+/// methods themselves — it is their handling that is checked here.
 @MainActor
 private final class PageBed {
 
@@ -91,8 +91,8 @@ private final class PageBed {
 
     var cancellationError: Error { error(code: NSURLErrorCancelled) }
 
-    /// Через протокол, а не напрямую: у страницы есть и свойство `webView`, и методы делегата с тем
-    /// же именем, и вызывать их стоит там, где имя однозначно.
+    /// Through the protocol rather than directly: the page has both a `webView` property and
+    /// delegate methods with the same name, so they are better called where the name is unambiguous.
     private var navigation: WKNavigationDelegate { page }
 
     init() {

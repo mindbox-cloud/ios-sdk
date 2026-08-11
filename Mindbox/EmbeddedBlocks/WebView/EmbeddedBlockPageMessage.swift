@@ -9,30 +9,33 @@
 import CoreGraphics
 import Foundation
 
-/// Что страница встроенного блока сообщает нативной стороне.
+/// What the embedded block page reports to the native side.
 ///
-/// Ядро разбирает только core-слой — `ready`, `heightChanged` и `empty`, они нужны любому блоку. Всё
-/// остальное с валидным конвертом уходит в механику как `action`: ядро не знает и не должно
-/// знать словарь конкретной механики.
+/// The core parses only the core layer — `ready`, `heightChanged` and `empty`, which every block
+/// needs. Everything else with a valid envelope goes to the mechanic as an `action`: the core does
+/// not know, and must not know, the vocabulary of a particular mechanic.
 ///
-/// Формат пока свой и минимальный: страница шлёт `{"type": ..., ...}`. Сведение с общим
-/// JS-мостом инаппов (`MindboxWebBridge`) — отдельная задача, до неё этот разбор трогать не нужно.
+/// The format is our own and minimal for now: the page sends `{"type": ..., ...}`. Converging with
+/// the shared in-app JS bridge (`MindboxWebBridge`) is a separate task; until then this parsing does
+/// not need to be touched.
 enum EmbeddedBlockPageMessage: Equatable {
 
-    /// Страница отрисовалась и просит контейнер стать `height` точек высотой.
+    /// The page has rendered and asks the container to become `height` points tall.
     case ready(height: CGFloat)
 
-    /// Страница перемерилась уже после показа — например, подгрузился контент.
+    /// The page re-measured itself after it was shown — for example, more content was loaded.
     case heightChanged(height: CGFloat)
 
-    /// Странице нечего показать — например, блок выключен в админке. Это не ошибка.
+    /// The page has nothing to show — for example, the block is turned off in the admin panel. This
+    /// is not an error.
     case empty
 
-    /// Действие сверх core-слоя — его смысл знает механика блока.
+    /// An action beyond the core layer — its meaning is known to the block mechanic.
     case action(EmbeddedBlockPageAction)
 
-    /// Тело сообщения приходит из WebKit как `Any`. Строку разбираем как JSON, словарь берём как
-    /// есть: страница может присылать и то и другое, а падать на форме сообщения тут незачем.
+    /// The message body arrives from WebKit as `Any`. A string is parsed as JSON, a dictionary is
+    /// taken as is: the page may send either one, and there is no reason to fail on the message
+    /// shape here.
     init?(body: Any) {
         let payload: [String: Any]
 
@@ -64,7 +67,7 @@ enum EmbeddedBlockPageMessage: Equatable {
         }
     }
 
-    /// JS отдаёт число как `Double`, но целые значения могут прийти и как `Int` — берём оба.
+    /// JS gives a number as a `Double`, but whole values may also arrive as an `Int` — take both.
     private static func height(from payload: [String: Any]) -> CGFloat? {
         if let height = payload["height"] as? Double {
             return CGFloat(height)
@@ -78,8 +81,8 @@ enum EmbeddedBlockPageMessage: Equatable {
     }
 }
 
-/// Конверт действия, которое ядро не разбирает, а передаёт механике: тип и весь payload
-/// сообщения как есть.
+/// The envelope of an action the core does not parse but passes to the mechanic: the type and the
+/// whole message payload as is.
 struct EmbeddedBlockPageAction: Equatable {
 
     let type: String

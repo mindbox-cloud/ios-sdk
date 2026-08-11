@@ -13,36 +13,10 @@ protocol EmbeddedBlockActionHandling: AnyObject {
     func handle(_ action: EmbeddedBlockPageAction)
 }
 
-protocol EmbeddedBlockURLOpening {
-    func canOpen(_ url: URL) -> Bool
-    func open(_ url: URL)
-}
-
-final class EmbeddedBlockSystemURLOpener: EmbeddedBlockURLOpening {
-    func canOpen(_ url: URL) -> Bool {
-        UIApplication.shared.canOpenURL(url)
-    }
-
-    func open(_ url: URL) {
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
-    }
-}
-
 final class EmbeddedBlockActionRouter: EmbeddedBlockActionHandling {
 
     private enum ActionType {
         static let openUrl = "openUrl"
-    }
-
-    /// Веб-адрес — это переход по контенту, и его странице позволено открывать всегда.
-    private enum WebScheme {
-        static let all: Set<String> = ["https"]
-    }
-
-    private let urlOpener: EmbeddedBlockURLOpening
-
-    init(urlOpener: EmbeddedBlockURLOpening = EmbeddedBlockSystemURLOpener()) {
-        self.urlOpener = urlOpener
     }
 
     func handle(_ action: EmbeddedBlockPageAction) {

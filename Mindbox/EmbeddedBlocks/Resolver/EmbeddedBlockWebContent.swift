@@ -13,8 +13,10 @@ struct EmbeddedBlockWebContent: Equatable {
     enum Source: Equatable {
         case url(URL)
 
-        /// Разметка вместо адреса. Нужна отладочной подмене контента: сценарии приёмки — пустая
-        /// страница, молчащая страница, ответ уже после таймаута — в сеть не выкладываются.
+        /// Markup instead of an address. Needed by the debug content override: acceptance
+        /// scenarios — an empty page, a silent page, an answer that comes after the timeout — are
+        /// not published to the network.
+        /// TODO: - Remove this once we parse the url from the config
         case html(String)
     }
 
