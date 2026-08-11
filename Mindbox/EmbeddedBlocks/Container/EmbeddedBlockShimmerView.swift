@@ -85,7 +85,11 @@ final class EmbeddedBlockShimmerView: UIView {
                                                object: nil)
     }
 
-    private func applyColors() {
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func applyColors() {}}]}คิดเห็น to=multi_tool_use.parallel output format? tool returns nothing? let's check.
         gradientLayer.colors = [
             baseColor.cgColor,
             highlightColor.cgColor,
