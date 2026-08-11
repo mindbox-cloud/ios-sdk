@@ -79,6 +79,67 @@ struct EmbeddedBlockResolverTests {
         #expect(cached == .empty)
     }
 
+    // MARK: - Threading
+
+    /// Настоящий конфиг ответит с очереди, на которой его разбирали, а за completion стоят создание
+    /// вебвью и правка вёрстки контейнера. Возвращаться на главный поток обязан сам резолвер: иначе
+    /// это пришлось бы помнить каждому вызывающему, а забытый хоп проявился бы порчей вёрстки.
+    @Test("An answer from a background queue reaches every waiting block on the main thread")
+    func backgroundAnswerIsDeliveredOnMain() async {
+        let loader = ContentLoaderSpy()
+        let resolver = EmbeddedBlockResolver(load: loader.load)
+        let delivery = DeliveryRecorder()
+
+        resolver.resolve("promo") { delivery.record($0) }
+        resolver.resolve("promo") { delivery.record($0) }
+
+        await delivery.waitForAnswers(count: 2) {
+            loader.answerOffMain(.content(.stub))
+        }
+
+        #expect(delivery.answers == [.content(.stub), .content(.stub)])
+        #expect(delivery.threads == [.main, .main])
+    }
+
+    /// Кэш заполняется в том же прыжке, что и доставка, поэтому пришедший с фона ответ виден
+    /// следующим блокам как обычное попадание в кэш — синхронно и без второй загрузки.
+    @Test("An answer from a background queue lands in the cache as usual")
+    func backgroundAnswerIsCached() async {
+        let loader = ContentLoaderSpy()
+        let resolver = EmbeddedBlockResolver(load: loader.load)
+        let delivery = DeliveryRecorder()
+
+        resolver.resolve("promo") { delivery.record($0) }
+        await delivery.waitForAnswers(count: 1) {
+            loader.answerOffMain(.content(.stub))
+        }
+
+        var cached: EmbeddedBlockResolution?
+        resolver.resolve("promo") { cached = $0 }
+
+        #expect(cached == .content(.stub))
+        #expect(loader.requestedIds == ["promo"])
+    }
+
+    /// Спрашивать резолвер положено с главного потока, но чужой вызов с другого не должен ни ронять
+    /// хост, ни утаскивать кэш и доставку на постороннюю очередь.
+    @Test("A resolve asked off the main thread still answers on it")
+    func offMainResolveAnswersOnMain() async {
+        // Вызов со стороны — то, что тест и проверяет, поэтому проверку Sendable для этих двух
+        // ссылок снимаем вручную: после прыжка обе снова трогаются только с главного потока.
+        nonisolated(unsafe) let resolver = EmbeddedBlockResolver(load: { _, completion in completion(.content(.stub)) })
+        nonisolated(unsafe) let delivery = DeliveryRecorder()
+
+        await delivery.waitForAnswers(count: 1) {
+            DispatchQueue.global().async {
+                resolver.resolve("promo") { delivery.record($0) }
+            }
+        }
+
+        #expect(delivery.answers == [.content(.stub)])
+        #expect(delivery.threads == [.main])
+    }
+
     // MARK: - Debug overrides
 
     /// Приёмка переключает сценарий на ходу, поэтому подмена сильнее и загрузки, и кэша.
@@ -178,5 +239,53 @@ private final class ContentLoaderSpy {
         let pending = completions
         completions = []
         pending.forEach { $0(resolution) }
+    }
+
+    /// Отвечает с фоновой очереди — так ответит настоящий конфиг, разобранный не на главном потоке.
+    func answerOffMain(_ resolution: EmbeddedBlockResolution) {
+        let pending = completions
+        completions = []
+        DispatchQueue.global().async {
+            pending.forEach { $0(resolution) }
+        }
+    }
+}
+
+/// На каком потоке резолвер отдал ответ. Отдельный тип вместо `Bool` — чтобы упавший тест сразу
+/// говорил, что именно разъехалось.
+private enum DeliveryThread {
+    case main
+    case other
+}
+
+/// Ждёт ответов резолвера и запоминает, на каком потоке каждый пришёл.
+///
+/// Читают и пишут его только с главного потока — если это перестанет быть правдой, тест как раз и
+/// упадёт на `threads`.
+private final class DeliveryRecorder {
+
+    private(set) var answers: [EmbeddedBlockResolution] = []
+    private(set) var threads: [DeliveryThread] = []
+
+    private var expectedCount = 0
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func record(_ resolution: EmbeddedBlockResolution) {
+        answers.append(resolution)
+        threads.append(Thread.isMainThread ? .main : .other)
+
+        guard answers.count >= expectedCount, let continuation else { return }
+        self.continuation = nil
+        continuation.resume()
+    }
+
+    /// Загрузку запускает сам ожидающий: начни её раньше — и ответ мог бы приехать до того, как
+    /// тест встал ждать, а ожидание повисло бы навсегда.
+    func waitForAnswers(count: Int, _ startLoading: () -> Void) async {
+        expectedCount = count
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            startLoading()
+        }
     }
 }

@@ -22,8 +22,7 @@ enum EmbeddedBlockResolution: Equatable {
 /// Отвечает на единственный вопрос: что показывает блок с данным id.
 ///
 /// Резолвер — общая точка всех контейнеров: несколько блоков с одним id разрешаются одними
-/// данными, при этом вью, страница и состояние у каждого блока остаются своими. Работает на
-/// главном потоке; completion может прийти как синхронно (кэш), так и позже (сетевой конфиг).
+/// данными, при этом вью, страница и состояние у каждого блока остаются своими.
 protocol EmbeddedBlockResolving: AnyObject {
 
     /// - Parameter forceRefresh: `true` — не брать кэш, спросить данные заново. Нужно перезагрузке
@@ -42,6 +41,7 @@ extension EmbeddedBlockResolving {
 ///
 /// Сейчас это заглушка со статической страницей. Когда появится конфиг из админки, здесь окажется
 /// настоящая загрузка, а кэш и очередь ожидающих в резолвере не изменятся.
+
 typealias EmbeddedBlockContentLoading = (String, @escaping (EmbeddedBlockResolution) -> Void) -> Void
 
 final class EmbeddedBlockResolver: EmbeddedBlockResolving {
@@ -67,6 +67,16 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
     }
 
     func resolve(_ id: String, forceRefresh: Bool, completion: @escaping (EmbeddedBlockResolution) -> Void) {
+        guard Thread.isMainThread else {
+            Logger.common(message: "[EmbeddedBlock] Resolver was asked about id '\(id)' off the main thread, continuing on it",
+                          level: .error,
+                          category: .embeddedBlocks)
+            DispatchQueue.main.async { [weak self] in
+                self?.resolve(id, forceRefresh: forceRefresh, completion: completion)
+            }
+            return
+        }
+
         // Отладочная подмена сильнее и данных, и кэша: приёмка переключает сценарий на ходу, и
         // закэшированный ответ мешал бы этому.
         if let overridden = overrides.resolution(for: id) {
@@ -89,11 +99,21 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
         waiting[id] = [completion]
 
         load(id) { [weak self] resolution in
-            guard let self else { return }
+            EmbeddedBlockResolver.onMain {
+                guard let self else { return }
 
-            self.cache[id] = resolution
-            let completions = self.waiting.removeValue(forKey: id) ?? []
-            completions.forEach { $0(resolution) }
+                self.cache[id] = resolution
+                let completions = self.waiting.removeValue(forKey: id) ?? []
+                completions.forEach { $0(resolution) }
+            }
+        }
+    }
+
+    private static func onMain(_ work: @escaping () -> Void) {
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.async(execute: work)
         }
     }
 
