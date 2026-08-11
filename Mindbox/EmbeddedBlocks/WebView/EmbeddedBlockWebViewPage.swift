@@ -48,6 +48,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         case .url(let url):
             webView.load(URLRequest(url: url))
         case .html(let html):
+            // у страницы, поданной разметкой, origin about:blank, поэтому ни localStorage, ни сетевых запросов на свой домен у неё не будет. В (MOBILE-328) изменится или полностью удалится этот кейс
             webView.loadHTMLString(html, baseURL: nil)
         }
     }
