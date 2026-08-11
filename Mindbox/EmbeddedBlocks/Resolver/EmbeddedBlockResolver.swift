@@ -80,6 +80,18 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
     }
 
     func resolve(_ id: String, forceRefresh: Bool, completion: @escaping (EmbeddedBlockResolution) -> Void) {
+        // The cache and the queue of waiters are plain dictionaries: every path through them has to
+        // run on one thread — the same one the block views wait on.
+        guard Thread.isMainThread else {
+            Logger.common(message: "[EmbeddedBlock] Resolver was asked about id '\(id)' off the main thread, continuing on it",
+                          level: .error,
+                          category: .embeddedBlocks)
+            DispatchQueue.main.async { [weak self] in
+                self?.resolve(id, forceRefresh: forceRefresh, completion: completion)
+            }
+            return
+        }
+
         // The debug override outranks both the data and the cache: acceptance testing switches
         // scenarios on the fly, and a cached answer would get in the way.
         if let overridden = overrides.resolution(for: id) {
