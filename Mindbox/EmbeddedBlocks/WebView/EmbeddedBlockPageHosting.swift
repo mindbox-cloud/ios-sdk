@@ -8,31 +8,32 @@
 
 import UIKit
 
-/// Страница встроенного блока — всё, что провайдеру нужно от вебвью.
+/// The embedded block page — everything the provider needs from the web view.
 ///
-/// Единственный шов внутри блока и единственное место, где живёт WebKit: перевод сообщений
-/// страницы в состояния блока так проверяется без реального вебвью и без сети.
+/// The single seam inside the block and the single place where WebKit lives: this is what lets the
+/// translation of page messages into block states be tested without a real web view and without
+/// the network.
 protocol EmbeddedBlockPageHosting: AnyObject {
 
-    /// Вью страницы. Провайдер отдаёт её контейнеру как контент блока.
+    /// The page view. The provider hands it to the container as the block content.
     var view: UIView { get }
 
-    /// Сообщения от страницы. Приходят на главном потоке.
+    /// Messages from the page. Delivered on the main thread.
     var onMessage: ((EmbeddedBlockPageMessage) -> Void)? { get set }
 
-    /// Загрузка страницы не состоялась — соединение, домен, отменённая навигация. Только про это
-    /// навигация и сообщает: готова ли страница, решает сама страница своим `ready`.
-    /// Приходит на главном потоке.
+    /// The page failed to load — connection, domain, a cancelled navigation. That is all navigation
+    /// reports: whether the page is ready is decided by the page itself with its `ready`.
+    /// Delivered on the main thread.
     var onLoadFailure: (() -> Void)? { get set }
 
-    /// Документ загрузился. Готовности блока это не значит — страница может быть пустой или
-    /// сломанной, — поэтому обычный путь этот сигнал игнорирует: его слушает только отладочная
-    /// подмена готовности для страниц без веб-контракта. Приходит на главном потоке.
+    /// The document has loaded. That does not mean the block is ready — the page may be empty or
+    /// broken — so the regular path ignores this signal: the only listener is the debug readiness
+    /// override for pages without the web contract. Delivered on the main thread.
     var onLoadFinish: (() -> Void)? { get set }
 
     func load()
 
-    /// Останавливает загрузку. Страница и её мост остаются на месте: блок может вернуться в окно,
-    /// и тогда уже отрендеренная страница показывается снова без перезагрузки.
+    /// Stops the loading. The page and its bridge stay in place: the block may come back into the
+    /// window, and then the already rendered page is shown again without a reload.
     func cancel()
 }

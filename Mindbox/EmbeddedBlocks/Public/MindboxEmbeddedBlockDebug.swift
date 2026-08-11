@@ -8,59 +8,62 @@
 
 import Foundation
 
-/// Отладочное управление содержимым встроенных блоков — для тестового приложения и приёмки.
+/// Debug control over embedded block content — for the test app and acceptance testing.
 ///
-/// Подменяет ответ на вопрос «что стоит за этим id», то есть встаёт ровно на место конфига из
-/// админки. Всё, что ниже — резолвер, провайдер, страница, бюджет ожидания у контейнера — работает
-/// без изменений, поэтому приёмка проверяет боевой путь, а не отдельный тестовый режим.
+/// Overrides the answer to "what stands behind this id", that is, it takes exactly the place of the
+/// admin panel config. Everything below — the resolver, the provider, the page, the container's
+/// waiting budget — works unchanged, so acceptance testing exercises the production path rather
+/// than a separate test mode.
 ///
-/// Не часть публичного API: доступно только через `@_spi(Internal) import Mindbox`. Из релизных
-/// сборок не вырезано намеренно — QA проверяет ровно то, что уходит клиентам, — поэтому каждая
-/// установка подмены пишется в лог.
+/// Not part of the public API: available only via `@_spi(Internal) import Mindbox`. Deliberately
+/// not stripped from release builds — QA checks exactly what ships to clients — which is why every
+/// override that gets set is written to the log.
 @_spi(Internal)
 public enum MindboxEmbeddedBlockDebug {
 
-    /// Чем подменить содержимое блока.
+    /// What to replace the block content with.
     public enum Content {
 
-        /// Адрес страницы. Так гоняются сценарии на реальной сети — включая заведомо недоступный
-        /// адрес, чтобы получить провал загрузки.
+        /// A page url. This is how scenarios are run against the real network — including a
+        /// knowingly unreachable address, to get a load failure.
         case url(URL)
 
-        /// Готовая разметка. Так задаются сценарии, которых в сети нет: страница, сообщающая
-        /// «пусто», молчащая страница, страница с ответом после таймаута.
+        /// Ready-made markup. This is how scenarios that do not exist on the network are set up: a
+        /// page reporting "empty", a silent page, a page that answers after the timeout.
         case html(String)
 
-        /// За id ничего не закреплено: блок выключен в админке или id неизвестен.
+        /// Nothing is attached to the id: the block is turned off in the admin panel or the id is
+        /// unknown.
         case empty
     }
 
-    /// Подменяет содержимое блока с этим id. Действует на блоки, которые начнут загрузку после
-    /// вызова: уже показанный блок надо перезагрузить или заново открыть экран.
+    /// Overrides the content of the block with this id. Applies to blocks that start loading after
+    /// the call: a block that is already shown has to be reloaded or its screen reopened.
     public static func setContent(_ content: Content, for id: String) {
         EmbeddedBlockContentOverrides.shared.set(content.resolution, for: id)
     }
 
-    /// Возвращает блоку его обычное содержимое.
+    /// Gives the block its usual content back.
     public static func removeContent(for id: String) {
         EmbeddedBlockContentOverrides.shared.remove(for: id)
     }
 
-    /// Снимает все подмены сразу.
+    /// Drops every override at once.
     public static func removeAllContent() {
         EmbeddedBlockContentOverrides.shared.removeAll()
     }
 
-    /// Показывать блок, как только загрузился документ, не дожидаясь `ready` от страницы.
+    /// Show the block as soon as the document has loaded, without waiting for `ready` from the page.
     ///
-    /// Нужно ровно одному сценарию: посмотреть, как блок выглядит и ведёт себя в вёрстке хоста,
-    /// пока веб-контракт не реализован на странице. По обычному правилу такая страница молчит,
-    /// а значит сворачивается по таймауту контейнера, и увидеть в блоке нечего.
+    /// Needed for exactly one scenario: seeing how the block looks and behaves inside the host
+    /// layout while the web contract is not implemented on the page yet. Under the usual rule such
+    /// a page stays silent, which means it collapses on the container timeout and there is nothing
+    /// to see in the block.
     ///
-    /// Выключено по умолчанию и ставится один раз при старте приложения. Держать включённым
-    /// дольше проверки UI не стоит: со включённым флагом сломанная страница выглядит как рабочая.
-    /// `ready` от страницы флаг не отменяет — он лишь добавляет второй повод показать блок,
-    /// поэтому страница, которая контракт умеет, ведёт себя одинаково с ним и без него.
+    /// Off by default and set once at app startup. Keeping it on for longer than the UI check is a
+    /// bad idea: with the flag on, a broken page looks like a working one. The flag does not cancel
+    /// `ready` from the page — it only adds a second reason to show the block, so a page that does
+    /// implement the contract behaves the same with it and without it.
     public static var treatsLoadedPageAsReady: Bool {
         get { EmbeddedBlockReadinessOverrides.shared.treatsLoadedPageAsReady }
         set { EmbeddedBlockReadinessOverrides.shared.setTreatsLoadedPageAsReady(newValue) }
