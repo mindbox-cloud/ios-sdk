@@ -22,9 +22,9 @@ final class EmbeddedBlockActionRouter: EmbeddedBlockActionHandling {
     func handle(_ action: EmbeddedBlockPageAction) {
         switch action.type {
         case ActionType.openUrl:
-                print("embeddedBlock action")
-                // TODO: - Add action here later
-//            openUrl(from: action)
+                // TODO(MOBILE-328): open the url once blocks move to the shared in-app bridge.
+                Logger.common(message: "[EmbeddedBlock] openUrl is not handled yet, ignoring: \(action.type)",
+                              category: .embeddedBlocks)
         default:
             Logger.common(message: "[EmbeddedBlock] Unknown page action: \(action.type)",
                           category: .embeddedBlocks)
