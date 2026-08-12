@@ -24,9 +24,9 @@ import MindboxLogger
 /// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
 /// else.
 ///
-/// Сам контейнер — это машина из четырёх состояний контента и одного видимого слоя на каждое из
-/// них. Всё, что можно было унести из него целиком, унесено: показ слоёв — в
-/// `EmbeddedBlockLayerHost`, бюджет ожидания вместе с его паузой в фоне — в
+/// The container itself is a machine of four content states and one visible layer for each of
+/// them. Everything that could be moved out of it wholesale has been: showing the layers went to
+/// `EmbeddedBlockLayerHost`, the waiting budget together with its background pause to
 /// `EmbeddedBlockReadyTimeout`.
 public final class MindboxEmbeddedBlockView: UIView {
 
@@ -40,9 +40,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// delivers that outcome, so subscribing late cannot lose it.
     public weak var delegate: MindboxEmbeddedBlockViewDelegate? {
         didSet {
-            // Тот же делегат — не новый подписчик. Хост штатно переприсваивает его на каждой
-            // переиспользованной ячейке, и отдавать ему на это уже услышанный исход нельзя: он на
-            // исход перестраивает вёрстку, а перестройка вёрстки снова переприсваивает делегата.
+            // The same delegate is not a new subscriber. The host routinely reassigns it on every
+            // reused cell, and answering that with an already heard outcome is not allowed: the
+            // host rebuilds its layout on the outcome, and the rebuild reassigns the delegate again.
             guard delegate !== oldValue else { return }
 
             deliveredEvent = nil
@@ -104,22 +104,22 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// Схлопывался ли блок с прошлой явной перезагрузки.
+    /// Whether the block has collapsed since the last explicit reload.
     ///
-    /// Место, единожды отданное хосту, назад не забирается: повторная попытка — а её блок получает
-    /// на каждом возвращении в окно — не разворачивает контейнер обратно под плейсхолдер. Иначе
-    /// блок, который показать не удалось, дёргал бы вёрстку хоста на свою высоту и мигал шиммером
-    /// на каждый свой проход по экрану, ничего в итоге не показывая. Разворачивает его только
-    /// показанный контент — или явная перезагрузка, которая и есть согласие на полный цикл заново.
+    /// Space once ceded to the host is not taken back: a retry — and the block gets one on every
+    /// return to a window — does not expand the container back for the placeholder. Otherwise a
+    /// block that failed to show would jerk the host layout by its height and flash the shimmer
+    /// on every pass across the screen, showing nothing in the end. Only shown content expands it
+    /// back — or an explicit reload, which is precisely consent to the full cycle anew.
     private var hasCollapsed = false
 
-    /// Слой, показанный прямо сейчас. Хранится, а не вычисляется на лету: он один источник и для
-    /// высоты, и для отчёта обёртке — иначе они могли бы разойтись. И он же отделяет показанный
-    /// экран ошибки от просто назначенного: `errorView`, отданный после схлопывания, не показан.
+    /// The layer shown right now. Stored, not computed on the fly: it is the one source for both
+    /// the height and the report to the wrapper — otherwise they could diverge. It also tells a
+    /// shown error screen from one merely assigned: an `errorView` given after collapse is not shown.
     private var shownLayer: EmbeddedBlockPresentation.Layer = .placeholder
 
-    /// Публичных исходов два: показан или не показан. «Пусто» для хоста — тот же непоказ, что и
-    /// ошибка, разница живёт только внутри контейнера (пустой блок не показывает `errorView`).
+    /// There are two public outcomes: shown or not shown. To the host "empty" is the same non-show
+    /// as a failure; the difference lives only in the container (an empty block shows no `errorView`).
     private enum BlockEvent {
         case loaded
         case failed
@@ -151,9 +151,9 @@ public final class MindboxEmbeddedBlockView: UIView {
         return nil
     }
 
-    /// - Parameter timeout: Бюджет ожидания целиком, а не одна его длительность: внутри него живут
-    ///   и часы, и планировщик, и подписка на фон, а подменять их поодиночке через контейнер значило
-    ///   бы протащить сквозь него три параметра ради тестов.
+    /// - Parameter timeout: The waiting budget as a whole, not just its duration: the clock, the
+    ///   scheduler, and the background subscription all live inside it, and swapping them one by
+    ///   one through the container would mean threading three parameters through it just for tests.
     init(id: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
@@ -170,10 +170,10 @@ public final class MindboxEmbeddedBlockView: UIView {
         setUpContainer()
     }
 
-    /// Высоту блока задаёт хост, и нулевая — это не «блок схлопнут», а «место под него не выделено»:
-    /// блок отработает весь цикл, отдаст хосту свои события и останется невидимым. Симптомов у этого
-    /// нет никаких — блока просто не видно, — а причина самая частая из возможных, поэтому SDK
-    /// говорит о ней вслух.
+    /// The host sets the block height, and zero means not "the block collapsed" but "no space was
+    /// reserved for it": the block runs its whole cycle, hands the host its events and stays
+    /// invisible. There are no symptoms at all — the block is simply not visible — and the cause is
+    /// the most common one possible, so the SDK says it out loud.
     private func warnIfHeightReservesNothing() {
         guard preferredHeight <= 0 else { return }
 
@@ -235,8 +235,8 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         if window == nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(id)' left the window, stopping content", category: .embeddedBlocks)
-            // Пауза, а не сброс: вне окна блока никто не ждёт, но начатую попытку это не отменяет —
-            // вернувшись, она досчитает свой остаток.
+            // A pause, not a reset: nobody waits for a block outside a window, but that does not
+            // cancel an attempt already started — once back, it counts down its remainder.
             timeout.pause()
             contentProvider.stop()
         } else {
@@ -246,16 +246,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// Перезагружает блок: контент начинает загрузку с нуля, адрес запрашивается заново в обход
-    /// кэша, блок возвращается в состояние загрузки со своим плейсхолдером и новым таймаутом.
+    /// Reloads the block: the content starts loading from scratch, the address is requested anew
+    /// bypassing the cache, the block returns to loading with its placeholder and a fresh timeout.
     ///
-    /// Internal и без публичной обёртки: автоматические перезагрузки — по ошибке, по возвращению
-    /// в приложение — будут строиться на этом методе, а хосту решать, когда обновлять блок, пока
-    /// незачем.
+    /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
+    /// app — will be built on this method, and there is no reason yet for the host to decide when
+    /// to refresh the block.
     func reload() {
         guard window != nil else {
-            // Контент живёт только пока блок в окне; перезагружать невидимый блок нечего — он
-            // сам загрузится заново, когда вернётся в окно.
+            // Content lives only while the block is in a window; reloading an invisible block is
+            // pointless — it loads anew by itself once it returns to a window.
             Logger.common(message: "[EmbeddedBlock] Block '\(id)' reload skipped: the block is not in a window",
                           category: .embeddedBlocks)
             return
@@ -263,11 +263,11 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(id)' reload requested", category: .embeddedBlocks)
         timeout.reset()
-        // Новая попытка — новый исход: хост должен услышать его целиком, даже если он совпадёт
-        // с прошлым.
+        // A new attempt means a new outcome: the host must hear it in full, even if it matches
+        // the previous one.
         deliveredEvent = nil
-        // И новая попытка вправе снова занять место: перезагрузка — это явное согласие хоста на
-        // полный цикл с плейсхолдером, в отличие от молчаливого возвращения блока в окно.
+        // And a new attempt is entitled to take space again: a reload is the host's explicit consent
+        // to the full cycle with the placeholder, unlike the block's silent return to a window.
         hasCollapsed = false
         contentProvider.reload()
         timeout.armIfNeeded()
@@ -281,9 +281,10 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Layers
 
-    /// Бюджет ожидания живёт по попыткам, а не по состояниям: продолжающаяся загрузка досчитывает
-    /// свой остаток, а всё остальное — известный исход или начатая заново загрузка — счёт обнуляет.
-    /// Заводить его снова решает тот, кто знает, ждут ли блок: вход в окно и возврат из фона.
+    /// The waiting budget lives per attempt, not per state: an ongoing load counts down its
+    /// remainder, while everything else — a known outcome or a load started anew — resets the count.
+    /// Arming it again is up to whoever knows whether the block is awaited: entering a window and
+    /// returning from the background.
     private func updateTimeout(from previous: EmbeddedBlockState) {
         guard state != .loading || previous != .loading else { return }
 
@@ -306,11 +307,11 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private func layer(for state: EmbeddedBlockState) -> EmbeddedBlockPresentation.Layer {
         switch state {
-        // Схлопнутый блок остаётся свёрнутым и пока грузится заново: место, которое хост уже
-        // забрал, повторная попытка назад не отыгрывает.
+        // A collapsed block stays collapsed even while it loads anew: a retry does not win back
+        // the space the host has already reclaimed.
         case .loading: return hasCollapsed ? .nothing : .placeholder
         case .ready: return .content
-        // Провал показывают только тем, кто согласился на это явно; остальным блок сворачивается.
+        // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
         case .failed: return errorView == nil ? .nothing : .errorView
         case .empty: return .nothing
         }

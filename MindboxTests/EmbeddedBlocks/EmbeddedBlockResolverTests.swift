@@ -208,7 +208,7 @@ private final class ContentLoaderSpy {
         pending.forEach { $0(resolution) }
     }
 
-    /// Отвечает с фоновой очереди — так ответит настоящий конфиг, разобранный не на главном потоке.
+    /// Answers from a background queue — how the real config, parsed off the main thread, will answer.
     func answerOffMain(_ resolution: EmbeddedBlockResolution) {
         let pending = completions
         completions = []
@@ -218,17 +218,17 @@ private final class ContentLoaderSpy {
     }
 }
 
-/// На каком потоке резолвер отдал ответ. Отдельный тип вместо `Bool` — чтобы упавший тест сразу
-/// говорил, что именно разъехалось.
+/// Which thread the resolver delivered the answer on. A separate type instead of `Bool` — so that
+/// a failing test says right away what exactly diverged.
 private enum DeliveryThread {
     case main
     case other
 }
 
-/// Ждёт ответов резолвера и запоминает, на каком потоке каждый пришёл.
+/// Waits for the resolver's answers and remembers which thread each one arrived on.
 ///
-/// Читают и пишут его только с главного потока — если это перестанет быть правдой, тест как раз и
-/// упадёт на `threads`.
+/// It is read and written only from the main thread — if that stops being true, the test will fail
+/// precisely on `threads`.
 private final class DeliveryRecorder {
 
     private(set) var answers: [EmbeddedBlockResolution] = []
@@ -246,8 +246,8 @@ private final class DeliveryRecorder {
         continuation.resume()
     }
 
-    /// Загрузку запускает сам ожидающий: начни её раньше — и ответ мог бы приехать до того, как
-    /// тест встал ждать, а ожидание повисло бы навсегда.
+    /// The waiter itself starts the load: start it any earlier — and the answer could arrive before
+    /// the test started waiting, and the wait would hang forever.
     func waitForAnswers(count: Int, _ startLoading: () -> Void) async {
         expectedCount = count
         await withCheckedContinuation { continuation in

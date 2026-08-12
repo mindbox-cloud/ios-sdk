@@ -8,15 +8,15 @@
 
 import UIKit
 
-/// Дефолтный плейсхолдер встроенного блока — нейтральная плашка с бегущим бликом.
+/// The default embedded block placeholder — a neutral tile with a sweeping highlight.
 ///
-/// Заливает контейнер целиком: у SDK нет знания о вёрстке будущего контента, поэтому плейсхолдер
-/// не изображает её, а просто помечает зарезервированное место как «грузится». Хост, которому
-/// нужен скелет своей вёрстки, задаёт `placeholderView` контейнера.
+/// Fills the container entirely: the SDK knows nothing about the layout of the content to come, so
+/// the placeholder does not depict it and simply marks the reserved spot as "loading". A host that
+/// needs a skeleton of its own layout sets the container's `placeholderView`.
 ///
-/// Анимация живёт ровно столько, сколько вью видна: запускается при входе в окно и гасится при
-/// выходе, включая уход приложения в фон (система снимает CA-анимации, поэтому на возврат в
-/// foreground блик перезапускается).
+/// The animation lives exactly as long as the view is visible: it starts on entering a window and
+/// stops on leaving it, including the app going to the background (the system removes CA
+/// animations, so the highlight is restarted on return to the foreground).
 final class EmbeddedBlockShimmerView: UIView {
 
     private enum Shimmer {
@@ -112,8 +112,8 @@ final class EmbeddedBlockShimmerView: UIView {
         gradientLayer.removeAnimation(forKey: Shimmer.animationKey)
     }
 
-    /// Система снимает бесконечные CA-анимации при уходе в фон — после возврата блик нужно
-    /// запустить заново.
+    /// The system removes infinite CA animations when the app goes to the background — after
+    /// coming back the highlight has to be started again.
     @objc
     private func applicationWillEnterForeground() {
         guard window != nil else { return }

@@ -7,35 +7,38 @@
 //
 
 import UIKit
+import QuartzCore
 import MindboxLogger
 
-/// Сколько блоку дано на то, чтобы показаться, — и учёт этого времени.
+/// How long a block is given to show up — and the accounting of that time.
 ///
-/// Бюджет принадлежит контейнеру, а не контенту: чем бы блок ни оказался внутри, вёрстка хоста не
-/// ждёт его вечно. Не уложился — контейнер сворачивает блок.
+/// The budget belongs to the container, not to the content: whatever the block turns out to be,
+/// the host layout does not wait for it forever. A block that misses the budget is collapsed by
+/// the container.
 ///
-/// Считается время ожидания пользователя, а не календарное: пока блока никто не ждёт — приложение
-/// в фоне, контейнер вне окна — отсчёт стоит. Иначе пользователь возвращался бы в приложение к
-/// блоку, который сдался, пока его никто не видел.
+/// What is counted is the user's waiting time, not calendar time: while nobody is waiting for the
+/// block — the app is in the background, the container is out of the window — the count stands
+/// still. Otherwise the user would come back to a block that gave up while nobody was looking.
 ///
-/// Но именно стоит, а не начинается заново: потраченное запоминается, и попытка продолжает бюджет
-/// с того места, где её прервали. Пауза, отдающая полный бюджет заново, не заканчивается никогда —
-/// пользователь, переключающийся между приложениями каждые пять секунд, продлевал бы ожидание
-/// блока бесконечно, и вёрстка хоста ждала бы его вечно. Ровно то, против чего бюджет и заведён.
-/// Полный бюджет заново получает только новая попытка — `reset()`.
+/// Stands still, but does not start over: what was spent is remembered, and the attempt continues
+/// its budget from where it was interrupted. A pause that handed the full budget back would never
+/// end — a user switching between apps every five seconds would extend the wait indefinitely, and
+/// the host layout would wait forever. Exactly what the budget exists to prevent. Only a new
+/// attempt — `reset()` — gets the full budget again.
 ///
-/// Загрузку пауза не трогает: она идёт своим чередом, в фоне её тормозит система, а не SDK.
+/// Loading is not affected by the pause: it runs its own course; in the background the system
+/// throttles it, not the SDK.
 
-/// Кто выполнит работу, когда истечёт заданный остаток бюджета.
+/// Runs the work when the given remainder of the budget expires.
 typealias EmbeddedBlockTimeoutScheduling = (TimeInterval, DispatchWorkItem) -> Void
 
 final class EmbeddedBlockReadyTimeout {
 
-    /// Нужен ли отсчёт прямо сейчас: исход ещё неизвестен и блок на виду. Спрашивается заново на
-    /// каждом заводе, потому что за время паузы могло измениться и то, и другое.
+    /// Whether the count is needed right now: the outcome is still unknown and the block is
+    /// visible. Asked again on every arm, because both may have changed while paused.
     var isNeeded: () -> Bool = { false }
 
-    /// Время вышло. Вызывается на главном потоке.
+    /// Time is up. Called on the main thread.
     var onExpire: () -> Void = {}
 
     var isRunning: Bool { workItem != nil }
@@ -43,32 +46,35 @@ final class EmbeddedBlockReadyTimeout {
     private let blockId: String
     private let duration: TimeInterval
 
-    /// Часы отдельным швом: считать потраченное без них нельзя, а тесты не могут ждать бюджет
-    /// целиком — им нужно уметь сказать, что время прошло.
-    private let now: () -> Date
+    /// The clock is its own seam: spent time cannot be counted without it, and tests cannot wait
+    /// out the budget for real — they need a way to say that time has passed. The clock is
+    /// monotonic, not `Date`: an NTP correction or a manual clock change would make the spent
+    /// delta negative and stretch the wait past the budget.
+    private let now: () -> TimeInterval
 
-    /// Нотификации отдельным швом по той же причине, что и часы: на глобальном центре уход в фон
-    /// проверить нельзя — тестовое уведомление долетело бы до блоков из тестов, идущих рядом.
+    /// Notifications are their own seam for the same reason as the clock: going to the background
+    /// cannot be tested on the global center — a test notification would reach the blocks of tests
+    /// running next to it.
     private let notificationCenter: NotificationCenter
 
-    /// Планировщик тем же швом и по той же причине: зашитая очередь заставляла бы тесты бюджета
-    /// ждать его настоящим временем — то есть спать на каждую проверку и флакать на нагруженной
-    /// машине.
+    /// The scheduler is the same kind of seam for the same reason: a hard-wired queue would force
+    /// budget tests to wait it out in real time — sleeping on every check and flaking on a busy
+    /// machine.
     private let schedule: EmbeddedBlockTimeoutScheduling
 
     private var workItem: DispatchWorkItem?
 
-    /// Сколько бюджета съели прошлые отрезки ожидания.
+    /// How much of the budget past waiting stretches have consumed.
     private var consumed: TimeInterval = 0
 
-    /// Когда начался идущий отрезок. `nil` — отсчёт не идёт.
-    private var resumedAt: Date?
+    /// When the current stretch started. `nil` — the count is not running.
+    private var resumedAt: TimeInterval?
 
     private var remaining: TimeInterval { max(0, duration - consumed) }
 
     init(blockId: String,
          duration: TimeInterval,
-         now: @escaping () -> Date = { Date() },
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
          notificationCenter: NotificationCenter = .default,
          schedule: @escaping EmbeddedBlockTimeoutScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
@@ -94,9 +100,9 @@ final class EmbeddedBlockReadyTimeout {
         workItem?.cancel()
     }
 
-    /// Заводит отсчёт на остаток бюджета, если он нужен и ещё не идёт. Звать можно сколько угодно
-    /// раз: лишние вызовы ничего не делают, поэтому вход в окно, возврат из фона и перезагрузка
-    /// обходятся одним и тем же вызовом.
+    /// Arms the count for the remainder of the budget, if it is needed and not already running.
+    /// Call as often as convenient: extra calls do nothing, so entering the window, returning from
+    /// the background, and reloading all share the same call.
     func armIfNeeded() {
         guard workItem == nil, isNeeded() else { return }
 
@@ -105,7 +111,8 @@ final class EmbeddedBlockReadyTimeout {
 
             self.workItem = nil
             self.resumedAt = nil
-            // Бюджет израсходован целиком: если блок почему-то заведут снова, ждать ему уже нечего.
+            // The budget is spent in full: if the block is somehow armed again, there is nothing
+            // left to wait for.
             self.consumed = self.duration
 
             Logger.common(message: "[EmbeddedBlock] Block '\(self.blockId)' timed out after \(self.duration)s of waiting",
@@ -113,26 +120,27 @@ final class EmbeddedBlockReadyTimeout {
             self.onExpire()
         }
 
-        // Работа записывается в свойство до того, как её заведут: планировщик вправе выполнить её
-        // тут же, и она должна застать бюджет в согласованном состоянии.
+        // The work is stored in the property before it is scheduled: the scheduler is free to run
+        // it right away, and it must find the budget in a consistent state.
         resumedAt = now()
         workItem = work
         schedule(remaining, work)
     }
 
-    /// Останавливает отсчёт, запомнив потраченное. Попытку это не отменяет: `armIfNeeded()`
-    /// продолжит её с остатка.
+    /// Stops the count, remembering what was spent. The attempt is not cancelled: `armIfNeeded()`
+    /// continues it from the remainder.
     func pause() {
         guard let resumedAt else { return }
 
-        consumed += now().timeIntervalSince(resumedAt)
+        consumed += max(0, now() - resumedAt)
         self.resumedAt = nil
         workItem?.cancel()
         workItem = nil
     }
 
-    /// Останавливает отсчёт и возвращает бюджет в полный: прошлая попытка кончилась — исходом или
-    /// тем, что началась следующая, — и её остаток к новой отношения не имеет.
+    /// Stops the count and restores the full budget: the previous attempt is over — with an
+    /// outcome, or because the next one started — and its remainder has nothing to do with the
+    /// new one.
     func reset() {
         pause()
         consumed = 0

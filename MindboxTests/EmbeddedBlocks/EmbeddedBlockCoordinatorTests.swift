@@ -10,18 +10,20 @@ import Testing
 import SwiftUI
 @testable import Mindbox
 
-/// Координатор пишет доложенную контейнером презентацию не сразу, а отложенно — на следующем витке
-/// главной очереди. `dismantleUIView` глушит колбэки контейнера, но уже поставленную запись из
-/// очереди не достать — её отменяет `detach()`: подписка перепроверяется в момент исполнения.
+/// The coordinator writes the presentation reported by the container deferred — on the next turn
+/// of the main queue. `dismantleUIView` silences the container's callbacks, but a write already
+/// queued cannot be recalled — `detach()` cancels it: the subscription is re-checked at execution
+/// time.
 ///
-/// Сьют не помечен `@available(iOS 13.0, *)` — макросы `@Suite`/`@Test` не применяются к таким
-/// объявлениям. Таргет тестов собирается под iOS 12, поэтому доступность SwiftUI-типов каждый тест
-/// открывает себе сам через `guard #available`.
+/// The suite is not marked `@available(iOS 13.0, *)` — the `@Suite`/`@Test` macros reject such
+/// declarations. The test target builds for iOS 12, so each test opens SwiftUI availability for
+/// itself with `guard #available`.
 @Suite("Embedded block coordinator", .tags(.embeddedBlocks))
 struct EmbeddedBlockCoordinatorTests {
 
-    /// Запись отложена: контейнер может доложить о смене слоя посреди прохода body, а менять
-    /// состояние в этот момент нельзя. Записывается на витке планировщика — и ровно то, что доложено.
+    /// The write is deferred: the container may report a layer change in the middle of a body
+    /// pass, and state must not change at that moment. It lands on the scheduler's turn — and is
+    /// exactly what was reported.
     @Test("Update writes on the scheduled turn, not synchronously")
     func updateWritesOnScheduledTurn() {
         guard #available(iOS 13.0, *) else { return }
@@ -47,8 +49,9 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(written == [content])
     }
 
-    /// Гонка демонтажа: запись уже в очереди, вью снимается с дерева до её исполнения. После
-    /// `detach()` блок обязан промолчать — состояние снятой вью ему больше не принадлежит.
+    /// The dismantle race: the write is already queued, the view leaves the tree before it runs.
+    /// After `detach()` the block must stay silent — the removed view's state is no longer its
+    /// to write.
     @Test("Detach drops a write that was already scheduled")
     func detachDropsScheduledWrite() {
         guard #available(iOS 13.0, *) else { return }

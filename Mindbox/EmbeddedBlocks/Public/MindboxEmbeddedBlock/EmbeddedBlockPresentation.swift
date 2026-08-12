@@ -8,36 +8,37 @@
 
 import CoreGraphics
 
-/// Что контейнер показывает прямо сейчас — снимок для SwiftUI-обёртки.
+/// What the container shows right now — a snapshot for the SwiftUI wrapper.
 ///
-/// UIKit-хосту такой тип не нужен: контейнер сам заявляет высоту через `intrinsicContentSize` и сам
-/// держит внутри нужный слой. SwiftUI не умеет ни того, ни другого. Высоту представимой вью
-/// назначает обёртка, а плейсхолдер и экран ошибки хоста — это SwiftUI-вью, и рисовать их обязана
-/// тоже она: вью, отданная контейнеру через отдельный `UIHostingController`, выпадает из дерева
-/// SwiftUI и теряет его окружение. Поэтому обёртке нужен не только размер, но и текущий слой.
+/// A UIKit host needs no such type: the container declares its height through `intrinsicContentSize`
+/// and holds the right layer inside, both on its own. SwiftUI can do neither. The wrapper assigns
+/// the representable's height, and the host's placeholder and error screen are SwiftUI views the
+/// wrapper must draw too: a view handed to the container through a separate `UIHostingController`
+/// falls out of the SwiftUI tree and loses its environment. So the wrapper needs not only the
+/// size but the current layer too.
 ///
-/// Deliberately internal, как и `EmbeddedBlockState`: хост знает только исход, а не то, как
-/// контейнер к нему пришёл.
+/// Deliberately internal, like `EmbeddedBlockState`: the host knows only the outcome, not how the
+/// container arrived at it.
 struct EmbeddedBlockPresentation: Equatable {
 
-    /// Слой, видимый в контейнере.
+    /// The layer visible in the container.
     enum Layer {
 
-        /// Идёт загрузка: показан плейсхолдер — хоста или дефолтный шиммер SDK.
+        /// Loading is underway: the placeholder is shown — the host's or the SDK's default shimmer.
         case placeholder
 
-        /// Показано содержимое блока.
+        /// The block content is shown.
         case content
 
-        /// Показан экран ошибки, на который хост согласился явно.
+        /// The error screen the host explicitly opted into is shown.
         case errorView
 
-        /// Блок схлопнут: провал без экрана ошибки или пустой блок.
+        /// The block is collapsed: a failure without an error screen, or an empty block.
         case nothing
     }
 
     let layer: Layer
 
-    /// Высота, которую контейнер занимает с этим слоем.
+    /// The height the container occupies with this layer.
     let height: CGFloat
 }

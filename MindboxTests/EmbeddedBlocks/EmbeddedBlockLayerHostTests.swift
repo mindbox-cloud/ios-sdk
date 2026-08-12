@@ -10,8 +10,8 @@ import Testing
 import UIKit
 @testable import Mindbox
 
-/// У хоста слоёв одно обещание: в контейнере ровно одна вью и она растянута по его краям. Слои блока
-/// взаимоисключающие, поэтому показать новый значит снять прежний.
+/// The layer host has one promise: the container holds exactly one view, stretched to its edges. The
+/// block's layers are mutually exclusive, so showing a new one means removing the previous one.
 @Suite("Embedded block layer host", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockLayerHostTests {
@@ -26,7 +26,7 @@ struct EmbeddedBlockLayerHostTests {
 
         #expect(layer.superview === container)
         #expect(layer.translatesAutoresizingMaskIntoConstraints == false)
-        // Четыре края: слой всегда заполняет контейнер, который ему дали.
+        // Four edges: the layer always fills the container it was given.
         #expect(container.constraints.count == 4)
     }
 
@@ -60,8 +60,8 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.isEmpty)
     }
 
-    /// Схлопнутый блок остаётся схлопнутым и продолжает получать `show(nil)` на каждую смену
-    /// состояния: снимать нечего, и трогать контейнер хост не должен.
+    /// A collapsed block stays collapsed and keeps receiving `show(nil)` on every state change:
+    /// there is nothing to remove, and the host must not touch the container.
     @Test("Showing nothing when nothing is shown changes nothing")
     func showingNothingOnEmptyHostChangesNothing() {
         let container = UIView()
@@ -74,8 +74,8 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.isEmpty)
     }
 
-    /// Контейнер зовёт `show` на каждую смену состояния, и часть этих вызовов приходит с той же вью.
-    /// Пересобирать под неё констрейнты незачем — их бы просто становилось больше.
+    /// The container calls `show` on every state change, and some of those calls come with the same
+    /// view. There is no reason to rebuild its constraints — they would simply keep piling up.
     @Test("Showing the same view again changes nothing")
     func showingTheSameViewAgainChangesNothing() {
         let container = UIView()
@@ -90,8 +90,8 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.count == 4)
     }
 
-    /// Снимать надо ту вью, что действительно висит: если её убрали снаружи, повторный показ обязан
-    /// вернуть её на место, а не решить, что она и так там.
+    /// The view to remove is the one that is actually attached: if it was detached from outside,
+    /// showing it again must put it back rather than decide it is already there.
     @Test("A view detached from outside is attached again")
     func viewDetachedFromOutsideIsAttachedAgain() {
         let container = UIView()

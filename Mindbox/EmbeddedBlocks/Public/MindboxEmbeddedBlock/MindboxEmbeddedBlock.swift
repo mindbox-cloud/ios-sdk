@@ -105,8 +105,8 @@ private struct EmbeddedBlockBody: View {
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    /// Стартует с того же, с чего стартует контейнер: место занято, показан плейсхолдер. Блок
-    /// занимает свою высоту сразу, а не с первого отчёта от контейнера.
+    /// Starts from the same point the container starts from: the space is taken, the placeholder
+    /// is shown. The block occupies its height right away, not from the container's first report.
     @State private var presentation: EmbeddedBlockPresentation
 
     init(id: String,
@@ -238,7 +238,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         private var isDetached = false
 
-        /// Куда `update` откладывает запись — `DispatchQueue.main` вне тестов.
+        /// Where `update` defers its write — `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
         init(presentation: Binding<EmbeddedBlockPresentation>,
@@ -261,9 +261,9 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             }
         }
 
-        /// Вью снята с дерева: гасит запись, уже поставленную `update` в очередь, — обнуление
-        /// колбэков в `dismantleUIView` её не отзывает, а `weak self` не гарантия: когда SwiftUI
-        /// отпустит координатор после демонтажа, не специфицировано.
+        /// The view left the tree: silences the write `update` has already queued — nulling the
+        /// callbacks in `dismantleUIView` cannot recall it, and `weak self` is no guarantee: when
+        /// SwiftUI releases the coordinator after dismantling is unspecified.
         func detach() {
             isDetached = true
         }

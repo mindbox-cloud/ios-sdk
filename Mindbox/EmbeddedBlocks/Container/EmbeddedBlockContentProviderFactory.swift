@@ -8,10 +8,10 @@
 
 import Foundation
 
-/// Собирает провайдер контента под конкретный блок.
+/// Builds a content provider for a specific block.
 ///
-/// Провайдер принадлежит одному контейнеру, поэтому создаётся на каждый блок заново — это и
-/// делает блоки с одинаковым id независимыми.
+/// A provider belongs to one container, so it is created anew for every block — this is what
+/// makes blocks with the same id independent.
 protocol EmbeddedBlockContentProviderMaking {
     func makeProvider(id: String) -> EmbeddedBlockWebViewProvider
 }

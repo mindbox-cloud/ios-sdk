@@ -9,18 +9,18 @@
 import UIKit
 import MindboxLogger
 
-/// Контент встроенного блока — веб-страница, найденная по id блока.
+/// Embedded block content — a web page found by the block id.
 ///
-/// Провайдер не рисует контент и не знает механик: он спрашивает у резолвера, что стоит за id,
-/// переводит core-сообщения страницы в состояния контейнера, а действия сверх core-слоя отдаёт
-/// универсальному обработчику.
+/// The provider does not draw content and knows no mechanics: it asks the resolver what stands
+/// behind the id, translates the page's core messages into container states, and hands actions
+/// beyond the core layer to the universal handler.
 ///
-/// Экземпляр принадлежит одному контейнеру, поэтому `start()` и `stop()` просто повторяют его
-/// видимость и могут вызываться по кругу. После `stop()` провайдер обязан молчать до следующего
-/// `start()` — на это опирается контейнер, когда сворачивает просроченный блок.
+/// An instance belongs to one container, so `start()` and `stop()` simply mirror its visibility
+/// and can be called in cycles. After `stop()` the provider must stay silent until the next
+/// `start()` — the container relies on this when it collapses an expired block.
 final class EmbeddedBlockWebViewProvider {
 
-    /// Сообщает каждую смену состояния на главном потоке. Ставится контейнером.
+    /// Reports every state change on the main thread. Set by the container.
     var onStateChange: ((EmbeddedBlockState) -> Void)?
 
     var contentView: UIView? { isReady ? page?.view : nil }
@@ -31,23 +31,23 @@ final class EmbeddedBlockWebViewProvider {
     private let readinessOverrides: EmbeddedBlockReadinessOverriding
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
-    /// Страница переживает рестарты: контейнер стартует и останавливает блок по видимости, и
-    /// пересоздавать вебвью на каждое возвращение в окно незачем.
+    /// The page survives restarts: the container starts and stops the block by visibility, and
+    /// there is no reason to recreate the web view on every return to the window.
     private var page: EmbeddedBlockPageHosting?
 
     private var isStarted = false
 
-    /// Чем кончилась текущая попытка: `nil` — ещё ничем.
+    /// How the current attempt ended: `nil` — nothing yet.
     ///
-    /// Исход переживает `stop()`: он свойство страницы, а не факта нахождения в окне. Провал и
-    /// `empty` при этом не убивают страницу — она жива и может продолжать говорить, — поэтому
-    /// известный исход нужен и как признак того, что блока на экране больше нет.
+    /// The outcome survives `stop()`: it is a property of the page, not of being in the window.
+    /// A failure and `empty` do not kill the page — it is alive and can keep talking — so a known
+    /// outcome is also needed as a sign that the block is no longer on screen.
     private var outcome: EmbeddedBlockState?
 
     private var isReady: Bool { outcome == .ready }
 
-    /// Номер текущей попытки загрузки. Резолв может ответить уже после `stop()` или после
-    /// перезагрузки — по номеру видно, что ответ относится к прошлой попытке, и его надо выбросить.
+    /// The number of the current load attempt. A resolve may answer after `stop()` or after a
+    /// reload — the number shows that the answer belongs to a past attempt and must be thrown away.
     private var loadGeneration = 0
 
     init(id: String,
@@ -76,19 +76,19 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted else { return }
 
         isStarted = false
-        // Исход не сбрасываем: он свойство страницы, а не факта нахождения в окне. Иначе каждый
-        // проход блока по экрану стоил бы полной перезагрузки.
+        // The outcome is not reset: it is a property of the page, not of being in the window.
+        // Otherwise every pass of the block across the screen would cost a full reload.
         loadGeneration += 1
         page?.cancel()
     }
 
-    /// Начинает загрузку с нуля: страница выбрасывается, а адрес запрашивается заново в обход кэша
-    /// резолвера — иначе переехавший или выключенный блок вечно доставал бы прежний адрес.
+    /// Starts the load from scratch: drops the page and requests the address again, bypassing the
+    /// resolver cache — otherwise a moved or disabled block would forever get its previous address.
     func reload() {
         Logger.common(message: "[EmbeddedBlock] Block '\(id)' is reloading", category: .embeddedBlocks)
 
-        // Прежняя страница больше не имеет отношения к делу — сначала отключаем её от себя, чтобы
-        // её запоздавшие сообщения не попали в новую попытку.
+        // The previous page is no longer relevant — detach it from us first so that its late
+        // messages do not end up in the new attempt.
         page?.onMessage = nil
         page?.onLoadFailure = nil
         page?.onLoadFinish = nil
@@ -109,17 +109,17 @@ final class EmbeddedBlockWebViewProvider {
         case .ready(let height):
             apply(height: height)
         case .heightChanged(let height):
-            // Высотой владеет хост — сообщение остаётся в контракте страницы, но на нативной
-            // стороне ни на что не влияет.
+            // The host owns the height — the message stays in the page contract but affects
+            // nothing on the native side.
             Logger.common(message: "[EmbeddedBlock] Ignored heightChanged(\(height)): the host owns the container height", category: .embeddedBlocks)
         case .empty:
             outcome = .empty
             onStateChange?(.empty)
         case .action(let action):
-            // Блока на экране нет, а страница жива и продолжает работать — например, досылает то,
-            // что запланировал её `setTimeout`. Выполнять её действия в этот момент нельзя: за
-            // невидимым блоком не стоит ни одного касания пользователя, а `openUrl` увёл бы его из
-            // приложения на пустом месте.
+            // The block is not on screen, but the page is alive and keeps working — for example,
+            // delivering what its `setTimeout` scheduled. Its actions must not run at this moment:
+            // not a single user touch stands behind an invisible block, and `openUrl` would take
+            // the user out of the app out of nowhere.
             guard isShown else {
                 Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored action '\(action.type)' from a block that is not shown",
                               category: .embeddedBlocks)
@@ -137,13 +137,13 @@ final class EmbeddedBlockWebViewProvider {
         onStateChange?(.failed)
     }
 
-    /// Пока исхода нет, страница ещё грузится — её сообщения относятся к живому блоку.
+    /// While there is no outcome, the page is still loading — its messages belong to a live block.
     private var isShown: Bool {
         outcome == nil || outcome == .ready
     }
 
-    /// Загруженный документ сам по себе ничего не значит: показать блок по нему разрешает только
-    /// отладочная подмена — для страниц, которые ещё не умеют присылать `ready`.
+    /// A loaded document means nothing by itself: showing the block on it is allowed only by the
+    /// debug override — for pages that cannot send `ready` yet.
     func handleLoadFinish() {
         guard isStarted, !isReady, readinessOverrides.treatsLoadedPageAsReady else { return }
 
@@ -159,8 +159,8 @@ final class EmbeddedBlockWebViewProvider {
 
         isStarted = true
 
-        // Страница уже отрендерилась и никуда не делась — показываем её как есть. Возврат блока
-        // в окно не стоит ни сети, ни шиммера, ни повторных событий хосту.
+        // The page has already rendered and is still around — show it as is. Returning the block
+        // to the window costs no network, no shimmer, no repeated events to the host.
         if isReady, page != nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(id)': showing the page rendered earlier",
                           category: .embeddedBlocks)
@@ -169,8 +169,8 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         onStateChange?(.loading)
-        // Началась новая попытка: чем кончилась прошлая, больше не важно — в том числе и для того,
-        // выполнять ли действия страницы.
+        // A new attempt has started: how the previous one ended no longer matters — including for
+        // deciding whether to run the page's actions.
         outcome = nil
 
         if let page {
@@ -205,8 +205,8 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func apply(height: CGFloat) {
-        // «Показывать нечего» страница сообщает явным `empty`, поэтому нулевая высота — это
-        // сломанная вёрстка, то есть ошибка.
+        // The page reports "nothing to show" with an explicit `empty`, so zero height means
+        // broken layout, that is, a failure.
         guard height > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(id)': page reported zero height, treating as broken", category: .embeddedBlocks)
             outcome = .empty
@@ -222,21 +222,21 @@ final class EmbeddedBlockWebViewProvider {
 
 // MARK: - Live blocks
 
-/// Сколько блоков с каждым id живо прямо сейчас.
+/// How many blocks with each id are alive right now.
 ///
-/// Диагностика, а не механика: два блока с одним id — законный случай, оба покажут один и тот же
-/// контент. Но чаще это либо скопированный id, либо переиспользованная ячейка, в которую попал
-/// контейнер от другой строки, — а у обоих случаев нет заметных симптомов, кроме «блок оказался не
-/// там, где ждали». Поэтому SDK говорит об этом в лог.
+/// Diagnostics, not mechanics: two blocks with one id are a legitimate case, both will show the
+/// same content. But more often it is either a copied id or a reused cell that got a block
+/// container from another row — and neither case has noticeable symptoms beyond "the block ended
+/// up not where it was expected". So the SDK reports it to the log.
 ///
-/// Счётчик общий на процесс, потому что вопрос тоже общий: одинаковые id ищутся не внутри блока, а
-/// между блоками. Живых блоков он не удерживает — хранит только числа.
+/// The counter is process-wide because the question is too: identical ids are looked for not
+/// inside one block but across blocks. It does not retain live blocks — it stores only counts.
 extension EmbeddedBlockWebViewProvider {
 
     private static var liveBlocks: [String: Int] = [:]
 
-    /// Блоки создаются и умирают с UIKit-вью, то есть на главном потоке. Замок стоит на случай, если
-    /// это когда-нибудь перестанет быть правдой: диагностика не должна ронять SDK.
+    /// Blocks are created and die with UIKit views, that is, on the main thread. The lock is here
+    /// in case that ever stops being true: diagnostics must not crash the SDK.
     private static let liveBlocksLock = NSLock()
 
     static func liveCount(for id: String) -> Int {
