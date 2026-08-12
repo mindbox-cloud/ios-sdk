@@ -51,6 +51,7 @@ enum MBInject {
             .registerReplaceableUtilities()
             .registerInappTools()
             .registerInappPresentation()
+            .registerEmbeddedBlocks()
     }
 
     public static var buildTestContainer: () -> MBContainer = {
