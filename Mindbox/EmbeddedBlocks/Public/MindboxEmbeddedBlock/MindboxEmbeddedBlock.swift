@@ -8,6 +8,7 @@
 
 #if canImport(SwiftUI)
 import SwiftUI
+import MindboxLogger
 
 /// SwiftUI wrapper over `MindboxEmbeddedBlockView`.
 ///
@@ -15,6 +16,10 @@ import SwiftUI
 /// Place it anywhere in a layout — the caller decides only the position and the width. The block
 /// keeps the given height while its content is loading and shown; a block with nothing to show
 /// collapses to zero height.
+///
+/// Both values are fixed at creation. A different `id` is a different block, built from scratch in
+/// place of the old one. A different `height` changes nothing: the block keeps the height it was
+/// created with and reports the ignored value to the log.
 ///
 /// Both outcomes can be customized the same way as in UIKit, through modifiers on the block
 /// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
@@ -46,7 +51,8 @@ public struct MindboxEmbeddedBlock: View {
 
     /// - Parameters:
     ///   - id: The block id from the admin panel.
-    ///   - height: The height the block occupies while loading and shown.
+    ///   - height: The height the block occupies while loading and shown. Fixed at creation:
+    ///     a new value given to a live block is ignored.
     ///   - onLoad: The block content is shown and the container is visible.
     ///   - onFail: The block cannot be shown — a failure or an empty block.
     public init(id: String,
@@ -85,30 +91,10 @@ public struct MindboxEmbeddedBlock: View {
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
-            .id(identity)
-    }
-
-    /// Идентичность блока в дереве SwiftUI.
-    ///
-    /// И `id`, и высоту контейнер получает при создании и потом не меняет, поэтому другое значение
-    /// любого из них — это другой блок, который надо собрать заново, а не обновление текущего. Без
-    /// этого хост, подставивший в блок другой id, продолжал бы видеть содержимое прежнего: SwiftUI
-    /// переиспользовал бы уже созданный контейнер.
-    var identity: Identity {
-        Identity(id: id, height: height)
-    }
-
-    struct Identity: Hashable {
-        let id: String
-        let height: CGFloat
+            .id(id)
     }
 }
 
-/// Хранит текущий показ и рисует слои хоста поверх контейнера.
-///
-/// Отдельная вью, а не тело `MindboxEmbeddedBlock`: состояние обязано сбрасываться вместе с
-/// контейнером при смене id или высоты, а сбрасывает его `.id(…)` — и только у той вью, к которой
-/// применён.
 @available(iOS 13.0, *)
 private struct EmbeddedBlockBody: View {
 
@@ -153,10 +139,6 @@ private struct EmbeddedBlockBody: View {
         .frame(height: presentation.height)
     }
 
-    /// Слой хоста рисуется здесь, а не отдаётся контейнеру как `UIView` из `UIHostingController`:
-    /// такой контроллер не входит в дерево SwiftUI, поэтому вью внутри него не видит его окружения —
-    /// плейсхолдер с `@EnvironmentObject` просто падает, а заданные хостом шрифт, цвет и локаль до
-    /// него не доезжают.
     @ViewBuilder private var hostLayer: some View {
         switch presentation.layer {
         case .placeholder:
@@ -184,14 +166,14 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     let onLoad: (() -> Void)?
     let onFail: (() -> Void)?
 
-    /// Есть ли у обёртки свой плейсхолдер и свой экран ошибки. Сами вью контейнеру не отдаются —
-    /// только факт: под каждый заявленный слой он получает прозрачную заглушку, чтобы держать место
-    /// и не рисовать своё, а красит это место SwiftUI поверх.
     let hasPlaceholder: Bool
     let hasErrorView: Bool
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(presentation: $presentation, onLoad: onLoad, onFail: onFail)
+        Coordinator(presentation: $presentation,
+                    creationHeight: height,
+                    onLoad: onLoad,
+                    onFail: onFail)
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
@@ -206,8 +188,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: MindboxEmbeddedBlockView, context: Context) {
-        // Замыкания и биндинг захватываются заново на каждый проход body, поэтому координатор надо
-        // переставлять на свежие, а не оставлять ему ту тройку, с которой его создали.
         let coordinator = context.coordinator
         coordinator.presentation = $presentation
         coordinator.onLoad = onLoad
@@ -216,18 +196,11 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     static func dismantleUIView(_ uiView: MindboxEmbeddedBlockView, coordinator: Coordinator) {
-        // Вью ушла из дерева: докладывать о слоях и исходах некому, а состояние обёртки уже
-        // выброшено вместе с ней.
         uiView.onPresentationChange = nil
         uiView.delegate = nil
     }
 
-    /// Заглушки ставятся и снимаются на каждом обновлении, а не только при создании: модификатор мог
-    /// быть применён по условию, поэтому слой может появиться после первого прохода — и точно так же
-    /// исчезнуть, и тогда держать под него место больше не за что.
     func syncStandIns(in blockView: MindboxEmbeddedBlockView) {
-        // Уже стоящую заглушку не подменяем: назначение нового вью пересобирало бы констрейнты
-        // контейнера на каждом проходе body.
         if hasPlaceholder {
             if blockView.placeholderView == nil {
                 blockView.placeholderView = Self.makeStandIn()
@@ -245,11 +218,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         }
     }
 
-    /// Прозрачная заглушка: контейнер держит под слой место, но ничего в нём не рисует и не
-    /// перехватывает касания — и то и другое дело SwiftUI-слоя поверх.
-    ///
-    /// Размером она во весь контейнер: слои он прибивает к своим четырём краям сам. На что-то
-    /// меньшее её не свести, да и незачем — пустой слой ничем не платит за свой размер.
     private static func makeStandIn() -> UIView {
         let standIn = UIView()
         standIn.backgroundColor = .clear
@@ -263,16 +231,20 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         var onLoad: (() -> Void)?
         var onFail: (() -> Void)?
 
+        private let creationHeight: CGFloat
+
+        private var hasWarnedAboutIgnoredHeight = false
+
         init(presentation: Binding<EmbeddedBlockPresentation>,
+             creationHeight: CGFloat,
              onLoad: (() -> Void)?,
              onFail: (() -> Void)?) {
             self.presentation = presentation
+            self.creationHeight = creationHeight
             self.onLoad = onLoad
             self.onFail = onFail
         }
 
-        /// Пишется на следующем витке главной очереди: контейнер может доложить о смене слоя прямо
-        /// посреди прохода body, а менять состояние в этот момент нельзя.
         func update(_ newPresentation: EmbeddedBlockPresentation) {
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.presentation.wrappedValue != newPresentation else { return }
