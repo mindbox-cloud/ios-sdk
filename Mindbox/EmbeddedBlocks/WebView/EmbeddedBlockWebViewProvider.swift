@@ -209,7 +209,7 @@ final class EmbeddedBlockWebViewProvider {
         // сломанная вёрстка, то есть ошибка.
         guard height > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(id)': page reported zero height, treating as broken", category: .embeddedBlocks)
-            outcome = .failed
+            outcome = .empty
             onStateChange?(.failed)
             return
         }
@@ -251,9 +251,6 @@ extension EmbeddedBlockWebViewProvider {
         let count = (liveBlocks[id] ?? 0) + 1
         liveBlocks[id] = count
         liveBlocksLock.unlock()
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)' is created, \(count) live with this id",
-                      category: .embeddedBlocks)
 
         guard count > 1 else { return }
 
