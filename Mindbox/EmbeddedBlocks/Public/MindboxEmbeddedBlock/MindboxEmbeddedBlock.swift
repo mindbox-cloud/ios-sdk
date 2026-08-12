@@ -261,6 +261,18 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             }
         }
 
+        /// The height is fixed when the block is created: a new value given to a live block is
+        /// ignored, and the host has no other way to notice — the block simply keeps standing at
+        /// its old height.
+        func warnIfHeightIsIgnored(_ newHeight: CGFloat, id: String) {
+            guard !hasWarnedAboutIgnoredHeight, newHeight != creationHeight else { return }
+
+            hasWarnedAboutIgnoredHeight = true
+            Logger.common(message: "[EmbeddedBlock] Block '\(id)' was given height \(newHeight) after creation and keeps \(creationHeight): the height is fixed when the block is created.",
+                          level: .error,
+                          category: .embeddedBlocks)
+        }
+
         /// The view left the tree: silences the write `update` has already queued — nulling the
         /// callbacks in `dismantleUIView` cannot recall it, and `weak self` is no guarantee: when
         /// SwiftUI releases the coordinator after dismantling is unspecified.
