@@ -192,6 +192,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         coordinator.presentation = $presentation
         coordinator.onLoad = onLoad
         coordinator.onFail = onFail
+        coordinator.warnIfHeightIsIgnored(height, id: id)
         syncStandIns(in: uiView)
     }
 
