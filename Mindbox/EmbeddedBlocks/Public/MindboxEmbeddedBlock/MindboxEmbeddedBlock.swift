@@ -198,6 +198,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     static func dismantleUIView(_ uiView: MindboxEmbeddedBlockView, coordinator: Coordinator) {
         uiView.onPresentationChange = nil
         uiView.delegate = nil
+        coordinator.detach()
     }
 
     func syncStandIns(in blockView: MindboxEmbeddedBlockView) {
@@ -235,21 +236,36 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         private var hasWarnedAboutIgnoredHeight = false
 
+        private var isDetached = false
+
+        /// Куда `update` откладывает запись — `DispatchQueue.main` вне тестов.
+        private let schedule: (@escaping () -> Void) -> Void
+
         init(presentation: Binding<EmbeddedBlockPresentation>,
              creationHeight: CGFloat,
              onLoad: (() -> Void)?,
-             onFail: (() -> Void)?) {
+             onFail: (() -> Void)?,
+             schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } }) {
             self.presentation = presentation
             self.creationHeight = creationHeight
             self.onLoad = onLoad
             self.onFail = onFail
+            self.schedule = schedule
         }
 
         func update(_ newPresentation: EmbeddedBlockPresentation) {
-            DispatchQueue.main.async { [weak self] in
-                guard let self, self.presentation.wrappedValue != newPresentation else { return }
+            schedule { [weak self] in
+                guard let self, !self.isDetached,
+                      self.presentation.wrappedValue != newPresentation else { return }
                 self.presentation.wrappedValue = newPresentation
             }
+        }
+
+        /// Вью снята с дерева: гасит запись, уже поставленную `update` в очередь, — обнуление
+        /// колбэков в `dismantleUIView` её не отзывает, а `weak self` не гарантия: когда SwiftUI
+        /// отпустит координатор после демонтажа, не специфицировано.
+        func detach() {
+            isDetached = true
         }
 
         func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView) {
