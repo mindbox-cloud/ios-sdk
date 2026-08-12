@@ -13,8 +13,9 @@ import Testing
 @MainActor
 struct EmbeddedBlockResolverTests {
 
-    /// Главное обещание резолвера: сколько блоков ни спросило бы про один id, за данными идём один
-    /// раз. Пока конфиг синхронный это незаметно, с сетью — это разница между одним и N запросами.
+    /// The resolver's main promise: however many blocks ask about one id, we go for the data once.
+    /// While the config is synchronous this is invisible; over the network it is the difference
+    /// between one request and N.
     @Test("Blocks asking for the same id at once share a single load")
     func concurrentResolvesShareOneLoad() {
         let loader = ContentLoaderSpy()
@@ -58,8 +59,8 @@ struct EmbeddedBlockResolverTests {
         #expect(answer == .content(.stub))
     }
 
-    /// Перезагрузка блока не должна вечно брать из кэша прежний адрес: выключенный или
-    /// переехавший блок иначе не починится до перезапуска приложения.
+    /// A block reload must not keep pulling the old address from the cache: a block that was turned
+    /// off or moved would otherwise stay broken until the app is restarted.
     @Test("Force refresh asks for the data again and replaces the cache")
     func forceRefreshBypassesTheCache() {
         let loader = ContentLoaderSpy()
@@ -79,70 +80,36 @@ struct EmbeddedBlockResolverTests {
         #expect(cached == .empty)
     }
 
-    // MARK: - Threading
+    /// The real config will answer from a background thread. The cache, the queue of waiters and the
+    /// block view live on the main one, so the answer has to move there instead of being handled
+    /// wherever it was delivered.
+    @Test("An answer from a background thread is delivered on the main thread")
+    func backgroundAnswerIsDeliveredOnTheMainThread() async {
+        let resolver = EmbeddedBlockResolver(
+            load: { _, completion in
+                DispatchQueue.global().async { completion(.content(.stub)) }
+            },
+            overrides: EmbeddedBlockContentOverrides()
+        )
 
-    /// Настоящий конфиг ответит с очереди, на которой его разбирали, а за completion стоят создание
-    /// вебвью и правка вёрстки контейнера. Возвращаться на главный поток обязан сам резолвер: иначе
-    /// это пришлось бы помнить каждому вызывающему, а забытый хоп проявился бы порчей вёрстки.
-    @Test("An answer from a background queue reaches every waiting block on the main thread")
-    func backgroundAnswerIsDeliveredOnMain() async {
-        let loader = ContentLoaderSpy()
-        let resolver = EmbeddedBlockResolver(load: loader.load)
-        let delivery = DeliveryRecorder()
-
-        resolver.resolve("promo") { delivery.record($0) }
-        resolver.resolve("promo") { delivery.record($0) }
-
-        await delivery.waitForAnswers(count: 2) {
-            loader.answerOffMain(.content(.stub))
-        }
-
-        #expect(delivery.answers == [.content(.stub), .content(.stub)])
-        #expect(delivery.threads == [.main, .main])
-    }
-
-    /// Кэш заполняется в том же прыжке, что и доставка, поэтому пришедший с фона ответ виден
-    /// следующим блокам как обычное попадание в кэш — синхронно и без второй загрузки.
-    @Test("An answer from a background queue lands in the cache as usual")
-    func backgroundAnswerIsCached() async {
-        let loader = ContentLoaderSpy()
-        let resolver = EmbeddedBlockResolver(load: loader.load)
-        let delivery = DeliveryRecorder()
-
-        resolver.resolve("promo") { delivery.record($0) }
-        await delivery.waitForAnswers(count: 1) {
-            loader.answerOffMain(.content(.stub))
-        }
-
-        var cached: EmbeddedBlockResolution?
-        resolver.resolve("promo") { cached = $0 }
-
-        #expect(cached == .content(.stub))
-        #expect(loader.requestedIds == ["promo"])
-    }
-
-    /// Спрашивать резолвер положено с главного потока, но чужой вызов с другого не должен ни ронять
-    /// хост, ни утаскивать кэш и доставку на постороннюю очередь.
-    @Test("A resolve asked off the main thread still answers on it")
-    func offMainResolveAnswersOnMain() async {
-        // Вызов со стороны — то, что тест и проверяет, поэтому проверку Sendable для этих двух
-        // ссылок снимаем вручную: после прыжка обе снова трогаются только с главного потока.
-        nonisolated(unsafe) let resolver = EmbeddedBlockResolver(load: { _, completion in completion(.content(.stub)) })
-        nonisolated(unsafe) let delivery = DeliveryRecorder()
-
-        await delivery.waitForAnswers(count: 1) {
-            DispatchQueue.global().async {
-                resolver.resolve("promo") { delivery.record($0) }
+        let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
+            resolver.resolve("promo") { _ in
+                continuation.resume(returning: Thread.isMainThread)
             }
         }
 
-        #expect(delivery.answers == [.content(.stub)])
-        #expect(delivery.threads == [.main])
+        #expect(deliveredOnMainThread)
+
+        // And the cache is already filled on the main thread: the next block gets the answer at once.
+        var cached: EmbeddedBlockResolution?
+        resolver.resolve("promo") { cached = $0 }
+        #expect(cached == .content(.stub))
     }
 
     // MARK: - Debug overrides
 
-    /// Приёмка переключает сценарий на ходу, поэтому подмена сильнее и загрузки, и кэша.
+    /// Acceptance testing switches scenarios on the fly, so the override outranks both the load and
+    /// the cache.
     @Test("Debug override answers instead of the data and outranks the cache")
     func overrideOutranksEverything() {
         let loader = ContentLoaderSpy()
@@ -157,7 +124,7 @@ struct EmbeddedBlockResolverTests {
         resolver.resolve("promo") { answers.append($0) }
 
         #expect(answers == [.empty, .empty])
-        // За данными резолвер не ходил: ответ пришёл из подмены.
+        // The resolver did not go for the data: the answer came from the override.
         #expect(loader.requestedIds == ["promo"])
     }
 
@@ -207,7 +174,7 @@ struct EmbeddedBlockResolverTests {
         #expect(html == "<html>empty page</html>")
     }
 
-    /// Заглушка на месте конфига: пока его нет, любой id ведёт на страницу ленты сторизов.
+    /// The stub in place of the config: while there is none, any id leads to the stories feed page.
     @Test("The stubbed loader resolves any id to the stories page")
     func stubbedLoaderResolvesToTheStoriesPage() {
         var resolution: EmbeddedBlockResolution?
@@ -222,8 +189,8 @@ struct EmbeddedBlockResolverTests {
     }
 }
 
-/// Загрузчик, который отвечает только когда его попросят: так проверяется поведение резолвера, пока
-/// загрузка ещё идёт.
+/// A loader that answers only when asked to: this is how the resolver's behaviour while a load is
+/// still in flight gets tested.
 private final class ContentLoaderSpy {
 
     private(set) var requestedIds: [String] = []

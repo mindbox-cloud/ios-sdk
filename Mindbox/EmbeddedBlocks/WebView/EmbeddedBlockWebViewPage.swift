@@ -6,16 +6,18 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
+import UIKit
 import WebKit
 import MindboxLogger
 
-/// Страница встроенного блока в WKWebView.
+/// The embedded block page in a WKWebView.
 ///
-/// Вебвью берётся из `InAppWebViewFactory` — того же места, где настраиваются вебвью инаппов:
-/// блок получает тот же user agent и тот же `WKWebsiteDataStore`, а значит и общий HTTP-кеш.
+/// The web view comes from `InAppWebViewFactory` — the same place where in-app web views are
+/// configured: the block gets the same user agent and the same `WKWebsiteDataStore`, and therefore
+/// a shared HTTP cache.
 final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
-    /// Имя обработчика своё, пока блоки не переехали на общий мост инаппов.
+    /// The handler name is our own until blocks move to the shared in-app bridge.
     private enum Constants {
         static let handlerName = "mindboxEmbeddedBlock"
     }
@@ -41,15 +43,12 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         attachBridge()
     }
 
-    deinit {
-        detachBridge()
-    }
-
     func load() {
         switch content.source {
         case .url(let url):
             webView.load(URLRequest(url: url))
         case .html(let html):
+            // у страницы, поданной разметкой, origin about:blank, поэтому ни localStorage, ни сетевых запросов на свой домен у неё не будет. В (MOBILE-328) изменится или полностью удалится этот кейс
             webView.loadHTMLString(html, baseURL: nil)
         }
     }
@@ -61,35 +60,28 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     private func setUpWebView() {
         webView.navigationDelegate = self
 
-        // Фон прозрачный: сквозь зазоры в контенте должен просвечивать фон приложения, а не белый лист.
+        // The background is transparent: the app background, not a white sheet, should show through
+        // the gaps in the content.
         webView.isOpaque = false
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
 
-        // Высота контейнера равна высоте контента, вертикально скроллить нечего — иначе блок
-        // пружинил бы под пальцем на каждом горизонтальном свайпе.
+        // The container height equals the content height, so there is nothing to scroll vertically —
+        // otherwise the block would bounce under the finger on every horizontal swipe.
         webView.scrollView.bounces = false
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.showsVerticalScrollIndicator = false
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
 
-    /// Мост живёт столько же, сколько страница: он ставится один раз и снимается только вместе с
-    /// ней. Раньше его снимала `cancel()` — из-за этого вернуть страницу в окно можно было только
-    /// перезагрузкой, иначе она оставалась глухой. От сообщений остановленной страницы защищает
-    /// провайдер, а не отсутствие моста.
     private func attachBridge() {
         let controller = webView.configuration.userContentController
-        // Идемпотентно: вебвью может прийти из переиспользования и нести обработчик с этим именем
-        // от прошлого владельца.
+        // Idempotent: the web view may come from reuse and carry a handler with this name from its
+        // previous owner.
         controller.removeScriptMessageHandler(forName: Constants.handlerName)
-        // WKUserContentController держит обработчик сильно, поэтому в него идёт слабый прокси —
-        // иначе страница и вебвью не освободятся никогда.
+        // WKUserContentController holds the handler strongly, so a weak proxy goes into it —
+        // otherwise the page and the web view would never be released.
         controller.add(EmbeddedBlockWebViewMessageProxy(receiver: self), name: Constants.handlerName)
-    }
-
-    private func detachBridge() {
-        webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.handlerName)
     }
 
     fileprivate func receive(body: Any) {
@@ -102,9 +94,9 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     }
 }
 
-/// Навигация судит только о своём: загрузка провалилась или документ доехал. Готовность блока из
-/// этого не следует — о ней говорит сама страница своим `ready`, а загруженный документ слушает
-/// одна лишь отладочная подмена готовности.
+/// Navigation only judges its own business: the load failed or the document arrived. Block
+/// readiness does not follow from that — it is declared by the page itself with its `ready`, and
+/// the only listener of a loaded document is the debug readiness override.
 extension EmbeddedBlockWebViewPage: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -124,12 +116,13 @@ extension EmbeddedBlockWebViewPage: WKNavigationDelegate {
 
 private extension EmbeddedBlockWebViewPage {
 
-    /// Отменённая навигация — не провал загрузки, и выдавать её за провал нельзя: блок схлопнулся бы
-    /// на ровном месте и остался бы дыркой нулевой высоты до конца жизни экрана. WebKit отдаёт
-    /// `NSURLErrorCancelled` в двух совершенно обычных случаях: навигацию вытеснила следующая —
-    /// клиентский редирект, страница загрузится сама, — и навигацию остановили мы, вызвав `cancel()`
-    /// на уехавшем с экрана блоке. Второй случай к тому же приходит уже после того, как блок
-    /// вернулся в окно, поэтому провайдер его своим `isStarted` не отфильтрует.
+    /// A cancelled navigation is not a load failure, and passing it off as one is not allowed: the
+    /// block would collapse out of nowhere and stay a zero-height hole until the end of the screen's
+    /// life. WebKit returns `NSURLErrorCancelled` in two perfectly ordinary cases: the navigation
+    /// was superseded by the next one — a client-side redirect, the page will load on its own — and
+    /// the navigation was stopped by us, by calling `cancel()` on a block that went off screen. The
+    /// second case also arrives after the block is back in the window, so the provider will not
+    /// filter it out with its `isStarted`.
     func reportLoadFailure(_ error: Error, phase: String) {
         let error = error as NSError
 
@@ -145,7 +138,7 @@ private extension EmbeddedBlockWebViewPage {
     }
 }
 
-/// Слабая прослойка между `WKUserContentController` и страницей.
+/// A weak layer between `WKUserContentController` and the page.
 private final class EmbeddedBlockWebViewMessageProxy: NSObject, WKScriptMessageHandler {
 
     private weak var receiver: EmbeddedBlockWebViewPage?

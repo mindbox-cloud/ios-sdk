@@ -8,24 +8,15 @@
 
 import Foundation
 
-/// Что именно показывает встроенный блок.
-///
-/// Контент блока всегда веб: SDK ничего не рисует сам, он показывает страницу, закреплённую за id
-/// блока. Меняется внутри — адрес, вёрстка, механика на странице, — но не вид контента, поэтому
-/// дескриптор описывает веб-страницу прямо, без промежуточного «вида контента».
-///
-/// Сюда же приедут остальные поля конфига, когда он появится: версия веб-контракта,
-/// зарезервированная высота, параметры страницы.
 struct EmbeddedBlockWebContent: Equatable {
 
-    /// Чем задана страница.
     enum Source: Equatable {
-
-        /// Боевой случай: адрес, который приедет из конфига.
         case url(URL)
 
-        /// Разметка вместо адреса. Нужна отладочной подмене контента: сценарии приёмки — пустая
-        /// страница, молчащая страница, ответ уже после таймаута — в сеть не выкладываются.
+        /// Markup instead of an address. Needed by the debug content override: acceptance
+        /// scenarios — an empty page, a silent page, an answer that comes after the timeout — are
+        /// not published to the network.
+        /// TODO: - Remove this once we parse the url from the config
         case html(String)
     }
 

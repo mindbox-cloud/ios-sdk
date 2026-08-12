@@ -9,28 +9,30 @@
 import Foundation
 import MindboxLogger
 
-/// Что подставить вместо контента, закреплённого за id блока.
+/// What to substitute for the content attached to a block id.
 protocol EmbeddedBlockContentOverriding: AnyObject {
 
     func resolution(for id: String) -> EmbeddedBlockResolution?
 }
 
-/// Отладочная подмена контента блока — то, чем приёмка воспроизводит сценарии, которые в сети не
-/// выложены: пустой блок, молчащая страница, ответ уже после таймаута, незнакомое сообщение.
+/// A debug override of the block content — what acceptance testing uses to reproduce scenarios that
+/// are not published on the network: an empty block, a silent page, an answer that comes after the
+/// timeout, an unknown message.
 ///
-/// Подмена сидит на месте конфига, поэтому весь путь ниже — резолвер, провайдер, страница, таймаут
-/// контейнера — работает по-настоящему; меняется только источник данных о блоке. Кэш резолвера для
-/// подменённого id не используется, чтобы переключение сценария применялось сразу.
+/// The override sits in the place of the config, so the whole path below it — the resolver, the
+/// provider, the page, the container timeout — works for real; only the source of the block data
+/// changes. The resolver cache is not used for an overridden id, so that switching a scenario
+/// applies right away.
 ///
-/// Спрятана за `@_spi(Internal)`: в обычном API её нет, но и не вырезана из релизных сборок — QA
-/// проверяет то, что уходит клиентам. Каждая установка пишется в лог, чтобы включённую подмену было
-/// невозможно не заметить.
+/// Hidden behind `@_spi(Internal)`: it is absent from the regular API, but it is not stripped from
+/// release builds either — QA checks what ships to clients. Every override that gets set is written
+/// to the log, so an enabled override is impossible to miss.
 final class EmbeddedBlockContentOverrides: EmbeddedBlockContentOverriding {
 
     static let shared = EmbeddedBlockContentOverrides()
 
-    /// Подмену ставят из QA-кода приложения, а читает её резолвер на главном потоке — потоки могут
-    /// не совпасть.
+    /// The override is set from the app's QA code, while the resolver reads it on the main thread —
+    /// the threads may differ.
     private let lock = NSLock()
 
     private var overrides: [String: EmbeddedBlockResolution] = [:]
