@@ -9,25 +9,28 @@
 import Foundation
 import MindboxLogger
 
-/// Во что разрешается id встроенного блока.
+/// What an embedded block id resolves into.
 enum EmbeddedBlockResolution: Equatable {
 
-    /// За id закреплён контент — блок грузит его.
+    /// There is content attached to the id — the block loads it.
     case content(EmbeddedBlockWebContent)
 
-    /// За id ничего нет — блок выключен в админке или id неизвестен. Не ошибка.
+    /// There is nothing behind the id — the block is turned off in the admin panel or the id is
+    /// unknown. Not an error.
     case empty
 }
 
-/// Отвечает на единственный вопрос: что показывает блок с данным id.
+/// Answers a single question: what does the block with this id show.
 ///
-/// Резолвер — общая точка всех контейнеров: несколько блоков с одним id разрешаются одними
-/// данными, при этом вью, страница и состояние у каждого блока остаются своими. Работает на
-/// главном потоке; completion может прийти как синхронно (кэш), так и позже (сетевой конфиг).
+/// The resolver is the shared point for every container: several blocks with the same id resolve
+/// with the same data, while the view, the page and the state stay per block. Works on the main
+/// thread; the completion may arrive either synchronously (cache) or later (remote config).
 protocol EmbeddedBlockResolving: AnyObject {
 
-    /// - Parameter forceRefresh: `true` — не брать кэш, спросить данные заново. Нужно перезагрузке
-    ///   блока: переехавший или выключенный блок иначе вечно доставал бы из кэша прежний адрес.
+    /// - Parameter forceRefresh: `true` — skip the cache, ask for the data again. Needed by a block
+    ///   reload: a block that moved or was turned off would otherwise keep pulling the old address
+    ///   from the cache forever. Laid down in advance and deliberately not exposed: while "once per
+    ///   SDK initialization" holds, a reload cannot be triggered from the app.
     func resolve(_ id: String, forceRefresh: Bool, completion: @escaping (EmbeddedBlockResolution) -> Void)
 }
 
@@ -38,26 +41,36 @@ extension EmbeddedBlockResolving {
     }
 }
 
-/// Откуда резолвер узнаёт, что стоит за id блока.
+/// Where the resolver learns what stands behind a block id.
 ///
-/// Сейчас это заглушка со статической страницей. Когда появится конфиг из админки, здесь окажется
-/// настоящая загрузка, а кэш и очередь ожидающих в резолвере не изменятся.
+/// For now it is a stub with a static page. Once the admin panel config arrives, the real loading
+/// will live here, while the cache and the queue of waiters in the resolver stay unchanged.
+///
+/// It may answer from any thread: the resolver moves the answer to the main thread itself, because
+/// that is where it updates the cache and the queue of waiters, and where the block views wait for
+/// the answer.
 typealias EmbeddedBlockContentLoading = (String, @escaping (EmbeddedBlockResolution) -> Void) -> Void
 
 final class EmbeddedBlockResolver: EmbeddedBlockResolving {
 
-    /// Страница ленты сторизов на статике. Временно захардкожена: когда появится конфиг из
-    /// админки, адрес приедет оттуда вместе с маппингом id → контент.
+    /// The stories feed page on static hosting. Hardcoded for now: once the admin panel config
+    /// arrives, the address will come from there together with the id → content mapping.
     private static let storiesPageURL = "https://mobile-static.mindbox.ru/beta/inapps/webview/content/stories.html"
 
     private let load: EmbeddedBlockContentLoading
     private let overrides: EmbeddedBlockContentOverriding
 
-    /// Кэш на id: ответ, полученный один раз, достаётся всем следующим блокам сразу.
+    /// A cache per id: an answer received once is handed to every following block immediately.
+    ///
+    /// Lives until the end of the process and is never invalidated — including `.empty`. That is a
+    /// decision, not an oversight: a block resolves once per SDK initialization, full stop. It
+    /// follows that a block turned off in the admin panel, or one that did not make it at app
+    /// startup, will not appear until a restart — and that is by design. This may change later, but
+    /// for now it is so.
     private var cache: [String: EmbeddedBlockResolution] = [:]
 
-    /// Кто уже ждёт ответ по этому id. «Одна загрузка данных на id» — это про то, что второй блок
-    /// с тем же id встаёт в эту очередь, а не идёт за данными сам.
+    /// Who is already waiting for the answer for this id. "One data load per id" means that a
+    /// second block with the same id joins this queue instead of going for the data itself.
     private var waiting: [String: [(EmbeddedBlockResolution) -> Void]] = [:]
 
     init(load: @escaping EmbeddedBlockContentLoading = EmbeddedBlockResolver.loadStubbedStoriesPage,
@@ -67,8 +80,20 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
     }
 
     func resolve(_ id: String, forceRefresh: Bool, completion: @escaping (EmbeddedBlockResolution) -> Void) {
-        // Отладочная подмена сильнее и данных, и кэша: приёмка переключает сценарий на ходу, и
-        // закэшированный ответ мешал бы этому.
+        // The cache and the queue of waiters are plain dictionaries: every path through them has to
+        // run on one thread — the same one the block views wait on.
+        guard Thread.isMainThread else {
+            Logger.common(message: "[EmbeddedBlock] Resolver was asked about id '\(id)' off the main thread, continuing on it",
+                          level: .error,
+                          category: .embeddedBlocks)
+            DispatchQueue.main.async { [weak self] in
+                self?.resolve(id, forceRefresh: forceRefresh, completion: completion)
+            }
+            return
+        }
+
+        // The debug override outranks both the data and the cache: acceptance testing switches
+        // scenarios on the fly, and a cached answer would get in the way.
         if let overridden = overrides.resolution(for: id) {
             completion(overridden)
             return
@@ -79,8 +104,8 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
             return
         }
 
-        // Загрузка по этому id уже идёт. Присоединиться к ней правильно и для `forceRefresh`:
-        // ответ, который она вот-вот принесёт, свежий по определению.
+        // A load for this id is already in flight. Joining it is right for `forceRefresh` too: the
+        // answer it is about to bring is fresh by definition.
         if waiting[id] != nil {
             waiting[id]?.append(completion)
             return
@@ -89,17 +114,28 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
         waiting[id] = [completion]
 
         load(id) { [weak self] resolution in
-            guard let self else { return }
+            guard Thread.isMainThread else {
+                DispatchQueue.main.async {
+                    self?.finish(id, with: resolution)
+                }
+                return
+            }
 
-            self.cache[id] = resolution
-            let completions = self.waiting.removeValue(forKey: id) ?? []
-            completions.forEach { $0(resolution) }
+            self?.finish(id, with: resolution)
         }
     }
 
-    /// Конфига ещё нет, поэтому любой id разрешается в страницу ленты сторизов. Это единственное
-    /// место, которое заменит настоящий конфиг из админки: id → контент блока, выключенный или
-    /// неизвестный блок → `.empty`.
+    /// The answer has arrived: it goes into the cache and is handed to the whole queue that waited
+    /// for it.
+    private func finish(_ id: String, with resolution: EmbeddedBlockResolution) {
+        cache[id] = resolution
+        let completions = waiting.removeValue(forKey: id) ?? []
+        completions.forEach { $0(resolution) }
+    }
+
+    /// There is no config yet, so any id resolves into the stories feed page. This is the single
+    /// place the real admin panel config will replace: id → block content, a turned off or unknown
+    /// block → `.empty`.
     static func loadStubbedStoriesPage(_ id: String, completion: @escaping (EmbeddedBlockResolution) -> Void) {
         guard let url = URL(string: storiesPageURL) else {
             Logger.common(message: "[EmbeddedBlock] Invalid stories page URL, resolving id '\(id)' as empty",

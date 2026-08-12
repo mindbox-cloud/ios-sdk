@@ -27,12 +27,19 @@ final class EmbeddedBlockLayerHost {
 
     /// Показывает вью вместо той, что висит сейчас. `nil` — не показывать ничего.
     func show(_ view: UIView?) {
-        guard attachedView !== view || view?.superview !== container else { return }
+        // «Не показывать ничего» — это просто снять текущую вью: сравнивать здесь нечего, и общее
+        // условие ниже на nil читалось бы не тем, чем оно является.
+        guard let view else {
+            attachedView?.removeFromSuperview()
+            attachedView = nil
+            return
+        }
+
+        // Та же вью и висит действительно у нас — пересобирать под неё констрейнты незачем.
+        guard attachedView !== view || view.superview !== container else { return }
 
         attachedView?.removeFromSuperview()
         attachedView = view
-
-        guard let view else { return }
 
         view.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(view)

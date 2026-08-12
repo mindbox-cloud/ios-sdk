@@ -60,6 +60,20 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.isEmpty)
     }
 
+    /// Схлопнутый блок остаётся схлопнутым и продолжает получать `show(nil)` на каждую смену
+    /// состояния: снимать нечего, и трогать контейнер хост не должен.
+    @Test("Showing nothing when nothing is shown changes nothing")
+    func showingNothingOnEmptyHostChangesNothing() {
+        let container = UIView()
+        let host = EmbeddedBlockLayerHost(container: container)
+
+        host.show(nil)
+        host.show(nil)
+
+        #expect(container.subviews.isEmpty)
+        #expect(container.constraints.isEmpty)
+    }
+
     /// Контейнер зовёт `show` на каждую смену состояния, и часть этих вызовов приходит с той же вью.
     /// Пересобирать под неё констрейнты незачем — их бы просто становилось больше.
     @Test("Showing the same view again changes nothing")

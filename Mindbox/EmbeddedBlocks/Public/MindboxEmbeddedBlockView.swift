@@ -135,7 +135,9 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     /// - Parameters:
     ///   - id: The block id from the admin panel.
-    ///   - height: The height the block occupies while loading and shown.
+    ///   - height: The height the block occupies while loading and shown. Reserving it is the
+    ///     host's job and there is no default: a height of 0 or less leaves the block invisible
+    ///     whatever its content turns out to be, so the SDK reports it as an integration error.
     public convenience init(id: String, height: CGFloat) {
         self.init(id: id,
                   height: height,
@@ -149,16 +151,35 @@ public final class MindboxEmbeddedBlockView: UIView {
         return nil
     }
 
+    /// - Parameter timeout: Бюджет ожидания целиком, а не одна его длительность: внутри него живут
+    ///   и часы, и планировщик, и подписка на фон, а подменять их поодиночке через контейнер значило
+    ///   бы протащить сквозь него три параметра ради тестов.
     init(id: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
-         readyTimeout: TimeInterval = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)) {
+         timeout: EmbeddedBlockReadyTimeout? = nil) {
         self.id = id
         self.preferredHeight = height
         self.contentProvider = contentProvider
-        self.timeout = EmbeddedBlockReadyTimeout(blockId: id, duration: readyTimeout)
+        self.timeout = timeout ?? EmbeddedBlockReadyTimeout(
+            blockId: id,
+            duration: TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        )
         super.init(frame: .zero)
+        warnIfHeightReservesNothing()
         setUpContainer()
+    }
+
+    /// Высоту блока задаёт хост, и нулевая — это не «блок схлопнут», а «место под него не выделено»:
+    /// блок отработает весь цикл, отдаст хосту свои события и останется невидимым. Симптомов у этого
+    /// нет никаких — блока просто не видно, — а причина самая частая из возможных, поэтому SDK
+    /// говорит о ней вслух.
+    private func warnIfHeightReservesNothing() {
+        guard preferredHeight <= 0 else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(id)' was created with height \(preferredHeight): it reserves no space and stays invisible even when its content loads. Pass the height the block should occupy.",
+                      level: .error,
+                      category: .embeddedBlocks)
     }
 
     deinit {

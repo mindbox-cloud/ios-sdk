@@ -85,6 +85,10 @@ final class EmbeddedBlockShimmerView: UIView {
                                                object: nil)
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     private func applyColors() {
         gradientLayer.colors = [
             baseColor.cgColor,
