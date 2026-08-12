@@ -252,7 +252,7 @@
 		47FDF0BA2C5BDAB80051F08C /* MigrationManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0B92C5BDAB80051F08C /* MigrationManagerProtocol.swift */; };
 		47FDF0BC2C5BE8BB0051F08C /* MigrationProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FDF0BB2C5BE8BB0051F08C /* MigrationProtocol.swift */; };
 		4841683F6839440F84477966 /* OperationNameValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EF1D88A18D64D60BD03ABB8 /* OperationNameValidator.swift */; };
-		57A1B3230000000000000007 /* InjectEmbeddedBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A1B3230000000000000107 /* InjectEmbeddedBlocks.swift */; };
+		57A1B3230000000000000007 /* (null) in Sources */ = {isa = PBXBuildFile; };
 		5D3FCB95C2AF59DF36A61254 /* WebViewLocalStateStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CFCC82B8014DE7276C217CD /* WebViewLocalStateStorageTests.swift */; };
 		5D4C060B41804FC7B3F791E9 /* MonitoringLogsBothFieldsFormat.json in Resources */ = {isa = PBXBuildFile; fileRef = 23E426DECA664254B2B3A29D /* MonitoringLogsBothFieldsFormat.json */; };
 		6182078DDFC681D168546DAD /* HapticService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1BE43AA9EAEA03F8ED4008 /* HapticService.swift */; };
@@ -672,6 +672,7 @@
 		F3A8B9A92A3A713E00E9C055 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */; };
 		F3A8B9AB2A3A719C00E9C055 /* ABTestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */; };
 		F3A961D62DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */; };
+		F3A97FFC302C707F005EA1AF /* InjectEmbeddedBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A97FFB302C707F005EA1AF /* InjectEmbeddedBlocks.swift */; };
 		F3AF0AD02BC40FCF0063BA58 /* InappTTLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */; };
 		F3B2A3982A4C79D900E2CA25 /* MindboxLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */; };
 		F3B2A39E2A4C79E200E2CA25 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B2A3992A4C79E200E2CA25 /* Status.swift */; };
@@ -1016,7 +1017,6 @@
 		4D716044131845AEA04A9858 /* WebViewReadyCheckerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewReadyCheckerTests.swift; sourceTree = "<group>"; };
 		4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SDKUserAgentTests.swift; sourceTree = "<group>"; };
 		55E67F6257F15F143DEA87DE /* JSONValueTagsMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValueTagsMergeTests.swift; sourceTree = "<group>"; };
-		57A1B3230000000000000107 /* InjectEmbeddedBlocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectEmbeddedBlocks.swift; sourceTree = "<group>"; };
 		68184C936B4243C28CC10829 /* SDKUserAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKUserAgent.swift; sourceTree = "<group>"; };
 		6C96F9B9CE3C4AA2AA975DB3 /* MD5Hash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MD5Hash.swift; sourceTree = "<group>"; };
 		6D096F433EBB44C8B3490CF6 /* InAppWebViewDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppWebViewDataStore.swift; sourceTree = "<group>"; };
@@ -1435,6 +1435,7 @@
 		F3A8B9A82A3A713E00E9C055 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		F3A8B9AA2A3A719C00E9C055 /* ABTestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABTestModel.swift; sourceTree = "<group>"; };
 		F3A961D52DE9C5220016D5D3 /* InAppPresentationValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppPresentationValidatorTests.swift; sourceTree = "<group>"; };
+		F3A97FFB302C707F005EA1AF /* InjectEmbeddedBlocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectEmbeddedBlocks.swift; sourceTree = "<group>"; };
 		F3AF0ACF2BC40FCF0063BA58 /* InappTTLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappTTLTests.swift; sourceTree = "<group>"; };
 		F3B2A3972A4C79D900E2CA25 /* MindboxLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MindboxLogger.swift; sourceTree = "<group>"; };
 		F3B2A3992A4C79E200E2CA25 /* Status.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
@@ -3898,12 +3899,12 @@
 		F3FEEAA02C25B4F5000E9D0F /* Injections */ = {
 			isa = PBXGroup;
 			children = (
+				F3A97FFB302C707F005EA1AF /* InjectEmbeddedBlocks.swift */,
 				F3FEEAA12C25B55C000E9D0F /* InjectCore.swift */,
 				F3FEEAA32C25B765000E9D0F /* InjectUtilities.swift */,
 				F3FEEAAC2C25FD1F000E9D0F /* InjectABTestUtilities.swift */,
 				F33087652C37590600F8DF10 /* InjectInappTools.swift */,
 				F3FEEAAA2C25D874000E9D0F /* InjectReplaceable.swift */,
-				57A1B3230000000000000107 /* InjectEmbeddedBlocks.swift */,
 			);
 			path = Injections;
 			sourceTree = "<group>";
@@ -4384,7 +4385,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57A1B3230000000000000007 /* InjectEmbeddedBlocks.swift in Sources */,
+				57A1B3230000000000000007 /* (null) in Sources */,
 				A881A16C702E41AE93848BD3 /* InAppWebViewLearnedHostsStore.swift in Sources */,
 				F389B3A639904206A3DADFFA /* InAppWebViewPrewarmPlanner.swift in Sources */,
 				8A94D721DAEF4395A360C5B2 /* InAppWebViewPrewarmNavigationPolicy.swift in Sources */,
@@ -4566,6 +4567,7 @@
 				A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */,
 				F361284B2BA31AC4000382D9 /* ActionUseCaseFactory.swift in Sources */,
 				9BC24E7528F6953D00C2619C /* ConfigResponse.swift in Sources */,
+				F3A97FFC302C707F005EA1AF /* InjectEmbeddedBlocks.swift in Sources */,
 				47CFDABB2F3A054A0034F310 /* MBSystemInfoProvider.swift in Sources */,
 				F331DD332A84D57800222120 /* VariantImageUrlExtractorService.swift in Sources */,
 				33072F482664CCBA001F1AB2 /* PoolResponse.swift in Sources */,
