@@ -320,6 +320,41 @@ public struct BridgeMessage: Codable {
         ///   ```
         case contentRendered
 
+        /// JS asks which of these in-apps currently pass targeting.
+        ///
+        /// Answered from targeting the SDK has already computed, without going to the network:
+        /// the page gives up on the answer after three seconds and renders nothing rather than
+        /// wait. The reply keeps the ids that pass, in the order they were asked about.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappIds": ["id-1", "id-2"] }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "inappIds": ["id-1"] }
+        ///   ```
+        case checkInappsTargeting
+
+        /// JS asks for an in-app to be shown by id.
+        ///
+        /// `params` is merged into that in-app's start payload and overwrites whatever it
+        /// collides with. The SDK neither validates nor limits it: what the page sends is what
+        /// the page gets, and avoiding collisions is the page's business.
+        ///
+        /// `index` and `sourceInappId` describe where the request came from and are journalled,
+        /// not passed on — the page already puts everything it needs into `params`.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappId": "...", "index": 0, "sourceInappId": "...", "params": { ... } }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case showInApp
+
         // MARK: JS → Native: Operations
 
         /// JS triggers an asynchronous Mindbox operation (fire-and-forget).
@@ -580,6 +615,11 @@ public struct BridgeMessage: Codable {
             // Answers for itself so a payload without a usable count is refused outright. The
             // blanket success would otherwise claim the SDK acted on a number it never got.
             case .contentRendered:
+                return true
+
+            // Both carry an answer the page acts on: one returns the ids that passed, the other
+            // reports whether the show was accepted.
+            case .checkInappsTargeting, .showInApp:
                 return true
 
             // Operations
