@@ -36,3 +36,20 @@ extension BridgeMessage {
         BridgeMessage(type: .request, action: action.rawValue, payload: payload)
     }
 }
+
+/// Lets the main queue run the work a handler scheduled on it, until `isDone` holds.
+///
+/// Opening a link hops through the main queue more than once — the handler defers, the system
+/// answers on its own turn, and the answer is delivered on another — and each hop is only
+/// enqueued while the previous one runs. Waiting a single turn would sample the state before
+/// the later hops exist, which is exactly the kind of flake that passes locally and fails in CI.
+@MainActor
+func drainMainQueue(until isDone: () -> Bool, turns: Int = 10) async {
+    for _ in 0..<turns {
+        guard !isDone() else { return }
+
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+    }
+}

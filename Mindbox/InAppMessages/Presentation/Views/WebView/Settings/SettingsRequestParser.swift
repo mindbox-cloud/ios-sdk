@@ -20,22 +20,10 @@ enum SettingsRequestParser {
     }
 
     static func parse(from message: BridgeMessage) -> SettingsType? {
-        let dict = extractPayloadDict(from: message)
-        guard case .string(let typeString) = dict[PayloadKey.target], !typeString.isEmpty else {
+        guard case .string(let typeString)? = message.payloadObject?[PayloadKey.target],
+              !typeString.isEmpty else {
             return nil
         }
         return SettingsType(rawValue: typeString)
-    }
-
-    private static func extractPayloadDict(from message: BridgeMessage) -> [String: JSONValue] {
-        if case .string(let str) = message.payload,
-           let data = str.data(using: .utf8),
-           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
-            return dict
-        }
-        if case .object(let dict) = message.payload {
-            return dict
-        }
-        return [:]
     }
 }

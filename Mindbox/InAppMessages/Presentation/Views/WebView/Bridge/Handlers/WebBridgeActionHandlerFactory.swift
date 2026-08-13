@@ -21,7 +21,10 @@ enum WebBridgeActionHandlerFactory {
     static func makeHandlers() -> [WebBridgeActionHandler] {
         [
             LogActionHandler(),
-            LocalStateActionHandler()
+            LocalStateActionHandler(),
+            OpenLinkActionHandler(),
+            SettingsActionHandler(),
+            PermissionActionHandler()
         ]
     }
 }

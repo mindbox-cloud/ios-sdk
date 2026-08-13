@@ -7,7 +7,6 @@
 
 import UIKit
 import WebKit
-import SafariServices
 import MindboxLogger
 
 // swiftlint:disable file_length
@@ -40,7 +39,6 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
-    private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
     lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
     lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
@@ -245,7 +243,8 @@ extension TransparentView: WebBridgeMessageDelegate {
 
         // Handled by the action registry above. Listed only to keep this switch exhaustive
         // while the remaining actions move out; unreachable.
-        case .log, .localStateGet, .localStateSet, .localStateInit:
+        case .log, .localStateGet, .localStateSet, .localStateInit,
+             .openLink, .settingsOpen, .permissionRequest:
             break
 
         // Operations
@@ -253,14 +252,6 @@ extension TransparentView: WebBridgeMessageDelegate {
             handleAsyncOperation(message: message)
         case .syncOperation:
             handleSyncOperation(message: message)
-
-        // Navigation, Settings & Permissions
-        case .openLink:
-            handleNavigate(message: message)
-        case .settingsOpen:
-            handleOpenSettings(message: message)
-        case .permissionRequest:
-            handlePermissionRequest(message: message)
 
         // Haptic
         case .haptic:
@@ -547,187 +538,6 @@ extension TransparentView {
     }
 }
 
-// MARK: - Navigate Handler
-
-extension TransparentView {
-
-    private func handleNavigate(message: BridgeMessage) {
-        guard let urlString = extractNavigateURL(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty 'url' field", action: message.action, id: message.id)
-            return
-        }
-
-        guard let url = URL(string: urlString) else {
-            sendBridgeError("Invalid URL: '\(urlString)' could not be parsed", action: message.action, id: message.id)
-            return
-        }
-
-        let scheme = url.scheme?.lowercased()
-
-        if scheme == "http" || scheme == "https" {
-            Logger.common(
-                message: "[WebView] navigate: trying universal link first for \(urlString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            openAsUniversalLinkOrSafari(url: url, message: message)
-        } else {
-            Logger.common(
-                message: "[WebView] navigate: opening via UIApplication \(urlString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            openViaUIApplication(url: url, message: message)
-        }
-    }
-
-    private func openAsUniversalLinkOrSafari(url: URL, message: BridgeMessage) {
-        DispatchQueue.main.async { [weak self] in
-            UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { opened in
-                DispatchQueue.main.async {
-                    if opened {
-                        Logger.common(
-                            message: "[WebView] navigate: opened as universal link \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeSuccess(action: message.action, id: message.id)
-                    } else {
-                        Logger.common(
-                            message: "[WebView] navigate: not a universal link, falling back to SFSafariViewController for \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.openInSafariViewController(url: url, message: message)
-                    }
-                }
-            }
-        }
-    }
-
-    private func openInSafariViewController(url: URL, message: BridgeMessage) {
-        guard let presentingVC = delegate as? UIViewController else {
-            Logger.common(
-                message: "[WebView] navigate: no presenting view controller found",
-                level: .default,
-                category: .webViewInAppMessages
-            )
-            sendBridgeError("Failed to open URL: no presenting view controller", action: message.action, id: message.id)
-            return
-        }
-
-        let safariVC = SFSafariViewController(url: url)
-        presentingVC.present(safariVC, animated: true) { [weak self] in
-            Logger.common(
-                message: "[WebView] navigate: SFSafariViewController presented for \(url.absoluteString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            self?.sendBridgeSuccess(action: message.action, id: message.id)
-        }
-    }
-
-    private func openViaUIApplication(url: URL, message: BridgeMessage) {
-        DispatchQueue.main.async { [weak self] in
-            UIApplication.shared.open(url, options: [:]) { success in
-                DispatchQueue.main.async {
-                    if success {
-                        Logger.common(
-                            message: "[WebView] navigate: successfully opened \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeSuccess(action: message.action, id: message.id)
-                    } else {
-                        Logger.common(
-                            message: "[WebView] navigate: failed to open \(url.absoluteString)",
-                            level: .default,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeError("Failed to open URL: '\(url.absoluteString)'", action: message.action, id: message.id)
-                    }
-                }
-            }
-        }
-    }
-
-    private func extractNavigateURL(from message: BridgeMessage) -> String? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let urlString) = dict["url"],
-              !urlString.isEmpty else {
-            return nil
-        }
-        return urlString
-    }
-}
-
-// MARK: - Permission Request Handler
-
-extension TransparentView {
-
-    private func handlePermissionRequest(message: BridgeMessage) {
-        guard let typeString = extractPermissionType(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty 'type' field", action: message.action, id: message.id)
-            return
-        }
-
-        guard let permissionType = PermissionType(rawValue: typeString) else {
-            sendBridgeError("Unknown permission type: '\(typeString)'", action: message.action, id: message.id)
-            return
-        }
-
-        guard let handler = permissionHandlerRegistry.handler(for: permissionType) else {
-            sendBridgeError("No handler registered for permission type: '\(typeString)'", action: message.action, id: message.id)
-            return
-        }
-
-        for key in handler.requiredInfoPlistKeys {
-            guard Bundle.main.object(forInfoDictionaryKey: key) != nil else {
-                sendBridgeError("Missing Info.plist key: \(key)", action: message.action, id: message.id)
-                return
-            }
-        }
-
-        handler.request { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
-
-                switch result {
-                case .granted(let dialogShown):
-                    self.sendPermissionResponse("granted", dialogShown: dialogShown, action: message.action, id: message.id)
-                case .denied(let dialogShown):
-                    self.sendPermissionResponse("denied", dialogShown: dialogShown, action: message.action, id: message.id)
-                case .error(let errorMessage):
-                    self.sendBridgeError(errorMessage, action: message.action, id: message.id)
-                }
-            }
-        }
-    }
-
-    private func sendPermissionResponse(_ resultValue: String, dialogShown: Bool, action: String, id: UUID) {
-        let response = BridgeMessage(
-            type: .response,
-            action: action,
-            payload: .object(["result": .string(resultValue), "dialogShown": .bool(dialogShown)]),
-            id: id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func extractPermissionType(from message: BridgeMessage) -> String? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let typeString) = dict["type"],
-              !typeString.isEmpty else {
-            return nil
-        }
-        return typeString
-    }
-}
-
 // MARK: - WKNavigationType String Representation
 
 private extension WKNavigationType {
@@ -751,38 +561,6 @@ extension TransparentView {
     private func handleHaptic(message: BridgeMessage) {
         hapticService.handle(message: message)
         sendBridgeSuccess(action: message.action, id: message.id)
-    }
-}
-
-// MARK: - Open Settings Handler
-
-extension TransparentView {
-
-    private func handleOpenSettings(message: BridgeMessage) {
-        guard let settingsType = SettingsRequestParser.parse(from: message) else {
-            sendBridgeError("Invalid or unknown settings type", action: message.action, id: message.id)
-            return
-        }
-        Logger.common(message: "[WebView] openSettings: type='\(settingsType.rawValue)'", level: .info, category: .webViewInAppMessages)
-
-        switch settingsType {
-        case .notifications:
-            handleOpenNotificationSettings(message: message)
-        case .application:
-            guard let url = URL(string: UIApplication.openSettingsURLString) else {
-                sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
-                return
-            }
-            openViaUIApplication(url: url, message: message)
-        }
-    }
-
-    private func handleOpenNotificationSettings(message: BridgeMessage) {
-        PushPermissionHelper.openPushNotificationSettings { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.sendBridgeSuccess(action: message.action, id: message.id)
-            }
-        }
     }
 }
 
