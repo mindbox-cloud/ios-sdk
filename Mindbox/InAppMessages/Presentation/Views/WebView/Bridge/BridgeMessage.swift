@@ -603,6 +603,24 @@ public struct BridgeMessage: Codable {
 
     var parsedAction: Action? { Action(rawValue: action) }
 
+    /// The payload as an object, whether JS sent it as a JSON string — the ordinary case,
+    /// `"{\"data\":{...},\"version\":3}"` — or as an already-decoded object.
+    ///
+    /// `nil` means neither shape parsed, which is a malformed request rather than an empty one.
+    var payloadObject: [String: JSONValue]? {
+        if case .string(let string) = payload,
+           let data = string.data(using: .utf8),
+           let object = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
+            return object
+        }
+
+        if case .object(let object) = payload {
+            return object
+        }
+
+        return nil
+    }
+
     /// The payload as the string a handler logs or forwards verbatim.
     ///
     /// JS sends it as a JSON string, so that is the ordinary case. A payload that arrived

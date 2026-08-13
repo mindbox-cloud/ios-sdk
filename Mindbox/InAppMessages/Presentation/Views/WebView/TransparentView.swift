@@ -40,7 +40,6 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
-    private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
     private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
     private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
     lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
@@ -246,7 +245,7 @@ extension TransparentView: WebBridgeMessageDelegate {
 
         // Handled by the action registry above. Listed only to keep this switch exhaustive
         // while the remaining actions move out; unreachable.
-        case .log:
+        case .log, .localStateGet, .localStateSet, .localStateInit:
             break
 
         // Operations
@@ -262,14 +261,6 @@ extension TransparentView: WebBridgeMessageDelegate {
             handleOpenSettings(message: message)
         case .permissionRequest:
             handlePermissionRequest(message: message)
-
-        // Local State
-        case .localStateGet:
-            handleLocalStateGet(message: message)
-        case .localStateSet:
-            handleLocalStateSet(message: message)
-        case .localStateInit:
-            handleLocalStateInit(message: message)
 
         // Haptic
         case .haptic:
@@ -553,178 +544,6 @@ extension TransparentView {
                 id: id
             )
         }
-    }
-}
-
-// MARK: - LocalState Handlers
-
-extension TransparentView {
-
-    private func handleLocalStateGet(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message) else {
-            sendBridgeError("Invalid payload", action: message.action, id: message.id)
-            return
-        }
-
-        let keys: [String]
-        if case .array(let arr) = payload["data"] {
-            keys = arr.compactMap { if case .string(let s) = $0 { return s } else { return nil } }
-        } else {
-            keys = []
-        }
-
-        let storage = localStateStorage
-        let state = storage.get(keys: keys)
-
-        Logger.common(
-            message: "[WebView] localState.get keys=\(keys) → \(state.data.count) entries, version=\(state.version)",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        // Build response data: found keys → value, missing keys → null
-        var dataObject: [String: JSONValue] = [:]
-        if keys.isEmpty {
-            for (key, value) in state.data {
-                dataObject[key] = .string(value)
-            }
-        } else {
-            for key in keys {
-                if let value = state.data[key] {
-                    dataObject[key] = .string(value)
-                } else {
-                    dataObject[key] = .null
-                }
-            }
-        }
-
-        let responsePayload: JSONValue = .object([
-            "data": .object(dataObject),
-            "version": .int(state.version)
-        ])
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: responsePayload,
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func handleLocalStateSet(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message),
-              case .object(let dataDict) = payload["data"] else {
-            sendBridgeError("Invalid payload: missing 'data' object", action: message.action, id: message.id)
-            return
-        }
-
-        var data: [String: String?] = [:]
-        for (key, value) in dataDict {
-            switch value {
-            case .string(let s):
-                data[key] = s
-            case .null:
-                data[key] = nil as String?
-            default:
-                if let encoded = try? JSONEncoder().encode(value),
-                   let str = String(data: encoded, encoding: .utf8) {
-                    data[key] = str
-                }
-            }
-        }
-
-        let storage = localStateStorage
-        let state = storage.set(data: data)
-
-        Logger.common(
-            message: "[WebView] localState.set \(data.count) keys → version=\(state.version)",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: localStateToPayload(data: data, version: state.version),
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func handleLocalStateInit(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message),
-              case .int(let version) = payload["version"],
-              case .object(let dataDict) = payload["data"] else {
-            sendBridgeError("Invalid payload: missing 'version' or 'data'", action: message.action, id: message.id)
-            return
-        }
-
-        var data: [String: String?] = [:]
-        for (key, value) in dataDict {
-            switch value {
-            case .string(let s):
-                data[key] = s
-            case .null:
-                data[key] = nil as String?
-            default:
-                if let encoded = try? JSONEncoder().encode(value),
-                   let str = String(data: encoded, encoding: .utf8) {
-                    data[key] = str
-                }
-            }
-        }
-
-        let storage = localStateStorage
-        guard let state = storage.initialize(version: version, data: data) else {
-            sendBridgeError(
-                "Version must be a positive integer, got \(version)",
-                action: message.action,
-                id: message.id
-            )
-            return
-        }
-
-        Logger.common(
-            message: "[WebView] localState.init version=\(version), \(data.count) keys",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: localStateToPayload(data: data, version: state.version),
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    // MARK: - LocalState Helpers
-
-    private func extractLocalStatePayload(from message: BridgeMessage) -> [String: JSONValue]? {
-        // Payload arrives as a JSON string: "{\"data\":{...},\"version\":3}"
-        if case .string(let str) = message.payload,
-           let data = str.data(using: .utf8),
-           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
-            return dict
-        }
-        // Payload is already a decoded object
-        if case .object(let dict) = message.payload {
-            return dict
-        }
-        return nil
-    }
-
-    private func localStateToPayload(data: [String: String?], version: Int) -> JSONValue {
-        var dataObject: [String: JSONValue] = [:]
-        for (key, value) in data {
-            dataObject[key] = value.map { .string($0) } ?? .null
-        }
-        return .object([
-            "data": .object(dataObject),
-            "version": .int(version)
-        ])
     }
 }
 
