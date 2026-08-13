@@ -191,6 +191,41 @@ extension TransparentView: WebBridgeHost {
     }
 }
 
+// MARK: - WebBridgeLifecycleHosting
+
+extension TransparentView: WebBridgeLifecycleHosting {
+
+    func bridgeDidInit() {
+        // First, before anything else can read it: the no-cache retry policy decides whether a
+        // failed subresource is worth healing by asking whether the page ever booted, and a
+        // late flag silently disables that.
+        hasReceivedInit = true
+        quizInitTimeoutWorkItem?.cancel()
+        // The page has proven it can boot — drop the retained retry content (mirror of
+        // Android's handleInitAction cleanup; the policy's one-shot state stays).
+        facade?.releaseRetainedContent()
+        actionRegistry.handler(ofType: HapticActionHandler.self)?.prepare()
+        webViewAction?.onInit()
+    }
+
+    func bridgeDidRequestClose() {
+        quizInitTimeoutWorkItem?.cancel()
+        // Whatever holds the device is released before the window goes: a haptic pattern
+        // playing into a closed show, or a sensor callback reaching a dead page, is the
+        // shape crashes come in.
+        actionRegistry.tearDown()
+        webViewAction?.onClose()
+    }
+
+    func bridgeDidRequestHide() {
+        webViewAction?.onHide()
+    }
+
+    func bridgeDidClick(rawPayload: String) {
+        webViewAction?.onCompleted(data: rawPayload)
+    }
+}
+
 extension TransparentView: WebBridgeMessageDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
         let action = message.action
@@ -215,43 +250,11 @@ extension TransparentView: WebBridgeMessageDelegate {
             return
         }
 
-        switch parsedAction {
+        // `ready` is the last action still waiting for a handler of its own. Everything else
+        // is either owned by the registry above, or is native → JS and never arrives here.
+        guard parsedAction == .ready else { return }
 
-        // Lifecycle
-        case .close:
-            quizInitTimeoutWorkItem?.cancel()
-            // Whatever holds the device is released before the window goes: a haptic pattern
-            // playing into a closed show, or a sensor callback reaching a dead page, is the
-            // shape crashes come in.
-            actionRegistry.tearDown()
-            webViewAction?.onClose()
-        case .`init`:
-            hasReceivedInit = true
-            quizInitTimeoutWorkItem?.cancel()
-            // The page has proven it can boot — drop the retained retry content (mirror of
-            // Android's handleInitAction cleanup; the policy's one-shot state stays).
-            facade?.releaseRetainedContent()
-            actionRegistry.handler(ofType: HapticActionHandler.self)?.prepare()
-            webViewAction?.onInit()
-        case .click:
-            webViewAction?.onCompleted(data: data)
-        case .hide:
-            webViewAction?.onHide()
-        case .ready:
-            facade?.sendReadyEvent(id: message.id)
-
-        // Handled by the action registry above. Listed only to keep this switch exhaustive
-        // while the remaining actions move out; unreachable.
-        case .log, .localStateGet, .localStateSet, .localStateInit,
-             .openLink, .settingsOpen, .permissionRequest,
-             .haptic, .motionStart, .motionStop,
-             .asyncOperation, .syncOperation:
-            break
-
-        // Native → JS (not handled here)
-        case .navigationIntercepted, .motionEvent:
-            break
-        }
+        facade?.sendReadyEvent(id: message.id)
     }
 }
 

@@ -27,7 +27,8 @@ enum WebBridgeActionHandlerFactory {
             PermissionActionHandler(),
             HapticActionHandler(),
             MotionActionHandler(),
-            OperationActionHandler()
+            OperationActionHandler(),
+            LifecycleActionHandler()
         ]
     }
 }
