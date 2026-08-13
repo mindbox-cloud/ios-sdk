@@ -1506,6 +1506,8 @@
 		471D4C3B2FEED16200856EA5 /* TestPlans */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TestPlans; sourceTree = "<group>"; };
 		57A1B3230000000000000203 /* EmbeddedBlocks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EmbeddedBlocks; sourceTree = "<group>"; };
 		57A1B3230000000000000300 /* EmbeddedBlocks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EmbeddedBlocks; sourceTree = "<group>"; };
+		57A1B3230000000000000400 /* Handlers */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Handlers; sourceTree = "<group>"; };
+		57A1B3230000000000000401 /* BridgeHandlers */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BridgeHandlers; sourceTree = "<group>"; };
 		A8C878878353491FA01AC096 /* WebViewPrewarmTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = WebViewPrewarmTests; sourceTree = "<group>"; };
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
@@ -1600,6 +1602,7 @@
 				7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */,
 				7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */,
 				F0DB93A7997961CA7C2BE917 /* MotionServiceBehaviorTests.swift */,
+				57A1B3230000000000000401 /* BridgeHandlers */,
 			);
 			path = WebView;
 			sourceTree = "<group>";
@@ -3839,6 +3842,7 @@
 				F3BD9F812F273BCD00647BAF /* BridgeMessage.swift */,
 				F3BDA0372F27444500647BAF /* MindboxWebBridge.swift */,
 				F338028F2F29F3AF00F83D2F /* BridgeMessageDispatcher.swift */,
+				57A1B3230000000000000400 /* Handlers */,
 			);
 			path = Bridge;
 			sourceTree = "<group>";
@@ -3965,6 +3969,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				57A1B3230000000000000300 /* EmbeddedBlocks */,
+				57A1B3230000000000000400 /* Handlers */,
 			);
 			name = Mindbox;
 			productName = MindBox;
@@ -3986,6 +3991,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				57A1B3230000000000000203 /* EmbeddedBlocks */,
+				57A1B3230000000000000401 /* BridgeHandlers */,
 				A8C878878353491FA01AC096 /* WebViewPrewarmTests */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
 				F397DE1C2CFF568800B72DA9 /* JSONs */,
