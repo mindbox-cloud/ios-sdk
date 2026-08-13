@@ -22,7 +22,11 @@ final class TransparentView: UIView {
     private var operation: (name: String, body: String)?
     private let userAgent: String
     private let inAppId: String
-    private let tags: [String: String]?
+    let tags: [String: String]?
+
+    /// Handlers for the actions that no longer live in the switch below. Built per show, not
+    /// shared: handlers moving in here own state that belongs to one page.
+    private let actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
     /// True when the page finished loading but the JS bridge never appeared within the
@@ -84,6 +88,7 @@ final class TransparentView: UIView {
 
     deinit {
         readyChecker?.cancel()
+        actionRegistry.tearDown()
         if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
@@ -173,27 +178,40 @@ extension TransparentView {
     }
 }
 
+// MARK: - WebBridgeHost
+
+extension TransparentView: WebBridgeHost {
+
+    var contentId: String { inAppId }
+
+    var logCategory: LogCategory { .webViewInAppMessages }
+
+    var presentingViewController: UIViewController? { delegate as? UIViewController }
+
+    /// A modal in-app exists only while it is on screen — unlike an embedded block, it has no
+    /// off-screen life in which its page could keep talking.
+    var isUserPresent: Bool { true }
+
+    func send(_ message: BridgeMessage) {
+        facade?.sendToJS(message)
+    }
+}
+
 extension TransparentView: WebBridgeMessageDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
         let action = message.action
-        let data: String
-
-        if case .string(let stringValue) = message.payload {
-            data = stringValue
-        } else if let payload = message.payload,
-                  let payloadData = try? JSONEncoder().encode(payload),
-                  let payloadString = String(data: payloadData, encoding: .utf8) {
-            data = payloadString
-        } else {
-            data = ""
-        }
+        let data = message.payloadString
 
         Logger.common(
             message: "[WebView] Bridge: received \(action) \(data)",
             category: .webViewInAppMessages
         )
-        
-        // TODO: - Create plugin-based handlers
+
+        // Whatever the registry owns is fully handled there and never reaches the switch below.
+        // The rest still lives here and moves out a group at a time.
+        if actionRegistry.handle(message, host: self) {
+            return
+        }
 
         guard let parsedAction = BridgeMessage.Action(rawValue: action) else {
             Logger.common(
@@ -226,9 +244,10 @@ extension TransparentView: WebBridgeMessageDelegate {
         case .ready:
             facade?.sendReadyEvent(id: message.id)
 
-        // Info
+        // Handled by the action registry above. Listed only to keep this switch exhaustive
+        // while the remaining actions move out; unreachable.
         case .log:
-            webViewAction?.onLog(message: data)
+            break
 
         // Operations
         case .asyncOperation:
@@ -1048,5 +1067,4 @@ protocol WebViewAction: AnyObject {
     func onCompleted(data: String)
     func onClose()
     func onHide()
-    func onLog(message: String)
 }

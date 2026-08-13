@@ -7,9 +7,6 @@
 //
 
 import Testing
-import UIKit
-import WebKit
-import MindboxLogger
 @_spi(Internal) @testable import Mindbox
 
 @Suite("WebBridgeActionRegistry", .tags(.webView))
@@ -22,7 +19,7 @@ struct WebBridgeActionRegistryTests {
         let log = HandlerSpy(actions: [.log])
         let haptic = HandlerSpy(actions: [.haptic])
         let registry = WebBridgeActionRegistry(handlers: [log, haptic])
-        let message = Self.request(.haptic)
+        let message = BridgeMessage.request(.haptic)
 
         let didHandle = registry.handle(message, host: HostSpy())
 
@@ -37,9 +34,9 @@ struct WebBridgeActionRegistryTests {
         let registry = WebBridgeActionRegistry(handlers: [localState])
         let host = HostSpy()
 
-        registry.handle(Self.request(.localStateGet), host: host)
-        registry.handle(Self.request(.localStateSet), host: host)
-        registry.handle(Self.request(.localStateInit), host: host)
+        registry.handle(BridgeMessage.request(.localStateGet), host: host)
+        registry.handle(BridgeMessage.request(.localStateSet), host: host)
+        registry.handle(BridgeMessage.request(.localStateInit), host: host)
 
         #expect(localState.handled.count == 3)
     }
@@ -48,7 +45,7 @@ struct WebBridgeActionRegistryTests {
     func reportsUnownedAction() {
         let registry = WebBridgeActionRegistry(handlers: [HandlerSpy(actions: [.log])])
 
-        let didHandle = registry.handle(Self.request(.haptic), host: HostSpy())
+        let didHandle = registry.handle(BridgeMessage.request(.haptic), host: HostSpy())
 
         #expect(!didHandle)
     }
@@ -69,7 +66,7 @@ struct WebBridgeActionRegistryTests {
         let second = HandlerSpy(actions: [.log])
         let registry = WebBridgeActionRegistry(handlers: [first, second])
 
-        registry.handle(Self.request(.log), host: HostSpy())
+        registry.handle(BridgeMessage.request(.log), host: HostSpy())
 
         #expect(first.handled.count == 1)
         #expect(second.handled.isEmpty)
@@ -82,7 +79,7 @@ struct WebBridgeActionRegistryTests {
         let used = HandlerSpy(actions: [.log])
         let idle = HandlerSpy(actions: [.haptic])
         let registry = WebBridgeActionRegistry(handlers: [used, idle])
-        registry.handle(Self.request(.log), host: HostSpy())
+        registry.handle(BridgeMessage.request(.log), host: HostSpy())
 
         registry.tearDown()
 
@@ -104,12 +101,6 @@ struct WebBridgeActionRegistryTests {
         let registry = WebBridgeActionRegistry(handlers: [HandlerSpy(actions: [.log])])
 
         #expect(registry.handler(ofType: OtherHandlerSpy.self) == nil)
-    }
-
-    // MARK: - Helpers
-
-    private static func request(_ action: BridgeMessage.Action) -> BridgeMessage {
-        BridgeMessage(type: .request, action: action.rawValue, payload: nil)
     }
 }
 
@@ -157,24 +148,6 @@ struct WebBridgeHostResponseTests {
 }
 
 // MARK: - Doubles
-
-/// Records what it was asked to send. Everything a handler could want from a page is inert:
-/// these tests are about routing and envelopes, not about any one page.
-private final class HostSpy: WebBridgeHost {
-
-    var contentId = "test-content-id"
-    var logCategory: LogCategory = .webViewInAppMessages
-    var tags: [String: String]?
-    var webView: WKWebView? { nil }
-    var presentingViewController: UIViewController? { nil }
-    var isUserPresent = true
-
-    private(set) var sent: [BridgeMessage] = []
-
-    func send(_ message: BridgeMessage) {
-        sent.append(message)
-    }
-}
 
 private final class HandlerSpy: WebBridgeActionHandler {
 

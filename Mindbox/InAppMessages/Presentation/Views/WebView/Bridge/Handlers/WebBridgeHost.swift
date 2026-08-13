@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import WebKit
 import MindboxLogger
 
 /// The WebView an action runs in, as much of it as a handler is allowed to know.
@@ -27,10 +26,6 @@ protocol WebBridgeHost: AnyObject {
 
     /// In-app tags, merged into operation bodies. Absent on pages that have none.
     var tags: [String: String]? { get }
-
-    /// Geometry only — the safe-area insets that go into the start payload. Navigating it is
-    /// not a handler's business: navigation belongs to the bridge.
-    var webView: WKWebView? { get }
 
     /// What a handler presents from when it needs a controller of its own (`SFSafariViewController`).
     /// `nil` means the handler falls back to the key window.

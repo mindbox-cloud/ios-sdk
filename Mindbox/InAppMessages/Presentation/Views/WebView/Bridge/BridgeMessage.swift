@@ -288,7 +288,7 @@ public struct BridgeMessage: Codable {
 
         /// JS sends a message to native SDK logger.
         ///
-        /// Triggers ``WebViewAction/onLog(message:)``.
+        /// Handled by ``LogActionHandler``, which journals it under the host's own log category.
         ///
         /// - Payload:
         ///   ```json
@@ -602,6 +602,25 @@ public struct BridgeMessage: Codable {
     public let timestamp: Int64
 
     var parsedAction: Action? { Action(rawValue: action) }
+
+    /// The payload as the string a handler logs or forwards verbatim.
+    ///
+    /// JS sends it as a JSON string, so that is the ordinary case. A payload that arrived
+    /// already decoded is re-encoded rather than described, so what a handler sees does not
+    /// depend on which of the two shapes the page happened to send.
+    var payloadString: String {
+        if case .string(let value) = payload {
+            return value
+        }
+
+        if let payload,
+           let data = try? JSONEncoder().encode(payload),
+           let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+
+        return ""
+    }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
