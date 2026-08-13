@@ -114,18 +114,21 @@ final class TransparentViewJSBridgeTests {
     // MARK: - Helpers
 
     private func makeView(tags: [String: String]?) -> TransparentView {
+        // The real dispatch path, with doubles behind the handler: this suite is about what
+        // reaches the repositories, and it should keep proving the view routes there at all.
+        let handler = OperationActionHandler(featureToggleManager: self.featureToggleManager,
+                                             databaseRepository: self.databaseRepository,
+                                             eventRepository: self.eventRepository)
         let view = TransparentView(
             frame: .zero,
             params: [:],
             userAgent: "",
             operation: nil,
             inAppId: "inapp-1",
-            tags: tags
+            tags: tags,
+            actionRegistry: WebBridgeActionRegistry(handlers: [handler])
         )
         view.facade = facade
-        view.featureToggleManager = featureToggleManager
-        view.databaseRepository = databaseRepository
-        view.eventRepository = eventRepository
         return view
     }
 

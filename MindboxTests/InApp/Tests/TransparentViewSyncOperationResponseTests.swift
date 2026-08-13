@@ -7,7 +7,7 @@ import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
 
-@Suite("TransparentView.makeSyncOperationResponse")
+@Suite("OperationActionHandler.makeSyncOperationResponse")
 struct TransparentViewSyncOperationResponseTests {
 
     private let action = "syncOperation"
@@ -20,7 +20,7 @@ struct TransparentViewSyncOperationResponseTests {
         let rawBody = #"{"status":"ValidationError","validationMessages":[{"message":"Invalid email","location":"/customer/email"}]}"#
         let data = try #require(rawBody.data(using: .utf8))
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(data),
             action: action,
             id: requestId
@@ -43,7 +43,7 @@ struct TransparentViewSyncOperationResponseTests {
         let rawBody = #"{"status":"Success","customer":{"email":"a@b.c"}}"#
         let data = try #require(rawBody.data(using: .utf8))
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(data),
             action: action,
             id: requestId
@@ -64,7 +64,7 @@ struct TransparentViewSyncOperationResponseTests {
         let rawBody = "plain text body"
         let data = try #require(rawBody.data(using: .utf8))
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(data),
             action: action,
             id: requestId
@@ -82,7 +82,7 @@ struct TransparentViewSyncOperationResponseTests {
 
     @Test("HTTP 200 with empty body becomes .response with empty string payload")
     func emptyBody_becomesResponseWithEmptyString() {
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(Data()),
             action: action,
             id: requestId
@@ -103,7 +103,7 @@ struct TransparentViewSyncOperationResponseTests {
         // Bytes that are not valid UTF-8: lone continuation byte 0xC3 + invalid follow-up
         let data = Data([0xC3, 0x28])
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(data),
             action: action,
             id: requestId
@@ -135,7 +135,7 @@ struct TransparentViewSyncOperationResponseTests {
     @Test("Protocol error payload is the data contents: status, errorMessage, httpStatusCode, errorId")
     func protocolError_payloadIsDataContentsOnly() throws {
         let pe = ProtocolError(status: .protocolError, errorMessage: "Operation Test not found", httpStatusCode: 400, errorId: "error-id-1")
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.protocolError(pe)),
             action: action,
             id: requestId
@@ -151,7 +151,7 @@ struct TransparentViewSyncOperationResponseTests {
     @Test("Server error payload is the data contents with InternalServerError status")
     func serverError_payloadIsDataContentsOnly() throws {
         let pe = ProtocolError(status: .internalServerError, errorMessage: "Something went wrong", httpStatusCode: 500)
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.serverError(pe)),
             action: action,
             id: requestId
@@ -165,7 +165,7 @@ struct TransparentViewSyncOperationResponseTests {
 
     @Test("Connection failure payload is the data contents without the NetworkError envelope")
     func connectionError_payloadIsDataContentsOnly() throws {
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.connectionError),
             action: action,
             id: requestId
@@ -182,7 +182,7 @@ struct TransparentViewSyncOperationResponseTests {
             status: .validationError,
             validationMessages: [ValidationMessage(message: "Invalid email", location: "/customer/email")]
         )
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.validationError(ve)),
             action: action,
             id: requestId
@@ -198,7 +198,7 @@ struct TransparentViewSyncOperationResponseTests {
 
     @Test("Internal error payload is the data contents with errorKey")
     func internalError_payloadIsDataContentsOnly() throws {
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.internalError(InternalError(errorKey: .parsing, reason: "Broken body"))),
             action: action,
             id: requestId
@@ -214,7 +214,7 @@ struct TransparentViewSyncOperationResponseTests {
         let url = try #require(URL(string: "https://api.mindbox.ru/v3/operations/sync"))
         let httpResponse = try #require(HTTPURLResponse(url: url, statusCode: 403, httpVersion: nil, headerFields: nil))
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.invalidResponse(httpResponse)),
             action: action,
             id: requestId
@@ -229,7 +229,7 @@ struct TransparentViewSyncOperationResponseTests {
     func unknownError_payloadIsDataContentsOnly() throws {
         let underlying = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "Something exploded"])
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .failure(.unknown(underlying)),
             action: action,
             id: requestId
@@ -248,7 +248,7 @@ struct TransparentViewSyncOperationResponseTests {
         let specificId = UUID()
         let data = try #require("body".data(using: .utf8))
 
-        let outgoing = TransparentView.makeSyncOperationResponse(
+        let outgoing = OperationActionHandler.makeSyncOperationResponse(
             result: .success(data),
             action: specificAction,
             id: specificId

@@ -24,7 +24,7 @@ final class TransparentView: UIView {
 
     /// Handlers for the actions that no longer live in the switch below. Built per show, not
     /// shared: handlers moving in here own state that belongs to one page.
-    private let actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
+    private let actionRegistry: WebBridgeActionRegistry
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
     /// True when the page finished loading but the JS bridge never appeared within the
@@ -38,11 +38,18 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
-    lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
-    lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-    lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
+    /// - Parameter actionRegistry: The handlers this show runs with. Injectable so a test can
+    ///   drive the real dispatch path with doubles behind it.
+    init(frame: CGRect,
+         params: [String: JSONValue],
+         userAgent: String,
+         operation: (name: String, body: String)?,
+         inAppId: String,
+         tags: [String: String]?,
+         actionRegistry: WebBridgeActionRegistry
+         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())) {
+        self.actionRegistry = actionRegistry
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
@@ -53,6 +60,7 @@ final class TransparentView: UIView {
     }
 
     override init(frame: CGRect) {
+        self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -63,6 +71,7 @@ final class TransparentView: UIView {
     }
 
     required init?(coder: NSCoder) {
+        self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -235,14 +244,9 @@ extension TransparentView: WebBridgeMessageDelegate {
         // while the remaining actions move out; unreachable.
         case .log, .localStateGet, .localStateSet, .localStateInit,
              .openLink, .settingsOpen, .permissionRequest,
-             .haptic, .motionStart, .motionStop:
+             .haptic, .motionStart, .motionStop,
+             .asyncOperation, .syncOperation:
             break
-
-        // Operations
-        case .asyncOperation:
-            handleAsyncOperation(message: message)
-        case .syncOperation:
-            handleSyncOperation(message: message)
 
         // Native → JS (not handled here)
         case .navigationIntercepted, .motionEvent:
@@ -376,145 +380,6 @@ extension TransparentView: WebBridgeNavigationDelegate {
                 category: .webViewInAppMessages
             )
             decisionHandler(.cancel)
-        }
-    }
-}
-
-// MARK: - Operation Handlers
-
-extension TransparentView {
-
-    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: JSONValue)? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let operation) = dict["operation"],
-              !operation.isEmpty,
-              let body = dict["body"] else {
-            return nil
-        }
-
-        return (operation, body)
-    }
-
-    private func mergedOperationBodyString(_ body: JSONValue) -> String? {
-        let gatedTags = featureToggleManager.gatedTags(tags)
-        let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
-
-        guard let bodyData = try? JSONEncoder().encode(mergedBody) else {
-            return nil
-        }
-        return String(data: bodyData, encoding: .utf8)
-    }
-
-    private func sendBridgeSuccess(action: String, id: UUID) {
-        let response = BridgeMessage(
-            type: .response,
-            action: action,
-            payload: .object(["success": .bool(true)]),
-            id: id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func sendBridgeError(_ errorMessage: String, action: String, id: UUID) {
-        let errorPayload: JSONValue = .object(["error": .string(errorMessage)])
-        let response = BridgeMessage(type: .error, action: action, payload: errorPayload, id: id)
-        facade?.sendToJS(response)
-    }
-
-    private func handleAsyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message),
-              let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
-            return
-        }
-
-        let customEvent = CustomEvent(name: params.name, payload: bodyString)
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-
-        do {
-            try databaseRepository.create(event: event)
-            Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
-        } catch {
-            Logger.common(message: "[WebView] asyncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-            sendBridgeError("Failed to queue operation: \(error.localizedDescription)", action: message.action, id: message.id)
-            return
-        }
-
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-
-    private func handleSyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message),
-              let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
-            return
-        }
-
-        let customEvent = CustomEvent(name: params.name, payload: bodyString)
-        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-
-        Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
-
-        // HTTP 2xx → forward the raw body to JS as a Response so the JS Tracker
-        // can dispatch onSuccess / onValidationError by the body's `status`.
-        // 4xx, 5xx and network failures stay on the MindboxError → Error path.
-        eventRepository.sendRaw(event: event) { [weak self] result in
-            DispatchQueue.main.async {
-                let outgoing = TransparentView.makeSyncOperationResponse(
-                    result: result,
-                    action: message.action,
-                    id: message.id
-                )
-                switch outgoing.type {
-                case .response:
-                    Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
-                case .error:
-                    if case .failure(let error) = result {
-                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-                    } else {
-                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: non-UTF-8 response body", level: .error, category: .webViewInAppMessages)
-                    }
-                default:
-                    break
-                }
-                self?.facade?.sendToJS(outgoing)
-            }
-        }
-    }
-
-    /// Maps the raw `sendRaw` result of a `syncOperation` request to the outgoing
-    /// `BridgeMessage` sent back to JS. Pure function — no side effects — extracted
-    /// to keep the JS-bridge contract independently unit-testable.
-    static func makeSyncOperationResponse(
-        result: Result<Data, MindboxError>,
-        action: String,
-        id: UUID
-    ) -> BridgeMessage {
-        switch result {
-        case .success(let data):
-            guard let bodyString = String(data: data, encoding: .utf8) else {
-                return BridgeMessage(
-                    type: .error,
-                    action: action,
-                    payload: .object(["error": .string("Response body is not valid UTF-8")]),
-                    id: id
-                )
-            }
-            return BridgeMessage(
-                type: .response,
-                action: action,
-                payload: .string(bodyString),
-                id: id
-            )
-        case .failure(let error):
-            return BridgeMessage(
-                type: .error,
-                action: action,
-                payload: .string(error.createDataJSON()),
-                id: id
-            )
         }
     }
 }
