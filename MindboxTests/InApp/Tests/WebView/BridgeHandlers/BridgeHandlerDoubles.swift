@@ -22,10 +22,18 @@ final class HostSpy: WebBridgeHost {
     var presentingViewController: UIViewController? { nil }
     var isUserPresent = true
 
+    /// What this page answers `ready` with. A plain stand-in: composing the real payload is
+    /// the builder's own subject, not something every handler suite should drag in.
+    var startPayload: JSONValue = .string("{}")
+
     private(set) var sent: [BridgeMessage] = []
 
     func send(_ message: BridgeMessage) {
         sent.append(message)
+    }
+
+    func makeStartPayload() -> JSONValue {
+        startPayload
     }
 }
 

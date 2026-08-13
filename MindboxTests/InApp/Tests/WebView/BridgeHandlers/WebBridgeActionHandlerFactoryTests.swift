@@ -18,12 +18,9 @@ import Testing
 @Suite("WebBridgeActionHandlerFactory", .tags(.webView))
 struct WebBridgeActionHandlerFactoryTests {
 
-    /// Actions the registry is not meant to own.
-    ///
-    /// `ready` is answered by the view until its payload builder is extracted; the other two
-    /// travel native → JS and never arrive as a request.
+    /// Actions the registry is not meant to own: both travel native → JS and never arrive as
+    /// a request.
     private static let notOwnedByRegistry: Set<BridgeMessage.Action> = [
-        .ready,
         .navigationIntercepted,
         .motionEvent
     ]

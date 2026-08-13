@@ -41,6 +41,14 @@ protocol WebBridgeHost: AnyObject {
 
     /// Native → JS. The only way out of a handler.
     func send(_ message: BridgeMessage)
+
+    /// The parameters this page needs to configure itself.
+    ///
+    /// Built by the host rather than by the handler: what goes in depends on what the page is —
+    /// an in-app knows its operation, a block knows its configuration entry — while answering
+    /// `ready` with it is the same everywhere. Snapshot at the moment of asking, so a page that
+    /// asks again is told what is true now.
+    func makeStartPayload() -> JSONValue
 }
 
 // MARK: - Answering a request

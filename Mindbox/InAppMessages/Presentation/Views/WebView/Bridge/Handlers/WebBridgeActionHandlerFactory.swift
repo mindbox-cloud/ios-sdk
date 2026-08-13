@@ -20,6 +20,7 @@ enum WebBridgeActionHandlerFactory {
     /// prepared haptic engine, a motion subscription — which has to die with that page.
     static func makeHandlers() -> [WebBridgeActionHandler] {
         [
+            ReadyActionHandler(),
             LogActionHandler(),
             LocalStateActionHandler(),
             OpenLinkActionHandler(),

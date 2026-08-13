@@ -189,6 +189,10 @@ extension TransparentView: WebBridgeHost {
     func send(_ message: BridgeMessage) {
         facade?.sendToJS(message)
     }
+
+    func makeStartPayload() -> JSONValue {
+        facade?.makeStartPayload() ?? .string("{}")
+    }
 }
 
 // MARK: - WebBridgeLifecycleHosting
@@ -236,25 +240,15 @@ extension TransparentView: WebBridgeMessageDelegate {
             category: .webViewInAppMessages
         )
 
-        // Whatever the registry owns is fully handled there and never reaches the switch below.
-        // The rest still lives here and moves out a group at a time.
-        if actionRegistry.handle(message, host: self) {
-            return
-        }
-
-        guard let parsedAction = BridgeMessage.Action(rawValue: action) else {
+        // Every action a page can send is owned by a handler now. An action nobody owns is
+        // not an error: the web vocabulary is allowed to be newer than the SDK.
+        guard actionRegistry.handle(message, host: self) else {
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
                 category: .webViewInAppMessages
             )
             return
         }
-
-        // `ready` is the last action still waiting for a handler of its own. Everything else
-        // is either owned by the registry above, or is native → JS and never arrives here.
-        guard parsedAction == .ready else { return }
-
-        facade?.sendReadyEvent(id: message.id)
     }
 }
 

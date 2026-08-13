@@ -89,6 +89,10 @@ private final class LifecycleHostSpy: WebBridgeHost, WebBridgeLifecycleHosting {
         sent.append(message)
     }
 
+    func makeStartPayload() -> JSONValue {
+        .string("{}")
+    }
+
     func bridgeDidInit() {
         events.append("init")
     }

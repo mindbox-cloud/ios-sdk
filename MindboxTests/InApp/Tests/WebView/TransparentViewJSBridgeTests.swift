@@ -164,7 +164,7 @@ private final class WebViewFacadeSpy: InappWebViewFacadeProtocol {
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
     func cleanWebView() {}
-    func sendReadyEvent(id: UUID) {}
+    func makeStartPayload() -> JSONValue { .string("{}") }
     func sendToJS(_ message: BridgeMessage) { sentMessages.append(message) }
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {}
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {}
