@@ -9,7 +9,6 @@ import UIKit
 import WebKit
 import MindboxLogger
 
-// swiftlint:disable file_length
 final class TransparentView: UIView {
 
     weak var delegate: WebVCDelegate?
@@ -39,19 +38,9 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
-    private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
     lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
     lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
     lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
-    private var isMotionServiceInitialized = false
-    private lazy var motionService: MotionServiceProtocol = {
-        isMotionServiceInitialized = true
-        let service = DI.injectOrFail(MotionServiceProtocol.self)
-        service.onGestureDetected = { [weak self] gesture, data in
-            self?.sendMotionEvent(gesture: gesture, data: data)
-        }
-        return service
-    }()
 
     init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
         self.params = params
@@ -86,7 +75,6 @@ final class TransparentView: UIView {
     deinit {
         readyChecker?.cancel()
         actionRegistry.tearDown()
-        if isMotionServiceInitialized { motionService.stopMonitoring() }
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
@@ -223,8 +211,10 @@ extension TransparentView: WebBridgeMessageDelegate {
         // Lifecycle
         case .close:
             quizInitTimeoutWorkItem?.cancel()
-            hapticService.stopPattern()
-            if isMotionServiceInitialized { motionService.stopMonitoring() }
+            // Whatever holds the device is released before the window goes: a haptic pattern
+            // playing into a closed show, or a sensor callback reaching a dead page, is the
+            // shape crashes come in.
+            actionRegistry.tearDown()
             webViewAction?.onClose()
         case .`init`:
             hasReceivedInit = true
@@ -232,7 +222,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             // The page has proven it can boot — drop the retained retry content (mirror of
             // Android's handleInitAction cleanup; the policy's one-shot state stays).
             facade?.releaseRetainedContent()
-            hapticService.prepare()
+            actionRegistry.handler(ofType: HapticActionHandler.self)?.prepare()
             webViewAction?.onInit()
         case .click:
             webViewAction?.onCompleted(data: data)
@@ -244,7 +234,8 @@ extension TransparentView: WebBridgeMessageDelegate {
         // Handled by the action registry above. Listed only to keep this switch exhaustive
         // while the remaining actions move out; unreachable.
         case .log, .localStateGet, .localStateSet, .localStateInit,
-             .openLink, .settingsOpen, .permissionRequest:
+             .openLink, .settingsOpen, .permissionRequest,
+             .haptic, .motionStart, .motionStop:
             break
 
         // Operations
@@ -252,16 +243,6 @@ extension TransparentView: WebBridgeMessageDelegate {
             handleAsyncOperation(message: message)
         case .syncOperation:
             handleSyncOperation(message: message)
-
-        // Haptic
-        case .haptic:
-            handleHaptic(message: message)
-
-        // Motion
-        case .motionStart:
-            handleMotionStart(message: message)
-        case .motionStop:
-            handleMotionStop(message: message)
 
         // Native → JS (not handled here)
         case .navigationIntercepted, .motionEvent:
@@ -554,102 +535,14 @@ private extension WKNavigationType {
     }
 }
 
-// MARK: - Haptic Handler
+// MARK: - System shake
 
 extension TransparentView {
 
-    private func handleHaptic(message: BridgeMessage) {
-        hapticService.handle(message: message)
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-}
-
-// MARK: - Motion Handlers
-
-extension TransparentView {
-
+    /// A shake is detected by the system and arrives at the view controller, so it is handed
+    /// down to whoever is monitoring motion for this show.
     func handleSystemShake() {
-        guard isMotionServiceInitialized else { return }
-        motionService.handleSystemShake()
-    }
-
-    private func handleMotionStart(message: BridgeMessage) {
-        guard let payload = extractMotionPayload(from: message) else {
-            sendBridgeError("Invalid payload: missing 'gestures' array", action: message.action, id: message.id)
-            return
-        }
-
-        guard case .array(let gestureArray) = payload["gestures"] else {
-            sendBridgeError("Invalid payload: 'gestures' must be an array", action: message.action, id: message.id)
-            return
-        }
-
-        var gestures = Set<MotionGesture>()
-        for item in gestureArray {
-            if case .string(let name) = item, let gesture = MotionGesture(rawValue: name) {
-                gestures.insert(gesture)
-            }
-        }
-
-        guard !gestures.isEmpty else {
-            sendBridgeError("No valid gestures provided. Available: shake, flip", action: message.action, id: message.id)
-            return
-        }
-
-        let result = motionService.startMonitoring(gestures: gestures)
-
-        if result.allUnavailable {
-            sendBridgeError(
-                "No sensors available for requested gestures: \(result.unavailable.map(\.rawValue).joined(separator: ", "))",
-                action: message.action,
-                id: message.id
-            )
-        } else {
-            var payload: [String: JSONValue] = ["success": .bool(true)]
-            if !result.unavailable.isEmpty {
-                payload["unavailable"] = .array(result.unavailable.map { .string($0.rawValue) })
-            }
-            let response = BridgeMessage(
-                type: .response,
-                action: message.action,
-                payload: .object(payload),
-                id: message.id
-            )
-            facade?.sendToJS(response)
-        }
-    }
-
-    private func handleMotionStop(message: BridgeMessage) {
-        motionService.stopMonitoring()
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-
-    private func sendMotionEvent(gesture: MotionGesture, data: [String: Any]) {
-        var payload: [String: JSONValue] = ["gesture": .string(gesture.rawValue)]
-        for (key, value) in data {
-            if let jsonValue = JSONValue(any: value) {
-                payload[key] = jsonValue
-            }
-        }
-
-        let event = BridgeMessage(
-            type: .request,
-            action: BridgeMessage.Action.motionEvent.rawValue,
-            payload: .object(payload)
-        )
-        facade?.sendToJS(event)
-    }
-
-    private func extractMotionPayload(from message: BridgeMessage) -> [String: JSONValue]? {
-        if case .string(let str) = message.payload,
-           let data = str.data(using: .utf8),
-           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
-            return dict
-        }
-        if case .object(let dict) = message.payload {
-            return dict
-        }
-        return nil
+        actionRegistry.handler(ofType: MotionActionHandler.self)?.handleSystemShake()
     }
 }
 
