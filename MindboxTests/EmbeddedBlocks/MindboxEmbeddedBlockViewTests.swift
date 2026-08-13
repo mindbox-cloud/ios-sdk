@@ -32,7 +32,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
 
         #expect(block.view.intrinsicContentSize.height == 120)
     }
@@ -112,7 +112,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.errorView = UIView()
         block.attachToWindow()
 
-        block.page?.send(.empty)
+        block.page?.renderContent(count: 0)
 
         #expect(block.view.intrinsicContentSize.height == 0)
     }
@@ -132,7 +132,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
 
         let content = try #require(block.page?.view)
         #expect(content.superview === block.view)
@@ -146,7 +146,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         let content = try #require(block.page?.view)
         block.page?.failLoad()
 
@@ -154,14 +154,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
     }
 
-    @Test("Empty content is detached")
-    func emptyContentIsDetached() throws {
+    /// A page that drew nothing has a view all the same — it just never goes on screen.
+    @Test("A block that renders nothing attaches no content")
+    func emptyBlockAttachesNoContent() throws {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 0)
+
         let content = try #require(block.page?.view)
-        block.page?.send(.empty)
+        #expect(content.superview == nil)
+    }
+
+    /// Content that did go on screen has to come off it again when the block stops showing.
+    @Test("Shown content is detached when the block collapses")
+    func shownContentIsDetachedOnCollapse() throws {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.renderContent(count: 3)
+        let content = try #require(block.page?.view)
+
+        block.page?.failLoad()
 
         #expect(content.superview == nil)
     }
@@ -171,7 +184,7 @@ struct MindboxEmbeddedBlockViewTests {
     func reloadDetachesOldContent() throws {
         let block = BlockFixture()
         block.attachToWindow()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         let oldContent = try #require(block.page?.view)
 
         block.view.reload()
@@ -216,7 +229,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
 
         #expect(delegate.events == [.loaded])
@@ -332,7 +345,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
         block.page?.failLoad()
         await mainQueueTurn()
@@ -352,8 +365,8 @@ struct MindboxEmbeddedBlockViewTests {
         var reported: [EmbeddedBlockPresentation] = []
         block.view.onPresentationChange = { reported.append($0) }
 
-        block.page?.send(.ready(height: 96))
-        block.page?.send(.empty)
+        block.page?.renderContent(count: 3)
+        block.page?.failLoad()
 
         #expect(reported == [EmbeddedBlockPresentation(layer: .content, height: 120),
                              EmbeddedBlockPresentation(layer: .nothing, height: 0)])
@@ -393,7 +406,7 @@ struct MindboxEmbeddedBlockViewTests {
     func reloadReportsPlaceholderLayer() {
         let block = BlockFixture()
         block.attachToWindow()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         var reported: [EmbeddedBlockPresentation] = []
         block.view.onPresentationChange = { reported.append($0) }
 
@@ -428,7 +441,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         block.attachToWindow()
         await mainQueueTurn()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
         let content = try #require(block.page?.view)
 
@@ -483,7 +496,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.removeFromWindow()
         block.attachToWindow()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 120)
@@ -546,7 +559,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
 
         block.attachToWindow()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         // A shown block has disarmed the budget, so a declared "time is up" no longer concerns it.
         block.expireTimeout()
         await mainQueueTurn()
@@ -628,12 +641,12 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         block.attachToWindow()
         await mainQueueTurn()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
 
         block.view.reload()
         await mainQueueTurn()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
         await mainQueueTurn()
 
         #expect(block.bed.resolver.forceRefreshHistory == [false, true])
@@ -661,7 +674,7 @@ struct MindboxEmbeddedBlockViewTests {
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
         block.attachToWindow()
-        block.page?.send(.ready(height: 96))
+        block.page?.renderContent(count: 3)
 
         block.view.reload()
         block.expireTimeout()

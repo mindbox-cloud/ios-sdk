@@ -16,35 +16,38 @@ extension EmbeddedBlockWebContent {
     static let other = EmbeddedBlockWebContent(url: URL(string: "https://mindbox.ru/another-block.html")!)
 }
 
-extension EmbeddedBlockPageAction {
-
-    static let openUrlStub = EmbeddedBlockPageAction(type: "openUrl", payload: ["url": "https://mindbox.ru"])
-}
-
 /// A page without WebKit: tests decide what it tells the native side and when.
 final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     let view = UIView()
 
-    var onMessage: ((EmbeddedBlockPageMessage) -> Void)?
+    var onContentRendered: ((Int) -> Void)?
 
     var onLoadFailure: (() -> Void)?
 
     var onLoadFinish: (() -> Void)?
 
+    var isUserPresent = true
+
     var loadCount = 0
+    var reloadCount = 0
     var cancelCount = 0
 
     func load() {
         loadCount += 1
     }
 
+    func reload() {
+        reloadCount += 1
+    }
+
     func cancel() {
         cancelCount += 1
     }
 
-    func send(_ message: EmbeddedBlockPageMessage) {
-        onMessage?(message)
+    /// The page reporting what it rendered — the one thing the provider listens for.
+    func renderContent(count: Int) {
+        onContentRendered?(count)
     }
 
     func failLoad() {
@@ -70,10 +73,12 @@ final class EmbeddedBlockPageFactoryMock {
 
     private(set) var pages: [EmbeddedBlockPageMock] = []
     private(set) var contents: [EmbeddedBlockWebContent] = []
+    private(set) var ids: [String] = []
 
     var page: EmbeddedBlockPageMock? { pages.last }
 
-    func make(_ content: EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting {
+    func make(_ id: String, _ content: EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting {
+        ids.append(id)
         contents.append(content)
         let page = EmbeddedBlockPageMock()
         pages.append(page)
@@ -115,15 +120,6 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
         let completions = pending
         pending = []
         completions.forEach { $0(resolution) }
-    }
-}
-
-final class EmbeddedBlockActionHandlerMock: EmbeddedBlockActionHandling {
-
-    private(set) var handledActions: [EmbeddedBlockPageAction] = []
-
-    func handle(_ action: EmbeddedBlockPageAction) {
-        handledActions.append(action)
     }
 }
 
@@ -208,7 +204,6 @@ final class EmbeddedBlockTimeoutBed {
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let actionHandler: EmbeddedBlockActionHandlerMock
     let readinessOverrides: EmbeddedBlockReadinessOverridesMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
@@ -219,19 +214,16 @@ final class EmbeddedBlockTestBed {
          resolution: EmbeddedBlockResolution = .content(.stub),
          treatsLoadedPageAsReady: Bool = false) {
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let actionHandler = EmbeddedBlockActionHandlerMock()
         let readinessOverrides = EmbeddedBlockReadinessOverridesMock(treatsLoadedPageAsReady: treatsLoadedPageAsReady)
         let pageFactory = EmbeddedBlockPageFactoryMock()
 
         self.resolver = resolver
-        self.actionHandler = actionHandler
         self.readinessOverrides = readinessOverrides
         self.pageFactory = pageFactory
         self.provider = EmbeddedBlockWebViewProvider(id: id,
                                                      resolver: resolver,
-                                                     actionHandler: actionHandler,
                                                      readinessOverrides: readinessOverrides,
-                                                     makePage: { pageFactory.make($0) })
+                                                     makePage: { pageFactory.make($0, $1) })
     }
 }
 

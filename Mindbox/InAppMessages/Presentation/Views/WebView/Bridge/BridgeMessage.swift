@@ -300,6 +300,26 @@ public struct BridgeMessage: Codable {
         ///   ```
         case log
 
+        /// JS reports how much content it rendered, once per load.
+        ///
+        /// Handled by ``ContentRenderedActionHandler`` and delivered to hosts that listen for
+        /// content events. A count of `0` is a valid outcome, not a failure: the page is alive
+        /// and correct and has nothing to show, and a surface that reserves space for it should
+        /// give that space back.
+        ///
+        /// This is deliberately not ``init``, which is welded to presenting a window and has no
+        /// such outcome.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "count": 5 }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case contentRendered
+
         // MARK: JS → Native: Operations
 
         /// JS triggers an asynchronous Mindbox operation (fire-and-forget).
@@ -556,6 +576,11 @@ public struct BridgeMessage: Codable {
                 return true
             case .close, .`init`, .click, .hide, .log:
                 return false
+
+            // Answers for itself so a payload without a usable count is refused outright. The
+            // blanket success would otherwise claim the SDK acted on a number it never got.
+            case .contentRendered:
+                return true
 
             // Operations
             case .asyncOperation, .syncOperation:

@@ -27,9 +27,8 @@ final class EmbeddedBlockWebViewProvider {
 
     private let id: String
     private let resolver: EmbeddedBlockResolving
-    private let actionHandler: EmbeddedBlockActionHandling
     private let readinessOverrides: EmbeddedBlockReadinessOverriding
-    private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
+    private let makePage: (String, EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
     /// The page survives restarts: the container starts and stops the block by visibility, and
     /// there is no reason to recreate the web view on every return to the window.
@@ -50,14 +49,15 @@ final class EmbeddedBlockWebViewProvider {
     /// reload — the number shows that the answer belongs to a past attempt and must be thrown away.
     private var loadGeneration = 0
 
+    /// Whether the page has already reported its content for the current load.
+    private var didReportContent = false
+
     init(id: String,
          resolver: EmbeddedBlockResolving,
-         actionHandler: EmbeddedBlockActionHandling,
          readinessOverrides: EmbeddedBlockReadinessOverriding = EmbeddedBlockReadinessOverrides.shared,
-         makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting) {
+         makePage: @escaping (String, EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting) {
         self.id = id
         self.resolver = resolver
-        self.actionHandler = actionHandler
         self.readinessOverrides = readinessOverrides
         self.makePage = makePage
 
@@ -79,6 +79,8 @@ final class EmbeddedBlockWebViewProvider {
         // The outcome is not reset: it is a property of the page, not of being in the window.
         // Otherwise every pass of the block across the screen would cost a full reload.
         loadGeneration += 1
+        // The page stays alive off screen, so it has to be told that nobody is looking.
+        page?.isUserPresent = false
         page?.cancel()
     }
 
@@ -89,7 +91,7 @@ final class EmbeddedBlockWebViewProvider {
 
         // The previous page is no longer relevant — detach it from us first so that its late
         // messages do not end up in the new attempt.
-        page?.onMessage = nil
+        page?.onContentRendered = nil
         page?.onLoadFailure = nil
         page?.onLoadFinish = nil
         page?.cancel()
@@ -97,47 +99,48 @@ final class EmbeddedBlockWebViewProvider {
 
         isStarted = false
         outcome = nil
+        didReportContent = false
         loadGeneration += 1
 
         start(forceRefresh: true)
     }
 
-    func handle(_ message: EmbeddedBlockPageMessage) {
+    /// The page reports what it rendered. Once per load: a repeat is a page bug, and acting on
+    /// it twice would let a block that already collapsed come back.
+    func handleContentRendered(count: Int) {
         guard isStarted else { return }
 
-        switch message {
-        case .ready(let height):
-            apply(height: height)
-        case .heightChanged(let height):
-            // The host owns the height — the message stays in the page contract but affects
-            // nothing on the native side.
-            Logger.common(message: "[EmbeddedBlock] Ignored heightChanged(\(height)): the host owns the container height", category: .embeddedBlocks)
-        case .empty:
-            outcome = .empty
-            onStateChange?(.empty)
-        case .action(let action):
-            // The block is not on screen, but the page is alive and keeps working — for example,
-            // delivering what its `setTimeout` scheduled. Its actions must not run at this moment:
-            // not a single user touch stands behind an invisible block, and `openUrl` would take
-            // the user out of the app out of nowhere.
-            guard isShown else {
-                Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored action '\(action.type)' from a block that is not shown",
-                              category: .embeddedBlocks)
-                return
-            }
-
-            actionHandler.handle(action)
+        guard !didReportContent else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored a repeated contentRendered(\(count))",
+                          category: .embeddedBlocks)
+            return
         }
+
+        didReportContent = true
+
+        // The number the page reported, not the size of a collection.
+        // swiftlint:disable:next empty_count
+        guard count > 0 else {
+            // Alive, correct, and with nothing to show. Not a failure — the block simply gives
+            // its space back.
+            Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered nothing",
+                          category: .embeddedBlocks)
+            finish(with: .empty)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered \(count)",
+                      category: .embeddedBlocks)
+        finish(with: .ready)
     }
 
     func handleLoadFailure() {
         guard isStarted else { return }
 
-        outcome = .failed
-        onStateChange?(.failed)
+        finish(with: .failed)
     }
 
-    /// While there is no outcome, the page is still loading — its messages belong to a live block.
+    /// While there is no outcome, the page is still loading — the user is looking at a live block.
     private var isShown: Bool {
         outcome == nil || outcome == .ready
     }
@@ -147,11 +150,10 @@ final class EmbeddedBlockWebViewProvider {
     func handleLoadFinish() {
         guard isStarted, !isReady, readinessOverrides.treatsLoadedPageAsReady else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': debug readiness is ON, showing the loaded page without a 'ready' from it",
+        Logger.common(message: "[EmbeddedBlock] Block '\(id)': debug readiness is ON, showing the loaded page without a contentRendered from it",
                       level: .default,
                       category: .embeddedBlocks)
-        outcome = .ready
-        onStateChange?(.ready)
+        finish(with: .ready)
     }
 
     private func start(forceRefresh: Bool) {
@@ -170,8 +172,10 @@ final class EmbeddedBlockWebViewProvider {
 
         onStateChange?(.loading)
         // A new attempt has started: how the previous one ended no longer matters — including for
-        // deciding whether to run the page's actions.
+        // deciding whether the page may act on the user's behalf.
         outcome = nil
+        didReportContent = false
+        page?.isUserPresent = true
 
         if let page {
             page.load()
@@ -186,11 +190,11 @@ final class EmbeddedBlockWebViewProvider {
             case .empty:
                 Logger.common(message: "[EmbeddedBlock] Block id '\(self.id)' resolved as empty",
                               category: .embeddedBlocks)
-                self.onStateChange?(.empty)
+                self.finish(with: .empty)
             case .content(let content):
-                let page = self.makePage(content)
-                page.onMessage = { [weak self] message in
-                    self?.handle(message)
+                let page = self.makePage(self.id, content)
+                page.onContentRendered = { [weak self] count in
+                    self?.handleContentRendered(count: count)
                 }
                 page.onLoadFailure = { [weak self] in
                     self?.handleLoadFailure()
@@ -204,19 +208,11 @@ final class EmbeddedBlockWebViewProvider {
         }
     }
 
-    private func apply(height: CGFloat) {
-        // The page reports "nothing to show" with an explicit `empty`, so zero height means
-        // broken layout, that is, a failure.
-        guard height > 0 else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': page reported zero height, treating as broken", category: .embeddedBlocks)
-            outcome = .empty
-            onStateChange?(.failed)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': page is ready", category: .embeddedBlocks)
-        outcome = .ready
-        onStateChange?(.ready)
+    /// Records the outcome, tells the container, and keeps the page's view of the user in sync.
+    private func finish(with outcome: EmbeddedBlockState) {
+        self.outcome = outcome
+        page?.isUserPresent = isShown
+        onStateChange?(outcome)
     }
 }
 

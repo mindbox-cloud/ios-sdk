@@ -68,7 +68,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
 
         #expect(states == [.loading, .ready])
         #expect(bed.provider.contentView === bed.page?.view)
@@ -89,46 +89,49 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView == nil)
     }
 
-    /// A page with no content is more honest saying `empty`, so a zero height is broken layout.
-    @Test("Zero height in ready is a failure")
-    func zeroHeightIsFailure() {
+    /// Alive, correct, and with nothing to show. Not a failure — the block gives its space back
+    /// without an error screen, which is exactly the outcome popups have no equivalent of.
+    @Test("Rendering nothing collapses the block")
+    func renderingNothingCollapsesTheBlock() {
         let bed = EmbeddedBlockTestBed()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.start()
-        bed.page?.send(.ready(height: 0))
+        bed.page?.renderContent(count: 0)
 
-        #expect(states.last == .failed)
+        #expect(states.last == .empty)
         #expect(bed.provider.contentView == nil)
     }
 
-    /// The host owns the height: the message exists in the contract, but it does not touch layout.
-    @Test("Height change leaves the state alone")
-    func heightChangeChangesNothing() {
+    /// Once per load. A page that reports twice must not be able to bring back a block that
+    /// already gave its space back.
+    @Test("A repeated report is ignored")
+    func repeatedReportIsIgnored() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
-        bed.page?.send(.ready(height: 104))
-        bed.page?.send(.heightChanged(height: 132))
+        bed.page?.renderContent(count: 0)
+        bed.page?.renderContent(count: 5)
 
-        #expect(states == [.ready])
+        #expect(states == [.empty])
+        #expect(bed.provider.contentView == nil)
     }
 
-    @Test("Page empty collapses the block")
-    func pageEmptyCollapsesTheBlock() {
+    @Test("A fresh load may report again")
+    func freshLoadReportsAgain() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
+        bed.page?.renderContent(count: 0)
+
+        bed.provider.reload()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
+        bed.page?.renderContent(count: 3)
 
-        bed.page?.send(.ready(height: 104))
-        bed.page?.send(.empty)
-
-        #expect(states == [.ready, .empty])
-        #expect(bed.provider.contentView == nil)
+        #expect(states.last == .ready)
     }
 
     // MARK: - Debug readiness
@@ -171,7 +174,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
         bed.page?.finishLoad()
 
         #expect(states == [.loading, .ready])
@@ -187,7 +190,7 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.provider.start()
         bed.page?.finishLoad()
-        bed.page?.send(.empty)
+        bed.page?.renderContent(count: 0)
 
         #expect(states == [.loading, .ready, .empty])
         #expect(bed.provider.contentView == nil)
@@ -253,96 +256,73 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.isEmpty)
     }
 
-    // MARK: - Page actions
+    // MARK: - Acting on the user's behalf
 
-    /// The core does not know the page's dictionary: everything above the core layer goes to the
-    /// handler as is and does not touch the container's state.
-    @Test("Page action is routed to the handler and changes no state")
-    func actionIsRouted() {
+    /// The page outlives the block's time on screen — it can still deliver whatever its
+    /// `setTimeout` scheduled — so the provider keeps it told whether a user is actually there.
+    /// The bridge reads that before doing anything on the user's behalf, such as opening a link.
+    @Test("A block being shown counts as the user being present")
+    func shownBlockHasUserPresent() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
-        var states: [EmbeddedBlockState] = []
-        bed.provider.onStateChange = { states.append($0) }
 
-        let action = EmbeddedBlockPageAction(type: "openUrl", payload: ["url": "https://mindbox.ru"])
-        bed.page?.send(.action(action))
+        bed.page?.renderContent(count: 3)
 
-        #expect(bed.actionHandler.handledActions == [action])
-        #expect(states.isEmpty)
+        #expect(bed.page?.isUserPresent == true)
     }
 
-    /// A stopped provider stays silent entirely — including not waking the action handler.
-    @Test("Actions after a stop do not reach the handler")
-    func actionsAfterStopAreIgnored() {
+    @Test("A block still loading counts as the user being present")
+    func loadingBlockHasUserPresent() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
+
+        #expect(bed.page?.isUserPresent == true)
+    }
+
+    @Test("A block that left the window does not")
+    func stoppedBlockHasNoUser() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
         bed.provider.stop()
-        bed.page?.send(.action(EmbeddedBlockPageAction(type: "openUrl", payload: [:])))
 
-        #expect(bed.actionHandler.handledActions.isEmpty)
+        #expect(bed.page?.isUserPresent == false)
     }
 
-    @Test("Action from a shown block is routed")
-    func actionFromShownBlockIsRouted() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-        bed.page?.send(.ready(height: 104))
-
-        bed.page?.send(.action(.openUrlStub))
-
-        #expect(bed.actionHandler.handledActions == [.openUrlStub])
-    }
-
-    /// A collapsed block does not kill the page — it stays alive and may still deliver what it
-    /// scheduled. But there is no user touch behind an invisible block, and `openUrl` would take
-    /// the user out of the app for no reason.
-    @Test("Actions from a block collapsed as empty do not reach the handler")
-    func actionsAfterEmptyAreIgnored() {
+    /// Collapsing does not kill the page: it stays alive and may still deliver something, but
+    /// nothing the user did stands behind a block that is no longer on screen.
+    @Test("A block collapsed as empty does not")
+    func emptyBlockHasNoUser() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
-        bed.page?.send(.empty)
-        bed.page?.send(.action(.openUrlStub))
+        bed.page?.renderContent(count: 0)
 
-        #expect(bed.actionHandler.handledActions.isEmpty)
+        #expect(bed.page?.isUserPresent == false)
     }
 
-    @Test("Actions from a failed block do not reach the handler")
-    func actionsAfterFailureAreIgnored() {
+    @Test("A failed block does not")
+    func failedBlockHasNoUser() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
         bed.page?.failLoad()
-        bed.page?.send(.action(.openUrlStub))
 
-        #expect(bed.actionHandler.handledActions.isEmpty)
-    }
-
-    /// Broken layout is the same as a block not shown: its actions are not executed either.
-    @Test("Actions from a block broken by a zero height do not reach the handler")
-    func actionsAfterZeroHeightAreIgnored() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-
-        bed.page?.send(.ready(height: 0))
-        bed.page?.send(.action(.openUrlStub))
-
-        #expect(bed.actionHandler.handledActions.isEmpty)
+        #expect(bed.page?.isUserPresent == false)
     }
 
     /// The ban rests on the attempt's outcome, not on the page: a new attempt is live again.
-    @Test("A new attempt after a failure accepts actions again")
-    func retryAfterFailureAcceptsActions() {
+    @Test("A new attempt after a failure counts as present again")
+    func retryAfterFailureHasUserPresent() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.failLoad()
 
         bed.provider.stop()
         bed.provider.start()
-        bed.page?.send(.action(.openUrlStub))
 
-        #expect(bed.actionHandler.handledActions == [.openUrlStub])
+        #expect(bed.page?.isUserPresent == true)
     }
 
     // MARK: - Stop and restart
@@ -357,7 +337,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.stop()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
 
         #expect(bed.page?.cancelCount == 1)
         #expect(states.isEmpty)
@@ -373,7 +353,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.provider.stop()
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
 
         #expect(bed.resolver.resolveCount == 1)
         #expect(bed.pageFactory.pages.count == 1)
@@ -387,7 +367,7 @@ struct EmbeddedBlockWebViewProviderTests {
     func renderedPageIsShownAgainWithoutReload() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
         bed.provider.stop()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
@@ -466,8 +446,7 @@ struct EmbeddedBlockWebViewProviderTests {
     private func makeProvider(id: String) -> EmbeddedBlockWebViewProvider {
         EmbeddedBlockWebViewProvider(id: id,
                                      resolver: EmbeddedBlockResolverMock(),
-                                     actionHandler: EmbeddedBlockActionHandlerMock(),
-                                     makePage: { _ in EmbeddedBlockPageMock() })
+                                     makePage: { _, _ in EmbeddedBlockPageMock() })
     }
 
     /// The resolve may have arrived after the stop — then it belongs to the previous attempt.
@@ -492,7 +471,7 @@ struct EmbeddedBlockWebViewProviderTests {
     func reloadRefetchesTheContent() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
         let firstPage = bed.page
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
@@ -515,13 +494,13 @@ struct EmbeddedBlockWebViewProviderTests {
     func droppedPageIsSilenced() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
         let firstPage = bed.page
         bed.provider.reload()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
-        firstPage?.send(.ready(height: 104))
+        firstPage?.renderContent(count: 3)
         firstPage?.failLoad()
 
         #expect(states.isEmpty)
@@ -546,10 +525,10 @@ struct EmbeddedBlockWebViewProviderTests {
     func reloadedBlockBecomesReady() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
 
         bed.provider.reload()
-        bed.page?.send(.ready(height: 104))
+        bed.page?.renderContent(count: 3)
 
         #expect(bed.provider.contentView === bed.page?.view)
     }

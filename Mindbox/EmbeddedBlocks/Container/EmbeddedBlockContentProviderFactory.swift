@@ -19,18 +19,14 @@ protocol EmbeddedBlockContentProviderMaking {
 final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMaking {
 
     private let resolver: EmbeddedBlockResolving
-    private let actionHandler: EmbeddedBlockActionHandling
 
-    init(resolver: EmbeddedBlockResolving,
-         actionHandler: EmbeddedBlockActionHandling) {
+    init(resolver: EmbeddedBlockResolving) {
         self.resolver = resolver
-        self.actionHandler = actionHandler
     }
 
     func makeProvider(id: String) -> EmbeddedBlockWebViewProvider {
         EmbeddedBlockWebViewProvider(id: id,
                                      resolver: resolver,
-                                     actionHandler: actionHandler,
-                                     makePage: { EmbeddedBlockWebViewPage(content: $0) })
+                                     makePage: { EmbeddedBlockWebViewPage(id: $0, content: $1) })
     }
 }
