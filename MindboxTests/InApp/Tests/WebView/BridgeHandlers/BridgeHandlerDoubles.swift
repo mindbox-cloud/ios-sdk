@@ -45,6 +45,21 @@ extension BridgeMessage {
     }
 }
 
+/// Watches whether the object handed to it has been released.
+///
+/// The observation belongs in a box rather than in a `weak` local: a weak local that is only ever
+/// read raises "never mutated", and `weak let` does not exist to answer it with.
+final class ReleaseWatch<Object: AnyObject> {
+
+    private(set) weak var object: Object?
+
+    var isReleased: Bool { object == nil }
+
+    init(_ object: Object) {
+        self.object = object
+    }
+}
+
 /// Lets the main queue run the work a handler scheduled on it, until `isDone` holds.
 ///
 /// Opening a link hops through the main queue more than once — the handler defers, the system

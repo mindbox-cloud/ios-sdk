@@ -97,6 +97,30 @@ struct SettingsActionHandlerTests {
 
         #expect(opener.opened.count == 1)
     }
+
+    // MARK: - Lifetime
+
+    /// Both routes hold the page weakly, so a show that ended while the system was switching
+    /// screens is not kept alive by the trip to settings.
+    @Test("A page released mid-route is not held by the notification route")
+    func notificationRouteDoesNotHoldPage() {
+        let notifications = NotificationSettingsSpy(result: true, defersAnswer: true)
+        let handler = SettingsActionHandler(urlOpener: URLOpenerSpy(),
+                                            openNotificationSettings: notifications.open)
+
+        var host: HostSpy? = HostSpy()
+        let watch = ReleaseWatch(host!)
+
+        handler.handle(.request(.settingsOpen, payload: .object(["target": .string("notifications")])), host: host!)
+        #expect(notifications.callCount == 1)
+
+        host = nil
+
+        #expect(watch.isReleased)
+
+        // The late answer finds nobody and is dropped rather than crashing.
+        notifications.answer()
+    }
 }
 
 // MARK: - Doubles
@@ -105,14 +129,33 @@ final class NotificationSettingsSpy {
 
     private let result: Bool
 
+    /// Holds the answer back instead of giving it, standing in for the moment the system is still
+    /// switching screens. That is the only window in which what the SDK holds onto is observable.
+    private let defersAnswer: Bool
+
+    private var pendingAnswer: ((Bool) -> Void)?
+
     private(set) var callCount = 0
 
-    init(result: Bool) {
+    init(result: Bool, defersAnswer: Bool = false) {
         self.result = result
+        self.defersAnswer = defersAnswer
     }
 
     func open(_ completion: @escaping (Bool) -> Void) {
         callCount += 1
-        completion(result)
+
+        guard defersAnswer else {
+            completion(result)
+            return
+        }
+
+        pendingAnswer = completion
+    }
+
+    func answer() {
+        let pendingAnswer = self.pendingAnswer
+        self.pendingAnswer = nil
+        pendingAnswer?(result)
     }
 }

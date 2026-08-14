@@ -55,8 +55,14 @@ final class PermissionActionHandler: WebBridgeActionHandler {
             return
         }
 
-        handler.request { result in
+        // The page is held weakly. A system dialog stands for as long as the user leaves it
+        // standing, and waiting on it must not be what keeps a finished show alive — with it
+        // would stay the whole handler set, an uncancelled ready checker and a live sensor
+        // subscription. A show that ended by the time the system answers gets no answer.
+        handler.request { [weak host] result in
             DispatchQueue.main.async {
+                guard let host else { return }
+
                 switch result {
                 case .granted(let dialogShown):
                     Self.respond("granted", dialogShown: dialogShown, to: message, host: host)
