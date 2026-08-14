@@ -7,6 +7,7 @@
 //
 
 import Testing
+import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
@@ -93,6 +94,62 @@ struct EmbeddedBlockWebViewPageTests {
 
         #expect(policy == .allow)
     }
+
+    // MARK: - Presenting from the host's hierarchy
+
+    /// A handler that needs a controller of its own gets the topmost one. The root is not it: a root
+    /// that already presents something refuses to present anything else, and UIKit refuses without
+    /// calling the completion the answer to the page is sent from.
+    @Test("The presenter is the topmost presented controller, not the window root")
+    func presenterIsTheTopmostController() {
+        let bed = PageBed()
+        let modal = StubPresentingController()
+        bed.putInWindow(presenting: modal)
+
+        #expect(bed.page.presentingViewController === modal)
+    }
+
+    /// A block inside a modal that itself presents a sheet is still the same question, one level
+    /// deeper — the walk does not stop at the first answer.
+    @Test("The walk goes through the whole presentation chain")
+    func presenterIsFoundThroughTheChain() {
+        let bed = PageBed()
+        let sheet = StubPresentingController()
+        let modal = StubPresentingController()
+        modal.stubbedPresented = sheet
+        bed.putInWindow(presenting: modal)
+
+        #expect(bed.page.presentingViewController === sheet)
+    }
+
+    @Test("With nothing presented the root is the presenter")
+    func rootIsThePresenterWhenNothingIsPresented() {
+        let bed = PageBed()
+        bed.putInWindow(presenting: nil)
+
+        #expect(bed.page.presentingViewController === bed.root)
+    }
+
+    /// Off the window there is nobody to present from, and the handler answers the page with an
+    /// error rather than waiting on a presentation that cannot happen.
+    @Test("Off the window there is no presenter")
+    func thereIsNoPresenterOffTheWindow() {
+        let bed = PageBed()
+
+        #expect(bed.page.presentingViewController == nil)
+    }
+}
+
+/// Reports whatever the test put on top of it.
+///
+/// `presentedViewController` is set by an actual presentation, which drags a visible window and a
+/// transition into a unit test. What is checked here is the walk, not UIKit's animation.
+@MainActor
+private final class StubPresentingController: UIViewController {
+
+    var stubbedPresented: UIViewController?
+
+    override var presentedViewController: UIViewController? { stubbedPresented }
 }
 
 /// A real page with a real web view, but without the network: the tests call the navigation delegate
@@ -102,10 +159,17 @@ private final class PageBed {
 
     let page: EmbeddedBlockWebViewPage
 
+    /// The controller the host's window is rooted at.
+    let root = StubPresentingController()
+
     private(set) var failures = 0
     private(set) var finishes = 0
 
     var cancellationError: Error { error(code: NSURLErrorCancelled) }
+
+    /// Held on purpose: a window nobody retains takes the page's view out of the hierarchy with it,
+    /// and the page would look off screen again.
+    private var window: UIWindow?
 
     /// Through the protocol rather than directly: the page has both a `webView` property and
     /// delegate methods with the same name, so they are better called where the name is unambiguous.
@@ -123,6 +187,19 @@ private final class PageBed {
         page.onLoadFinish = { [weak self] in
             self?.finishes += 1
         }
+    }
+
+    /// Puts the page where a real block lives — inside the host's own view hierarchy — with
+    /// `presented` standing on top of the window's root.
+    func putInWindow(presenting presented: UIViewController?) {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        root.stubbedPresented = presented
+        window.rootViewController = root
+        // Straight onto the window rather than into the root's view: all the page needs is to have
+        // a window, and a test window belongs to no scene — it installs its root's view only when
+        // it is about to be shown.
+        window.addSubview(page.view)
+        self.window = window
     }
 
     func error(code: Int) -> Error {

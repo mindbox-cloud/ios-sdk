@@ -115,8 +115,19 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
     /// A block has none: tags belong to an in-app show.
     var tags: [String: String]? { nil }
 
+    /// The block draws inside the host's own hierarchy and owns no controller, so the search starts
+    /// at the window's root — and does not stop there. Whatever is on top is what can present: a
+    /// root that already presents something refuses to present anything else, and the block sitting
+    /// inside a modal screen is exactly that case. Stopping at the root would leave the tap with no
+    /// Safari and the page with no answer.
     var presentingViewController: UIViewController? {
-        view.window?.rootViewController
+        guard var presenter = view.window?.rootViewController else { return nil }
+
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+
+        return presenter
     }
 
     func send(_ message: BridgeMessage) {
