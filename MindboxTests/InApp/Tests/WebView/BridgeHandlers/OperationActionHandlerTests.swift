@@ -138,26 +138,26 @@ struct OperationActionHandlerTests {
     @Test("A request in flight does not hold the page alive")
     func pendingSyncOperationDoesNotHoldThePage() {
         let sut = makeSUT()
-        let watch: ReleaseWatch<HostSpy>
+        weak var page: HostSpy?
 
         do {
             let host = HostSpy()
-            watch = ReleaseWatch(host)
+            page = host
             sut.handler.handle(request(.syncOperation), host: host)
         }
 
         #expect(sut.events.pending != nil, "the request is still waiting for its answer")
-        #expect(watch.isReleased, "the page must not be held by a request that has not answered yet")
+        #expect(page == nil, "the page must not be held by a request that has not answered yet")
     }
 
     @Test("An answer that arrives after the page is gone is dropped")
     func answerAfterThePageIsGoneIsDropped() async {
         let sut = makeSUT()
-        let watch: ReleaseWatch<HostSpy>
+        weak var page: HostSpy?
 
         do {
             let host = HostSpy()
-            watch = ReleaseWatch(host)
+            page = host
             sut.handler.handle(request(.syncOperation), host: host)
         }
 
@@ -166,7 +166,7 @@ struct OperationActionHandlerTests {
         // has nowhere to go, and going there anyway is what this guards against.
         await drainMainQueue(until: { false }, turns: 3)
 
-        #expect(watch.isReleased)
+        #expect(page == nil)
     }
 
     // MARK: - Refusals

@@ -83,16 +83,16 @@ struct BridgeURLOpeningTests {
     @Test("A page released while the system is deciding is not held by the request")
     func pendingOpenDoesNotHoldThePage() async {
         let opener = URLOpenerSpy()
-        let watch: ReleaseWatch<HostSpy>
+        weak var page: HostSpy?
 
         do {
             let host = HostSpy()
-            watch = ReleaseWatch(host)
+            page = host
             opener.open(url, answering: .request(.openLink), host: host)
         }
 
         await drainMainQueue(until: { false }, turns: 3)
 
-        #expect(watch.isReleased)
+        #expect(page == nil)
     }
 }

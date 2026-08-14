@@ -173,17 +173,17 @@ struct OpenLinkActionHandlerTests {
     func pendingOpenDoesNotHoldThePage() async {
         let opener = URLOpenerSpy()
         let handler = OpenLinkActionHandler(urlOpener: opener)
-        let watch: ReleaseWatch<HostSpy>
+        weak var page: HostSpy?
 
         do {
             let host = HostSpy()
-            watch = ReleaseWatch(host)
+            page = host
             handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
         }
 
         await drainMainQueue(until: { false }, turns: 3)
 
-        #expect(watch.isReleased)
+        #expect(page == nil)
     }
 
     @Test("A payload sent as a JSON string is understood too")

@@ -108,15 +108,16 @@ struct SettingsActionHandlerTests {
         let handler = SettingsActionHandler(urlOpener: URLOpenerSpy(),
                                             openNotificationSettings: notifications.open)
 
-        var host: HostSpy? = HostSpy()
-        let watch = ReleaseWatch(host!)
+        weak var page: HostSpy?
 
-        handler.handle(.request(.settingsOpen, payload: .object(["target": .string("notifications")])), host: host!)
-        #expect(notifications.callCount == 1)
+        do {
+            let host = HostSpy()
+            page = host
+            handler.handle(.request(.settingsOpen, payload: .object(["target": .string("notifications")])), host: host)
+            #expect(notifications.callCount == 1)
+        }
 
-        host = nil
-
-        #expect(watch.isReleased)
+        #expect(page == nil)
 
         // The late answer finds nobody and is dropped rather than crashing.
         notifications.answer()

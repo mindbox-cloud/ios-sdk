@@ -151,15 +151,16 @@ struct PermissionActionHandlerTests {
         let registry = PermissionRegistrySpy(handler: permission)
         let handler = PermissionActionHandler(makeRegistry: { registry }, infoPlistValue: { _ in "value" })
 
-        var host: HostSpy? = HostSpy()
-        let watch = ReleaseWatch(host!)
+        weak var page: HostSpy?
 
-        handler.handle(pushRequest(), host: host!)
-        #expect(permission.requestCount == 1)
+        do {
+            let host = HostSpy()
+            page = host
+            handler.handle(pushRequest(), host: host)
+            #expect(permission.requestCount == 1)
+        }
 
-        host = nil
-
-        #expect(watch.isReleased)
+        #expect(page == nil)
     }
 
     /// A show that ended gets no answer — and the answer arriving late is not a crash either.
