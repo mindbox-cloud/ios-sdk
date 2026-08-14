@@ -107,11 +107,11 @@ final class EmbeddedBlockWebViewProvider {
 
     /// The page reports what it rendered. Once per load: a repeat is a page bug, and acting on
     /// it twice would let a block that already collapsed come back.
-    func handleContentRendered(count: Int) {
+    func handleContentRendered(count renderedCount: Int) {
         guard isStarted else { return }
 
         guard !didReportContent else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored a repeated contentRendered(\(count))",
+            Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored a repeated contentRendered(\(renderedCount))",
                           category: .embeddedBlocks)
             return
         }
@@ -119,8 +119,7 @@ final class EmbeddedBlockWebViewProvider {
         didReportContent = true
 
         // The number the page reported, not the size of a collection.
-        // swiftlint:disable:next empty_count
-        guard count > 0 else {
+        guard renderedCount > 0 else {
             // Alive, correct, and with nothing to show. Not a failure — the block simply gives
             // its space back.
             Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered nothing",
@@ -129,7 +128,7 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered \(count)",
+        Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered \(renderedCount)",
                       category: .embeddedBlocks)
         finish(with: .ready)
     }

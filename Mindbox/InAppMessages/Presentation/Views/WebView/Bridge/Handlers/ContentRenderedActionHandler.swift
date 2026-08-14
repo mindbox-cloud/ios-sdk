@@ -19,27 +19,26 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.contentRendered]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        guard let count = Self.count(in: message) else {
+        guard let renderedCount = Self.count(in: message) else {
             host.respondError("Invalid payload: missing or non-numeric 'count'", to: message)
             return
         }
 
-        // A count of items the page drew, not the size of a collection — isEmpty has no meaning
-        // here, and a negative number is a page bug worth naming rather than clamping.
-        // swiftlint:disable:next empty_count
-        guard count >= 0 else {
-            host.respondError("Invalid payload: 'count' must not be negative, got \(count)", to: message)
+        // A count of items the page drew, not the size of a collection: a negative number is
+        // a page bug worth naming rather than clamping.
+        guard renderedCount >= 0 else {
+            host.respondError("Invalid payload: 'count' must not be negative, got \(renderedCount)", to: message)
             return
         }
 
         guard let content = host as? WebBridgeContentHosting else {
-            Logger.common(message: "[WebView] Bridge: contentRendered(\(count)) from '\(host.contentId)' has nobody listening here, ignoring",
+            Logger.common(message: "[WebView] Bridge: contentRendered(\(renderedCount)) from '\(host.contentId)' has nobody listening here, ignoring",
                           category: host.logCategory)
             host.respondSuccess(to: message)
             return
         }
 
-        content.bridgeDidRenderContent(count: count)
+        content.bridgeDidRenderContent(count: renderedCount)
         host.respondSuccess(to: message)
     }
 
