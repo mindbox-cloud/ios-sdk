@@ -66,13 +66,113 @@ struct EmbeddedBlockWebViewPageTests {
     /// The bridge drops every script message until the load's own document commits, because a
     /// reused web view can still deliver a previous owner's. Handing it the navigation is what
     /// opens that gate — forget it and the page's messages vanish with no error anywhere.
-    @Test("Loading hands the navigation to the bridge")
-    func loadRegistersItsNavigation() {
+    ///
+    /// > Note: what the bridge was told is not observable from here — `contentLoadIssued` and
+    /// > `contentURL` are private to `MindboxWebBridge`, and a `WKScriptMessage` cannot be built in
+    /// > a test to drive the gate from the outside. So this pins the half that is visible: the load
+    /// > that the registration accompanies actually goes to the block's own address.
+    @Test("Loading a url block loads that url")
+    func loadingURLContentLoadsThatURL() {
         let bed = PageBed()
+        guard case .url(let contentURL) = EmbeddedBlockWebContent.stub.source else {
+            Issue.record("the stub stands for a block with an address")
+            return
+        }
 
         bed.page.load()
 
-        #expect(bed.page.webView.url != nil)
+        #expect(bed.page.webView.url == contentURL)
+    }
+
+    /// Markup has no address of its own: it is loaded with a nil base URL on purpose, so the page
+    /// gets an `about:blank` origin rather than the privileges of some domain.
+    @Test("Loading html content gives the page no domain of its own")
+    func loadingHTMLContentHasNoOrigin() {
+        let bed = PageBed(content: EmbeddedBlockWebContent(html: "<html><body>block</body></html>"))
+
+        bed.page.load()
+
+        #expect(bed.page.webView.url == nil || bed.page.webView.url?.absoluteString == "about:blank")
+    }
+
+    // MARK: - Being a host of the shared bridge
+
+    /// The point of the move onto the shared bridge: a request from the page's document reaches the
+    /// same registry an in-app show uses, with the page itself as the host.
+    @Test("A request from the page is routed into the action registry")
+    func requestIsRoutedIntoTheRegistry() throws {
+        let owner = RecordingHandler(actions: [.openLink])
+        let bed = PageBed(handlers: [owner])
+        let message = BridgeMessage.request(.openLink)
+
+        bed.deliver(message)
+
+        #expect(owner.handled.map(\.id) == [message.id])
+        #expect(owner.hosts.first === bed.page, "the page hosts its own requests")
+    }
+
+    /// Responses and errors are answers to something the SDK asked, and the dispatcher matches them
+    /// to their pending request. Routing them as if they were requests would run a handler twice.
+    ///
+    /// Both kinds in one test rather than as arguments: `MessageType` crossing into a `@MainActor`
+    /// suite as a parameter is not `Sendable` enough for the Swift 6 language mode.
+    @Test("Anything that is not a request is not routed")
+    func nonRequestIsNotRouted() {
+        let owner = RecordingHandler(actions: [.openLink])
+        let bed = PageBed(handlers: [owner])
+        let action = BridgeMessage.Action.openLink.rawValue
+
+        bed.deliver(BridgeMessage(type: .response, action: action, payload: nil))
+        bed.deliver(BridgeMessage(type: .error, action: action, payload: nil))
+
+        #expect(owner.handled.isEmpty)
+    }
+
+    /// A vocabulary newer than the SDK is allowed: an action nobody owns is journalled and dropped,
+    /// not treated as a failure of the block.
+    @Test("An action nobody owns is dropped without disturbing the block")
+    func unownedActionIsDropped() {
+        let bed = PageBed(handlers: [])
+
+        bed.deliver(.request(.openLink))
+
+        #expect(bed.failures == 0)
+        #expect(bed.finishes == 0)
+    }
+
+    @Test("The block identifies itself by its own id and journals under its own category")
+    func hostIdentityIsTheBlocks() {
+        let bed = PageBed()
+
+        #expect(bed.page.contentId == "block-id")
+        #expect(bed.page.logCategory == .embeddedBlocks)
+    }
+
+    /// Tags belong to an in-app show — they are what an operation is attributed to. A block has no
+    /// show behind it, so it contributes none.
+    @Test("A block carries no in-app tags")
+    func hostCarriesNoTags() {
+        let bed = PageBed()
+
+        #expect(bed.page.tags == nil)
+    }
+
+    /// The provider is what knows whether anyone is looking, and it says so through this. A page
+    /// starts out in front of the user because it is built when the block enters the window.
+    @Test("A fresh page starts out in front of the user")
+    func freshPageStartsPresent() {
+        let bed = PageBed()
+
+        #expect(bed.page.isUserPresent)
+    }
+
+    @Test("What the provider sets is what the bridge reads")
+    func presenceFollowsTheProvider() {
+        let bed = PageBed()
+
+        bed.page.isUserPresent = false
+
+        #expect(bed.page.isUserPresent == false)
     }
 
     /// The block is a piece of the host's own layout, so a tap must not replace the feed with the
@@ -140,6 +240,24 @@ struct EmbeddedBlockWebViewPageTests {
     }
 }
 
+/// Records what the registry routed to it, and which host came with it.
+private final class RecordingHandler: WebBridgeActionHandler {
+
+    let actions: Set<BridgeMessage.Action>
+
+    private(set) var handled: [BridgeMessage] = []
+    private(set) var hosts: [WebBridgeHost] = []
+
+    init(actions: Set<BridgeMessage.Action>) {
+        self.actions = actions
+    }
+
+    func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        handled.append(message)
+        hosts.append(host)
+    }
+}
+
 /// Reports whatever the test put on top of it.
 ///
 /// `presentedViewController` is set by an actual presentation, which drags a visible window and a
@@ -175,18 +293,31 @@ private final class PageBed {
     /// delegate methods with the same name, so they are better called where the name is unambiguous.
     private var navigation: WebBridgeNavigationDelegate { page }
 
+    private var messages: WebBridgeMessageDelegate { page }
+
     private let bridge: MindboxWebBridge
 
-    init() {
+    /// - Parameter handlers: the registry the page routes into. Empty by default — a suite that does
+    ///   not send anything has no use for the shipped set, and building it here would drag every
+    ///   handler's dependencies into tests about navigation.
+    init(content: EmbeddedBlockWebContent = .stub, handlers: [WebBridgeActionHandler] = []) {
         let webView = WKWebView()
         bridge = MindboxWebBridge(webView: webView)
-        page = EmbeddedBlockWebViewPage(id: "block-id", content: .stub, webView: webView)
+        page = EmbeddedBlockWebViewPage(id: "block-id",
+                                       content: content,
+                                       webView: webView,
+                                       actionRegistry: WebBridgeActionRegistry(handlers: handlers))
         page.onLoadFailure = { [weak self] in
             self?.failures += 1
         }
         page.onLoadFinish = { [weak self] in
             self?.finishes += 1
         }
+    }
+
+    /// Hands the page a message as the bridge would.
+    func deliver(_ message: BridgeMessage) {
+        messages.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 
     /// Puts the page where a real block lives — inside the host's own view hierarchy — with

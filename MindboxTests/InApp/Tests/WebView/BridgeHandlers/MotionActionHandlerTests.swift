@@ -89,6 +89,28 @@ struct MotionActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: 'gestures' must be an array")]))
     }
 
+    /// The first guard has its own wording, because there is a difference worth telling the page:
+    /// nothing arrived at all, as against something arrived in the wrong shape.
+    @Test("A request with no payload at all is refused before the shape is looked at")
+    func missingPayloadIsRefused() throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: missing 'gestures' array")]))
+    }
+
+    @Test("A payload that is not an object is refused the same way")
+    func nonObjectPayloadIsRefused() throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .array([.string("shake")])), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: missing 'gestures' array")]))
+    }
+
     @Test("A gestures field that is not an array is refused")
     func nonArrayGesturesIsRefused() throws {
         let (handler, _, host) = makeSUT()

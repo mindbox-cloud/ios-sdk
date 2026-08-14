@@ -114,6 +114,78 @@ struct OpenLinkActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
+    /// A string can be non-empty and still not be an address. It is refused by name rather than
+    /// handed to the system, which would answer a flat `false` and say nothing about why.
+    @Test("A url that cannot be parsed is refused without reaching the system",
+          arguments: ["http://exa mple.com", "ht tp://example.com"])
+    func unparseableURLIsRefused(urlString: String) throws {
+        let opener = URLOpenerSpy()
+        let host = HostSpy()
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string(urlString)])), host: host)
+
+        #expect(opener.opened.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Invalid URL: '\(urlString)' could not be parsed")]))
+    }
+
+    /// A bare address parses, but with no scheme it is nothing Safari could show — only the system
+    /// might know what it means, so it goes there rather than down the universal-link route.
+    @Test("A url without a scheme goes to the system, not the universal-link route")
+    func schemelessURLGoesToSystem() async {
+        let opener = URLOpenerSpy()
+        let host = HostSpy()
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string("example.com/promo")])), host: host)
+        await drainMainQueue(until: { !opener.opened.isEmpty })
+
+        #expect(opener.opened.map(\.universalLinksOnly) == [false])
+    }
+
+    /// The fallback needs a controller to present from, and off the window there is none. The page is
+    /// answered with an error rather than left waiting on a presentation that cannot happen.
+    @Test("A web address nobody claims and no presenter to fall back on is refused")
+    func safariFallbackWithoutPresenterIsRefused() async throws {
+        let opener = URLOpenerSpy()
+        opener.result = false
+        let host = HostSpy()
+        #expect(host.presentingViewController == nil, "the spy stands for a page that owns no controller")
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
+        await drainMainQueue(until: { !host.sent.isEmpty })
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Failed to open URL: no presenting view controller")]))
+        #expect(host.sent.count == 1, "the universal-link attempt and the fallback answer once between them")
+    }
+
+    /// The system takes its own time, and the show may end first. Waiting on it must not be what
+    /// keeps the page alive.
+    @Test("A page released while the system is deciding is not held by the request")
+    func pendingOpenDoesNotHoldThePage() async {
+        let opener = URLOpenerSpy()
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+        let watch: ReleaseWatch<HostSpy>
+
+        do {
+            let host = HostSpy()
+            watch = ReleaseWatch(host)
+            handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
+        }
+
+        await drainMainQueue(until: { false }, turns: 3)
+
+        #expect(watch.isReleased)
+    }
+
     @Test("A payload sent as a JSON string is understood too")
     func acceptsStringifiedPayload() async {
         let opener = URLOpenerSpy()
