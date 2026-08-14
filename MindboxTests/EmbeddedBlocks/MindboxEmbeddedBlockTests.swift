@@ -31,7 +31,7 @@ struct MindboxEmbeddedBlockTests {
     func bareBlockHasNoCustomViews() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
 
         #expect(block.placeholderBuilder == nil)
         #expect(block.errorBuilder == nil)
@@ -41,7 +41,7 @@ struct MindboxEmbeddedBlockTests {
     func placeholderModifierSetsOnlyThePlaceholder() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
             .placeholder { Color.gray }
 
         #expect(block.placeholderBuilder != nil)
@@ -52,7 +52,7 @@ struct MindboxEmbeddedBlockTests {
     func errorViewModifierSetsOnlyTheErrorView() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
             .errorView { Text("no stories") }
 
         #expect(block.errorBuilder != nil)
@@ -63,11 +63,11 @@ struct MindboxEmbeddedBlockTests {
     func bothModifiersCompose() {
         guard #available(iOS 13.0, *) else { return }
 
-        let placeholderFirst = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let placeholderFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
             .placeholder { Color.gray }
             .errorView { Text("no stories") }
 
-        let errorFirst = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let errorFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
             .errorView { Text("no stories") }
             .placeholder { Color.gray }
 
@@ -81,7 +81,7 @@ struct MindboxEmbeddedBlockTests {
     func modifierDoesNotMutateTheOriginal() {
         guard #available(iOS 13.0, *) else { return }
 
-        let bare = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let bare = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
 
         let decorated = bare
             .placeholder { Color.gray }
@@ -99,7 +99,7 @@ struct MindboxEmbeddedBlockTests {
 
         let log = BuildLog()
 
-        let block = MindboxEmbeddedBlock(id: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
             .placeholder { ProbeView("first", log: log) }
             .placeholder { ProbeView("second", log: log) }
 
@@ -207,7 +207,7 @@ struct MindboxEmbeddedBlockTests {
     /// A container with substituted dependencies: the wrapper loads nothing itself, its job is to
     /// set the container up correctly, so no window or live content is needed here.
     private func makeBlockView() -> MindboxEmbeddedBlockView {
-        MindboxEmbeddedBlockView(id: "stories",
+        MindboxEmbeddedBlockView(placeSystemName: "stories",
                                  height: 104,
                                  contentProvider: EmbeddedBlockTestBed().provider)
     }
@@ -216,7 +216,7 @@ struct MindboxEmbeddedBlockTests {
     private func makeRepresentable(hasPlaceholder: Bool = false,
                                    hasErrorView: Bool = false) -> EmbeddedBlockRepresentable {
         let presentation = EmbeddedBlockPresentation(layer: .placeholder, height: 104)
-        return EmbeddedBlockRepresentable(id: "stories",
+        return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
                                           presentation: .constant(presentation),
                                           onLoad: nil,

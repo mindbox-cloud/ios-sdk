@@ -11,7 +11,8 @@ import MindboxLogger
 
 /// A drop-in container for a Mindbox embedded block.
 ///
-/// Created with the block `id` from the admin panel and the `height` the block should occupy.
+/// Created with the `placeSystemName` of the place from the admin panel and the `height` the block
+/// should occupy.
 /// Put it anywhere in the app and constrain its position and width only — the height is applied
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
 /// content is loading and shown, and 0 when there is nothing to show (a failure or an empty
@@ -19,7 +20,7 @@ import MindboxLogger
 /// customized: `placeholderView` replaces the stock loading shimmer, and `errorView` opts into
 /// showing a failure instead of collapsing.
 ///
-/// What exactly lives inside is decided by the SDK from the block `id`, not by the host. The
+/// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
 /// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
 /// else.
@@ -32,9 +33,9 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
 
-    /// The block id from the admin panel, given at creation. Decides what content the SDK puts
-    /// inside.
-    public let id: String
+    /// The system name of the place from the admin panel, given at creation. Decides what content
+    /// the SDK puts inside.
+    public let placeSystemName: String
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
     /// delivers that outcome, so subscribing late cannot lose it.
@@ -134,19 +135,19 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Life cycle
 
     /// - Parameters:
-    ///   - id: The block id from the admin panel.
+    ///   - placeSystemName: The system name of the place from the admin panel.
     ///   - height: The height the block occupies while loading and shown. Reserving it is the
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
-    public convenience init(id: String, height: CGFloat) {
-        self.init(id: id,
+    public convenience init(placeSystemName: String, height: CGFloat) {
+        self.init(placeSystemName: placeSystemName,
                   height: height,
-                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(id: id))
+                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(id: placeSystemName))
     }
 
-    /// Blocks are not created from storyboards: the id and the height are required and have no
-    /// sensible defaults. Create the view in code with `init(id:height:)`.
-    @available(*, unavailable, message: "Use init(id:height:) instead")
+    /// Blocks are not created from storyboards: the place system name and the height are required
+    /// and have no sensible defaults. Create the view in code with `init(placeSystemName:height:)`.
+    @available(*, unavailable, message: "Use init(placeSystemName:height:) instead")
     public required init?(coder: NSCoder) {
         return nil
     }
@@ -154,15 +155,15 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// - Parameter timeout: The waiting budget as a whole, not just its duration: the clock, the
     ///   scheduler, and the background subscription all live inside it, and swapping them one by
     ///   one through the container would mean threading three parameters through it just for tests.
-    init(id: String,
+    init(placeSystemName: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
          timeout: EmbeddedBlockReadyTimeout? = nil) {
-        self.id = id
+        self.placeSystemName = placeSystemName
         self.preferredHeight = height
         self.contentProvider = contentProvider
         self.timeout = timeout ?? EmbeddedBlockReadyTimeout(
-            blockId: id,
+            blockId: placeSystemName,
             duration: TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
         )
         super.init(frame: .zero)
@@ -177,7 +178,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func warnIfHeightReservesNothing() {
         guard preferredHeight <= 0 else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)' was created with height \(preferredHeight): it reserves no space and stays invisible even when its content loads. Pass the height the block should occupy.",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible even when its content loads. "
+                      + "Pass the height the block should occupy.",
                       level: .error,
                       category: .embeddedBlocks)
     }
@@ -234,13 +236,13 @@ public final class MindboxEmbeddedBlockView: UIView {
         super.didMoveToWindow()
 
         if window == nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)' left the window, stopping content", category: .embeddedBlocks)
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' left the window, stopping content", category: .embeddedBlocks)
             // A pause, not a reset: nobody waits for a block outside a window, but that does not
             // cancel an attempt already started — once back, it counts down its remainder.
             timeout.pause()
             contentProvider.stop()
         } else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)' entered the window, starting content", category: .embeddedBlocks)
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' entered the window, starting content", category: .embeddedBlocks)
             contentProvider.start()
             timeout.armIfNeeded()
         }
@@ -256,12 +258,12 @@ public final class MindboxEmbeddedBlockView: UIView {
         guard window != nil else {
             // Content lives only while the block is in a window; reloading an invisible block is
             // pointless — it loads anew by itself once it returns to a window.
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)' reload skipped: the block is not in a window",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not in a window",
                           category: .embeddedBlocks)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)' reload requested", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload requested", category: .embeddedBlocks)
         timeout.reset()
         // A new attempt means a new outcome: the host must hear it in full, even if it matches
         // the previous one.

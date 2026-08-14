@@ -720,7 +720,7 @@ private final class BlockFixture {
         let timeoutBed = EmbeddedBlockTimeoutBed()
         self.bed = bed
         self.timeoutBed = timeoutBed
-        self.view = MindboxEmbeddedBlockView(id: "block-id",
+        self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
                                              timeout: timeoutBed.timeout)
