@@ -10,9 +10,6 @@
 ///
 /// Deliberately internal: the host app only learns whether the block ended up shown or not,
 /// never the intermediate progress, so the SDK stays free to change the flow later.
-///
-/// The states carry no height: the container is always as tall as the host asked at creation,
-/// except for `failed` and `empty`, where it collapses to zero.
 enum EmbeddedBlockState: Equatable {
 
     /// The content has not resolved yet.
@@ -21,11 +18,10 @@ enum EmbeddedBlockState: Equatable {
     /// The content is renderable.
     case ready
 
-    /// The content failed to resolve — a load error, a timeout or broken content. Collapses
-    /// the container.
+    /// The content failed to resolve — a load error, a timeout or broken content.
     case failed
 
     /// There is genuinely nothing to show — for instance, the block is disabled in the admin
-    /// panel. Not a failure, but collapses the container the same way.
+    /// panel. Not a failure.
     case empty
 }

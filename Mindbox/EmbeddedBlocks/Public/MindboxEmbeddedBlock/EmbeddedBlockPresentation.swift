@@ -11,14 +11,9 @@ import CoreGraphics
 /// What the container shows right now — a snapshot for the SwiftUI wrapper.
 ///
 /// A UIKit host needs no such type: the container declares its height through `intrinsicContentSize`
-/// and holds the right layer inside, both on its own. SwiftUI can do neither. The wrapper assigns
-/// the representable's height, and the host's placeholder and error screen are SwiftUI views the
-/// wrapper must draw too: a view handed to the container through a separate `UIHostingController`
-/// falls out of the SwiftUI tree and loses its environment. So the wrapper needs not only the
-/// size but the current layer too.
-///
-/// Deliberately internal, like `EmbeddedBlockState`: the host knows only the outcome, not how the
-/// container arrived at it.
+/// and holds the right layer inside. The SwiftUI wrapper must do both itself — a host view handed to
+/// the container through a separate `UIHostingController` falls out of the SwiftUI tree and loses its
+/// environment — so it needs the height and the current layer.
 struct EmbeddedBlockPresentation: Equatable {
 
     /// The layer visible in the container.

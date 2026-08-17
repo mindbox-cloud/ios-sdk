@@ -13,15 +13,16 @@ import UIKit
 /// Fills the container entirely: the SDK knows nothing about the layout of the content to come, so
 /// the placeholder does not depict it and simply marks the reserved spot as "loading". A host that
 /// needs a skeleton of its own layout sets the container's `placeholderView`.
-///
-/// The animation lives exactly as long as the view is visible: it starts on entering a window and
-/// stops on leaving it, including the app going to the background (the system removes CA
-/// animations, so the highlight is restarted on return to the foreground).
 final class EmbeddedBlockShimmerView: UIView {
 
     private enum Shimmer {
         static let animationKey = "embeddedBlockShimmer"
         static let animationDuration: CFTimeInterval = 1.4
+
+        /// Where the highlight sits before and after the sweep: fully off the leading edge, then
+        /// fully off the trailing one.
+        static let restingLocations: [NSNumber] = [-1.0, -0.5, 0.0]
+        static let sweptLocations: [NSNumber] = [1.0, 1.5, 2.0]
     }
 
     private let gradientLayer = CAGradientLayer()
@@ -33,9 +34,11 @@ final class EmbeddedBlockShimmerView: UIView {
         return UIColor(white: 0.90, alpha: 1.0)
     }
 
+    /// Lighter than the base in both appearances, which the system grays do not give for free: their
+    /// order flips in the dark, where `systemGray6` is the closest one to black.
     private var highlightColor: UIColor {
         if #available(iOS 13.0, *) {
-            return .systemGray6
+            return UIColor { $0.userInterfaceStyle == .dark ? .systemGray4 : .systemGray6 }
         }
         return UIColor(white: 0.96, alpha: 1.0)
     }
@@ -75,7 +78,7 @@ final class EmbeddedBlockShimmerView: UIView {
 
         gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
         gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
-        gradientLayer.locations = [-1.0, -0.5, 0.0]
+        gradientLayer.locations = Shimmer.restingLocations
         applyColors()
         layer.addSublayer(gradientLayer)
 
@@ -101,8 +104,8 @@ final class EmbeddedBlockShimmerView: UIView {
         guard gradientLayer.animation(forKey: Shimmer.animationKey) == nil else { return }
 
         let animation = CABasicAnimation(keyPath: "locations")
-        animation.fromValue = [-1.0, -0.5, 0.0]
-        animation.toValue = [1.0, 1.5, 2.0]
+        animation.fromValue = Shimmer.restingLocations
+        animation.toValue = Shimmer.sweptLocations
         animation.duration = Shimmer.animationDuration
         animation.repeatCount = .infinity
         gradientLayer.add(animation, forKey: Shimmer.animationKey)

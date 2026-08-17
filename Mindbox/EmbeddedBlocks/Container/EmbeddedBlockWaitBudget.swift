@@ -1,5 +1,5 @@
 //
-//  EmbeddedBlockReadyTimeout.swift
+//  EmbeddedBlockWaitBudget.swift
 //  Mindbox
 //
 //  Created by vailence on 10.08.2026.
@@ -10,29 +10,17 @@ import UIKit
 import QuartzCore
 import MindboxLogger
 
-/// How long a block is given to show up — and the accounting of that time.
-///
-/// The budget belongs to the container, not to the content: whatever the block turns out to be,
-/// the host layout does not wait for it forever. A block that misses the budget is collapsed by
-/// the container.
+/// How long a block is given to show up, and the accounting of that time.
 ///
 /// What is counted is the user's waiting time, not calendar time: while nobody is waiting for the
-/// block — the app is in the background, the container is out of the window — the count stands
-/// still. Otherwise the user would come back to a block that gave up while nobody was looking.
+/// block — the app is in the background, the container is out of the window — the count stands still.
+/// It stands still without starting over, because a pause that handed the full budget back would never
+/// end: a user switching apps every few seconds would stretch the wait indefinitely. Only a new
+/// attempt (`reset()`) gets the whole budget again.
 ///
-/// Stands still, but does not start over: what was spent is remembered, and the attempt continues
-/// its budget from where it was interrupted. A pause that handed the full budget back would never
-/// end — a user switching between apps every five seconds would extend the wait indefinitely, and
-/// the host layout would wait forever. Exactly what the budget exists to prevent. Only a new
-/// attempt — `reset()` — gets the full budget again.
-///
-/// Loading is not affected by the pause: it runs its own course; in the background the system
-/// throttles it, not the SDK.
-
-/// Runs the work when the given remainder of the budget expires.
-typealias EmbeddedBlockTimeoutScheduling = (TimeInterval, DispatchWorkItem) -> Void
-
-final class EmbeddedBlockReadyTimeout {
+/// The pause does not reach loading. That runs its own course, throttled by the system rather than by
+/// the SDK.
+final class EmbeddedBlockWaitBudget {
 
     /// Whether the count is needed right now: the outcome is still unknown and the block is
     /// visible. Asked again on every arm, because both may have changed while paused.
@@ -43,24 +31,22 @@ final class EmbeddedBlockReadyTimeout {
 
     var isRunning: Bool { workItem != nil }
 
-    private let blockId: String
-    private let duration: TimeInterval
+    private let placeSystemName: String
 
-    /// The clock is its own seam: spent time cannot be counted without it, and tests cannot wait
-    /// out the budget for real — they need a way to say that time has passed. The clock is
-    /// monotonic, not `Date`: an NTP correction or a manual clock change would make the spent
-    /// delta negative and stretch the wait past the budget.
+    /// Asked when the count is armed rather than stored: the block waits first for an answer about what
+    /// to show and then for the page to report itself, and the two waits have different budgets.
+    private let duration: () -> TimeInterval
+
+    /// Monotonic, not `Date`: an NTP correction or a manual clock change would make a spent stretch
+    /// negative and stretch the wait past its budget.
     private let now: () -> TimeInterval
 
-    /// Notifications are their own seam for the same reason as the clock: going to the background
-    /// cannot be tested on the global center — a test notification would reach the blocks of tests
+    /// Its own center, so a test's background notification cannot reach the budgets of the tests
     /// running next to it.
     private let notificationCenter: NotificationCenter
 
-    /// The scheduler is the same kind of seam for the same reason: a hard-wired queue would force
-    /// budget tests to wait it out in real time — sleeping on every check and flaking on a busy
-    /// machine.
-    private let schedule: EmbeddedBlockTimeoutScheduling
+    /// Injected so the budget can be tested without waiting it out in real time.
+    private let schedule: EmbeddedBlockWaitScheduling
 
     private var workItem: DispatchWorkItem?
 
@@ -70,16 +56,16 @@ final class EmbeddedBlockReadyTimeout {
     /// When the current stretch started. `nil` — the count is not running.
     private var resumedAt: TimeInterval?
 
-    private var remaining: TimeInterval { max(0, duration - consumed) }
+    private var remaining: TimeInterval { max(0, duration() - consumed) }
 
-    init(blockId: String,
-         duration: TimeInterval,
+    init(placeSystemName: String,
+         duration: @escaping () -> TimeInterval,
          now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
          notificationCenter: NotificationCenter = .default,
-         schedule: @escaping EmbeddedBlockTimeoutScheduling = { delay, work in
+         schedule: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          }) {
-        self.blockId = blockId
+        self.placeSystemName = placeSystemName
         self.duration = duration
         self.now = now
         self.notificationCenter = notificationCenter
@@ -113,9 +99,9 @@ final class EmbeddedBlockReadyTimeout {
             self.resumedAt = nil
             // The budget is spent in full: if the block is somehow armed again, there is nothing
             // left to wait for.
-            self.consumed = self.duration
+            self.consumed = self.duration()
 
-            Logger.common(message: "[EmbeddedBlock] Block '\(self.blockId)' timed out after \(self.duration)s of waiting",
+            Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)' timed out after \(self.duration())s of waiting",
                           category: .embeddedBlocks)
             self.onExpire()
         }
@@ -150,7 +136,7 @@ final class EmbeddedBlockReadyTimeout {
     private func applicationDidEnterBackground() {
         guard isRunning else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(blockId)' went to the background while loading, pausing the timeout",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' went to the background while loading, pausing the timeout",
                       category: .embeddedBlocks)
         pause()
     }
@@ -160,3 +146,6 @@ final class EmbeddedBlockReadyTimeout {
         armIfNeeded()
     }
 }
+
+/// Runs the work when the given remainder of the budget expires.
+typealias EmbeddedBlockWaitScheduling = (TimeInterval, DispatchWorkItem) -> Void
