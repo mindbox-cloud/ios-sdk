@@ -55,7 +55,7 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
 
     /// The stories feed page on static hosting. Hardcoded for now: once the admin panel config
     /// arrives, the address will come from there together with the id → content mapping.
-    private static let storiesPageURL = "https://mobile-static.mindbox.ru/beta/inapps/webview/content/stories.html"
+    private static let storiesPageURL = "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html"
 
     private let load: EmbeddedBlockContentLoading
     private let overrides: EmbeddedBlockContentOverriding

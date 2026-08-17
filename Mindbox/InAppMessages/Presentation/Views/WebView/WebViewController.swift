@@ -296,10 +296,6 @@ extension WebViewController: WebViewAction {
             }
         }
     }
-    
-    func onLog(message: String) {
-        Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
-    }
 }
 
 private extension WebViewController {

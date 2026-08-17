@@ -12,14 +12,14 @@ import MindboxLogger
 
 /// SwiftUI wrapper over `MindboxEmbeddedBlockView`.
 ///
-/// Created with the block `id` from the admin panel and the `height` the block should occupy.
-/// Place it anywhere in a layout — the caller decides only the position and the width. The block
-/// keeps the given height while its content is loading and shown; a block with nothing to show
-/// collapses to zero height.
+/// Created with the `placeSystemName` of the place from the admin panel and the `height` the block
+/// should occupy. Place it anywhere in a layout — the caller decides only the position and the
+/// width. The block keeps the given height while its content is loading and shown; a block with
+/// nothing to show collapses to zero height.
 ///
-/// Both values are fixed at creation. A different `id` is a different block, built from scratch in
-/// place of the old one. A different `height` changes nothing: the block keeps the height it was
-/// created with and reports the ignored value to the log.
+/// Both values are fixed at creation. A different `placeSystemName` is a different block, built from
+/// scratch in place of the old one. A different `height` changes nothing: the block keeps the height
+/// it was created with and reports the ignored value to the log.
 ///
 /// Both outcomes can be customized the same way as in UIKit, through modifiers on the block
 /// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
@@ -27,7 +27,7 @@ import MindboxLogger
 /// environment of the tree they were written in — objects, fonts, locale, color scheme.
 ///
 /// ```swift
-/// MindboxEmbeddedBlock(id: "stories", height: 104, onFail: hideSection)
+/// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, onFail: hideSection)
 ///     .placeholder { StoriesSkeleton() }
 ///     .errorView { StoriesUnavailable() }
 /// ```
@@ -41,7 +41,7 @@ import MindboxLogger
 @available(iOS 13.0, *)
 public struct MindboxEmbeddedBlock: View {
 
-    private let id: String
+    private let placeSystemName: String
     private let height: CGFloat
     private let onLoad: (() -> Void)?
     private let onFail: (() -> Void)?
@@ -50,16 +50,16 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var errorBuilder: (() -> AnyView)?
 
     /// - Parameters:
-    ///   - id: The block id from the admin panel.
+    ///   - placeSystemName: The system name of the place from the admin panel.
     ///   - height: The height the block occupies while loading and shown. Fixed at creation:
     ///     a new value given to a live block is ignored.
     ///   - onLoad: The block content is shown and the container is visible.
     ///   - onFail: The block cannot be shown — a failure or an empty block.
-    public init(id: String,
+    public init(placeSystemName: String,
                 height: CGFloat,
                 onLoad: (() -> Void)? = nil,
                 onFail: (() -> Void)? = nil) {
-        self.id = id
+        self.placeSystemName = placeSystemName
         self.height = height
         self.onLoad = onLoad
         self.onFail = onFail
@@ -76,7 +76,7 @@ public struct MindboxEmbeddedBlock: View {
 
     /// Shows this view instead of collapsing when the block cannot be shown.
     ///
-    /// Applies only to failures: an empty block — one with nothing behind its id — always
+    /// Applies only to failures: an empty block — one with nothing behind its place system name — always
     /// collapses, so a host cannot fill the space of a block that was never meant to be there.
     public func errorView<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
@@ -85,20 +85,20 @@ public struct MindboxEmbeddedBlock: View {
     }
 
     public var body: some View {
-        EmbeddedBlockBody(id: id,
+        EmbeddedBlockBody(placeSystemName: placeSystemName,
                           height: height,
                           onLoad: onLoad,
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
-            .id(id)
+            .id(placeSystemName)
     }
 }
 
 @available(iOS 13.0, *)
 private struct EmbeddedBlockBody: View {
 
-    let id: String
+    let placeSystemName: String
     let height: CGFloat
     let onLoad: (() -> Void)?
     let onFail: (() -> Void)?
@@ -109,13 +109,13 @@ private struct EmbeddedBlockBody: View {
     /// is shown. The block occupies its height right away, not from the container's first report.
     @State private var presentation: EmbeddedBlockPresentation
 
-    init(id: String,
+    init(placeSystemName: String,
          height: CGFloat,
          onLoad: (() -> Void)?,
          onFail: (() -> Void)?,
          placeholder: (() -> AnyView)?,
          errorContent: (() -> AnyView)?) {
-        self.id = id
+        self.placeSystemName = placeSystemName
         self.height = height
         self.onLoad = onLoad
         self.onFail = onFail
@@ -127,7 +127,7 @@ private struct EmbeddedBlockBody: View {
 
     var body: some View {
         ZStack {
-            EmbeddedBlockRepresentable(id: id,
+            EmbeddedBlockRepresentable(placeSystemName: placeSystemName,
                                        height: height,
                                        presentation: $presentation,
                                        onLoad: onLoad,
@@ -158,7 +158,7 @@ private struct EmbeddedBlockBody: View {
 @available(iOS 13.0, *)
 struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
-    let id: String
+    let placeSystemName: String
     let height: CGFloat
 
     @Binding var presentation: EmbeddedBlockPresentation
@@ -177,7 +177,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
-        let blockView = MindboxEmbeddedBlockView(id: id, height: height)
+        let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
         blockView.onPresentationChange = { presentation in
@@ -192,7 +192,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         coordinator.presentation = $presentation
         coordinator.onLoad = onLoad
         coordinator.onFail = onFail
-        coordinator.warnIfHeightIsIgnored(height, id: id)
+        coordinator.warnIfHeightIsIgnored(height, placeSystemName: placeSystemName)
         syncStandIns(in: uiView)
     }
 
@@ -265,11 +265,11 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         /// The height is fixed when the block is created: a new value given to a live block is
         /// ignored, and the host has no other way to notice — the block simply keeps standing at
         /// its old height.
-        func warnIfHeightIsIgnored(_ newHeight: CGFloat, id: String) {
+        func warnIfHeightIsIgnored(_ newHeight: CGFloat, placeSystemName: String) {
             guard !hasWarnedAboutIgnoredHeight, newHeight != creationHeight else { return }
 
             hasWarnedAboutIgnoredHeight = true
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)' was given height \(newHeight) after creation and keeps \(creationHeight): the height is fixed when the block is created.",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given height \(newHeight) after creation and keeps \(creationHeight): the height is fixed when the block is created.",
                           level: .error,
                           category: .embeddedBlocks)
         }

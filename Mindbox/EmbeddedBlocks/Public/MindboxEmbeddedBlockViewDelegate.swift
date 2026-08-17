@@ -24,7 +24,7 @@ public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
     func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView)
 
     /// The block cannot be shown. Covers failures — the load broke, timed out or the content is
-    /// malformed — and also the empty block, one that has nothing behind its id. On a failure the
+    /// malformed — and also the empty block, one that has nothing behind its place system name. On a failure the
     /// container collapses to zero height, or keeps its height and shows `errorView` when one is
     /// set; an empty block always collapses, `errorView` does not apply to it.
     func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView)

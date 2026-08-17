@@ -7,10 +7,8 @@
 
 import UIKit
 import WebKit
-import SafariServices
 import MindboxLogger
 
-// swiftlint:disable file_length
 final class TransparentView: UIView {
 
     weak var delegate: WebVCDelegate?
@@ -22,7 +20,11 @@ final class TransparentView: UIView {
     private var operation: (name: String, body: String)?
     private let userAgent: String
     private let inAppId: String
-    private let tags: [String: String]?
+    let tags: [String: String]?
+
+    /// Handlers for the actions that no longer live in the switch below. Built per show, not
+    /// shared: handlers moving in here own state that belongs to one page.
+    private let actionRegistry: WebBridgeActionRegistry
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
     /// True when the page finished loading but the JS bridge never appeared within the
@@ -36,23 +38,18 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
-    private lazy var localStateStorage: WebViewLocalStateStorageProtocol = DI.injectOrFail(WebViewLocalStateStorageProtocol.self)
-    private lazy var permissionHandlerRegistry = DI.injectOrFail(PermissionHandlerRegistryProtocol.self)
-    private lazy var hapticService: HapticServiceProtocol = DI.injectOrFail(HapticServiceProtocol.self)
-    lazy var featureToggleManager: FeatureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
-    lazy var databaseRepository: DatabaseRepositoryProtocol = DI.injectOrFail(DatabaseRepositoryProtocol.self)
-    lazy var eventRepository: EventRepository = DI.injectOrFail(EventRepository.self)
-    private var isMotionServiceInitialized = false
-    private lazy var motionService: MotionServiceProtocol = {
-        isMotionServiceInitialized = true
-        let service = DI.injectOrFail(MotionServiceProtocol.self)
-        service.onGestureDetected = { [weak self] gesture, data in
-            self?.sendMotionEvent(gesture: gesture, data: data)
-        }
-        return service
-    }()
 
-    init(frame: CGRect, params: [String: JSONValue], userAgent: String, operation: (name: String, body: String)?, inAppId: String, tags: [String: String]?) {
+    /// - Parameter actionRegistry: The handlers this show runs with. Injectable so a test can
+    ///   drive the real dispatch path with doubles behind it.
+    init(frame: CGRect,
+         params: [String: JSONValue],
+         userAgent: String,
+         operation: (name: String, body: String)?,
+         inAppId: String,
+         tags: [String: String]?,
+         actionRegistry: WebBridgeActionRegistry
+         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())) {
+        self.actionRegistry = actionRegistry
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
@@ -63,6 +60,7 @@ final class TransparentView: UIView {
     }
 
     override init(frame: CGRect) {
+        self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -73,6 +71,7 @@ final class TransparentView: UIView {
     }
 
     required init?(coder: NSCoder) {
+        self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -84,7 +83,7 @@ final class TransparentView: UIView {
 
     deinit {
         readyChecker?.cancel()
-        if isMotionServiceInitialized { motionService.stopMonitoring() }
+        actionRegistry.tearDown()
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
     }
 
@@ -173,98 +172,82 @@ extension TransparentView {
     }
 }
 
+// MARK: - WebBridgeHost
+
+extension TransparentView: WebBridgeHost {
+
+    var contentId: String { inAppId }
+
+    var logCategory: LogCategory { .webViewInAppMessages }
+
+    var presentingViewController: UIViewController? { delegate as? UIViewController }
+
+    /// A modal in-app exists only while it is on screen — unlike an embedded block, it has no
+    /// off-screen life in which its page could keep talking.
+    var isUserPresent: Bool { true }
+
+    func send(_ message: BridgeMessage) {
+        facade?.sendToJS(message)
+    }
+
+    func makeStartPayload() -> JSONValue {
+        facade?.makeStartPayload() ?? .string("{}")
+    }
+}
+
+// MARK: - WebBridgeLifecycleHosting
+
+extension TransparentView: WebBridgeLifecycleHosting {
+
+    func bridgeDidInit() {
+        // First, before anything else can read it: the no-cache retry policy decides whether a
+        // failed subresource is worth healing by asking whether the page ever booted, and a
+        // late flag silently disables that.
+        hasReceivedInit = true
+        quizInitTimeoutWorkItem?.cancel()
+        // The page has proven it can boot — drop the retained retry content (mirror of
+        // Android's handleInitAction cleanup; the policy's one-shot state stays).
+        facade?.releaseRetainedContent()
+        actionRegistry.handler(ofType: HapticActionHandler.self)?.prepare()
+        webViewAction?.onInit()
+    }
+
+    func bridgeDidRequestClose() {
+        quizInitTimeoutWorkItem?.cancel()
+        // Whatever holds the device is released before the window goes: a haptic pattern
+        // playing into a closed show, or a sensor callback reaching a dead page, is the
+        // shape crashes come in.
+        actionRegistry.tearDown()
+        webViewAction?.onClose()
+    }
+
+    func bridgeDidRequestHide() {
+        webViewAction?.onHide()
+    }
+
+    func bridgeDidClick(rawPayload: String) {
+        webViewAction?.onCompleted(data: rawPayload)
+    }
+}
+
 extension TransparentView: WebBridgeMessageDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
         let action = message.action
-        let data: String
-
-        if case .string(let stringValue) = message.payload {
-            data = stringValue
-        } else if let payload = message.payload,
-                  let payloadData = try? JSONEncoder().encode(payload),
-                  let payloadString = String(data: payloadData, encoding: .utf8) {
-            data = payloadString
-        } else {
-            data = ""
-        }
+        let data = message.payloadString
 
         Logger.common(
             message: "[WebView] Bridge: received \(action) \(data)",
             category: .webViewInAppMessages
         )
-        
-        // TODO: - Create plugin-based handlers
 
-        guard let parsedAction = BridgeMessage.Action(rawValue: action) else {
+        // Every action a page can send is owned by a handler now. An action nobody owns is
+        // not an error: the web vocabulary is allowed to be newer than the SDK.
+        guard actionRegistry.handle(message, host: self) else {
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
                 category: .webViewInAppMessages
             )
             return
-        }
-
-        switch parsedAction {
-
-        // Lifecycle
-        case .close:
-            quizInitTimeoutWorkItem?.cancel()
-            hapticService.stopPattern()
-            if isMotionServiceInitialized { motionService.stopMonitoring() }
-            webViewAction?.onClose()
-        case .`init`:
-            hasReceivedInit = true
-            quizInitTimeoutWorkItem?.cancel()
-            // The page has proven it can boot — drop the retained retry content (mirror of
-            // Android's handleInitAction cleanup; the policy's one-shot state stays).
-            facade?.releaseRetainedContent()
-            hapticService.prepare()
-            webViewAction?.onInit()
-        case .click:
-            webViewAction?.onCompleted(data: data)
-        case .hide:
-            webViewAction?.onHide()
-        case .ready:
-            facade?.sendReadyEvent(id: message.id)
-
-        // Info
-        case .log:
-            webViewAction?.onLog(message: data)
-
-        // Operations
-        case .asyncOperation:
-            handleAsyncOperation(message: message)
-        case .syncOperation:
-            handleSyncOperation(message: message)
-
-        // Navigation, Settings & Permissions
-        case .openLink:
-            handleNavigate(message: message)
-        case .settingsOpen:
-            handleOpenSettings(message: message)
-        case .permissionRequest:
-            handlePermissionRequest(message: message)
-
-        // Local State
-        case .localStateGet:
-            handleLocalStateGet(message: message)
-        case .localStateSet:
-            handleLocalStateSet(message: message)
-        case .localStateInit:
-            handleLocalStateInit(message: message)
-
-        // Haptic
-        case .haptic:
-            handleHaptic(message: message)
-
-        // Motion
-        case .motionStart:
-            handleMotionStart(message: message)
-        case .motionStop:
-            handleMotionStop(message: message)
-
-        // Native → JS (not handled here)
-        case .navigationIntercepted, .motionEvent:
-            break
         }
     }
 }
@@ -398,498 +381,6 @@ extension TransparentView: WebBridgeNavigationDelegate {
     }
 }
 
-// MARK: - Operation Handlers
-
-extension TransparentView {
-
-    private func extractOperationParams(from message: BridgeMessage) -> (name: String, body: JSONValue)? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let operation) = dict["operation"],
-              !operation.isEmpty,
-              let body = dict["body"] else {
-            return nil
-        }
-
-        return (operation, body)
-    }
-
-    private func mergedOperationBodyString(_ body: JSONValue) -> String? {
-        let gatedTags = featureToggleManager.gatedTags(tags)
-        let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
-
-        guard let bodyData = try? JSONEncoder().encode(mergedBody) else {
-            return nil
-        }
-        return String(data: bodyData, encoding: .utf8)
-    }
-
-    private func sendBridgeSuccess(action: String, id: UUID) {
-        let response = BridgeMessage(
-            type: .response,
-            action: action,
-            payload: .object(["success": .bool(true)]),
-            id: id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func sendBridgeError(_ errorMessage: String, action: String, id: UUID) {
-        let errorPayload: JSONValue = .object(["error": .string(errorMessage)])
-        let response = BridgeMessage(type: .error, action: action, payload: errorPayload, id: id)
-        facade?.sendToJS(response)
-    }
-
-    private func handleAsyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message),
-              let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
-            return
-        }
-
-        let customEvent = CustomEvent(name: params.name, payload: bodyString)
-        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
-
-        do {
-            try databaseRepository.create(event: event)
-            Logger.common(message: "[WebView] asyncOperation '\(params.name)' queued", level: .info, category: .webViewInAppMessages)
-        } catch {
-            Logger.common(message: "[WebView] asyncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-            sendBridgeError("Failed to queue operation: \(error.localizedDescription)", action: message.action, id: message.id)
-            return
-        }
-
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-
-    private func handleSyncOperation(message: BridgeMessage) {
-        guard let params = extractOperationParams(from: message),
-              let bodyString = mergedOperationBodyString(params.body) else {
-            sendBridgeError("Invalid payload: could not parse operation/body or encode the operation body", action: message.action, id: message.id)
-            return
-        }
-
-        let customEvent = CustomEvent(name: params.name, payload: bodyString)
-        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
-
-        Logger.common(message: "[WebView] syncOperation '\(params.name)' sending", level: .info, category: .webViewInAppMessages)
-
-        // HTTP 2xx → forward the raw body to JS as a Response so the JS Tracker
-        // can dispatch onSuccess / onValidationError by the body's `status`.
-        // 4xx, 5xx and network failures stay on the MindboxError → Error path.
-        eventRepository.sendRaw(event: event) { [weak self] result in
-            DispatchQueue.main.async {
-                let outgoing = TransparentView.makeSyncOperationResponse(
-                    result: result,
-                    action: message.action,
-                    id: message.id
-                )
-                switch outgoing.type {
-                case .response:
-                    Logger.common(message: "[WebView] syncOperation '\(params.name)' success", level: .info, category: .webViewInAppMessages)
-                case .error:
-                    if case .failure(let error) = result {
-                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: \(error)", level: .error, category: .webViewInAppMessages)
-                    } else {
-                        Logger.common(message: "[WebView] syncOperation '\(params.name)' failed: non-UTF-8 response body", level: .error, category: .webViewInAppMessages)
-                    }
-                default:
-                    break
-                }
-                self?.facade?.sendToJS(outgoing)
-            }
-        }
-    }
-
-    /// Maps the raw `sendRaw` result of a `syncOperation` request to the outgoing
-    /// `BridgeMessage` sent back to JS. Pure function — no side effects — extracted
-    /// to keep the JS-bridge contract independently unit-testable.
-    static func makeSyncOperationResponse(
-        result: Result<Data, MindboxError>,
-        action: String,
-        id: UUID
-    ) -> BridgeMessage {
-        switch result {
-        case .success(let data):
-            guard let bodyString = String(data: data, encoding: .utf8) else {
-                return BridgeMessage(
-                    type: .error,
-                    action: action,
-                    payload: .object(["error": .string("Response body is not valid UTF-8")]),
-                    id: id
-                )
-            }
-            return BridgeMessage(
-                type: .response,
-                action: action,
-                payload: .string(bodyString),
-                id: id
-            )
-        case .failure(let error):
-            return BridgeMessage(
-                type: .error,
-                action: action,
-                payload: .string(error.createDataJSON()),
-                id: id
-            )
-        }
-    }
-}
-
-// MARK: - LocalState Handlers
-
-extension TransparentView {
-
-    private func handleLocalStateGet(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message) else {
-            sendBridgeError("Invalid payload", action: message.action, id: message.id)
-            return
-        }
-
-        let keys: [String]
-        if case .array(let arr) = payload["data"] {
-            keys = arr.compactMap { if case .string(let s) = $0 { return s } else { return nil } }
-        } else {
-            keys = []
-        }
-
-        let storage = localStateStorage
-        let state = storage.get(keys: keys)
-
-        Logger.common(
-            message: "[WebView] localState.get keys=\(keys) → \(state.data.count) entries, version=\(state.version)",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        // Build response data: found keys → value, missing keys → null
-        var dataObject: [String: JSONValue] = [:]
-        if keys.isEmpty {
-            for (key, value) in state.data {
-                dataObject[key] = .string(value)
-            }
-        } else {
-            for key in keys {
-                if let value = state.data[key] {
-                    dataObject[key] = .string(value)
-                } else {
-                    dataObject[key] = .null
-                }
-            }
-        }
-
-        let responsePayload: JSONValue = .object([
-            "data": .object(dataObject),
-            "version": .int(state.version)
-        ])
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: responsePayload,
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func handleLocalStateSet(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message),
-              case .object(let dataDict) = payload["data"] else {
-            sendBridgeError("Invalid payload: missing 'data' object", action: message.action, id: message.id)
-            return
-        }
-
-        var data: [String: String?] = [:]
-        for (key, value) in dataDict {
-            switch value {
-            case .string(let s):
-                data[key] = s
-            case .null:
-                data[key] = nil as String?
-            default:
-                if let encoded = try? JSONEncoder().encode(value),
-                   let str = String(data: encoded, encoding: .utf8) {
-                    data[key] = str
-                }
-            }
-        }
-
-        let storage = localStateStorage
-        let state = storage.set(data: data)
-
-        Logger.common(
-            message: "[WebView] localState.set \(data.count) keys → version=\(state.version)",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: localStateToPayload(data: data, version: state.version),
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func handleLocalStateInit(message: BridgeMessage) {
-        guard let payload = extractLocalStatePayload(from: message),
-              case .int(let version) = payload["version"],
-              case .object(let dataDict) = payload["data"] else {
-            sendBridgeError("Invalid payload: missing 'version' or 'data'", action: message.action, id: message.id)
-            return
-        }
-
-        var data: [String: String?] = [:]
-        for (key, value) in dataDict {
-            switch value {
-            case .string(let s):
-                data[key] = s
-            case .null:
-                data[key] = nil as String?
-            default:
-                if let encoded = try? JSONEncoder().encode(value),
-                   let str = String(data: encoded, encoding: .utf8) {
-                    data[key] = str
-                }
-            }
-        }
-
-        let storage = localStateStorage
-        guard let state = storage.initialize(version: version, data: data) else {
-            sendBridgeError(
-                "Version must be a positive integer, got \(version)",
-                action: message.action,
-                id: message.id
-            )
-            return
-        }
-
-        Logger.common(
-            message: "[WebView] localState.init version=\(version), \(data.count) keys",
-            level: .info,
-            category: .webViewInAppMessages
-        )
-
-        let response = BridgeMessage(
-            type: .response,
-            action: message.action,
-            payload: localStateToPayload(data: data, version: state.version),
-            id: message.id
-        )
-        facade?.sendToJS(response)
-    }
-
-    // MARK: - LocalState Helpers
-
-    private func extractLocalStatePayload(from message: BridgeMessage) -> [String: JSONValue]? {
-        // Payload arrives as a JSON string: "{\"data\":{...},\"version\":3}"
-        if case .string(let str) = message.payload,
-           let data = str.data(using: .utf8),
-           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
-            return dict
-        }
-        // Payload is already a decoded object
-        if case .object(let dict) = message.payload {
-            return dict
-        }
-        return nil
-    }
-
-    private func localStateToPayload(data: [String: String?], version: Int) -> JSONValue {
-        var dataObject: [String: JSONValue] = [:]
-        for (key, value) in data {
-            dataObject[key] = value.map { .string($0) } ?? .null
-        }
-        return .object([
-            "data": .object(dataObject),
-            "version": .int(version)
-        ])
-    }
-}
-
-// MARK: - Navigate Handler
-
-extension TransparentView {
-
-    private func handleNavigate(message: BridgeMessage) {
-        guard let urlString = extractNavigateURL(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty 'url' field", action: message.action, id: message.id)
-            return
-        }
-
-        guard let url = URL(string: urlString) else {
-            sendBridgeError("Invalid URL: '\(urlString)' could not be parsed", action: message.action, id: message.id)
-            return
-        }
-
-        let scheme = url.scheme?.lowercased()
-
-        if scheme == "http" || scheme == "https" {
-            Logger.common(
-                message: "[WebView] navigate: trying universal link first for \(urlString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            openAsUniversalLinkOrSafari(url: url, message: message)
-        } else {
-            Logger.common(
-                message: "[WebView] navigate: opening via UIApplication \(urlString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            openViaUIApplication(url: url, message: message)
-        }
-    }
-
-    private func openAsUniversalLinkOrSafari(url: URL, message: BridgeMessage) {
-        DispatchQueue.main.async { [weak self] in
-            UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { opened in
-                DispatchQueue.main.async {
-                    if opened {
-                        Logger.common(
-                            message: "[WebView] navigate: opened as universal link \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeSuccess(action: message.action, id: message.id)
-                    } else {
-                        Logger.common(
-                            message: "[WebView] navigate: not a universal link, falling back to SFSafariViewController for \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.openInSafariViewController(url: url, message: message)
-                    }
-                }
-            }
-        }
-    }
-
-    private func openInSafariViewController(url: URL, message: BridgeMessage) {
-        guard let presentingVC = delegate as? UIViewController else {
-            Logger.common(
-                message: "[WebView] navigate: no presenting view controller found",
-                level: .default,
-                category: .webViewInAppMessages
-            )
-            sendBridgeError("Failed to open URL: no presenting view controller", action: message.action, id: message.id)
-            return
-        }
-
-        let safariVC = SFSafariViewController(url: url)
-        presentingVC.present(safariVC, animated: true) { [weak self] in
-            Logger.common(
-                message: "[WebView] navigate: SFSafariViewController presented for \(url.absoluteString)",
-                level: .info,
-                category: .webViewInAppMessages
-            )
-            self?.sendBridgeSuccess(action: message.action, id: message.id)
-        }
-    }
-
-    private func openViaUIApplication(url: URL, message: BridgeMessage) {
-        DispatchQueue.main.async { [weak self] in
-            UIApplication.shared.open(url, options: [:]) { success in
-                DispatchQueue.main.async {
-                    if success {
-                        Logger.common(
-                            message: "[WebView] navigate: successfully opened \(url.absoluteString)",
-                            level: .info,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeSuccess(action: message.action, id: message.id)
-                    } else {
-                        Logger.common(
-                            message: "[WebView] navigate: failed to open \(url.absoluteString)",
-                            level: .default,
-                            category: .webViewInAppMessages
-                        )
-                        self?.sendBridgeError("Failed to open URL: '\(url.absoluteString)'", action: message.action, id: message.id)
-                    }
-                }
-            }
-        }
-    }
-
-    private func extractNavigateURL(from message: BridgeMessage) -> String? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let urlString) = dict["url"],
-              !urlString.isEmpty else {
-            return nil
-        }
-        return urlString
-    }
-}
-
-// MARK: - Permission Request Handler
-
-extension TransparentView {
-
-    private func handlePermissionRequest(message: BridgeMessage) {
-        guard let typeString = extractPermissionType(from: message) else {
-            sendBridgeError("Invalid payload: missing or empty 'type' field", action: message.action, id: message.id)
-            return
-        }
-
-        guard let permissionType = PermissionType(rawValue: typeString) else {
-            sendBridgeError("Unknown permission type: '\(typeString)'", action: message.action, id: message.id)
-            return
-        }
-
-        guard let handler = permissionHandlerRegistry.handler(for: permissionType) else {
-            sendBridgeError("No handler registered for permission type: '\(typeString)'", action: message.action, id: message.id)
-            return
-        }
-
-        for key in handler.requiredInfoPlistKeys {
-            guard Bundle.main.object(forInfoDictionaryKey: key) != nil else {
-                sendBridgeError("Missing Info.plist key: \(key)", action: message.action, id: message.id)
-                return
-            }
-        }
-
-        handler.request { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
-
-                switch result {
-                case .granted(let dialogShown):
-                    self.sendPermissionResponse("granted", dialogShown: dialogShown, action: message.action, id: message.id)
-                case .denied(let dialogShown):
-                    self.sendPermissionResponse("denied", dialogShown: dialogShown, action: message.action, id: message.id)
-                case .error(let errorMessage):
-                    self.sendBridgeError(errorMessage, action: message.action, id: message.id)
-                }
-            }
-        }
-    }
-
-    private func sendPermissionResponse(_ resultValue: String, dialogShown: Bool, action: String, id: UUID) {
-        let response = BridgeMessage(
-            type: .response,
-            action: action,
-            payload: .object(["result": .string(resultValue), "dialogShown": .bool(dialogShown)]),
-            id: id
-        )
-        facade?.sendToJS(response)
-    }
-
-    private func extractPermissionType(from message: BridgeMessage) -> String? {
-        guard case .string(let str) = message.payload,
-              let data = str.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data),
-              case .string(let typeString) = dict["type"],
-              !typeString.isEmpty else {
-            return nil
-        }
-        return typeString
-    }
-}
-
 // MARK: - WKNavigationType String Representation
 
 private extension WKNavigationType {
@@ -906,134 +397,14 @@ private extension WKNavigationType {
     }
 }
 
-// MARK: - Haptic Handler
+// MARK: - System shake
 
 extension TransparentView {
 
-    private func handleHaptic(message: BridgeMessage) {
-        hapticService.handle(message: message)
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-}
-
-// MARK: - Open Settings Handler
-
-extension TransparentView {
-
-    private func handleOpenSettings(message: BridgeMessage) {
-        guard let settingsType = SettingsRequestParser.parse(from: message) else {
-            sendBridgeError("Invalid or unknown settings type", action: message.action, id: message.id)
-            return
-        }
-        Logger.common(message: "[WebView] openSettings: type='\(settingsType.rawValue)'", level: .info, category: .webViewInAppMessages)
-
-        switch settingsType {
-        case .notifications:
-            handleOpenNotificationSettings(message: message)
-        case .application:
-            guard let url = URL(string: UIApplication.openSettingsURLString) else {
-                sendBridgeError("Failed to create application settings URL", action: message.action, id: message.id)
-                return
-            }
-            openViaUIApplication(url: url, message: message)
-        }
-    }
-
-    private func handleOpenNotificationSettings(message: BridgeMessage) {
-        PushPermissionHelper.openPushNotificationSettings { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.sendBridgeSuccess(action: message.action, id: message.id)
-            }
-        }
-    }
-}
-
-// MARK: - Motion Handlers
-
-extension TransparentView {
-
+    /// A shake is detected by the system and arrives at the view controller, so it is handed
+    /// down to whoever is monitoring motion for this show.
     func handleSystemShake() {
-        guard isMotionServiceInitialized else { return }
-        motionService.handleSystemShake()
-    }
-
-    private func handleMotionStart(message: BridgeMessage) {
-        guard let payload = extractMotionPayload(from: message) else {
-            sendBridgeError("Invalid payload: missing 'gestures' array", action: message.action, id: message.id)
-            return
-        }
-
-        guard case .array(let gestureArray) = payload["gestures"] else {
-            sendBridgeError("Invalid payload: 'gestures' must be an array", action: message.action, id: message.id)
-            return
-        }
-
-        var gestures = Set<MotionGesture>()
-        for item in gestureArray {
-            if case .string(let name) = item, let gesture = MotionGesture(rawValue: name) {
-                gestures.insert(gesture)
-            }
-        }
-
-        guard !gestures.isEmpty else {
-            sendBridgeError("No valid gestures provided. Available: shake, flip", action: message.action, id: message.id)
-            return
-        }
-
-        let result = motionService.startMonitoring(gestures: gestures)
-
-        if result.allUnavailable {
-            sendBridgeError(
-                "No sensors available for requested gestures: \(result.unavailable.map(\.rawValue).joined(separator: ", "))",
-                action: message.action,
-                id: message.id
-            )
-        } else {
-            var payload: [String: JSONValue] = ["success": .bool(true)]
-            if !result.unavailable.isEmpty {
-                payload["unavailable"] = .array(result.unavailable.map { .string($0.rawValue) })
-            }
-            let response = BridgeMessage(
-                type: .response,
-                action: message.action,
-                payload: .object(payload),
-                id: message.id
-            )
-            facade?.sendToJS(response)
-        }
-    }
-
-    private func handleMotionStop(message: BridgeMessage) {
-        motionService.stopMonitoring()
-        sendBridgeSuccess(action: message.action, id: message.id)
-    }
-
-    private func sendMotionEvent(gesture: MotionGesture, data: [String: Any]) {
-        var payload: [String: JSONValue] = ["gesture": .string(gesture.rawValue)]
-        for (key, value) in data {
-            if let jsonValue = JSONValue(any: value) {
-                payload[key] = jsonValue
-            }
-        }
-
-        let event = BridgeMessage(
-            type: .request,
-            action: BridgeMessage.Action.motionEvent.rawValue,
-            payload: .object(payload)
-        )
-        facade?.sendToJS(event)
-    }
-
-    private func extractMotionPayload(from message: BridgeMessage) -> [String: JSONValue]? {
-        if case .string(let str) = message.payload,
-           let data = str.data(using: .utf8),
-           let dict = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
-            return dict
-        }
-        if case .object(let dict) = message.payload {
-            return dict
-        }
-        return nil
+        actionRegistry.handler(ofType: MotionActionHandler.self)?.handleSystemShake()
     }
 }
 
@@ -1048,5 +419,4 @@ protocol WebViewAction: AnyObject {
     func onCompleted(data: String)
     func onClose()
     func onHide()
-    func onLog(message: String)
 }

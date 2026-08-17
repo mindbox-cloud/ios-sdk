@@ -10,7 +10,7 @@ import Foundation
 
 /// Debug control over embedded block content — for the test app and acceptance testing.
 ///
-/// Overrides the answer to "what stands behind this id", that is, it takes exactly the place of the
+/// Overrides the answer to "what stands behind this place system name", that is, it takes exactly the place of the
 /// admin panel config. Everything below — the resolver, the provider, the page, the container's
 /// waiting budget — works unchanged, so acceptance testing exercises the production path rather
 /// than a separate test mode.
@@ -32,20 +32,20 @@ public enum MindboxEmbeddedBlockDebug {
         /// page reporting "empty", a silent page, a page that answers after the timeout.
         case html(String)
 
-        /// Nothing is attached to the id: the block is turned off in the admin panel or the id is
-        /// unknown.
+        /// Nothing is attached to the place: the block is turned off in the admin panel or the
+        /// place system name is unknown.
         case empty
     }
 
-    /// Overrides the content of the block with this id. Applies to blocks that start loading after
+    /// Overrides the content of the block in this place. Applies to blocks that start loading after
     /// the call: a block that is already shown has to be reloaded or its screen reopened.
-    public static func setContent(_ content: Content, for id: String) {
-        EmbeddedBlockContentOverrides.shared.set(content.resolution, for: id)
+    public static func setContent(_ content: Content, for placeSystemName: String) {
+        EmbeddedBlockContentOverrides.shared.set(content.resolution, for: placeSystemName)
     }
 
     /// Gives the block its usual content back.
-    public static func removeContent(for id: String) {
-        EmbeddedBlockContentOverrides.shared.remove(for: id)
+    public static func removeContent(for placeSystemName: String) {
+        EmbeddedBlockContentOverrides.shared.remove(for: placeSystemName)
     }
 
     /// Drops every override at once.

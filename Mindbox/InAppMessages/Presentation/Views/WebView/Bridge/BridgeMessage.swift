@@ -288,7 +288,7 @@ public struct BridgeMessage: Codable {
 
         /// JS sends a message to native SDK logger.
         ///
-        /// Triggers ``WebViewAction/onLog(message:)``.
+        /// Handled by ``LogActionHandler``, which journals it under the host's own log category.
         ///
         /// - Payload:
         ///   ```json
@@ -299,6 +299,71 @@ public struct BridgeMessage: Codable {
         ///   { "success": true }
         ///   ```
         case log
+
+        /// JS reports how much content it rendered, once per load.
+        ///
+        /// Handled by ``ContentRenderedActionHandler`` and delivered to hosts that listen for
+        /// content events. A count of `0` is a valid outcome, not a failure: the page is alive
+        /// and correct and has nothing to show, and a surface that reserves space for it should
+        /// give that space back.
+        ///
+        /// This is deliberately not ``init``, which is welded to presenting a window and has no
+        /// such outcome.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "count": 5 }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case contentRendered
+
+        /// JS asks which of these in-apps currently pass targeting.
+        ///
+        /// Answered from targeting the SDK has already computed, without going to the network:
+        /// the page gives up on the answer after three seconds and renders nothing rather than
+        /// wait. The reply keeps the ids that pass, in the order they were asked about.
+        ///
+        /// > Warning: Not implemented yet. `CheckInappsTargetingActionHandler` evaluates no
+        /// > targeting and returns every id it was given, so an answer to this action is not
+        /// > evidence that anything passed. The envelope below is what ships; the filtering is
+        /// > not.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappIds": ["id-1", "id-2"] }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "inappIds": ["id-1"] }
+        ///   ```
+        case checkInappsTargeting
+
+        /// JS asks for an in-app to be shown by id.
+        ///
+        /// `params` is merged into that in-app's start payload and overwrites whatever it
+        /// collides with. The SDK neither validates nor limits it: what the page sends is what
+        /// the page gets, and avoiding collisions is the page's business.
+        ///
+        /// `index` and `sourceInappId` describe where the request came from and are journalled,
+        /// not passed on — the page already puts everything it needs into `params`.
+        ///
+        /// > Warning: Not implemented yet. `ShowInAppActionHandler` journals the request and
+        /// > acknowledges it, and no window opens. The success below says the request was
+        /// > well-formed and received — never that a show happened. The page is answered rather
+        /// > than left on a promise nothing will settle, so it can finish its own flow.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappId": "...", "index": 0, "sourceInappId": "...", "params": { ... } }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case showInApp
 
         // MARK: JS → Native: Operations
 
@@ -557,6 +622,16 @@ public struct BridgeMessage: Codable {
             case .close, .`init`, .click, .hide, .log:
                 return false
 
+            // Answers for itself so a payload without a usable count is refused outright. The
+            // blanket success would otherwise claim the SDK acted on a number it never got.
+            case .contentRendered:
+                return true
+
+            // Both carry an answer the page acts on: one returns the ids that passed, the other
+            // reports whether the show was accepted.
+            case .checkInappsTargeting, .showInApp:
+                return true
+
             // Operations
             case .asyncOperation, .syncOperation:
                 return true
@@ -588,6 +663,48 @@ public struct BridgeMessage: Codable {
         }
 
         static let deferredActions: Set<Action> = Set(allCases.filter(\.isDeferred))
+
+        /// Actions that act on the user's behalf, and therefore must not run on a page nobody is
+        /// looking at.
+        ///
+        /// An embedded block that left the window keeps its page alive, and that page still
+        /// delivers whatever its `setTimeout` scheduled. Nothing the user did stands behind such a
+        /// message, so anything that leaves the app, covers it, or reaches for the device has to be
+        /// refused. Enforced by ``WebBridgeActionRegistry`` before dispatch, and again by the
+        /// handlers that go on to wait — the page can leave the screen while they do.
+        ///
+        /// Every action listed here is also ``isDeferred``, and has to be: the refusal reaches the
+        /// page as the answer to its request, while a non-deferred action was already answered
+        /// `{success: true}` by the dispatcher before a handler ever saw it.
+        var requiresUserPresence: Bool {
+            switch self {
+            // Leave the app or cover it — a Safari sheet, the settings screen, a permission
+            // dialog — over whatever the user went to instead.
+            case .openLink, .settingsOpen, .permissionRequest:
+                return true
+
+            // Felt rather than seen, which makes it worse: a block three screens down buzzing the
+            // device gives the user nothing to trace it back to.
+            case .haptic:
+                return true
+
+            // Takes the sensors on behalf of a page nobody sees. Stopping is always allowed —
+            // giving the sensors back is not something done on the user's behalf.
+            case .motionStart:
+                return true
+
+            // Opens a window, once it is implemented.
+            case .showInApp:
+                return true
+
+            case .motionStop, .ready, .close, .`init`, .click, .hide, .log,
+                 .contentRendered, .checkInappsTargeting,
+                 .asyncOperation, .syncOperation,
+                 .localStateGet, .localStateSet, .localStateInit,
+                 .motionEvent, .navigationIntercepted:
+                return false
+            }
+        }
     }
 
     enum CodingKeys: String, CodingKey {
@@ -602,6 +719,43 @@ public struct BridgeMessage: Codable {
     public let timestamp: Int64
 
     var parsedAction: Action? { Action(rawValue: action) }
+
+    /// The payload as an object, whether JS sent it as a JSON string — the ordinary case,
+    /// `"{\"data\":{...},\"version\":3}"` — or as an already-decoded object.
+    ///
+    /// `nil` means neither shape parsed, which is a malformed request rather than an empty one.
+    var payloadObject: [String: JSONValue]? {
+        if case .string(let string) = payload,
+           let data = string.data(using: .utf8),
+           let object = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
+            return object
+        }
+
+        if case .object(let object) = payload {
+            return object
+        }
+
+        return nil
+    }
+
+    /// The payload as the string a handler logs or forwards verbatim.
+    ///
+    /// JS sends it as a JSON string, so that is the ordinary case. A payload that arrived
+    /// already decoded is re-encoded rather than described, so what a handler sees does not
+    /// depend on which of the two shapes the page happened to send.
+    var payloadString: String {
+        if case .string(let value) = payload {
+            return value
+        }
+
+        if let payload,
+           let data = try? JSONEncoder().encode(payload),
+           let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+
+        return ""
+    }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)

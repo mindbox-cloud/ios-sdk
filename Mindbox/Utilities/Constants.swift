@@ -116,12 +116,17 @@ enum Constants {
     }
 
     enum EmbeddedBlock {
-        /// Сколько встроенный блок ждёт, пока страница объявит себя готовой, прежде чем свернуться.
+        /// How long an embedded block waits for the page to report its content before collapsing.
         ///
-        /// Бюджет свой, а не общий с инаппами, даже при совпадающем значении: блок стоит в вёрстке
-        /// хоста, и его терпение — самостоятельное продуктовое решение, а не следствие таймаута
-        /// инаппов.
-        static let readyTimeoutSeconds = 7
+        /// Its own budget rather than the in-apps' one, even when the numbers agree: a block sits
+        /// in the host's layout, and how long it holds that space is a product decision of its
+        /// own, not a consequence of what a popup waits for.
+        ///
+        /// It covers strictly more than a popup's: the page has to load, boot its bridge, ask for
+        /// its start payload, run its own pipeline — which includes waiting up to three seconds
+        /// on a targeting answer before giving up on it — and only then report what it drew.
+        /// Roughly 3s to load, 1s to boot, 3s of targeting, 3s to render, and slack.
+        static let readyTimeoutSeconds = 12
     }
 
     enum MagicNumbers {

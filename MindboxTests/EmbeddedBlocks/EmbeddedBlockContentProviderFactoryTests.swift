@@ -55,8 +55,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
     @Test("The provider asks the shared resolver for its own id")
     func providerAsksTheSharedResolver() {
         let resolver = EmbeddedBlockResolverMock(resolution: .empty)
-        let factory = EmbeddedBlockContentProviderFactory(resolver: resolver,
-                                                          actionHandler: EmbeddedBlockActionHandlerMock())
+        let factory = EmbeddedBlockContentProviderFactory(resolver: resolver)
 
         let provider = factory.makeProvider(id: "factory-shared-resolver")
         withExtendedLifetime(provider) {
@@ -71,7 +70,6 @@ struct EmbeddedBlockContentProviderFactoryTests {
     /// The resolver answers "empty": no page is created for such a block, so the factory's tests
     /// need no real web view.
     private func makeFactory() -> EmbeddedBlockContentProviderFactory {
-        EmbeddedBlockContentProviderFactory(resolver: EmbeddedBlockResolverMock(resolution: .empty),
-                                            actionHandler: EmbeddedBlockActionHandlerMock())
+        EmbeddedBlockContentProviderFactory(resolver: EmbeddedBlockResolverMock(resolution: .empty))
     }
 }

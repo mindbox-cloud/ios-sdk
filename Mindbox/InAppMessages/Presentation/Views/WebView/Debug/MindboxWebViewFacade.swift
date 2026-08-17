@@ -10,34 +10,6 @@ import UIKit
 import WebKit
 import MindboxLogger
 
-private enum PayloadKey {
-    static let sdkVersion = "sdkVersion"
-    static let sdkVersionNumeric = "sdkVersionNumeric"
-    static let endpointId = "endpointId"
-    static let deviceUuid = "deviceUUID"
-    static let userVisitCount = "userVisitCount"
-
-    static let inAppId = "inAppId"
-    static let operationName = "operationName"
-    static let operationBody = "operationBody"
-
-    static let trackVisitSource = "trackVisitSource"
-    static let trackVisitRequestUrl = "trackVisitRequestUrl"
-
-    static let firstInitializationDateTime = "firstInitializationDateTime"
-
-    static let permissions = "permissions"
-    static let localStateVersion = "localStateVersion"
-
-    enum Insets {
-        static let key = "insets"
-        static let top = "top"
-        static let left = "left"
-        static let bottom = "bottom"
-        static let right = "right"
-    }
-}
-
 @_spi(Internal)
 public protocol InappWebViewFacadeProtocol: AnyObject {
     func makeView() -> UIView
@@ -45,7 +17,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     func cleanWebView()
 
-    func sendReadyEvent(id: UUID)
+    func makeStartPayload() -> JSONValue
     func sendToJS(_ message: BridgeMessage)
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
@@ -215,14 +187,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
     
-    public func sendReadyEvent(id: UUID) {
-        let message = BridgeMessage(
-            type: .response,
-            action: BridgeMessage.Action.ready,
-            payload: buildStartPayload(),
-            id: id
-        )
-        bridge.send(message)
+    public func makeStartPayload() -> JSONValue {
+        WebViewStartPayloadBuilder(contentId: inAppId,
+                                   operation: operation,
+                                   customParams: params,
+                                   insetsSource: webView,
+                                   logError: logError).build()
     }
     
     public func sendToJS(_ message: BridgeMessage) {
@@ -265,91 +235,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
 }
 
 extension MindboxWebViewFacade {
-    private func buildStartPayload() -> JSONValue {
-        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)
-
-        var params = buildBaseParams(persistenceStorage: persistenceStorage)
-        addSystemInfo(to: &params, systemInfoProvider: systemInfoProvider)
-        mergeCustomParams(into: &params)
-        addOperationParams(to: &params)
-        addTrackVisitParams(to: &params)
-
-        return serializeToJSONString(params)
-    }
-
-    private func buildBaseParams(persistenceStorage: PersistenceStorage) -> [String: Any] {
-        var params: [String: Any] = [
-            PayloadKey.sdkVersion: Mindbox.shared.sdkVersion,
-            PayloadKey.endpointId: persistenceStorage.configuration?.endpoint ?? "",
-            PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
-            PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
-            PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)",
-            PayloadKey.inAppId: inAppId,
-            // Add localState version for WebView JS migration logic
-            PayloadKey.localStateVersion: persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
-        ]
-
-        if let firstInitDate = persistenceStorage.firstInitializationDateTime {
-            params[PayloadKey.firstInitializationDateTime] = firstInitDate.toString(withFormat: .utc)
-        }
-
-        return params
-    }
-
-    private func addOperationParams(to params: inout [String: Any]) {
-        guard let operation else { return }
-        params[PayloadKey.operationName] = operation.name
-        params[PayloadKey.operationBody] = operation.body
-    }
-
-    private func addSystemInfo(to params: inout [String: Any], systemInfoProvider: SystemInfoProvider) {
-        params.merge(systemInfoProvider.getBasicSystemInfo()) { _, new in new }
-
-        let insets = systemInfoProvider.getSafeAreaInsets(from: webView)
-        params[PayloadKey.Insets.key] = [
-            PayloadKey.Insets.top: insets.top,
-            PayloadKey.Insets.left: insets.left,
-            PayloadKey.Insets.bottom: insets.bottom,
-            PayloadKey.Insets.right: insets.right
-        ]
-
-        let permissions = systemInfoProvider.getGrantedPermissions()
-        if !permissions.isEmpty {
-            params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
-        }
-    }
-
-    private func mergeCustomParams(into params: inout [String: Any]) {
-        guard let customParams = self.params, !customParams.isEmpty else { return }
-        for (key, value) in customParams {
-            params[key] = value.anyValue ?? NSNull()
-        }
-    }
-
-    private func addTrackVisitParams(to params: inout [String: Any]) {
-        guard let lastTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit else { return }
-        if let source = lastTrackVisit.source {
-            params[PayloadKey.trackVisitSource] = source.rawValue
-        }
-        if let requestUrl = lastTrackVisit.requestUrl {
-            params[PayloadKey.trackVisitRequestUrl] = requestUrl
-        }
-    }
-
-    private func serializeToJSONString(_ params: [String: Any]) -> JSONValue {
-        do {
-            let data = try JSONSerialization.data(withJSONObject: params, options: [])
-            guard let jsonString = String(bytes: data, encoding: .utf8) else {
-                logError("[WebView] Failed to convert JSON data to UTF-8 string")
-                return .string("{}")
-            }
-            return .string(jsonString)
-        } catch {
-            logError("[WebView] Failed to encode start payload to JSON string: \(error)")
-            return .string("{}")
-        }
-    }
 
     private func fetchHTML(from urlString: String,
                            completion: @escaping (String?) -> Void) {

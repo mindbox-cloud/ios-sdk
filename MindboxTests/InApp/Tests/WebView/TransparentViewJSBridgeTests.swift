@@ -114,18 +114,21 @@ final class TransparentViewJSBridgeTests {
     // MARK: - Helpers
 
     private func makeView(tags: [String: String]?) -> TransparentView {
+        // The real dispatch path, with doubles behind the handler: this suite is about what
+        // reaches the repositories, and it should keep proving the view routes there at all.
+        let handler = OperationActionHandler(featureToggleManager: self.featureToggleManager,
+                                             databaseRepository: self.databaseRepository,
+                                             eventRepository: self.eventRepository)
         let view = TransparentView(
             frame: .zero,
             params: [:],
             userAgent: "",
             operation: nil,
             inAppId: "inapp-1",
-            tags: tags
+            tags: tags,
+            actionRegistry: WebBridgeActionRegistry(handlers: [handler])
         )
         view.facade = facade
-        view.featureToggleManager = featureToggleManager
-        view.databaseRepository = databaseRepository
-        view.eventRepository = eventRepository
         return view
     }
 
@@ -161,7 +164,7 @@ private final class WebViewFacadeSpy: InappWebViewFacadeProtocol {
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
     func cleanWebView() {}
-    func sendReadyEvent(id: UUID) {}
+    func makeStartPayload() -> JSONValue { .string("{}") }
     func sendToJS(_ message: BridgeMessage) { sentMessages.append(message) }
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {}
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {}
