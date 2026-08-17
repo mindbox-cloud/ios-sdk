@@ -163,10 +163,9 @@ extension EmbeddedBlockWebViewPage: WebBridgeContentHosting {
 extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
-        guard message.type == .request else { return }
-
         // An action nobody owns is not an error: the web vocabulary is allowed to be newer than
-        // the SDK.
+        // the SDK. Messages that are not requests are the registry's to swallow — both hosts hand
+        // it everything the dispatcher matched.
         guard actionRegistry.handle(message, host: self) else {
             Logger.common(message: "[EmbeddedBlock] Block '\(id)': unknown action '\(message.action)'",
                           category: .embeddedBlocks)

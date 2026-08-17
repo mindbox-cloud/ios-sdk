@@ -72,6 +72,50 @@ struct WebBridgeActionRegistryTests {
         #expect(second.handled.isEmpty)
     }
 
+    // MARK: - Requests only
+
+    /// A host hands the registry everything the dispatcher matched, and a response the page sent
+    /// back — its confirmation of a `motion.event` we pushed — is not an action anybody owns.
+    /// Reporting it as unhandled would put `Unknown action: motion.event` in the log on every
+    /// confirmed gesture.
+    ///
+    /// Both kinds in one test rather than as arguments: `MessageType` does not cross into a test
+    /// as a parameter under the Swift 6 language mode.
+    @Test("Anything that is not a request is swallowed as handled")
+    func nonRequestIsSwallowed() {
+        let motion = HandlerSpy(actions: [.motionStart])
+        let registry = WebBridgeActionRegistry(handlers: [motion])
+        let host = HostSpy()
+        let event = BridgeMessage.Action.motionEvent.rawValue
+
+        let didHandleResponse = registry.handle(BridgeMessage(type: .response, action: event, payload: nil), host: host)
+        let didHandleError = registry.handle(BridgeMessage(type: .error, action: event, payload: nil), host: host)
+
+        #expect(didHandleResponse)
+        #expect(didHandleError)
+        #expect(motion.handled.isEmpty)
+        #expect(host.sent.isEmpty)
+    }
+
+    /// The handler contract is "requests only", so an answer that happens to carry an owned action
+    /// must not run it a second time — the request it answers has already been through here.
+    @Test("A response carrying an owned action does not reach that handler")
+    func responseWithOwnedActionIsNotRouted() {
+        let openLink = HandlerSpy(actions: [.openLink])
+        let registry = WebBridgeActionRegistry(handlers: [openLink])
+        let host = HostSpy()
+        host.isUserPresent = false
+
+        let didHandle = registry.handle(BridgeMessage(type: .response,
+                                                      action: BridgeMessage.Action.openLink.rawValue,
+                                                      payload: nil),
+                                        host: host)
+
+        #expect(didHandle)
+        #expect(openLink.handled.isEmpty)
+        #expect(host.sent.isEmpty, "the presence gate answers requests, and this is not one")
+    }
+
     // MARK: - Session teardown
 
     @Test("Teardown reaches every handler, including ones that never handled anything")

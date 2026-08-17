@@ -72,9 +72,16 @@ final class WebBridgeActionRegistry {
 
     /// - Returns: `false` when no handler owns the action. Not an error in itself — the web
     ///   vocabulary is allowed to be newer than the SDK — so how loudly to report it is the
-    ///   caller's call.
+    ///   caller's call. Anything that is not a request is reported as handled: it was never a
+    ///   handler's to answer.
     @discardableResult
     func handle(_ message: BridgeMessage, host: WebBridgeHost) -> Bool {
+        // Handlers are promised requests only, and it is this door that has to keep the promise:
+        // a host forwards everything the dispatcher matched, confirmed responses to what we sent
+        // the page included. A confirmed `motion.event` is not an unknown action — it is not an
+        // action at all — so it is swallowed here rather than reported to the host as one.
+        guard message.type == .request else { return true }
+
         guard let action = message.parsedAction, let owner = owners[action] else {
             return false
         }
