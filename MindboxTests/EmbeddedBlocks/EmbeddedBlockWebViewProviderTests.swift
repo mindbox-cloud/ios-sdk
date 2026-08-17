@@ -325,6 +325,21 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isUserPresent == true)
     }
 
+    /// The cheapest path back into the window is the one that reloads nothing, which is exactly
+    /// the one that could skip restoring presence. A block scrolled away and back would then be
+    /// visible and refusing every link the user taps on it.
+    @Test("A rendered page shown again from cache counts as present again")
+    func restartOfRenderedPageHasUserPresent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.renderContent(count: 3)
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.page?.isUserPresent == true)
+    }
+
     // MARK: - Stop and restart
 
     /// After `stop()` the provider must stay silent — the container relies on this when it

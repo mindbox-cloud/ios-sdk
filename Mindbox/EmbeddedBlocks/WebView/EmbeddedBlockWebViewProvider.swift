@@ -159,6 +159,11 @@ final class EmbeddedBlockWebViewProvider {
         guard !isStarted else { return }
 
         isStarted = true
+        // Above every early return below: the block is back in the window, whatever it takes to
+        // show it. Left further down it would only be restored on the paths that reload, and a
+        // page shown again from cache would stay marked invisible for the rest of its life —
+        // silently refusing every link the user taps on it.
+        page?.isUserPresent = true
 
         // The page has already rendered and is still around — show it as is. Returning the block
         // to the window costs no network, no shimmer, no repeated events to the host.
@@ -170,11 +175,9 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         onStateChange?(.loading)
-        // A new attempt has started: how the previous one ended no longer matters — including for
-        // deciding whether the page may act on the user's behalf.
+        // A new attempt has started: how the previous one ended no longer matters.
         outcome = nil
         didReportContent = false
-        page?.isUserPresent = true
 
         if let page {
             page.load()

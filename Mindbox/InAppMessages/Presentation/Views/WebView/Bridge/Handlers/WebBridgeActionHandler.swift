@@ -79,6 +79,14 @@ final class WebBridgeActionRegistry {
             return false
         }
 
+        // The one door for `requiresUserPresence`: a handler that never runs cannot act on a page
+        // nobody is looking at, whatever it was going to do. A refusal still counts as handled —
+        // the action is owned, and reporting it as unknown would send the caller looking for a
+        // missing handler.
+        guard !action.requiresUserPresence || host.requireUserPresence(for: message) else {
+            return true
+        }
+
         owner.handle(message, host: host)
         return true
     }

@@ -62,6 +62,11 @@ private extension OpenLinkActionHandler {
         let opener = urlOpener
 
         DispatchQueue.main.async { [weak host] in
+            // Presence was checked before this hop, and a block can leave the window inside it.
+            // Asked through the optional on purpose — binding `host` strongly here would hand the
+            // closures below a page they must not keep alive.
+            guard host?.requireUserPresence(for: message) == true else { return }
+
             opener.open(url, universalLinksOnly: true) { opened in
                 DispatchQueue.main.async {
                     guard let host else { return }
@@ -84,6 +89,11 @@ private extension OpenLinkActionHandler {
     }
 
     static func openInSafari(url: URL, message: BridgeMessage, host: WebBridgeHost) {
+        // The last gate, and the one that matters most: the system takes as long as it takes to
+        // decide the link is nobody's, and a block can go off screen while it does. A sheet put up
+        // after that covers a screen the user chose themselves.
+        guard host.requireUserPresence(for: message) else { return }
+
         guard let presenter = host.presentingViewController else {
             Logger.common(message: "[WebView] navigate: no presenting view controller found",
                           level: .default,

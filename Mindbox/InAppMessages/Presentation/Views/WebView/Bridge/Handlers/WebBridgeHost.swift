@@ -79,6 +79,29 @@ extension WebBridgeHost {
     }
 }
 
+// MARK: - Acting on the user's behalf
+
+extension WebBridgeHost {
+
+    /// Whether a request that acts on the user's behalf may go ahead here and now.
+    ///
+    /// Asked in two places, and both are needed. ``WebBridgeActionRegistry`` asks before it
+    /// dispatches, which stops the whole class of such actions at one door. A handler that then
+    /// goes on to wait — on the system, on a dialog the user is free to leave standing — asks
+    /// again when it comes back, because the page can leave the screen while it waits and the
+    /// answer would otherwise land as a Safari sheet over a screen the user went to on their own.
+    ///
+    /// - Returns: `true` when the action may go ahead. On `false` the request is already answered:
+    ///   the page's promise settles with an error rather than hanging on something that will never
+    ///   happen.
+    func requireUserPresence(for message: BridgeMessage) -> Bool {
+        guard !isUserPresent else { return true }
+
+        respondError("Nobody is looking at this page", to: message)
+        return false
+    }
+}
+
 // MARK: - Capabilities
 
 /// Hosts a page that steers its own life: it can report that it booted, ask to be closed or

@@ -653,6 +653,48 @@ public struct BridgeMessage: Codable {
         }
 
         static let deferredActions: Set<Action> = Set(allCases.filter(\.isDeferred))
+
+        /// Actions that act on the user's behalf, and therefore must not run on a page nobody is
+        /// looking at.
+        ///
+        /// An embedded block that left the window keeps its page alive, and that page still
+        /// delivers whatever its `setTimeout` scheduled. Nothing the user did stands behind such a
+        /// message, so anything that leaves the app, covers it, or reaches for the device has to be
+        /// refused. Enforced by ``WebBridgeActionRegistry`` before dispatch, and again by the
+        /// handlers that go on to wait — the page can leave the screen while they do.
+        ///
+        /// Every action listed here is also ``isDeferred``, and has to be: the refusal reaches the
+        /// page as the answer to its request, while a non-deferred action was already answered
+        /// `{success: true}` by the dispatcher before a handler ever saw it.
+        var requiresUserPresence: Bool {
+            switch self {
+            // Leave the app or cover it — a Safari sheet, the settings screen, a permission
+            // dialog — over whatever the user went to instead.
+            case .openLink, .settingsOpen, .permissionRequest:
+                return true
+
+            // Felt rather than seen, which makes it worse: a block three screens down buzzing the
+            // device gives the user nothing to trace it back to.
+            case .haptic:
+                return true
+
+            // Takes the sensors on behalf of a page nobody sees. Stopping is always allowed —
+            // giving the sensors back is not something done on the user's behalf.
+            case .motionStart:
+                return true
+
+            // Opens a window, once it is implemented.
+            case .showInApp:
+                return true
+
+            case .motionStop, .ready, .close, .`init`, .click, .hide, .log,
+                 .contentRendered, .checkInappsTargeting,
+                 .asyncOperation, .syncOperation,
+                 .localStateGet, .localStateSet, .localStateInit,
+                 .motionEvent, .navigationIntercepted:
+                return false
+            }
+        }
     }
 
     enum CodingKeys: String, CodingKey {

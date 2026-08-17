@@ -38,6 +38,12 @@ extension BridgeURLOpening {
     /// carried — worth correcting, but not while the point of the change is that nothing moved.
     func open(_ url: URL, answering message: BridgeMessage, host: WebBridgeHost) {
         DispatchQueue.main.async { [weak host] in
+            // The hop above is a turn of the main queue, and a block can leave the window inside
+            // it: whoever routed us here checked presence before that turn, not after it. Asked
+            // through the optional on purpose — binding `host` strongly here would hand the
+            // closures below a page they must not keep alive.
+            guard host?.requireUserPresence(for: message) == true else { return }
+
             self.open(url, universalLinksOnly: false) { success in
                 DispatchQueue.main.async {
                     guard let host else { return }
