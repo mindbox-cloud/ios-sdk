@@ -18,7 +18,8 @@ private enum EmbeddedBlockConfig: String, Configurable {
 
 /// The three new ways into the selection: by place, by id, and the list a feed may draw. The config
 /// behind them holds a block for `stories-list-container`, an unlimited direct-call story, an
-/// ordinary modal, and a `once` direct-call story — the pair that shows the frequency rule.
+/// ordinary modal, a `once` direct-call story — the pair that shows the frequency rule — and a
+/// mixed form carrying an embedded and a modal variant at once.
 ///
 /// The config also carries `validityPeriod` on every in-app, in all three shapes the backend sends —
 /// including one long expired. iOS does not read the field at all, and the stub keeps it so that the
@@ -38,6 +39,7 @@ struct EmbeddedBlockResolveTests {
         static let cappedBlockId = "88888888-8888-8888-8888-888888888888"
         static let operationName = "block.refresh.operation"
         static let segmentStoryId = "99999999-9999-9999-9999-999999999999"
+        static let mixedId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     }
 
     private let mapper: InappMapperProtocol
@@ -492,5 +494,26 @@ struct EmbeddedBlockResolveTests {
 
         #expect(!dataFacade.targetingArray.contains(Constants.unlimitedStoryId))
         #expect(!dataFacade.targetingArray.contains(Constants.onceStoryId))
+    }
+
+    /// A pure-embedded in-app is offered by its place resolve, which vouches for it there — the
+    /// catch-up speaking for it too would double the funnel on every start. A mixed form stays
+    /// covered: the catch-up speaks for its overlay half (in sync with Android).
+    @Test("The startup catch-up vouches for no in-app without an overlay variant")
+    func catchUpSkipsPureEmbeddedInapps() async {
+        _ = await withCheckedContinuation { continuation in
+            mapper.handleInapps(nil, config) { continuation.resume(returning: $0) }
+        } as InAppFormData?
+
+        #expect(!dataFacade.targetingArray.contains(Constants.blockId))
+        #expect(!dataFacade.targetingArray.contains(Constants.cappedBlockId))
+        #expect(dataFacade.targetingArray.contains(Constants.mixedId))
+    }
+
+    /// The feed-side half of the same split: an id is cut only when nothing of it can be drawn over
+    /// the screen, so a mixed form stays in the answer.
+    @Test("A feed keeps a mixed in-app — its overlay half can be drawn")
+    func feedKeepsAMixedInapp() async {
+        #expect(await renderable([Constants.mixedId]) == [Constants.mixedId])
     }
 }

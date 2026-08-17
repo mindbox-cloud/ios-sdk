@@ -450,6 +450,75 @@
       "tags": {
         "templateType": "Embedded"
       }
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": null,
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "mixed-block-place",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": []
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          },
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160479"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Mixed"
+      }
     }
   ]
 }
