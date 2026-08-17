@@ -7,10 +7,13 @@
 //
 
 import UIKit
+import class MindboxLogger.Locked
 @testable import Mindbox
 
 // swiftlint:disable force_unwrapping
 
+// Spy state is @Locked: the selection calls in on its processing queue (and main), tests read
+// from their own threads — TSan flagged the unsynchronized version.
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     let segmentationService: SegmentationServiceProtocol
@@ -18,14 +21,15 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let imageService: ImageDownloadServiceProtocol
     let tracker: InappTargetingTrackProtocol
 
-    public var showArray: [String] = []
-    public var targetingArray: [String] = []
-    public var trackTargetingCalls: [(id: String?, tags: [String: String]?)] = []
-    public var downloadImageError: MindboxError?
-    public var imageDownloadFailures: [(inappId: String, details: String?)] = []
-    public var downloadImageTags: [String: [String: String]?] = [:]
-    public var collectedTargetingFailureIds: [Set<String>] = []
-    public var collectedTagsByInappId: [[String: [String: String]]] = []
+    @Locked public var showArray: [String] = []
+    @Locked public var targetingArray: [String] = []
+    @Locked public var trackTargetingCalls: [(id: String?, tags: [String: String]?)] = []
+    @Locked public var downloadImageError: MindboxError?
+    @Locked public var imageDownloadFailures: [(inappId: String, details: String?)] = []
+    @Locked public var downloadImageTags: [String: [String: String]?] = [:]
+    @Locked public var collectedTargetingFailureIds: [Set<String>] = []
+    @Locked public var collectedTagsByInappId: [[String: [String: String]]] = []
+    @Locked public var fetchDependenciesCalls = 0
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -42,6 +46,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     ) {
+        fetchDependenciesCalls += 1
         completion()
     }
 

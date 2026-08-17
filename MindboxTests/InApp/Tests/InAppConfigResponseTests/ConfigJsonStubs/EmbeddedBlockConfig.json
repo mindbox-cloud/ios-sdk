@@ -1,0 +1,455 @@
+{
+  "monitoring": {
+    "logs": []
+  },
+  "settings": {
+    "operations": {},
+    "ttl": {
+      "inapps": "1.00:00:00"
+    },
+    "inapp": {
+      "maxInappsPerSession": 3,
+      "maxInappsPerDay": 50,
+      "minIntervalBetweenShows": "00:00:10"
+    }
+  },
+  "inapps": [
+    {
+      "id": "66666666-6666-6666-6666-666666666666",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "$type": "unlimited"
+      },
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "154",
+            "systemName": "block.refresh.operation",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "stories-list-container",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": [
+                        {
+                          "inAppId": "55555555-5555-5555-5555-555555555555",
+                          "title": "Operation story"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
+    },
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "stories-list-container",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": [
+                        {
+                          "inAppId": "22222222-2222-2222-2222-222222222222",
+                          "title": "Story one"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": {
+        "$type": "directCall"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160477"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Hidden"
+      }
+    },
+    {
+      "id": "99999999-9999-9999-9999-999999999999",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": {
+        "$type": "directCall"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "positive",
+            "segmentationInternalId": "42",
+            "segmentationExternalId": "feed-segmentation",
+            "segmentExternalId": "feed-segment",
+            "$type": "segment"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160477"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Hidden"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": null,
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160478"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Popup"
+      }
+    },
+    {
+      "id": "55555555-5555-5555-5555-555555555555",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "once",
+        "kind": "lifetime"
+      },
+      "validityPeriod": {
+        "$type": "unlimited"
+      },
+      "displayConditions": {
+        "$type": "directCall"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160478"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Popup"
+      }
+    },
+    {
+      "id": "77777777-7777-7777-7777-777777777777",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "$type": "unlimited"
+      },
+      "displayConditions": {
+        "$type": "directCall"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "internalId": "154",
+            "systemName": "block.refresh.operation",
+            "$type": "apiMethodCall"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "modal",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/popup",
+                    "contentUrl": "https://mobile-static.mindbox.ru/stable/inapps/webview/content/index.html",
+                    "params": {
+                      "formId": "160477"
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            },
+            "imageUrl": "",
+            "redirectUrl": "",
+            "intentPayload": ""
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Hidden"
+      }
+    },
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "once",
+        "kind": "lifetime"
+      },
+      "validityPeriod": null,
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "capped-block-place",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": []
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
+    }
+  ]
+}

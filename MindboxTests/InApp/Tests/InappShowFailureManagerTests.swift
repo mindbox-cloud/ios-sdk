@@ -811,6 +811,7 @@ final class WebViewControllerWindowProviderTests: XCTestCase {
 private final class InAppMessagesTrackerMock: InAppMessagesTrackerProtocol {
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {}
     func trackClick(id: String, tags: [String: String]?) throws {}
+    func trackTargeting(id: String, tags: [String: String]?) throws {}
 }
 
 private final class PresentationStrategyMock: PresentationStrategyProtocol {

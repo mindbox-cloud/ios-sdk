@@ -618,6 +618,7 @@ private extension ABTests {
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
+                                           displayConditions: inapp.displayConditions,
                                            form: formModel,
                                            tags: inapp.tags)
                     filteredInapps.append(inappModel)

@@ -140,6 +140,7 @@ extension InAppConfigStub {
                          delayTime: nil,
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
+                         displayConditions: .unrestricted,
                          targeting: targeting,
                          form: try getForm(),
                          tags: nil)]
