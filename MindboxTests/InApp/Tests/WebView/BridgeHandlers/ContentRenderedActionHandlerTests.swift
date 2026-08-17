@@ -136,18 +136,21 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
-    /// Odd, but readable: to the surface it means the same as zero — nothing was drawn. Refusing
-    /// it would leave the block waiting out its whole budget over a report that did arrive.
-    @Test("A negative count is delivered like zero")
-    func negativeCountIsDelivered() {
+    /// A page counts what it drew, and it cannot draw minus one story: the number is a page bug.
+    /// Refused rather than folded into "empty", and the host hears it too — that is what puts the
+    /// bug into the metrics instead of letting it pass for a feed with nothing to show.
+    @Test("A negative count is refused and reaches the host as unreadable")
+    func negativeCountIsRefused() throws {
         let host = ContentHostSpy()
 
         ContentRenderedActionHandler().handle(.request(.contentRendered, payload: .object(["count": .int(-1)])),
                                               host: host)
 
-        #expect(host.rendered == [-1])
-        #expect(host.sent.first?.type == .response)
-        #expect(host.unreadableReports == 0)
+        #expect(host.rendered.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Invalid payload: 'count' must not be negative, got -1")]))
+        #expect(host.unreadableReports == 1)
     }
 
     /// The action is registered on every surface. One that reserves no space for content simply

@@ -207,16 +207,32 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
-    /// The same three cases that write no history send no event either: what is reported is a show, and
+    /// The cases that write no history send no event either: what is reported is a show, and
     /// none of these put anything in front of the user.
-    @Test("Nothing drawn, nothing reported", arguments: [0, -1])
-    func pageWithoutContentReportsNoShow(count: Int) {
+    @Test("Nothing drawn, nothing reported")
+    func pageWithoutContentReportsNoShow() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
-        bed.page?.reportRendered(count)
+        bed.page?.reportRendered(0)
 
         #expect(bed.showReporter.reported.isEmpty)
+    }
+
+    /// A page cannot draw minus one story: the number is a page bug, and it must land in the
+    /// metrics rather than pass for an empty feed.
+    @Test("A negative count is a failure, not an empty block")
+    func negativeCountIsFailure() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.page?.reportRendered(-1)
+
+        #expect(states.last == .failed)
+        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
     @Test("A page that failed to load reports no show")
