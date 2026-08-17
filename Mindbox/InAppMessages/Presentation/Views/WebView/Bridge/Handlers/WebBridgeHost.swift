@@ -28,7 +28,7 @@ protocol WebBridgeHost: AnyObject {
     var tags: [String: String]? { get }
 
     /// What a handler presents from when it needs a controller of its own (`SFSafariViewController`).
-    /// `nil` means the handler falls back to the key window.
+    /// `nil` refuses such actions: the handler answers the page with an error and presents nothing.
     var presentingViewController: UIViewController? { get }
 
     /// Whether a user is looking at this page right now.
