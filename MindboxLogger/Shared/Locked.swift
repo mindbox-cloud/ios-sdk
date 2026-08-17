@@ -8,16 +8,9 @@
 
 import Foundation
 
-/// A stored property whose reads and writes are individually atomic.
-///
-/// This is memory safety, not transactionality: a compound mutation (`append`, `insert`, `+=`)
-/// is a locked read followed by a locked write, so properties that need read-modify-write
-/// atomicity across threads still need one writer or a lock of their own. The SDK's shared
-/// state is almost all single-writer-many-readers, which is exactly the shape this covers.
-///
-/// The lock is never held while calling out: `willSet`/`didSet` observers on the wrapped
-/// property run after the store completes, so an observer that touches another `@Locked`
-/// property cannot deadlock.
+/// A stored property whose reads and writes are individually atomic — not transactional: a compound
+/// mutation is a locked read then a locked write, so cross-thread read-modify-write still needs a
+/// single writer. The lock is never held while calling out: property observers run after the store.
 @propertyWrapper
 public final class Locked<Value> {
 
@@ -39,5 +32,17 @@ public final class Locked<Value> {
             defer { lock.unlock() }
             value = newValue
         }
+    }
+
+    public var projectedValue: Locked<Value> { self }
+
+    /// Atomically replaces the value and returns what it replaced — the one compound mutation a
+    /// read-then-write through `wrappedValue` cannot make race-free.
+    public func exchange(_ newValue: Value) -> Value {
+        lock.lock()
+        defer { lock.unlock() }
+        let oldValue = value
+        value = newValue
+        return oldValue
     }
 }
