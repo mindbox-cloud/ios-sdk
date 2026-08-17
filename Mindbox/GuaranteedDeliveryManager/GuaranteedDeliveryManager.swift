@@ -33,14 +33,19 @@ final class GuaranteedDeliveryManager: NSObject {
 
     @objc dynamic var stateObserver: NSString
 
-    private(set) var state: State = .idle {
+    // @Locked for the same reason as `canScheduleOperations`: `performScheduleIfNeeded` reads it
+    // from database-notification and retry threads while the delivery flow writes it. The KVO
+    // mirror in didSet is untouched — observers still fire after every write.
+    @Locked private(set) var state: State = .idle {
         didSet {
             stateObserver = NSString(string: state.rawValue)
             Logger.common(message: "[GD] State did set to value: \(state.description)", level: .info, category: .delivery)
         }
     }
 
-    var canScheduleOperations = false {
+    // @Locked because the flag is written from the SDK's init path and read by
+    // performScheduleIfNeeded from database-notification threads (TSan-confirmed race).
+    @Locked var canScheduleOperations = false {
         didSet {
             Logger.common(message: "[GD] Scheduling of operations is now \(canScheduleOperations ? "enabled" : "disabled")", level: .info, category: .delivery)
             performScheduleIfNeeded()
@@ -64,7 +69,9 @@ final class GuaranteedDeliveryManager: NSObject {
         )
         self.retryDeadline = retryDeadline
         self.fetchLimit = fetchLimit
-        stateObserver = NSString(string: state.description)
+        // Spelled as the literal initial state: `state` is behind a lock, and its accessor
+        // cannot be called before super.init.
+        stateObserver = NSString(string: State.idle.description)
         super.init()
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()

@@ -71,8 +71,7 @@ extension MBContainer {
             let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
-            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
-            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
+            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager)
         }
         
         register(InappShowFailureManagerProtocol.self) {

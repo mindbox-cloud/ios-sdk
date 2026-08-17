@@ -28,7 +28,9 @@ public class MBLoggerCoreDataManager {
         case enabled
         case disabled
     }
-    private(set) var storageState: StorageState
+    // @Locked: bootstrap assigns it on the logger queue while public entry points read it from
+    // caller threads (TSan-confirmed race on init vs first log call).
+    @Locked private(set) var storageState: StorageState
     
     private let osLog = OSLogWriter(
         subsystem: Bundle.main.bundleIdentifier ?? "cloud.Mindbox.UndefinedHostApplication",
@@ -70,8 +72,10 @@ public class MBLoggerCoreDataManager {
     
     // MARK: CoreData objects
     
-    private var persistentContainer: MBPersistentContainer?
-    private var context: NSManagedObjectContext?
+    // @Locked for the same bootstrap-vs-caller reason as `storageState`: the guards in the public
+    // entry points read both from the calling thread.
+    @Locked private var persistentContainer: MBPersistentContainer?
+    @Locked private var context: NSManagedObjectContext?
     
     // MARK: Initializer
     

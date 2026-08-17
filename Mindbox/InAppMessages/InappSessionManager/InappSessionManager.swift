@@ -15,24 +15,24 @@ protocol InappSessionManagerProtocol {
 
 final class InappSessionManager: InappSessionManagerProtocol {
     
-    var lastTrackVisitTimestamp: Date?
+    // @Locked: session checks arrive both from the controller queue (direct visits) and
+    // synchronously from the host's thread (push and link visits), and each check is a
+    // read followed by a write of this timestamp.
+    @Locked var lastTrackVisitTimestamp: Date?
     
     private let inappCoreManager: InAppCoreManagerProtocol
     private let inappConfigManager: InAppConfigurationManagerProtocol
     private let targetingChecker: TargetingCheckerEraseProtocol
     private let userVisitManager: UserVisitManagerProtocol
-    private let inappTrackingService: InAppTrackingServiceProtocol
 
     init(inappCoreManager: InAppCoreManagerProtocol,
          inappConfigManager: InAppConfigurationManagerProtocol,
          targetingChecker: TargetingCheckerEraseProtocol,
-         userVisitManager: UserVisitManagerProtocol,
-         inappTrackingService: InAppTrackingServiceProtocol) {
+         userVisitManager: UserVisitManagerProtocol) {
         self.inappCoreManager = inappCoreManager
         self.inappConfigManager = inappConfigManager
         self.targetingChecker = targetingChecker
         self.userVisitManager = userVisitManager
-        self.inappTrackingService = inappTrackingService
         
         addObserverToDismissInApp()
     }

@@ -28,7 +28,13 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     /// When `true`, the next `trackDirect()` call will be skipped.
     /// Set by `handlePush` / `handleUniversalLink` to prevent a duplicate
     /// track-visit that would otherwise fire from the session handler.
-    private var skipNextDirectTrackVisit = false
+    ///
+    /// The setters run synchronously on whatever thread the host called `track` from — that ordering is
+    /// the contract `track(_:)` documents — while `trackDirect` consumes the flag on the controller
+    /// queue. `@Locked` only removes the data race on the flag itself: the read-then-clear in
+    /// `trackDirect` is two separate accesses, so a `track` landing between them has its skip cleared
+    /// and the next direct visit goes out as a duplicate.
+    @Locked private var skipNextDirectTrackVisit = false
 
     init(
         databaseRepository: DatabaseRepositoryProtocol,
