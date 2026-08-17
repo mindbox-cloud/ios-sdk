@@ -326,6 +326,11 @@ public struct BridgeMessage: Codable {
         /// the page gives up on the answer after three seconds and renders nothing rather than
         /// wait. The reply keeps the ids that pass, in the order they were asked about.
         ///
+        /// > Warning: Not implemented yet. `CheckInappsTargetingActionHandler` evaluates no
+        /// > targeting and returns every id it was given, so an answer to this action is not
+        /// > evidence that anything passed. The envelope below is what ships; the filtering is
+        /// > not.
+        ///
         /// - Payload:
         ///   ```json
         ///   { "inappIds": ["id-1", "id-2"] }
@@ -344,6 +349,11 @@ public struct BridgeMessage: Codable {
         ///
         /// `index` and `sourceInappId` describe where the request came from and are journalled,
         /// not passed on — the page already puts everything it needs into `params`.
+        ///
+        /// > Warning: Not implemented yet. `ShowInAppActionHandler` journals the request and
+        /// > acknowledges it, and no window opens. The success below says the request was
+        /// > well-formed and received — never that a show happened. The page is answered rather
+        /// > than left on a promise nothing will settle, so it can finish its own flow.
         ///
         /// - Payload:
         ///   ```json

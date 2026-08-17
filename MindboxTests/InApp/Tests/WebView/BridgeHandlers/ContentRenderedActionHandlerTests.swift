@@ -91,6 +91,49 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
+    /// A whole number of items or nothing. Rounding would take a page bug and turn it into a
+    /// plausible number the SDK then acts on.
+    @Test("A fractional count is refused rather than rounded")
+    func fractionalCountIsRefused() throws {
+        let host = ContentHostSpy()
+
+        ContentRenderedActionHandler().handle(.request(.contentRendered, payload: .object(["count": .double(3.6)])),
+                                              host: host)
+
+        #expect(host.rendered.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Invalid payload: 'count' must be a whole number, got 3.6")]))
+    }
+
+    /// The reason it is worth refusing at all: rounding decides the block's fate on the page's
+    /// behalf. `0.4` would reach the host as `0` and collapse the block as empty, `0.6` as `1` and
+    /// show it — the same page bug, two opposite outcomes, neither of them reported.
+    @Test("A fraction either side of a half is refused, not turned into a verdict",
+          arguments: [0.4, 0.6, 1.5, 2.9])
+    func fractionNeverBecomesAVerdict(count: Double) {
+        let host = ContentHostSpy()
+
+        ContentRenderedActionHandler().handle(.request(.contentRendered, payload: .object(["count": .double(count)])),
+                                              host: host)
+
+        #expect(host.rendered.isEmpty)
+        #expect(host.sent.first?.type == .error)
+    }
+
+    /// Not numbers of items either, and `Int(exactly:)` turns them away with the fractions.
+    @Test("A count that is not a finite number is refused",
+          arguments: [Double.nan, .infinity, -.infinity, 1e30])
+    func unusableNumberIsRefused(count: Double) {
+        let host = ContentHostSpy()
+
+        ContentRenderedActionHandler().handle(.request(.contentRendered, payload: .object(["count": .double(count)])),
+                                              host: host)
+
+        #expect(host.rendered.isEmpty)
+        #expect(host.sent.first?.type == .error)
+    }
+
     @Test("A negative count is refused rather than clamped")
     func negativeCountIsRefused() {
         let host = ContentHostSpy()
