@@ -526,13 +526,13 @@ struct MindboxEmbeddedBlockViewTests {
     /// exposes as an XML attribute. What the host cannot do is break the block with it: a
     /// non-positive value would collapse every block before the config had a chance, so it is
     /// reported and replaced with the default.
-    @Test("A custom config timeout is taken as given, a broken one falls back",
+    @Test("A custom timeout is taken as given, a broken one falls back",
           arguments: [(nil as TimeInterval?, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (TimeInterval(12), TimeInterval(12)),
                       (TimeInterval(0), TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (TimeInterval(-5), TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds))])
-    func configTimeoutIsSanitized(given: TimeInterval?, effective: TimeInterval) {
-        #expect(MindboxEmbeddedBlockView.sanitizedConfigTimeout(given, placeSystemName: "block") == effective)
+    func timeoutIsSanitized(given: TimeInterval?, effective: TimeInterval) {
+        #expect(MindboxEmbeddedBlockView.sanitizedTimeout(given, placeSystemName: "block") == effective)
     }
 
     /// The container, not the content, guarantees the host's layout will not wait forever: a

@@ -44,7 +44,7 @@ public struct MindboxEmbeddedBlock: View {
 
     private let placeSystemName: String
     private let height: CGFloat
-    private let configTimeout: TimeInterval?
+    private let timeout: TimeInterval?
     private let onLoad: (() -> Void)?
     private let onFail: (() -> Void)?
 
@@ -55,19 +55,19 @@ public struct MindboxEmbeddedBlock: View {
     ///   - placeSystemName: The system name of the place from the admin panel.
     ///   - height: The height the block occupies while loading and shown. Fixed at creation:
     ///     a new value given to a live block is ignored.
-    ///   - configTimeout: How long the block waits to learn what it shows before collapsing as
+    ///   - timeout: How long the block waits to learn what it shows before collapsing as
     ///     empty, in seconds. `nil` means the SDK default of 30. A late answer still expands the
     ///     block.
     ///   - onLoad: The block content is shown and the container is visible.
     ///   - onFail: The block cannot be shown — a failure or an empty block.
     public init(placeSystemName: String,
                 height: CGFloat,
-                configTimeout: TimeInterval? = nil,
+                timeout: TimeInterval? = nil,
                 onLoad: (() -> Void)? = nil,
                 onFail: (() -> Void)? = nil) {
         self.placeSystemName = placeSystemName
         self.height = height
-        self.configTimeout = configTimeout
+        self.timeout = timeout
         self.onLoad = onLoad
         self.onFail = onFail
     }
@@ -94,7 +94,7 @@ public struct MindboxEmbeddedBlock: View {
     public var body: some View {
         EmbeddedBlockBody(placeSystemName: placeSystemName,
                           height: height,
-                          configTimeout: configTimeout,
+                          timeout: timeout,
                           onLoad: onLoad,
                           onFail: onFail,
                           placeholder: placeholderBuilder,
@@ -108,7 +108,7 @@ private struct EmbeddedBlockBody: View {
 
     let placeSystemName: String
     let height: CGFloat
-    let configTimeout: TimeInterval?
+    let timeout: TimeInterval?
     let onLoad: (() -> Void)?
     let onFail: (() -> Void)?
     let placeholder: (() -> AnyView)?
@@ -120,14 +120,14 @@ private struct EmbeddedBlockBody: View {
 
     init(placeSystemName: String,
          height: CGFloat,
-         configTimeout: TimeInterval?,
+         timeout: TimeInterval?,
          onLoad: (() -> Void)?,
          onFail: (() -> Void)?,
          placeholder: (() -> AnyView)?,
          errorContent: (() -> AnyView)?) {
         self.placeSystemName = placeSystemName
         self.height = height
-        self.configTimeout = configTimeout
+        self.timeout = timeout
         self.onLoad = onLoad
         self.onFail = onFail
         self.placeholder = placeholder
@@ -140,7 +140,7 @@ private struct EmbeddedBlockBody: View {
         ZStack {
             EmbeddedBlockRepresentable(placeSystemName: placeSystemName,
                                        height: height,
-                                       configTimeout: configTimeout,
+                                       timeout: timeout,
                                        presentation: $presentation,
                                        onLoad: onLoad,
                                        onFail: onFail,
@@ -172,7 +172,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     let placeSystemName: String
     let height: CGFloat
-    let configTimeout: TimeInterval?
+    let timeout: TimeInterval?
 
     @Binding var presentation: EmbeddedBlockPresentation
 
@@ -190,7 +190,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
-        let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height, configTimeout: configTimeout)
+        let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height, timeout: timeout)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
         blockView.onPresentationChange = { presentation in

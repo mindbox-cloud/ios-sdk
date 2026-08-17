@@ -218,7 +218,7 @@ struct MindboxEmbeddedBlockTests {
         let presentation = EmbeddedBlockPresentation(layer: .placeholder, height: 104)
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
-                                          configTimeout: nil,
+                                          timeout: nil,
                                           presentation: .constant(presentation),
                                           onLoad: nil,
                                           onFail: nil,

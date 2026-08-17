@@ -130,15 +130,15 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///   - height: The height the block occupies while loading and shown. Reserving it is the
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
-    ///   - configTimeout: How long the block waits to learn what it shows — the config has to
+    ///   - timeout: How long the block waits to learn what it shows — the config has to
     ///     arrive and the selection has to run — before collapsing as empty, in seconds. `nil`
     ///     means the SDK default of 30. A late answer still expands the block. The separate budget
     ///     a loaded page gets to render itself is not affected.
-    public convenience init(placeSystemName: String, height: CGFloat, configTimeout: TimeInterval? = nil) {
+    public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
         self.init(placeSystemName: placeSystemName,
                   height: height,
                   contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: placeSystemName),
-                  configTimeout: configTimeout)
+                  timeout: timeout)
     }
 
     /// Blocks are not created from storyboards: the place system name and the height are required
@@ -151,12 +151,12 @@ public final class MindboxEmbeddedBlockView: UIView {
     init(placeSystemName: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
-         configTimeout: TimeInterval? = nil,
+         timeout: TimeInterval? = nil,
          waitBudget: EmbeddedBlockWaitBudget? = nil) {
         self.placeSystemName = placeSystemName
         self.preferredHeight = height
         self.contentProvider = contentProvider
-        let answerTimeout = Self.sanitizedConfigTimeout(configTimeout, placeSystemName: placeSystemName)
+        let answerTimeout = Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName)
         // The provider knows which wait is running, so the duration is asked at arm time, not stored.
         self.waitBudget = waitBudget ?? EmbeddedBlockWaitBudget(
             placeSystemName: placeSystemName,
@@ -174,18 +174,18 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// A non-positive timeout cannot mean anything the host would want — it would collapse every
     /// block before the config had a chance — so it is reported and replaced with the default
     /// rather than obeyed.
-    static func sanitizedConfigTimeout(_ configTimeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
-        guard let configTimeout else {
+    static func sanitizedTimeout(_ timeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
+        guard let timeout else {
             return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
         }
 
-        guard configTimeout > 0 else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given configTimeout \(configTimeout): it must be positive, using the default \(Constants.EmbeddedBlock.answerTimeoutSeconds) s",
+        guard timeout > 0 else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given timeout \(timeout): it must be positive, using the default \(Constants.EmbeddedBlock.answerTimeoutSeconds) s",
                           level: .error, category: .embeddedBlocks)
             return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
         }
 
-        return configTimeout
+        return timeout
     }
 
     /// Zero height is not a collapse: the block runs its whole cycle and hands the host its events,
