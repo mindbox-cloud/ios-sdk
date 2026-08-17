@@ -634,11 +634,18 @@ public class Mindbox: NSObject {
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
+    // The two below have no caller in this repository and are not dead: the internal test apps invoke
+    // them through `NSSelectorFromString`, which is what `@objc` is here for. Objective-C dispatch
+    // ignores `private`, so the reset stays out of the public API while remaining reachable to a
+    // debug screen. A search for callers will not find them — do not remove them on that basis.
+
+    /// Wipes the show history, so a once-per-lifetime in-app can be shown again while testing.
     @objc
     private func resetShownInApps() {
         persistenceStorage?.shownDatesByInApp = [:]
     }
 
+    /// Wipes the session storage, so the next event starts a session as if the app had been relaunched.
     @objc
     private func eraseSessionStorage() {
         sessionTemporaryStorage?.erase()

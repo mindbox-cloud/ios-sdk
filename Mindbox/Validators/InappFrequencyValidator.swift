@@ -28,6 +28,10 @@ class InappFrequencyValidator {
             case .once(let onceFrequency):
                 let validator = OnceFrequencyValidator(persistenceStorage: persistenceStorage)
                 return validator.isValid(item: onceFrequency, id: id)
+            case .unlimited:
+                Logger.common(message: "[Inapp frequency] Current frequency is [unlimited]. Valid = true. Inapp ID: \(id)",
+                              level: .debug, category: .inAppMessages)
+                return true
             case .unknown:
                 return false
         }

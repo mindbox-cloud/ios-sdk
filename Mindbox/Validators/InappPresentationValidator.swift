@@ -11,6 +11,15 @@ import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
+
+    /// The same budgets without the one-at-a-time lock: how often the SDK may show an in-app at all,
+    /// asked by a path that does not put anything over the screen.
+    ///
+    /// The lock is the only check here that belongs to overlays alone — two of them cannot share the
+    /// screen, while a block is drawn inside the host layout and shares it with everything. Everything
+    /// else applies to a block exactly as it applies to a modal: the session and daily budgets, the
+    /// minimum interval, the frequency, and the same way out for a priority or `unlimited` in-app.
+    func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
 }
 
 final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
@@ -22,21 +31,35 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
-        
-        guard isNotPresentingAnotherInApp(), isValidFrequency(frequency: frequency, id: id) else {
+
+        // Two in-apps cannot share the screen, so the lock holds for everyone — including a priority or
+        // `unlimited` in-app. It is also the only check a block does not run: see `isWithinShowBudgets`.
+        guard isNotPresentingAnotherInApp() else {
             return false
         }
 
-        if isPriority {
+        return isWithinShowBudgets(isPriority: isPriority, frequency: frequency, id: id)
+    }
+
+    func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        guard isValidFrequency(frequency: frequency, id: id) else {
+            return false
+        }
+
+        // The budgets are about how often the SDK may show an in-app on its own, and an `unlimited`
+        // in-app is outside that accounting in both directions: it records no show
+        // (`InappFrequency.countsShows`) and no recorded show holds it back.
+        if isPriority || frequency == .unlimited {
+            let reason = isPriority ? "Priority" : "Unlimited"
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()
-            
+
             Logger.common(message: """
-                [PresentationValidator] Priority in-app detected, skipping all checks except isNotPresentingAnotherInApp
+                [PresentationValidator] \(reason) in-app detected, skipping the show budgets
                 - Current session shown count: \(currentShownCount)
                 - Shown in-apps today: \(shownInappsToday)
                 """, level: .debug, category: .inAppMessages)
-            
+
             return true
         }
         

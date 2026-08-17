@@ -35,6 +35,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let imagesDict: [String: UIImage]
     private let operation: (name: String, body: String)?
     private let tags: [String: String]?
+    private let extraParams: [String: JSONValue]?
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
@@ -63,13 +64,15 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
         operation: (name: String, body: String)?,
-        tags: [String: String]?
+        tags: [String: String]?,
+        extraParams: [String: JSONValue]? = nil
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
         self.operation = operation
         self.tags = tags
+        self.extraParams = extraParams
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
         self.onError = onError
@@ -100,7 +103,10 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
+            // The caller's params go on top of the config's, key by key: whoever asked for this show
+            // gets the last word, service keys included. The SDK does not judge what is in there.
+            let params = webviewLayer.params.merging(extraParams ?? [:]) { _, fromCaller in fromCaller }
+            let webView = TransparentView(frame: .zero, params: params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)

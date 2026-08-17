@@ -20,6 +20,15 @@ internal struct ScheduledInapp {
 protocol InappScheduleManagerProtocol {
     var delegate: InAppMessagesDelegate? { get set }
     func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
+
+    /// Shows an in-app somebody asked for, now: past the queue and the limits that guard it — session
+    /// and daily caps, the minimum interval, the frequency rules, the one-at-a-time lock. A direct call
+    /// is invited, and a tap that does nothing is a defect.
+    ///
+    /// What it records is the frequency's call, not the path's — see `InappFrequency.countsShows`.
+    /// Of the events only `Inapp.Show` goes out: targeting was already sent when the selection offered
+    /// this in-app to the page.
+    func showInAppNow(_ inAppFormData: InAppFormData)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -77,6 +86,19 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             Logger.common(message: "[InappScheduleManager] Scheduled \(inapp.inAppId) at \(presentationTime.asReadableDateTime) priority=\(inapp.isPriority) processingDuration=\(processingDuration.toTimeSpan())")
         }
     }
+
+    func showInAppNow(_ inapp: InAppFormData) {
+        DispatchQueue.main.async {
+            // The requested show replaces whatever overlay is on screen, and the dismissal finishes the
+            // closed show through its normal completion on the next main queue turn. Presenting is
+            // deferred behind it so the lock is released by the closed show before the new one takes it.
+            self.presentationManager.dismissActiveInApp()
+
+            DispatchQueue.main.async {
+                self.presentRequestedInapp(inapp)
+            }
+        }
+    }
 }
 
 internal extension InappScheduleManager {
@@ -107,7 +129,72 @@ internal extension InappScheduleManager {
         }
     }
     
+    private func trackShow(_ inapp: InAppFormData, timeToDisplay: String) {
+        do {
+            try tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplay, tags: inapp.tags)
+        } catch {
+            Logger.common(message: "[InappScheduleManager] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
+        }
+
+        guard InappFrequency.countsShows(inapp.frequency) else { return }
+
+        trackingService.trackInAppShown(id: inapp.inAppId)
+        trackingService.saveInappStateChange()
+    }
+
+    /// The cooldown is written a second time on dismissal, so that an app killed while the in-app was
+    /// on screen still leaves the interval counted from a real moment.
+    private func trackDismissal(_ inapp: InAppFormData) {
+        guard InappFrequency.countsShows(inapp.frequency) else { return }
+
+        trackingService.saveInappStateChange()
+    }
+
+    /// The requested show: everything the direct call does once the screen is free.
+    private func presentRequestedInapp(_ inapp: InAppFormData) {
+        Logger.common(message: "[InappScheduleManager] Showing \(inapp.inAppId) on request, past the queue and its limits")
+
+        let stopwatch = ForegroundStopwatch()
+        present(
+            inapp,
+            onPresented: {
+                let presentationTime = stopwatch.elapsed
+                stopwatch.stop()
+                let timeToDisplayString = presentationTime.toTimeSpan()
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) presentationTime=\(timeToDisplayString) timeToDisplay=\(timeToDisplayString)")
+                self.trackShow(inapp, timeToDisplay: timeToDisplayString)
+            },
+            onDismissed: {
+                self.trackDismissal(inapp)
+            }
+        )
+    }
+
+    /// The trigger show: the one the queue and its limits let through.
     func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
+        present(
+            inapp,
+            onPresented: {
+                let presentationTime = stopwatch.elapsed
+                stopwatch.stop()
+                let timeToDisplay = processingDuration + presentationTime
+                let timeToDisplayString = timeToDisplay.toTimeSpan()
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
+                self.trackShow(inapp, timeToDisplay: timeToDisplayString)
+                self.failureManager.clearFailures()
+            },
+            onDismissed: {
+                self.trackDismissal(inapp)
+            }
+        )
+    }
+
+    /// Putting the in-app on screen, shared by the trigger show and the direct call. What differs
+    /// between them is composed on top by each caller — the bookkeeping is not a flag here but code
+    /// the direct path never calls.
+    private func present(_ inapp: InAppFormData,
+                         onPresented: @escaping () -> Void,
+                         onDismissed: @escaping () -> Void) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
@@ -116,21 +203,7 @@ internal extension InappScheduleManager {
 
         presentationManager.present(
             inAppFormData: inapp,
-            onPresented: {
-                let presentationTime = stopwatch.elapsed
-                stopwatch.stop()
-                let timeToDisplay = processingDuration + presentationTime
-                let timeToDisplayString = timeToDisplay.toTimeSpan()
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
-                do {
-                    try self.tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplayString, tags: inapp.tags)
-                } catch {
-                    Logger.common(message: "[InappScheduleManager] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
-                }
-                self.trackingService.trackInAppShown(id: inapp.inAppId)
-                self.trackingService.saveInappStateChange()
-                self.failureManager.clearFailures()
-            },
+            onPresented: onPresented,
             onTapAction: { [delegate] url, payload in
                 delegate?.inAppMessageTapAction(
                     id: inapp.inAppId,
@@ -141,7 +214,7 @@ internal extension InappScheduleManager {
             onPresentationCompleted: { [delegate] in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
-                self.trackingService.saveInappStateChange()
+                onDismissed()
             },
             onError: { error in
                 guard !didHandleOnError else {
