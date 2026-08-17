@@ -109,11 +109,17 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
     
+    /// Hops onto `serialQueue` because that queue owns `isConfigurationReady` and
+    /// `unhandledEvents`, while a session expiring is noticed on whatever thread the track-visit
+    /// came in on. The caller sends the new session's `start` right after this, through the same
+    /// queue, so the discard always lands first.
     func discardEvents() {
-        Logger.common(message: "[InappCoreManager] Discard expired events.")
-        isConfigurationReady = false
-        configManager.resetInappManager()
-        unhandledEvents = []
+        serialQueue.async {
+            Logger.common(message: "[InappCoreManager] Discard expired events.")
+            self.isConfigurationReady = false
+            self.configManager.resetInappManager()
+            self.unhandledEvents = []
+        }
     }
 
     // MARK: - Private
@@ -136,7 +142,15 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             completion()
             return
         }
-        
+
+        // The push side of embedded blocks: the place registry hears about the operation and
+        // re-resolves the affected places with it — the only way an operation-targeted in-app can
+        // reach a block. Posted after the gate above so an operation the config never mentions wakes
+        // nobody; which places are affected is the registry's question, not this queue's.
+        if let applicationEvent = event.applicationEvent {
+            NotificationCenter.default.post(name: .inAppOperationOccurred, object: applicationEvent)
+        }
+
         let triggerTimestamp = CACurrentMediaTime()
         
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
@@ -171,11 +185,16 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         processNextEvent()
     }
     
+    /// The continuation hops back onto `serialQueue`: `handleEvent` answers on the main thread
+    /// (the selection hands its result over there), and the next iteration mutates
+    /// `unhandledEvents`, which this queue owns.
     private func processNextEvent() {
         guard !unhandledEvents.isEmpty else { return }
         let event = unhandledEvents.removeFirst()
         handleEvent(event) {
-            self.processNextEvent()
+            self.serialQueue.async {
+                self.processNextEvent()
+            }
         }
     }
 }
