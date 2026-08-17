@@ -502,7 +502,11 @@ class InappMapper: InappMapperProtocol {
             // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either:
             // otherwise every start would pump the story funnel with every user, block or no block.
             let triggerable = inapps.filter { $0.displayConditions != .directCall }
-            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: triggerable, targetingChecker: self.targetingChecker)
+            // A pure-embedded in-app is offered by its place resolve, which vouches for it there —
+            // the catch-up speaking for it too would double the funnel. A mixed form stays covered:
+            // the catch-up speaks for its overlay half (in sync with Android).
+            let catchUpCandidates = self.inappFilterService.filterOutNonOverlayInapps(triggerable)
+            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: catchUpCandidates, targetingChecker: self.targetingChecker)
 
             let logMessage = """
             [InappMapper] TR | Initiating processing of remaining in-app targeting requests.

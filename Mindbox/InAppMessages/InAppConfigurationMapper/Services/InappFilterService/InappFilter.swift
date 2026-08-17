@@ -15,6 +15,7 @@ protocol InappFilterProtocol {
     func filter(feedIds ids: [String], inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
     func filter(id: String, inapps: [InAppDTO]?) -> InApp?
     func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp]
+    func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp]
     func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp]
     func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
     func filterInappsByTargeting(inapps: [InApp],
