@@ -8,7 +8,7 @@
 
 import Testing
 import SwiftUI
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 /// The coordinator writes the presentation reported by the container deferred — on the next turn
 /// of the main queue. `dismantleUIView` silences the container's callbacks, but a write already

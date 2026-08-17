@@ -7,14 +7,10 @@
 //
 
 import Testing
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
-/// The factory keeps one promise: the provider is its own for every block, while the resolver and
-/// the action handler are shared. The independence of blocks sharing an id rests on this, so it is
-/// checked on its own.
-///
-/// The live-block counter is shared across the process, so each test uses its own id: otherwise
-/// tests running in parallel would count each other's blocks.
+/// The factory keeps one promise: the provider is its own for every block, while the place registry is
+/// shared. The independence of blocks sharing an id rests on this, so it is checked on its own.
 @Suite("Embedded block content provider factory", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockContentProviderFactoryTests {
@@ -23,46 +19,33 @@ struct EmbeddedBlockContentProviderFactoryTests {
     /// shared one would make their state and page one for both.
     @Test("Every call makes its own provider")
     func eachCallMakesItsOwnProvider() {
-        let id = "factory-independent-blocks"
+        let place = "factory-independent-blocks"
         let factory = makeFactory()
 
-        let first = factory.makeProvider(id: id)
-        let second = factory.makeProvider(id: id)
+        let first = factory.makeProvider(placeSystemName: place)
+        let second = factory.makeProvider(placeSystemName: place)
 
         #expect(first !== second)
-        withExtendedLifetime((first, second)) {
-            #expect(EmbeddedBlockWebViewProvider.liveCount(for: id) == 2)
-        }
+        withExtendedLifetime((first, second)) {}
     }
 
-    @Test("The provider is made for the requested id")
-    func providerIsMadeForTheRequestedId() {
-        let id = "factory-carries-the-id"
-        let other = "factory-some-other-id"
-        let factory = makeFactory()
-
-        let provider = factory.makeProvider(id: id)
-
-        withExtendedLifetime(provider) {
-            #expect(EmbeddedBlockWebViewProvider.liveCount(for: id) == 1)
-            #expect(EmbeddedBlockWebViewProvider.liveCount(for: other) == 0)
-        }
-    }
-
-    /// The resolver is shared exactly so that several blocks with the same id are resolved by one
-    /// data fetch. This checks that the factory really hands the provider that resolver instead
-    /// of making its own.
-    @Test("The provider asks the shared resolver for its own id")
-    func providerAsksTheSharedResolver() {
+    /// The registry is shared exactly so that several blocks of one place live off a single resolve.
+    /// This checks that the factory really hands the provider that registry instead of making its own,
+    /// and that the provider it made pulls the place it was asked for.
+    @Test("The provider pulls the requested place through the shared registry")
+    func providerPullsThroughTheSharedRegistry() {
         let resolver = EmbeddedBlockResolverMock(resolution: .empty)
-        let factory = EmbeddedBlockContentProviderFactory(resolver: resolver)
+        let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  notificationCenter: NotificationCenter(),
+                                                  fetchEmbeddedPlaces: { $0(nil) })
+        let factory = EmbeddedBlockContentProviderFactory(registry: registry, feed: EmbeddedBlockFeedServiceMock())
 
-        let provider = factory.makeProvider(id: "factory-shared-resolver")
+        let provider = factory.makeProvider(placeSystemName: "factory-shared-registry")
         withExtendedLifetime(provider) {
             provider.start()
         }
 
-        #expect(resolver.resolvedIds == ["factory-shared-resolver"])
+        #expect(resolver.resolvedPlaces == ["factory-shared-registry"])
     }
 
     // MARK: - Helpers
@@ -70,6 +53,10 @@ struct EmbeddedBlockContentProviderFactoryTests {
     /// The resolver answers "empty": no page is created for such a block, so the factory's tests
     /// need no real web view.
     private func makeFactory() -> EmbeddedBlockContentProviderFactory {
-        EmbeddedBlockContentProviderFactory(resolver: EmbeddedBlockResolverMock(resolution: .empty))
+        let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
+                                                  notificationCenter: NotificationCenter(),
+                                                  fetchEmbeddedPlaces: { $0(nil) })
+        return EmbeddedBlockContentProviderFactory(registry: registry,
+                                                   feed: EmbeddedBlockFeedServiceMock())
     }
 }

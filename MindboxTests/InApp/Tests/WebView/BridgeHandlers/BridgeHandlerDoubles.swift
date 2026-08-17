@@ -14,7 +14,7 @@ import MindboxLogger
 ///
 /// Everything a handler could want from a real page is inert here: these suites are about what
 /// a handler does with a message, not about any particular surface.
-final class HostSpy: WebBridgeHost {
+class HostSpy: WebBridgeHost {
 
     var contentId = "test-content-id"
     var logCategory: LogCategory = .webViewInAppMessages

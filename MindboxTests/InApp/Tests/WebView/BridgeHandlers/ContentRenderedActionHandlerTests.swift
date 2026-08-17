@@ -78,6 +78,7 @@ struct ContentRenderedActionHandlerTests {
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
         #expect(response.payload == .object(["error": .string("Invalid payload: missing or non-numeric 'count'")]))
+        #expect(host.unreadableReports == 1)
     }
 
     @Test("A non-numeric count is refused")
@@ -104,6 +105,7 @@ struct ContentRenderedActionHandlerTests {
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
         #expect(response.payload == .object(["error": .string("Invalid payload: 'count' must be a whole number, got 3.6")]))
+        #expect(host.unreadableReports == 1)
     }
 
     /// The reason it is worth refusing at all: rounding decides the block's fate on the page's
@@ -134,16 +136,18 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
-    @Test("A negative count is refused rather than clamped")
-    func negativeCountIsRefused() {
+    /// Odd, but readable: to the surface it means the same as zero — nothing was drawn. Refusing
+    /// it would leave the block waiting out its whole budget over a report that did arrive.
+    @Test("A negative count is delivered like zero")
+    func negativeCountIsDelivered() {
         let host = ContentHostSpy()
 
         ContentRenderedActionHandler().handle(.request(.contentRendered, payload: .object(["count": .int(-1)])),
                                               host: host)
 
-        #expect(host.rendered.isEmpty)
-        #expect(host.sent.first?.payload
-                == .object(["error": .string("Invalid payload: 'count' must not be negative, got -1")]))
+        #expect(host.rendered == [-1])
+        #expect(host.sent.first?.type == .response)
+        #expect(host.unreadableReports == 0)
     }
 
     /// The action is registered on every surface. One that reserves no space for content simply
@@ -174,6 +178,7 @@ private final class ContentHostSpy: WebBridgeHost, WebBridgeContentHosting {
 
     private(set) var sent: [BridgeMessage] = []
     private(set) var rendered: [Int] = []
+    private(set) var unreadableReports = 0
 
     func send(_ message: BridgeMessage) {
         sent.append(message)
@@ -185,5 +190,9 @@ private final class ContentHostSpy: WebBridgeHost, WebBridgeContentHosting {
 
     func bridgeDidRenderContent(count: Int) {
         rendered.append(count)
+    }
+
+    func bridgeDidReportUnreadableContent() {
+        unreadableReports += 1
     }
 }

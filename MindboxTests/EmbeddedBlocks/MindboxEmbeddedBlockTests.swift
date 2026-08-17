@@ -9,7 +9,7 @@
 #if canImport(SwiftUI)
 import Testing
 import SwiftUI
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 /// The block logic lives in the UIKit container, so only what the SwiftUI wrapper owns is checked
 /// here: the modifier contract and the way the wrapper sets the container up for the layers it
@@ -218,6 +218,7 @@ struct MindboxEmbeddedBlockTests {
         let presentation = EmbeddedBlockPresentation(layer: .placeholder, height: 104)
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
+                                          configTimeout: nil,
                                           presentation: .constant(presentation),
                                           onLoad: nil,
                                           onFail: nil,

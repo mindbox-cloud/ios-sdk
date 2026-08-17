@@ -1,0 +1,235 @@
+//
+//  FeedActionHandlersTests.swift
+//  MindboxTests
+//
+//  Created by Akylbek Utekeshev on 13.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Testing
+@_spi(Internal) @testable import Mindbox
+
+/// The two feed actions are served through the host's feed capability: the handler owns the
+/// envelope — parsing, refusals, the answer's shape — and the host owns the selection. What these
+/// pin is that split, and the shape the page reads: `payload.inappIds` for the question, a plain
+/// success for the show.
+@Suite("CheckInappsTargetingActionHandler", .tags(.webView))
+struct CheckInappsTargetingActionHandlerTests {
+
+    @Test("Owns the checkInappsTargeting action")
+    func ownsAction() {
+        #expect(CheckInappsTargetingActionHandler().actions == [.checkInappsTargeting])
+    }
+
+    /// The question goes to the feed as asked; the answer echoes what the feed allowed, under the
+    /// request's own id.
+    @Test("The feed's answer travels back in the response")
+    func feedAnswerTravelsBack() throws {
+        let host = FeedHostSpy()
+        host.allowed = ["id-1", "id-3"]
+        let message = BridgeMessage.request(.checkInappsTargeting,
+                                            payload: .object(["inappIds": .array([.string("id-1"),
+                                                                                  .string("id-2"),
+                                                                                  .string("id-3")])]))
+
+        CheckInappsTargetingActionHandler().handle(message, host: host)
+
+        #expect(host.askedIds == [["id-1", "id-2", "id-3"]])
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.id == message.id)
+        #expect(response.payload == .object(["inappIds": .array([.string("id-1"), .string("id-3")])]))
+    }
+
+    /// The selection may finish long after the request arrived — the answer still reaches the page.
+    @Test("A late answer from the selection still becomes the response")
+    func lateAnswerStillResponds() {
+        let host = FeedHostSpy()
+        host.isDeferred = true
+
+        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+                                                            payload: .object(["inappIds": .array([.string("id-1")])])),
+                                                   host: host)
+
+        #expect(host.sent.isEmpty)
+
+        host.allowed = ["id-1"]
+        host.flush()
+
+        #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
+    }
+
+    @Test("An empty question is asked and answered, not refused")
+    func emptyRequestIsAnswered() {
+        let host = FeedHostSpy()
+
+        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+                                                            payload: .object(["inappIds": .array([])])),
+                                                   host: host)
+
+        #expect(host.askedIds == [[]])
+        #expect(host.sent.first?.payload == .object(["inappIds": .array([])]))
+    }
+
+    @Test("Non-string entries are dropped instead of breaking the question")
+    func nonStringEntriesAreDropped() {
+        let host = FeedHostSpy()
+        host.allowed = ["id-1"]
+
+        CheckInappsTargetingActionHandler().handle(
+            .request(.checkInappsTargeting, payload: .object(["inappIds": .array([.string("id-1"), .int(7)])])),
+            host: host
+        )
+
+        #expect(host.askedIds == [["id-1"]])
+        #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
+    }
+
+    /// An unreadable question is refused rather than answered with an empty list: the page can
+    /// retry a refusal, while an empty answer it would take for the truth.
+    @Test("A payload without the array is refused before the feed is asked")
+    func missingArrayIsRefused() throws {
+        let host = FeedHostSpy()
+
+        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting, payload: .object([:])), host: host)
+
+        #expect(host.askedIds.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Invalid payload: missing 'inappIds' array")]))
+    }
+
+    @Test("A payload sent as a JSON string is understood too")
+    func acceptsStringifiedPayload() {
+        let host = FeedHostSpy()
+        host.allowed = ["id-1"]
+
+        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+                                                            payload: .string(#"{"inappIds":["id-1"]}"#)),
+                                                   host: host)
+
+        #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
+    }
+
+    /// A surface without a feed does not answer: the page owns its own deadline, and an error
+    /// here would have to be unlearned the day the surface conforms.
+    @Test("A host without a feed leaves the question unanswered")
+    func hostWithoutFeedStaysSilent() {
+        let host = HostSpy()
+
+        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+                                                            payload: .object(["inappIds": .array([.string("id-1")])])),
+                                                   host: host)
+
+        #expect(host.sent.isEmpty)
+    }
+}
+
+@Suite("ShowInAppActionHandler", .tags(.webView))
+struct ShowInAppActionHandlerTests {
+
+    @Test("Owns the showInApp action")
+    func ownsAction() {
+        #expect(ShowInAppActionHandler().actions == [.showInApp])
+    }
+
+    /// The id and the params reach the feed; the success says the request was handed over, and the
+    /// page finishes its own flow on it without waiting for a window.
+    @Test("A well-formed request reaches the feed and is acknowledged")
+    func requestReachesTheFeed() throws {
+        let host = FeedHostSpy()
+        let message = BridgeMessage.request(.showInApp, payload: .object([
+            "inappId": .string("11111111-1111-1111-1111-111111111111"),
+            "index": .int(0),
+            "sourceInappId": .string("feed"),
+            "params": .object(["title": .string("Сториз 1")])
+        ]))
+
+        ShowInAppActionHandler().handle(message, host: host)
+
+        let shown = try #require(host.shown.first)
+        #expect(shown.id == "11111111-1111-1111-1111-111111111111")
+        #expect(shown.params == ["title": .string("Сториз 1")])
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.payload == .object(["success": .bool(true)]))
+        #expect(response.id == message.id)
+    }
+
+    @Test("Only the id is required")
+    func onlyIdIsRequired() throws {
+        let host = FeedHostSpy()
+
+        ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
+                                        host: host)
+
+        let shown = try #require(host.shown.first)
+        #expect(shown.id == "some-id")
+        #expect(shown.params.isEmpty)
+        #expect(host.sent.first?.type == .response)
+    }
+
+    @Test("A request without an id is refused", arguments: [
+        JSONValue.object([:]),
+        .object(["inappId": .string("")]),
+        .object(["inappId": .int(1)])
+    ])
+    func missingIdIsRefused(payload: JSONValue) throws {
+        let host = FeedHostSpy()
+
+        ShowInAppActionHandler().handle(.request(.showInApp, payload: payload), host: host)
+
+        #expect(host.shown.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'inappId'")]))
+    }
+
+    /// Journalled and dropped, not refused: a surface without a feed picking this up later is a
+    /// conformance, and pages must not have learned that it errors here.
+    @Test("A host without a feed leaves the request unanswered")
+    func hostWithoutFeedStaysSilent() {
+        let host = HostSpy()
+
+        ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
+                                        host: host)
+
+        #expect(host.sent.isEmpty)
+    }
+}
+
+/// A host that carries a feed: the questions and shows land here, and the test decides the answer
+/// and its moment.
+private final class FeedHostSpy: HostSpy, WebBridgeFeedHosting {
+
+    var allowed: [String] = []
+
+    /// `true` — the answer waits for `flush()`: how a selection that finishes late is modelled.
+    var isDeferred = false
+
+    private(set) var askedIds: [[String]] = []
+    private(set) var shown: [(id: String, params: [String: JSONValue])] = []
+
+    private var pending: [([String]) -> Void] = []
+
+    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        askedIds.append(ids)
+
+        if isDeferred {
+            pending.append(completion)
+        } else {
+            completion(allowed)
+        }
+    }
+
+    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
+        shown.append((id, params))
+    }
+
+    func flush() {
+        let completions = pending
+        pending = []
+        completions.forEach { $0(allowed) }
+    }
+}

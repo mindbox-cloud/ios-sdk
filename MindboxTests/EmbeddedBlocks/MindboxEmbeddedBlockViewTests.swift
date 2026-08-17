@@ -8,7 +8,7 @@
 
 import Testing
 import UIKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MindboxEmbeddedBlockView container", .tags(.embeddedBlocks))
 @MainActor
@@ -32,7 +32,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
 
         #expect(block.view.intrinsicContentSize.height == 120)
     }
@@ -112,7 +112,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.errorView = UIView()
         block.attachToWindow()
 
-        block.page?.renderContent(count: 0)
+        block.page?.reportRendered(0)
 
         #expect(block.view.intrinsicContentSize.height == 0)
     }
@@ -132,7 +132,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
 
         let content = try #require(block.page?.view)
         #expect(content.superview === block.view)
@@ -146,7 +146,7 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
         block.page?.failLoad()
 
@@ -154,27 +154,14 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
     }
 
-    /// A page that drew nothing has a view all the same — it just never goes on screen.
-    @Test("A block that renders nothing attaches no content")
-    func emptyBlockAttachesNoContent() throws {
+    @Test("Empty content is detached")
+    func emptyContentIsDetached() throws {
         let block = BlockFixture()
         block.attachToWindow()
 
-        block.page?.renderContent(count: 0)
-
+        block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
-        #expect(content.superview == nil)
-    }
-
-    /// Content that did go on screen has to come off it again when the block stops showing.
-    @Test("Shown content is detached when the block collapses")
-    func shownContentIsDetachedOnCollapse() throws {
-        let block = BlockFixture()
-        block.attachToWindow()
-        block.page?.renderContent(count: 3)
-        let content = try #require(block.page?.view)
-
-        block.page?.failLoad()
+        block.page?.reportRendered(0)
 
         #expect(content.superview == nil)
     }
@@ -184,7 +171,7 @@ struct MindboxEmbeddedBlockViewTests {
     func reloadDetachesOldContent() throws {
         let block = BlockFixture()
         block.attachToWindow()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         let oldContent = try #require(block.page?.view)
 
         block.view.reload()
@@ -229,7 +216,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
 
         #expect(delegate.events == [.loaded])
@@ -345,7 +332,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
         block.page?.failLoad()
         await mainQueueTurn()
@@ -365,8 +352,8 @@ struct MindboxEmbeddedBlockViewTests {
         var reported: [EmbeddedBlockPresentation] = []
         block.view.onPresentationChange = { reported.append($0) }
 
-        block.page?.renderContent(count: 3)
-        block.page?.failLoad()
+        block.page?.reportRendered(1)
+        block.page?.reportRendered(0)
 
         #expect(reported == [EmbeddedBlockPresentation(layer: .content, height: 120),
                              EmbeddedBlockPresentation(layer: .nothing, height: 0)])
@@ -406,7 +393,7 @@ struct MindboxEmbeddedBlockViewTests {
     func reloadReportsPlaceholderLayer() {
         let block = BlockFixture()
         block.attachToWindow()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         var reported: [EmbeddedBlockPresentation] = []
         block.view.onPresentationChange = { reported.append($0) }
 
@@ -441,7 +428,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         block.attachToWindow()
         await mainQueueTurn()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
         let content = try #require(block.page?.view)
 
@@ -474,8 +461,9 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        // The attempt is genuinely new — the page loads again...
-        #expect(block.page?.loadCount == 2)
+        // The attempt is genuinely new — a new page is built and loads...
+        #expect(block.bed.pageFactory.pages.count == 2)
+        #expect(block.page?.loadCount == 1)
         // ...but the container does not claim space for it and does not flash the shimmer.
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
@@ -496,7 +484,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.removeFromWindow()
         block.attachToWindow()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 120)
@@ -534,6 +522,19 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Timeout
 
+    /// The host may give a block its own patience for the config answer — the same knob Android
+    /// exposes as an XML attribute. What the host cannot do is break the block with it: a
+    /// non-positive value would collapse every block before the config had a chance, so it is
+    /// reported and replaced with the default.
+    @Test("A custom config timeout is taken as given, a broken one falls back",
+          arguments: [(nil as TimeInterval?, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (TimeInterval(12), TimeInterval(12)),
+                      (TimeInterval(0), TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (TimeInterval(-5), TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds))])
+    func configTimeoutIsSanitized(given: TimeInterval?, effective: TimeInterval) {
+        #expect(MindboxEmbeddedBlockView.sanitizedConfigTimeout(given, placeSystemName: "block") == effective)
+    }
+
     /// The container, not the content, guarantees the host's layout will not wait forever: a
     /// silent page past its budget collapses and reports a failure.
     @Test("Silent block times out, collapses and reports didFail")
@@ -559,7 +560,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
 
         block.attachToWindow()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         // A shown block has disarmed the budget, so a declared "time is up" no longer concerns it.
         block.expireTimeout()
         await mainQueueTurn()
@@ -590,7 +591,7 @@ struct MindboxEmbeddedBlockViewTests {
     /// block in the background, and collapsing it there makes no sense — otherwise the user would
     /// come back to a block that gave up without ever being on screen. That the budget then
     /// continues from the remainder instead of being granted anew is checked by the tests of
-    /// `EmbeddedBlockReadyTimeout` itself.
+    /// `EmbeddedBlockWaitBudget` itself.
     @Test("Timeout pauses in the background and resumes on return")
     func timeoutPausesInBackground() async {
         let block = BlockFixture()
@@ -613,6 +614,64 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed])
     }
 
+    /// The block waits twice, and the two waits are not the same thing. Learning what to show can cost a
+    /// config fetch, so it gets the long budget — and running out of it means "nothing to show", not
+    /// "broken": the block collapses without an error screen and the host hears the outcome once.
+    @Test("A block that never learned what to show collapses as empty")
+    func neverAnsweredBlockCollapsesAsEmpty() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.view.errorView = UIView()
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+        #expect(delegate.events == [.failed])
+    }
+
+    /// The other wait: the page was built and stayed silent. That is a breakage, so the error screen
+    /// applies and the block keeps the space it was given.
+    @Test("A page that was built and stayed silent fails")
+    func silentBuiltPageFails() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.subviews.contains(errorView))
+        #expect(delegate.events == [.failed])
+    }
+
+    /// And the switch between the two waits restarts the count: a page that arrives after most of the
+    /// answer budget was spent still gets its own full patience, not the remainder.
+    @Test("The answer restarts the waiting budget")
+    func answerRestartsTheBudget() async {
+        let block = BlockFixture()
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.waitBudgetBed.clock.advance(block.waitBudgetBed.duration - 1)
+        block.bed.resolver.flush()
+        await mainQueueTurn()
+
+        // Armed anew for the whole budget: almost all of it went on waiting for the answer, and the
+        // page is not charged for that.
+        #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
+    }
+
     /// A block outside a window loads nothing, so it needs no budget either.
     @Test("Returning from the background does not arm a timeout outside a window")
     func foregroundOutsideWindowArmsNothing() async {
@@ -625,7 +684,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         // The countdown did not just fail to fire — it was never armed at all.
-        #expect(block.timeoutBed.scheduler.lastDelay == nil)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == nil)
         #expect(delegate.events.isEmpty)
         #expect(block.view.intrinsicContentSize.height == 120)
     }
@@ -641,15 +700,15 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         block.attachToWindow()
         await mainQueueTurn()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
 
         block.view.reload()
         await mainQueueTurn()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
         await mainQueueTurn()
 
-        #expect(block.bed.resolver.forceRefreshHistory == [false, true])
+        #expect(block.bed.resolver.resolveCount == 2)
         #expect(delegate.events == [.loaded, .loaded])
         #expect(block.view.intrinsicContentSize.height == 120)
     }
@@ -674,7 +733,7 @@ struct MindboxEmbeddedBlockViewTests {
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
         block.attachToWindow()
-        block.page?.renderContent(count: 3)
+        block.page?.reportRendered(1)
 
         block.view.reload()
         block.expireTimeout()
@@ -706,7 +765,7 @@ private final class BlockFixture {
 
     /// The budget is handed to the view from outside, so "time is up" here happens on the test's
     /// command rather than through a sleep: `expireTimeout()`.
-    let timeoutBed: EmbeddedBlockTimeoutBed
+    let waitBudgetBed: EmbeddedBlockWaitBudgetBed
 
     let view: MindboxEmbeddedBlockView
 
@@ -717,13 +776,13 @@ private final class BlockFixture {
     init(height: CGFloat = 120,
          resolution: EmbeddedBlockResolution = .content(.stub)) {
         let bed = EmbeddedBlockTestBed(resolution: resolution)
-        let timeoutBed = EmbeddedBlockTimeoutBed()
+        let waitBudgetBed = EmbeddedBlockWaitBudgetBed()
         self.bed = bed
-        self.timeoutBed = timeoutBed
+        self.waitBudgetBed = waitBudgetBed
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
-                                             timeout: timeoutBed.timeout)
+                                             waitBudget: waitBudgetBed.budget)
     }
 
     func attachToWindow() {
@@ -736,14 +795,14 @@ private final class BlockFixture {
 
     /// Declares that the waiting budget has run out.
     func expireTimeout() {
-        timeoutBed.scheduler.fireAll()
+        waitBudgetBed.scheduler.fireAll()
     }
 
     func enterBackground() {
-        timeoutBed.enterBackground()
+        waitBudgetBed.enterBackground()
     }
 
     func enterForeground() {
-        timeoutBed.enterForeground()
+        waitBudgetBed.enterForeground()
     }
 }
