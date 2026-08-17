@@ -128,7 +128,32 @@ protocol WebBridgeLifecycleHosting: AnyObject {
 /// here and the page simply starts sending `contentRendered` — nothing inside the bridge changes.
 protocol WebBridgeContentHosting: AnyObject {
 
-    /// - Parameter count: `0` means the page is alive and correct and has nothing to show.
-    ///   That is an outcome, not a failure.
+    /// - Parameter count: at or below `0` means the page is alive and correct and has nothing
+    ///   to show. That is an outcome, not a failure.
     func bridgeDidRenderContent(count: Int)
+
+    /// The page reported content, but the report could not be read — no count, or one that is
+    /// not a whole number. The page has already been refused; the host hears it separately
+    /// because a surface that reserved space for the content now holds a failed show, not a
+    /// page-side detail: nobody can say what is on screen.
+    func bridgeDidReportUnreadableContent()
+}
+
+/// Hosts a page that renders a feed of in-apps: it can answer which of them the page may draw,
+/// and show one of them when the page asks.
+///
+/// A capability, not a layer. Only the embedded block conforms today; the day an overlay page
+/// carries a feed it conforms here and the same handlers start serving it. Until then those
+/// requests are journalled and left unanswered — the page owns its own deadline, and an empty
+/// answer it would take for the truth.
+protocol WebBridgeFeedHosting: AnyObject {
+
+    /// Which of `ids` may be rendered. Answered asynchronously — the selection may still be
+    /// working — and possibly never: a host that stopped listening drops the question, and what
+    /// a missing answer means is the page's call.
+    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
+
+    /// The page asks to show in-app `id`. `params` travel into the shown in-app's start payload
+    /// untouched: for the SDK they are an opaque dictionary.
+    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue])
 }

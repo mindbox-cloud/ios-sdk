@@ -300,71 +300,6 @@ public struct BridgeMessage: Codable {
         ///   ```
         case log
 
-        /// JS reports how much content it rendered, once per load.
-        ///
-        /// Handled by ``ContentRenderedActionHandler`` and delivered to hosts that listen for
-        /// content events. A count of `0` is a valid outcome, not a failure: the page is alive
-        /// and correct and has nothing to show, and a surface that reserves space for it should
-        /// give that space back.
-        ///
-        /// This is deliberately not ``init``, which is welded to presenting a window and has no
-        /// such outcome.
-        ///
-        /// - Payload:
-        ///   ```json
-        ///   { "count": 5 }
-        ///   ```
-        /// - Response:
-        ///   ```json
-        ///   { "success": true }
-        ///   ```
-        case contentRendered
-
-        /// JS asks which of these in-apps currently pass targeting.
-        ///
-        /// Answered from targeting the SDK has already computed, without going to the network:
-        /// the page gives up on the answer after three seconds and renders nothing rather than
-        /// wait. The reply keeps the ids that pass, in the order they were asked about.
-        ///
-        /// > Warning: Not implemented yet. `CheckInappsTargetingActionHandler` evaluates no
-        /// > targeting and returns every id it was given, so an answer to this action is not
-        /// > evidence that anything passed. The envelope below is what ships; the filtering is
-        /// > not.
-        ///
-        /// - Payload:
-        ///   ```json
-        ///   { "inappIds": ["id-1", "id-2"] }
-        ///   ```
-        /// - Response:
-        ///   ```json
-        ///   { "inappIds": ["id-1"] }
-        ///   ```
-        case checkInappsTargeting
-
-        /// JS asks for an in-app to be shown by id.
-        ///
-        /// `params` is merged into that in-app's start payload and overwrites whatever it
-        /// collides with. The SDK neither validates nor limits it: what the page sends is what
-        /// the page gets, and avoiding collisions is the page's business.
-        ///
-        /// `index` and `sourceInappId` describe where the request came from and are journalled,
-        /// not passed on — the page already puts everything it needs into `params`.
-        ///
-        /// > Warning: Not implemented yet. `ShowInAppActionHandler` journals the request and
-        /// > acknowledges it, and no window opens. The success below says the request was
-        /// > well-formed and received — never that a show happened. The page is answered rather
-        /// > than left on a promise nothing will settle, so it can finish its own flow.
-        ///
-        /// - Payload:
-        ///   ```json
-        ///   { "inappId": "...", "index": 0, "sourceInappId": "...", "params": { ... } }
-        ///   ```
-        /// - Response:
-        ///   ```json
-        ///   { "success": true }
-        ///   ```
-        case showInApp
-
         // MARK: JS → Native: Operations
 
         /// JS triggers an asynchronous Mindbox operation (fire-and-forget).
@@ -613,7 +548,120 @@ public struct BridgeMessage: Codable {
         ///   ```
         case navigationIntercepted
 
+        // MARK: JS → Native: Feeds
+        //
+        // A feed page renders a list of in-apps rather than one in-app, so it asks the SDK the things
+        // only the SDK can answer and reports back what it drew.
+        //
+        // Beware of two spellings of one idea in this group: the bridge payloads say `inappId` and
+        // `inappIds`, while an element of the feed's own list says `inAppId`, because that is the
+        // config's spelling and the SDK forwards config params untouched. Neither side may be
+        // "corrected" to match the other — both are silent when wrong.
+
+        /// JS asks which of these in-apps it is allowed to render.
+        ///
+        /// Answering is the only place a feed's items are filtered: the page cannot see targeting, the
+        /// A/B pool or what the frequency still allows. The page gives up after 3 seconds and renders an
+        /// empty feed, so an unanswered request looks exactly like an empty one.
+        ///
+        /// > Important: the SDK does not race that deadline — it answers when the selection answers,
+        /// > and what a late answer means is the page's call.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappIds": ["<string>", "..."] }
+        ///   ```
+        /// - Response: the subset that may be rendered, in any order:
+        ///   ```json
+        ///   { "inappIds": ["<string>", "..."] }
+        ///   ```
+        case checkInappsTargeting
+
+        /// JS reports how many items it actually rendered, exactly once per load.
+        ///
+        /// This is what readiness means for a feed: a loaded document says nothing, and a count of zero
+        /// is a legitimate "nothing to show" rather than a failure.
+        ///
+        /// The page does not wait for the confirmation, which does not make it optional — every request
+        /// on this bridge is answered under the same id. A count that is not a whole non-negative
+        /// number is refused with an error rather than rounded: rounding would decide the block's
+        /// fate on the page's behalf.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "count": <int> }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case contentRendered
+
+        /// JS asks to show one in-app from the feed, by id.
+        ///
+        /// `sourceInappId` is the in-app the tap came from — the feed itself. `params` is the feed's own
+        /// catalogue entry for the tapped item, forwarded without listing its fields, so fields the
+        /// config gains later reach the shown page by themselves.
+        ///
+        /// Showing is the SDK's business from here on: it merges `params` flat into the shown in-app's
+        /// start payload, where an incoming key overwrites — the same semantics as the params of a
+        /// webview layer. Not to be confused with ``click``, which happens inside an already open page.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappId": "<string>", "index": <int>, "sourceInappId": "<string>", "params": { } }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        case showInApp
+
+        // MARK: Native → JS: Feeds
+
+        /// SDK hands JS fresh initialization data, without reloading the page.
+        ///
+        /// Sent when the config changed or an A/B verdict flipped. The payload has the same shape as the
+        /// ``ready`` response, and the page always reacts the same way: it runs its whole load pipeline
+        /// again. Pushes carry full state rather than deltas, which is what makes reacting idempotent.
+        ///
+        /// - Payload: the same JSON as the ``ready`` response.
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        ///   or, when the payload cannot be used:
+        ///   ```json
+        ///   { "error": "<string>" }
+        ///   ```
+        case initDataUpdated
+
+        /// SDK tells JS that stored keys changed, so a page can repaint without being asked.
+        ///
+        /// Sent to every other live WebView when one of them writes through ``localStateSet``, as a
+        /// separate request into each page's own channel — there is no page-to-page channel. It is a
+        /// broadcast: the receiver picks out the keys it cares about and ignores the rest.
+        ///
+        /// - Payload: the same shape as the ``localStateSet`` response. A `null` value means the key is
+        ///   gone.
+        ///   ```json
+        ///   { "data": { "<key>": "<string>" }, "version": <int> }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        ///   or, when the payload cannot be used:
+        ///   ```json
+        ///   { "error": "<string>" }
+        ///   ```
+        case localStateChanged = "localState.changed"
+
         /// Actions that send their own bridge responses (no auto-response from dispatcher).
+        ///
+        /// The auto-response goes out before the handler runs, so a handler that refuses a non-deferred
+        /// action sends a second envelope under the same id, and the page is expected to take the later
+        /// one.
         var isDeferred: Bool {
             switch self {
             // Lifecycle
@@ -655,9 +703,13 @@ public struct BridgeMessage: Codable {
             // Native → JS: Motion
             case .motionEvent:
                 return false
-                
+
             // Native → JS: Navigation
             case .navigationIntercepted:
+                return false
+
+            // Native → JS: Feeds and storage
+            case .initDataUpdated, .localStateChanged:
                 return false
             }
         }
@@ -701,7 +753,8 @@ public struct BridgeMessage: Codable {
                  .contentRendered, .checkInappsTargeting,
                  .asyncOperation, .syncOperation,
                  .localStateGet, .localStateSet, .localStateInit,
-                 .motionEvent, .navigationIntercepted:
+                 .motionEvent, .navigationIntercepted,
+                 .initDataUpdated, .localStateChanged:
                 return false
             }
         }
@@ -870,7 +923,6 @@ public struct BridgeMessage: Codable {
             return "nil"
         }
 
-        // Helper to format JSON with pretty print
         func prettyJSON(from data: Data) -> String? {
             guard let jsonObject = try? JSONSerialization.jsonObject(with: data),
                   let prettyData = try? JSONSerialization.data(
@@ -885,7 +937,6 @@ public struct BridgeMessage: Codable {
 
         switch payload {
         case .string(let stringValue):
-            // If it's a JSON string, try to parse and pretty print it
             if let data = stringValue.data(using: .utf8),
                let pretty = prettyJSON(from: data) {
                 return pretty
@@ -893,7 +944,6 @@ public struct BridgeMessage: Codable {
             return stringValue
 
         case .object, .array:
-            // Serialize JSONValue to pretty JSON
             if let data = try? JSONEncoder().encode(payload),
                let pretty = prettyJSON(from: data) {
                 return pretty

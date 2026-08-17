@@ -11,9 +11,10 @@ import MindboxLogger
 
 /// Shows the in-app the page asked for, by id.
 ///
-/// **Not implemented yet: the request is journalled and acknowledged, and no window opens.** The
-/// page is answered so it can finish its own flow — un-highlighting the story it just handled —
-/// rather than sit on a promise nothing will ever settle.
+/// The show itself belongs to the host: what asking means — closing whatever is on screen,
+/// bypassing which limits — is a decision of the surface that carries the feed, not of the
+/// bridge. The success below says the request was well-formed and handed over, never that a
+/// window opened: the page finishes its own flow on it and does not wait for the show.
 final class ShowInAppActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.showInApp]
@@ -26,21 +27,24 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
             return
         }
 
-        // TODO: Show the in-app with this id as a direct call.
-        //   - it bypasses targeting, the shown-before dedup and every presentation limit, which
-        //     is achieved by NOT entering `InappMapper` or `InappScheduleManager.scheduleInApp`
-        //     and going straight to `InAppPresentationManager.present`;
-        //   - the show is still tracked as on the ordinary path. Reuse what
-        //     `InappScheduleManager.presentInapp` already does — it also raises
-        //     `isPresentingInAppMessage`, which is what keeps ordinary in-apps and snackbars from
-        //     appearing over stories;
-        //   - the reverse is deliberate: this path must NOT consult `canPresentInApp`, so stories
-        //     open over an in-app that is already showing, dismissing it first;
-        //   - `params` merges into that in-app's start payload LAST and overwrites everything it
-        //     collides with, service keys included. The SDK validates nothing and protects
-        //     nothing: it is an opaque dictionary and collisions are the page's business;
-        //   - `index` and `sourceInappId` stay in the log and out of the payload — the page
-        //     already puts whatever it needs into `params`.
+        guard let feedHost = host as? WebBridgeFeedHosting else {
+            // Journalled and dropped, not refused: a surface without a feed picking this up
+            // later is a conformance, and pages must not have learned that it errors here.
+            Logger.common(message: "[WebView] Bridge: showInApp from '\(host.contentId)' has no feed to serve it here, ignoring",
+                          level: .error,
+                          category: host.logCategory)
+            return
+        }
+
+        // `params` merges into the shown in-app's start payload last and overwrites everything
+        // it collides with, service keys included: an opaque dictionary, collisions are the
+        // page's business. `index` and `sourceInappId` stay in the log and out of the payload —
+        // the page already puts whatever it needs into `params`.
+        var params: [String: JSONValue] = [:]
+        if case .object(let sent)? = payload["params"] {
+            params = sent
+        }
+
         let index = payload["index"].flatMap { value -> Int? in
             guard case .int(let index) = value else { return nil }
             return index
@@ -50,12 +54,11 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
             return source
         }()
 
-        Logger.common(message: """
-        [WebView] showInApp is not implemented, nothing will be shown: \
-        inappId=\(inAppId) index=\(index.map(String.init) ?? "nil") \
-        sourceInappId=\(sourceInAppId ?? "nil") params=\(payload["params"].map { String(describing: $0.anyValue) } ?? "nil")
-        """, level: .default, category: host.logCategory)
+        Logger.common(message: "[WebView] showInApp: inappId=\(inAppId) index=\(index.map(String.init) ?? "nil") sourceInappId=\(sourceInAppId ?? "nil") with \(params.count) param(s)",
+                      level: .info,
+                      category: host.logCategory)
 
+        feedHost.bridgeDidRequestShowInApp(id: inAppId, params: params)
         host.respondSuccess(to: message)
     }
 }
