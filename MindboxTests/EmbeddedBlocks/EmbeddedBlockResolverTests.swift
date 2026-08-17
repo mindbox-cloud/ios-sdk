@@ -10,9 +10,6 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The resolver is now a thin adapter between a block and the in-app selection: it asks, and it makes
-/// sure the answer lands where the container can use it. What is worth choosing between in-app
-/// candidates is decided in the selection itself and covered there.
 @Suite("Embedded block resolver", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockResolverTests {
@@ -34,8 +31,6 @@ struct EmbeddedBlockResolverTests {
         #expect(answers == [.content(.stub), .content(.stub), .content(.stub)])
     }
 
-    /// Nothing is remembered on purpose. The config arrives after the app starts, so a remembered
-    /// "nothing to show" would outlive the reason for it and keep the block empty until a restart.
     @Test("An empty answer is not remembered")
     func emptyAnswerIsNotRemembered() {
         let loader = ContentLoaderSpy()
@@ -52,8 +47,6 @@ struct EmbeddedBlockResolverTests {
         #expect(second == .content(.stub))
     }
 
-    /// The push side hands the operation to the loader as is: targeting has to run in the operation's
-    /// context, and the resolver is the only thing between the block and the selection.
     @Test("The trigger travels to the loader untouched")
     func triggerTravelsToTheLoader() {
         let loader = ContentLoaderSpy()
@@ -68,8 +61,6 @@ struct EmbeddedBlockResolverTests {
         #expect(loader.requestedTriggers[1] == nil)
     }
 
-    /// The selection answers off the main thread, and the container waits on it, so the hop belongs
-    /// here rather than in every block.
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
         let resolver = EmbeddedBlockResolver(load: { _, _, completion in
@@ -85,8 +76,6 @@ struct EmbeddedBlockResolverTests {
         #expect(deliveredOnMainThread)
     }
 
-    /// An answer that is already on the main thread is not pushed to the next runloop turn: a block
-    /// whose content is known right away must not flash its placeholder.
     @Test("An answer from the main thread is delivered without a hop")
     func mainThreadAnswerIsDeliveredSynchronously() {
         let resolver = EmbeddedBlockResolver(load: { _, _, completion in completion(.empty) })
@@ -115,9 +104,7 @@ struct EmbeddedBlockResolverTests {
                                    tags: nil)
     }
 
-    /// The params are not read on the way — not even `stories`. An empty catalog is the page's own
-    /// call to make (`contentRendered: 0`), so even a params set the page would render as nothing
-    /// still becomes a page.
+    /// The params are not read on the way: an empty catalog is the page's own call to make (`contentRendered: 0`).
     @Test("The selection's answer becomes the page, params untouched")
     func resolutionMapsTheWebviewLayerIntoThePage() throws {
         let catalogs: [[String: JSONValue]] = [
