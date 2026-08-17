@@ -8,7 +8,7 @@
 
 import Testing
 import UIKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MindboxEmbeddedBlockView container", .tags(.embeddedBlocks))
 @MainActor
@@ -682,6 +682,278 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events.last == .failed)
+    }
+
+    // MARK: - Visibility observer
+
+    /// A wrapper that lays the block out itself gets exactly one bit of the container's state:
+    /// whether the block takes space. The current value arrives on subscribing, so a wrapper that
+    /// comes after the outcome cannot miss the collapse that came with it.
+    @Test("Visibility observer reports the current value on subscribe")
+    func visibilityObserverReportsCurrentValueOnSubscribe() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        let visibility = EmbeddedBlockVisibilitySpy()
+        block.view.setVisibilityObserver { visibility.record($0) }
+
+        #expect(visibility.values == [false])
+    }
+
+    @Test("Visibility observer reports the collapse of a failed block")
+    func visibilityObserverReportsTheCollapse() {
+        let block = BlockFixture()
+        let visibility = EmbeddedBlockVisibilitySpy()
+        block.view.setVisibilityObserver { visibility.record($0) }
+        block.attachToWindow()
+
+        block.page?.failLoad()
+
+        #expect(visibility.last == false)
+    }
+
+    /// A shown block keeps the space it was given, and the wrapper must not collapse it: the report
+    /// stays `true` through the whole load.
+    @Test("Visibility observer stays true while the block loads and shows content")
+    func visibilityObserverStaysTrueForShownBlock() {
+        let block = BlockFixture()
+        let visibility = EmbeddedBlockVisibilitySpy()
+        block.view.setVisibilityObserver { visibility.record($0) }
+        block.attachToWindow()
+
+        block.page?.renderContent(count: 3)
+
+        #expect(visibility.last == true)
+        #expect(!visibility.values.contains(false))
+    }
+
+    /// The rule "an `errorView` keeps the space, an empty block collapses anyway" is applied by the
+    /// container, and the wrapper sees only the answer — which is the whole point of a boolean.
+    @Test("Visibility observer follows the error view opt-in")
+    func visibilityObserverFollowsTheErrorViewOptIn() {
+        let failed = BlockFixture()
+        let failedVisibility = EmbeddedBlockVisibilitySpy()
+        failed.view.errorView = UIView()
+        failed.view.setVisibilityObserver { failedVisibility.record($0) }
+        failed.attachToWindow()
+
+        failed.page?.failLoad()
+
+        #expect(failedVisibility.last == true)
+
+        let empty = BlockFixture(resolution: .empty)
+        let emptyVisibility = EmbeddedBlockVisibilitySpy()
+        empty.view.errorView = UIView()
+        empty.view.setVisibilityObserver { emptyVisibility.record($0) }
+
+        empty.attachToWindow()
+
+        #expect(emptyVisibility.last == false)
+    }
+
+    // MARK: - Host visibility
+
+    /// The whole reason the hook exists: a block on a screen nobody is looking at must not spend its
+    /// waiting budget — and must not even start, so no content is requested for it.
+    @Test("Host-hidden block does not start when it enters a window")
+    func hostHiddenBlockDoesNotStartInWindow() {
+        let block = BlockFixture()
+        block.view.setHostVisible(false)
+
+        block.attachToWindow()
+
+        #expect(block.bed.resolver.resolveCount == 0)
+        #expect(block.bed.pageFactory.pages.isEmpty)
+        // Not armed at all, so there is no budget to run out while the screen is out of sight.
+        #expect(block.timeoutBed.scheduler.lastDelay == nil)
+    }
+
+    /// Being shown again by the wrapper is the same event as entering a window: the block starts.
+    @Test("Host-shown block in a window starts its content")
+    func hostShownBlockStartsContent() {
+        let block = BlockFixture()
+        block.view.setHostVisible(false)
+        block.attachToWindow()
+
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.page?.loadCount == 1)
+    }
+
+    /// Both sources have to agree: the wrapper saying "shown" cannot start a block that is not in a
+    /// window in the first place.
+    @Test("Host visibility alone does not start a block outside a window")
+    func hostVisibilityAloneStartsNothing() {
+        let block = BlockFixture()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 0)
+        #expect(block.bed.pageFactory.pages.isEmpty)
+    }
+
+    @Test("Host-hidden block stops its content")
+    func hostHiddenBlockStopsContent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+
+        #expect(block.page?.cancelCount == 1)
+    }
+
+    /// Three sources drive one switch, and they repeat each other freely — the same value twice must
+    /// not stop the content twice.
+    @Test("Repeated host visibility changes nothing")
+    func repeatedHostVisibilityIsIdempotent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(false)
+
+        #expect(block.page?.cancelCount == 1)
+    }
+
+    /// A pause, not a reset — the same as leaving a window: the page that was already loaded is kept
+    /// instead of being resolved and built anew.
+    @Test("Block hidden and shown again keeps its page")
+    func hostHiddenBlockKeepsItsPage() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.bed.pageFactory.pages.count == 1)
+    }
+
+    /// And the budget is paused, not handed back: what the block spent before it was hidden stays
+    /// spent, so a wrapper toggling visibility cannot extend the wait indefinitely.
+    @Test("Host visibility pauses the budget and resumes it from the remainder")
+    func hostVisibilityResumesTheBudgetFromTheRemainder() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+
+        block.timeoutBed.clock.advance(2)
+        block.view.setHostVisible(false)
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        // Nobody was looking, so the block did not give up while it was hidden.
+        #expect(delegate.events.isEmpty)
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.view.setHostVisible(true)
+
+        // Five seconds of budget, two of them already spent on screen.
+        #expect(block.timeoutBed.scheduler.lastDelay == 3)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed])
+        #expect(block.view.intrinsicContentSize.height == 0)
+    }
+
+    /// A block that is already shown costs nothing to hide and show: the content is there, and the
+    /// host hears no second outcome for it.
+    @Test("Shown block hidden and shown again keeps its content and reports nothing twice")
+    func hostVisibilityKeepsShownContent() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.renderContent(count: 3)
+        await mainQueueTurn()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+        #expect(block.bed.resolver.resolveCount == 1)
+    }
+
+    /// A reload needs somebody to look at the block, and the window is no longer the only one who
+    /// knows whether anybody does.
+    @Test("Reload on a host-hidden block does nothing")
+    func reloadOnHostHiddenBlockDoesNothing() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.view.setHostVisible(false)
+
+        block.view.reload()
+
+        #expect(block.bed.pageFactory.pages.count == 1)
+        #expect(block.bed.resolver.forceRefreshHistory == [false])
+    }
+
+    // MARK: - Release
+
+    @Test("Release stops the content")
+    func releaseStopsTheContent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+
+        #expect(block.page?.cancelCount == 1)
+    }
+
+    /// Release is final: the wrapper holds the view for as long as the platform sees fit, and a
+    /// block whose screen is gone must not come back to life with it.
+    @Test("Released block does not start again in a window")
+    func releasedBlockDoesNotStartAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.page?.loadCount == 1)
+        #expect(block.bed.resolver.resolveCount == 1)
+    }
+
+    /// Nothing reaches the wrapper after it let the block go — neither outcomes nor visibility.
+    @Test("Release silences the delegate and the visibility observer")
+    func releaseSilencesTheWrapper() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        let visibility = EmbeddedBlockVisibilitySpy()
+        block.view.delegate = delegate
+        block.view.setVisibilityObserver { visibility.record($0) }
+        block.attachToWindow()
+        block.page?.renderContent(count: 3)
+        await mainQueueTurn()
+        let reportsBeforeRelease = visibility.values.count
+
+        block.view.release()
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        #expect(block.view.delegate == nil)
+        #expect(delegate.events == [.loaded])
+        #expect(visibility.values.count == reportsBeforeRelease)
+    }
+
+    @Test("Repeated release changes nothing")
+    func repeatedReleaseIsIdempotent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+        block.view.release()
+
+        #expect(block.page?.cancelCount == 1)
     }
 
     // MARK: - Helpers

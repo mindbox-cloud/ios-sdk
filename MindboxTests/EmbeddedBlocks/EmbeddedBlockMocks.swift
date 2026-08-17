@@ -227,6 +227,18 @@ final class EmbeddedBlockTestBed {
     }
 }
 
+/// Collects what the container tells a wrapper through `setVisibilityObserver`.
+final class EmbeddedBlockVisibilitySpy {
+
+    private(set) var values: [Bool] = []
+
+    var last: Bool? { values.last }
+
+    func record(_ isVisible: Bool) {
+        values.append(isVisible)
+    }
+}
+
 final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
     enum Event: Equatable {

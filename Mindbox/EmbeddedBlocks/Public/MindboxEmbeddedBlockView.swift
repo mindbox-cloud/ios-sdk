@@ -84,6 +84,67 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// itself instead of handing them over as `UIView`s. Internal: not part of the public API.
     var onPresentationChange: ((EmbeddedBlockPresentation) -> Void)?
 
+    // MARK: - Wrapper API
+
+    /// Reports whether the block occupies space in the host layout right now. `false` means it
+    /// collapsed and the space went back to the host.
+    ///
+    /// For wrappers that lay the block out themselves instead of relying on `intrinsicContentSize`.
+    /// A Flutter platform view is sized from the Dart side, and neither `intrinsicContentSize` nor
+    /// the layer model reaches it — so the collapse has to arrive as a signal. A boolean and not
+    /// `EmbeddedBlockPresentation`: which layer the container shows is its own business, and the
+    /// wrapper needs exactly one bit of it.
+    ///
+    /// The current value arrives right away on subscribing, so a wrapper that subscribes after the
+    /// outcome cannot miss the collapse that came with it.
+    @_spi(Internal)
+    public func setVisibilityObserver(_ observer: ((Bool) -> Void)?) {
+        visibilityObserver = observer
+        observer?(isVisible)
+    }
+
+    /// Tells the block whether the host still shows it — a second source for the same input as
+    /// window visibility: the content runs while `window != nil && isHostVisible`.
+    ///
+    /// For wrappers whose whole app lives in one window. In Flutter every screen shares it, so
+    /// leaving a screen never takes the block out of a window: the block would keep waiting — and
+    /// spending its budget — on a screen nobody is looking at, and could collapse before the user
+    /// ever got there. `true` by default, so a wrapper that says nothing behaves as before.
+    ///
+    /// The semantics are exactly those of leaving and entering a window: a pause, not a reset. A
+    /// block hidden mid-load keeps the page it has and the remainder of its budget; shown again, it
+    /// counts that remainder down instead of starting the budget anew.
+    @_spi(Internal)
+    public func setHostVisible(_ isHostVisible: Bool) {
+        guard self.isHostVisible != isHostVisible else { return }
+
+        self.isHostVisible = isHostVisible
+        updateContentActivity(reason: isHostVisible ? "was shown by the host wrapper"
+                                                   : "was hidden by the host wrapper")
+    }
+
+    /// Stops the block for good: the content stops, the wrapper's callbacks are dropped, and the
+    /// block does not start again even while it stays in a window.
+    ///
+    /// The container stops the same things in `deinit`, so a wrapper that simply lets the view go is
+    /// already correct. This is for wrappers that cannot promise that: a platform-view factory holds
+    /// the view for as long as the platform sees fit, and the block should stop when the screen is
+    /// gone rather than when the last reference is. What the container holds — the page among it —
+    /// still goes away with the container itself, so a released block is meant to be let go right
+    /// after, not kept around.
+    @_spi(Internal)
+    public func release() {
+        guard !isReleased else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was released by the host wrapper",
+                      category: .embeddedBlocks)
+        isReleased = true
+        delegate = nil
+        visibilityObserver = nil
+        onPresentationChange = nil
+        updateContentActivity(reason: "was released by the host wrapper")
+    }
+
     // MARK: - State
 
     private let contentProvider: EmbeddedBlockWebViewProvider
@@ -118,6 +179,22 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// the height and the report to the wrapper — otherwise they could diverge. It also tells a
     /// shown error screen from one merely assigned: an `errorView` given after collapse is not shown.
     private var shownLayer: EmbeddedBlockPresentation.Layer = .placeholder
+
+    /// Whether the block takes space in the host layout: every layer except `nothing` does.
+    private var isVisible: Bool { shownLayer != .nothing }
+
+    private var visibilityObserver: ((Bool) -> Void)?
+
+    /// Whether the wrapper's host still shows the block. Nobody says otherwise until a wrapper does.
+    private var isHostVisible = true
+
+    /// Whether a wrapper has released the block: then it stays stopped whatever the window says.
+    private var isReleased = false
+
+    /// Whether the content is running right now. Three sources drive one decision — the window, the
+    /// wrapper's host, a release — and each of them can repeat what another has already said, so the
+    /// switch needs to know its own position.
+    private var isContentRunning = false
 
     /// There are two public outcomes: shown or not shown. To the host "empty" is the same non-show
     /// as a failure; the difference lives only in the container (an empty block shows no `errorView`).
@@ -199,7 +276,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         timeout.isNeeded = { [weak self] in
             guard let self else { return false }
-            return self.window != nil && self.state == .loading
+            return self.isEffectivelyVisible && self.state == .loading
         }
         timeout.onExpire = { [weak self] in
             self?.handleTimeout()
@@ -222,29 +299,47 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private var contentHeight: CGFloat {
-        switch shownLayer {
-        case .placeholder, .content, .errorView: return max(0, preferredHeight)
-        case .nothing: return 0
-        }
+        isVisible ? max(0, preferredHeight) : 0
     }
 
     // MARK: - Visibility
 
-    /// Visibility drives the content: there is no reason to hold content for a container that is
-    /// not in a window, and no public way for the host to start or stop it by hand.
+    /// Whether anybody is looking at the block. The window answers that for a UIKit host; a wrapper
+    /// whose app has a single window answers the rest through `setHostVisible(_:)`, and a released
+    /// block is not looked at by definition.
+    private var isEffectivelyVisible: Bool {
+        window != nil && isHostVisible && !isReleased
+    }
+
+    /// Visibility drives the content: there is no reason to hold content for a block nobody is
+    /// looking at, and no public way for the host to start or stop it by hand.
     override public func didMoveToWindow() {
         super.didMoveToWindow()
 
-        if window == nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' left the window, stopping content", category: .embeddedBlocks)
-            // A pause, not a reset: nobody waits for a block outside a window, but that does not
-            // cancel an attempt already started — once back, it counts down its remainder.
-            timeout.pause()
-            contentProvider.stop()
-        } else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' entered the window, starting content", category: .embeddedBlocks)
+        updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
+    }
+
+    /// - Parameter reason: What changed, for the log. The three sources of visibility lead here, and
+    ///   a log line saying only "stopped" leaves the interesting half out.
+    private func updateContentActivity(reason: String) {
+        let shouldRun = isEffectivelyVisible
+
+        guard shouldRun != isContentRunning else { return }
+
+        isContentRunning = shouldRun
+
+        if shouldRun {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), starting content",
+                          category: .embeddedBlocks)
             contentProvider.start()
             timeout.armIfNeeded()
+        } else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
+                          category: .embeddedBlocks)
+            // A pause, not a reset: nobody waits for a block that is not on screen, but that does
+            // not cancel an attempt already started — once back, it counts down its remainder.
+            timeout.pause()
+            contentProvider.stop()
         }
     }
 
@@ -255,10 +350,10 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// app — will be built on this method, and there is no reason yet for the host to decide when
     /// to refresh the block.
     func reload() {
-        guard window != nil else {
-            // Content lives only while the block is in a window; reloading an invisible block is
-            // pointless — it loads anew by itself once it returns to a window.
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not in a window",
+        guard isEffectivelyVisible else {
+            // Content lives only while somebody is looking at the block; reloading an invisible
+            // block is pointless — it loads anew by itself once it is back on screen.
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return
         }
@@ -304,6 +399,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         invalidateIntrinsicContentSize()
         onPresentationChange?(EmbeddedBlockPresentation(layer: shownLayer, height: contentHeight))
+        visibilityObserver?(isVisible)
         scheduleDelivery()
     }
 
