@@ -415,7 +415,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     /// `contentRendered` is the page's only statement about itself, and it carries how many items it
-    /// drew. Zero — or below — is a valid outcome, not a failure.
+    /// drew. Zero is a valid outcome, not a failure.
     private func applyContentRendered(_ count: Int) {
         guard isStarted else { return }
 

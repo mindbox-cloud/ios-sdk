@@ -128,14 +128,14 @@ protocol WebBridgeLifecycleHosting: AnyObject {
 /// here and the page simply starts sending `contentRendered` — nothing inside the bridge changes.
 protocol WebBridgeContentHosting: AnyObject {
 
-    /// - Parameter count: at or below `0` means the page is alive and correct and has nothing
-    ///   to show. That is an outcome, not a failure.
+    /// - Parameter count: `0` means the page is alive and correct and has nothing to show.
+    ///   That is an outcome, not a failure.
     func bridgeDidRenderContent(count: Int)
 
-    /// The page reported content, but the report could not be read — no count, or one that is
-    /// not a whole number. The page has already been refused; the host hears it separately
-    /// because a surface that reserved space for the content now holds a failed show, not a
-    /// page-side detail: nobody can say what is on screen.
+    /// The page reported content, but the report cannot be used — no count, a fraction, or a
+    /// negative. The page has already been refused; the host hears it separately because a
+    /// surface that reserved space for the content now holds a failed show, not a page-side
+    /// detail: nobody can say what is on screen.
     func bridgeDidReportUnreadableContent()
 }
 

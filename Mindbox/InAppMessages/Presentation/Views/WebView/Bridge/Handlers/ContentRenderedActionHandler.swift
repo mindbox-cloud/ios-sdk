@@ -12,9 +12,8 @@ import MindboxLogger
 /// The page reports how much content it put on screen.
 ///
 /// Registered everywhere, like every handler. Only a surface that reserves space for content
-/// listens today — a block gives its space back when the count is at or below zero — but nothing
-/// here is specific to one, so an in-app that wants the same signal conforms and starts
-/// receiving it.
+/// listens today — a block gives its space back when the count is zero — but nothing here is
+/// specific to one, so an in-app that wants the same signal conforms and starts receiving it.
 final class ContentRenderedActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.contentRendered]
@@ -24,9 +23,6 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
 
         switch Self.count(in: message) {
         case .whole(let count):
-            // A negative count is delivered rather than refused: to the surface it means the
-            // same as zero — nothing was drawn, give the space back — and the page's report,
-            // odd as it is, was readable.
             renderedCount = count
         case .notWhole(let count):
             // A fraction is a page bug, and rounding one decides the block's fate on the page's
@@ -37,6 +33,14 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
             return
         case .absent:
             refuse("Invalid payload: missing or non-numeric 'count'", message: message, host: host)
+            return
+        }
+
+        // A count of items the page drew, not the size of a collection: a negative number is a
+        // page bug, and the refusal is what makes it land in the metrics instead of passing for
+        // an empty feed.
+        guard renderedCount >= 0 else {
+            refuse("Invalid payload: 'count' must not be negative, got \(renderedCount)", message: message, host: host)
             return
         }
 

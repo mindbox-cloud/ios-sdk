@@ -22,8 +22,8 @@ protocol EmbeddedBlockPageHosting: AnyObject {
     /// The page view. The provider hands it to the container as the block content.
     var view: UIView { get }
 
-    /// The page rendered `count` pieces of content, once per load. At or below `0` means the
-    /// page is alive and correct and has nothing to show. Delivered on the main thread.
+    /// The page rendered `count` pieces of content, once per load. `0` means the page is alive
+    /// and correct and has nothing to show. Delivered on the main thread.
     var onContentRendered: ((Int) -> Void)? { get set }
 
     /// The page reported content, but the report could not be read. The page was already
