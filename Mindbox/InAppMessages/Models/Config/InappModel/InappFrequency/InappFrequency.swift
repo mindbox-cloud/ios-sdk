@@ -13,6 +13,7 @@ protocol iInappFrequency: Decodable, Equatable { }
 enum InappFrequencyType: String, Decodable {
     case periodic
     case once
+    case unlimited
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -25,6 +26,10 @@ enum InappFrequencyType: String, Decodable {
 enum InappFrequency: Decodable, Equatable, Hashable {
     case periodic(PeriodicFrequency)
     case once(OnceFrequency)
+
+    /// No limit on how many times the in-app may be shown. Carries no payload, so it needs no type
+    /// of its own next to `OnceFrequency` and `PeriodicFrequency`.
+    case unlimited
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +40,7 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         switch (lhs, rhs) {
             case (.periodic, .periodic): return true
             case (.once, .once): return true
+            case (.unlimited, .unlimited): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -44,8 +50,19 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         switch self {
             case .periodic: hasher.combine("periodic")
             case .once: hasher.combine("once")
+            case .unlimited: hasher.combine("unlimited")
             case .unknown: hasher.combine("unknown")
         }
+    }
+
+    /// Whether a show of an in-app with this frequency is written down: its show history and the
+    /// session list, the same two stores the shared session and daily budgets are counted out of.
+    /// `unlimited` records nothing — the records exist to hold shows back, and it is never held back.
+    ///
+    /// One rule for all three paths — a trigger show, a requested show, a rendered block — in sync with
+    /// Android. `nil` never reaches here: the in-app decoder fills a missing frequency with once/lifetime.
+    static func countsShows(_ frequency: InappFrequency?) -> Bool {
+        frequency != .unlimited
     }
 
     init(from decoder: Decoder) throws {
@@ -64,6 +81,8 @@ enum InappFrequency: Decodable, Equatable, Hashable {
             case .once:
                 let onceFrequency = try variantContainer.decode(OnceFrequency.self)
                 self = .once(onceFrequency)
+            case .unlimited:
+                self = .unlimited
             case .unknown:
                 self = .unknown
         }

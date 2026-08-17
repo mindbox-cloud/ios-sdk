@@ -15,6 +15,7 @@ struct InAppDTO: Decodable, Equatable {
     let delayTime: String?
     let sdkVersion: SdkVersion
     var frequency: InappFrequency?
+    let displayConditions: DisplayConditions
     let targeting: Targeting
     let form: InAppFormDTO
     let tags: [String: String]?
@@ -25,6 +26,7 @@ struct InAppDTO: Decodable, Equatable {
         case delayTime
         case sdkVersion
         case frequency
+        case displayConditions
         case targeting
         case form
         case tags
@@ -59,6 +61,11 @@ extension InAppDTO {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
 
+        // The restriction field collapses "no key", "null" and "unreadable" into the permissive
+        // value here, so nothing downstream has to know that an absent restriction and an
+        // unrestricted one are the same thing.
+        self.displayConditions = (try? container.decode(DisplayConditions.self, forKey: .displayConditions)) ?? .unrestricted
+
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
 
@@ -73,6 +80,7 @@ struct InApp: Decodable, Equatable {
     let sdkVersion: SdkVersion
     let targeting: Targeting
     var frequency: InappFrequency?
+    let displayConditions: DisplayConditions
     let form: InAppForm
     let tags: [String: String]?
 }

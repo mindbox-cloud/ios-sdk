@@ -33,7 +33,7 @@ enum Constants {
     /// Mobile configuration sdkVersion.
     enum Versions {
         static let webBridgeVersion = 1
-        static let sdkVersionNumeric = 12
+        static let sdkVersionNumeric = 13
     }
 
     enum WebViewLocalState {
@@ -116,17 +116,18 @@ enum Constants {
     }
 
     enum EmbeddedBlock {
-        /// How long an embedded block waits for the page to report its content before collapsing.
+        /// How long a built page is given to declare itself ready. Running out is a failure: it is
+        /// reported to the backend, and the host gets its own `errorView` if it passed one.
         ///
-        /// Its own budget rather than the in-apps' one, even when the numbers agree: a block sits
-        /// in the host's layout, and how long it holds that space is a product decision of its
-        /// own, not a consequence of what a popup waits for.
-        ///
-        /// It covers strictly more than a popup's: the page has to load, boot its bridge, ask for
-        /// its start payload, run its own pipeline — which includes waiting up to three seconds
-        /// on a targeting answer before giving up on it — and only then report what it drew.
-        /// Roughly 3s to load, 1s to boot, 3s of targeting, 3s to render, and slack.
-        static let readyTimeoutSeconds = 12
+        /// Its own budget, not shared with in-apps even while the values match: the block stands in the
+        /// host's layout, and its patience is a product decision of its own.
+        static let readyTimeoutSeconds = 7
+
+        /// How long the block waits to learn what to show at all — the config has to arrive and the
+        /// selection has to run. Running out means "nothing to show", not a breakage, and reports
+        /// nothing. Longer than the page's budget because a cold start with no network can spend this
+        /// whole time before anyone can say whether there is content (contract, in sync with Android).
+        static let answerTimeoutSeconds = 30
     }
 
     enum MagicNumbers {
