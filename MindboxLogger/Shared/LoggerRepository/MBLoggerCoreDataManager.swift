@@ -29,7 +29,7 @@ public class MBLoggerCoreDataManager {
         case disabled
     }
     // @Locked: bootstrap assigns it on the logger queue while public entry points read it from
-    // caller threads (TSan-confirmed race on init vs first log call).
+    // caller threads (TSan-confirmed race).
     @Locked private(set) var storageState: StorageState
     
     private let osLog = OSLogWriter(
@@ -72,8 +72,7 @@ public class MBLoggerCoreDataManager {
     
     // MARK: CoreData objects
     
-    // @Locked for the same bootstrap-vs-caller reason as `storageState`: the guards in the public
-    // entry points read both from the calling thread.
+    // @Locked: same bootstrap-vs-caller race as `storageState`.
     @Locked private var persistentContainer: MBPersistentContainer?
     @Locked private var context: NSManagedObjectContext?
     

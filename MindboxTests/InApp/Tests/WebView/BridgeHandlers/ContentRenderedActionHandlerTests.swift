@@ -136,9 +136,6 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
-    /// A page counts what it drew, and it cannot draw minus one story: the number is a page bug.
-    /// Refused rather than folded into "empty", and the host hears it too — that is what puts the
-    /// bug into the metrics instead of letting it pass for a feed with nothing to show.
     @Test("A negative count is refused and reaches the host as unreadable")
     func negativeCountIsRefused() throws {
         let host = ContentHostSpy()

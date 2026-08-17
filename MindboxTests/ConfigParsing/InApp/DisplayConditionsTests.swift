@@ -13,8 +13,6 @@ import Testing
 @Suite("DisplayConditions parsing", .tags(.decoding))
 struct DisplayConditionsTests {
 
-    /// The field always arrives nested in an in-app, and the optional mirrors the contract: an absent
-    /// key and an explicit null are the same thing.
     private struct Holder: Decodable {
         let displayConditions: DisplayConditions?
     }
@@ -29,8 +27,6 @@ struct DisplayConditionsTests {
         #expect(try decode(#"{"$type": "directCall"}"#) == .directCall)
     }
 
-    /// A value we cannot read must not silently switch an in-app to direct call only — that would
-    /// hide it from every trigger it used to answer.
     @Test("Anything unreadable keeps the in-app showing as before", arguments: [
         #"{"$type": "pushOnly"}"#,
         #"{"$type": "all"}"#,

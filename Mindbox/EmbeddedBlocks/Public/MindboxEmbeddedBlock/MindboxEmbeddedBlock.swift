@@ -114,8 +114,6 @@ private struct EmbeddedBlockBody: View {
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    /// Starts from the same point the container starts from: the space is taken, the placeholder
-    /// is shown. The block occupies its height right away, not from the container's first report.
     @State private var presentation: EmbeddedBlockPresentation
 
     init(placeSystemName: String,
@@ -252,7 +250,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         private var isDetached = false
 
-        /// Where `update` defers its write — `DispatchQueue.main` outside tests.
+        /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
         init(presentation: Binding<EmbeddedBlockPresentation>,
@@ -275,7 +273,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             }
         }
 
-        /// An ignored height has no other symptom: the block simply keeps standing at its old one.
+        /// An ignored height has no other symptom.
         func warnIfHeightIsIgnored(_ newHeight: CGFloat, placeSystemName: String) {
             guard !hasWarnedAboutIgnoredHeight, newHeight != creationHeight else { return }
 
@@ -285,8 +283,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
                           category: .embeddedBlocks)
         }
 
-        /// The view left the tree: silences the write `update` has already queued — nulling the
-        /// callbacks in `dismantleUIView` cannot recall it, and `weak self` is no guarantee: when
+        /// Silences the write `update` has already queued: `weak self` is no guarantee — when
         /// SwiftUI releases the coordinator after dismantling is unspecified.
         func detach() {
             isDetached = true

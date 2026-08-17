@@ -84,10 +84,8 @@ enum InAppWebViewPrewarmPlanner {
                 switch variant {
                 case .modal(let modal): layers = modal.content?.background?.layers
                 case .snackbar(let snackbar): layers = snackbar.content?.background?.layers
-                // Blocks are left out of prewarm deliberately: the prewarm contract assumes a page
-                // that recognises it and boots tracker-only, and the feed page has not been checked
-                // against it. Warming a page that boots in full would talk to a bridge that is not
-                // there yet.
+                // Deliberate: prewarm assumes a page that recognises it and boots tracker-only,
+                // and the feed page has not been checked against that contract.
                 case .embedded: layers = nil
                 case .unknown: layers = nil
                 }

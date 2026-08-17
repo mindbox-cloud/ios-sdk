@@ -10,9 +10,6 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The service forwards the feed's question to the selection and delivers the answer on the main
-/// thread — whenever it arrives. The page enforces its own waiting budget, so there is deliberately
-/// no deadline on this side: a made-up "none" would pre-empt a call that is the page's to make.
 @Suite("Embedded block feed service", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockFeedServiceTests {
@@ -27,8 +24,6 @@ struct EmbeddedBlockFeedServiceTests {
         #expect(bed.askedIds == [["story-1", "story-2", "story-3"]])
     }
 
-    /// Nothing to ask about is answered on the spot: the selection would run the whole targeting
-    /// evaluation to return an empty list.
     @Test("An empty question is answered without asking the selection")
     func emptyQuestionIsAnsweredWithoutAsking() {
         let bed = FeedBed()
@@ -39,8 +34,6 @@ struct EmbeddedBlockFeedServiceTests {
         #expect(bed.askedIds.isEmpty)
     }
 
-    /// However long the selection takes, its answer still reaches the page: what a late answer means
-    /// is the page's decision, not something the SDK answers for it.
     @Test("A slow selection still answers when it comes back")
     func slowSelectionStillAnswers() {
         let bed = FeedBed(allowed: ["story-1"], isDeferred: true)
@@ -53,7 +46,6 @@ struct EmbeddedBlockFeedServiceTests {
         #expect(bed.answers == [["story-1"]])
     }
 
-    /// The selection answers off the main thread, and the page is written to from the main thread.
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
         let service = EmbeddedBlockFeedService(ask: { _, completion in
@@ -70,7 +62,6 @@ struct EmbeddedBlockFeedServiceTests {
     }
 }
 
-/// The service with the selection in the test's hands.
 @MainActor
 private final class FeedBed {
 
@@ -87,7 +78,6 @@ private final class FeedBed {
         self.allowed = allowed
         self.isDeferred = isDeferred
 
-        // Built before the closures can capture `self`, so the collaborators are handed in afterwards.
         var askedIds: (([String]) -> Void)?
         var ask: ((@escaping (FeedAnswer) -> Void) -> Void)?
 

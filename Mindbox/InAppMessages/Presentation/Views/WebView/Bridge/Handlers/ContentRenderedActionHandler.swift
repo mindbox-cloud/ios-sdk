@@ -36,9 +36,6 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
             return
         }
 
-        // A count of items the page drew, not the size of a collection: a negative number is a
-        // page bug, and the refusal is what makes it land in the metrics instead of passing for
-        // an empty feed.
         guard renderedCount >= 0 else {
             refuse("Invalid payload: 'count' must not be negative, got \(renderedCount)", message: message, host: host)
             return
@@ -55,8 +52,6 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
         host.respondSuccess(to: message)
     }
 
-    /// The page is refused, and the host hears it too: this report is the page's only statement
-    /// about itself, so a host that reserved space for it now holds a show nobody can vouch for.
     private func refuse(_ reason: String, message: BridgeMessage, host: WebBridgeHost) {
         host.respondError(reason, to: message)
         (host as? WebBridgeContentHosting)?.bridgeDidReportUnreadableContent()

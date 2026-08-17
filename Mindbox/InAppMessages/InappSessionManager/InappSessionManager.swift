@@ -15,9 +15,8 @@ protocol InappSessionManagerProtocol {
 
 final class InappSessionManager: InappSessionManagerProtocol {
     
-    // @Locked: session checks arrive both from the controller queue (direct visits) and
-    // synchronously from the host's thread (push and link visits), and each check is a
-    // read followed by a write of this timestamp.
+    // @Locked: checks arrive from the controller queue (direct visits) and synchronously from the
+    // host's thread (push/link visits), each a read-then-write of this timestamp.
     @Locked var lastTrackVisitTimestamp: Date?
     
     private let inappCoreManager: InAppCoreManagerProtocol

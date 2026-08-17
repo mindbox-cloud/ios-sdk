@@ -81,15 +81,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// What a block at this place should show, or `nil` for "nothing to show" — which for a block is an
-    /// outcome, not an error.
-    ///
-    /// Runs on the same serial queue as the trigger path. That is not incidental: the targeting checker
-    /// is one shared instance holding the event it was prepared with, so two resolves in flight at once
-    /// would answer each other's questions.
-    ///
-    /// The trigger is a parameter because the push side calls this with the operation that just
-    /// happened, and pull calls it with nothing at all.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ response: ConfigResponse,
@@ -108,16 +99,11 @@ class InappMapper: InappMapperProtocol {
         )
 
         evaluateTargeting(query) { suitableInapps in
-            // Two candidates for one place is a legitimate config, and the answer is the first by
-            // priority. The rest are not queued anywhere: a block shows one thing at a time and asks
-            // again when it needs to.
             guard let winner = suitableInapps.first else {
                 completion(nil)
                 return
             }
 
-            // Checked on the winner and not as a filter, because the budgets are shared: what stops one
-            // candidate stops the next.
             guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
                                                                 frequency: winner.frequency,
                                                                 id: winner.inAppId) else {
@@ -127,28 +113,19 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            // Vouching comes after the budgets: an in-app the place did not get was not offered.
             self.vouchOncePerSession(for: [winner])
 
             completion(winner)
         }
     }
 
-    /// Which of `ids` a feed may draw.
-    ///
-    /// Same queue and same shared targeting checker as every other path, but this one never goes to
-    /// the network: the answer comes from what the session has already fetched, and an id whose
-    /// targeting needs data that is not there is cut — the wire contract's fail closed, in sync with
-    /// Android. The place resolve that built the page has fetched the same dependencies moments
-    /// earlier, so a cold cache here means that fetch failed, and retrying it is not this question's
-    /// job.
+    /// Never goes to the network: answers from what the session already fetched, and an id whose
+    /// targeting lacks data is cut — fail closed, in sync with Android.
     func getRenderableInappIds(_ ids: [String],
                                _ response: ConfigResponse,
                                _ completion: @escaping (FeedAnswer) -> Void) {
         let query = TargetingQuery(
             label: "a feed asking about \(ids.count) in-app(s)",
-            // No event: a feed asks about itself. Its stories answer no trigger — that is what makes
-            // them direct-call — so there is nothing for an operation to add to the question.
             event: nil,
             response: response,
             fetchesDependencies: false,
@@ -161,13 +138,8 @@ class InappMapper: InappMapperProtocol {
         )
 
         evaluateTargeting(query) { allowed in
-            // The vouching travels with the answer instead of happening here, because the caller is the
-            // one who knows whether the answer reached the page at all.
-            //
-            // Every delivered answer vouches anew, with no per-session dedup — the same rule the
-            // operation targeting of overlays lives by, where every occurrence is a new offer. A feed's
-            // occurrence is its question: a page that asks again is drawing the feed again (in sync
-            // with Android, which also sends per answer).
+            // Vouching travels with the answer — only the caller knows it reached the page — and
+            // repeats per delivered answer with no session dedup, in sync with Android.
             let answer = FeedAnswer(inappIds: allowed.map(\.inAppId)) { [weak self] in
                 for inapp in allowed {
                     self?.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
@@ -178,12 +150,8 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Sends `Inapp.Targeting` for in-apps that have not been vouched for in this session yet.
-    ///
-    /// The place path only. Its resolves repeat for reasons that offer nothing new — the block
-    /// reappears, a config lands, an operation passes by — so the winner is vouched for once per
-    /// session. A feed's question is different: each one redraws the feed, so its vouching happens per
-    /// delivered answer, above. Whether this split is right is an open question with Android.
+    /// Place path only: its resolves repeat without offering anything new, hence once per session —
+    /// unlike a feed, which vouches per delivered answer. The split is an open question with Android.
     private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
         for inapp in inapps {
             guard !SessionTemporaryStorage.shared.vouchedInappIds.contains(inapp.inAppId) else {
@@ -197,33 +165,23 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// A question that ends in "who is targeted". The callers differ only in which candidates they
-    /// start from and which variant they are going to render.
     private struct TargetingQuery {
 
-        /// How the question names itself in the log.
         let label: String
 
         let event: ApplicationEvent?
         let response: ConfigResponse
 
-        /// Whether the pass may go to the network for geo and segmentations before checking.
-        ///
-        /// A place resolve may: nothing is waiting on it but a shimmer. A feed's question may not —
-        /// the page holds a three-second deadline, and an answer that waited out a request is an
-        /// answer to nobody. A checker asked without its data says "not targeted", so the id is cut.
+        /// A place resolve may fetch geo/segmentations; a feed may not — its page holds a
+        /// three-second deadline, and a checker asked without data says "not targeted".
         let fetchesDependencies: Bool
 
         let candidates: () -> [InApp]
         let pickVariant: (InApp) -> MindboxFormVariant?
     }
 
-    /// The shared shape of answering one: one serial queue, one environment, one targeting pass.
-    /// Sharing it is the point — a feed and a trigger disagreeing about who is targeted would be a
-    /// defect nobody could explain.
-    ///
-    /// The elapsed time is logged on purpose. A feed page gives up after three seconds, and whether
-    /// that budget is ever really at risk is a question for measurements, not for guesses.
+    /// One serial queue and one shared targeting checker for every path — two passes in flight would
+    /// answer each other's questions.
     private func evaluateTargeting(_ query: TargetingQuery,
                                    completion: @escaping ([InAppTransitionData]) -> Void) {
         processingQueue.async {
@@ -264,8 +222,7 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// The content behind an id, with nothing checked — display conditions included. A direct call is
-    /// allowed to show anything the config holds, whatever it says about triggers.
+    /// Nothing checked, display conditions included: a direct call may show anything the config holds.
     func getInAppById(_ id: String,
                       _ response: ConfigResponse,
                       _ completion: @escaping (InAppTransitionData?) -> Void) {
@@ -275,9 +232,6 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            // Any variant, not only an overlay one: whether a variant can actually be shown is the
-            // caller's check, applied below by the overlay path. Keeping a feed from opening inside a
-            // feed is the feed's job, done where it answers which of its stories may be shown.
             guard let variant = inapp.form.variants.first else {
                 Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
                               level: .error, category: .inAppMessages)
@@ -294,11 +248,8 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Everything needed to show the in-app behind an id, ready for the presenter.
-    ///
-    /// The history of shows is deliberately not consulted. On the trigger path an in-app that was
-    /// already shown is skipped, and that is right there — but here the page has already offered this
-    /// in-app to the user, and what they just tapped has to open, however many times it opened before.
+    /// Show history is deliberately not consulted: the page already offered this in-app, and a tap
+    /// has to open it however many times it opened before.
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ response: ConfigResponse,
@@ -309,9 +260,6 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            // `getInAppById` resolves blocks too, but this path ends in the overlay displayer, and a
-            // variant drawn inside the host layout has nothing it could show there. Without the guard
-            // the build fails further down with no images and no explanation for why a tap did nothing.
             guard transitionData.content.isOverlayPresentable else {
                 Logger.common(message: "[InappMapper] In-app \(id) is drawn inside the host layout and cannot be shown over the screen.",
                               level: .error, category: .inAppMessages)
@@ -390,16 +338,11 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Turns a chosen in-app into everything the presenter needs, downloading its images on the way.
-    ///
-    /// Blocking, and deliberately so: the callers walk a list and stop at the first in-app that could be
-    /// built. Must not be called on `processingQueue` — waiting for a download there would stall every
-    /// targeting question behind it.
+    /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
+    /// on `processingQueue`: a download wait there would stall every targeting question behind it.
     private func makeFormData(_ inapp: InAppTransitionData, extraParams: [String: JSONValue]?) -> InAppFormData? {
         Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
 
-        // A web page draws itself: there is nothing for the SDK to fetch, and waiting for images that do
-        // not exist would only delay the show.
         if case .modal(let modal) = inapp.content,
            modal.content.background.layers.contains(where: { $0.layerType == .webview }) {
             return InAppFormData(inAppId: inapp.inAppId,
@@ -459,7 +402,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// The direct-call counterpart: off the serial queue, answered on the main thread.
     private func buildInApp(_ inapp: InAppTransitionData,
                             extraParams: [String: JSONValue],
                             completion: @escaping (InAppFormData?) -> Void) {
@@ -499,12 +441,11 @@ class InappMapper: InappMapperProtocol {
                 event: self.applicationEvent,
                 operationInapps: self.targetingChecker.context.operationInapps
             )
-            // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either:
-            // otherwise every start would pump the story funnel with every user, block or no block.
+            // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either —
+            // otherwise every start would pump the story funnel with every user.
             let triggerable = inapps.filter { $0.displayConditions != .directCall }
-            // A pure-embedded in-app is offered by its place resolve, which vouches for it there —
-            // the catch-up speaking for it too would double the funnel. A mixed form stays covered:
-            // the catch-up speaks for its overlay half (in sync with Android).
+            // A pure-embedded in-app is vouched by its place resolve — speaking here too would double
+            // the funnel. A mixed form stays: the catch-up covers its overlay half (in sync with Android).
             let catchUpCandidates = self.inappFilterService.filterOutNonOverlayInapps(triggerable)
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: catchUpCandidates, targetingChecker: self.targetingChecker)
 

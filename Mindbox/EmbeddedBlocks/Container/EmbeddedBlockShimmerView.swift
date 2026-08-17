@@ -19,8 +19,7 @@ final class EmbeddedBlockShimmerView: UIView {
         static let animationKey = "embeddedBlockShimmer"
         static let animationDuration: CFTimeInterval = 1.4
 
-        /// Where the highlight sits before and after the sweep: fully off the leading edge, then
-        /// fully off the trailing one.
+        /// Outside 0…1 on purpose: fully off the leading edge at rest, off the trailing one once swept.
         static let restingLocations: [NSNumber] = [-1.0, -0.5, 0.0]
         static let sweptLocations: [NSNumber] = [1.0, 1.5, 2.0]
     }

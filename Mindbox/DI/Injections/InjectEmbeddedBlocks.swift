@@ -10,8 +10,7 @@ import Foundation
 
 extension MBContainer {
     func registerEmbeddedBlocks() -> Self {
-        // Container-scoped: one resolver and one registry per container, which is why several
-        // blocks of one place share a single resolve.
+        // One resolver and one registry per container: blocks of one place share a single resolve.
         register(EmbeddedBlockResolving.self) {
             EmbeddedBlockResolver()
         }

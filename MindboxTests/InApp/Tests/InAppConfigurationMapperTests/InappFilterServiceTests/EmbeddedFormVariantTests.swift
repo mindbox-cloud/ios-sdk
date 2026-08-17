@@ -58,8 +58,6 @@ struct EmbeddedFormVariantTests {
         #expect(place(of: variants.first) == "stories-list-container")
     }
 
-    /// Padding in the admin panel still means the place the host app asks for.
-    /// The values are JSON escapes on purpose: the padding has to survive the config as written.
     @Test("Place name is trimmed", arguments: [
         "  stories-list-container",
         "stories-list-container  ",
@@ -70,8 +68,6 @@ struct EmbeddedFormVariantTests {
         #expect(self.place(of: variants.first) == "stories-list-container")
     }
 
-    /// Case is significant: a case-only mismatch is a configuration error, not a match, so the name
-    /// has to survive filtering exactly as written.
     @Test("Place name case is preserved")
     func keepsPlaceNameCase() throws {
         let variants = try filter(embeddedVariant(place: "Stories-List-Container"))
@@ -85,7 +81,6 @@ struct EmbeddedFormVariantTests {
         #expect(try filter(embeddedVariant(place: place)).isEmpty)
     }
 
-    /// No webview layer means there is nothing to render, and the variant cannot address a block.
     @Test("A variant with no webview layer is dropped", arguments: [
         "",
         #"{"$type": "image", "source": {"$type": "url", "value": "https://example.com/a.png"}, "action": {"$type": "redirectUrl", "intentPayload": "payload", "value": "https://example.com"}}"#
@@ -94,9 +89,7 @@ struct EmbeddedFormVariantTests {
         #expect(try filter(embeddedVariant(place: "stories-list-container", layers: layers)).isEmpty)
     }
 
-    /// More than one layer is a configuration mistake, not a reason to show nothing: the block renders
-    /// one page, so the first webview layer is used and the rest are ignored, in sync with
-    /// Android.
+    /// A configuration mistake, not a reason to show nothing: the first webview layer wins, in sync with Android.
     @Test("Two webview layers keep the variant and use the first")
     func keepsVariantWithTwoLayersAndUsesTheFirst() throws {
         let first = webviewLayer(contentUrl: "https://example.com/first.html")
@@ -115,9 +108,6 @@ struct EmbeddedFormVariantTests {
         #expect(layer.contentUrl == "https://example.com/first.html")
     }
 
-    /// And a picture in front of the webview layer does not hide it: the first *webview* layer is what
-    /// counts, not the first layer — which is only pinned by checking that the surviving layer is the
-    /// webview one and carries its address.
     @Test("A webview layer behind another layer is still found")
     func findsWebviewLayerBehindAnother() throws {
         let image = #"{"$type": "image", "source": {"$type": "url", "value": "https://example.com/a.png"}, "action": {"$type": "redirectUrl", "intentPayload": "payload", "value": "https://example.com"}}"#
@@ -136,8 +126,6 @@ struct EmbeddedFormVariantTests {
         #expect(layer.contentUrl == "https://example.com/behind.html")
     }
 
-    /// The point of skipping rather than throwing: one broken block must not take the in-app's other
-    /// variants down with it.
     @Test("A broken embedded variant does not take its siblings down")
     func keepsSiblingVariants() throws {
         let modal = """
@@ -153,8 +141,7 @@ struct EmbeddedFormVariantTests {
         let variants = try filter(embeddedVariant(place: nil), modal)
 
         #expect(variants.count == 1)
-        // Compared by case rather than by value: `MindboxFormVariant.==` only compares the case, so an
-        // expected variant built out of content would assert nothing about the content.
+        // `MindboxFormVariant.==` only compares the case — an expected variant built from content would assert nothing.
         guard case .modal(let survivor)? = variants.first else {
             Issue.record("The modal sibling is expected to survive")
             return

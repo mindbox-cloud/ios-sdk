@@ -10,12 +10,8 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-/// The fixture is assembled from a template and generated scene places, and the config decoder is
-/// failsafe — a typo in the generated JSON would not fail the parse, it would silently drop the
-/// broken in-app and leave a QA scene inexplicably empty. So the suite pins the full outcome: every
-/// place the QA kit knows is present and decodes into a real embedded variant.
-///
-/// Dies together with `LocalStoriesConfigOverride` — delete both before the PR.
+/// The config decoder is failsafe — a typo in the generated fixture silently drops the broken in-app,
+/// so the suite pins the full outcome. Dies together with `LocalStoriesConfigOverride` — delete both before the PR.
 @Suite("Local stories config fixture", .tags(.embeddedBlocks))
 struct LocalStoriesConfigOverrideTests {
 
@@ -50,8 +46,6 @@ struct LocalStoriesConfigOverrideTests {
         #expect(placesInConfig == Set(Self.qaScenePlaces + ["stories-list-container"]))
     }
 
-    /// The sixteen stories are what every scene's feed refers to — a broken story in-app would decode
-    /// away silently and its circles would open nothing in every feed at once.
     @Test("Fixture keeps the sixteen story in-apps the feeds refer to")
     func fixtureKeepsTheStories() throws {
         let data = try #require(LocalStoriesConfigOverride.data)

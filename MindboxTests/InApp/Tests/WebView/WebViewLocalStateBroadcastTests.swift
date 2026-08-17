@@ -11,8 +11,6 @@ import UIKit
 import MindboxLogger
 @_spi(Internal) @testable import Mindbox
 
-/// A write to local state is announced, not only answered. That is what lets a feed grey a ring while
-/// the story that wrote the mark is still on top of it — the feed never asks, so nobody would tell it.
 @MainActor
 @Suite("WebView local state broadcast", .tags(.webView))
 final class WebViewLocalStateBroadcastTests {
@@ -23,8 +21,7 @@ final class WebViewLocalStateBroadcastTests {
 
     init() {
         TestConfiguration.configure()
-        // In memory on purpose: the announcement is what is under test, and a real store would leave
-        // watched marks behind for whatever suite runs next.
+        // In memory on purpose: a real store would leave watched marks behind for the next suite.
         handler = LocalStateActionHandler(makeStorage: { InMemoryLocalStateStorage() },
                                           webPageRegistry: registry)
     }
@@ -41,8 +38,6 @@ final class WebViewLocalStateBroadcastTests {
         #expect(announced.payload == host.sent.last?.payload)
     }
 
-    /// The response still goes to the writer: the announcement is in addition to the answer, not
-    /// instead of it.
     @Test("The writer is still answered")
     func writerIsStillAnswered() {
         registry.register(WebPageSpy())
@@ -52,8 +47,6 @@ final class WebViewLocalStateBroadcastTests {
         #expect(host.sent.last?.type == .response)
     }
 
-    /// The page that wrote already holds the answer — hearing the broadcast too would make it
-    /// repaint over its own write.
     @Test("The writer does not hear its own write")
     func writerIsExcludedFromTheBroadcast() {
         let listener = WebPageSpy()
@@ -66,8 +59,6 @@ final class WebViewLocalStateBroadcastTests {
         #expect(host.pushed.isEmpty)
     }
 
-    /// A payload with nothing to store is an error, and an error is not news: announcing it would make
-    /// every other page redraw over a write that never happened.
     @Test("A rejected write is not announced")
     func rejectedWriteIsNotBroadcast() {
         let listener = WebPageSpy()
@@ -87,8 +78,6 @@ final class WebViewLocalStateBroadcastTests {
     }
 }
 
-/// The page that is writing: a bridge host for the handler, and a page the registry could hold —
-/// so the author-exclusion promise is checkable on the same object identity the handler passes.
 private final class BroadcastHostSpy: WebBridgeHost, MindboxWebPage {
 
     private(set) var sent: [BridgeMessage] = []

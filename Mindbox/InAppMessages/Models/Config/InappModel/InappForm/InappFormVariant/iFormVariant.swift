@@ -132,12 +132,8 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
     }
 }
 
-/// The two questions the filters ask about a variant — which place it is addressed to, and whether it
-/// can be shown over the app's own screen — both answerable without unwrapping the variant's payload.
 extension MindboxFormVariant {
 
-    /// The place in the host app's layout this variant is addressed to, or `nil` for variants that are
-    /// not addressed by a place at all.
     var placeSystemName: String? {
         switch self {
         case .embedded(let embedded): return embedded.placeSystemName
@@ -145,8 +141,6 @@ extension MindboxFormVariant {
         }
     }
 
-    /// Whether this variant can be shown over the app's own screen. A block is drawn inside the host
-    /// layout, so it never can.
     var isOverlayPresentable: Bool {
         switch self {
         case .modal, .snackbar: return true

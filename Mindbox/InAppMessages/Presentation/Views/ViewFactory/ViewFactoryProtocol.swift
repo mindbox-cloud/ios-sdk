@@ -21,8 +21,7 @@ struct ViewFactoryParameters {
     let operation: (name: String, body: String)?
     let tags: [String: String]?
 
-    /// See ``InAppFormData/extraParams``. Only a web page can use them, so only the web factory reads
-    /// this.
+    /// See ``InAppFormData/extraParams``; only the web factory reads this.
     let extraParams: [String: JSONValue]?
 }
 

@@ -17,8 +17,7 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedOnPresentationCompleted: (() -> Void)?
     var receivedOnError: ((InAppPresentationError) -> Void)?
 
-    /// `true` — a show is on screen: `dismissActiveInApp` completes it, the way the real manager
-    /// routes an outside dismissal through the show's own completion.
+    /// Like the real manager, `dismissActiveInApp` routes an outside dismissal through the show's own completion.
     var hasActivePresentation = false
 
     func present(inAppFormData: InAppFormData,

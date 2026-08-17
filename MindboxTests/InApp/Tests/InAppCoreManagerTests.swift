@@ -10,8 +10,6 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The push side of embedded blocks at its source: an operation the pipeline agreed to handle is
-/// announced, one the config never mentions wakes nobody.
 @Suite("In-app core manager operation announcement", .tags(.embeddedBlocks))
 struct InAppCoreManagerTests {
 
@@ -60,7 +58,6 @@ struct InAppCoreManagerTests {
         coreManager.didPreparedConfiguration()
     }
 
-    /// Collects every announced operation for the test's lifetime.
     private final class AnnouncementSpy {
         private(set) var events: [ApplicationEvent] = []
         private var token: NSObjectProtocol?
@@ -94,8 +91,6 @@ struct InAppCoreManagerTests {
         #expect(spy.events.first === event)
     }
 
-    /// The gate stays in front of the announcement: an operation the config never mentions cannot
-    /// bring content to any place, so no block should be woken to ask.
     @Test("An operation the config does not know is not announced")
     func unknownOperationIsNotAnnounced() {
         let spy = AnnouncementSpy()
@@ -106,7 +101,6 @@ struct InAppCoreManagerTests {
         #expect(spy.events.isEmpty)
     }
 
-    /// Blocks pull at start on their own; announcing the start would make every block resolve twice.
     @Test("The start event is not announced")
     func startIsNotAnnounced() {
         let spy = AnnouncementSpy()

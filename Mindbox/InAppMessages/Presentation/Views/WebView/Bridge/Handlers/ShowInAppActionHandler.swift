@@ -9,12 +9,8 @@
 import Foundation
 import MindboxLogger
 
-/// Shows the in-app the page asked for, by id.
-///
-/// The show itself belongs to the host: what asking means — closing whatever is on screen,
-/// bypassing which limits — is a decision of the surface that carries the feed, not of the
-/// bridge. The success below says the request was well-formed and handed over, never that a
-/// window opened: the page finishes its own flow on it and does not wait for the show.
+/// The success response says the request was well-formed and handed over, never that a window
+/// opened — the page does not wait for the show.
 final class ShowInAppActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.showInApp]
@@ -28,18 +24,14 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
         }
 
         guard let feedHost = host as? WebBridgeFeedHosting else {
-            // Journalled and dropped, not refused: a surface without a feed picking this up
-            // later is a conformance, and pages must not have learned that it errors here.
+            // Journalled and dropped, not refused: feedless surfaces may conform later, and
+            // pages must not have learned that this errors here.
             Logger.common(message: "[WebView] Bridge: showInApp from '\(host.contentId)' has no feed to serve it here, ignoring",
                           level: .error,
                           category: host.logCategory)
             return
         }
 
-        // `params` merges into the shown in-app's start payload last and overwrites everything
-        // it collides with, service keys included: an opaque dictionary, collisions are the
-        // page's business. `index` and `sourceInappId` stay in the log and out of the payload —
-        // the page already puts whatever it needs into `params`.
         var params: [String: JSONValue] = [:]
         if case .object(let sent)? = payload["params"] {
             params = sent

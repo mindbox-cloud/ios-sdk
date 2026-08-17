@@ -2,63 +2,46 @@
 //  EmbeddedBlockPlaceRegistry.swift
 //  Mindbox
 //
-//  Created by vailence on 14.08.2026.
+//  Created by Sergei Semko on 14.08.2026.
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import Foundation
 import MindboxLogger
 
-/// What the registry needs from a block: whether there is anywhere to draw, and the one thing it
-/// ever does to a block — hand it the place's fresh answer.
 protocol EmbeddedBlockPlaceHandling: AnyObject {
 
-    /// Whether the block is on screen right now. A place where every block is off screen is not
-    /// resolved: there is nowhere to draw, and the next `start()` asks again anyway.
     var isActive: Bool { get }
 
     /// The place's fresh answer, on the main thread.
     func apply(_ resolution: EmbeddedBlockResolution)
 }
 
-/// What a block needs from the registry.
+/// Called on the main thread: the registry's state is confined to it.
 ///
-/// Called on the main thread: the place map, the resolve slot and the invalidation queue are
-/// confined to it.
-///
-/// There is no `unregister`: blocks are held weakly and drop out of the map on their own. An
-/// explicit unregister would have to be called from `deinit`, and hopping to the main thread from
-/// there would capture an object that is already being torn down.
+/// There is no `unregister`: blocks are held weakly and drop out on their own — an explicit one
+/// would have to hop to the main thread from `deinit`, capturing an object already being torn down.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)
 
-    /// Pull: the block came on screen and wants the place's current answer.
     func blockAppeared(_ place: String)
 }
 
 /// The place map and the router between blocks and the selection — in sync with Android, where the
 /// same component carries the same name and rules.
-///
-/// One place resolves at most once at a time, whoever asked: several blocks of one place share one
-/// answer. There is no selection in here: pull and push converge on the same resolver call.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
-    /// How the registry learns which places the config addresses at all, and which operations each
-    /// place's in-apps listen to — `nil` means "no config yet".
     typealias EmbeddedPlacesFetching = (@escaping ([String: Set<String>]?) -> Void) -> Void
 
     private struct WeakBlock {
         weak var block: EmbeddedBlockPlaceHandling?
     }
 
-    /// A queued re-resolve for a place whose slot is busy. The key's presence is what means "queued";
-    /// the trigger is kept so the deferred pass can still match operation targetings.
     private struct QueuedInvalidation {
         var trigger: ApplicationEvent?
     }
 
-    /// Why a place is being resolved.
     private enum ResolveCause {
         case blockAppeared
         case newConfig
@@ -73,9 +56,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             }
         }
 
-        /// A pull is dropped rather than queued when a resolve is already in flight: the block is in
-        /// the map, so the flying answer reaches it too, and unlike an invalidation a pull carries
-        /// nothing that pass could be missing.
         var queuesWhenBusy: Bool {
             if case .blockAppeared = self {
                 return false
@@ -98,10 +78,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private var resolvingPlaces: Set<String> = []
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
-    /// The places the current config addresses with an embedded variant, each with the operations
-    /// its in-apps' targetings listen to. `nil` until a config has been seen: gating on an empty map
-    /// before the config arrives would silently drop operations whose resolve would simply have
-    /// waited for the config.
+    /// `nil` until a config has been seen: gating on an empty map before that would silently drop
+    /// operations whose resolve would simply have waited for the config.
     private var embeddedPlacesInConfig: [String: Set<String>]?
 
     private let resolver: EmbeddedBlockResolving
@@ -148,8 +126,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         warnIfPlaceIsShared(place)
     }
 
-    /// Two blocks with one place are a legitimate case — both show the same content, resolved once —
-    /// but more often it is a copied name or a reused cell that got a block container from another row.
     private func warnIfPlaceIsShared(_ place: String) {
         let count = blocksByPlace[place]?.count ?? 0
 
@@ -176,12 +152,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    /// The push side: an operation the pipeline handles may carry an in-app targeted at a place, and
-    /// only a resolve run in the operation's context can find it.
-    ///
     /// Gated twice, in sync with Android: the place must be in the config, and some in-app of the
-    /// place must actually listen to this operation — re-resolving on every operation re-ran
-    /// targetings nothing asked about. Before the config (`nil`) both gates stay open.
+    /// place must listen to this operation.
     private func operationOccurred(_ event: ApplicationEvent) {
         let operationName = event.name.lowercased()
 
@@ -206,9 +178,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     // MARK: - The place slot
 
-    /// One live resolve per place. An invalidation landing while the slot is busy is queued — the
-    /// in-flight pass may be reading the config that invalidation is about — and runs immediately
-    /// after, carrying the strongest trigger seen while waiting.
+    /// One live resolve per place: an invalidation landing mid-flight is queued — the in-flight
+    /// pass may be reading the config it is about — and runs right after.
     private func requestResolve(place: String, cause: ResolveCause) {
         prune(place)
 
@@ -225,8 +196,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 return
             }
 
-            // An operation beats an empty trigger, never the other way round: dropping the operation
-            // would drop the only context the deferred pass exists for.
             queuedInvalidations[place] = QueuedInvalidation(trigger: cause.trigger ?? queuedInvalidations[place]?.trigger)
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) landed mid-resolve — queued for the pass after",
@@ -239,8 +208,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution in
             guard let self else { return }
 
-            // The slot is always released, whatever the answer was — a stuck slot would lock the
-            // place in "already resolving" for the life of the process.
             self.resolvingPlaces.remove(place)
             self.deliver(place: place, resolution: resolution)
 
@@ -250,8 +217,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    /// One answer for everyone at the place. Every block decides for itself what the answer means —
-    /// including the blocks that stopped while the resolve was in flight, which simply ignore it.
     private func deliver(place: String, resolution: EmbeddedBlockResolution) {
         for weakBlock in blocksByPlace[place] ?? [] {
             weakBlock.block?.apply(resolution)
@@ -261,10 +226,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     // MARK: - Housekeeping
 
     private func refreshEmbeddedPlaces() {
-        // Unknown while the answer is on its way, and unknown means the gate is open. The fetch hops to
-        // the config manager's queue, and a new config starts its resolves without waiting for it — so an
-        // operation landing in that window would otherwise be gated by the places of the previous config
-        // and skip a place only the new one addresses.
         embeddedPlacesInConfig = nil
 
         fetchEmbeddedPlaces { [weak self] places in

@@ -10,8 +10,6 @@ import Foundation
 import Testing
 @testable import Mindbox
 
-/// What the overlay path is allowed to keep. Every case that drops something has a pair that keeps an
-/// ordinary in-app, because the risk here is not missing a block — it is quietly restricting modals.
 @Suite("Overlay path filters", .tags(.embeddedBlocks))
 struct InappOverlayFilterTests {
 
@@ -64,7 +62,6 @@ struct InappOverlayFilterTests {
         #expect(sut.filterOutNonOverlayInapps([inapp(id: "1", variants: [modal()])]).count == 1)
     }
 
-    /// Not expected from the backend, but an in-app that has both still has something to show.
     @Test("An in-app with both variants stays, and the overlay one is what gets built")
     func keepsMixedInapp() throws {
         let sut = try #require(sut)

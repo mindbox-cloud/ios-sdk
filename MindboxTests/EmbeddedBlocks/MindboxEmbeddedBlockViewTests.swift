@@ -522,10 +522,7 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Timeout
 
-    /// The host may give a block its own patience for the config answer — the same knob Android
-    /// exposes as an XML attribute. What the host cannot do is break the block with it: a
-    /// non-positive value would collapse every block before the config had a chance, so it is
-    /// reported and replaced with the default.
+    /// The same knob Android exposes as an XML attribute.
     @Test("A custom timeout is taken as given, a broken one falls back",
           arguments: [(nil as TimeInterval?, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (TimeInterval(12), TimeInterval(12)),
@@ -614,9 +611,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed])
     }
 
-    /// The block waits twice, and the two waits are not the same thing. Learning what to show can cost a
-    /// config fetch, so it gets the long budget — and running out of it means "nothing to show", not
-    /// "broken": the block collapses without an error screen and the host hears the outcome once.
     @Test("A block that never learned what to show collapses as empty")
     func neverAnsweredBlockCollapsesAsEmpty() async {
         let block = BlockFixture()
@@ -635,8 +629,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed])
     }
 
-    /// The other wait: the page was built and stayed silent. That is a breakage, so the error screen
-    /// applies and the block keeps the space it was given.
     @Test("A page that was built and stayed silent fails")
     func silentBuiltPageFails() async {
         let block = BlockFixture()
@@ -654,8 +646,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed])
     }
 
-    /// And the switch between the two waits restarts the count: a page that arrives after most of the
-    /// answer budget was spent still gets its own full patience, not the remainder.
     @Test("The answer restarts the waiting budget")
     func answerRestartsTheBudget() async {
         let block = BlockFixture()
@@ -667,8 +657,6 @@ struct MindboxEmbeddedBlockViewTests {
         block.bed.resolver.flush()
         await mainQueueTurn()
 
-        // Armed anew for the whole budget: almost all of it went on waiting for the answer, and the
-        // page is not charged for that.
         #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
     }
 

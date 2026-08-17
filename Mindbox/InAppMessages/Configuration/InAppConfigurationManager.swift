@@ -33,14 +33,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
 
-    /// Long enough to outlast a slow network on a cold start, short enough that a caller waiting on it is
-    /// not waiting for the life of the process.
     private static let defaultConfigWaitBudget: TimeInterval = 30
 
-    /// Injectable so a test does not sit the whole budget out.
     private let configWaitBudget: TimeInterval
 
-    /// Callers that asked before the first config arrived. Confined to `queue`, like `configResponse`.
+    /// Confined to `queue`, like `configResponse`.
     private var configWaiters: [(ConfigResponse?) -> Void] = []
     private let inAppConfigRepository: InAppConfigurationRepository
 
@@ -78,9 +75,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
     
-    /// Hops onto `queue` because `configResponse` and `inappMapper` are confined to it, while the
-    /// core manager calls this from its own event queue. Safe to make asynchronous: the answer
-    /// already comes through a completion.
     func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
         queue.async {
             guard let inappMapper = self.inappMapper, let config = self.configResponse else {
@@ -94,12 +88,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
     
-    /// Waits for the config if it has not arrived yet.
-    ///
-    /// A block asks the moment it enters the window, and on a first screen that is regularly before the
-    /// config is downloaded. Answering "nothing to show" then would be wrong in the way that is hardest
-    /// to notice: the block collapses, nothing retries, and it stays empty for the whole screen's life
-    /// while the config sits in memory a second later.
+    /// Waits for the first config rather than answering nil early: an early "nothing to show"
+    /// collapses the block for the screen's whole life — nothing retries.
     func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
         awaitConfig("place '\(place)'") { [weak self] config in
             guard let self = self, let inappMapper = self.inappMapper, let config = config else {
@@ -111,8 +101,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// Answers "none of them" if the config never arrives — showing a story nobody checked is worse than
-    /// showing no story.
     func getRenderableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
         awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] config in
             guard let self = self, let inappMapper = self.inappMapper, let config = config else {
@@ -135,12 +123,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// The places the current config addresses with an embedded variant — each with the operations
-    /// its in-apps' targetings listen to — or `nil` before any config.
-    ///
-    /// This is a raw scan, not the selection: the place registry uses it only to decide whether an
-    /// operation can concern a place at all, so an unvalidated variant counting in errs on the side
-    /// of resolving — the resolve itself applies the real filters.
+    /// A raw scan, not the selection: unvalidated variants count in on purpose — the resolve applies
+    /// the real filters.
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
         queue.async {
             guard let config = self.configResponse else {
@@ -152,8 +136,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             for inapp in config.inapps?.elements ?? [] {
                 let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
                     guard case .embedded(let embedded) = variant else { return nil }
-                    // Trimmed the way the selection trims it, or the gate would speak different place
-                    // names than the resolve behind it and close on a place the resolve would serve.
+                    // Must trim the way the selection trims, or the gate would close on a place
+                    // the resolve behind it would serve.
                     let place = embedded.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines)
                     return place?.isEmpty == false ? place : nil
                 }
@@ -169,9 +153,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// The operations a targeting tree listens to — the same names the checkers file under
-    /// `operationInapps` when the tree is prepared: custom operations by their own system name,
-    /// product and category nodes by the system operation the config settings declare for them.
+    /// Must mirror the names the checkers file under `operationInapps`: custom operations by their own
+    /// system name, product/category nodes by the system operation the config settings declare.
     private static func operationNames(in targeting: Targeting) -> Set<String> {
         switch targeting {
         case .apiMethodCall(let operation):
@@ -189,11 +172,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// Hands over the config, waiting for the first one if it is not there yet.
-    ///
-    /// The wait is bounded so a caller can never be left holding a closure forever — a device with no
-    /// network would otherwise keep every block's callback alive for the life of the process. Giving up
-    /// answers with `nil`, which each caller turns into its own "nothing to show".
     private func awaitConfig(_ what: String, _ completion: @escaping (ConfigResponse?) -> Void) {
         queue.async {
             if let config = self.configResponse {
@@ -224,9 +202,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// Hops onto `queue` for the same reason as `handleInapps`: `inappMapper` is confined to it,
-    /// and the session expiring is noticed on another queue. The new session's config download is
-    /// enqueued after this from the same flow, so the swap always lands before its completion.
+    /// The new session's config download is enqueued after this from the same flow, so the swap
+    /// always lands on `queue` before that download completes.
     func resetInappManager() {
         queue.async {
             Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")

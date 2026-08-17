@@ -163,9 +163,6 @@ struct InAppWebViewPrewarmServiceTests {
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
-    /// Parking starts a navigation of its own — the blank page — and on a real WKWebView it is
-    /// regularly still in flight when the next show asks. Our own blank must not read as
-    /// "mid-navigation", or every show after the first gets a cold instance.
     @Test("Our own blank page in flight does not refuse the next borrow")
     func borrowAcceptsAnInstanceSettlingToOurOwnBlankPage() async throws {
         let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))

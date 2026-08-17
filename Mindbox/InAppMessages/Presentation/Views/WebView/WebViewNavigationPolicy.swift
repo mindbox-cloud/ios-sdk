@@ -9,11 +9,7 @@
 import WebKit
 import MindboxLogger
 
-/// What a Mindbox web view is allowed to navigate to.
-///
-/// One policy for every surface. The content load is ours to perform, and a navigation the user started
-/// is the page's business to decide, not the web view's to perform: an overlay that followed a link
-/// would replace the in-app with a web page, and a block would do it inside someone else's list.
+/// What a Mindbox web view may navigate to — one policy for every surface.
 enum WebViewNavigationPolicy {
 
     enum Decision: Equatable {
@@ -21,8 +17,7 @@ enum WebViewNavigationPolicy {
         /// Our own load: the content commit, a reload, a back-forward move.
         case allow
 
-        /// Anything the user started. Cancelled here and handed to the page, which knows whether it
-        /// wanted a browser, a deep link or nothing at all.
+        /// Anything the user started: cancelled and handed to the page to decide.
         case handInBack(url: URL?)
     }
 
@@ -31,15 +26,12 @@ enum WebViewNavigationPolicy {
         case .other, .reload, .backForward:
             return .allow
 
-        // Every remaining case, `@unknown` included: a navigation type we cannot name is not one we
-        // should let through.
+        // `@unknown` included: a navigation type we cannot name is not one we let through.
         default:
             return .handInBack(url: url)
         }
     }
 
-    /// Logging is separate from deciding so that a surface can name itself in its own log category
-    /// while both keep one wording.
     static func log(_ decision: Decision,
                     navigationType: WKNavigationType,
                     url: URL?,

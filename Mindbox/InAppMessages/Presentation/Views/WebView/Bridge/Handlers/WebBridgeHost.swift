@@ -132,28 +132,18 @@ protocol WebBridgeContentHosting: AnyObject {
     ///   That is an outcome, not a failure.
     func bridgeDidRenderContent(count: Int)
 
-    /// The page reported content, but the report cannot be used — no count, a fraction, or a
-    /// negative. The page has already been refused; the host hears it separately because a
-    /// surface that reserved space for the content now holds a failed show, not a page-side
-    /// detail: nobody can say what is on screen.
+    /// The page was already refused over an unusable content report; the host hears it too
+    /// because it now holds a show nobody can vouch for.
     func bridgeDidReportUnreadableContent()
 }
 
-/// Hosts a page that renders a feed of in-apps: it can answer which of them the page may draw,
-/// and show one of them when the page asks.
-///
-/// A capability, not a layer. Only the embedded block conforms today; the day an overlay page
-/// carries a feed it conforms here and the same handlers start serving it. Until then those
-/// requests are journalled and left unanswered — the page owns its own deadline, and an empty
-/// answer it would take for the truth.
 protocol WebBridgeFeedHosting: AnyObject {
 
-    /// Which of `ids` may be rendered. Answered asynchronously — the selection may still be
-    /// working — and possibly never: a host that stopped listening drops the question, and what
-    /// a missing answer means is the page's call.
+    /// Which of `ids` may be rendered. Answered asynchronously and possibly never: a host that
+    /// stopped listening drops the question, and what a missing answer means is the page's call.
     func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
 
-    /// The page asks to show in-app `id`. `params` travel into the shown in-app's start payload
-    /// untouched: for the SDK they are an opaque dictionary.
+    /// `params` travel into the shown in-app's start payload untouched: for the SDK they are an
+    /// opaque dictionary.
     func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue])
 }

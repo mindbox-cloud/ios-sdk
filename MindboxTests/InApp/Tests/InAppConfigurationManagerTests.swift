@@ -11,9 +11,6 @@ import Testing
 import class MindboxLogger.Locked
 @testable import Mindbox
 
-/// The config wait. A block asks the moment it enters the window — on a first screen regularly before
-/// the config is downloaded — and answering "nothing" then would collapse it for the screen's life.
-/// So a caller waits for the first config, within a budget.
 @Suite("In-app configuration manager", .tags(.embeddedBlocks))
 struct InAppConfigurationManagerTests {
 
@@ -21,8 +18,7 @@ struct InAppConfigurationManagerTests {
         static let liveStoryId = "55555555-5555-5555-5555-555555555555"
     }
 
-    /// Answers land on the manager's queue (or main); the test polls from its own thread — the
-    /// box is what makes that pair race-free.
+    /// Answers land on the manager's queue while the test polls from its own thread — the box keeps that race-free.
     private final class Answers<Value> {
         @Locked private var storage: [Value] = []
 
@@ -35,10 +31,7 @@ struct InAppConfigurationManagerTests {
         }
     }
 
-    /// Holds the download until the test releases it — the "config is still on the network" state.
-    ///
-    /// The manager starts the fetch on its own queue, so the test polls `isFetchPending` before
-    /// delivering: a result delivered into a fetch that has not started yet would vanish.
+    /// Poll `isFetchPending` before delivering — a result delivered into a fetch that has not started yet would vanish.
     private final class HeldConfigAPI: InAppConfigurationAPI {
         private let lock = NSLock()
         private var held: ((InAppConfigurationAPIResult) -> Void)?
@@ -104,9 +97,6 @@ struct InAppConfigurationManagerTests {
         return try Data(contentsOf: url)
     }
 
-    /// Polls instead of confirming, because the manager answers on its own queue and the test has no
-    /// hook into it. The ceiling is generous on purpose: it is there to fail a hung test, not to time
-    /// anything, so a loaded machine cannot turn it red.
     private func waitUntil(_ condition: @autoclosure () -> Bool,
                            sourceLocation: SourceLocation = #_sourceLocation) async throws {
         let step: UInt64 = 20_000_000
@@ -119,9 +109,6 @@ struct InAppConfigurationManagerTests {
         #expect(condition(), "gave up after \(Double(ceiling) * Double(step) / 1_000_000_000)s", sourceLocation: sourceLocation)
     }
 
-    /// A caller that arrives first must wait, not be fobbed off with an empty answer. That is what the
-    /// single answer below proves: the manager answers a waiter exactly once, so had it answered before
-    /// the config landed, the one answer on record would be the empty one.
     @Test("A caller arriving before the config is answered when it lands")
     func callerBeforeConfigIsAnsweredOnArrival() async throws {
         manager.prepareConfiguration()
@@ -149,8 +136,6 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [[Constants.liveStoryId]])
     }
 
-    /// The budget is the ceiling, not the promise: a config that never comes must not keep a block's
-    /// callback alive for the life of the process.
     @Test("A config that never arrives answers with nothing after the budget")
     func neverArrivingConfigAnswersNothingAfterTheBudget() async throws {
         manager.prepareConfiguration()
@@ -162,8 +147,6 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [[]])
     }
 
-    /// A failed download is an answer too — nobody sits out the rest of the budget for a config that
-    /// already said no. With no cache behind it, that answer is "nothing".
     @Test("A failed download with no cache answers with nothing at once")
     func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
         let slowBudgetManager = InAppConfigurationManager(

@@ -39,9 +39,8 @@ final class TransparentView: UIView {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
     lazy var webPageRegistry = MindboxWebPageRegistry.shared
-    /// A page joins the broadcast set once it has proven it can receive, that is, on its first
-    /// `ready`: registering earlier would aim `localState.changed` at a document that has no
-    /// bridge yet.
+    /// A page joins the broadcast set on its first `ready`: registering earlier would aim
+    /// `localState.changed` at a document that has no bridge yet.
     private var isRegisteredForBroadcasts = false
 
     /// - Parameter actionRegistry: The handlers this show runs with. Injectable so a test can
@@ -245,8 +244,6 @@ extension TransparentView: WebBridgeMessageDelegate {
             category: .webViewInAppMessages
         )
 
-        // The first `ready` is the page proving it can receive — the moment it may join the
-        // broadcast set. Observed on the way through; answering it stays the registry's business.
         if message.type == .request, message.parsedAction == .ready, !isRegisteredForBroadcasts {
             isRegisteredForBroadcasts = true
             webPageRegistry.register(self)

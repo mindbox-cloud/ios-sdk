@@ -58,10 +58,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     // True between borrow and park: `superview` alone can't tell (there is a window
     // between borrow and addSubview).
     private var isLentToShow = false
-    // True while the only navigation in flight is the blank page *we* loaded — parking a finished
-    // show, or settling a prewarm that ran long. Without telling it apart from a real page
-    // navigation every show after the first one is refused: parking itself starts a navigation, and
-    // the next show regularly arrives while it is still in flight.
+    // True while the only navigation in flight is our own blank page — without telling it apart,
+    // every show after the first is refused: parking itself starts a navigation.
     private var isSettlingToBlank = false
     private var memoryWarningObserver: NSObjectProtocol?
     // Retained here because navigationDelegate is weak; armed until the first borrow.
@@ -188,8 +186,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // half-committed document and its didFinish can fire before the page's module
         // scripts evaluate. Park it instead; the show creates a fresh WKWebView on the
         // same shared store (pays process spin-up, keeps the HTTP cache).
-        // Our own blank page does not count as mid-navigation: the lend below stops it and the show
-        // loads its own content over it, which is what the bridge's staleness filter is for.
         guard !webView.isLoading || isSettlingToBlank else {
             webView.stopLoading()
             loadBlank(on: webView)
@@ -301,20 +297,15 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                       level: .info, category: .webViewInAppMessages)
     }
 
-    /// Every content-page load goes through here, the way every blank load goes through `loadBlank`: the
-    /// settle budget cannot be forgotten at one of the call sites, and forgetting it at the heal reload
-    /// is what would bring back the navigation nothing ever ends.
+    /// Every content-page load goes through here so the settle budget cannot be forgotten.
     private func loadContentPage(_ html: String, baseURL: URL, on webView: WKWebView) {
         isSettlingToBlank = false
         webView.loadHTMLString(html, baseURL: baseURL)
         settleContentPage(after: Self.contentPageSettleBudget)
     }
 
-    /// Stops the prewarm navigation if it has not finished in time, leaving the instance idle.
-    ///
-    /// A borrow refuses an instance that is mid-navigation, and the first borrow latches the prewarm
-    /// off: a navigation nothing ever ends — a dead or slow prewarm host — leaves the warm instance
-    /// unusable for the rest of the launch.
+    /// A borrow refuses a mid-navigation instance, so a navigation nothing ever ends would leave
+    /// the warm instance unusable for the rest of the launch.
     private func settleContentPage(after budget: TimeInterval) {
         DispatchQueue.main.asyncAfter(deadline: .now() + budget) { [weak self] in
             guard let self, !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
@@ -331,8 +322,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     /// first show can plausibly ask for it.
     private static let contentPageSettleBudget: TimeInterval = 5
 
-    /// Every blank load goes through here so the "this navigation is only ours" flag can never be
-    /// forgotten at one of the call sites.
+    /// Every blank load goes through here so the "this navigation is ours" flag is never forgotten.
     private func loadBlank(on webView: WKWebView) {
         isSettlingToBlank = true
         webView.loadHTMLString(Self.blankPage, baseURL: nil)

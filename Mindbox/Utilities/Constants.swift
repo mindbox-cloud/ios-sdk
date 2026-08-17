@@ -116,17 +116,10 @@ enum Constants {
     }
 
     enum EmbeddedBlock {
-        /// How long a built page is given to declare itself ready. Running out is a failure: it is
-        /// reported to the backend, and the host gets its own `errorView` if it passed one.
-        ///
-        /// Its own budget, not shared with in-apps even while the values match: the block stands in the
-        /// host's layout, and its patience is a product decision of its own.
+        /// Deliberately its own budget, not shared with the in-apps' timeouts.
         static let readyTimeoutSeconds = 7
 
-        /// How long the block waits to learn what to show at all — the config has to arrive and the
-        /// selection has to run. Running out means "nothing to show", not a breakage, and reports
-        /// nothing. Longer than the page's budget because a cold start with no network can spend this
-        /// whole time before anyone can say whether there is content (contract, in sync with Android).
+        /// Sized for a no-network cold start (in sync with Android).
         static let answerTimeoutSeconds = 30
     }
 

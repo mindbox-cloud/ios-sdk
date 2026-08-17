@@ -2,17 +2,13 @@
 //  FeedActionHandlersTests.swift
 //  MindboxTests
 //
-//  Created by Akylbek Utekeshev on 13.08.2026.
+//  Created by Sergei Semko on 13.08.2026.
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The two feed actions are served through the host's feed capability: the handler owns the
-/// envelope — parsing, refusals, the answer's shape — and the host owns the selection. What these
-/// pin is that split, and the shape the page reads: `payload.inappIds` for the question, a plain
-/// success for the show.
 @Suite("CheckInappsTargetingActionHandler", .tags(.webView))
 struct CheckInappsTargetingActionHandlerTests {
 
@@ -21,8 +17,6 @@ struct CheckInappsTargetingActionHandlerTests {
         #expect(CheckInappsTargetingActionHandler().actions == [.checkInappsTargeting])
     }
 
-    /// The question goes to the feed as asked; the answer echoes what the feed allowed, under the
-    /// request's own id.
     @Test("The feed's answer travels back in the response")
     func feedAnswerTravelsBack() throws {
         let host = FeedHostSpy()
@@ -41,7 +35,6 @@ struct CheckInappsTargetingActionHandlerTests {
         #expect(response.payload == .object(["inappIds": .array([.string("id-1"), .string("id-3")])]))
     }
 
-    /// The selection may finish long after the request arrived — the answer still reaches the page.
     @Test("A late answer from the selection still becomes the response")
     func lateAnswerStillResponds() {
         let host = FeedHostSpy()
@@ -85,8 +78,6 @@ struct CheckInappsTargetingActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
-    /// An unreadable question is refused rather than answered with an empty list: the page can
-    /// retry a refusal, while an empty answer it would take for the truth.
     @Test("A payload without the array is refused before the feed is asked")
     func missingArrayIsRefused() throws {
         let host = FeedHostSpy()
@@ -111,8 +102,6 @@ struct CheckInappsTargetingActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
-    /// A surface without a feed does not answer: the page owns its own deadline, and an error
-    /// here would have to be unlearned the day the surface conforms.
     @Test("A host without a feed leaves the question unanswered")
     func hostWithoutFeedStaysSilent() {
         let host = HostSpy()
@@ -133,8 +122,6 @@ struct ShowInAppActionHandlerTests {
         #expect(ShowInAppActionHandler().actions == [.showInApp])
     }
 
-    /// The id and the params reach the feed; the success says the request was handed over, and the
-    /// page finishes its own flow on it without waiting for a window.
     @Test("A well-formed request reaches the feed and is acknowledged")
     func requestReachesTheFeed() throws {
         let host = FeedHostSpy()
@@ -186,8 +173,6 @@ struct ShowInAppActionHandlerTests {
         #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'inappId'")]))
     }
 
-    /// Journalled and dropped, not refused: a surface without a feed picking this up later is a
-    /// conformance, and pages must not have learned that it errors here.
     @Test("A host without a feed leaves the request unanswered")
     func hostWithoutFeedStaysSilent() {
         let host = HostSpy()
@@ -199,13 +184,10 @@ struct ShowInAppActionHandlerTests {
     }
 }
 
-/// A host that carries a feed: the questions and shows land here, and the test decides the answer
-/// and its moment.
 private final class FeedHostSpy: HostSpy, WebBridgeFeedHosting {
 
     var allowed: [String] = []
 
-    /// `true` — the answer waits for `flush()`: how a selection that finishes late is modelled.
     var isDeferred = false
 
     private(set) var askedIds: [[String]] = []

@@ -11,14 +11,6 @@ import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
-
-    /// The same budgets without the one-at-a-time lock: how often the SDK may show an in-app at all,
-    /// asked by a path that does not put anything over the screen.
-    ///
-    /// The lock is the only check here that belongs to overlays alone — two of them cannot share the
-    /// screen, while a block is drawn inside the host layout and shares it with everything. Everything
-    /// else applies to a block exactly as it applies to a modal: the session and daily budgets, the
-    /// minimum interval, the frequency, and the same way out for a priority or `unlimited` in-app.
     func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
 }
 
@@ -32,8 +24,6 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
 
-        // Two in-apps cannot share the screen, so the lock holds for everyone — including a priority or
-        // `unlimited` in-app. It is also the only check a block does not run: see `isWithinShowBudgets`.
         guard isNotPresentingAnotherInApp() else {
             return false
         }
@@ -46,8 +36,7 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
             return false
         }
 
-        // The budgets are about how often the SDK may show an in-app on its own, and an `unlimited`
-        // in-app is outside that accounting in both directions: it records no show
+        // `unlimited` is outside the show accounting in both directions: it records no show
         // (`InappFrequency.countsShows`) and no recorded show holds it back.
         if isPriority || frequency == .unlimited {
             let reason = isPriority ? "Priority" : "Unlimited"

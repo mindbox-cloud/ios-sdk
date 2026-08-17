@@ -109,9 +109,6 @@ private extension LocalStateActionHandler {
         let answer = Self.payload(for: data, version: state.version)
         host.respond(to: message, payload: answer)
 
-        // Every other live page learns without being asked — this is how a feed greys a ring
-        // while the story that wrote the key is still on top of it. The author is excluded:
-        // it already holds the answer above.
         webPageRegistry.broadcast(.localStateChanged, payload: answer, excluding: host)
     }
 

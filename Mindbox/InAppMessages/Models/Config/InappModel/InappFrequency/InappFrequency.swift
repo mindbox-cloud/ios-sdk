@@ -26,9 +26,6 @@ enum InappFrequencyType: String, Decodable {
 enum InappFrequency: Decodable, Equatable, Hashable {
     case periodic(PeriodicFrequency)
     case once(OnceFrequency)
-
-    /// No limit on how many times the in-app may be shown. Carries no payload, so it needs no type
-    /// of its own next to `OnceFrequency` and `PeriodicFrequency`.
     case unlimited
     case unknown
 
@@ -55,12 +52,8 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         }
     }
 
-    /// Whether a show of an in-app with this frequency is written down: its show history and the
-    /// session list, the same two stores the shared session and daily budgets are counted out of.
-    /// `unlimited` records nothing — the records exist to hold shows back, and it is never held back.
-    ///
-    /// One rule for all three paths — a trigger show, a requested show, a rendered block — in sync with
-    /// Android. `nil` never reaches here: the in-app decoder fills a missing frequency with once/lifetime.
+    /// One rule for every show path, in sync with Android; the decoder fills a missing frequency,
+    /// so `nil` never arrives.
     static func countsShows(_ frequency: InappFrequency?) -> Bool {
         frequency != .unlimited
     }

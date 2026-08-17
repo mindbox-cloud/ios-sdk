@@ -10,8 +10,6 @@ import Foundation
 import Testing
 @testable import Mindbox
 
-/// What the place path keeps, and — just as important — that it is the same chain as the trigger path
-/// with one step swapped.
 @Suite("Place path filters", .tags(.embeddedBlocks))
 struct InappPlaceFilterTests {
 
@@ -73,8 +71,6 @@ struct InappPlaceFilterTests {
         #expect(inapps.isEmpty)
     }
 
-    /// A case-only difference stays a mismatch. It is the failure with no symptom other than an empty
-    /// block, which is why the log calls it out.
     @Test("Place names are case-sensitive")
     func placeNamesAreCaseSensitive() throws {
         let sut = try #require(sut)
@@ -113,10 +109,7 @@ struct InappPlaceFilterTests {
         #expect(ids(inapps) == ["unshown-block-id"])
     }
 
-    /// The other half of the frequency rule, and the one that only means something because a block that
-    /// drew its page writes the show down: a spent frequency leaves the place empty on the next resolve.
-    /// Blocks arrive `unlimited` by contract, so this is the behaviour of a config the contract does not
-    /// describe — pinned because Android behaves the same way and the two must not drift.
+    /// Blocks arrive `unlimited` by contract — pinned because Android behaves the same way and the two must not drift.
     @Test("A block whose show was already recorded is no longer a candidate", arguments: [
         InappFrequency.once(OnceFrequency(kind: .lifetime)),
         .once(OnceFrequency(kind: .session)),

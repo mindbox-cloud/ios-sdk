@@ -412,8 +412,6 @@ final class InAppPresentationValidatorTests: XCTestCase {
         ], "Priority in-app should only perform isNotPresentingAnotherInApp and isValidFrequency checks")
     }
     
-    /// The mirror below copies production's short circuit, and a copy that nothing exercises can drift
-    /// from the original unnoticed — so the `unlimited` half of it is exercised too, not only `isPriority`.
     func test_canPresentInApp_validationOrderForUnlimitedInApp() {
         let wrapper = InAppPresentationValidatorWrapper(persistenceStorage: persistenceStorage)
 
@@ -466,8 +464,6 @@ class InAppPresentationValidatorWrapper: InAppPresentationValidatorProtocol {
         return trackValidationOrder(isPriority: isPriority, frequency: frequency, id: id)
     }
 
-    /// The block path asks the same budgets without the lock. Mirrored here so the wrapper keeps
-    /// standing in for the real validator.
     func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         validator.isWithinShowBudgets(isPriority: isPriority, frequency: frequency, id: id)
     }

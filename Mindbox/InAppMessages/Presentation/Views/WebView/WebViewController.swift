@@ -103,8 +103,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            // The caller's params go on top of the config's, key by key: whoever asked for this show
-            // gets the last word, service keys included. The SDK does not judge what is in there.
             let params = webviewLayer.params.merging(extraParams ?? [:]) { _, fromCaller in fromCaller }
             let webView = TransparentView(frame: .zero, params: params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)

@@ -79,13 +79,8 @@ final class VariantFilterService: VariantFilterProtocol {
         return resultVariants
     }
 
-    /// Returns `nil` when the variant cannot address a block, and the caller skips it. An invalid
-    /// embedded variant does not throw the way an invalid modal does: a block with no usable place is
-    /// inert rather than broken, and taking the whole in-app down for it would also take down the
-    /// sibling variants.
     private func makeEmbeddedVariant(from dto: EmbeddedFormVariantDTO) -> EmbeddedFormVariant? {
-        // Trimmed, because a place name padded with spaces in the admin panel still means the place
-        // the host app asks for. Case is left alone: it has to match.
+        // A place name padded with spaces in the admin panel still means the same place; case has to match.
         let placeSystemName = dto.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         guard !placeSystemName.isEmpty else {
@@ -100,7 +95,6 @@ final class VariantFilterService: VariantFilterProtocol {
             return nil
         }
 
-        // Caught, not propagated: a malformed section costs this variant only, not the whole in-app.
         let filteredLayers: [ContentBackgroundLayer]
         let filteredElements: [ContentElement]
         do {
@@ -112,10 +106,8 @@ final class VariantFilterService: VariantFilterProtocol {
             return nil
         }
 
-        // The whole block is one web page, so the first webview layer is what it renders. More layers is
-        // a configuration mistake rather than a reason to show nothing — the extra ones are ignored and
-        // called out in the log (in sync with Android). No webview layer at all is different: there
-        // is nothing to render, and the variant cannot address a block.
+        // A block renders one web page: extra layers are a config mistake — ignored and logged, in
+        // sync with Android — but no webview layer at all means nothing to render.
         guard let webviewLayerIndex = filteredLayers.firstIndex(where: { if case .webview = $0 { return true } else { return false } }) else {
             Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has no webview layer. Variant will be skipped.",
                           level: .error, category: .inAppMessages)

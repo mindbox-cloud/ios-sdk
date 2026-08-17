@@ -10,10 +10,6 @@ import Testing
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
-/// The page sits between the shared web layer and the block, and its whole job is deciding who owns
-/// an incoming message: the one response the provider waits on is caught first, everything else is
-/// the shared action registry's. What is checked here is that division — plus the one navigation
-/// judgement the page makes on its own: a cancelled load is not a failure.
 @Suite("Embedded block web view page", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockWebViewPageTests {
@@ -55,8 +51,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 1)
     }
 
-    /// The push the page makes when its config changed. Asserted through the facade because that is where
-    /// a signature that drifts from the protocol requirement would turn the call into a silent no-op.
     @Test("New init data reaches the web layer")
     func initDataReachesTheWebLayer() {
         let bed = PageBed()
@@ -75,8 +69,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 0)
     }
 
-    /// A failure while fetching the markup never reaches navigation at all — there is nothing to
-    /// navigate to — so the load's own failure path has to report it.
     @Test("A markup fetch failure fails the block")
     func markupFetchFailureFailsTheBlock() {
         let bed = PageBed()
@@ -88,8 +80,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 1)
     }
 
-    /// The content load is ours to perform; a navigation the user started is the page's to decide.
-    /// A block that followed a link would replace a feed inside someone's list with a web page.
     @Test("A user-started navigation is blocked and handed back to the page")
     func userStartedNavigationIsBlocked() {
         let bed = PageBed()
@@ -114,8 +104,6 @@ struct EmbeddedBlockWebViewPageTests {
 
     // MARK: - Who owns a message
 
-    /// `ready` is answered by the shared handler with the start payload the web layer builds — the
-    /// same answer a block and an overlay get, because the payload is where the difference lives.
     @Test("Ready is answered with the start payload under the request's own id")
     func readyIsAnsweredWithTheStartPayload() throws {
         let bed = PageBed()
@@ -129,8 +117,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(answer.id == ready.id)
     }
 
-    /// A page joins the broadcast set once it has proven it can receive. Registering earlier would
-    /// aim `localState.changed` at a document with no bridge yet.
     @Test("A page joins the broadcast set on its first ready, once")
     func pageJoinsTheBroadcastSetOnReady() {
         let registry = MindboxWebPageRegistry()
@@ -144,8 +130,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(registry.count == 1)
     }
 
-    /// The feed's question travels through the shared registry into the block's capability, and the
-    /// answer goes back out under the request's own id.
     @Test("The feed's question reaches the block and the answer goes back to the page")
     func feedQuestionReachesTheBlock() throws {
         let bed = PageBed()
@@ -173,8 +157,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.renderedCounts == [4])
     }
 
-    /// The page was refused, and the block hears it through its own channel: for the surface this is
-    /// a failed show, not a page-side detail.
     @Test("An unreadable render report reaches the block as such")
     func unreadableRenderReportReachesTheBlock() {
         let bed = PageBed()
@@ -199,9 +181,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.map(\.type) == [.response])
     }
 
-    /// The registry's presence gate, on the block: a page that left the window keeps talking, but
-    /// nothing that acts on the user's behalf may run on it — the request is answered with an error
-    /// instead of hanging.
     @Test("A show request from a page nobody is looking at is refused")
     func showRequestWithoutUserIsRefused() {
         let bed = PageBed()
@@ -215,8 +194,6 @@ struct EmbeddedBlockWebViewPageTests {
 
     // MARK: - The provider's one response
 
-    /// The page's answer to the `initDataUpdated` we pushed is the single response the SDK acts on.
-    /// It is caught before the registry — which swallows every non-request — and handed to the block.
     @Test("The data push's confirmation is caught before the registry")
     func dataPushConfirmationReachesTheBlock() {
         let bed = PageBed()
@@ -229,8 +206,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.isEmpty)
     }
 
-    /// Every other response is somebody's confirmed request — the registry's to swallow, nobody's
-    /// to answer.
     @Test("Another response is swallowed in silence")
     func foreignResponseIsSwallowed() {
         let bed = PageBed()
@@ -241,9 +216,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.isEmpty)
     }
 
-    /// An overlay's window lifecycle has no meaning for a block: the block hosts no lifecycle, so
-    /// the shared handler journals the message and drops it. The dispatcher's blanket success is
-    /// the only reply such an action ever gets — nothing extra is sent from here.
     @Test("An overlay's lifecycle message is dropped without an extra answer",
           arguments: [BridgeMessage.Action.close, .`init`, .click, .hide])
     func overlayLifecycleMessageIsDropped(action: BridgeMessage.Action) {
@@ -254,9 +226,7 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.isEmpty)
     }
 
-    /// What the port bought the block: the shared vocabulary is served by the shared handlers now.
-    /// Local state is the proof — the same handler, the same answer an overlay gets. The storage is
-    /// in memory only because the test container does not carry the real one.
+    /// The storage is in memory only because the test container does not carry the real one.
     @Test("A shared action is served by the shared handlers")
     func sharedActionIsServed() throws {
         let handlers: [WebBridgeActionHandler] = [
@@ -296,8 +266,6 @@ struct EmbeddedBlockWebViewPageTests {
 
     // MARK: - Healing a poisoned cache
 
-    /// The overlay path's heal, on the block too: a script that keeps failing over a stale cache entry
-    /// is refetched once with the cache bypassed, before the page ever booted.
     @Test("A failing script is retried with the cache bypassed")
     func subresourceErrorHealsThePoisonedCache() {
         let bed = PageBed()
@@ -307,8 +275,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.cacheBypassingRetries == ["https://cdn.example/feed.js"])
     }
 
-    /// A page whose bridge already spoke can fail a request for its own reasons — that is not a
-    /// poisoned boot, and reloading it would throw away a live document.
     @Test("A booted page is not healed")
     func bootedPageIsNotHealed() {
         let bed = PageBed()
@@ -319,7 +285,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.cacheBypassingRetries.isEmpty)
     }
 
-    /// Only a script resource marks the cache as suspect — an image failing is an image failing.
     @Test("A non-script subresource error is not healed")
     func nonScriptErrorIsNotHealed() {
         let bed = PageBed()
@@ -329,8 +294,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.cacheBypassingRetries.isEmpty)
     }
 
-    /// The kill switch kills the heal too: bypassing a cache the feature does not own would be a
-    /// silent second fetch on every flaky network.
     @Test("The heal respects the cache kill switch")
     func healRespectsTheKillSwitch() {
         let bed = PageBed(isCacheFeatureEnabled: false)
@@ -341,10 +304,6 @@ struct EmbeddedBlockWebViewPageTests {
     }
 }
 
-/// A real page on a substituted web layer: nothing loads, and every message the page sends is
-/// recorded. The bridge is real because the delegate methods are typed on it, but it does no work.
-/// The action registry is the real one with the real handler set — the dispatch under test is
-/// exactly the dispatch that ships.
 @MainActor
 private final class PageBed {
 
@@ -402,7 +361,6 @@ private final class PageBed {
         facade.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 
-    /// The selection answering the feed's question — from wherever it finished.
     func answerFeed(_ allowed: [String]) {
         feedCompletions.forEach { $0(allowed) }
         feedCompletions = []

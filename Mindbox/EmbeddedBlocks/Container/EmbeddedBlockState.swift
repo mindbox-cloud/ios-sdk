@@ -18,10 +18,7 @@ enum EmbeddedBlockState: Equatable {
     /// The content is renderable.
     case ready
 
-    /// The content failed to resolve — a load error, a timeout or broken content.
     case failed
 
-    /// There is genuinely nothing to show — for instance, the block is disabled in the admin
-    /// panel. Not a failure.
     case empty
 }

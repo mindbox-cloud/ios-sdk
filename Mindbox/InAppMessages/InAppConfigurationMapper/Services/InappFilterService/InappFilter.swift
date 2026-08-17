@@ -9,18 +9,55 @@
 import Foundation
 import MindboxLogger
 
+/// The selection's view of the config: which in-apps are valid at all, and which of them a given
+/// path — trigger, place, feed, direct call — may consider. Every entry point taking DTOs starts by
+/// normalizing them the same way (SDK version range, parseable form), which is what fills `validInapps`.
 protocol InappFilterProtocol {
+
+    /// The trigger path's candidates: valid in-apps an overlay can show, minus the A/B pool cuts,
+    /// the direct-call-only ones and those the frequency already spent — in priority order.
     func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
+
+    /// The candidates a block at `place` could show, in priority order. The trigger chain with one
+    /// step swapped: "is this addressed to this place" instead of "can this be shown over the screen".
     func filter(place: String, inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
+
+    /// The in-apps out of `ids` a feed may draw, before targeting. The trigger chain minus the
+    /// direct-call cut — that one would drop exactly the in-apps a feed is made of.
     func filter(feedIds ids: [String], inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
+
+    /// The in-app behind `id`, with no restriction checked — not the frequency, not the display
+    /// conditions, not the A/B pool: an in-app the page has already offered has to open, and every
+    /// one of those checks is a way for it to open into nothing. `nil` — no valid in-app under this id.
     func filter(id: String, inapps: [InAppDTO]?) -> InApp?
+
+    /// The valid in-apps wired to `event`'s operation, with nothing else checked.
+    /// Empty when the event is missing or no in-app listens to its operation.
     func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp]
+
+    /// Keeps only in-apps with at least one variant an overlay can show. A pure-embedded in-app
+    /// gets its content by place instead, so it has no business on an overlay path or in the
+    /// targeting catch-up (in sync with Android).
     func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp]
+
+    /// `filterInappsByOperation` narrowed the way the trigger path narrows: the operation's in-apps
+    /// that are actually showable right now — A/B pool, overlay variant, direct call, frequency, priority.
     func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp]
+
+    /// The overlay path's targeting pass: keeps the targeted in-apps, each paired with its first
+    /// overlay-presentable variant.
     func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
+
+    /// The same targeting pass for callers that render something else: `pickVariant` names the
+    /// variant the caller is going to draw, `nil` skips the candidate. One check, however many
+    /// paths ask it — a feed and a trigger disagreeing about who is targeted would be a defect
+    /// nobody could explain.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
                                  pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData]
+
+    /// Everything the SDK could make sense of in the last config it normalized: the right version
+    /// range and a parseable form. The operation filters read it instead of re-parsing the config.
     var validInapps: [InApp] { get }
 }
 
@@ -44,17 +81,10 @@ final class InappsFilterService: InappFilterProtocol {
         applyCommonFilters(inapps: renderableInapps(from: inapps), abTests: abTests)
     }
 
-    /// The candidates a block at this place could show, in priority order.
     func filter(place: String, inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
         filterInappsForPlace(place, inapps: renderableInapps(from: inapps), abTests: abTests)
     }
 
-    /// The in-apps out of `ids` a feed is allowed to draw, before targeting.
-    ///
-    /// The same steps the other paths run, except the direct-call one — it would drop exactly the
-    /// in-apps a feed is made of. The frequency step is here like everywhere else: for the
-    /// `unlimited` stories the contract prescribes it never cuts, because unlimited shows are never
-    /// recorded.
     func filter(feedIds ids: [String], inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
         // The full list goes through the version and form filters first: narrowing to the asked ids
         // earlier would leave `validInapps` holding a subset, and the rest of the selection reads it.
@@ -73,13 +103,6 @@ final class InappsFilterService: InappFilterProtocol {
         return applyShowabilityFilters(inPool)
     }
 
-    /// The in-app behind an id, with no restriction checked — not the frequency, not the display
-    /// conditions, not the A/B pool. An in-app the page has already offered has to open, and
-    /// every one of those checks is a way for it to open into nothing.
-    ///
-    /// The version filter runs first because it is not a restriction on showing but on understanding:
-    /// the same id appears more than once in a config, once per SDK version range, and matching on the
-    /// id alone can pick the copy meant for a different SDK.
     func filter(id: String, inapps: [InAppDTO]?) -> InApp? {
         let inapp = renderableInapps(from: inapps).first { $0.id == id }
 
@@ -91,8 +114,8 @@ final class InappsFilterService: InappFilterProtocol {
         return inapp
     }
 
-    /// Everything this SDK can make sense of: the right version range, and a form that parses. No
-    /// question about whether it should be shown has been asked yet.
+    /// Version range first: the same id appears in a config once per SDK version range, so matching
+    /// on the id alone can pick the copy meant for a different SDK.
     private func renderableInapps(from inapps: [InAppDTO]?) -> [InApp] {
         guard let inapps = inapps else {
             Logger.common(message: "Received nil for in-apps. Returning an empty array.", level: .debug, category: .inAppMessages)
@@ -119,17 +142,12 @@ final class InappsFilterService: InappFilterProtocol {
         return applyCommonFilters(inapps: inapps, abTests: abTests)
     }
 
-    /// The overlay path takes the first variant that can actually be shown over the screen, not simply
-    /// the first one: handing the displayer a variant that is drawn inside the host layout would mean
-    /// showing nothing at all.
     func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
         filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker) { inapp in
             inapp.form.variants.first(where: { $0.isOverlayPresentable })
         }
     }
 
-    /// Targeting is the same question on every path; which variant answers it is not. The caller says
-    /// what it is going to render, so the check itself stays in one place.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
                                  pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
@@ -287,13 +305,8 @@ extension InappsFilterService {
         return applyPostABFilters(overlayInapps)
     }
 
-    /// The candidates for one place in the host layout. Deliberately the same chain as the overlay path
-    /// with a single step swapped: instead of "can this be shown over the screen" it asks "is this
-    /// addressed to this place". Everything after that — direct call, frequency, priority — is
-    /// the code the trigger path runs, not a copy of it.
-    ///
-    /// The one-in-app-at-a-time lock and the delayed queue belong to showing an overlay and are never
-    /// asked here; the shared show budgets are asked later, on the winner.
+    /// The overlay lock and the delayed queue are never asked here; the shared show budgets are
+    /// asked later, on the winner.
     func filterInappsForPlace(_ place: String, inapps: [InApp], abTests: [ABTest]?) -> [InApp] {
         let filteredByABTestInapps = filterInappsByABTests(abTests, responseInapps: inapps)
         let placeInapps = filterInappsByPlace(place, inapps: filteredByABTestInapps)
@@ -304,15 +317,10 @@ extension InappsFilterService {
         applyShowabilityFilters(filterOutDirectCallInapps(inapps))
     }
 
-    /// The steps every entry point runs, whatever it started from: what the frequency still allows, in
-    /// priority order. Shared rather than copied so a step added here cannot silently skip a path.
     private func applyShowabilityFilters(_ inapps: [InApp]) -> [InApp] {
         sortInappsByPriority(filterInappsByAlreadyShown(inapps))
     }
 
-    /// Names match exactly. They are already trimmed by the variants filter, and case has to match — a
-    /// case-only difference is a configuration mistake with no symptoms, so it is called out in the log
-    /// rather than quietly accepted.
     func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {
         inapps.filter { inapp in
             let places = inapp.form.variants.compactMap { $0.placeSystemName }
@@ -332,9 +340,6 @@ extension InappsFilterService {
         }
     }
 
-    /// Only in-apps that have something to show over the app's own screen belong on this path. An
-    /// embedded block is drawn inside the host layout and gets its content by place instead, so it has
-    /// nothing to do here — and this asks the variant what it can do rather than what it is.
     func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp] {
         inapps.filter { inapp in
             guard inapp.form.variants.contains(where: { $0.isOverlayPresentable }) else {
@@ -346,8 +351,6 @@ extension InappsFilterService {
         }
     }
 
-    /// An in-app restricted to a direct call answers no trigger at all — not an operation, not the
-    /// app start.
     func filterOutDirectCallInapps(_ inapps: [InApp]) -> [InApp] {
         inapps.filter { inapp in
             guard inapp.displayConditions != .directCall else {

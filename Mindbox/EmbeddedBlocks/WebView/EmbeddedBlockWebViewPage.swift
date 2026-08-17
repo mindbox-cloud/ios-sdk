@@ -10,15 +10,8 @@ import UIKit
 import WebKit
 import MindboxLogger
 
-/// The embedded block page, on the same web layer in-app messages run on.
-///
-/// The web view, the JS bridge, the markup fetch and the start payload all come from
-/// `MindboxWebViewFacade`: a block and an overlay have to agree on the protocol down to the envelope,
-/// and two implementations of one bridge would drift the first time either side changed.
-///
-/// The actions themselves are served by the shared `WebBridgeActionRegistry` — the same handler set
-/// that serves an overlay. What is different about a block lives in the capabilities this page
-/// conforms to, not in a handler list of its own.
+/// The web view, the bridge, the markup fetch and the start payload all come from the shared
+/// facade: a block and an overlay must agree on the bridge protocol down to the envelope.
 final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var view: UIView { pageView }
@@ -50,9 +43,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     /// registering earlier would aim `localState.changed` at a document that has no bridge yet.
     private var isRegistered = false
 
-    /// The same poisoned-cache heal the overlay path runs: a subresource that keeps failing over a
-    /// stale cache entry is retried once with the cache bypassed. Gated on the page not having booted —
-    /// a page whose bridge already spoke can fail a request for its own reasons.
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
 
     init(content: EmbeddedBlockWebContent,
@@ -84,9 +74,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         actionRegistry.tearDown()
     }
 
-    /// The markup is downloaded from `contentUrl` and committed under `baseUrl`, the same way in-app
-    /// web views load. Loading `contentUrl` directly would give the page the static host as its
-    /// origin, and the page resolves parts of itself against its own location.
     func load() {
         facade.loadHTML(baseUrl: content.baseUrl, contentUrl: content.contentUrl) { [weak self] in
             Logger.common(message: "[EmbeddedBlock] Failed to load page markup from '\(self?.content.contentUrl ?? "")'",
@@ -131,8 +118,6 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
 
     var logCategory: LogCategory { .embeddedBlocks }
 
-    /// The tags of the in-app the block is showing: operations the page sends carry them, so
-    /// metrics can tell the block's traffic from an overlay's.
     var tags: [String: String]? { content.tags }
 
     /// The block draws inside the host's own hierarchy and owns no controller, so the search starts
@@ -199,16 +184,11 @@ extension EmbeddedBlockWebViewPage: MindboxWebPage {
 extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
-        // The page's answer to the `initDataUpdated` we pushed — the provider is waiting on it.
-        // Caught before the registry, which swallows every non-request as somebody's confirmed
-        // response; this one is the single response the SDK acts on.
         if message.type == .response, message.parsedAction == .initDataUpdated {
             onDataPushConfirmed?()
             return
         }
 
-        // The first `ready` is the page proving it can receive — the moment it may join the
-        // broadcast set. Observed on the way through; answering it stays the registry's business.
         if message.type == .request, message.parsedAction == .ready {
             registerForBroadcasts()
         }
@@ -248,10 +228,8 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
                       category: .embeddedBlocks)
     }
 
-    /// A cancelled navigation is not a load failure — reporting it as one would collapse the block for
-    /// nothing. WebKit returns `NSURLErrorCancelled` in two perfectly ordinary cases: the navigation
-    /// was superseded by the next one — a client-side redirect, the page will load on its own — and it
-    /// was stopped by us, by calling `cancel()` on a block that went off screen.
+    /// Not a load failure: WebKit returns `NSURLErrorCancelled` for a navigation superseded by a
+    /// client-side redirect and for our own `cancel()` on a block that went off screen.
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) {
         let error = error as NSError
 

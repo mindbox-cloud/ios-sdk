@@ -442,8 +442,7 @@ struct InappScheduleManagerTests {
 
     private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager, _ inapp: InAppFormData) async {
         manager.showInAppNow(inapp)
-        // showInAppNow takes two turns of the main queue: the first closes the active overlay, the
-        // second presents. Two more hops land after both.
+        // showInAppNow takes two main-queue turns: close the active overlay, then present.
         for _ in 0..<2 {
             await withCheckedContinuation { continuation in
                 DispatchQueue.main.async { continuation.resume() }
@@ -451,11 +450,6 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// An unlimited in-app is shown as many times as asked, so its shows leave no trace: no show
-    /// history, no session counter, no cooldown shift — recording them would burn the shared budgets
-    /// for everyone else. The show event still goes out, and the lock is honoured for the time on
-    /// screen. The stories a feed opens are unlimited by contract, so this is the tap-show's normal
-    /// case.
     @Test("An unlimited show on request sends the event but records nothing", .tags(.inAppSchedule))
     func showInAppNow_unlimitedRecordsNothing() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -477,8 +471,6 @@ struct InappScheduleManagerTests {
         #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
     }
 
-    /// The recording rule is the frequency's, not the path's: a non-unlimited in-app shown on request
-    /// spins the same counters a trigger show spins.
     @Test("A non-unlimited show on request records like a trigger show", .tags(.inAppSchedule))
     func showInAppNow_nonUnlimitedRecords() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -495,8 +487,6 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
     }
 
-    /// The mirror on the trigger path: an unlimited in-app shown by a trigger records nothing either —
-    /// unlimited never touches the stores, whoever shows it.
     @Test("An unlimited trigger show records nothing", .tags(.inAppSchedule))
     func presentInapp_unlimitedRecordsNothing() {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -512,9 +502,6 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
     }
 
-    /// The requested show sends the show and nothing else. Targeting belongs to the moment the in-app
-    /// was offered — the answer the page got from the selection — and showing what the user chose there
-    /// does not offer it a second time — the funnel counts what was offered.
     @Test("A show on request sends the show and no targeting", .tags(.inAppSchedule))
     func showInAppNow_sendsOnlyTheShow() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -529,9 +516,6 @@ struct InappScheduleManagerTests {
         #expect(trackerSpy.trackTargetingCallCount == 0)
     }
 
-    /// A tapped story replaces the overlay already on screen — mostly a snackbar. The active show is
-    /// closed through its normal completion, so the lock is released by the closed show and taken by
-    /// the story, and the host hears both.
     @Test("A show on request closes the overlay already on screen", .tags(.inAppSchedule))
     func showInAppNow_closesTheActiveOverlay() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -550,9 +534,6 @@ struct InappScheduleManagerTests {
         #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
     }
 
-    /// The pair to the record-free direct show: the trigger show still records everything, so the fix
-    /// for one cannot quietly loosen the other. Its targeting is not sent from here — the selection
-    /// vouched for it already.
     @Test("A trigger show still records the show, the event and the cooldown", .tags(.inAppSchedule))
     func presentInapp_stillRecordsEverything() {
         let trackerSpy = InAppMessagesTrackerSpyMock()
@@ -571,8 +552,6 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
     }
 
-    /// A failed direct show is still a failed show: the error is reported through the same channel and
-    /// the lock is released.
     @Test("A show on request reports a presentation error", .tags(.inAppSchedule))
     func showInAppNow_reportsAnError() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()

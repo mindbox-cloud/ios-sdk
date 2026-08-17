@@ -19,9 +19,8 @@ protocol InAppPresentationManagerProtocol: AnyObject {
         onError: @escaping (InAppPresentationError) -> Void
     )
 
-    /// Closes the overlay on screen, if any, through its normal completion path — the host hears
-    /// `inAppMessageDismissed` and the lock is released the same way a user's close releases it.
-    /// Main thread only.
+    /// Closes the overlay on screen, if any, through its normal completion path, exactly as a
+    /// user's close would. Main thread only.
     func dismissActiveInApp()
 }
 
@@ -63,11 +62,8 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     private let displayUseCase: PresentationDisplayUseCaseProtocol
 
-    /// The active show's completion, kept so an outside dismissal finishes that show the same way the
-    /// view's own close button would. Main-confined, like the shows themselves.
-    ///
-    /// The token is what lets a show release only its own completion: releasing without one would let a
-    /// finishing show clear the slot a newer show has already taken.
+    /// The token lets a finishing show release only its own slot, never a newer show's.
+    /// Main-confined, like the shows.
     private var activePresentation: (token: UUID, complete: () -> Void)?
 
     init(displayUseCase: PresentationDisplayUseCaseProtocol) {
@@ -101,8 +97,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     ) {
         let callbackGuard = PresentationCallbackGuard()
         let token = UUID()
-        // A finished show releases its completion, and with it the form data — images included — that
-        // the completion holds.
+        // Releasing the completion also releases the form data — images included — that it holds.
         let releaseActivePresentation: () -> Void = { [weak self] in
             guard self?.activePresentation?.token == token else { return }
 

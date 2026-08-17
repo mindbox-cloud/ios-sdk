@@ -62,10 +62,9 @@ public enum MindboxEmbeddedBlockDebug {
 
 extension MindboxEmbeddedBlockDebug.Content {
 
-    /// The block loads its page strictly by url — markup travels as a `data:` url, which the same
-    /// fetch path downloads like any other address. The identity fields are knowingly fake and
-    /// greppable: events reported for an overridden block carry them to the log and the backend, and
-    /// they must be tellable from a real in-app at a glance.
+    /// Markup travels as a `data:` url so the production fetch path stays exercised. The identity
+    /// fields are knowingly fake and greppable: events for an overridden block must be tellable
+    /// from a real in-app at a glance.
     var resolution: EmbeddedBlockResolution {
         switch self {
         case .url(let url):

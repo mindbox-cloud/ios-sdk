@@ -12,8 +12,7 @@ import class MindboxLogger.Locked
 
 // swiftlint:disable force_unwrapping
 
-// Spy state is @Locked: the selection calls in on its processing queue (and main), tests read
-// from their own threads — TSan flagged the unsynchronized version.
+// Spy state is @Locked: the selection calls in on its own queues while tests read from theirs — TSan flagged the unsynchronized version.
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     let segmentationService: SegmentationServiceProtocol

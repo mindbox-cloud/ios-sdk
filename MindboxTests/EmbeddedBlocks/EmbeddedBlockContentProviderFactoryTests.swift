@@ -9,8 +9,6 @@
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The factory keeps one promise: the provider is its own for every block, while the place registry is
-/// shared. The independence of blocks sharing an id rests on this, so it is checked on its own.
 @Suite("Embedded block content provider factory", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockContentProviderFactoryTests {
@@ -29,9 +27,6 @@ struct EmbeddedBlockContentProviderFactoryTests {
         withExtendedLifetime((first, second)) {}
     }
 
-    /// The registry is shared exactly so that several blocks of one place live off a single resolve.
-    /// This checks that the factory really hands the provider that registry instead of making its own,
-    /// and that the provider it made pulls the place it was asked for.
     @Test("The provider pulls the requested place through the shared registry")
     func providerPullsThroughTheSharedRegistry() {
         let resolver = EmbeddedBlockResolverMock(resolution: .empty)

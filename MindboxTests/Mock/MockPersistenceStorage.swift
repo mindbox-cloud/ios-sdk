@@ -10,10 +10,7 @@ import Foundation
 import class MindboxLogger.Locked
 @testable import Mindbox
 
-/// Every stored property is `@Locked`: production reaches this storage from background queues
-/// (token updates, delivery, config) while tests write and assert from their own threads, and the
-/// real `MBPersistenceStorage` is UserDefaults-backed — thread-safe per access — so the mock has
-/// to be as well (TSan flagged it before it was).
+/// Every stored property is `@Locked`: production reaches this storage from background queues while tests assert from their own threads — TSan flagged the unsynchronized version.
 class MockPersistenceStorage: PersistenceStorage {
 
     var onDidChange: (() -> Void)?

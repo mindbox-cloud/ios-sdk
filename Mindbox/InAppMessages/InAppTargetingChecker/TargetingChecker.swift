@@ -54,10 +54,8 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         setupCheckerMap()
     }
 
-    // @Locked: a selection pass fills these on its serial queue and the dependency fetch's
-    // network callbacks, while `eraseCache()` clears them from whatever thread noticed the
-    // session expire. The lock makes each access atomic; a pass overlapping an erase is a
-    // session-boundary case that at worst answers one pass from a just-cleared cache.
+    // @Locked: selection passes fill these on their queue and fetch callbacks while `eraseCache()`
+    // clears from another thread; an erase overlapping a pass at worst answers from a cleared cache.
     @Locked var context = PreparationContext()
     @Locked var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
     @Locked var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]

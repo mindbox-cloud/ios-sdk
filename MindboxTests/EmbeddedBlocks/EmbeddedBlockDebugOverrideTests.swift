@@ -10,9 +10,7 @@ import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
 
-/// The debug override stands in for the admin config, so what is checked here is the substitution
-/// itself: the config is not asked while an override holds the place, and is asked again the moment
-/// it is gone. The overrides are process-global — every test cleans up after itself.
+/// The overrides are process-global — every test cleans up after itself.
 @Suite("Embedded block debug overrides", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockDebugOverrideTests {
@@ -86,8 +84,6 @@ struct EmbeddedBlockDebugOverrideTests {
         #expect(spy.loadCalls == 1)
     }
 
-    /// The block loads content strictly by url, so markup has to survive the round trip through the
-    /// `data:` url it is packed into.
     @Test("Markup override travels as a data url carrying the same markup")
     func markupTravelsAsADataUrl() throws {
         defer { MindboxEmbeddedBlockDebug.removeAllContent() }
@@ -109,8 +105,7 @@ struct EmbeddedBlockDebugOverrideTests {
         let decoded = try #require(Data(base64Encoded: base64).flatMap { String(data: $0, encoding: .utf8) })
         #expect(decoded == markup)
 
-        // `unlimited` keeps the local show history untouched: an override must not leave a trace a
-        // real in-app's frequency would later read.
+        // An override must not leave a trace a real in-app's frequency would later read.
         #expect(InappFrequency.countsShows(content.frequency) == false)
     }
 }

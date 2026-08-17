@@ -22,8 +22,7 @@ struct UnlimitedFrequencyTests {
         return try JSONDecoder().decode(Holder.self, from: Data(json.utf8)).frequency
     }
 
-    /// A private storage instead of the shared one: the validator only reads it, so there is no need
-    /// to join the suites that depend on serial execution.
+    /// Private storage: the validator only reads it, so no need to join the serial-execution-bound suites.
     private func makeValidator(shownDates: [String: [Date]] = [:]) -> InappFrequencyValidator {
         let storage = MockPersistenceStorage()
         storage.shownDatesByInApp = shownDates
@@ -40,16 +39,12 @@ struct UnlimitedFrequencyTests {
         #expect(makeValidator().isValid(frequency: .unlimited, id: "1"))
     }
 
-    /// The property that matters: unlimited never consults the show history, which is what lets the
-    /// same in-app be resolved again and again.
     @Test("Unlimited passes for an in-app that was already shown")
     func passesWhenAlreadyShown() {
         let validator = makeValidator(shownDates: ["1": [Date(), Date()]])
         #expect(validator.isValid(frequency: .unlimited, id: "1"))
     }
 
-    /// The pair to the case above: adding a permissive frequency must not make the restrictive ones
-    /// permissive too.
     @Test("Once lifetime still blocks an in-app that was already shown")
     func onceLifetimeStillBlocks() {
         let validator = makeValidator(shownDates: ["1": [Date()]])
@@ -57,16 +52,12 @@ struct UnlimitedFrequencyTests {
     }
 }
 
-/// `unlimited` is outside the show budgets in both directions: it records no show, and no recorded
-/// show holds it back. Each test pairs the unlimited answer with a restricted in-app in the very same
-/// state, so what changed the answer is the frequency and not the arrangement.
 @Suite("Unlimited in-app and the show limits", .tags(.inAppSchedule))
 struct UnlimitedFrequencyLimitsTests {
 
     private let restricted: InappFrequency = .once(OnceFrequency(kind: .session))
 
-    /// The budgets are read from the shared session storage, so this suite leans on the target running
-    /// its tests serially, like the others that touch it.
+    /// Budgets live in the shared session storage — this suite leans on the target's serial execution.
     init() {
         SessionTemporaryStorage.shared.erase()
     }
@@ -123,8 +114,6 @@ struct UnlimitedFrequencyLimitsTests {
         #expect(!validator.canPresentInApp(isPriority: false, frequency: restricted, id: "1"))
     }
 
-    /// The one thing being unlimited does not buy. Two in-apps cannot share the screen, so the lock is
-    /// not a budget to be exempt from — a priority in-app waits for it too.
     @Test("Unlimited waits while another in-app is on screen")
     func respectsTheOneAtATimeLock() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
@@ -132,9 +121,6 @@ struct UnlimitedFrequencyLimitsTests {
         #expect(!makeValidator().canPresentInApp(isPriority: false, frequency: .unlimited, id: "1"))
     }
 
-    /// And the reason the validator was split in two: the lock is the one check a block does not run.
-    /// A block is drawn inside the host's layout and shares it with everything, so a snackbar on screen
-    /// is no reason to leave a hole in someone else's list.
     @Test("A block's budgets are checked without the one-at-a-time lock")
     func showBudgetsIgnoreTheScreenLock() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
@@ -144,7 +130,6 @@ struct UnlimitedFrequencyLimitsTests {
         #expect(!validator.canPresentInApp(isPriority: false, frequency: restricted, id: "1"))
     }
 
-    /// The other half of the split: everything that is not the lock still applies to a block.
     @Test("A block is held back by a spent budget like anything else")
     func showBudgetsStillHoldBackABlock() {
         setLimits(session: 2)

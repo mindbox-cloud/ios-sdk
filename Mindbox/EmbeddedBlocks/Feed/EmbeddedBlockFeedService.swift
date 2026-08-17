@@ -9,14 +9,10 @@
 import Foundation
 import MindboxLogger
 
-/// The answer to a page's question about which in-apps it may draw.
-///
 /// The ids and the `Inapp.Targeting` behind them are deliberately apart: an answer the page never
-/// receives has offered nothing, so the event belongs to the moment the answer reaches the page, not
-/// to the moment the selection computed it.
+/// receives has offered nothing, so the event belongs to the moment the answer reaches the page.
 struct FeedAnswer {
 
-    /// Nothing allowed and nothing to vouch for — the answer when there is no config or no question.
     static let nothing = FeedAnswer(inappIds: [], vouch: {})
 
     /// The allowed ids: a subset of what the page asked about, in priority order.
@@ -26,21 +22,13 @@ struct FeedAnswer {
     let vouch: () -> Void
 }
 
-/// Answers the questions a feed page cannot answer for itself.
-///
-/// A feed draws a list of in-apps, and which of them it is allowed to draw depends on targeting and
-/// on the A/B pool — neither of which the page can see.
 protocol EmbeddedBlockFeedServing: AnyObject {
 
-    /// Which of `ids` may be drawn. Answered from what the session has already fetched, never from
-    /// the network — an id whose targeting cannot be checked without one is cut (fail closed, the
-    /// wire contract shared with Android).
+    /// Answered from what the session already fetched, never the network — an id whose targeting
+    /// cannot be checked without one is cut: fail closed, in sync with Android.
     func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void)
 
-    /// Shows the in-app behind `id`, with `params` merged into its start payload.
-    ///
-    /// Nothing is checked on the way: display conditions and the history of shows belong to deciding
-    /// whether to offer the in-app, and that was decided when the page drew it.
+    /// Deliberately unchecked: whether to offer the in-app was decided when the page drew it.
     func showInapp(id: String, params: [String: JSONValue])
 }
 
@@ -66,9 +54,6 @@ final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
         }
     }
 
-    /// Answers as soon as the selection queue gets to the question — there is no network on this
-    /// path, so the page's three-second deadline is never in real danger. The page still owns its own
-    /// patience, and what to do about a late answer is its call, not ours to pre-empt.
     func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
         guard !ids.isEmpty else {
             completion(.nothing)
@@ -76,9 +61,7 @@ final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
         }
 
         ask(ids) { answer in
-            // The selection answers off the main thread and the page has to be written to from the
-            // main thread, so the hop belongs here rather than in the caller. An answer already on
-            // main is delivered as is — a needless runloop hop would only delay the page.
+            // The selection answers off the main thread; the page is written to from it.
             guard Thread.isMainThread else {
                 DispatchQueue.main.async {
                     completion(answer)

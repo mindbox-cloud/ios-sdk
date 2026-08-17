@@ -61,9 +61,6 @@ extension InAppDTO {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
 
-        // The restriction field collapses "no key", "null" and "unreadable" into the permissive
-        // value here, so nothing downstream has to know that an absent restriction and an
-        // unrestricted one are the same thing.
         self.displayConditions = (try? container.decode(DisplayConditions.self, forKey: .displayConditions)) ?? .unrestricted
 
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)

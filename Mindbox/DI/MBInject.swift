@@ -30,9 +30,8 @@ enum MBInject {
         case test
     }
 
-    // @Locked: written once at SDK start (and by every test's setUp), read by DI from every queue
-    // the SDK runs on — TSan caught a test's setUp swapping the container under a previous test's
-    // still-running config queue.
+    // @Locked: read by DI from every queue the SDK runs on; tests' setUp swaps it while a previous
+    // test's config queue may still be reading (TSan-confirmed race).
     @Locked static var container: MBContainer = MBInject.buildDefaulContainer()
 
     @Locked static var mode: InjectionMode = .standard {

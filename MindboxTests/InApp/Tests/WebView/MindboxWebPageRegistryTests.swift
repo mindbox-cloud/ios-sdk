@@ -10,8 +10,7 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// Tests build their own registry rather than the shared one: the shared set is process-wide and
-/// outlives a test, so asserting on it would make these cases depend on each other.
+/// Each test builds its own registry: the shared one is process-wide and would couple the cases.
 @Suite("MindboxWebPageRegistry", .tags(.webView))
 struct MindboxWebPageRegistryTests {
 
@@ -31,8 +30,6 @@ struct MindboxWebPageRegistryTests {
         #expect(other.received.map(\.action) == [.localStateChanged])
     }
 
-    /// The author is excluded by identity, not by count: a page that wrote the value must stay silent
-    /// even when it is the only one registered, otherwise a story would answer its own write.
     @Test("A lone author hears nothing")
     func aLoneAuthorHearsNothing() {
         let registry = MindboxWebPageRegistry()
@@ -44,8 +41,6 @@ struct MindboxWebPageRegistryTests {
         #expect(author.received.isEmpty)
     }
 
-    /// Nobody excluded is the ordinary case for `initDataUpdated`: a new config concerns every page,
-    /// including the one that happens to be asking about something else.
     @Test("With no author excluded every page hears it")
     func withoutAnAuthorEveryPageHearsIt() {
         let registry = MindboxWebPageRegistry()
@@ -57,8 +52,6 @@ struct MindboxWebPageRegistryTests {
         #expect(page.received.map(\.action) == [.initDataUpdated])
     }
 
-    /// Each receiver gets its own message. An id identifies one request on one channel, and a page
-    /// answers by id — a shared id would make two answers indistinguishable.
     @Test("Each page gets its own payload copy under its own request")
     func eachPageGetsItsOwnRequest() {
         let registry = MindboxWebPageRegistry()
@@ -72,8 +65,6 @@ struct MindboxWebPageRegistryTests {
         #expect(second.received.first?.payload == .object(["version": .int(7)]))
     }
 
-    /// The registry must not be the reason a page stays alive: a block scrolled out of a list and
-    /// released has to leave the set on its own, with nobody calling unregister.
     @Test("A released page leaves the registry by itself")
     func aReleasedPageLeavesByItself() {
         let registry = MindboxWebPageRegistry()

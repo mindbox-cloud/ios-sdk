@@ -9,10 +9,6 @@
 import UIKit
 
 /// Holds exactly one view in the container, stretched to its edges.
-///
-/// The shown view is remembered separately from the container's properties, because the host can
-/// swap it at any moment, and the view to remove is the one that is actually attached, not the one
-/// sitting in a property right now.
 final class EmbeddedBlockLayerHost {
 
     /// The owner holds the host, so the back reference must not count — or the container never dies.

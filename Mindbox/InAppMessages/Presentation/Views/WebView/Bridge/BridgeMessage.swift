@@ -550,22 +550,13 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Feeds
         //
-        // A feed page renders a list of in-apps rather than one in-app, so it asks the SDK the things
-        // only the SDK can answer and reports back what it drew.
-        //
-        // Beware of two spellings of one idea in this group: the bridge payloads say `inappId` and
-        // `inappIds`, while an element of the feed's own list says `inAppId`, because that is the
-        // config's spelling and the SDK forwards config params untouched. Neither side may be
-        // "corrected" to match the other — both are silent when wrong.
+        // Two spellings by contract: bridge payloads say `inappId`/`inappIds`, feed list entries say
+        // `inAppId` (the config's spelling, forwarded untouched) — neither may be "corrected".
 
         /// JS asks which of these in-apps it is allowed to render.
         ///
-        /// Answering is the only place a feed's items are filtered: the page cannot see targeting, the
-        /// A/B pool or what the frequency still allows. The page gives up after 3 seconds and renders an
-        /// empty feed, so an unanswered request looks exactly like an empty one.
-        ///
-        /// > Important: the SDK does not race that deadline — it answers when the selection answers,
-        /// > and what a late answer means is the page's call.
+        /// The page gives up after 3 seconds and renders an empty feed; the SDK does not race that
+        /// deadline — it answers when the selection answers.
         ///
         /// - Payload:
         ///   ```json
@@ -579,13 +570,8 @@ public struct BridgeMessage: Codable {
 
         /// JS reports how many items it actually rendered, exactly once per load.
         ///
-        /// This is what readiness means for a feed: a loaded document says nothing, and a count of zero
-        /// is a legitimate "nothing to show" rather than a failure.
-        ///
-        /// The page does not wait for the confirmation, which does not make it optional — every request
-        /// on this bridge is answered under the same id. A count that is not a whole non-negative
-        /// number is refused with an error rather than rounded: rounding would decide the block's
-        /// fate on the page's behalf.
+        /// A count of zero is a legitimate "nothing to show", not a failure. A count that is not a
+        /// whole non-negative number is refused with an error, never rounded.
         ///
         /// - Payload:
         ///   ```json
@@ -599,13 +585,8 @@ public struct BridgeMessage: Codable {
 
         /// JS asks to show one in-app from the feed, by id.
         ///
-        /// `sourceInappId` is the in-app the tap came from — the feed itself. `params` is the feed's own
-        /// catalogue entry for the tapped item, forwarded without listing its fields, so fields the
-        /// config gains later reach the shown page by themselves.
-        ///
-        /// Showing is the SDK's business from here on: it merges `params` flat into the shown in-app's
-        /// start payload, where an incoming key overwrites — the same semantics as the params of a
-        /// webview layer. Not to be confused with ``click``, which happens inside an already open page.
+        /// `sourceInappId` is the feed the tap came from. `params` is forwarded untouched and merged
+        /// flat into the shown in-app's start payload, where an incoming key overwrites.
         ///
         /// - Payload:
         ///   ```json
@@ -621,9 +602,8 @@ public struct BridgeMessage: Codable {
 
         /// SDK hands JS fresh initialization data, without reloading the page.
         ///
-        /// Sent when the config changed or an A/B verdict flipped. The payload has the same shape as the
-        /// ``ready`` response, and the page always reacts the same way: it runs its whole load pipeline
-        /// again. Pushes carry full state rather than deltas, which is what makes reacting idempotent.
+        /// Carries full state rather than deltas — the page reacts by re-running its whole load
+        /// pipeline, so repeated pushes are idempotent.
         ///
         /// - Payload: the same JSON as the ``ready`` response.
         /// - Response:
@@ -638,9 +618,8 @@ public struct BridgeMessage: Codable {
 
         /// SDK tells JS that stored keys changed, so a page can repaint without being asked.
         ///
-        /// Sent to every other live WebView when one of them writes through ``localStateSet``, as a
-        /// separate request into each page's own channel — there is no page-to-page channel. It is a
-        /// broadcast: the receiver picks out the keys it cares about and ignores the rest.
+        /// Broadcast to every other live WebView when one writes through ``localStateSet``; the
+        /// receiver picks out the keys it cares about and ignores the rest.
         ///
         /// - Payload: the same shape as the ``localStateSet`` response. A `null` value means the key is
         ///   gone.
@@ -659,9 +638,8 @@ public struct BridgeMessage: Codable {
 
         /// Actions that send their own bridge responses (no auto-response from dispatcher).
         ///
-        /// The auto-response goes out before the handler runs, so a handler that refuses a non-deferred
-        /// action sends a second envelope under the same id, and the page is expected to take the later
-        /// one.
+        /// The auto-response goes out before the handler runs, so a handler refusing a non-deferred
+        /// action sends a second envelope under the same id; the page takes the later one.
         var isDeferred: Bool {
             switch self {
             // Lifecycle
@@ -745,7 +723,7 @@ public struct BridgeMessage: Codable {
             case .motionStart:
                 return true
 
-            // Opens a window, once it is implemented.
+            // Opens a window.
             case .showInApp:
                 return true
 

@@ -20,24 +20,18 @@ enum DisplayConditionsType: String, Decodable {
     }
 }
 
-/// What is allowed to initiate the show.
-///
-/// A restriction field: anything we fail to understand comes out as `unrestricted`, so an in-app never
-/// becomes less showable because of a value we could not parse.
+/// Fail-open: anything we cannot parse comes out as `unrestricted`, so an in-app never becomes
+/// less showable over a value we could not read.
 enum DisplayConditions: Decodable, Equatable {
 
-    /// Only a direct call by id — no trigger ever shows this in-app.
     case directCall
 
-    /// A trigger or a direct call, which is how in-apps behaved before the field existed.
     case unrestricted
 
     enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
 
-    /// Never throws: this runs inside the in-app decoder, where a thrown error discards the whole
-    /// in-app.
     init(from decoder: Decoder) throws {
         guard let container = try? decoder.container(keyedBy: CodingKeys.self) else {
             Logger.common(message: "[DisplayConditions] Value is not an object. Showing as before.",
