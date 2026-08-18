@@ -227,6 +227,9 @@ private final class WebViewFacadeSpy: InappWebViewFacadeProtocol {
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {}
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {}
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {}
+    func sendInitDataUpdated(params: [String: JSONValue]) {}
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
+    func releaseRetainedContent() {}
 }
 
 private final class DatabaseRepositorySpy: DatabaseRepositoryProtocol {

@@ -249,18 +249,18 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
         return .string("{}")
     }
 
-    /// Implemented rather than left to the protocol's default no-op, so the test sees the push.
     func sendInitDataUpdated(params: [String: JSONValue]) {
         initDataPushes.append(params)
     }
 
     private(set) var cacheBypassingRetries: [String?] = []
 
-    /// Same reason as above: the default is a silent no-op, and these tests are about the call being made.
     func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {
         cacheBypassingRetries.append(failedURL)
         onPurgeOutcome(true)
     }
+
+    func releaseRetainedContent() {}
 
     func sendToJS(_ message: BridgeMessage) {
         sentMessages.append(message)
