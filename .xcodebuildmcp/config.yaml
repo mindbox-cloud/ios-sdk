@@ -1,0 +1,24 @@
+schemaVersion: 1
+sessionDefaults:
+  projectPath: /Users/semko/dev/Mindbox/ios-sdk/Mindbox.xcodeproj
+  scheme: Mindbox
+  simulatorName: iPhone 17 Pro
+  simulatorId: C436B409-82B5-4889-8F8C-C03FCA37B4A7
+  useLatestOS: false
+  simulatorPlatform: iOS Simulator
+sessionDefaultsProfiles:
+  abtests:
+    projectPath: /Users/semko/dev/Mindbox/AB-Tests-iOS-App/AB test reliability
+      calculator.xcodeproj
+    scheme: AB test reliability calculator
+    simulatorName: iPhone 17 Pro
+    simulatorId: BD6E5E37-A73E-4E32-9BA9-6BCD7B7153D6
+    simulatorPlatform: iOS Simulator
+  pushok:
+    projectPath: /Users/semko/dev/Mindbox/ios-app/MindBox-Test.xcodeproj
+    scheme: MindBox-Test
+    simulatorName: iPhone 17 Pro
+    simulatorId: BD6E5E37-A73E-4E32-9BA9-6BCD7B7153D6
+    simulatorPlatform: iOS Simulator
+    useLatestOS: false
+activeSessionDefaultsProfile: pushok
