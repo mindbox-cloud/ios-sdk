@@ -313,8 +313,9 @@ class InappMapper: InappMapperProtocol {
         var formData: InAppFormData?
 
         DispatchQueue.global().async {
+            let operation = self.getOperation()
             for inapp in inapps where formData == nil {
-                formData = self.makeFormData(inapp, extraParams: nil)
+                formData = self.makeFormData(inapp, extraParams: nil, operation: operation)
             }
 
             DispatchQueue.main.async { [weak self] in
@@ -330,7 +331,12 @@ class InappMapper: InappMapperProtocol {
 
     /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
     /// on `processingQueue`: a download wait there would stall every targeting question behind it.
-    private func makeFormData(_ inapp: InAppTransitionData, extraParams: [String: JSONValue]?) -> InAppFormData? {
+    ///
+    /// `operation` is the caller's to name: this runs outside the pass lock, so reading the shared
+    /// event here could pick up a later pass's.
+    private func makeFormData(_ inapp: InAppTransitionData,
+                              extraParams: [String: JSONValue]?,
+                              operation: (name: String, body: String)?) -> InAppFormData? {
         Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
 
         if case .modal(let modal) = inapp.content,
@@ -343,7 +349,7 @@ class InappMapper: InappMapperProtocol {
                                  content: inapp.content,
                                  frequency: inapp.frequency,
                                  tags: inapp.tags,
-                                 operation: getOperation(),
+                                 operation: operation,
                                  extraParams: extraParams)
         }
 
@@ -387,7 +393,7 @@ class InappMapper: InappMapperProtocol {
                                  content: inapp.content,
                                  frequency: inapp.frequency,
                                  tags: inapp.tags,
-                                 operation: getOperation(),
+                                 operation: operation,
                                  extraParams: extraParams)
         }
     }
@@ -396,7 +402,7 @@ class InappMapper: InappMapperProtocol {
                             extraParams: [String: JSONValue],
                             completion: @escaping (InAppFormData?) -> Void) {
         DispatchQueue.global().async {
-            let formData = self.makeFormData(inapp, extraParams: extraParams)
+            let formData = self.makeFormData(inapp, extraParams: extraParams, operation: nil)
 
             DispatchQueue.main.async {
                 completion(formData)
