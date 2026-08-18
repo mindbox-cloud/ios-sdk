@@ -34,6 +34,20 @@ struct LockedTests {
         #expect($flag.exchange(false) == false)
     }
 
+    @Test("mutate keeps every concurrent insert, where mutating through the value loses some")
+    func mutateKeepsEveryConcurrentInsert() {
+        let inserts = 500
+        let set = Locked(wrappedValue: Set<Int>())
+
+        DispatchQueue.concurrentPerform(iterations: inserts) { index in
+            set.mutate { (value: inout Set<Int>) -> Void in
+                value.insert(index)
+            }
+        }
+
+        #expect(set.wrappedValue.count == inserts)
+    }
+
     // Real threads behind a start gate: a read-then-write `exchange` only misbehaves with two
     // callers inside it at once, and one raised flag makes each round a single race — hence rounds.
     @Test("A raised flag is consumed by exactly one of the racing threads")
