@@ -65,8 +65,11 @@ class InappMapper: InappMapperProtocol {
                           level: .debug, category: .inAppMessages)
             self.setupEnvironment(event: event)
             self.prepareTargetingChecker(for: candidates.renderable)
+            // Narrowed here rather than in the fetch completion below: that one answers on the main
+            // queue, and the frequency reads and their logging have no business there.
+            let inapps = self.showableInapps(in: candidates)
 
-            self.chooseInappToShow(candidates) { formData in
+            self.chooseInappToShow(inapps) { formData in
                 self.sendRemainingInappsTargeting(candidates) {
                     completion(formData)
                     group.leave()
@@ -271,18 +274,20 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    private func chooseInappToShow(_ candidates: ConfigCandidates, completion: @escaping (InAppFormData?) -> Void) {
+    private func showableInapps(in candidates: ConfigCandidates) -> [InApp] {
+        guard let event = applicationEvent else {
+            return inappFilterService.filterForTrigger(in: candidates)
+        }
+
+        return inappFilterService.filterInappsByOperationForShow(
+            event: event,
+            operationInapps: targetingChecker.context.operationInapps,
+            in: candidates
+        )
+    }
+
+    private func chooseInappToShow(_ inapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
         dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let inapps: [InApp]
-            if let event = self.applicationEvent {
-                inapps = self.inappFilterService.filterInappsByOperationForShow(
-                    event: event,
-                    operationInapps: self.targetingChecker.context.operationInapps,
-                    in: candidates
-                )
-            } else {
-                inapps = self.inappFilterService.filterForTrigger(in: candidates)
-            }
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
             let suitableIds = Set(suitableInapps.map(\.inAppId))
             let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
