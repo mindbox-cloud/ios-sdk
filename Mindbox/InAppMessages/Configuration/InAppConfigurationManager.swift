@@ -42,6 +42,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     /// Confined to `queue`, like `configResponse`.
     private var configWaiters: [(ConfigCandidates?) -> Void] = []
+
+    /// Confined to `queue`, like `configResponse`.
+    private var hasConcludedDownload = false
     private let inAppConfigRepository: InAppConfigurationRepository
 
     /// Confined to `queue`, like `configResponse`: swapped on session expiry while the previous
@@ -185,6 +188,13 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 return
             }
 
+            if self.hasConcludedDownload {
+                Logger.common(message: "[InAppConfigurationManager] The session's config download already finished with nothing, \(what) gets nothing",
+                              level: .error, category: .inAppMessages)
+                completion(nil)
+                return
+            }
+
             Logger.common(message: "[InAppConfigurationManager] No config yet, \(what) waits for it",
                           level: .debug, category: .inAppMessages)
 
@@ -220,6 +230,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     // MARK: - Private
     private func downloadConfig() {
+        hasConcludedDownload = false
         inAppConfigAPI.fetchConfig(completionQueue: queue) { result in
             self.completeDownloadTask(result)
         }
@@ -247,6 +258,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
 
         configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
+        hasConcludedDownload = true
 
         let waiters = configWaiters
         configWaiters = []
