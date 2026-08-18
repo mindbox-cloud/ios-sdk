@@ -21,11 +21,14 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
 
     private let registry: EmbeddedBlockPlaceRegistering
     private let feed: EmbeddedBlockFeedServing
+    private let failureManager: InappShowFailureManagerProtocol
 
     init(registry: EmbeddedBlockPlaceRegistering,
-         feed: EmbeddedBlockFeedServing) {
+         feed: EmbeddedBlockFeedServing,
+         failureManager: InappShowFailureManagerProtocol) {
         self.registry = registry
         self.feed = feed
+        self.failureManager = failureManager
     }
 
     func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
@@ -45,14 +48,22 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                                            level: .error, category: .embeddedBlocks)
                                          }
                                      },
-                                     reportFailure: { content, reason, details in
-                                         // Past the buffer: it keeps one failure per in-app id and would drop
-                                         // this one whenever a selection pass had already buffered another.
-                                         DI.injectOrFail(InappShowFailureManagerProtocol.self)
-                                             .sendFailure(inappId: content.inAppId,
-                                                          reason: reason,
-                                                          details: details,
-                                                          tags: content.tags)
+                                     reportFailure: { [failureManager] content, reason, details in
+                                         // Captured, not read through the factory: a provider outliving it
+                                         // would otherwise drop the failure it is reporting.
+                                         Self.report(failure: reason, details: details, for: content, to: failureManager)
                                      })
+    }
+
+    /// Past the buffer: it keeps one failure per in-app id and would drop this one whenever a
+    /// selection pass had already buffered another.
+    static func report(failure reason: InAppShowFailureReason,
+                       details: String,
+                       for content: EmbeddedBlockWebContent,
+                       to manager: InappShowFailureManagerProtocol) {
+        manager.sendFailure(inappId: content.inAppId,
+                            reason: reason,
+                            details: details,
+                            tags: content.tags)
     }
 }
