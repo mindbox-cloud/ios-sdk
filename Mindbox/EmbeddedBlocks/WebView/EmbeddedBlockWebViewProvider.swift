@@ -332,6 +332,8 @@ final class EmbeddedBlockWebViewProvider {
     private func applyContentRendered(_ count: Int) {
         guard isStarted else { return }
 
+        // The page reports a number, not a collection, so `isEmpty` has nothing to be asked of here.
+        // swiftlint:disable:next empty_count
         guard count > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
             outcome = .empty
