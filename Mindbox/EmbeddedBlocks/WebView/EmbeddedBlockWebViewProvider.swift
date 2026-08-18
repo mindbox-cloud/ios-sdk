@@ -371,7 +371,7 @@ final class EmbeddedBlockWebViewProvider {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — the event was already reported",
                           category: .embeddedBlocks)
         } else {
-            SessionTemporaryStorage.shared.blockShowsReportedInSession.insert(content.inAppId)
+            SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay)",
                           category: .embeddedBlocks)
             reportShow(content, timeToDisplay)

@@ -153,7 +153,7 @@ class InappMapper: InappMapperProtocol {
                 continue
             }
 
-            SessionTemporaryStorage.shared.vouchedInappIds.insert(inapp.inAppId)
+            SessionTemporaryStorage.shared.$vouchedInappIds.mutate { $0.insert(inapp.inAppId) }
             self.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }
@@ -320,7 +320,7 @@ class InappMapper: InappMapperProtocol {
             DispatchQueue.main.async { [weak self] in
                 if let id = formData?.inAppId {
                     self?.dataFacade.trackTargeting(id: id, tags: formData?.tags)
-                    self?.shownInappIDWithHashValue[id] = self?.getEventHashValue()
+                    self?.$shownInappIDWithHashValue.mutate { $0[id] = self?.getEventHashValue() }
                 }
 
                 completion(formData)

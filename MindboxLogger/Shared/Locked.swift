@@ -8,9 +8,10 @@
 
 import Foundation
 
-/// A stored property whose reads and writes are individually atomic — not transactional: a compound
-/// mutation is a locked read then a locked write, so cross-thread read-modify-write still needs a
-/// single writer. The lock is never held while calling out: property observers run after the store.
+/// A stored property whose reads and writes are individually atomic. A compound mutation through
+/// `wrappedValue` is a locked read then a locked write, so it can still lose a concurrent update —
+/// use ``mutate(_:)`` for that. The lock is never held while calling out: property observers run
+/// after the store.
 @propertyWrapper
 public final class Locked<Value> {
 
@@ -44,5 +45,17 @@ public final class Locked<Value> {
         let oldValue = value
         value = newValue
         return oldValue
+    }
+
+    /// Reads, mutates and stores under one lock, so `insert`, `append` and friends cannot lose a
+    /// concurrent update the way `wrappedValue` mutation can.
+    ///
+    /// - Warning: the lock is held for the whole body. Do not call back into the same wrapper or
+    ///   block inside it.
+    @discardableResult
+    public func mutate<Result>(_ body: (inout Value) throws -> Result) rethrows -> Result {
+        lock.lock()
+        defer { lock.unlock() }
+        return try body(&value)
     }
 }
